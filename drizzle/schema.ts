@@ -33,7 +33,7 @@ export const tenantSettings = mysqlTable("tenant_settings", {
   revalidationDaysHigh: int("revalidation_days_high").notNull().default(30),
   defaultRiskModelVersion: varchar("default_risk_model_version", { length: 20 }).notNull().default("v1"),
   defaultLearningModelVersion: varchar("default_learning_model_version", { length: 20 }).notNull().default("v1"),
-  configJson: json("config_json").notNull().default({}),
+  configJson: json("config_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -112,8 +112,8 @@ export const assessmentBlueprints = mysqlTable("assessment_blueprints", {
   key: varchar("key", { length: 100 }).notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   version: int("version").notNull().default(1),
-  roleScopeJson: json("role_scope_json").notNull().default({}),
-  structureJson: json("structure_json").notNull().default({}),
+  roleScopeJson: json("role_scope_json").$default(() => ({})),
+  structureJson: json("structure_json").$default(() => ({})),
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -124,7 +124,7 @@ export const assessmentItems = mysqlTable("assessment_items", {
   competencyId: varchar("competency_id", { length: 36 }),
   itemType: varchar("item_type", { length: 50 }).notNull(),
   prompt: text("prompt").notNull(),
-  metadataJson: json("metadata_json").notNull().default({}),
+  metadataJson: json("metadata_json").$default(() => ({})),
   difficulty: int("difficulty").notNull().default(2),
   activeVersion: int("active_version").notNull().default(1),
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
@@ -140,8 +140,8 @@ export const assessmentItemOptions = mysqlTable("assessment_item_options", {
   isCorrect: boolean("is_correct"),
   scoreWeight: decimal("score_weight", { precision: 6, scale: 2 }).notNull().default("0"),
   outcomeClass: varchar("outcome_class", { length: 50 }),
-  signalDeltasJson: json("signal_deltas_json").notNull().default({}),
-  eventCodesJson: json("event_codes_json").notNull().default([]),
+  signalDeltasJson: json("signal_deltas_json").$default(() => ({})),
+  eventCodesJson: json("event_codes_json").$default(() => ([])),
 });
 
 export const assessmentSessions = mysqlTable("assessment_sessions", {
@@ -153,7 +153,7 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
   invalidatedAt: timestamp("invalidated_at"),
-  sessionMetadataJson: json("session_metadata_json").notNull().default({}),
+  sessionMetadataJson: json("session_metadata_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   userStateIdx: index("idx_assessment_sessions_user_state").on(t.tenantId, t.userId, t.startedAt),
@@ -176,8 +176,8 @@ export const assessmentScores = mysqlTable("assessment_scores", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }).notNull().unique(),
   overallScore: decimal("overall_score", { precision: 6, scale: 2 }).notNull(),
-  scoreBreakdownJson: json("score_breakdown_json").notNull().default({}),
-  signalScoresJson: json("signal_scores_json").notNull().default({}),
+  scoreBreakdownJson: json("score_breakdown_json").$default(() => ({})),
+  signalScoresJson: json("signal_scores_json").$default(() => ({})),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
   modelVersion: varchar("model_version", { length: 20 }).notNull().default("v1"),
 });
@@ -190,7 +190,7 @@ export const credibilityScores = mysqlTable("credibility_scores", {
   assessmentSessionId: varchar("assessment_session_id", { length: 36 }),
   credibilityScore: decimal("credibility_score", { precision: 5, scale: 4 }).notNull(),
   band: mysqlEnum("band", ["low", "medium", "high"]).notNull(),
-  reasonJson: json("reason_json").notNull().default({}),
+  reasonJson: json("reason_json").$default(() => ({})),
   modelVersion: varchar("model_version", { length: 20 }).notNull().default("v1"),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
@@ -200,7 +200,7 @@ export const riskScores = mysqlTable("risk_scores", {
   userId: varchar("user_id", { length: 36 }).notNull(),
   riskScore: decimal("risk_score", { precision: 5, scale: 4 }).notNull(),
   band: mysqlEnum("band", ["low", "medium", "high"]).notNull(),
-  reasonJson: json("reason_json").notNull().default({}),
+  reasonJson: json("reason_json").$default(() => ({})),
   modelVersion: varchar("model_version", { length: 20 }).notNull().default("v1"),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
@@ -215,7 +215,7 @@ export const userStates = mysqlTable("user_states", {
   complianceState: mysqlEnum("compliance_state", ["compliant", "at_risk", "breach"]).notNull().default("compliant"),
   effectiveFrom: timestamp("effective_from").defaultNow().notNull(),
   effectiveTo: timestamp("effective_to"),
-  stateReasonJson: json("state_reason_json").notNull().default({}),
+  stateReasonJson: json("state_reason_json").$default(() => ({})),
 }, (t) => ({
   currentStateIdx: index("idx_user_states_current").on(t.userId, t.effectiveTo),
 }));
@@ -262,8 +262,8 @@ export const contentItems = mysqlTable("content_items", {
   version: int("version").notNull().default(1),
   difficulty: int("difficulty").notNull().default(2),
   durationSeconds: int("duration_seconds").notNull().default(0),
-  metadataJson: json("metadata_json").notNull().default({}),
-  bodyJson: json("body_json").notNull().default({}),
+  metadataJson: json("metadata_json").$default(() => ({})),
+  bodyJson: json("body_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -283,8 +283,8 @@ export const policyRules = mysqlTable("policy_rules", {
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
   severity: varchar("severity", { length: 50 }).notNull().default("medium"),
   actionType: mysqlEnum("action_type", ["hard_block", "warning", "remediation_trigger", "escalate", "force_revalidation"]).notNull(),
-  conditionsJson: json("conditions_json").notNull().default({}),
-  consequencesJson: json("consequences_json").notNull().default({}),
+  conditionsJson: json("conditions_json").$default(() => ({})),
+  consequencesJson: json("consequences_json").$default(() => ({})),
   version: int("version").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
@@ -299,7 +299,7 @@ export const learningPlans = mysqlTable("learning_plans", {
   state: mysqlEnum("state", ["active", "completed", "superseded", "blocked"]).notNull().default("active"),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
   generatorVersion: varchar("generator_version", { length: 20 }).notNull().default("v1"),
-  summaryJson: json("summary_json").notNull().default({}),
+  summaryJson: json("summary_json").$default(() => ({})),
 }, (t) => ({
   userPlanIdx: index("idx_learning_plans_user_generated").on(t.tenantId, t.userId, t.generatedAt),
 }));
@@ -311,7 +311,7 @@ export const learningPlanItems = mysqlTable("learning_plan_items", {
   orderIndex: int("order_index").notNull(),
   required: boolean("required").notNull().default(true),
   unlockRuleJson: json("unlock_rule_json"),
-  reasonJson: json("reason_json").notNull().default({}),
+  reasonJson: json("reason_json").$default(() => ({})),
   status: varchar("status", { length: 50 }).notNull().default("assigned"),
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
@@ -325,7 +325,7 @@ export const contentProgress = mysqlTable("content_progress", {
   status: varchar("status", { length: 50 }).notNull().default("not_started"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
-  latestResultJson: json("latest_result_json").notNull().default({}),
+  latestResultJson: json("latest_result_json").$default(() => ({})),
 }, (t) => ({
   uniqueUserContent: unique("unique_user_content").on(t.userId, t.contentItemId),
 }));
@@ -340,8 +340,8 @@ export const simulations = mysqlTable("simulations", {
   version: int("version").notNull().default(1),
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
   learningObjectiveId: varchar("learning_objective_id", { length: 36 }),
-  metadataJson: json("metadata_json").notNull().default({}),
-  passConditionsJson: json("pass_conditions_json").notNull().default({}),
+  metadataJson: json("metadata_json").$default(() => ({})),
+  passConditionsJson: json("pass_conditions_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -351,7 +351,7 @@ export const simulationNodes = mysqlTable("simulation_nodes", {
   nodeKey: varchar("node_key", { length: 100 }).notNull(),
   nodeType: varchar("node_type", { length: 50 }).notNull(),
   prompt: text("prompt").notNull(),
-  contextJson: json("context_json").notNull().default({}),
+  contextJson: json("context_json").$default(() => ({})),
   scoringWeight: decimal("scoring_weight", { precision: 6, scale: 2 }).notNull().default("1"),
   nodeOrder: int("node_order"),
   isStart: boolean("is_start").notNull().default(false),
@@ -367,7 +367,7 @@ export const simulationChoices = mysqlTable("simulation_choices", {
   outcomeType: varchar("outcome_type", { length: 50 }).notNull(),
   scoreDelta: decimal("score_delta", { precision: 6, scale: 2 }).notNull().default("0"),
   riskDelta: decimal("risk_delta", { precision: 6, scale: 2 }).notNull().default("0"),
-  metadataJson: json("metadata_json").notNull().default({}),
+  metadataJson: json("metadata_json").$default(() => ({})),
 });
 
 export const simulationTransitions = mysqlTable("simulation_transitions", {
@@ -403,7 +403,7 @@ export const simulationSessionEvents = mysqlTable("simulation_session_events", {
   nodeId: varchar("node_id", { length: 36 }),
   choiceId: varchar("choice_id", { length: 36 }),
   eventType: varchar("event_type", { length: 100 }).notNull(),
-  payloadJson: json("payload_json").notNull().default({}),
+  payloadJson: json("payload_json").$default(() => ({})),
   occurredAt: timestamp("occurred_at").defaultNow().notNull(),
 });
 
@@ -411,10 +411,10 @@ export const simulationResults = mysqlTable("simulation_results", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }).notNull().unique(),
   totalScore: decimal("total_score", { precision: 6, scale: 2 }).notNull(),
-  scoreBreakdownJson: json("score_breakdown_json").notNull().default({}),
+  scoreBreakdownJson: json("score_breakdown_json").$default(() => ({})),
   passed: boolean("passed").notNull(),
-  riskImpactJson: json("risk_impact_json").notNull().default({}),
-  feedbackJson: json("feedback_json").notNull().default({}),
+  riskImpactJson: json("risk_impact_json").$default(() => ({})),
+  feedbackJson: json("feedback_json").$default(() => ({})),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
@@ -427,7 +427,7 @@ export const policyEvaluations = mysqlTable("policy_evaluations", {
   contextType: varchar("context_type", { length: 100 }).notNull(),
   contextId: varchar("context_id", { length: 36 }),
   result: varchar("result", { length: 50 }).notNull(),
-  explanationJson: json("explanation_json").notNull().default({}),
+  explanationJson: json("explanation_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -455,7 +455,7 @@ export const events = mysqlTable("events", {
   sourceService: varchar("source_service", { length: 100 }).notNull(),
   sourceId: varchar("source_id", { length: 36 }),
   correlationId: varchar("correlation_id", { length: 100 }),
-  payloadJson: json("payload_json").notNull().default({}),
+  payloadJson: json("payload_json").$default(() => ({})),
   occurredAt: timestamp("occurred_at").defaultNow().notNull(),
   ingestedAt: timestamp("ingested_at").defaultNow().notNull(),
 }, (t) => ({
@@ -469,7 +469,7 @@ export const auditLogs = mysqlTable("audit_logs", {
   action: varchar("action", { length: 200 }).notNull(),
   targetType: varchar("target_type", { length: 100 }).notNull(),
   targetId: varchar("target_id", { length: 36 }),
-  metadataJson: json("metadata_json").notNull().default({}),
+  metadataJson: json("metadata_json").$default(() => ({})),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   tenantTimeIdx: index("idx_audit_logs_tenant_time").on(t.tenantId, t.createdAt),
@@ -480,10 +480,10 @@ export const reportJobs = mysqlTable("report_jobs", {
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
   reportType: varchar("report_type", { length: 100 }).notNull(),
   requestedBy: varchar("requested_by", { length: 36 }),
-  parametersJson: json("parameters_json").notNull().default({}),
+  parametersJson: json("parameters_json").$default(() => ({})),
   status: varchar("status", { length: 50 }).notNull().default("queued"),
   downloadUrl: text("download_url"),
-  manifestJson: json("manifest_json").notNull().default({}),
+  manifestJson: json("manifest_json").$default(() => ({})),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),

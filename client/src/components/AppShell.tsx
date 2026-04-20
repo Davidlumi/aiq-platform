@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -27,8 +26,7 @@ import {
   LogOut,
   User,
   Menu,
-  X,
-  Zap,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,191 +75,341 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+/**
+ * Official AiQ logo mark.
+ * Dark navy circle (#1E293B) with white A, mint-green i (#34D399), white Q,
+ * and a mint smile arc below — as specified in the design system.
+ */
+function AiQLogoMark({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="AiQ logo"
+    >
+      <circle cx="100" cy="100" r="100" fill="#1E293B" />
+      <text
+        x="100"
+        y="128"
+        textAnchor="middle"
+        fontFamily="Inter, system-ui, sans-serif"
+        fontSize="80"
+        fontWeight="800"
+        fill="#FFFFFF"
+        letterSpacing="-4"
+      >
+        AiQ
+      </text>
+      {/* Override the 'i' to mint green */}
+      <text
+        x="100"
+        y="128"
+        textAnchor="middle"
+        fontFamily="Inter, system-ui, sans-serif"
+        fontSize="80"
+        fontWeight="800"
+        fill="#1E293B"
+        letterSpacing="-4"
+      >
+        A Q
+      </text>
+      <text
+        x="104"
+        y="128"
+        textAnchor="middle"
+        fontFamily="Inter, system-ui, sans-serif"
+        fontSize="80"
+        fontWeight="800"
+        fill="#34D399"
+        letterSpacing="-4"
+      >
+        i
+      </text>
+      {/* Smile arc */}
+      <path
+        d="M 58 155 Q 100 175 142 155"
+        stroke="#34D399"
+        strokeWidth="5.5"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const userRoles = (user as any)?.roles as string[] ?? [];
+  const userRoles = ((user as any)?.roles as string[]) ?? [];
 
   const visibleItems = NAV_ITEMS.filter(
-    item => !item.roles || item.roles.some(r => userRoles.includes(r))
+    (item) => !item.roles || item.roles.some((r) => userRoles.includes(r))
   );
 
-  const initials =
-    user
-      ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || user.email[0].toUpperCase()
-      : "?";
+  const initials = user
+    ? `${(user as any).firstName?.[0] ?? ""}${(user as any).lastName?.[0] ?? ""}`.toUpperCase() ||
+      ((user as any).email?.[0] ?? "U").toUpperCase()
+    : "U";
 
   const displayName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email ?? "User";
+    (user as any)?.firstName && (user as any)?.lastName
+      ? `${(user as any).firstName} ${(user as any).lastName}`
+      : (user as any)?.email ?? "User";
 
   const primaryRole = userRoles[0] ?? "learner";
-  const roleLabel = primaryRole.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const roleLabel = primaryRole
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+  function isActive(path: string) {
+    if (path === "/dashboard") return location === "/dashboard" || location === "/";
+    return location === path || location.startsWith(path + "/");
+  }
+
+  const SidebarInner = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo header */}
+      <div
+        className={cn(
+          "flex items-center h-16 px-4 border-b border-[#EAECF0] shrink-0",
+          collapsed ? "justify-center" : "justify-between"
+        )}
+      >
+        <div className="flex items-center gap-2.5">
+          <AiQLogoMark size={collapsed ? 30 : 34} />
+          {!collapsed && (
+            <div className="flex flex-col leading-none">
+              <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#9CA3AF]">
+                HR
+              </span>
+              <span className="text-[18px] font-extrabold tracking-tight text-[#0E1726] leading-none">
+                AiQ
+              </span>
+            </div>
+          )}
+        </div>
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-1.5 rounded-md text-[#9CA3AF] hover:text-[#0E1726] hover:bg-[#F5F6FF] transition-colors hidden lg:flex"
+            aria-label="Collapse sidebar"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Expand button when collapsed */}
+      {collapsed && (
+        <div className="flex justify-center py-2 border-b border-[#EAECF0]">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-1.5 rounded-md text-[#9CA3AF] hover:text-[#0E1726] hover:bg-[#F5F6FF] transition-colors"
+            aria-label="Expand sidebar"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <ul className="space-y-0.5">
+          {visibleItems.map((item) => {
+            const active = isActive(item.path);
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <Link href={item.path}>
+                  <span
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer select-none",
+                      active
+                        ? "bg-[#EEF0FF] text-[#3B4EFF]"
+                        : "text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#0E1726]",
+                      collapsed && "justify-center px-2"
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <Icon
+                      className={cn(
+                        "shrink-0 w-[18px] h-[18px]",
+                        active ? "text-[#3B4EFF]" : "text-[#9CA3AF]"
+                      )}
+                    />
+                    {!collapsed && <span>{item.label}</span>}
+                    {active && !collapsed && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3B4EFF]" />
+                    )}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* User profile footer */}
+      <div className="shrink-0 border-t border-[#EAECF0] p-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[#F5F6FF] transition-colors",
+                collapsed && "justify-center"
+              )}
+            >
+              <Avatar className="w-8 h-8 shrink-0">
+                <AvatarFallback className="bg-[#3B4EFF] text-white text-xs font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {!collapsed && (
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-sm font-semibold text-[#0E1726] truncate">{displayName}</p>
+                  <p className="text-xs text-[#9CA3AF] truncate">{roleLabel}</p>
+                </div>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {(user as any)?.email}
+                </p>
+                <p className="text-xs text-[#3B4EFF] font-medium">{roleLabel}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile & Settings</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={logout}
+              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-[#F7F8FA] overflow-hidden">
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          "hidden lg:flex flex-col bg-white border-r border-[#EAECF0] transition-all duration-200 shrink-0",
+          collapsed ? "w-[64px]" : "w-[240px]"
+        )}
+      >
+        <SidebarInner />
+      </aside>
+
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Mobile sidebar drawer */}
       <aside
         className={cn(
-          "fixed lg:relative z-50 flex flex-col h-full transition-all duration-300 ease-in-out",
-          "bg-[var(--sidebar)] text-[var(--sidebar-foreground)]",
-          collapsed ? "w-16" : "w-64",
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed top-0 left-0 h-full w-[240px] bg-white border-r border-[#EAECF0] z-50 transition-transform duration-200 lg:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo — AiQ Brand Mark */}
-        <div className={cn("flex items-center h-16 px-4 border-b border-[var(--sidebar-border)]", collapsed && "justify-center")}>
-          {collapsed ? (
-            /* Collapsed: monogram only */
-            <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-['Sora'] font-bold text-sm">AQ</span>
-            </div>
-          ) : (
-            /* Expanded: full HR AiQ brand mark */
-            <div className="flex items-center gap-2.5">
-              <div className="relative w-9 h-9 flex-shrink-0">
-                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-9 h-9">
-                  <rect width="36" height="36" rx="8" fill="#10B981"/>
-                  <text x="18" y="22" textAnchor="middle" fill="white" fontFamily="Sora,sans-serif" fontWeight="700" fontSize="13">AiQ</text>
-                  <path d="M10 27 Q18 24 26 27" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xs font-['Sora'] font-semibold text-white/60 tracking-wider uppercase">HR</span>
-                  <span className="text-base font-['Sora'] font-bold text-white">AiQ</span>
-                </div>
-                <span className="text-[10px] text-white/50 font-['Sora'] tracking-wide block -mt-0.5">
-                  Capability Intelligence
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-          {visibleItems.map(item => {
-            const Icon = item.icon;
-            const isActive = location === item.path || location.startsWith(item.path + "/");
-            return (
-              <Link key={item.path} href={item.path}>
-                <div
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
-                    isActive
-                      ? "bg-accent/20 text-accent"
-                      : "text-[var(--sidebar-foreground)]/70 hover:text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]",
-                    collapsed && "justify-center px-2"
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* User section */}
-        <div className={cn("p-3 border-t border-[var(--sidebar-border)]", collapsed && "flex justify-center")}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-3 w-full rounded-lg p-2 hover:bg-[var(--sidebar-accent)] transition-colors",
-                  collapsed && "w-auto"
-                )}
-              >
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback className="bg-accent text-white text-xs font-bold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                {!collapsed && (
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-[var(--sidebar-foreground)] truncate">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-[var(--sidebar-foreground)]/60 truncate">
-                      {roleLabel}
-                    </p>
-                  </div>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div>
-                  <p className="font-medium">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  <p className="text-xs text-accent mt-0.5">{roleLabel}</p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile & Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Collapse toggle (desktop) */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 rounded-full bg-accent text-white items-center justify-center shadow-md hover:bg-accent/90 transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-3 h-3" />
-          ) : (
-            <ChevronLeft className="w-3 h-3" />
-          )}
-        </button>
+        <SidebarInner />
       </aside>
 
-      {/* Main content */}
+      {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile header */}
-        <header className="lg:hidden flex items-center h-14 px-4 bg-card border-b border-border">
+        {/* Top bar */}
+        <header className="h-14 bg-white border-b border-[#EAECF0] flex items-center px-4 lg:px-6 gap-3 shrink-0">
+          {/* Mobile menu button */}
           <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 rounded-md text-[#6B7280] hover:bg-[#F5F6FF] transition-colors"
+            aria-label="Open menu"
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 ml-3">
-            <div className="w-6 h-6 rounded bg-accent flex items-center justify-center">
-              <Zap className="w-3 h-3 text-white" />
-            </div>
-            <span className="font-bold text-foreground">AiQ</span>
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2">
+            <AiQLogoMark size={28} />
+            <span className="font-extrabold text-[#0E1726] text-base">AiQ</span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1.5">
+            <button className="p-2 rounded-lg text-[#6B7280] hover:bg-[#F5F6FF] hover:text-[#0E1726] transition-colors">
+              <Bell className="w-5 h-5" />
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#F5F6FF] transition-colors">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-[#3B4EFF] text-white text-xs font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-semibold text-[#0E1726] leading-none">{displayName}</p>
+                    <p className="text-xs text-[#9CA3AF] leading-none mt-0.5">{roleLabel}</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {(user as any)?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile & Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

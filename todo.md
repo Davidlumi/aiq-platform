@@ -61,3 +61,15 @@
 - [ ] PDF export rendering (requires server-side PDF library)
 - [ ] Real-time notifications via WebSocket
 - [ ] Bulk user import via CSV
+
+## Design System Overhaul (Priority)
+- [x] Full scan of Figma site and GitHub repo — extract all tokens, logos, SVGs, component specs
+- [x] Download all brand assets from GitHub (logos, wordmarks, icons, SVGs)
+- [x] Upload assets to webdev static storage and reference via CDN URLs
+- [x] Rewrite index.css with exact brand tokens (colours, typography, spacing, radius, shadows)
+- [x] Rebuild AppShell with correct HR AiQ logo (wordmark + icon, collapsed state)
+- [x] Rebuild LoginPage with correct brand visual treatment
+- [x] Apply brand typography (correct font weights, sizes, line heights) across all pages
+- [x] Apply capability semantic colours correctly (EXEC, JUDG, RISK, WKFL, APPR, DATA)
+- [x] Apply correct button, card, badge, and input component styles
+- [x] QA all pages against Figma spec

@@ -65,13 +65,27 @@
   --aiq-unsafe:     #DC2626;   /* Unsafe — below threshold */
   --aiq-unknown:    #6B7280;   /* Unknown — insufficient data */
 
-  /* ── Six Capability Semantic Colours (fixed, never swapped) ── */
-  --cap-exec:       #4477AA;   /* AI Execution — blue */
-  --cap-judg:       #AA3377;   /* AI Judgement — purple/magenta */
-  --cap-lit:        #228833;   /* AI Literacy — green */
-  --cap-gov:        #EE6677;   /* AI Risk & Governance — red */
-  --cap-stew:       #EE8866;   /* AI Stewardship — orange */
-  --cap-collab:     #66CCEE;   /* AI Collaboration — cyan */
+  /* ── Six Capability Semantic Colours (official names from design system) ── */
+  --capability-execution:    #4477AA;   /* Blue  — AI Execution */
+  --capability-judgement:    #AA3377;   /* Purple — AI Judgement */
+  --capability-literacy:     #228833;   /* Green  — AI Literacy */
+  --capability-governance:   #EE6677;   /* Red    — AI Risk & Governance */
+  --capability-stewardship:  #EE8866;   /* Orange — AI Stewardship */
+  --capability-collaboration: #66CCEE;  /* Cyan   — AI Collaboration */
+  /* Aliases used in build spec (EXEC/JUDG/RISK/WKFL/APPR/DATA) */
+  --cap-exec:   var(--capability-execution);
+  --cap-judg:   var(--capability-judgement);
+  --cap-risk:   var(--capability-governance);
+  --cap-wkfl:   var(--capability-collaboration);
+  --cap-appr:   var(--capability-stewardship);
+  --cap-data:   var(--capability-literacy);
+  /* Background variants */
+  --capability-execution-bg:    rgba(68, 119, 170, 0.1);
+  --capability-judgement-bg:    rgba(170, 51, 119, 0.1);
+  --capability-literacy-bg:     rgba(34, 136, 51, 0.1);
+  --capability-governance-bg:   rgba(238, 102, 119, 0.1);
+  --capability-stewardship-bg:  rgba(238, 136, 102, 0.1);
+  --capability-collaboration-bg: rgba(102, 204, 238, 0.1);
 
   /* ── Ambition Level Colours ── */
   --ambition-conservative:     #64748B;
@@ -91,36 +105,36 @@
   --card-foreground:      #0E1726;
   --popover:              #FFFFFF;
   --popover-foreground:   #0E1726;
-  --primary:              #10B981;
+  --primary:              #3B4EFF;
   --primary-foreground:   #FFFFFF;
-  --secondary:            #F3F4F6;
-  --secondary-foreground: #1E293B;
-  --muted:                #F3F4F6;
+  --secondary:            #F2F4F8;
+  --secondary-foreground: #0E1726;
+  --muted:                #F2F4F6;
   --muted-foreground:     #6B7280;
-  --accent:               #10B981;
-  --accent-foreground:    #FFFFFF;
+  --accent:               #EEF0FF;
+  --accent-foreground:    #3B4EFF;
   --destructive:          #DC2626;
   --destructive-foreground: #FFFFFF;
   --border:               #E5E7EB;
   --input:                #E5E7EB;
-  --ring:                 #10B981;
+  --ring:                 #BAC0FD;
 
   /* ── Charts ── */
-  --chart-1: #10B981;
-  --chart-2: #3B82F6;
-  --chart-3: #F59E0B;
-  --chart-4: #8B5CF6;
-  --chart-5: #EF4444;
+  --chart-1: #4477AA;
+  --chart-2: #AA3377;
+  --chart-3: #228833;
+  --chart-4: #EE6677;
+  --chart-5: #EE8866;
 
-  /* ── Sidebar (dark slate — always dark) ── */
-  --sidebar:                        #1E293B;
-  --sidebar-foreground:             #F1F5F9;
-  --sidebar-primary:                #10B981;
-  --sidebar-primary-foreground:     #FFFFFF;
-  --sidebar-accent:                 #334155;
-  --sidebar-accent-foreground:      #F1F5F9;
-  --sidebar-border:                 #334155;
-  --sidebar-ring:                   #10B981;
+  /* ── Sidebar (white — per AiQ design system) ── */
+  --sidebar:                        #ffffff;
+  --sidebar-foreground:             #0E1726;
+  --sidebar-primary:                #3B4EFF;
+  --sidebar-primary-foreground:     #ffffff;
+  --sidebar-accent:                 #F5F6FF;
+  --sidebar-accent-foreground:      #3B4EFF;
+  --sidebar-border:                 #EAECF0;
+  --sidebar-ring:                   #BAC0FD;
 }
 
 /* ─── Dark theme (hero / certificate / premium surfaces only) ────────────── */
@@ -161,21 +175,21 @@
   }
 
   html {
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  /* DM Mono for technical data: credential IDs, hex codes, score ranges */
-  code, kbd, samp, pre, .font-mono { font-family: 'DM Mono', 'Courier New', monospace; }
+  /* DM Mono for technical data: scores, IDs, hex codes */
+  code, kbd, samp, pre, .font-mono { font-family: 'DM Mono', 'ui-monospace', 'SFMono-Regular', monospace; }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-weight: 600;
     color: #0E1726;
   }
@@ -194,16 +208,16 @@
 
   /* WCAG 2.1 AA focus ring */
   :focus-visible {
-    outline: 3px solid #10B981;
+    outline: 3px solid #3B4EFF;
     outline-offset: 2px;
   }
 }
 
 /* ─── AiQ Typography Scale ───────────────────────────────────────────────── */
-.aiq-display { font-size: 48px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
-.aiq-h1      { font-size: 36px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
-.aiq-h2      { font-size: 28px; font-weight: 600; line-height: 1.4; }
-.aiq-h3      { font-size: 20px; font-weight: 600; line-height: 1.4; }
+.aiq-display { font-size: 48px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; font-family: 'Inter', sans-serif; }
+.aiq-h1      { font-size: 36px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; font-family: 'Inter', sans-serif; }
+.aiq-h2      { font-size: 28px; font-weight: 600; line-height: 1.4; font-family: 'Inter', sans-serif; }
+.aiq-h3      { font-size: 20px; font-weight: 600; line-height: 1.4; font-family: 'Inter', sans-serif; }
 .aiq-body    { font-size: 16px; font-weight: 400; line-height: 1.6; }
 .aiq-caption { font-size: 14px; font-weight: 400; line-height: 1.5; }
 .aiq-label   { font-size: 12px; font-weight: 700; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -219,9 +233,21 @@
 
 /* ─── AiQ Component Utilities ────────────────────────────────────────────── */
 
-/* Capability colour pills */
-.cap-exec   { background-color: #4477AA; color: #fff; }
-.cap-judg   { background-color: #AA3377; color: #fff; }
+/* Capability colour pills — official names */
+.cap-execution    { background-color: #4477AA; color: #fff; }
+.cap-judgement    { background-color: #AA3377; color: #fff; }
+.cap-literacy     { background-color: #228833; color: #fff; }
+.cap-governance   { background-color: #EE6677; color: #fff; }
+.cap-stewardship  { background-color: #EE8866; color: #fff; }
+.cap-collaboration { background-color: #66CCEE; color: #0E1726; }
+/* Build spec aliases */
+.cap-exec  { background-color: #4477AA; color: #fff; }
+.cap-judg  { background-color: #AA3377; color: #fff; }
+.cap-risk  { background-color: #EE6677; color: #fff; }
+.cap-wkfl  { background-color: #66CCEE; color: #0E1726; }
+.cap-appr  { background-color: #EE8866; color: #fff; }
+.cap-data  { background-color: #228833; color: #fff; }
+/* Legacy aliases (kept for backward compat) */
 .cap-lit    { background-color: #228833; color: #fff; }
 .cap-gov    { background-color: #EE6677; color: #fff; }
 .cap-stew   { background-color: #EE8866; color: #fff; }
@@ -251,10 +277,10 @@
 
 /* Score range display */
 .aiq-score-range {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 700;
-  color: #10B981;
+  color: #3B4EFF;
   letter-spacing: -0.02em;
 }
 
