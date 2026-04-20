@@ -216,12 +216,14 @@ export default function AssessmentResultsPage() {
   }
 
   const { score } = data;
-  const breakdown = score.breakdown ?? {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const breakdown = (score.breakdown ?? {}) as any;
   const overallScore = Math.round(score.overallScore ?? 0);
-  const primaryState = (breakdown.primaryState ?? "unknown") as keyof typeof READINESS_CONFIG;
-  const credibilityBand = (breakdown.credibilityBand ?? breakdown.credibility_band ?? "medium") as keyof typeof CREDIBILITY_CONFIG;
+  const readiness = breakdown.readiness as { state?: string; label?: string; description?: string } | undefined;
+  const primaryState = (readiness?.state ?? breakdown.primaryState ?? "unknown") as keyof typeof READINESS_CONFIG;
+  const credibilityBand = (breakdown.credibilityBand ?? breakdown.credibility_band ?? (breakdown.confidenceProfile as any)?.band ?? "medium") as keyof typeof CREDIBILITY_CONFIG;
   const riskBand = (breakdown.riskBand ?? breakdown.risk_band ?? "medium") as keyof typeof RISK_CONFIG;
-  const narrative = breakdown.narrative ?? "";
+  const narrative = (typeof breakdown.narrative === "string" ? breakdown.narrative : (breakdown.narrative as any)?.text) ?? "";
   const capabilityScores = breakdown.capabilityScores ?? {};
   const signalScores = breakdown.signalScores ?? {};
 
@@ -307,7 +309,7 @@ export default function AssessmentResultsPage() {
                   {riskConfig.label}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  Model: V9.2 · {breakdown.total ?? 0} questions
+                  Model: V9.2 · {breakdown.totalAnswers ?? 0} questions
                 </span>
               </div>
             </div>
@@ -393,15 +395,77 @@ export default function AssessmentResultsPage() {
         </Card>
       )}
 
+      {/* ── Contradiction Profile ── */}
+      {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
+        <Card className="border-[#EE6677]/30 bg-[#EE6677]/5">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[#EE6677] shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-foreground font-sora mb-1">Contradiction Profile</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {(breakdown.contradictionProfile as any).detected} inconsistenc{(breakdown.contradictionProfile as any).detected === 1 ? 'y' : 'ies'} detected across your responses.
+                  Contradictions reduce credibility and may indicate uncertainty or inconsistent application of judgement.
+                </p>
+                {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
+                  <div className="space-y-2">
+                    {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
+                      <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#EE6677]/20">
+                        <span className="font-medium text-[#EE6677]">Inconsistency {i + 1}:</span>{" "}
+                        {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Governance Profile ── */}
+      {breakdown.governanceProfile && (
+        <Card className="border-border">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#3B4EFF]" />
+              Governance Profile
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
+                <p className="text-xl font-bold font-sora text-foreground">
+                  {Math.round((breakdown.governanceProfile as any).score ?? 0)}
+                  <span className="text-sm font-normal text-muted-foreground">/100</span>
+                </p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
+                <p className="text-sm font-bold font-sora text-foreground capitalize">
+                  {(breakdown.governanceProfile as any).band ?? "Not assessed"}
+                </p>
+              </div>
+            </div>
+            {(breakdown.governanceProfile as any).bypasses > 0 && (
+              <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
+                These are flagged for review by your HR governance team.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Score Summary ── */}
       <Card className="border-border">
         <CardContent className="p-5">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Correct Answers</p>
+              <p className="text-xs text-muted-foreground mb-1">Questions Answered</p>
               <p className="text-2xl font-bold text-foreground font-sora">
-                {breakdown.correct ?? 0}
-                <span className="text-sm font-normal text-muted-foreground">/{breakdown.total ?? 0}</span>
+                {breakdown.totalAnswers ?? 0}
+                <span className="text-sm font-normal text-muted-foreground">/50</span>
               </p>
             </div>
             <div>

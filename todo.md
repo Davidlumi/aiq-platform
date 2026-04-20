@@ -107,3 +107,15 @@
 - [x] AssessmentResultsPage: capability breakdown radar, signal profile, readiness state card, credibility score, narrative templates
 - [x] AssessmentPage landing: purpose panel, estimated duration, resume card, blocked state handling
 - [x] Full end-to-end QA of assessment flow
+
+## Adaptive Assessment Engine (Full Spec Rebuild)
+- [x] server/assessment/adaptiveEngine.ts: role archetypes, governed generation variables, LLM scenario generation
+- [x] server/assessment/scoringEngine.ts: full signal system, anchor framework, failure mode detection, risk weighting
+- [x] server/assessment/contradictionEngine.ts: inconsistency detection, follow-up probe injection, confidence reduction
+- [x] server/assessment/antiGamingEngine.ts: pattern detection, trap injection, scrutiny escalation
+- [x] server/assessment/confidenceEngine.ts: evidence depth/breadth/diversity/risk/consistency scoring (integrated into scoringEngine)
+- [x] server/assessment/sessionController.ts: 3-phase structure (baseline/adaptive/validation), minimum evidence model
+- [x] server/routers/assessment.ts: rewrite getSession to use adaptive engine, add generateItem procedure
+- [x] AssessmentSessionPage: 11 interaction type renderers (SJT, critique, output improvement, error detection, prioritisation, risk judgement, data interpretation, governance, multi-step, contradiction probe, confidence calibration)
+- [x] AssessmentResultsPage: 7-profile output (capability, signal, confidence, contradiction, risk, governance, readiness)
+- [x] Full end-to-end QA of adaptive flow across multiple roles

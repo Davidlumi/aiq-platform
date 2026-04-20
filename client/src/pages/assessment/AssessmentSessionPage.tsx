@@ -397,6 +397,31 @@ export default function AssessmentSessionPage() {
             </p>
           </div>
 
+          {/* Interaction type instruction */}
+          {(() => {
+            const iType = (nextItem as any).interactionType ?? "situational_judgement";
+            const instructions: Record<string, string> = {
+              situational_judgement:    "Select the response that best demonstrates sound professional judgement.",
+              critique:                 "Evaluate the AI output below and select the most appropriate critique.",
+              output_improvement:       "Identify the best way to improve the AI-generated output.",
+              error_detection:          "Identify the most significant error or risk in the AI output.",
+              prioritisation:           "Select the action that should be prioritised first given the constraints.",
+              risk_judgement:           "Assess the level of risk and select the most appropriate response.",
+              data_interpretation:      "Interpret the data or AI insight and select the most accurate conclusion.",
+              governance:               "Select the response that best aligns with AI governance and compliance requirements.",
+              multi_step:               "Consider the full sequence of steps and select the most appropriate next action.",
+              contradiction_probe:      "Review your earlier response and select the most consistent answer.",
+              confidence_calibration:   "Reflect on your certainty and select the response that best reflects your actual confidence level.",
+            };
+            const instruction = instructions[iType];
+            if (!instruction) return null;
+            return (
+              <p className="text-xs text-muted-foreground italic border-l-2 border-[#3B4EFF]/30 pl-3 py-0.5">
+                {instruction}
+              </p>
+            );
+          })()}
+
           {/* Options */}
           {nextItem.options && nextItem.options.length > 0 && (
             <div className="space-y-2">

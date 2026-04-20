@@ -1,184 +1,215 @@
-import { z } from "zod";
+/**
+ * AIQ Adaptive Assessment Engine — tRPC Router
+ *
+ * Implements the full adaptive 3-phase assessment flow:
+ * - Phase 1 (Baseline): Serves static V9.2 canonical items in order
+ * - Phase 2 (Adaptive): LLM-generated items targeting weak capabilities
+ * - Phase 3 (Validation): Contradiction probes and confirmation items
+ */
+
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
-import { getDb } from "../db";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { z } from "zod";
 import {
-  assessmentBlueprints,
-  assessmentItems,
-  assessmentItemOptions,
-  assessmentSessions,
   assessmentAnswers,
+  assessmentBlueprints,
+  assessmentItemOptions,
+  assessmentItems,
   assessmentScores,
+  assessmentSessions,
+  auditLogs,
   credibilityScores,
+  decisionLogs,
   riskScores,
   userStates,
-  decisionLogs,
-  auditLogs,
 } from "../../drizzle/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
-import { nanoid } from "nanoid";
+import { getDb } from "../db";
+import { protectedProcedure, router } from "../_core/trpc";
+import {
+  computeCapabilityScores,
+  computeOverallScore,
+  computeSignalScores,
+  classifyReadiness,
+  computeConfidenceProfile,
+  detectFailureModes,
+} from "../assessment/scoringEngine";
+import {
+  SessionController,
+  MINIMUM_EVIDENCE,
+  type AnswerData,
+} from "../assessment/sessionController";
+import {
+  determineSessionPhase,
+  generateAdaptiveItem,
+  selectNextGenerationVariables,
+  DEFAULT_ORG_INTENT,
+  type AdaptiveSelectionContext,
+  type InteractionType,
+} from "../assessment/adaptiveEngine";
+import { resolveRoleArchetype } from "../assessment/roleArchetypes";
+import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
+import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
+import type { CapabilityKey } from "../assessment/roleArchetypes";
 
-// ─── V9.2 Scoring Engine ──────────────────────────────────────────────────────
-// Implements the canonical signal delta scoring from AIQ V9.2 specification.
-// Ref: Volume 01 §16 Scoring System, §17 Signal Model
+// ─── Capability Display + Colour Maps ────────────────────────────────────────
 
-interface SignalAccumulator {
-  [signal: string]: number;
-}
-
-// V9.2 risk multipliers (Vol 01 §16)
-const RISK_MULTIPLIERS: Record<string, { positive: number; negative: number }> = {
-  Low:    { positive: 1.00, negative: 1.00 },
-  Medium: { positive: 1.00, negative: 1.15 },
-  High:   { positive: 1.05, negative: 1.35 },
-};
-
-// V9.2 difficulty weights (Vol 01 §16)
-const DIFFICULTY_WEIGHTS: Record<number, number> = {
-  1: 0.85,
-  2: 1.00,
-  3: 1.20,
-};
-
-// Signal → Capability mapping (Vol 01 §17 + §6 Capability Framework)
-const SIGNAL_TO_CAPABILITY: Record<string, string> = {
-  execution_quality:            "execution",
-  prioritisation_quality:       "execution",
-  validation_accuracy:          "execution",
-  judgement_quality:            "judgement",
-  discrimination_quality:       "judgement",
-  governance_quality:           "governance",
-  appropriateness_boundary:     "appropriateness",
-  workflow_application_quality: "workflow",
-  data_interpretation_quality:  "data_interpretation",
-  timing_integrity:             "execution",
-  over_reliance_risk:           "governance",
-  over_caution_risk:            "judgement",
-  avoidance_risk:               "judgement",
-  automation_expansion_risk:    "appropriateness",
-  blind_acceptance_risk:        "governance",
-  consistency_index:            "execution",
-  calibration_index:            "judgement",
-  contradiction_index:          "governance",
-};
-
-// Canonical capability display names
 const CAPABILITY_DISPLAY: Record<string, string> = {
-  execution:          "AI Execution",
-  judgement:          "AI Judgement",
-  governance:         "AI Risk & Governance",
-  appropriateness:    "AI Appropriateness",
-  workflow:           "AI Workflow Application",
-  data_interpretation:"AI Data & Insight",
+  execution:           "AI Execution",
+  judgement:           "AI Judgement",
+  governance:          "AI Risk & Governance",
+  appropriateness:     "AI Appropriateness",
+  workflow:            "AI Workflow Application",
+  data_interpretation: "AI Data & Insight",
 };
 
-// Canonical capability colours (colorblind-safe palette)
 const CAPABILITY_COLOURS: Record<string, string> = {
-  execution:          "#4477AA",
-  judgement:          "#AA3377",
-  governance:         "#228833",
-  appropriateness:    "#EE6677",
-  workflow:           "#66CCEE",
-  data_interpretation:"#BBBBBB",
+  execution:           "#4477AA",
+  judgement:           "#AA3377",
+  governance:          "#228833",
+  appropriateness:     "#EE6677",
+  workflow:            "#CCBB44",
+  data_interpretation: "#66CCEE",
 };
 
-// Narrative templates (Vol 02A Appendix C)
-const NARRATIVE_TEMPLATES: Record<string, string> = {
-  learner_safe:       "You are currently showing strong, credible evidence in this area. Keep using the checklist and practice patterns that are helping you make proportionate decisions with AI.",
-  learner_at_risk:    "You are comfortable using AI, but the evidence shows that in higher-stakes situations you may trust it too quickly or challenge the wrong thing first. Your next plan focuses on the most important corrective behaviours.",
-  learner_unsafe:     "The evidence suggests that your current AI use in this context creates material risk. Before reassessment, complete the required governance-first learning sequence and use the practice tools in your workflow.",
-  learner_restricted: "Certain uses remain restricted for now because the current evidence does not yet support safe use in this context. The system will show what must be completed before access can be reconsidered.",
-  manager_at_risk:    "This teammate would benefit from support in the specific workflow where risk is showing up. Use the guidance prompts to reinforce the right checks and boundaries rather than discussing the score abstractly.",
-  manager_unsafe:     "This teammate should not be left to self-manage the risk theme alone. Support should focus on the real workflow context and on whether the required remediation is actually being applied at work.",
-};
+// ─── Helper: Enrich answers with item metadata ────────────────────────────────
 
-function getNarrative(primaryState: string, audience: "learner" | "manager" = "learner"): string {
-  const key = `${audience}_${primaryState}`;
-  return NARRATIVE_TEMPLATES[key] ?? NARRATIVE_TEMPLATES[`${audience}_at_risk`] ?? "";
-}
-
-/**
- * Compute weighted signal scores applying V9.2 risk and difficulty multipliers.
- */
-function computeSignalScores(
+async function enrichAnswers(
   answers: Array<{
-    signalDeltasJson: unknown;
+    id: string;
+    itemId: string;
+    selectedValueJson: unknown;
+    freeText: string | null;
+    confidenceScore: unknown;
+    timeToAnswerMs: number;
     outcomeClass: string | null;
-    riskLevel?: string | null;
-    difficulty?: number | null;
-  }>
-): SignalAccumulator {
-  const acc: SignalAccumulator = {};
-  for (const answer of answers) {
-    if (!answer.signalDeltasJson) continue;
-    try {
-      const raw = typeof answer.signalDeltasJson === "string"
-        ? JSON.parse(answer.signalDeltasJson)
-        : answer.signalDeltasJson;
-      const deltas = raw as Record<string, number>;
-      const riskLevel = answer.riskLevel ?? "Medium";
-      const difficulty = answer.difficulty ?? 2;
-      const riskMult = RISK_MULTIPLIERS[riskLevel] ?? RISK_MULTIPLIERS.Medium;
-      const diffWeight = DIFFICULTY_WEIGHTS[difficulty] ?? 1.0;
-      for (const [signal, baseDelta] of Object.entries(deltas)) {
-        const multiplier = baseDelta >= 0 ? riskMult.positive : riskMult.negative;
-        const weightedDelta = baseDelta * multiplier * diffWeight;
-        acc[signal] = (acc[signal] ?? 0) + weightedDelta;
+    signalDeltasJson: unknown;
+    eventCodesJson: unknown;
+    revisionCount: number;
+  }>,
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
+): Promise<AnswerData[]> {
+  return Promise.all(
+    answers.map(async (a) => {
+      const item = await db
+        .select({ difficulty: assessmentItems.difficulty, metadataJson: assessmentItems.metadataJson })
+        .from(assessmentItems)
+        .where(eq(assessmentItems.id, a.itemId))
+        .limit(1);
+      let riskLevel = "Medium";
+      let capabilityKey = "execution";
+      let interactionType = "situational_judgement";
+      let optionPosition: number | null = null;
+      try {
+        const meta = (typeof item[0]?.metadataJson === "string"
+          ? JSON.parse(item[0].metadataJson as string)
+          : (item[0]?.metadataJson ?? {})) as Record<string, unknown>;
+        riskLevel = (meta.risk_level as string) ?? "Medium";
+        capabilityKey = (meta.capability_key as string) ?? "execution";
+        interactionType = (meta.interaction_type as string) ?? "situational_judgement";
+      } catch {}
+      if (a.selectedValueJson) {
+        try {
+          const selectedVal = typeof a.selectedValueJson === "string"
+            ? JSON.parse(a.selectedValueJson as string)
+            : a.selectedValueJson;
+          const opts = await db
+            .select({ value: assessmentItemOptions.value, optionOrder: assessmentItemOptions.optionOrder })
+            .from(assessmentItemOptions)
+            .where(eq(assessmentItemOptions.itemId, a.itemId));
+          const opt = opts.find(o => o.value === selectedVal);
+          optionPosition = opt?.optionOrder ?? null;
+        } catch {}
       }
-    } catch {}
-  }
-  return acc;
+      // Safe JSON parse: MySQL JSON columns may return already-parsed values
+      function safeJsonParse(val: unknown): unknown {
+        if (val === null || val === undefined) return null;
+        if (typeof val !== "string") return val; // already parsed by MySQL driver
+        try { return JSON.parse(val); } catch { return val; } // return raw string if not valid JSON
+      }
+      return {
+        itemId: a.itemId,
+        selectedValue: a.selectedValueJson ? safeJsonParse(a.selectedValueJson) as string : null,
+        freeText: a.freeText ?? undefined,
+        confidenceScore: parseFloat(String(a.confidenceScore ?? "0.5")),
+        timeToAnswerMs: a.timeToAnswerMs,
+        outcomeClass: a.outcomeClass ?? null,
+        signalDeltasJson: a.signalDeltasJson ?? {},
+        eventCodesJson: a.eventCodesJson ?? [],
+        riskLevel,
+        difficulty: item[0]?.difficulty ?? 2,
+        capabilityKey,
+        interactionType,
+        optionPosition,
+      };
+    })
+  );
 }
 
-/**
- * Aggregate signal scores into capability scores (0–100).
- */
-function computeCapabilityScores(
-  signalScores: SignalAccumulator
-): Record<string, { score: number; displayName: string; colour: string; signalCount: number }> {
-  const capAccum: Record<string, { sum: number; count: number }> = {};
-  for (const [signal, delta] of Object.entries(signalScores)) {
-    const cap = SIGNAL_TO_CAPABILITY[signal] ?? "execution";
-    if (!capAccum[cap]) capAccum[cap] = { sum: 0, count: 0 };
-    capAccum[cap].sum += delta;
-    capAccum[cap].count += 1;
-  }
-  // Ensure all 6 capabilities are always present
-  const allCaps = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
-  for (const cap of allCaps) {
-    if (!capAccum[cap]) capAccum[cap] = { sum: 0, count: 0 };
-  }
-  const result: Record<string, { score: number; displayName: string; colour: string; signalCount: number }> = {};
-  for (const [cap, { sum, count }] of Object.entries(capAccum)) {
-    const avgDelta = count > 0 ? sum / count : 0;
-    const normalised = Math.max(0, Math.min(100, 50 + avgDelta * 12.5));
-    result[cap] = {
-      score: Math.round(normalised),
-      displayName: CAPABILITY_DISPLAY[cap] ?? cap,
-      colour: CAPABILITY_COLOURS[cap] ?? "#4477AA",
-      signalCount: count,
-    };
-  }
-  return result;
-}
+// ─── Helper: Get next static item ────────────────────────────────────────────
 
-function computeOverallScore(capabilityScores: Record<string, { score: number }>): number {
-  const scores = Object.values(capabilityScores).map(c => c.score);
-  if (scores.length === 0) return 50;
-  return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
-}
-
-function determineReadinessState(overallScore: number, riskBand: string): string {
-  if (riskBand === "high") return "unsafe";
-  if (overallScore >= 75) return "safe";
-  if (overallScore >= 55) return "at_risk";
-  if (overallScore >= 35) return "unsafe";
-  return "unknown";
+async function getNextStaticItem(
+  blueprintId: string,
+  answeredItemIds: string[],
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
+) {
+  const allStaticItems = await db
+    .select({ id: assessmentItems.id, metadataJson: assessmentItems.metadataJson })
+    .from(assessmentItems)
+    .where(
+      and(
+        eq(assessmentItems.blueprintId, blueprintId),
+        eq(assessmentItems.status, "published")
+      )
+    );
+  const unanswered = allStaticItems
+    .filter(i => !answeredItemIds.includes(i.id))
+    .sort((a, b) => {
+      let ma: Record<string, unknown> = {}, mb: Record<string, unknown> = {};
+      try { ma = (typeof a.metadataJson === "string" ? JSON.parse(a.metadataJson as string) : (a.metadataJson ?? {})) as Record<string, unknown>; } catch {}
+      try { mb = (typeof b.metadataJson === "string" ? JSON.parse(b.metadataJson as string) : (b.metadataJson ?? {})) as Record<string, unknown>; } catch {}
+      return ((ma.display_order as number) ?? 999) - ((mb.display_order as number) ?? 999);
+    });
+  if (unanswered.length === 0) return null;
+  const nextItemFull = await db
+    .select()
+    .from(assessmentItems)
+    .where(eq(assessmentItems.id, unanswered[0].id))
+    .limit(1);
+  if (!nextItemFull[0]) return null;
+  const options = await db
+    .select()
+    .from(assessmentItemOptions)
+    .where(eq(assessmentItemOptions.itemId, nextItemFull[0].id))
+    .orderBy(assessmentItemOptions.optionOrder);
+  let meta: Record<string, unknown> = {};
+  try { meta = (typeof nextItemFull[0].metadataJson === "string" ? JSON.parse(nextItemFull[0].metadataJson as string) : (nextItemFull[0].metadataJson ?? {})) as Record<string, unknown>; } catch {}
+  return {
+    id: nextItemFull[0].id,
+    itemType: nextItemFull[0].itemType,
+    prompt: nextItemFull[0].prompt,
+    difficulty: nextItemFull[0].difficulty,
+    title: (meta.title as string) ?? "",
+    scenario: (meta.scenario as string) ?? "",
+    constraint: (meta.constraint as string) ?? "",
+    question: (meta.question as string) ?? "What do you do?",
+    capability: (meta.capability as string) ?? "",
+    capabilityKey: (meta.capability_key as string) ?? "execution",
+    workflow: (meta.workflow as string) ?? "",
+    riskLevel: (meta.risk_level as string) ?? "Medium",
+    interactionType: (meta.interaction_type as string) ?? "situational_judgement",
+    interactionId: (meta.interaction_id as string) ?? "",
+    primarySignal: (meta.primary_signal as string) ?? "",
+    displayOrder: (meta.display_order as number) ?? 0,
+    isGenerated: false,
+    options: options.map(({ isCorrect: _ic, scoreWeight: _sw, signalDeltasJson: _sd, eventCodesJson: _ec, outcomeClass: _oc, ...o }) => o),
+  };
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
+
 export const assessmentRouter = router({
-  // List published blueprints
+  // ── List published blueprints ──────────────────────────────────────────────
   blueprints: protectedProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -188,7 +219,7 @@ export const assessmentRouter = router({
       .where(eq(assessmentBlueprints.status, "published"));
   }),
 
-  // Get the default V9.2 blueprint
+  // ── Get default blueprint ──────────────────────────────────────────────────
   defaultBlueprint: protectedProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -199,10 +230,21 @@ export const assessmentRouter = router({
       .orderBy(desc(assessmentBlueprints.createdAt))
       .limit(5);
     const v9 = bps.find(b => b.key === "aiq_v9_standard");
-    return v9 ?? bps[0] ?? null;
+    const bp = v9 ?? bps[0] ?? null;
+    if (!bp) return null;
+    const items = await db
+      .select({ id: assessmentItems.id })
+      .from(assessmentItems)
+      .where(
+        and(
+          eq(assessmentItems.blueprintId, bp.id),
+          eq(assessmentItems.status, "published")
+        )
+      );
+    return { ...bp, itemCount: items.length };
   }),
 
-  // Get a blueprint with its items (strips scoring data from options)
+  // ── Get blueprint with items ───────────────────────────────────────────────
   blueprint: protectedProcedure
     .input(z.object({ blueprintId: z.string() }))
     .query(async ({ input }) => {
@@ -239,9 +281,12 @@ export const assessmentRouter = router({
       return { ...bp[0], items: itemsWithOptions };
     }),
 
-  // Start or resume an assessment session
+  // ── Start or resume a session ──────────────────────────────────────────────
   startSession: protectedProcedure
-    .input(z.object({ blueprintId: z.string() }))
+    .input(z.object({
+      blueprintId: z.string(),
+      roleHint: z.string().optional(),
+    }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -265,7 +310,11 @@ export const assessmentRouter = router({
         blueprintId: input.blueprintId,
         state: "in_progress",
         startedAt: new Date(),
-        sessionMetadataJson: { blueprintId: input.blueprintId },
+        sessionMetadataJson: {
+          blueprintId: input.blueprintId,
+          roleHint: input.roleHint ?? null,
+          engineVersion: "adaptive-v1",
+        },
       });
       await db.insert(auditLogs).values({
         id: nanoid(),
@@ -274,12 +323,12 @@ export const assessmentRouter = router({
         action: "assessment.session.started",
         targetType: "assessment_session",
         targetId: sessionId,
-        metadataJson: JSON.stringify({ blueprintId: input.blueprintId }),
+        metadataJson: JSON.stringify({ blueprintId: input.blueprintId, engineVersion: "adaptive-v1" }),
       });
       return { sessionId, resumed: false };
     }),
 
-  // Get session state + next unanswered item
+  // ── Get session state + next item (adaptive) ───────────────────────────────
   session: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -296,78 +345,209 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
-      const answers = await db
+
+      const rawAnswers = await db
         .select()
         .from(assessmentAnswers)
         .where(eq(assessmentAnswers.sessionId, input.sessionId));
-      const allItems = await db
-        .select({ id: assessmentItems.id, metadataJson: assessmentItems.metadataJson })
-        .from(assessmentItems)
-        .where(
-          and(
-            eq(assessmentItems.blueprintId, session[0].blueprintId),
-            eq(assessmentItems.status, "published")
-          )
-        );
-      const answeredItemIds = answers.map(a => a.itemId);
-      const totalItems = allItems.length;
-      const answeredCount = answeredItemIds.length;
-      let nextItem = null;
-      if (session[0].state === "in_progress" && answeredCount < totalItems) {
-        const unanswered = allItems
-          .filter(i => !answeredItemIds.includes(i.id))
-          .sort((a, b) => {
-            let ma: any = {}, mb: any = {};
-            try { ma = typeof a.metadataJson === "string" ? JSON.parse(a.metadataJson) : (a.metadataJson ?? {}); } catch {}
-            try { mb = typeof b.metadataJson === "string" ? JSON.parse(b.metadataJson) : (b.metadataJson ?? {}); } catch {}
-            return (ma.display_order ?? 999) - (mb.display_order ?? 999);
-          });
-        if (unanswered.length > 0) {
-          const nextItemFull = await db
-            .select()
-            .from(assessmentItems)
-            .where(eq(assessmentItems.id, unanswered[0].id))
-            .limit(1);
-          if (nextItemFull[0]) {
-            const options = await db
-              .select()
-              .from(assessmentItemOptions)
-              .where(eq(assessmentItemOptions.itemId, nextItemFull[0].id))
-              .orderBy(assessmentItemOptions.optionOrder);
-            let meta: any = {};
-            try { meta = typeof nextItemFull[0].metadataJson === "string" ? JSON.parse(nextItemFull[0].metadataJson as string) : (nextItemFull[0].metadataJson ?? {}); } catch {}
-            nextItem = {
-              id: nextItemFull[0].id,
-              itemType: nextItemFull[0].itemType,
-              prompt: nextItemFull[0].prompt,
-              difficulty: nextItemFull[0].difficulty,
-              title: meta.title ?? "",
-              scenario: meta.scenario ?? "",
-              constraint: meta.constraint ?? "",
-              question: meta.question ?? "What do you do?",
-              capability: meta.capability ?? "",
-              capabilityKey: meta.capability_key ?? "",
-              workflow: meta.workflow ?? "",
-              riskLevel: meta.risk_level ?? "Medium",
-              interactionId: meta.interaction_id ?? "",
-              primarySignal: meta.primary_signal ?? "",
-              displayOrder: meta.display_order ?? 0,
-              options: options.map(({ isCorrect, scoreWeight, signalDeltasJson, eventCodesJson, outcomeClass, ...o }) => o),
+
+      const answers = await enrichAnswers(rawAnswers, db);
+      const answeredCount = answers.length;
+      const answeredItemIds = rawAnswers.map(a => a.itemId);
+
+      let roleHint: string | null = null;
+      try {
+        const meta = (typeof session[0].sessionMetadataJson === "string"
+          ? JSON.parse(session[0].sessionMetadataJson as string)
+          : (session[0].sessionMetadataJson ?? {})) as Record<string, unknown>;
+        roleHint = (meta.roleHint as string) ?? null;
+      } catch {}
+
+      const phase = determineSessionPhase(answeredCount, MINIMUM_EVIDENCE.targetItems);
+      const state = SessionController.computeState(
+        session[0].id,
+        ctx.user.id,
+        session[0].blueprintId,
+        answers,
+        MINIMUM_EVIDENCE.targetItems
+      );
+
+      type NextItem = {
+        id: string; itemType: string; prompt: string; difficulty: number;
+        title: string; scenario: string; constraint: string; question: string;
+        capability: string; capabilityKey: string; workflow: string; riskLevel: string;
+        interactionType: string; interactionId: string; primarySignal: string;
+        displayOrder: number; isGenerated: boolean;
+        options: Array<{ id: string; label: string; value: string; optionOrder: number }>;
+      };
+      let nextItem: NextItem | null = null;
+
+      if (session[0].state === "in_progress" && answeredCount < MINIMUM_EVIDENCE.targetItems) {
+        if (phase === "baseline") {
+          nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
+        }
+
+        if ((phase === "adaptive" || phase === "validation") && !nextItem) {
+          try {
+            const signalScores = computeSignalScores(
+              answers.map(a => ({
+                signalDeltasJson: a.signalDeltasJson,
+                outcomeClass: a.outcomeClass,
+                riskLevel: a.riskLevel,
+                difficulty: a.difficulty,
+              }))
+            );
+            const capabilityScores = computeCapabilityScores(signalScores);
+            const capabilityScoreSummary = Object.fromEntries(
+              Object.entries(capabilityScores).map(([k, v]) => [k, { score: v.score, signalCount: v.signalCount }])
+            ) as Record<CapabilityKey, { score: number; signalCount: number }>;
+
+            const answerRecords: AnswerRecord[] = answers.map(a => ({
+              itemId: a.itemId,
+              capabilityKey: a.capabilityKey,
+              outcomeClass: a.outcomeClass,
+              signalDeltas: (() => {
+                try { return (typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson as string) : (a.signalDeltasJson as Record<string, number>)) ?? {}; } catch { return {}; }
+              })(),
+              confidenceScore: a.confidenceScore,
+              interactionType: a.interactionType,
+              riskLevel: a.riskLevel,
+            }));
+            const contradictions = detectContradictions(answerRecords);
+
+            const gamingAnswers = answers.map(a => ({
+              selectedValue: a.selectedValue,
+              optionPosition: a.optionPosition,
+              timeToAnswerMs: a.timeToAnswerMs,
+              outcomeClass: a.outcomeClass,
+              confidenceScore: a.confidenceScore,
+              signalDeltas: (() => {
+                try { return (typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson as string) : (a.signalDeltasJson as Record<string, number>)) ?? {}; } catch { return {}; }
+              })(),
+              interactionType: a.interactionType,
+            }));
+            const gamingAnalysis = analyseGamingPatterns(gamingAnswers);
+            const riskExposure = {
+              Low: answers.filter(a => a.riskLevel === "Low").length,
+              Medium: answers.filter(a => a.riskLevel === "Medium").length,
+              High: answers.filter(a => a.riskLevel === "High").length,
             };
+            const interactionTypesUsed = Object.fromEntries(
+              Object.entries(state.interactionTypesUsed)
+            ) as Record<InteractionType, number>;
+            const roleArchetype = resolveRoleArchetype(roleHint);
+
+            const ctx2: AdaptiveSelectionContext = {
+              answeredCount,
+              totalTarget: MINIMUM_EVIDENCE.targetItems,
+              capabilityScores: capabilityScoreSummary,
+              interactionTypesUsed,
+              riskExposure,
+              gamingAnalysis,
+              contradictionProbes: contradictions.pairs.slice(0, 2).map(pair =>
+                generateContradictionProbeSpec(pair, "execution", roleArchetype.id)
+              ),
+              roleArchetype,
+              orgIntent: DEFAULT_ORG_INTENT,
+            };
+
+            const generationVars = selectNextGenerationVariables(ctx2);
+            const generated = await generateAdaptiveItem(generationVars);
+
+            const generatedItemId = `gen-${nanoid()}`;
+            const generatedItemMetadata = {
+              title: generated.title,
+              scenario: generated.scenario,
+              constraint: generated.constraint,
+              question: generated.question,
+              capability: CAPABILITY_DISPLAY[generated.capabilityKey] ?? generated.capabilityKey,
+              capability_key: generated.capabilityKey,
+              workflow: generated.workflow,
+              risk_level: generated.riskLevel,
+              interaction_type: generated.interactionType,
+              interaction_id: `gen-${generatedItemId}`,
+              primary_signal: generationVars.evidenceObjective,
+              display_order: answeredCount + 1,
+              generated: true,
+              phase,
+            };
+            await db.insert(assessmentItems).values({
+              id: generatedItemId,
+              blueprintId: session[0].blueprintId,
+              itemType: generated.interactionType,
+              prompt: `${generated.scenario}\n\n${generated.constraint}\n\n${generated.question}`,
+              metadataJson: JSON.stringify(generatedItemMetadata),
+              difficulty: generated.difficulty,
+              status: "published",
+            });
+            for (let i = 0; i < generated.options.length; i++) {
+              const opt = generated.options[i];
+              await db.insert(assessmentItemOptions).values({
+                id: `${generatedItemId}-opt-${i}`,
+                itemId: generatedItemId,
+                label: opt.label,
+                value: opt.label.toLowerCase(),
+                optionOrder: i + 1,
+                isCorrect: opt.outcomeClass === "strong",
+                scoreWeight: (opt.outcomeClass === "strong" ? 1 : opt.outcomeClass === "acceptable" ? 0.5 : 0) as any,
+                outcomeClass: opt.outcomeClass,
+                signalDeltasJson: JSON.stringify(opt.signalDeltas),
+                eventCodesJson: JSON.stringify(opt.eventCodes),
+              });
+            }
+            nextItem = {
+              id: generatedItemId,
+              itemType: generated.interactionType,
+              prompt: `${generated.scenario}\n\n${generated.constraint}\n\n${generated.question}`,
+              difficulty: generated.difficulty,
+              title: generated.title,
+              scenario: generated.scenario,
+              constraint: generated.constraint,
+              question: generated.question,
+              capability: CAPABILITY_DISPLAY[generated.capabilityKey] ?? generated.capabilityKey,
+              capabilityKey: generated.capabilityKey,
+              workflow: generated.workflow,
+              riskLevel: generated.riskLevel,
+              interactionType: generated.interactionType,
+              interactionId: `gen-${generatedItemId}`,
+              primarySignal: generationVars.evidenceObjective,
+              displayOrder: answeredCount + 1,
+              isGenerated: true,
+              options: generated.options.map((opt, i) => ({
+                id: `${generatedItemId}-opt-${i}`,
+                label: opt.label,
+                value: opt.label.toLowerCase(),
+                optionOrder: i + 1,
+              })),
+            };
+          } catch {
+            nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
           }
         }
       }
+
+      const isComplete = session[0].state !== "in_progress" || (answeredCount >= MINIMUM_EVIDENCE.targetItems && !nextItem);
+
       return {
         session: session[0],
-        answers,
-        totalItems,
+        answers: rawAnswers,
+        totalItems: MINIMUM_EVIDENCE.targetItems,
         answeredCount,
         nextItem,
-        isComplete: session[0].state !== "in_progress" || answeredCount >= totalItems,
+        isComplete,
+        phase,
+        sessionState: {
+          canComplete: state.canComplete,
+          completionBlockers: state.completionBlockers,
+          evidenceSufficient: state.evidenceSufficient,
+          interactionTypesUsed: state.interactionTypesUsed,
+          contradictionCount: state.contradictionCount,
+          gamingScrutinyLevel: state.gamingScrutinyLevel,
+        },
       };
     }),
 
-  // Submit an answer
+  // ── Submit an answer ───────────────────────────────────────────────────────
   submitAnswer: protectedProcedure
     .input(
       z.object({
@@ -394,10 +574,12 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active session not found" });
+
       let correctness: boolean | null = null;
       let outcomeClass: string | null = null;
       let signalDeltasJson: unknown = null;
       let eventCodesJson: unknown = null;
+
       if (input.selectedValue) {
         const options = await db
           .select()
@@ -411,6 +593,7 @@ export const assessmentRouter = router({
           eventCodesJson = selected.eventCodesJson ?? null;
         }
       }
+
       await db.insert(assessmentAnswers).values({
         id: nanoid(),
         sessionId: input.sessionId,
@@ -424,10 +607,11 @@ export const assessmentRouter = router({
         signalDeltasJson,
         eventCodesJson,
       });
+
       return { success: true, correctness, outcomeClass };
     }),
 
-  // Complete assessment and compute V9.2 signal-based scores
+  // ── Complete session and compute full adaptive scores ──────────────────────
   completeSession: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ input, ctx }) => {
@@ -445,105 +629,107 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
-      const answers = await db
+
+      const rawAnswers = await db
         .select()
         .from(assessmentAnswers)
         .where(eq(assessmentAnswers.sessionId, input.sessionId));
-      // Enrich answers with item metadata for V9.2 multipliers
-      const enrichedAnswers = await Promise.all(
-        answers.map(async a => {
-          const item = await db
-            .select({ difficulty: assessmentItems.difficulty, metadataJson: assessmentItems.metadataJson })
-            .from(assessmentItems)
-            .where(eq(assessmentItems.id, a.itemId))
-            .limit(1);
-          let riskLevel = "Medium";
-          try {
-            const meta = typeof item[0]?.metadataJson === "string"
-              ? JSON.parse(item[0].metadataJson)
-              : (item[0]?.metadataJson ?? {});
-            riskLevel = (meta as any).risk_level ?? "Medium";
-          } catch {}
-          return {
-            signalDeltasJson: (a as any).signalDeltasJson ?? null,
-            outcomeClass: (a as any).outcomeClass ?? null,
-            riskLevel,
-            difficulty: item[0]?.difficulty ?? 2,
-          };
-        })
-      );
-      // ── V9.2 Signal Delta Scoring ─────────────────────────────────────────
-      const signalScores = computeSignalScores(enrichedAnswers);
-      const capabilityScores = computeCapabilityScores(signalScores);
-      const overallScore = computeOverallScore(capabilityScores);
-      // ── Credibility Scoring ───────────────────────────────────────────────
-      const total = answers.length;
-      const correct = answers.filter(a => a.correctness === true).length;
-      const accuracyRate = total > 0 ? correct / total : 0;
-      const avgConfidence =
-        answers.filter(a => a.confidenceScore !== null).length > 0
-          ? answers.reduce((s, a) => s + parseFloat(String(a.confidenceScore ?? 0)), 0) /
-            answers.filter(a => a.confidenceScore !== null).length
-          : 0.5;
-      const calibrationDiff = Math.abs(avgConfidence - accuracyRate);
-      const credibilityScore = Math.max(0, 1 - calibrationDiff * 1.5);
-      const credibilityBand: "low" | "medium" | "high" =
-        credibilityScore >= 0.75 ? "high" : credibilityScore >= 0.5 ? "medium" : "low";
-      // ── Risk Scoring ──────────────────────────────────────────────────────
-      const avgTime = total > 0 ? answers.reduce((s, a) => s + a.timeToAnswerMs, 0) / total : 0;
-      const speedRisk = avgTime < 3000 ? 0.3 : 0;
-      const scoreRisk = overallScore < 50 ? 0.4 : overallScore < 70 ? 0.2 : 0;
-      const riskScore = Math.min(1, speedRisk + scoreRisk);
-      const riskBand: "low" | "medium" | "high" =
-        riskScore >= 0.6 ? "high" : riskScore >= 0.3 ? "medium" : "low";
-      // ── Readiness State ───────────────────────────────────────────────────
-      const primaryState = determineReadinessState(overallScore, riskBand);
-      const narrative = getNarrative(primaryState, "learner");
-      const managerNarrative = getNarrative(primaryState, "manager");
-      // Flat capability scores for storage
+
+      const answers = await enrichAnswers(rawAnswers, db);
+
+      let roleHint: string | null = null;
+      try {
+        const meta = (typeof session[0].sessionMetadataJson === "string"
+          ? JSON.parse(session[0].sessionMetadataJson as string)
+          : (session[0].sessionMetadataJson ?? {})) as Record<string, unknown>;
+        roleHint = (meta.roleHint as string) ?? null;
+      } catch {}
+
+      const results = SessionController.computeResults(answers, roleHint);
+
       const capabilityScoresFlat: Record<string, number> = {};
-      for (const [key, val] of Object.entries(capabilityScores)) {
+      for (const [key, val] of Object.entries(results.capabilityScores)) {
         capabilityScoresFlat[key] = val.score;
       }
+
       const scoreBreakdown = {
-        correct,
-        total,
-        overallScore,
+        overallScore: results.overallScore,
         capabilityScores: capabilityScoresFlat,
-        signalScores,
-        credibilityScore,
-        riskScore,
-        primaryState,
-        narrative,
-        managerNarrative,
-        modelVersion: "v9.2",
+        signalScores: results.signalScores,
+        readiness: results.readiness,
+        narrative: results.narrative,
+        confidenceProfile: results.confidenceProfile,
+        failureModes: results.failureModes,
+        contradictions: {
+          count: results.contradictions.count,
+          pairs: results.contradictions.pairs,
+        },
+        // Results page format: contradictionProfile
+        contradictionProfile: {
+          detected: results.contradictions.count,
+          pairs: results.contradictions.pairs.map((p: any) => ({
+            itemA: p.itemAId,
+            itemB: p.itemBId,
+            description: p.description ?? "Inconsistent responses detected between two related items.",
+          })),
+        },
+        // Results page format: governanceProfile
+        governanceProfile: {
+          score: results.failureModes.governanceFlag
+            ? 30
+            : Math.round((results.capabilityScores["governance" as CapabilityKey]?.score ?? 70)),
+          band: results.failureModes.governanceFlag
+            ? "critical"
+            : (results.capabilityScores["governance" as CapabilityKey]?.score ?? 70) >= 75
+              ? "strong"
+              : "developing",
+          bypasses: results.failureModes.governanceFlag ? 1 : 0,
+        },
+        credibilityBand: results.confidenceProfile.overall >= 0.75 ? "high" : results.confidenceProfile.overall >= 0.5 ? "medium" : "low",
+        gamingAnalysis: {
+          score: results.gamingAnalysis.score,
+          scrutinyLevel: results.gamingAnalysis.scrutinyLevel,
+          patterns: results.gamingAnalysis.patterns,
+        },
+        roleArchetype: results.roleArchetype.id,
+        totalAnswers: results.totalAnswers,
+        avgConfidence: results.avgConfidence,
+        riskBand: results.riskBand,
+        modelVersion: "adaptive-v1",
       };
+
       await db.insert(assessmentScores).values({
         id: nanoid(),
         sessionId: input.sessionId,
-        overallScore: overallScore.toFixed(2) as any,
+        overallScore: results.overallScore.toFixed(2) as any,
         scoreBreakdownJson: JSON.stringify(scoreBreakdown),
-        signalScoresJson: JSON.stringify(signalScores),
-        modelVersion: "v9.2",
+        signalScoresJson: JSON.stringify(results.signalScores),
+        modelVersion: "adaptive-v1",
       });
+
+      const credibilityScore = results.confidenceProfile.overall;
+      const credibilityBand: "low" | "medium" | "high" =
+        credibilityScore >= 0.75 ? "high" : credibilityScore >= 0.5 ? "medium" : "low";
       await db.insert(credibilityScores).values({
         id: nanoid(),
         userId: ctx.user.id,
         assessmentSessionId: input.sessionId,
         credibilityScore: credibilityScore.toFixed(4) as any,
         band: credibilityBand,
-        reasonJson: JSON.stringify({ calibrationDiff, avgConfidence, accuracyRate }),
-        modelVersion: "v9.2",
+        reasonJson: JSON.stringify(results.confidenceProfile),
+        modelVersion: "adaptive-v1",
       });
+
+      const riskScore = results.riskBand === "high" ? 0.8 : results.riskBand === "medium" ? 0.5 : 0.2;
       await db.insert(riskScores).values({
         id: nanoid(),
         userId: ctx.user.id,
         riskScore: riskScore.toFixed(4) as any,
-        band: riskBand,
-        reasonJson: JSON.stringify({ speedRisk, scoreRisk, avgTime }),
-        modelVersion: "v9.2",
+        band: results.riskBand,
+        reasonJson: JSON.stringify({ failureModes: results.failureModes, contradictions: results.contradictions.count }),
+        modelVersion: "adaptive-v1",
       });
-      const learningState = overallScore >= 70 ? "completed" : "in_progress";
+
       await db
         .update(userStates)
         .set({ effectiveTo: new Date() })
@@ -551,31 +737,41 @@ export const assessmentRouter = router({
       await db.insert(userStates).values({
         id: nanoid(),
         userId: ctx.user.id,
-        primaryState: primaryState as any,
+        primaryState: results.readiness.state as any,
         credibilityState: credibilityBand,
-        riskState: riskBand,
-        learningState,
-        complianceState: "compliant",
+        riskState: results.riskBand,
+        learningState: results.overallScore >= 70 ? "completed" : "in_progress",
+        complianceState: results.failureModes.governanceFlag ? "at_risk" : "compliant",
         stateReasonJson: JSON.stringify({
           source: "assessment",
           sessionId: input.sessionId,
           capabilityScores: capabilityScoresFlat,
-          signalScores,
+          signalScores: results.signalScores,
+          modelVersion: "adaptive-v1",
         }),
       });
+
       await db.insert(decisionLogs).values({
         id: nanoid(),
         tenantId: ctx.user.tenantId,
         userId: ctx.user.id,
         decisionType: "assessment_completion",
         inputSnapshotJson: JSON.stringify({ sessionId: input.sessionId, answers: answers.length }),
-        outputSnapshotJson: JSON.stringify({ overallScore, credibilityScore, riskScore, capabilityScores: capabilityScoresFlat }),
-        precedenceAppliedJson: JSON.stringify({ modelVersion: "v9.2" }),
+        outputSnapshotJson: JSON.stringify({
+          overallScore: results.overallScore,
+          credibilityScore,
+          riskScore,
+          capabilityScores: capabilityScoresFlat,
+          readiness: results.readiness,
+        }),
+        precedenceAppliedJson: JSON.stringify({ modelVersion: "adaptive-v1" }),
       });
+
       await db
         .update(assessmentSessions)
         .set({ state: "completed", completedAt: new Date() })
         .where(eq(assessmentSessions.id, input.sessionId));
+
       await db.insert(auditLogs).values({
         id: nanoid(),
         tenantId: ctx.user.tenantId,
@@ -583,24 +779,34 @@ export const assessmentRouter = router({
         action: "assessment.session.completed",
         targetType: "assessment_session",
         targetId: input.sessionId,
-        metadataJson: JSON.stringify({ overallScore, credibilityBand, riskBand, primaryState }),
+        metadataJson: JSON.stringify({
+          overallScore: results.overallScore,
+          credibilityBand,
+          riskBand: results.riskBand,
+          readiness: results.readiness.state,
+          modelVersion: "adaptive-v1",
+        }),
       });
+
       return {
-        overallScore,
+        overallScore: results.overallScore,
         credibilityScore,
         credibilityBand,
         riskScore,
-        riskBand,
-        primaryState,
-        capabilityScores,
-        signalScores,
-        narrative,
-        managerNarrative,
-        modelVersion: "v9.2",
+        riskBand: results.riskBand,
+        readiness: results.readiness,
+        capabilityScores: results.capabilityScores,
+        signalScores: results.signalScores,
+        narrative: results.narrative,
+        confidenceProfile: results.confidenceProfile,
+        failureModes: results.failureModes,
+        contradictions: results.contradictions,
+        gamingAnalysis: results.gamingAnalysis,
+        modelVersion: "adaptive-v1",
       };
     }),
 
-  // Get full results for a completed session
+  // ── Get full results for a completed session ───────────────────────────────
   results: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -623,13 +829,15 @@ export const assessmentRouter = router({
         .where(eq(assessmentScores.sessionId, input.sessionId))
         .limit(1);
       if (!score[0]) return { session: session[0], score: null };
-      let breakdown: any = {};
+
+      let breakdown: Record<string, unknown> = {};
       try {
-        breakdown = typeof score[0].scoreBreakdownJson === "string"
-          ? JSON.parse(score[0].scoreBreakdownJson)
-          : (score[0].scoreBreakdownJson ?? {});
+        breakdown = (typeof score[0].scoreBreakdownJson === "string"
+          ? JSON.parse(score[0].scoreBreakdownJson as string)
+          : (score[0].scoreBreakdownJson ?? {})) as Record<string, unknown>;
       } catch {}
-      const rawCapScores = breakdown.capabilityScores ?? {};
+
+      const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, number>;
       const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string }> = {};
       for (const [key, val] of Object.entries(rawCapScores)) {
         enrichedCapScores[key] = {
@@ -638,6 +846,7 @@ export const assessmentRouter = router({
           colour: CAPABILITY_COLOURS[key] ?? "#4477AA",
         };
       }
+
       return {
         session: session[0],
         score: {
@@ -651,7 +860,7 @@ export const assessmentRouter = router({
       };
     }),
 
-  // Get user's assessment history
+  // ── Get user's assessment history ──────────────────────────────────────────
   history: protectedProcedure
     .input(z.object({ userId: z.string().optional() }))
     .query(async ({ input, ctx }) => {
@@ -676,22 +885,39 @@ export const assessmentRouter = router({
             .from(assessmentScores)
             .where(eq(assessmentScores.sessionId, s.id))
             .limit(1);
-          let breakdown: any = {};
+          let breakdown: Record<string, unknown> = {};
           try {
-            breakdown = typeof score[0]?.scoreBreakdownJson === "string"
-              ? JSON.parse(score[0].scoreBreakdownJson)
-              : (score[0]?.scoreBreakdownJson ?? {});
+            breakdown = (typeof score[0]?.scoreBreakdownJson === "string"
+              ? JSON.parse(score[0].scoreBreakdownJson as string)
+              : (score[0]?.scoreBreakdownJson ?? {})) as Record<string, unknown>;
           } catch {}
           return {
             ...s,
             score: score[0] ? {
               ...score[0],
               overallScore: parseFloat(String(score[0].overallScore)),
-              primaryState: breakdown.primaryState ?? null,
+              primaryState: (breakdown.readiness as { state?: string })?.state ?? null,
             } : null,
           };
         })
       );
       return withScores;
+    }),
+
+  // ── Admin: list all sessions for a tenant ─────────────────────────────────
+  adminSessions: protectedProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(100).default(50),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const sessions = await db
+        .select()
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.tenantId, ctx.user.tenantId))
+        .orderBy(desc(assessmentSessions.createdAt))
+        .limit(input.limit);
+      return sessions;
     }),
 });
