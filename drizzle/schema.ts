@@ -124,7 +124,7 @@ export const assessmentItems = mysqlTable("assessment_items", {
   competencyId: varchar("competency_id", { length: 36 }),
   itemType: varchar("item_type", { length: 50 }).notNull(),
   prompt: text("prompt").notNull(),
-  metadataJson: json("metadata_json").$default(() => ({})),
+  metadataJson: json("metadata_json").$type<Record<string, unknown>>().$default(() => ({})),
   difficulty: int("difficulty").notNull().default(2),
   activeVersion: int("active_version").notNull().default(1),
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),

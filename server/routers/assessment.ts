@@ -476,7 +476,7 @@ export const assessmentRouter = router({
               blueprintId: session[0].blueprintId,
               itemType: generated.interactionType,
               prompt: `${generated.scenario}\n\n${generated.constraint}\n\n${generated.question}`,
-              metadataJson: JSON.stringify(generatedItemMetadata),
+              metadataJson: generatedItemMetadata,
               difficulty: generated.difficulty,
               status: "published",
             });
@@ -902,6 +902,85 @@ export const assessmentRouter = router({
         })
       );
       return withScores;
+    }),
+
+  // ── Admin: list assessment items (scenario browser) ──────────────────────
+  adminItems: protectedProcedure
+    .input(z.object({
+      blueprintId: z.string().optional(),
+      domain: z.string().optional(),
+      riskLevel: z.string().optional(),
+      difficulty: z.number().int().min(1).max(3).optional(),
+      search: z.string().optional(),
+      status: z.string().optional(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(50),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const conditions: ReturnType<typeof eq>[] = [];
+      if (input.blueprintId) conditions.push(eq(assessmentItems.blueprintId, input.blueprintId));
+      if (input.status) conditions.push(eq(assessmentItems.status, input.status as 'published' | 'draft' | 'archived'));
+      if (input.difficulty) conditions.push(eq(assessmentItems.difficulty, input.difficulty));
+      const allItems = await db
+        .select()
+        .from(assessmentItems)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(assessmentItems.createdAt))
+        .limit(1000);
+      // Apply JSON-based filters in memory
+      const filtered = allItems.filter((item) => {
+        const meta = (typeof item.metadataJson === 'object' ? item.metadataJson : {}) as Record<string, unknown>;
+        if (input.domain && meta.domain !== input.domain) return false;
+        if (input.riskLevel && meta.risk_level !== input.riskLevel) return false;
+        if (input.search) {
+          const q = input.search.toLowerCase();
+          const title = ((meta.title as string) || item.prompt || '').toLowerCase();
+          const scenario = ((meta.scenario as string) || '').toLowerCase();
+          if (!title.includes(q) && !scenario.includes(q)) return false;
+        }
+        return true;
+      });
+      const total = filtered.length;
+      const offset = (input.page - 1) * input.pageSize;
+      const items = filtered.slice(offset, offset + input.pageSize);
+      return { items, total, page: input.page, pageSize: input.pageSize };
+    }),
+
+  // ── Admin: update assessment item status ────────────────────────────────────
+  adminUpdateItemStatus: protectedProcedure
+    .input(z.object({
+      itemId: z.string(),
+      status: z.enum(['published', 'draft', 'archived']),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db
+        .update(assessmentItems)
+        .set({ status: input.status })
+        .where(eq(assessmentItems.id, input.itemId));
+      return { success: true };
+    }),
+
+  // ── Admin: get assessment item with options ──────────────────────────────────
+  adminGetItem: protectedProcedure
+    .input(z.object({ itemId: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [item] = await db
+        .select()
+        .from(assessmentItems)
+        .where(eq(assessmentItems.id, input.itemId));
+      if (!item) throw new TRPCError({ code: "NOT_FOUND" });
+      const options = await db
+        .select()
+        .from(assessmentItemOptions)
+        .where(eq(assessmentItemOptions.itemId, input.itemId))
+        .orderBy(assessmentItemOptions.optionOrder);
+      return { item, options };
     }),
 
   // ── Admin: list all sessions for a tenant ─────────────────────────────────

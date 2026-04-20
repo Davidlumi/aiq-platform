@@ -119,3 +119,17 @@
 - [x] AssessmentSessionPage: 11 interaction type renderers (SJT, critique, output improvement, error detection, prioritisation, risk judgement, data interpretation, governance, multi-step, contradiction probe, confidence calibration)
 - [x] AssessmentResultsPage: 7-profile output (capability, signal, confidence, contradiction, risk, governance, readiness)
 - [x] Full end-to-end QA of adaptive flow across multiple roles
+
+## AIQ Assessment Content System (Full Build)
+- [ ] DB schema: content_roles, content_workflows, content_scenarios, content_scenario_options, content_scenario_anchors, content_failure_modes, content_tags, content_versions
+- [ ] Role architecture: 22 roles across 8 families with workflows, AI usage patterns, capability weightings, failure points
+- [ ] Workflow library: 13 domains with step-by-step flows, AI usage points, risk points, governance requirements
+- [ ] Scenario library: 200+ base scenarios with full metadata, scoring anchors, failure tags, interaction types
+- [ ] AI failure mode library: 10 failure types with HR examples and risk implications
+- [ ] Governance/ER high-risk case library: ER, redundancy, bias, legal scenarios
+- [ ] Content tagging system: role, workflow, capability, interaction type, difficulty, risk, ambiguity, failure mode, governance sensitivity
+- [ ] Content versioning: version tracking, auditability, comparability
+- [ ] Seed all content into DB and wire to adaptive assessment engine
+- [ ] Content Management System UI: scenario browser with filters, version history, admin CRUD
+- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation
+- [ ] Full QA of content system
