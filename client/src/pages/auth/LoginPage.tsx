@@ -179,11 +179,13 @@ export default function LoginPage() {
 
             {/* Demo credentials hint */}
             <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Demo credentials:</p>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Demo credentials (Org: <code className="text-foreground">demo</code>):</p>
               <div className="space-y-0.5 text-xs text-muted-foreground">
-                <p>Org: <code className="text-foreground">demo</code></p>
-                <p>Admin: <code className="text-foreground">admin@demo.aiq.com</code> / <code className="text-foreground">Admin1234!</code></p>
-                <p>Learner: <code className="text-foreground">learner@demo.aiq.com</code> / <code className="text-foreground">Learner1234!</code></p>
+                <p><span className="font-medium text-foreground">Admin:</span> admin@demo.aiq.com / <code className="text-foreground">Admin1234!</code></p>
+                <p><span className="font-medium text-foreground">HR Leader:</span> hr@demo.aiq.com / <code className="text-foreground">HRLeader1234!</code></p>
+                <p><span className="font-medium text-foreground">Manager:</span> manager@demo.aiq.com / <code className="text-foreground">Manager1234!</code></p>
+                <p><span className="font-medium text-foreground">Learner:</span> learner@demo.aiq.com / <code className="text-foreground">Learner1234!</code></p>
+                <p><span className="font-medium text-foreground">Auditor:</span> auditor@demo.aiq.com / <code className="text-foreground">Auditor1234!</code></p>
               </div>
             </div>
           </CardContent>

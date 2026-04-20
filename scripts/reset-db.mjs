@@ -70,7 +70,7 @@ for (const [id, key, label] of roles) {
 
 // Seed tenant
 await exec(conn,
-  `INSERT IGNORE INTO \`tenants\` (\`id\`, \`name\`, \`slug\`, \`primary_domain\`, \`status\`) VALUES ('tenant-demo-001', 'Acme Corporation', 'acme', 'acme.aiq.io', 'active')`,
+  `INSERT IGNORE INTO \`tenants\` (\`id\`, \`name\`, \`slug\`, \`primary_domain\`, \`status\`) VALUES ('tenant-demo-001', 'Acme Corporation', 'demo', 'demo.aiq.io', 'active')`,
   'Tenant: Acme Corporation'
 );
 
@@ -85,11 +85,11 @@ await exec(conn,
 const hash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e';
 const demoUsers = [
   ['user-psa-001', 'superadmin@aiq.io',  'Platform', 'Admin'],
-  ['user-ta-001',  'admin@acme.com',     'Alice',    'Tenant'],
-  ['user-hl-001',  'hr@acme.com',        'Harriet',  'Leader'],
-  ['user-mgr-001', 'manager@acme.com',   'Marcus',   'Manager'],
-  ['user-lrn-001', 'learner@acme.com',   'Laura',    'Learner'],
-  ['user-aud-001', 'auditor@acme.com',   'Audrey',   'Auditor'],
+  ['user-ta-001',  'admin@demo.aiq.com',     'Alice',    'Tenant'],
+  ['user-hl-001',  'hr@demo.aiq.com',        'Harriet',  'Leader'],
+  ['user-mgr-001', 'manager@demo.aiq.com',   'Marcus',   'Manager'],
+  ['user-lrn-001', 'learner@demo.aiq.com',   'Laura',    'Learner'],
+  ['user-aud-001', 'auditor@demo.aiq.com',   'Audrey',   'Auditor'],
 ];
 for (const [id, email, first, last] of demoUsers) {
   await exec(conn,
