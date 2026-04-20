@@ -3,123 +3,183 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Tailwind theme mapping ────────────────────────────────────────────── */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+  --color-primary:                 var(--primary);
+  --color-primary-foreground:      var(--primary-foreground);
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+  --color-chart-1:                 var(--chart-1);
+  --color-chart-2:                 var(--chart-2);
+  --color-chart-3:                 var(--chart-3);
+  --color-chart-4:                 var(--chart-4);
+  --color-chart-5:                 var(--chart-5);
+  --color-sidebar:                 var(--sidebar);
+  --color-sidebar-foreground:      var(--sidebar-foreground);
+  --color-sidebar-primary:         var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent:          var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border:          var(--sidebar-border);
+  --color-sidebar-ring:            var(--sidebar-ring);
 }
 
+/* ─── Light theme — white is the AiQ standard ───────────────────────────── */
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --radius: 0.5rem;
+
+  /* ── AiQ Core Brand Palette (from Figma site) ── */
+  --aiq-green:      #10B981;   /* Primary Green — actions, success, safe */
+  --aiq-dark-slate: #1E293B;   /* Dark Slate — secondary, headers */
+  --aiq-mint:       #34D399;   /* Mint Accent — highlights, AI indicators */
+  --aiq-body-text:  #0E1726;   /* Body Text — primary text */
+  --aiq-chalk:      #F7F8FA;   /* Chalk — app background */
+  --aiq-surface:    #FFFFFF;   /* White — cards, panels */
+  --aiq-muted:      #F3F4F6;   /* Muted — disabled states */
+  --aiq-border:     #E5E7EB;   /* Border — dividers */
+  --aiq-text-sec:   #6B7280;   /* Text Secondary */
+  --aiq-text-tert:  #9CA3AF;   /* Text Tertiary / placeholder */
+
+  /* ── Readiness State Colours ── */
+  --aiq-safe:       #10B981;   /* Safe — above threshold */
+  --aiq-risk:       #F59E0B;   /* At Risk — near threshold */
+  --aiq-unsafe:     #DC2626;   /* Unsafe — below threshold */
+  --aiq-unknown:    #6B7280;   /* Unknown — insufficient data */
+
+  /* ── Six Capability Semantic Colours (fixed, never swapped) ── */
+  --cap-exec:       #4477AA;   /* AI Execution — blue */
+  --cap-judg:       #AA3377;   /* AI Judgement — purple/magenta */
+  --cap-lit:        #228833;   /* AI Literacy — green */
+  --cap-gov:        #EE6677;   /* AI Risk & Governance — red */
+  --cap-stew:       #EE8866;   /* AI Stewardship — orange */
+  --cap-collab:     #66CCEE;   /* AI Collaboration — cyan */
+
+  /* ── Ambition Level Colours ── */
+  --ambition-conservative:     #64748B;
+  --ambition-accelerated:      #3B82F6;
+  --ambition-transformational: #7C3AED;
+
+  /* ── Progress / Status Colours ── */
+  --status-not-started: #E5E7EB;
+  --status-in-progress: #3B82F6;
+  --status-completed:   #10B981;
+  --status-overdue:     #DC2626;
+
+  /* ── Shadcn/Tailwind semantic mappings ── */
+  --background:           #F7F8FA;
+  --foreground:           #0E1726;
+  --card:                 #FFFFFF;
+  --card-foreground:      #0E1726;
+  --popover:              #FFFFFF;
+  --popover-foreground:   #0E1726;
+  --primary:              #10B981;
+  --primary-foreground:   #FFFFFF;
+  --secondary:            #F3F4F6;
+  --secondary-foreground: #1E293B;
+  --muted:                #F3F4F6;
+  --muted-foreground:     #6B7280;
+  --accent:               #10B981;
+  --accent-foreground:    #FFFFFF;
+  --destructive:          #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border:               #E5E7EB;
+  --input:                #E5E7EB;
+  --ring:                 #10B981;
+
+  /* ── Charts ── */
+  --chart-1: #10B981;
+  --chart-2: #3B82F6;
+  --chart-3: #F59E0B;
+  --chart-4: #8B5CF6;
+  --chart-5: #EF4444;
+
+  /* ── Sidebar (dark slate — always dark) ── */
+  --sidebar:                        #1E293B;
+  --sidebar-foreground:             #F1F5F9;
+  --sidebar-primary:                #10B981;
+  --sidebar-primary-foreground:     #FFFFFF;
+  --sidebar-accent:                 #334155;
+  --sidebar-accent-foreground:      #F1F5F9;
+  --sidebar-border:                 #334155;
+  --sidebar-ring:                   #10B981;
 }
 
+/* ─── Dark theme (hero / certificate / premium surfaces only) ────────────── */
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --background:           #0D1117;
+  --foreground:           #F1F5F9;
+  --card:                 #1E293B;
+  --card-foreground:      #F1F5F9;
+  --popover:              #1E293B;
+  --popover-foreground:   #F1F5F9;
+  --primary:              #34D399;
+  --primary-foreground:   #0D1117;
+  --secondary:            #334155;
+  --secondary-foreground: #F1F5F9;
+  --muted:                #334155;
+  --muted-foreground:     #94A3B8;
+  --accent:               #34D399;
+  --accent-foreground:    #0D1117;
+  --destructive:          #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border:               #334155;
+  --input:                #334155;
+  --ring:                 #34D399;
+  --sidebar:              #0D1117;
+  --sidebar-foreground:   #F1F5F9;
+  --sidebar-primary:      #34D399;
+  --sidebar-primary-foreground: #0D1117;
+  --sidebar-accent:       #1E293B;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border:       #1E293B;
+  --sidebar-ring:         #34D399;
 }
 
+/* ─── Base styles ────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
   }
+
+  /* DM Mono for technical data: credential IDs, hex codes, score ranges */
+  code, kbd, samp, pre, .font-mono { font-family: 'DM Mono', 'Courier New', monospace; }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 600;
+    color: #0E1726;
+  }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -131,47 +191,100 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+
+  /* WCAG 2.1 AA focus ring */
+  :focus-visible {
+    outline: 3px solid #10B981;
+    outline-offset: 2px;
+  }
 }
 
+/* ─── AiQ Typography Scale ───────────────────────────────────────────────── */
+.aiq-display { font-size: 48px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+.aiq-h1      { font-size: 36px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.aiq-h2      { font-size: 28px; font-weight: 600; line-height: 1.4; }
+.aiq-h3      { font-size: 20px; font-weight: 600; line-height: 1.4; }
+.aiq-body    { font-size: 16px; font-weight: 400; line-height: 1.6; }
+.aiq-caption { font-size: 14px; font-weight: 400; line-height: 1.5; }
+.aiq-label   { font-size: 12px; font-weight: 700; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; }
+.aiq-mono    { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+@media (max-width: 768px) {
+  .aiq-display { font-size: 36px; }
+  .aiq-h1      { font-size: 28px; }
+  .aiq-h2      { font-size: 24px; }
+  .aiq-h3      { font-size: 18px; }
+  .aiq-caption { font-size: 13px; }
+}
+
+/* ─── AiQ Component Utilities ────────────────────────────────────────────── */
+
+/* Capability colour pills */
+.cap-exec   { background-color: #4477AA; color: #fff; }
+.cap-judg   { background-color: #AA3377; color: #fff; }
+.cap-lit    { background-color: #228833; color: #fff; }
+.cap-gov    { background-color: #EE6677; color: #fff; }
+.cap-stew   { background-color: #EE8866; color: #fff; }
+.cap-collab { background-color: #66CCEE; color: #0E1726; }
+
+/* Readiness state badges */
+.state-safe    { background-color: #D1FAE5; color: #065F46; }
+.state-risk    { background-color: #FEF3C7; color: #92400E; }
+.state-unsafe  { background-color: #FEE2E2; color: #991B1B; }
+.state-unknown { background-color: #F3F4F6; color: #374151; }
+
+/* AiQ card */
+.aiq-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* AiQ hero card — dark surface for result reveals */
+.aiq-card-hero {
+  background: #1E293B;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.24);
+  color: #F1F5F9;
+}
+
+/* Score range display */
+.aiq-score-range {
+  font-family: 'Sora', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: #10B981;
+  letter-spacing: -0.02em;
+}
+
+/* Credibility badges */
+.aiq-credibility-high   { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; border-radius: 6px; padding: 2px 10px; }
+.aiq-credibility-medium { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; border-radius: 6px; padding: 2px 10px; }
+.aiq-credibility-low    { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; border-radius: 6px; padding: 2px 10px; }
+
+/* AIQ Verified tier badges */
+.aiq-verified-foundation   { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 6px; padding: 2px 10px; }
+.aiq-verified-practitioner { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; border-radius: 6px; padding: 2px 10px; }
+.aiq-verified-advanced     { background: #FDF4FF; color: #7E22CE; border: 1px solid #E9D5FF; border-radius: 6px; padding: 2px 10px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F3F4F6; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* ─── Layout utilities ───────────────────────────────────────────────────── */
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
+  .flex { min-height: 0; min-width: 0; }
 
-  .flex {
-    min-height: 0;
-    min-width: 0;
-  }
-
-  @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
-    }
-  }
+  @media (min-width: 640px)  { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
+  @media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; } }
 }

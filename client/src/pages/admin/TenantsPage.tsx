@@ -1,0 +1,240 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Building2, Plus, Search, Loader2, CheckCircle2, Globe } from "lucide-react";
+
+export default function TenantsPage() {
+  const { user } = useAuth();
+  const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newTenant, setNewTenant] = useState({ name: "", slug: "", plan: "starter" });
+
+  const utils = trpc.useUtils();
+
+  // Use tenant.current to show current tenant info
+  const { data: currentTenant, isLoading } = trpc.tenant.current.useQuery();
+
+  const isSuperAdmin = user?.roles?.includes("platform_super_admin");
+
+  return (
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="aiq-h1 text-[#0E1726]">Tenant Management</h1>
+          <p className="aiq-caption text-[#6B7280] mt-1">
+            {isSuperAdmin
+              ? "Manage all tenants on the AiQ platform"
+              : "View and manage your organisation's tenant settings"}
+          </p>
+        </div>
+        {isSuperAdmin && (
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2 font-['Sora']">
+                <Plus className="h-4 w-4" /> New Tenant
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="font-['Sora'] font-semibold">Create New Tenant</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 pt-2">
+                <div>
+                  <Label className="aiq-label text-[#6B7280]">Organisation Name</Label>
+                  <Input
+                    value={newTenant.name}
+                    onChange={e => setNewTenant(t => ({ ...t, name: e.target.value }))}
+                    className="mt-1 font-['Sora']"
+                    placeholder="Acme Corporation"
+                  />
+                </div>
+                <div>
+                  <Label className="aiq-label text-[#6B7280]">Slug (URL identifier)</Label>
+                  <Input
+                    value={newTenant.slug}
+                    onChange={e => setNewTenant(t => ({ ...t, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))}
+                    className="mt-1 font-['Sora'] font-['DM_Mono']"
+                    placeholder="acme-corp"
+                  />
+                </div>
+                <Button
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                  disabled={!newTenant.name || !newTenant.slug}
+                  onClick={() => {
+                    toast.info("Tenant creation coming soon — contact platform admin");
+                    setCreateOpen(false);
+                  }}
+                >
+                  Create Tenant
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Current Tenant Card */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-[#10B981]" />
+        </div>
+      ) : currentTenant ? (
+        <Card className="aiq-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-[#10B981]" />
+              Your Organisation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4">
+              <div className="h-16 w-16 rounded-xl bg-[#1E293B] flex items-center justify-center text-white font-['Sora'] font-bold text-2xl">
+                {(currentTenant.name ?? "?")[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <h2 className="font-['Sora'] font-bold text-xl text-[#0E1726]">{currentTenant.name}</h2>
+                <p className="aiq-caption text-[#6B7280] font-['DM_Mono']">/{currentTenant.slug}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Badge variant="secondary" className="font-['Sora'] text-xs">
+                    {"Enterprise"}
+                  </Badge>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                    currentTenant.status === "active"
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-gray-100 text-gray-500 border-gray-200"
+                  }`}>
+                    <CheckCircle2 className="h-3 w-3" />
+                    {currentTenant.status ?? "active"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { label: "Tenant ID", value: currentTenant.id, mono: true },
+                { label: "Plan", value: "Enterprise" },
+                { label: "Created", value: currentTenant.createdAt ? new Date(currentTenant.createdAt).toLocaleDateString() : "—" },
+                { label: "Status", value: currentTenant.status ?? "Active" },
+              ].map(item => (
+                <div key={item.label} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
+                  <dt className="aiq-label text-[#9CA3AF] text-xs">{item.label}</dt>
+                  <dd className={`mt-0.5 text-[#0E1726] font-medium text-sm ${item.mono ? "font-['DM_Mono'] text-xs" : "font-['Sora']"}`}>
+                    {item.value}
+                  </dd>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Tenant Settings */}
+      <TenantSettingsCard />
+    </div>
+  );
+}
+
+function TenantSettingsCard() {
+  const { data: settings } = trpc.tenant.settings.useQuery();
+  const utils = trpc.useUtils();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ credibilityThreshold: 70, revalidationDaysLow: 30, revalidationDaysMedium: 90, revalidationDaysHigh: 180 });
+
+  const updateMutation = trpc.tenant.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Settings updated");
+      utils.tenant.settings.invalidate();
+      setEditing(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="aiq-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <Globe className="h-5 w-5 text-[#10B981]" />
+          Tenant Settings
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {settings ? (
+          <div className="space-y-4">
+            {editing ? (
+              <div className="space-y-3">
+                <div>
+                  <Label className="aiq-label text-[#6B7280]">Credibility Threshold (%)</Label>
+                  <Input
+                    type="number"
+                    value={form.credibilityThreshold}
+                    onChange={e => setForm(f => ({ ...f, credibilityThreshold: parseInt(e.target.value) || 70 }))}
+                    className="mt-1 font-['Sora'] max-w-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="aiq-label text-[#6B7280]">Revalidation Days (Low)</Label>
+                  <Input
+                    type="number"
+                    value={form.revalidationDaysLow}
+                    onChange={e => setForm(f => ({ ...f, revalidationDaysLow: parseInt(e.target.value) || 30 }))}
+                    className="mt-1 font-['Sora'] max-w-xs"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                    disabled={updateMutation.isPending}
+                    onClick={() => updateMutation.mutate({ credibilityThreshold: form.credibilityThreshold })}
+                  >
+                    {updateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    Save
+                  </Button>
+                  <Button size="sm" variant="outline" className="font-['Sora']" onClick={() => setEditing(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {Object.entries(settings as Record<string, unknown>).map(([k, v]) => (
+                    <div key={k} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
+                      <dt className="aiq-label text-[#9CA3AF] text-xs">{k}</dt>
+                      <dd className="mt-0.5 text-[#0E1726] font-medium text-sm font-['Sora']">
+                        {String(v ?? "—")}
+                      </dd>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-['Sora']"
+                  onClick={() => {
+                    setForm({ credibilityThreshold: (settings as any).credibilityThreshold ?? 70, revalidationDaysLow: (settings as any).revalidationDaysLow ?? 30, revalidationDaysMedium: (settings as any).revalidationDaysMedium ?? 90, revalidationDaysHigh: (settings as any).revalidationDaysHigh ?? 180 });
+                    setEditing(true);
+                  }}
+                >
+                  Edit Settings
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="aiq-caption text-[#6B7280]">No settings configured</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
