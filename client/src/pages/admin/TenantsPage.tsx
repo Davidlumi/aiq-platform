@@ -208,11 +208,18 @@ function TenantSettingsCard() {
             ) : (
               <div>
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                  {Object.entries(settings as Record<string, unknown>).map(([k, v]) => (
-                    <div key={k} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
-                      <dt className="aiq-label text-[#9CA3AF] text-xs">{k}</dt>
+                  {([
+                    { key: "credibilityThreshold", label: "Credibility Threshold" },
+                    { key: "revalidationDaysLow", label: "Revalidation Days (Low Risk)" },
+                    { key: "revalidationDaysMedium", label: "Revalidation Days (Medium Risk)" },
+                    { key: "revalidationDaysHigh", label: "Revalidation Days (High Risk)" },
+                    { key: "defaultRiskModelVersion", label: "Risk Model Version" },
+                    { key: "defaultLearningModelVersion", label: "Learning Model Version" },
+                  ] as const).map(({ key, label }) => (
+                    <div key={key} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
+                      <dt className="aiq-label text-[#9CA3AF] text-xs">{label}</dt>
                       <dd className="mt-0.5 text-[#0E1726] font-medium text-sm font-['Sora']">
-                        {String(v ?? "—")}
+                        {String((settings as any)[key] ?? "—")}
                       </dd>
                     </div>
                   ))}

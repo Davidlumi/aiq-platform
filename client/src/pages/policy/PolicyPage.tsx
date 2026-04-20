@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import {
   Shield, Plus, AlertTriangle, Ban, Bell, RefreshCw, ArrowUpRight,
-  CheckCircle2, Clock, Users, FileText, Loader2
+  CheckCircle2, Clock, FileText, Loader2
 } from "lucide-react";
 
 const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -23,7 +23,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.
 };
 
 function ActionBadge({ action }: { action: string }) {
-  const meta = ACTION_LABELS[action] ?? { label: action, color: "bg-gray-100 text-gray-700 border-gray-200", icon: null };
+  const meta = ACTION_LABELS[action] ?? { label: action ?? "—", color: "bg-gray-100 text-gray-700 border-gray-200", icon: null };
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${meta.color}`}>
       {meta.icon}{meta.label}
@@ -41,30 +41,16 @@ export default function PolicyPage() {
 
   // create not yet exposed — placeholder
   const createMutation = { mutate: (_: any) => {}, isPending: false } as any;
-  const _createMutation = trpc.policy.createOverride.useMutation({
-    onSuccess: () => {
-      toast.success("Policy created successfully");
-      utils.policy.list.invalidate();
-      setCreateOpen(false);
-      setNewPolicy({ name: "", description: "", action: "warning", priority: 50 });
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const toggleMutation = { mutate: (_: any) => {}, isPending: false } as any;
-  const _toggleMutation = trpc.policy.evaluate.useMutation({
-    onSuccess: () => utils.policy.list.invalidate(),
-    onError: (e) => toast.error(e.message),
-  });
 
   const canManage = user?.roles?.some((r: string) =>
     ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r)
   );
 
+  // Use status field from DB (draft/published/archived)
   const stats = {
     total: policies?.length ?? 0,
-    active: policies?.filter((p: any) => p.isActive).length ?? 0,
-    hardBlocks: policies?.filter((p: any) => p.action === "hard_block").length ?? 0,
+    active: policies?.filter((p: any) => p.status === "published").length ?? 0,
+    hardBlocks: policies?.filter((p: any) => p.actionType === "hard_block").length ?? 0,
   };
 
   return (
@@ -190,41 +176,30 @@ export default function PolicyPage() {
             </div>
           ) : (
             <div className="divide-y divide-[#E5E7EB]">
-              {policies.map((policy: any) => (
-                <div key={policy.id} className="py-4 flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-['Sora'] font-semibold text-[#0E1726]">{policy.name}</span>
-                      <ActionBadge action={policy.action} />
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
-                        policy.isActive
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-gray-100 text-gray-500 border-gray-200"
-                      }`}>
-                        {policy.isActive ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                        {policy.isActive ? "Active" : "Inactive"}
-                      </span>
+              {(policies as any[]).map((policy: any) => {
+                const isActive = policy.status === "published";
+                return (
+                  <div key={policy.id} className="py-4 flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-['Sora'] font-semibold text-[#0E1726]">{policy.name}</span>
+                        <ActionBadge action={policy.actionType} />
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                          isActive
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : "bg-gray-100 text-gray-500 border-gray-200"
+                        }`}>
+                          {isActive ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                          {isActive ? "Active" : policy.status}
+                        </span>
+                      </div>
+                      <p className="aiq-caption text-[#9CA3AF] mt-1 font-['DM_Mono']">
+                        Severity: {policy.severity} · v{policy.version} · ID: {policy.id.slice(0, 8)}…
+                      </p>
                     </div>
-                    {policy.description && (
-                      <p className="aiq-caption text-[#6B7280] mt-1">{policy.description}</p>
-                    )}
-                    <p className="aiq-caption text-[#9CA3AF] mt-1 font-['DM_Mono']">
-                      Priority: {policy.priority} · ID: {policy.id}
-                    </p>
                   </div>
-                  {canManage && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 font-['Sora']"
-                      onClick={() => toggleMutation.mutate({ id: policy.id })}
-                      disabled={toggleMutation.isPending}
-                    >
-                      {policy.isActive ? "Disable" : "Enable"}
-                    </Button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -262,26 +237,29 @@ function PolicyEvaluationsLog() {
             <table className="w-full text-sm font-['Sora']">
               <thead>
                 <tr className="border-b border-[#E5E7EB]">
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Policy</th>
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Action</th>
+                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Policy Rule ID</th>
+                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Context</th>
                   <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Result</th>
                   <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Time</th>
                 </tr>
               </thead>
               <tbody>
-                {evals.map((ev: any) => (
+                {(evals as any[]).map((ev: any) => (
                   <tr key={ev.id} className="border-b border-[#F3F4F6] hover:bg-[#F7F8FA]">
-                    <td className="py-2 px-3 text-[#0E1726] font-medium">{ev.policyName ?? `Policy #${ev.policyId}`}</td>
-                    <td className="py-2 px-3"><ActionBadge action={ev.actionTaken} /></td>
+                    <td className="py-2 px-3 text-[#0E1726] font-medium font-['DM_Mono'] text-xs">
+                      {ev.policyRuleId?.slice(0, 12) ?? "—"}…
+                    </td>
+                    <td className="py-2 px-3 text-[#6B7280] text-xs">{ev.contextType}</td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         ev.result === "triggered" ? "bg-red-100 text-red-700" :
                         ev.result === "passed" ? "bg-green-100 text-green-700" :
-                        "bg-gray-100 text-gray-600"
+                        ev.result === "no_action" ? "bg-gray-100 text-gray-600" :
+                        "bg-blue-100 text-blue-700"
                       }`}>{ev.result}</span>
                     </td>
                     <td className="py-2 px-3 text-[#9CA3AF] aiq-mono text-xs">
-                      {new Date(ev.evaluatedAt).toLocaleString()}
+                      {new Date(ev.createdAt).toLocaleString()}
                     </td>
                   </tr>
                 ))}

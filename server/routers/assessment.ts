@@ -101,6 +101,7 @@ export const assessmentRouter = router({
         blueprintId: input.blueprintId,
         state: "in_progress",
         startedAt: new Date(),
+        sessionMetadataJson: { blueprintId: input.blueprintId },
       });
 
       await db.insert(auditLogs).values({

@@ -48,25 +48,30 @@ export default function SimulationSessionPage() {
     return (
       <div className="p-6 text-center">
         <p className="text-muted-foreground">Session not found</p>
-        <Button onClick={() => navigate("/simulation")} className="mt-4">Back to Simulations</Button>
+        <Button onClick={() => navigate("/simulations")} className="mt-4">Back to Simulations</Button>
       </div>
     );
   }
 
   const { session, currentNode, events } = data;
 
-  if (session.state === "completed") {
+  if (session.state === "completed" || session.state === "passed" || session.state === "failed") {
+    const isPassed = session.state === "passed";
+    const isFailed = session.state === "failed";
     return (
       <div className="p-6 space-y-6 max-w-3xl">
         <div className="text-center py-8">
-          <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground">Simulation Complete!</h1>
+          <CheckCircle2 className={`w-16 h-16 mx-auto mb-4 ${isFailed ? 'text-red-400' : 'text-emerald-500'}`} />
+          <h1 className="text-2xl font-bold text-foreground">
+            {isPassed ? 'Simulation Passed!' : isFailed ? 'Simulation Failed' : 'Simulation Complete!'}
+          </h1>
           <p className="text-muted-foreground mt-2">
             You completed {events.filter((e: any) => e.eventType === "choice_made").length} decision points.
+            {isFailed && ' Review the learning materials and try again.'}
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => navigate("/simulation")} className="flex-1 bg-accent hover:bg-accent/90 text-white">
+          <Button onClick={() => navigate("/simulations")} className="flex-1 bg-accent hover:bg-accent/90 text-white">
             Back to Simulations
           </Button>
           <Button onClick={() => navigate("/learning")} variant="outline" className="flex-1">
@@ -107,7 +112,7 @@ export default function SimulationSessionPage() {
   return (
     <div className="p-6 space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/simulation")} className="gap-1">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/simulations")} className="gap-1">
           <ArrowLeft className="w-4 h-4" />
           Simulations
         </Button>

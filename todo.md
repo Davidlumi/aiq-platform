@@ -73,3 +73,13 @@
 - [x] Apply capability semantic colours correctly (EXEC, JUDG, RISK, WKFL, APPR, DATA)
 - [x] Apply correct button, card, badge, and input component styles
 - [x] QA all pages against Figma spec
+
+## QA Pass (Full Site)
+- [x] Login page: fixed demo credentials to match DB (slug=demo, @demo.aiq.com emails, role-specific passwords)
+- [x] Register page: fixed default tenant slug to match DB (demo)
+- [x] Seed SQL: updated to match actual DB values (demo slug, @demo.aiq.com emails, correct password hashes)
+- [x] Assessment startSession: fixed 500 error (sessionMetadataJson field now passed explicitly)
+- [x] Policy page: fixed field name mismatches (isActive→status, action→actionType, actionTaken→result)
+- [x] Simulation session: verified end-to-end flow (select choice → confirm → outcome → complete)
+- [x] All 5 roles tested: Admin, HR Leader, Manager, Learner, Auditor — dashboards load correctly
+- [x] All pages tested: Dashboard, Assessment, Learning Plan, Content Library, Simulations, Reports, Audit Log, Policy, Profile, Users, Tenants

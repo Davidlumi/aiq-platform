@@ -1,5 +1,6 @@
 -- AiQ Seed Data: Roles, Demo Tenant, Demo Users
--- Passwords are bcrypt hashes of "Password123!" for demo purposes
+-- Passwords are bcrypt hashes of role-specific passwords for demo purposes
+-- Admin: Admin1234! | HR Leader: HRLeader1234! | Manager: Manager1234! | Learner: Learner1234! | Auditor: Auditor1234!
 
 -- Canonical roles (platform-wide)
 INSERT IGNORE INTO `roles` (`id`, `key`, `label`) VALUES
@@ -12,21 +13,20 @@ INSERT IGNORE INTO `roles` (`id`, `key`, `label`) VALUES
 
 -- Demo tenant
 INSERT IGNORE INTO `tenants` (`id`, `name`, `slug`, `primary_domain`, `status`) VALUES
-  ('tenant-demo-001', 'Acme Corporation', 'acme', 'acme.aiq.io', 'active');
+  ('tenant-demo-001', 'Acme Corporation', 'demo', 'demo.aiq.io', 'active');
 
 -- Demo tenant settings
 INSERT IGNORE INTO `tenant_settings` (`id`, `tenant_id`) VALUES
   ('ts-demo-001', 'tenant-demo-001');
 
--- Demo users (password = "Password123!")
--- Hash: $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e
+-- Demo users with role-specific passwords
 INSERT IGNORE INTO `users` (`id`, `tenant_id`, `email`, `first_name`, `last_name`, `password_hash`, `status`) VALUES
-  ('user-psa-001',  'tenant-demo-001', 'superadmin@aiq.io',    'Platform', 'Admin',   '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active'),
-  ('user-ta-001',   'tenant-demo-001', 'admin@acme.com',       'Alice',    'Tenant',  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active'),
-  ('user-hl-001',   'tenant-demo-001', 'hr@acme.com',          'Harriet',  'Leader',  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active'),
-  ('user-mgr-001',  'tenant-demo-001', 'manager@acme.com',     'Marcus',   'Manager', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active'),
-  ('user-lrn-001',  'tenant-demo-001', 'learner@acme.com',     'Laura',    'Learner', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active'),
-  ('user-aud-001',  'tenant-demo-001', 'auditor@acme.com',     'Audrey',   'Auditor', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK9e', 'active');
+  ('user-psa-001',  'tenant-demo-001', 'superadmin@aiq.io',       'Platform', 'Admin',   '$2b$12$DOrQzlCBhEtW7BHGnp9/q..lOB9xQ5LIP6xotkr414mK7p6dxQsjC', 'active'),
+  ('user-ta-001',   'tenant-demo-001', 'admin@demo.aiq.com',      'Alice',    'Admin',   '$2b$12$h8KtMxNlJJRgN.xS3/mglu5CZ23BOpb45qGopgPsHkoJMcIKw2FSS', 'active'),
+  ('user-hl-001',   'tenant-demo-001', 'hr@demo.aiq.com',         'Harriet',  'Leader',  '$2b$12$WyIa/MzGq.2NgQR01FdXDeMJpLwuQCfmyEwq8ZePoPhTAHZFtoEGm', 'active'),
+  ('user-mgr-001',  'tenant-demo-001', 'manager@demo.aiq.com',    'Marcus',   'Manager', '$2b$12$DJxMdpRnI4J25zOMcbxjp.02yXUvfoAjfN.ZWgXtzgKhKpQpgJy0C', 'active'),
+  ('user-lrn-001',  'tenant-demo-001', 'learner@demo.aiq.com',    'Laura',    'Learner', '$2b$12$6zliIBQAQDOshlrI/KNU2uq0IqmaQ7oX7mvG0izFowsHe14DtEr1.', 'active'),
+  ('user-aud-001',  'tenant-demo-001', 'auditor@demo.aiq.com',    'Audrey',   'Auditor', '$2b$12$iSq3kVwzMMzG1uHPxwfLYuBfMcfHiFyn5iBly8a242FloI7SvJ8J2', 'active');
 
 -- Assign roles to demo users
 INSERT IGNORE INTO `user_roles` (`id`, `tenant_id`, `user_id`, `role_id`) VALUES
