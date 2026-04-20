@@ -91,7 +91,7 @@ export default function AssessmentPage() {
                     {stateIcon(session.state)}
                     <div>
                       <p className="text-sm font-semibold text-foreground capitalize">
-                        {session.assessmentType.replace(/_/g, " ")} Assessment
+                        Capability Assessment
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Started: {new Date(session.startedAt).toLocaleDateString()}

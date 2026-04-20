@@ -227,7 +227,7 @@ export default function AssessmentSessionPage() {
                   >
                     <RadioGroupItem value={option.value} id={option.id} />
                     <Label htmlFor={option.id} className="cursor-pointer flex-1 text-sm">
-                      {option.optionText}
+                      {option.label}
                     </Label>
                   </div>
                 ))}

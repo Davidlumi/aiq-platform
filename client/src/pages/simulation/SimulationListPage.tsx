@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Layers, Play, Clock, Award } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Layers, Play, Award } from "lucide-react";
 
 export default function SimulationListPage() {
   const [, navigate] = useLocation();
@@ -15,12 +14,12 @@ export default function SimulationListPage() {
 
   const startMutation = trpc.simulation.startSession.useMutation({
     onSuccess: (result) => {
-      navigate(`/simulation/${result.sessionId}`);
+      navigate(`/simulations/${result.sessionId}`);
     },
     onError: err => toast.error(err.message),
   });
 
-  const completedIds = new Set((history ?? []).filter((h: any) => h.state === "completed").map((h: any) => h.simulationId));
+  const completedIds = new Set(((history as any[]) ?? []).filter((h: any) => h.state === "completed").map((h: any) => h.simulationId));
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
@@ -35,17 +34,17 @@ export default function SimulationListPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48" />)}
         </div>
-      ) : !simulations || simulations.length === 0 ? (
+      ) : !simulations || (simulations as any[]).length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
           <Layers className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">No simulations available yet</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {simulations.map((sim: any) => {
+          {(simulations as any[]).map((sim: any) => {
             const isDone = completedIds.has(sim.id);
             return (
-              <Card key={sim.id} className="hover:shadow-sm transition-shadow">
+              <Card key={sim.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base">{sim.title}</CardTitle>
@@ -58,25 +57,18 @@ export default function SimulationListPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground line-clamp-3">{sim.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {sim.key?.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </p>
                   <div className="flex items-center gap-3">
-                    {sim.estimatedMinutes && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        ~{sim.estimatedMinutes} min
-                      </span>
-                    )}
-                    {sim.difficulty && (
-                      <Badge variant="outline" className="text-xs">
-                        Level {sim.difficulty}
-                      </Badge>
-                    )}
+                    <Badge variant="outline" className="text-xs capitalize">{sim.status}</Badge>
+                    <span className="text-xs text-muted-foreground">v{sim.version}</span>
                   </div>
                   <Button
                     size="sm"
                     onClick={() => startMutation.mutate({ simulationId: sim.id })}
                     disabled={startMutation.isPending}
-                    className="w-full bg-accent hover:bg-accent/90 text-white gap-2"
+                    className="w-full gap-2"
                   >
                     <Play className="w-3 h-3" />
                     {isDone ? "Replay" : "Start Simulation"}
