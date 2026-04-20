@@ -1,149 +1,319 @@
-import { useState } from "react";
+/**
+ * Assessment Landing Page — AiQ Enterprise Platform
+ *
+ * Implements the V9.2 assessment landing specification:
+ * - Purpose panel explaining the AIQ V9.2 Standard Assessment
+ * - Blueprint info: 50 interactions, 6 capability domains, ~35 minutes
+ * - Active session resume card (if in_progress session exists)
+ * - Assessment history with readiness states and scores
+ * - Start new / resume CTA
+ */
+
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList, Play, CheckCircle2, Clock, AlertCircle, Plus } from "lucide-react";
+import {
+  ClipboardList,
+  Play,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  RotateCcw,
+  ChevronRight,
+  Target,
+  Brain,
+  Shield,
+  Workflow,
+  Database,
+  Gavel,
+  AlertTriangle,
+  ShieldAlert,
+  HelpCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// ─── Capability Domain Info ───────────────────────────────────────────────────
+
+const CAPABILITY_DOMAINS = [
+  { key: "execution",           label: "AI Execution",            icon: Target,    colour: "#4477AA", description: "Quality of AI task execution and validation" },
+  { key: "judgement",           label: "AI Judgement",            icon: Brain,     colour: "#AA3377", description: "Proportionate decision-making with AI outputs" },
+  { key: "governance",          label: "AI Risk & Governance",    icon: Shield,    colour: "#228833", description: "Risk identification and governance application" },
+  { key: "appropriateness",     label: "AI Appropriateness",      icon: Gavel,     colour: "#EE6677", description: "Knowing when AI use is appropriate" },
+  { key: "workflow",            label: "AI Workflow Application", icon: Workflow,  colour: "#66CCEE", description: "Integrating AI into professional workflows" },
+  { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#BBBBBB", description: "Interpreting and challenging AI-generated data" },
+];
+
+// ─── Readiness State Config ───────────────────────────────────────────────────
+
+const READINESS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  safe:    { label: "Safe to Deploy", color: "text-[#228833]",        icon: CheckCircle2 },
+  at_risk: { label: "At Risk",        color: "text-[#EE8866]",        icon: AlertTriangle },
+  unsafe:  { label: "Unsafe",         color: "text-[#EE6677]",        icon: ShieldAlert },
+  unknown: { label: "Not Assessed",   color: "text-muted-foreground", icon: HelpCircle },
+};
+
+// ─── Session State Badge ──────────────────────────────────────────────────────
+
+function SessionStateBadge({ state }: { state: string }) {
+  const map: Record<string, string> = {
+    completed:   "bg-[#228833]/10 text-[#228833] border-[#228833]/20",
+    in_progress: "bg-[#EE8866]/10 text-[#EE8866] border-[#EE8866]/20",
+    abandoned:   "bg-muted text-muted-foreground border-border",
+  };
+  const labels: Record<string, string> = {
+    completed:   "Completed",
+    in_progress: "In Progress",
+    abandoned:   "Abandoned",
+  };
+  return (
+    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full border", map[state] ?? map.abandoned)}>
+      {labels[state] ?? state}
+    </span>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function AssessmentPage() {
   const [, navigate] = useLocation();
-  const { data: blueprints } = trpc.assessment.blueprints.useQuery();
-  const { data: sessions, isLoading, refetch } = trpc.assessment.history.useQuery({});
+
+  const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
+  const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
+
   const startMutation = trpc.assessment.startSession.useMutation({
-    onSuccess: (result) => {
+    onSuccess: result => {
       navigate(`/assessment/${result.sessionId}`);
     },
     onError: err => toast.error(err.message),
   });
 
   const handleStart = () => {
-    const blueprintId = blueprints?.[0]?.id;
-    if (!blueprintId) { toast.error("No assessment blueprint available"); return; }
+    const blueprintId = defaultBlueprint?.id;
+    if (!blueprintId) {
+      toast.error("No assessment blueprint available. Please contact your administrator.");
+      return;
+    }
     startMutation.mutate({ blueprintId });
   };
 
-  const stateIcon = (state: string) => {
-    switch (state) {
-      case "completed": return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      case "in_progress": return <Clock className="w-4 h-4 text-amber-500" />;
-      default: return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  const stateBadge = (state: string) => {
-    const map: Record<string, string> = {
-      completed: "bg-emerald-100 text-emerald-800",
-      in_progress: "bg-amber-100 text-amber-800",
-      abandoned: "bg-red-100 text-red-800",
-    };
-    return map[state] ?? "bg-muted text-muted-foreground";
-  };
+  // Find any in-progress session
+  const activeSession = sessions?.find(s => s.state === "in_progress");
+  const hasCompletedBefore = sessions?.some(s => s.state === "completed") ?? false;
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      <div className="flex items-start justify-between">
+      {/* ── Page Header ── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Assessments</h1>
-          <p className="text-muted-foreground mt-1">
-            Adaptive capability assessments that measure your knowledge, confidence, and proficiency
+          <h1 className="text-2xl font-bold text-foreground font-sora">AI Capability Assessment</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            AIQ V9.2 Standard Assessment · 50 interactions · 6 capability domains · ~35 minutes
           </p>
         </div>
-        <Button
-          onClick={handleStart}
-          disabled={startMutation.isPending}
-          className="bg-accent hover:bg-accent/90 text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          {startMutation.isPending ? "Starting…" : "New Assessment"}
-        </Button>
-      </div>
-
-      {/* Info card */}
-      <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <ClipboardList className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-foreground">Adaptive Assessment Engine</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Each assessment adapts to your responses in real time. Questions are sequenced based on your
-              confidence level and time taken. Your credibility and risk scores are computed on completion.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Sessions list */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20" />)}
-        </div>
-      ) : sessions && sessions.length > 0 ? (
-        <div className="space-y-3">
-          {sessions.map((session: any) => (
-            <Card key={session.id} className="hover:shadow-sm transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {stateIcon(session.state)}
-                    <div>
-                      <p className="text-sm font-semibold text-foreground capitalize">
-                        Capability Assessment
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Started: {new Date(session.startedAt).toLocaleDateString()}
-                        {session.completedAt && ` · Completed: ${new Date(session.completedAt).toLocaleDateString()}`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className={cn("text-xs", stateBadge(session.state))}>
-                      {session.state.replace(/_/g, " ")}
-                    </Badge>
-                    {session.state === "in_progress" && (
-                      <Button
-                        size="sm"
-                        onClick={() => navigate(`/assessment/${session.id}`)}
-                        className="bg-accent hover:bg-accent/90 text-white gap-1"
-                      >
-                        <Play className="w-3 h-3" />
-                        Resume
-                      </Button>
-                    )}
-                    {session.state === "completed" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate(`/assessment/${session.id}`)}
-                      >
-                        View Results
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
-          <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-semibold text-foreground mb-2">No assessments yet</p>
-          <p className="text-muted-foreground text-sm mb-6">
-            Start your first assessment to establish your capability baseline
-          </p>
+        {!activeSession && (
           <Button
             onClick={handleStart}
             disabled={startMutation.isPending}
-            className="bg-accent hover:bg-accent/90 text-white"
+            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2 shrink-0"
           >
-            Start First Assessment
+            <Play className="w-4 h-4" />
+            {startMutation.isPending ? "Starting…" : hasCompletedBefore ? "Retake Assessment" : "Start Assessment"}
           </Button>
-        </div>
+        )}
+      </div>
+
+      {/* ── Active Session Resume Card ── */}
+      {activeSession && (
+        <Card className="border-2 border-[#EE8866]/30 bg-[#EE8866]/4">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#EE8866]/15 flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5 text-[#EE8866]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Started {new Date(activeSession.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                    })} · Your progress has been saved
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate(`/assessment/${activeSession.id}`)}
+                className="bg-[#EE8866] hover:bg-[#EE8866]/90 text-white gap-2 shrink-0"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Resume
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
+
+      {/* ── Purpose Panel ── */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-[#3B4EFF]" />
+            <CardTitle className="text-base font-semibold">About the AIQ V9.2 Standard Assessment</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            The AIQ V9.2 Standard Assessment measures your practical AI capability across six domains using
+            50 scenario-based interactions. Each interaction presents a realistic workplace situation involving
+            AI tools and asks you to make a decision. Your answers generate signal deltas that accumulate into
+            a capability profile — not a pass/fail score.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Interactions are weighted by <strong className="text-foreground">risk level</strong> (Low / Medium / High)
+            and <strong className="text-foreground">difficulty</strong> (1–3). Higher-risk, higher-difficulty
+            interactions carry greater weight in your final profile. A <strong className="text-foreground">confidence
+            slider</strong> on each question captures your self-assessment, which feeds into your credibility score.
+          </p>
+
+          {/* Capability domains grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+            {CAPABILITY_DOMAINS.map(domain => {
+              const Icon = domain.icon;
+              return (
+                <div
+                  key={domain.key}
+                  className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-muted/20"
+                >
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ backgroundColor: `${domain.colour}18` }}
+                  >
+                    <Icon className="w-3.5 h-3.5" style={{ color: domain.colour }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground leading-tight">{domain.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{domain.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Assessment stats */}
+          <div className="flex items-center gap-6 pt-1 flex-wrap">
+            {[
+              { label: "Interactions", value: "50" },
+              { label: "Capability Domains", value: "6" },
+              { label: "Estimated Time", value: "~35 min" },
+              { label: "Model Version", value: "V9.2" },
+            ].map(stat => (
+              <div key={stat.label} className="text-center">
+                <p className="text-lg font-bold text-[#3B4EFF] font-sora">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Assessment History ── */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3">Assessment History</h2>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
+          </div>
+        ) : !sessions || sessions.length === 0 ? (
+          <Card className="border-border border-dashed">
+            <CardContent className="p-8 text-center">
+              <ClipboardList className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">No assessments yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Start your first AIQ V9.2 assessment to generate your capability profile.
+              </p>
+              <Button
+                onClick={handleStart}
+                disabled={startMutation.isPending}
+                className="mt-4 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+              >
+                <Play className="w-4 h-4" />
+                Start First Assessment
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {sessions.map((session: any) => {
+              const primaryState = session.score?.primaryState ?? "unknown";
+              const stateConfig = READINESS_CONFIG[primaryState] ?? READINESS_CONFIG.unknown;
+              const StateIcon = stateConfig.icon;
+              const overallScore = session.score?.overallScore;
+              const completedAt = session.completedAt
+                ? new Date(session.completedAt).toLocaleDateString("en-GB", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })
+                : null;
+              return (
+                <Card
+                  key={session.id}
+                  className={cn(
+                    "border-border hover:border-[#3B4EFF]/30 transition-colors cursor-pointer",
+                    session.state === "in_progress" && "border-[#EE8866]/30"
+                  )}
+                  onClick={() => {
+                    if (session.state === "completed") navigate(`/assessment/${session.id}/results`);
+                    else if (session.state === "in_progress") navigate(`/assessment/${session.id}`);
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          {session.state === "completed" ? (
+                            <StateIcon className={cn("w-4 h-4", stateConfig.color)} />
+                          ) : session.state === "in_progress" ? (
+                            <Clock className="w-4 h-4 text-[#EE8866]" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-foreground">
+                              AIQ V9.2 Standard Assessment
+                            </p>
+                            <SessionStateBadge state={session.state} />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {completedAt
+                              ? `Completed ${completedAt}`
+                              : `Started ${new Date(session.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {session.state === "completed" && overallScore !== undefined && (
+                          <div className="text-right">
+                            <p className={cn("text-lg font-bold font-sora", stateConfig.color)}>
+                              {Math.round(overallScore)}
+                            </p>
+                            <p className={cn("text-xs font-medium", stateConfig.color)}>
+                              {stateConfig.label}
+                            </p>
+                          </div>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

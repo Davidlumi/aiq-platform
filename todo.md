@@ -99,3 +99,11 @@
 - [x] Full QA pass: all 5 roles verified, all pages loading correctly
 - [x] TypeScript: 0 errors
 - [x] Tests: 22/22 passing
+
+## Assessment Engine V9.2 Rebuild
+- [x] Seed all 50 canonical interactions (EX-01 to RG-06) with real scenario text, constraint, options, and signal-delta scoring
+- [x] Update assessment scoring engine: V9.2 risk/difficulty multipliers, correct signal-to-capability mapping
+- [x] AssessmentSessionPage: full spec UX (scenario/constraint panels, confidence slider, locked submit, progress header, animation)
+- [x] AssessmentResultsPage: capability breakdown radar, signal profile, readiness state card, credibility score, narrative templates
+- [x] AssessmentPage landing: purpose panel, estimated duration, resume card, blocked state handling
+- [x] Full end-to-end QA of assessment flow

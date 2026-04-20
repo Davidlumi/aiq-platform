@@ -208,9 +208,6 @@ export default function AssessmentSessionPage() {
   const [confidence, setConfidence] = useState<number>(50);
   const [startTime] = useState<number>(Date.now());
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
-  const [completed, setCompleted] = useState(false);
-  const [completionResult, setCompletionResult] = useState<any>(null);
-
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: () => {
       setSelectedValue("");
@@ -222,9 +219,9 @@ export default function AssessmentSessionPage() {
   });
 
   const completeMutation = trpc.assessment.completeSession.useMutation({
-    onSuccess: result => {
-      setCompleted(true);
-      setCompletionResult(result);
+    onSuccess: () => {
+      // Navigate to the dedicated results page
+      navigate(`/assessment/${sessionId}/results`);
     },
     onError: err => toast.error(err.message),
   });
@@ -255,9 +252,10 @@ export default function AssessmentSessionPage() {
   const isComplete = sessionData.isComplete;
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
 
-  // Completed state
-  if (completed || session.state === "completed") {
-    return <CompletionScreen result={completionResult} onNavigate={navigate} />;
+  // Completed state — redirect to results page
+  if (session.state === "completed") {
+    navigate(`/assessment/${sessionId}/results`);
+    return null;
   }
 
   // All answered — show complete button
@@ -395,10 +393,7 @@ export default function AssessmentSessionPage() {
           {/* Question prompt */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              What do you do?
-            </p>
-            <p className="text-sm font-medium text-foreground leading-relaxed">
-              {nextItem.prompt.split("\n\n").pop() ?? nextItem.prompt}
+              {(nextItem as any).question || "What do you do?"}
             </p>
           </div>
 

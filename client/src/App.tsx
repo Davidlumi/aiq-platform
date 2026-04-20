@@ -26,6 +26,7 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 // Feature pages
 import AssessmentPage from "./pages/assessment/AssessmentPage";
 import AssessmentSessionPage from "./pages/assessment/AssessmentSessionPage";
+import AssessmentResultsPage from "./pages/assessment/AssessmentResultsPage";
 import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
 import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
@@ -88,6 +89,9 @@ function Router() {
       </Route>
       <Route path="/assessment">
         <ProtectedRoute component={AssessmentPage} />
+      </Route>
+      <Route path="/assessment/:sessionId/results">
+        <ProtectedRoute component={AssessmentResultsPage} />
       </Route>
       <Route path="/assessment/:sessionId">
         <ProtectedRoute component={AssessmentSessionPage} />
