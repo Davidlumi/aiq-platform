@@ -15,8 +15,83 @@ import {
   decisionLogs,
   auditLogs,
 } from "../../drizzle/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, notInArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
+
+// ─── Signal Scoring Engine ────────────────────────────────────────────────────
+// Implements the canonical signal delta scoring from the question bank spec.
+// Each answer carries signal_deltas (e.g. { execution_quality: 4, prioritisation_quality: 2 })
+// We accumulate these across all answers to produce per-signal scores.
+
+interface SignalAccumulator {
+  [signal: string]: number;
+}
+
+function computeSignalScores(
+  answers: Array<{ signalDeltasJson: string | null; outcomeClass: string | null }>
+): SignalAccumulator {
+  const acc: SignalAccumulator = {};
+  for (const answer of answers) {
+    if (!answer.signalDeltasJson) continue;
+    try {
+      const deltas = JSON.parse(answer.signalDeltasJson) as Record<string, number>;
+      for (const [signal, delta] of Object.entries(deltas)) {
+        acc[signal] = (acc[signal] ?? 0) + delta;
+      }
+    } catch {}
+  }
+  return acc;
+}
+
+// Map signal names to capability areas for the score breakdown
+const SIGNAL_TO_CAPABILITY: Record<string, string> = {
+  execution_quality: "execution",
+  prioritisation_quality: "prioritisation",
+  validation_quality: "validation",
+  judgement_quality: "judgement",
+  governance_quality: "governance",
+  appropriateness_quality: "appropriateness",
+  data_interpretation_quality: "data_interpretation",
+  timing_integrity: "execution",
+  over_reliance_risk: "governance",
+  over_caution_risk: "judgement",
+  avoidance_risk: "judgement",
+  blind_acceptance_risk: "governance",
+};
+
+function computeCapabilityScores(
+  signalScores: SignalAccumulator,
+  totalItems: number
+): Record<string, number> {
+  // Group signals by capability, normalise to 0-100
+  const capAccum: Record<string, { sum: number; count: number }> = {};
+
+  for (const [signal, delta] of Object.entries(signalScores)) {
+    const cap = SIGNAL_TO_CAPABILITY[signal] ?? "execution";
+    if (!capAccum[cap]) capAccum[cap] = { sum: 0, count: 0 };
+    capAccum[cap].sum += delta;
+    capAccum[cap].count += 1;
+  }
+
+  const result: Record<string, number> = {};
+  for (const [cap, { sum, count }] of Object.entries(capAccum)) {
+    // Normalise: max possible per signal is 4 per item, min is -4
+    // We map to 0-100 where 0 signal delta = 50
+    const avgDelta = count > 0 ? sum / count : 0;
+    const normalised = Math.max(0, Math.min(100, 50 + avgDelta * 12.5));
+    result[cap] = Math.round(normalised);
+  }
+
+  return result;
+}
+
+function computeOverallScore(capabilityScores: Record<string, number>): number {
+  const caps = Object.values(capabilityScores);
+  if (caps.length === 0) return 50;
+  return Math.round(caps.reduce((s, v) => s + v, 0) / caps.length);
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
 
 export const assessmentRouter = router({
   // List published blueprints
@@ -29,10 +104,10 @@ export const assessmentRouter = router({
       .where(eq(assessmentBlueprints.status, "published"));
   }),
 
-  // Get a blueprint with its items
+  // Get a blueprint with its items (strips scoring data from options)
   blueprint: protectedProcedure
     .input(z.object({ blueprintId: z.string() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -60,10 +135,10 @@ export const assessmentRouter = router({
             .from(assessmentItemOptions)
             .where(eq(assessmentItemOptions.itemId, item.id))
             .orderBy(assessmentItemOptions.optionOrder);
-          // Strip isCorrect from options sent to learner
+          // Strip scoring data from options sent to learner
           return {
             ...item,
-            options: options.map(({ isCorrect, scoreWeight, ...o }) => o),
+            options: options.map(({ isCorrect, scoreWeight, signalDeltasJson, eventCodesJson, outcomeClass, ...o }) => o),
           };
         })
       );
@@ -117,7 +192,7 @@ export const assessmentRouter = router({
       return { sessionId, resumed: false };
     }),
 
-  // Get session state (answers so far)
+  // Get session state + next unanswered item
   session: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -142,10 +217,74 @@ export const assessmentRouter = router({
         .from(assessmentAnswers)
         .where(eq(assessmentAnswers.sessionId, input.sessionId));
 
-      return { session: session[0], answers };
+      // Get total item count for the blueprint
+      const allItems = await db
+        .select({ id: assessmentItems.id })
+        .from(assessmentItems)
+        .where(
+          and(
+            eq(assessmentItems.blueprintId, session[0].blueprintId),
+            eq(assessmentItems.status, "published")
+          )
+        );
+
+      const answeredItemIds = answers.map(a => a.itemId);
+      const totalItems = allItems.length;
+      const answeredCount = answeredItemIds.length;
+
+      // Get next unanswered item
+      let nextItem = null;
+      if (session[0].state === "in_progress" && answeredCount < totalItems) {
+        const unanswered = allItems.filter(i => !answeredItemIds.includes(i.id));
+        if (unanswered.length > 0) {
+          const nextItemFull = await db
+            .select()
+            .from(assessmentItems)
+            .where(eq(assessmentItems.id, unanswered[0].id))
+            .limit(1);
+
+          if (nextItemFull[0]) {
+            const options = await db
+              .select()
+              .from(assessmentItemOptions)
+              .where(eq(assessmentItemOptions.itemId, nextItemFull[0].id))
+              .orderBy(assessmentItemOptions.optionOrder);
+
+            // Parse metadata to get title, scenario, constraint
+            let meta: any = {};
+            try { meta = JSON.parse((nextItemFull[0].metadataJson as string | null) ?? "{}"); } catch {}
+
+            nextItem = {
+              id: nextItemFull[0].id,
+              itemType: nextItemFull[0].itemType,
+              prompt: nextItemFull[0].prompt,
+              difficulty: nextItemFull[0].difficulty,
+              title: meta.title ?? "",
+              scenario: meta.scenario ?? "",
+              constraint: meta.constraint ?? "",
+              capability: meta.capability ?? "",
+              capabilityKey: meta.capability_key ?? "",
+              workflow: meta.workflow ?? "",
+              riskLevel: meta.risk_level ?? "",
+              interactionId: meta.interaction_id ?? "",
+              displayOrder: meta.display_order ?? 0,
+              options: options.map(({ isCorrect, scoreWeight, signalDeltasJson, eventCodesJson, outcomeClass, ...o }) => o),
+            };
+          }
+        }
+      }
+
+      return {
+        session: session[0],
+        answers,
+        totalItems,
+        answeredCount,
+        nextItem,
+        isComplete: session[0].state !== "in_progress" || answeredCount >= totalItems,
+      };
     }),
 
-  // Submit an answer
+  // Submit an answer with signal delta scoring
   submitAnswer: protectedProcedure
     .input(
       z.object({
@@ -175,15 +314,24 @@ export const assessmentRouter = router({
 
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active session not found" });
 
-      // Determine correctness
+      // Find the selected option with scoring data
       let correctness: boolean | null = null;
+      let outcomeClass: string | null = null;
+      let signalDeltasJson: unknown = null;
+      let eventCodesJson: unknown = null;
+
       if (input.selectedValue) {
         const options = await db
           .select()
           .from(assessmentItemOptions)
           .where(eq(assessmentItemOptions.itemId, input.itemId));
         const selected = options.find(o => o.value === input.selectedValue);
-        if (selected) correctness = selected.isCorrect ?? null;
+        if (selected) {
+          correctness = selected.isCorrect ?? null;
+          outcomeClass = selected.outcomeClass ?? null;
+          signalDeltasJson = selected.signalDeltasJson ?? null;
+          eventCodesJson = selected.eventCodesJson ?? null;
+        }
       }
 
       await db.insert(assessmentAnswers).values({
@@ -195,12 +343,15 @@ export const assessmentRouter = router({
         confidenceScore: input.confidenceScore?.toFixed(4) as any,
         timeToAnswerMs: input.timeToAnswerMs,
         correctness,
+        outcomeClass: outcomeClass as any,
+        signalDeltasJson,
+        eventCodesJson,
       });
 
-      return { success: true, correctness };
+      return { success: true, correctness, outcomeClass };
     }),
 
-  // Complete assessment and compute scores
+  // Complete assessment and compute signal-based scores
   completeSession: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ input, ctx }) => {
@@ -226,38 +377,54 @@ export const assessmentRouter = router({
         .from(assessmentAnswers)
         .where(eq(assessmentAnswers.sessionId, input.sessionId));
 
-      // Compute overall score
+      // ── Signal Delta Scoring ──────────────────────────────────────────────
+      const signalScores = computeSignalScores(
+        answers.map(a => ({
+          signalDeltasJson: (a as any).signalDeltasJson ?? null,
+          outcomeClass: (a as any).outcomeClass ?? null,
+        }))
+      );
+
+      const capabilityScores = computeCapabilityScores(signalScores, answers.length);
+      const overallScore = computeOverallScore(capabilityScores);
+
+      // ── Credibility Scoring ───────────────────────────────────────────────
       const total = answers.length;
       const correct = answers.filter(a => a.correctness === true).length;
-      const overallScore = total > 0 ? (correct / total) * 100 : 0;
+      const accuracyRate = total > 0 ? correct / total : 0;
 
-      // Compute credibility: based on confidence calibration and time patterns
       const avgConfidence =
         answers.filter(a => a.confidenceScore !== null).length > 0
           ? answers.reduce((s, a) => s + parseFloat(String(a.confidenceScore ?? 0)), 0) /
             answers.filter(a => a.confidenceScore !== null).length
           : 0.5;
 
-      const accuracyRate = total > 0 ? correct / total : 0;
-      // Credibility = calibration between confidence and accuracy
       const calibrationDiff = Math.abs(avgConfidence - accuracyRate);
       const credibilityScore = Math.max(0, 1 - calibrationDiff * 1.5);
       const credibilityBand: "low" | "medium" | "high" =
         credibilityScore >= 0.75 ? "high" : credibilityScore >= 0.5 ? "medium" : "low";
 
-      // Compute risk: based on score and time taken
-      const avgTime =
-        total > 0
-          ? answers.reduce((s, a) => s + a.timeToAnswerMs, 0) / total
-          : 0;
-      const speedRisk = avgTime < 3000 ? 0.3 : 0; // too fast = suspicious
+      // ── Risk Scoring ──────────────────────────────────────────────────────
+      const avgTime = total > 0 ? answers.reduce((s, a) => s + a.timeToAnswerMs, 0) / total : 0;
+      const speedRisk = avgTime < 3000 ? 0.3 : 0;
       const scoreRisk = overallScore < 50 ? 0.4 : overallScore < 70 ? 0.2 : 0;
       const riskScore = Math.min(1, speedRisk + scoreRisk);
       const riskBand: "low" | "medium" | "high" =
         riskScore >= 0.6 ? "high" : riskScore >= 0.3 ? "medium" : "low";
 
-      const scoreBreakdown = { correct, total, overallScore };
-      const signalScores = { credibility: credibilityScore, risk: riskScore };
+      // ── Readiness State ───────────────────────────────────────────────────
+      const primaryState =
+        overallScore >= 75 ? "safe" :
+        overallScore >= 55 ? "at_risk" :
+        overallScore >= 35 ? "unsafe" : "unknown";
+
+      const scoreBreakdown = {
+        correct,
+        total,
+        overallScore,
+        capabilityScores,
+        signalScores,
+      };
 
       // Persist assessment score
       await db.insert(assessmentScores).values({
@@ -266,7 +433,7 @@ export const assessmentRouter = router({
         overallScore: overallScore.toFixed(2) as any,
         scoreBreakdownJson: JSON.stringify(scoreBreakdown),
         signalScoresJson: JSON.stringify(signalScores),
-        modelVersion: "v1",
+        modelVersion: "v2-signal-delta",
       });
 
       // Persist credibility score
@@ -277,7 +444,7 @@ export const assessmentRouter = router({
         credibilityScore: credibilityScore.toFixed(4) as any,
         band: credibilityBand,
         reasonJson: JSON.stringify({ calibrationDiff, avgConfidence, accuracyRate }),
-        modelVersion: "v1",
+        modelVersion: "v2-signal-delta",
       });
 
       // Persist risk score
@@ -287,15 +454,12 @@ export const assessmentRouter = router({
         riskScore: riskScore.toFixed(4) as any,
         band: riskBand,
         reasonJson: JSON.stringify({ speedRisk, scoreRisk, avgTime }),
-        modelVersion: "v1",
+        modelVersion: "v2-signal-delta",
       });
 
       // Update user state
-      const primaryState =
-        overallScore >= 70 ? "proficient" : overallScore >= 50 ? "developing" : "needs_support";
       const learningState = overallScore >= 70 ? "completed" : "in_progress";
 
-      // Close previous state
       await db
         .update(userStates)
         .set({ effectiveTo: new Date() })
@@ -304,12 +468,17 @@ export const assessmentRouter = router({
       await db.insert(userStates).values({
         id: nanoid(),
         userId: ctx.user.id,
-        primaryState,
+        primaryState: primaryState as any,
         credibilityState: credibilityBand,
         riskState: riskBand,
         learningState,
         complianceState: "compliant",
-        stateReasonJson: JSON.stringify({ source: "assessment", sessionId: input.sessionId }),
+        stateReasonJson: JSON.stringify({
+          source: "assessment",
+          sessionId: input.sessionId,
+          capabilityScores,
+          signalScores,
+        }),
       });
 
       // Log decision
@@ -319,8 +488,8 @@ export const assessmentRouter = router({
         userId: ctx.user.id,
         decisionType: "assessment_completion",
         inputSnapshotJson: JSON.stringify({ sessionId: input.sessionId, answers: answers.length }),
-        outputSnapshotJson: JSON.stringify({ overallScore, credibilityScore, riskScore }),
-        precedenceAppliedJson: JSON.stringify({ modelVersion: "v1" }),
+        outputSnapshotJson: JSON.stringify({ overallScore, credibilityScore, riskScore, capabilityScores }),
+        precedenceAppliedJson: JSON.stringify({ modelVersion: "v2-signal-delta" }),
       });
 
       // Mark session complete
@@ -336,7 +505,7 @@ export const assessmentRouter = router({
         action: "assessment.session.completed",
         targetType: "assessment_session",
         targetId: input.sessionId,
-        metadataJson: JSON.stringify({ overallScore, credibilityBand, riskBand }),
+        metadataJson: JSON.stringify({ overallScore, credibilityBand, riskBand, primaryState }),
       });
 
       return {
@@ -346,6 +515,8 @@ export const assessmentRouter = router({
         riskScore,
         riskBand,
         primaryState,
+        capabilityScores,
+        signalScores,
       };
     }),
 

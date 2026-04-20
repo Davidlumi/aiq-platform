@@ -293,13 +293,38 @@ export const learningRouter = router({
       return { success: true };
     }),
 
+  // Get a single content item by ID
+  getContentItem: protectedProcedure
+    .input(z.object({ contentItemId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const item = await db
+        .select()
+        .from(contentItems)
+        .where(eq(contentItems.id, input.contentItemId))
+        .limit(1);
+      if (!item[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Content item not found" });
+      const progress = await db
+        .select()
+        .from(contentProgress)
+        .where(
+          and(
+            eq(contentProgress.userId, ctx.user.id),
+            eq(contentProgress.contentItemId, input.contentItemId)
+          )
+        )
+        .limit(1);
+      return { ...item[0], progress: progress[0] ?? null };
+    }),
+
   // Get content library
   contentLibrary: protectedProcedure
     .input(
       z.object({
         contentType: z.string().optional(),
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(50).default(12),
+        pageSize: z.number().int().min(1).max(200).default(24),
       })
     )
     .query(async ({ ctx, input }) => {

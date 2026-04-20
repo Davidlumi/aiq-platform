@@ -1,67 +1,240 @@
+/**
+ * Assessment Session Page — AiQ Enterprise Platform
+ *
+ * Uses the session.nextItem from the assessment router which includes:
+ * - title, scenario, constraint, capability, workflow, riskLevel
+ * - options with label/value (scoring data stripped server-side)
+ * - progress tracking via answeredCount / totalItems
+ */
+
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
 import { toast } from "sonner";
-import { Clock, ChevronRight, CheckCircle2, Award, Shield } from "lucide-react";
+import {
+  Clock,
+  ChevronRight,
+  CheckCircle2,
+  Award,
+  Shield,
+  AlertTriangle,
+  Info,
+  Briefcase,
+  Target,
+  ArrowLeft,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ─── Capability colours ───────────────────────────────────────────────────────
+
+const CAPABILITY_COLOURS: Record<string, string> = {
+  execution:           "#4477AA",
+  judgement:           "#AA3377",
+  governance:          "#228833",
+  appropriateness:     "#EE6677",
+  validation:          "#EE8866",
+  prioritisation:      "#66CCEE",
+  data_interpretation: "#BBBBBB",
+  workflow_application:"#4477AA",
+};
+
+const RISK_CONFIG = {
+  High:   { color: "text-[#EE6677] bg-[#EE6677]/8 border-[#EE6677]/30", icon: AlertTriangle },
+  Medium: { color: "text-[#EE8866] bg-[#EE8866]/8 border-[#EE8866]/30", icon: AlertTriangle },
+  Low:    { color: "text-[#228833] bg-[#228833]/8 border-[#228833]/30", icon: Target },
+} as const;
+
+// ─── Completion Screen ────────────────────────────────────────────────────────
+
+function CompletionScreen({
+  result,
+  onNavigate,
+}: {
+  result: any;
+  onNavigate: (path: string) => void;
+}) {
+  const primaryState = result?.primaryState ?? "unknown";
+  const STATE_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
+    safe:     { label: "Safe to Deploy", color: "text-[#228833]", bg: "bg-[#228833]/8 border-[#228833]/30" },
+    at_risk:  { label: "At Risk",        color: "text-[#EE8866]", bg: "bg-[#EE8866]/8 border-[#EE8866]/30" },
+    unsafe:   { label: "Unsafe",         color: "text-[#EE6677]", bg: "bg-[#EE6677]/8 border-[#EE6677]/30" },
+    unknown:  { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border" },
+  };
+  const stateConfig = STATE_CONFIGS[primaryState] ?? { label: "Assessed", color: "text-foreground", bg: "bg-muted/20 border-border" };
+
+  const capabilityScores = result?.capabilityScores ?? {};
+
+  return (
+    <div className="p-6 space-y-6 max-w-2xl">
+      {/* Hero */}
+      <div className="text-center py-6">
+        <div className="w-20 h-20 rounded-full bg-[#3B4EFF]/8 border-2 border-[#3B4EFF]/20 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-10 h-10 text-[#3B4EFF]" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Complete</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Your capability profile has been updated. Your learning plan will reflect these results.
+        </p>
+      </div>
+
+      {/* Readiness State */}
+      {result && (
+        <div className={cn("rounded-2xl border-2 p-5 text-center", stateConfig.bg)}>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+            Readiness State
+          </p>
+          <p className={cn("text-3xl font-bold font-sora", stateConfig.color)}>
+            {stateConfig.label}
+          </p>
+          <p className={cn("text-5xl font-bold mt-2", stateConfig.color)}>
+            {Math.round(result.overallScore)}
+          </p>
+          <p className="text-sm text-muted-foreground">overall score</p>
+        </div>
+      )}
+
+      {/* Capability Breakdown */}
+      {result && Object.keys(capabilityScores).length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Capability Breakdown</h3>
+            <ExplanationDrawer
+              trigger={
+                <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  <Info className="w-3 h-3" />
+                  How scores are calculated
+                </button>
+              }
+              title="Signal-Weighted Capability Scoring"
+              subtitle="Each answer carries signal deltas that accumulate across the assessment"
+            >
+              <ScoreBreakdown
+                overallScore={Math.round(result.overallScore)}
+                confidenceLevel={result.credibilityBand}
+                dataPoints={Object.keys(capabilityScores).length}
+                lastUpdated={new Date().toLocaleDateString()}
+                factors={Object.entries(capabilityScores).map(([key, score]) => ({
+                  name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                  score: score as number,
+                  weight: 1 / Object.keys(capabilityScores).length,
+                  description: `Signal-weighted score for ${key.replace(/_/g, " ")}`,
+                  color: CAPABILITY_COLOURS[key] ?? "#4477AA",
+                }))}
+              />
+            </ExplanationDrawer>
+          </div>
+
+          {Object.entries(capabilityScores).map(([key, score]) => (
+            <div key={key} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-40 truncate capitalize">
+                {key.replace(/_/g, " ")}
+              </span>
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${score}%`,
+                    backgroundColor: CAPABILITY_COLOURS[key] ?? "#4477AA",
+                  }}
+                />
+              </div>
+              <span
+                className="text-xs font-bold w-8 text-right"
+                style={{ color: CAPABILITY_COLOURS[key] ?? "#4477AA" }}
+              >
+                {score as number}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Credibility + Risk */}
+      {result && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border p-3 text-center">
+            <Award className="w-5 h-5 text-[#3B4EFF] mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">Credibility</p>
+            <p className="text-sm font-bold capitalize text-foreground">{result.credibilityBand}</p>
+          </div>
+          <div className="rounded-xl border border-border p-3 text-center">
+            <Shield className="w-5 h-5 text-[#3B4EFF] mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">Risk Level</p>
+            <p className="text-sm font-bold capitalize text-foreground">{result.riskBand}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button
+          onClick={() => onNavigate("/learning")}
+          className="flex-1 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+        >
+          View Learning Plan
+        </Button>
+        <Button
+          onClick={() => onNavigate("/dashboard")}
+          variant="outline"
+          className="flex-1"
+        >
+          Back to Dashboard
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
 
-  // We use the blueprint to get items to show
   const { data: sessionData, isLoading, refetch } = trpc.assessment.session.useQuery(
     { sessionId: sessionId! },
-    { enabled: !!sessionId }
-  );
-
-  const { data: blueprintData } = trpc.assessment.blueprint.useQuery(
-    { blueprintId: sessionData?.session?.blueprintId ?? "" },
-    { enabled: !!sessionData?.session?.blueprintId }
+    { enabled: !!sessionId, refetchOnWindowFocus: false }
   );
 
   const [selectedValue, setSelectedValue] = useState<string>("");
-  const [freeText, setFreeText] = useState<string>("");
   const [confidence, setConfidence] = useState<number>(50);
-  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [startTime] = useState<number>(Date.now());
+  const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
   const [completed, setCompleted] = useState(false);
   const [completionResult, setCompletionResult] = useState<any>(null);
 
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: () => {
       setSelectedValue("");
-      setFreeText("");
       setConfidence(50);
-      setStartTime(Date.now());
+      setItemStartTime(Date.now());
       refetch();
     },
     onError: err => toast.error(err.message),
   });
 
   const completeMutation = trpc.assessment.completeSession.useMutation({
-    onSuccess: (result) => {
+    onSuccess: result => {
       setCompleted(true);
       setCompletionResult(result);
-      toast.success("Assessment completed!");
     },
     onError: err => toast.error(err.message),
   });
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 max-w-3xl">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-64" />
+      <div className="p-6 space-y-4 max-w-2xl">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-64 rounded-2xl" />
       </div>
     );
   }
@@ -76,180 +249,196 @@ export default function AssessmentSessionPage() {
   }
 
   const session = sessionData.session;
-  const answers = sessionData.answers ?? [];
-  const allItems = blueprintData?.items ?? [];
-  const answeredItemIds = new Set(answers.map((a: any) => a.itemId));
-  const unansweredItems = allItems.filter((item: any) => !answeredItemIds.has(item.id));
-  const currentItem = unansweredItems[0] ?? null;
-  const answeredCount = answers.length;
-  const totalItems = allItems.length || 10;
+  const totalItems = sessionData.totalItems ?? 0;
+  const answeredCount = sessionData.answeredCount ?? 0;
+  const nextItem = sessionData.nextItem;
+  const isComplete = sessionData.isComplete;
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
 
   // Completed state
   if (completed || session.state === "completed") {
-    const result = completionResult;
-    return (
-      <div className="p-6 space-y-6 max-w-3xl">
-        <div className="text-center py-8">
-          <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground">Assessment Complete!</h1>
-          <p className="text-muted-foreground mt-2">
-            Your results have been calculated and your learning plan has been updated.
-          </p>
-        </div>
-
-        {result && (
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Overall Score", value: `${Math.round(result.overallScore)}%`, icon: Award, color: "text-blue-600 bg-blue-50" },
-              { label: "Credibility", value: result.credibilityBand, icon: Award, color: "text-emerald-600 bg-emerald-50" },
-              { label: "Risk Level", value: result.riskBand, icon: Shield, color: "text-amber-600 bg-amber-50" },
-            ].map(item => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className={cn("rounded-xl p-4 text-center", item.color)}>
-                  <Icon className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-xl font-bold capitalize">{item.value ?? "—"}</p>
-                  <p className="text-xs font-medium mt-1">{item.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button onClick={() => navigate("/learning")} className="flex-1 bg-accent hover:bg-accent/90 text-white">
-            View Learning Plan
-          </Button>
-          <Button onClick={() => navigate("/assessment")} variant="outline" className="flex-1">
-            Back to Assessments
-          </Button>
-        </div>
-      </div>
-    );
+    return <CompletionScreen result={completionResult} onNavigate={navigate} />;
   }
 
   // All answered — show complete button
-  if (!currentItem && answeredCount > 0) {
+  if (isComplete && answeredCount > 0) {
     return (
-      <div className="p-6 space-y-6 max-w-3xl">
+      <div className="p-6 space-y-6 max-w-2xl">
         <div className="text-center py-8">
-          <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-foreground">All questions answered!</h2>
-          <p className="text-muted-foreground mt-2">Click below to complete your assessment and calculate your scores.</p>
+          <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground font-sora">All questions answered</h2>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Click below to calculate your capability scores and update your learning plan.
+          </p>
           <Button
             onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
             disabled={completeMutation.isPending}
-            className="mt-6 bg-accent hover:bg-accent/90 text-white"
+            className="mt-6 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
           >
-            {completeMutation.isPending ? "Calculating…" : "Complete Assessment"}
+            {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
           </Button>
         </div>
       </div>
     );
   }
 
-  // No items loaded yet
-  if (!currentItem) {
+  // No next item loaded
+  if (!nextItem) {
     return (
       <div className="p-6 text-center">
-        <p className="text-muted-foreground">Loading assessment questions…</p>
+        <p className="text-muted-foreground">Loading next question…</p>
       </div>
     );
   }
 
   const handleSubmit = () => {
-    const timeTaken = Math.round((Date.now() - startTime));
-    const val = currentItem.itemType === "free_text" ? null : selectedValue || null;
-    const ft = currentItem.itemType === "free_text" ? freeText : undefined;
-    if (!val && !ft) { toast.error("Please select or enter an answer"); return; }
+    if (!selectedValue) {
+      toast.error("Please select an answer before continuing");
+      return;
+    }
+    const timeTaken = Math.round(Date.now() - itemStartTime);
     submitMutation.mutate({
       sessionId: sessionId!,
-      itemId: currentItem.id,
-      selectedValue: val,
-      freeText: ft,
+      itemId: nextItem.id,
+      selectedValue,
       confidenceScore: confidence / 100,
       timeToAnswerMs: timeTaken,
     });
   };
 
+  const capabilityColor = CAPABILITY_COLOURS[nextItem.capabilityKey] ?? "#4477AA";
+  const riskLevel = nextItem.riskLevel as keyof typeof RISK_CONFIG;
+  const riskConfig = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Medium;
+
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
-      {/* Header */}
-      <div className="space-y-2">
+    <div className="p-6 space-y-5 max-w-2xl">
+      {/* Back + Progress header */}
+      <div className="space-y-3">
+        <button
+          onClick={() => navigate("/assessment")}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Assessments
+        </button>
+
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-foreground">Capability Assessment</h1>
-          <Badge variant="outline" className="text-xs">
-            <Clock className="w-3 h-3 mr-1" />
-            Question {answeredCount + 1} of {totalItems}
-          </Badge>
+          <span className="text-sm font-semibold text-foreground">
+            Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+          </span>
+          <span className="text-xs text-muted-foreground">{progress}% complete</span>
         </div>
-        <Progress value={progress} className="h-2" />
-        <p className="text-xs text-muted-foreground">{progress}% complete</p>
+        <Progress value={progress} className="h-1.5" />
       </div>
 
       {/* Question card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs capitalize">
-                    {currentItem.itemType?.replace(/_/g, " ") ?? "question"}
-                  </Badge>
-                {currentItem.difficulty && (
-                  <Badge variant="outline" className="text-xs capitalize">
-                    Level {currentItem.difficulty}
-                  </Badge>
-                )}
-              </div>
-              <CardTitle className="text-base font-medium leading-relaxed">
-                {currentItem.prompt}
-              </CardTitle>
-            </div>
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-6 space-y-5">
+          {/* Meta badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            {nextItem.capability && (
+              <span
+                className="text-xs font-semibold px-2.5 py-1 rounded-full border"
+                style={{
+                  color: capabilityColor,
+                  backgroundColor: `${capabilityColor}12`,
+                  borderColor: `${capabilityColor}30`,
+                }}
+              >
+                {nextItem.capability}
+              </span>
+            )}
+            {nextItem.workflow && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Briefcase className="w-3 h-3" />
+                {nextItem.workflow}
+              </span>
+            )}
+            {nextItem.riskLevel && (
+              <span className={cn("flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border", riskConfig.color)}>
+                <riskConfig.icon className="w-3 h-3" />
+                {nextItem.riskLevel} Risk
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground ml-auto">
+              Level {nextItem.difficulty}
+            </span>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* MCQ options */}
-          {currentItem.itemType !== "free_text" && currentItem.options && currentItem.options.length > 0 && (
-            <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
-              <div className="space-y-2">
-                {currentItem.options.map((option: any) => (
-                  <div
-                    key={option.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                      selectedValue === option.value
-                        ? "border-accent bg-accent/5"
-                        : "border-border hover:border-accent/50 hover:bg-muted/50"
-                    )}
-                    onClick={() => setSelectedValue(option.value)}
-                  >
-                    <RadioGroupItem value={option.value} id={option.id} />
-                    <Label htmlFor={option.id} className="cursor-pointer flex-1 text-sm">
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
+
+          {/* Title */}
+          {nextItem.title && (
+            <h2 className="text-base font-bold text-foreground font-sora leading-snug">
+              {nextItem.title}
+            </h2>
           )}
 
-          {/* Free text */}
-          {currentItem.itemType === "free_text" && (
-            <Textarea
-              placeholder="Enter your answer here…"
-              value={freeText}
-              onChange={e => setFreeText(e.target.value)}
-              className="min-h-[120px]"
-            />
+          {/* Scenario */}
+          {nextItem.scenario && (
+            <div className="bg-muted/40 rounded-xl p-4 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Scenario
+              </p>
+              <p className="text-sm text-foreground leading-relaxed">{nextItem.scenario}</p>
+            </div>
+          )}
+
+          {/* Constraint */}
+          {nextItem.constraint && (
+            <div className="bg-[#EE8866]/6 rounded-xl p-3 border border-[#EE8866]/20">
+              <p className="text-xs font-semibold text-[#EE8866] uppercase tracking-wider mb-1">
+                Constraint
+              </p>
+              <p className="text-sm text-foreground">{nextItem.constraint}</p>
+            </div>
+          )}
+
+          {/* Question prompt */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              What do you do?
+            </p>
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              {nextItem.prompt.split("\n\n").pop() ?? nextItem.prompt}
+            </p>
+          </div>
+
+          {/* Options */}
+          {nextItem.options && nextItem.options.length > 0 && (
+            <div className="space-y-2">
+              {nextItem.options.map((option: any) => (
+                <button
+                  key={option.id}
+                  onClick={() => setSelectedValue(option.value)}
+                  className={cn(
+                    "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
+                    selectedValue === option.value
+                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/20"
+                      : "border-border hover:border-[#3B4EFF]/40 hover:bg-muted/30"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
+                      selectedValue === option.value
+                        ? "border-[#3B4EFF] bg-[#3B4EFF] text-white"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    {option.value}
+                  </span>
+                  <span className="leading-relaxed">{option.label}</span>
+                </button>
+              ))}
+            </div>
           )}
 
           {/* Confidence slider */}
-          <div className="space-y-3">
+          <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Confidence Level</Label>
-              <span className="text-sm font-semibold text-accent">{confidence}%</span>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                How confident are you in this answer?
+              </Label>
+              <span className="text-sm font-bold text-[#3B4EFF]">{confidence}%</span>
             </div>
             <Slider
               value={[confidence]}
@@ -267,10 +456,10 @@ export default function AssessmentSessionPage() {
 
           <Button
             onClick={handleSubmit}
-            disabled={submitMutation.isPending || (!selectedValue && !freeText)}
-            className="w-full bg-accent hover:bg-accent/90 text-white gap-2"
+            disabled={submitMutation.isPending || !selectedValue}
+            className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
           >
-            {submitMutation.isPending ? "Saving…" : "Next Question"}
+            {submitMutation.isPending ? "Saving…" : answeredCount + 1 === totalItems ? "Submit Final Answer" : "Next Question"}
             <ChevronRight className="w-4 h-4" />
           </Button>
         </CardContent>

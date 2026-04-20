@@ -169,6 +169,9 @@ export const assessmentAnswers = mysqlTable("assessment_answers", {
   timeToAnswerMs: int("time_to_answer_ms").notNull().default(0),
   revisionCount: int("revision_count").notNull().default(0),
   correctness: boolean("correctness"),
+  outcomeClass: varchar("outcome_class", { length: 50 }),
+  signalDeltasJson: json("signal_deltas_json"),
+  eventCodesJson: json("event_codes_json"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 

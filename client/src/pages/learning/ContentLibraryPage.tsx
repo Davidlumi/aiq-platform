@@ -1,27 +1,51 @@
+/**
+ * Content Library Page — AiQ Enterprise Platform
+ *
+ * Canonical learner view from the build bible:
+ * - Browse all 80 real learning modules
+ * - Filter by content type and capability area
+ * - Search by title
+ * - Progress indicators per item
+ * - Brand-compliant modality badges
+ */
+
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Clock, Filter, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Clock, Search, Target, CheckCircle2, Play, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CONTENT_TYPE_COLORS: Record<string, string> = {
-  micro_lesson: "bg-blue-100 text-blue-800",
-  scenario: "bg-purple-100 text-purple-800",
-  scenario_practice: "bg-purple-100 text-purple-800",
-  simulation: "bg-amber-100 text-amber-800",
-  coach_prompt: "bg-emerald-100 text-emerald-800",
-  video: "bg-red-100 text-red-800",
-  article: "bg-slate-100 text-slate-800",
-  quiz: "bg-pink-100 text-pink-800",
-  walkthrough: "bg-cyan-100 text-cyan-800",
-  worked_example: "bg-indigo-100 text-indigo-800",
-  checklist: "bg-orange-100 text-orange-800",
-  reflection: "bg-teal-100 text-teal-800",
-  nudge: "bg-yellow-100 text-yellow-800",
+// ─── Modality Config ──────────────────────────────────────────────────────────
+
+const MODALITY_CONFIG: Record<string, { label: string; color: string }> = {
+  micro_lesson:      { label: "Micro",        color: "#3B4EFF" },
+  scenario:          { label: "Scenario",     color: "#AA3377" },
+  scenario_practice: { label: "Practice",     color: "#AA3377" },
+  simulation:        { label: "Simulation",   color: "#EE8866" },
+  coach_prompt:      { label: "Coaching",     color: "#228833" },
+  video:             { label: "Video",        color: "#EE6677" },
+  article:           { label: "Article",      color: "#66CCEE" },
+  quiz:              { label: "Quiz",         color: "#4477AA" },
+  walkthrough:       { label: "Walkthrough",  color: "#4477AA" },
+  worked_example:    { label: "Example",      color: "#AA3377" },
+  checklist:         { label: "Checklist",    color: "#228833" },
+  reflection:        { label: "Reflection",   color: "#228833" },
+  nudge:             { label: "Nudge",        color: "#EE8866" },
+};
+
+const CAPABILITY_COLORS: Record<string, string> = {
+  execution:          "#4477AA",
+  prioritisation:     "#AA3377",
+  validation:         "#228833",
+  judgement:          "#EE6677",
+  governance:         "#EE8866",
+  appropriateness:    "#66CCEE",
+  data_interpretation:"#BBBBBB",
 };
 
 function formatDuration(seconds: number): string | null {
@@ -30,24 +54,169 @@ function formatDuration(seconds: number): string | null {
   return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
+// ─── Content Card ─────────────────────────────────────────────────────────────
+
+function ContentCard({ item }: { item: any }) {
+  const [, navigate] = useLocation();
+  const duration = formatDuration(item.durationSeconds);
+  const modality = MODALITY_CONFIG[item.contentType] ?? { label: item.contentType, color: "#9CA3AF" };
+
+  // Parse capability from metadata
+  let capabilityArea = "";
+  try {
+    const meta = typeof item.metadataJson === "string"
+      ? JSON.parse(item.metadataJson)
+      : (item.metadataJson ?? {});
+    capabilityArea = meta.capability_area ?? (meta.target_capabilities_list ?? [])[0] ?? "";
+  } catch {}
+
+  const capColor = CAPABILITY_COLORS[capabilityArea?.toLowerCase()] ?? "#9CA3AF";
+  const isCompleted = !!item.progress?.completedAt;
+  const progressPct = item.progress?.progressPct ?? 0;
+
+  return (
+    <Card
+      className={cn(
+        "group hover:shadow-md transition-all duration-200 cursor-pointer border-border",
+        isCompleted && "opacity-75"
+      )}
+      onClick={() => navigate(`/learning/module/${item.id}`)}
+    >
+      <CardContent className="p-4 space-y-3">
+        {/* Type badge + duration */}
+        <div className="flex items-center justify-between">
+          <span
+            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{ color: modality.color, backgroundColor: `${modality.color}15` }}
+          >
+            {modality.label}
+          </span>
+          {duration && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {duration}
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-[#3B4EFF] transition-colors line-clamp-2">
+          {item.title}
+        </p>
+
+        {/* Capability area */}
+        {capabilityArea && (
+          <div className="flex items-center gap-1.5">
+            <Target className="w-3 h-3" style={{ color: capColor }} />
+            <span className="text-xs font-medium capitalize" style={{ color: capColor }}>
+              {capabilityArea.replace(/_/g, " ")}
+            </span>
+          </div>
+        )}
+
+        {/* Difficulty */}
+        <div className="flex items-center justify-between pt-1 border-t border-border/50">
+          {item.difficulty ? (
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map(d => (
+                <div
+                  key={d}
+                  className="w-1.5 h-3 rounded-sm"
+                  style={{
+                    backgroundColor: d <= item.difficulty ? "#3B4EFF" : "#E5E7EB",
+                  }}
+                />
+              ))}
+            </div>
+          ) : <div />}
+
+          {isCompleted ? (
+            <span className="text-xs text-[#228833] font-medium flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              Done
+            </span>
+          ) : progressPct > 0 ? (
+            <span className="text-xs text-[#3B4EFF] font-medium flex items-center gap-1">
+              <Play className="w-3 h-3" />
+              {progressPct}%
+            </span>
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#3B4EFF] transition-colors" />
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+const CAPABILITY_OPTIONS = [
+  { value: "all", label: "All capabilities" },
+  { value: "execution", label: "Execution" },
+  { value: "prioritisation", label: "Prioritisation" },
+  { value: "validation", label: "Validation" },
+  { value: "judgement", label: "Judgement" },
+  { value: "governance", label: "Governance" },
+  { value: "appropriateness", label: "Appropriateness" },
+  { value: "data_interpretation", label: "Data Interpretation" },
+];
+
+const TYPE_OPTIONS = [
+  { value: "all", label: "All types" },
+  { value: "micro_lesson", label: "Micro Lesson" },
+  { value: "video", label: "Video" },
+  { value: "scenario", label: "Scenario" },
+  { value: "simulation", label: "Simulation" },
+  { value: "coach_prompt", label: "Coaching" },
+  { value: "quiz", label: "Quiz" },
+  { value: "reflection", label: "Reflection" },
+  { value: "article", label: "Article" },
+];
+
 export default function ContentLibraryPage() {
   const [search, setSearch] = useState("");
-  const [contentTypeFilter, setContentTypeFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [capabilityFilter, setCapabilityFilter] = useState("all");
 
   const { data, isLoading } = trpc.learning.contentLibrary.useQuery({
-    contentType: contentTypeFilter === "all" ? undefined : contentTypeFilter,
+    contentType: typeFilter === "all" ? undefined : typeFilter,
+    pageSize: 200,
   });
 
   const items: any[] = (data as any)?.items ?? [];
-  const filtered = items.filter((item: any) =>
-    !search || item.title?.toLowerCase().includes(search.toLowerCase())
-  );
+
+  // Client-side filtering for search and capability
+  const filtered = items.filter((item: any) => {
+    if (search && !item.title?.toLowerCase().includes(search.toLowerCase())) return false;
+
+    if (capabilityFilter !== "all") {
+      let capabilityArea = "";
+      try {
+        const meta = typeof item.metadataJson === "string"
+          ? JSON.parse(item.metadataJson)
+          : (item.metadataJson ?? {});
+        capabilityArea = (meta.capability_area ?? (meta.target_capabilities_list ?? [])[0] ?? "").toLowerCase();
+      } catch {}
+      if (!capabilityArea.includes(capabilityFilter)) return false;
+    }
+
+    return true;
+  });
+
+  const completedCount = items.filter((i: any) => i.progress?.completedAt).length;
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Content Library</h1>
-        <p className="text-muted-foreground mt-1">Browse all available learning content</p>
+    <div className="p-6 space-y-6 max-w-6xl">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-sora">Content Library</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {items.length} modules available
+            {completedCount > 0 && ` · ${completedCount} completed`}
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -55,88 +224,67 @@ export default function ContentLibraryPage() {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search content…"
+            placeholder="Search modules…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9"
           />
         </div>
-        <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
-          <SelectTrigger className="w-48">
-            <Filter className="w-4 h-4 mr-2" />
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-44 h-9">
             <SelectValue placeholder="Content type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="micro_lesson">Micro Lesson</SelectItem>
-            <SelectItem value="video">Video</SelectItem>
-            <SelectItem value="scenario">Scenario</SelectItem>
-            <SelectItem value="scenario_practice">Scenario Practice</SelectItem>
-            <SelectItem value="simulation">Simulation</SelectItem>
-            <SelectItem value="coach_prompt">Coach Prompt</SelectItem>
-            <SelectItem value="quiz">Quiz</SelectItem>
-            <SelectItem value="walkthrough">Walkthrough</SelectItem>
-            <SelectItem value="worked_example">Worked Example</SelectItem>
-            <SelectItem value="checklist">Checklist</SelectItem>
-            <SelectItem value="reflection">Reflection</SelectItem>
-            <SelectItem value="nudge">Nudge</SelectItem>
+            {TYPE_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
+        <Select value={capabilityFilter} onValueChange={setCapabilityFilter}>
+          <SelectTrigger className="w-48 h-9">
+            <SelectValue placeholder="Capability" />
+          </SelectTrigger>
+          <SelectContent>
+            {CAPABILITY_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(search || typeFilter !== "all" || capabilityFilter !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setSearch(""); setTypeFilter("all"); setCapabilityFilter("all"); }}
+            className="text-xs h-9"
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
 
+      {/* Results count */}
+      {!isLoading && (search || typeFilter !== "all" || capabilityFilter !== "all") && (
+        <p className="text-sm text-muted-foreground">
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+        </p>
+      )}
+
+      {/* Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-40" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
+        <div className="text-center py-16 border-2 border-dashed border-border rounded-xl bg-muted/10">
           <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground font-medium">No content found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filter</p>
+          <p className="text-base font-semibold text-foreground mb-1">No modules found</p>
+          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item: any) => {
-            const duration = formatDuration(item.durationSeconds);
-            return (
-              <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer group">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                      {item.title}
-                    </p>
-                    {item.contentType && (
-                      <Badge className={cn("text-xs flex-shrink-0", CONTENT_TYPE_COLORS[item.contentType] ?? "bg-muted text-muted-foreground")}>
-                        {item.contentType.replace(/_/g, " ")}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    {duration && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {duration}
-                      </span>
-                    )}
-                    {item.difficulty && (
-                      <Badge variant="outline" className="text-xs">
-                        Level {item.difficulty}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {item.progress && (
-                    <div className="pt-1 border-t border-border">
-                      <p className="text-xs text-emerald-600 font-medium">
-                        {item.progress.completedAt ? "✓ Completed" : `${item.progress.progressPct ?? 0}% complete`}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((item: any) => (
+            <ContentCard key={item.id} item={item} />
+          ))}
         </div>
       )}
     </div>

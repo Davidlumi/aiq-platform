@@ -83,3 +83,19 @@
 - [x] Simulation session: verified end-to-end flow (select choice → confirm → outcome → complete)
 - [x] All 5 roles tested: Admin, HR Leader, Manager, Learner, Auditor — dashboards load correctly
 - [x] All pages tested: Dashboard, Assessment, Learning Plan, Content Library, Simulations, Reports, Audit Log, Policy, Profile, Users, Tenants
+
+## Enterprise Rebuild (Full Spec Implementation)
+- [x] Phase 1 — Design System: white sidebar (#ffffff), indigo primary (#3B4EFF), Sora font, colorblind-safe capability colours (7 capabilities), correct AiQ logo
+- [x] Phase 2 — ExplanationDrawer component: ScoreBreakdown, PolicyDecisionExplanation, VisibilityBoundaries, WhyAssigned
+- [x] Phase 3 — Database Schema: all 47 canonical tables present, added content_policy_links and content_prerequisites
+- [x] Phase 4 — Assessment Engine: 50 real questions seeded, signal delta scoring, nextItem with full metadata, capability-level breakdown
+- [x] Phase 5 — Learner Experience: LearnerDashboard with readiness state card, AssessmentSessionPage with real questions, LearningPlanPage with why-assigned, ContentLibraryPage with 88 modules, ModulePlayerPage with 9 renderers
+- [x] Phase 6 — Manager + HR Leader: ManagerDashboard readiness heatmap, HRDashboard capability coverage bars
+- [x] Phase 7 — Admin Experience: AdminDashboard KPIs, ContentCMSPage (88 modules), AssessmentBlueprintsPage
+- [x] Phase 8 — Simulation Engine: canonical simulation seeded (6 nodes, 9 choices), SimulationSessionPage with consequence panels
+- [x] Phase 9 — Governance + Audit: AuditLogPage with expandable decision traces, PolicyPage
+- [x] Content Library pageSize fixed: now requests 200 items to show all 88 modules
+- [x] Content CMS pageSize fixed: router max increased to 200 to support admin CMS showing all 88 modules
+- [x] Full QA pass: all 5 roles verified, all pages loading correctly
+- [x] TypeScript: 0 errors
+- [x] Tests: 22/22 passing

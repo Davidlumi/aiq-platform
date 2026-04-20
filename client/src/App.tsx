@@ -28,6 +28,7 @@ import AssessmentPage from "./pages/assessment/AssessmentPage";
 import AssessmentSessionPage from "./pages/assessment/AssessmentSessionPage";
 import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
+import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
 import SimulationListPage from "./pages/simulation/SimulationListPage";
 import SimulationSessionPage from "./pages/simulation/SimulationSessionPage";
 import ReportsPage from "./pages/reports/ReportsPage";
@@ -36,6 +37,8 @@ import PolicyPage from "./pages/policy/PolicyPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import UsersPage from "./pages/admin/UsersPage";
 import TenantsPage from "./pages/admin/TenantsPage";
+import ContentCMSPage from "./pages/admin/ContentCMSPage";
+import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
 
 function ProtectedRoute({
   component: Component,
@@ -95,6 +98,9 @@ function Router() {
       <Route path="/library">
         <ProtectedRoute component={ContentLibraryPage} />
       </Route>
+      <Route path="/learning/module/:contentItemId">
+        <ProtectedRoute component={ModulePlayerPage} />
+      </Route>
       <Route path="/simulations">
         <ProtectedRoute component={SimulationListPage} />
       </Route>
@@ -118,6 +124,12 @@ function Router() {
       </Route>
       <Route path="/admin/tenants">
         <ProtectedRoute component={TenantsPage} />
+      </Route>
+      <Route path="/admin/content">
+        <ProtectedRoute component={ContentCMSPage} />
+      </Route>
+      <Route path="/admin/assessments">
+        <ProtectedRoute component={AssessmentBlueprintsPage} />
       </Route>
 
       {/* 404 */}
