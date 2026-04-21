@@ -159,46 +159,46 @@
 ## Enterprise Readiness Build (Phase 1–5)
 
 ### Phase 1 — Content Expansion
-- [ ] Author and seed 20 prioritisation scenarios (across 6 domains)
-- [ ] Author and seed 20 contradiction probe scenarios (4 inconsistency patterns)
-- [ ] Author and seed 30 risk judgement scenarios (severity, probability, mitigation)
-- [ ] Author and seed 50+ variant scenarios to reach 250+ total
-- [ ] Add confidence_rating column to assessment_answers table
-- [ ] Update submitAnswer tRPC procedure to accept and store confidence ratings
-- [ ] Update scoring engine to compute calibration score from confidence ratings
-- [ ] Update AssessmentSessionPage to show confidence rating interstitial after each answer
+- [x] Author and seed 20 prioritisation scenarios (across 6 domains)
+- [x] Author and seed 20 contradiction probe scenarios (4 inconsistency patterns)
+- [x] Author and seed 30 risk judgement scenarios (severity, probability, mitigation)
+- [x] Author and seed 50+ variant scenarios to reach 250+ total
+- [x] Add confidence_rating column to assessment_answers table
+- [x] Update submitAnswer tRPC procedure to accept and store confidence ratings
+- [x] Update scoring engine to compute calibration score from confidence ratings
+- [x] Update AssessmentSessionPage to show confidence rating interstitial after each answer
 
 ### Phase 2 — Simulation Expansion
-- [ ] Add consequence_text and stakeholder_state columns to simulation_nodes table
-- [ ] Author and seed SIM-006: The AI Ethics Crisis (12 nodes)
-- [ ] Author and seed SIM-007: The Whistleblowing Investigation (10 nodes)
-- [ ] Author and seed SIM-008: The Talent Pipeline Collapse (9 nodes)
-- [ ] Author and seed SIM-009: The Culture Survey Disaster (8 nodes)
-- [ ] Author and seed SIM-010: The TUPE Transfer (11 nodes)
-- [ ] Author and seed SIM-011: The AI Vendor Failure (10 nodes)
-- [ ] Author and seed SIM-012: The DEI Audit (9 nodes)
-- [ ] Update simulation router to return consequence_text and stakeholder_state
-- [ ] Update SimulationSessionPage to display consequence panel and stakeholder card
+- [x] Add consequence_text and stakeholder_state columns to simulation_nodes table
+- [x] Author and seed SIM-006: The AI Ethics Crisis (12 nodes)
+- [x] Author and seed SIM-007: The Whistleblowing Investigation (10 nodes)
+- [x] Author and seed SIM-008: The Talent Pipeline Collapse (9 nodes)
+- [x] Author and seed SIM-009: The Culture Survey Disaster (8 nodes)
+- [x] Author and seed SIM-010: The TUPE Transfer (11 nodes)
+- [x] Author and seed SIM-011: The AI Vendor Failure (10 nodes)
+- [x] Author and seed SIM-012: The DEI Audit (9 nodes)
+- [x] Update simulation router to return consequence_text and stakeholder_state
+- [x] Update SimulationSessionPage to display consequence panel and stakeholder card
 
 ### Phase 3 — UX Layer
-- [ ] Build onboarding journey: /onboarding route with role config + 3 context questions
-- [ ] Build orientation simulation: 3-node unscored format-familiarisation flow
-- [ ] Refactor AssessmentSessionPage: remove progress bar, add confidence rating interstitial
-- [ ] Build three-layer results UX: Layer 1 (radar + 3-sentence narrative), Layer 2 (full signal profile), Layer 3 (LLM development report on demand)
-- [ ] Build narrative continuity: session opening context card for returning users
-- [ ] Build simulation narrative framing: full-screen intro card before first node
-- [ ] Build stakeholder presence card in simulation nodes
+- [x] Build onboarding journey: /onboarding route with role config + 3 context questions
+- [x] Build orientation simulation: 3-node unscored format-familiarisation flow
+- [x] Refactor AssessmentSessionPage: remove progress bar, add confidence rating interstitial
+- [x] Build three-layer results UX: Layer 1 (radar + 3-sentence narrative), Layer 2 (full signal profile), Layer 3 (LLM development report on demand)
+- [x] Build narrative continuity: session opening context card for returning users
+- [x] Build simulation narrative framing: full-screen intro card before first node
+- [x] Build stakeholder presence card in simulation nodes
 
 ### Phase 4 — Enterprise Features
-- [ ] Build organisation context configuration UI (/admin/org-context)
-- [ ] Build HR analytics dashboard: team capability heatmap, risk distribution, development tracking
-- [ ] Build CSV user import UI with role/seniority/team columns
-- [ ] Build results governance controls: visibility settings per role in tenant settings
-- [ ] Implement LLM generation budget: 3 items per session max, fallback to best static item
-- [ ] Enforce LLM forbidden contexts: baseline phase and governance-sensitive scenarios always static
+- [x] Build organisation context configuration UI (/admin/org-context)
+- [x] Build HR analytics dashboard: team capability heatmap, risk distribution, development tracking
+- [x] Build CSV user import UI with role/seniority/team columns
+- [x] Build results governance controls: visibility settings per role in tenant settings
+- [x] Implement LLM generation budget: 3 items per session max, fallback to best static item
+- [x] Enforce LLM forbidden contexts: baseline phase and governance-sensitive scenarios always static
 
 ### Phase 5 — AIL Cold Start
-- [ ] Implement fast inference: onboarding answers → provisional persona + difficulty profile (confidence 0.3)
-- [ ] Implement orientation simulation behavioural inference (answer time, confidence patterns)
-- [ ] Implement early-stage difficulty logic: signal diversity mode for first 2 sessions
-- [ ] Add cold_start flag and 0.5 confidence threshold to persona classification engine
+- [x] Implement fast inference: onboarding answers → provisional persona + difficulty profile (confidence 0.3)
+- [x] Implement orientation simulation behavioural inference (answer time, confidence patterns)
+- [x] Implement early-stage difficulty logic: signal diversity mode for first 2 sessions
+- [x] Add cold_start flag and 0.5 confidence threshold to persona classification engine

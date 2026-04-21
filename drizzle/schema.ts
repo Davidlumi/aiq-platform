@@ -364,6 +364,8 @@ export const simulationNodes = mysqlTable("simulation_nodes", {
   nodeOrder: int("node_order"),
   isStart: boolean("is_start").notNull().default(false),
   isEnd: boolean("is_end").notNull().default(false),
+  consequenceText: text("consequence_text"),
+  stakeholderState: json("stakeholder_state"),
 });
 
 export const simulationChoices = mysqlTable("simulation_choices", {
