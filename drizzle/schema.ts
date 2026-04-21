@@ -639,3 +639,256 @@ export type ContentScenarioAnchor = typeof contentScenarioAnchors.$inferSelect;
 export type ContentFailureMode = typeof contentFailureModes.$inferSelect;
 export type ContentTag = typeof contentTags.$inferSelect;
 export type ContentVersion = typeof contentVersions.$inferSelect;
+
+// ─── Adaptive Intelligence Layer (AIL) Tables ────────────────────────────────
+
+export const ailUserIntelligenceProfiles = mysqlTable("ail_user_intelligence_profiles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  totalSimulationsCompleted: int("total_simulations_completed").notNull().default(0),
+  totalAssessmentsCompleted: int("total_assessments_completed").notNull().default(0),
+  platformEngagementScore: decimal("platform_engagement_score", { precision: 5, scale: 2 }).notNull().default("0.00" as any),
+  nextSimulationRecommendationJson: text("next_simulation_recommendation_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_uip_user").on(t.userId),
+  tenantIdx: index("idx_ail_uip_tenant").on(t.tenantId),
+}));
+
+export const ailSignalLedger = mysqlTable("ail_signal_ledger", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  signalName: varchar("signal_name", { length: 100 }).notNull(),
+  totalScore: decimal("total_score", { precision: 8, scale: 3 }).notNull().default("0.000" as any),
+  observationCount: int("observation_count").notNull().default(0),
+  averageScore: decimal("average_score", { precision: 8, scale: 3 }).notNull().default("0.000" as any),
+  trend: mysqlEnum("trend", ["improving", "stable", "declining"]).notNull().default("stable"),
+  lastObservedAt: timestamp("last_observed_at"),
+  simulationsObservedJson: text("simulations_observed_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_sl_user").on(t.userId),
+  tenantIdx: index("idx_ail_sl_tenant").on(t.tenantId),
+  uniqueUserSignal: unique("unique_user_signal").on(t.userId, t.signalName),
+}));
+
+export const ailFailureModeRegistry = mysqlTable("ail_failure_mode_registry", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  failureMode: varchar("failure_mode", { length: 100 }).notNull(),
+  occurrenceCount: int("occurrence_count").notNull().default(1),
+  severity: mysqlEnum("severity", ["critical", "moderate", "minor"]).notNull().default("minor"),
+  simulationsTriggeredJson: text("simulations_triggered_json"),
+  lastOccurrenceAt: timestamp("last_occurrence_at").defaultNow().notNull(),
+  retestScheduled: boolean("retest_scheduled").notNull().default(false),
+  retestSimulationId: varchar("retest_simulation_id", { length: 36 }),
+  patternFlagged: boolean("pattern_flagged").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_fmr_user").on(t.userId),
+  tenantIdx: index("idx_ail_fmr_tenant").on(t.tenantId),
+  uniqueUserFailureMode: unique("unique_user_failure_mode").on(t.userId, t.failureMode),
+}));
+
+export const ailRetestQueue = mysqlTable("ail_retest_queue", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  targetFailureMode: varchar("target_failure_mode", { length: 100 }).notNull(),
+  scheduledSimulationId: varchar("scheduled_simulation_id", { length: 36 }),
+  contextVariation: text("context_variation"),
+  priority: mysqlEnum("priority", ["high", "medium", "low"]).notNull().default("medium"),
+  scheduledAfterSimulationCount: int("scheduled_after_simulation_count").notNull().default(1),
+  status: mysqlEnum("status", ["pending", "delivered", "passed", "failed"]).notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_rq_user").on(t.userId),
+  statusIdx: index("idx_ail_rq_status").on(t.status),
+}));
+
+export const ailPersonaProfiles = mysqlTable("ail_persona_profiles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  validationOrientation: decimal("validation_orientation", { precision: 4, scale: 2 }).notNull().default("5.00" as any),
+  governanceOrientation: decimal("governance_orientation", { precision: 4, scale: 2 }).notNull().default("5.00" as any),
+  riskOrientation: decimal("risk_orientation", { precision: 4, scale: 2 }).notNull().default("5.00" as any),
+  communicationOrientation: decimal("communication_orientation", { precision: 4, scale: 2 }).notNull().default("5.00" as any),
+  primaryPersona: mysqlEnum("primary_persona", [
+    "strong_validator",
+    "overconfident_decision_maker",
+    "risk_averse_escalator",
+    "passive_deferrer",
+    "governance_anchor_under_pressure",
+    "unclassified",
+  ]).notNull().default("unclassified"),
+  personaConfidence: decimal("persona_confidence", { precision: 4, scale: 3 }).notNull().default("0.000" as any),
+  pressureSensitivityJson: text("pressure_sensitivity_json"),
+  blindAcceptancePattern: boolean("blind_acceptance_pattern").notNull().default(false),
+  governanceBypassPattern: boolean("governance_bypass_pattern").notNull().default(false),
+  overCautiousPattern: boolean("over_cautious_pattern").notNull().default(false),
+  contradictionRigidity: boolean("contradiction_rigidity").notNull().default(false),
+  communicationWeakness: boolean("communication_weakness").notNull().default(false),
+  highConfidenceOverconfidence: boolean("high_confidence_overconfidence").notNull().default(false),
+  narrativeSummary: text("narrative_summary"),
+  narrativeUpdatedAt: timestamp("narrative_updated_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_pp_user").on(t.userId),
+  tenantIdx: index("idx_ail_pp_tenant").on(t.tenantId),
+  personaIdx: index("idx_ail_pp_persona").on(t.primaryPersona),
+}));
+
+export const ailOrgContext = mysqlTable("ail_org_context", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull().unique(),
+  sector: mysqlEnum("sector", [
+    "financial_services", "healthcare", "technology", "retail",
+    "public_sector", "professional_services", "manufacturing", "other",
+  ]).notNull().default("other"),
+  primaryRegulator: varchar("primary_regulator", { length: 100 }),
+  additionalRegulatorsJson: text("additional_regulators_json"),
+  reportingRequirementsJson: text("reporting_requirements_json"),
+  recentRegulatoryActionsJson: text("recent_regulatory_actions_json"),
+  headcount: int("headcount"),
+  structure: mysqlEnum("structure", ["centralised", "decentralised", "matrix", "holding_company"]).default("centralised"),
+  geographiesJson: text("geographies_json"),
+  strategicPrioritiesJson: text("strategic_priorities_json"),
+  currentChallengesJson: text("current_challenges_json"),
+  recentEventsJson: text("recent_events_json"),
+  riskAppetiteOverall: mysqlEnum("risk_appetite_overall", ["risk_averse", "moderate", "risk_tolerant"]).default("moderate"),
+  riskAppetiteLegal: mysqlEnum("risk_appetite_legal", ["risk_averse", "moderate", "risk_tolerant"]).default("risk_averse"),
+  riskAppetiteReputational: mysqlEnum("risk_appetite_reputational", ["risk_averse", "moderate", "risk_tolerant"]).default("moderate"),
+  riskAppetiteInnovation: mysqlEnum("risk_appetite_innovation", ["risk_averse", "moderate", "risk_tolerant"]).default("moderate"),
+  aiMaturityLevel: mysqlEnum("ai_maturity_level", ["early_adopter", "scaling", "mature", "cautious"]).default("early_adopter"),
+  currentAiToolsJson: text("current_ai_tools_json"),
+  aiGovernanceFramework: boolean("ai_governance_framework").default(false),
+  aiEthicsCommittee: boolean("ai_ethics_committee").default(false),
+  recentAiIncidentsJson: text("recent_ai_incidents_json"),
+  hierarchyLevel: mysqlEnum("hierarchy_level", ["flat", "moderate", "hierarchical"]).default("moderate"),
+  decisionMakingStyle: mysqlEnum("decision_making_style", ["consensus", "top_down", "data_driven"]).default("consensus"),
+  hrInfluence: mysqlEnum("hr_influence", ["strategic_partner", "operational", "administrative"]).default("operational"),
+  ceoStyle: mysqlEnum("ceo_style", ["collaborative", "directive", "data_driven", "charismatic"]).default("collaborative"),
+  cfoStyle: mysqlEnum("cfo_style", ["risk_averse", "growth_focused", "cost_focused"]).default("cost_focused"),
+  hasAiUsagePolicy: boolean("has_ai_usage_policy").default(false),
+  hasDataProtectionPolicy: boolean("has_data_protection_policy").default(true),
+  hasRedundancyPolicy: boolean("has_redundancy_policy").default(false),
+  hasWhistleblowingPolicy: boolean("has_whistleblowing_policy").default(false),
+  hasEdiPolicy: boolean("has_edi_policy").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_ail_oc_tenant").on(t.tenantId),
+}));
+
+export const ailNarrativeState = mysqlTable("ail_narrative_state", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  legalRiskLevel: mysqlEnum("legal_risk_level", ["low", "moderate", "high", "critical"]).notNull().default("low"),
+  employeeRelationsScore: int("employee_relations_score").notNull().default(70),
+  regulatoryStandingScore: int("regulatory_standing_score").notNull().default(80),
+  csuiteConfidenceInHr: int("csuite_confidence_in_hr").notNull().default(60),
+  boardConfidenceInHr: int("board_confidence_in_hr").notNull().default(60),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_ns_user").on(t.userId),
+  tenantIdx: index("idx_ail_ns_tenant").on(t.tenantId),
+}));
+
+export const ailStakeholderRelationships = mysqlTable("ail_stakeholder_relationships", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  stakeholderId: varchar("stakeholder_id", { length: 50 }).notNull(),
+  stakeholderName: varchar("stakeholder_name", { length: 100 }).notNull(),
+  stakeholderRole: varchar("stakeholder_role", { length: 100 }).notNull(),
+  relationshipScore: int("relationship_score").notNull().default(0),
+  trustLevel: mysqlEnum("trust_level", ["high", "moderate", "low", "broken"]).notNull().default("moderate"),
+  currentEmotionalState: mysqlEnum("current_emotional_state", [
+    "collaborative", "pressured", "defensive", "frustrated",
+    "distressed", "confident", "suspicious", "resigned",
+  ]).notNull().default("collaborative"),
+  knownHistoryJson: text("known_history_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_sr_user").on(t.userId),
+  tenantIdx: index("idx_ail_sr_tenant").on(t.tenantId),
+  uniqueUserStakeholder: unique("unique_user_stakeholder").on(t.userId, t.stakeholderId),
+}));
+
+export const ailNarrativeEvents = mysqlTable("ail_narrative_events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  simulationId: varchar("simulation_id", { length: 36 }),
+  eventType: mysqlEnum("event_type", ["decision", "consequence", "external_event"]).notNull().default("decision"),
+  description: text("description").notNull(),
+  stakeholdersInvolvedJson: text("stakeholders_involved_json"),
+  consequenceForFuture: text("consequence_for_future"),
+  occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_ne_user").on(t.userId),
+  tenantIdx: index("idx_ail_ne_tenant").on(t.tenantId),
+  simIdx: index("idx_ail_ne_simulation").on(t.simulationId),
+}));
+
+export const ailNarrativeThreads = mysqlTable("ail_narrative_threads", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  threadName: varchar("thread_name", { length: 200 }).notNull(),
+  threadType: mysqlEnum("thread_type", ["consequence", "escalation", "relationship"]).notNull().default("consequence"),
+  startedInSimulationId: varchar("started_in_simulation_id", { length: 36 }),
+  currentStatus: mysqlEnum("current_status", ["active", "resolved", "escalated"]).notNull().default("active"),
+  nextExpectedEvent: text("next_expected_event"),
+  relatedSimulationsJson: text("related_simulations_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_nt_user").on(t.userId),
+  tenantIdx: index("idx_ail_nt_tenant").on(t.tenantId),
+  statusIdx: index("idx_ail_nt_status").on(t.currentStatus),
+}));
+
+export const ailDifficultyProfiles = mysqlTable("ail_difficulty_profiles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  signalClarity: int("signal_clarity").notNull().default(4),
+  ambiguity: int("ambiguity").notNull().default(2),
+  politicalComplexity: int("political_complexity").notNull().default(2),
+  informationalCompleteness: int("informational_completeness").notNull().default(4),
+  timePressure: int("time_pressure").notNull().default(2),
+  consequenceVisibility: int("consequence_visibility").notNull().default(4),
+  dimensionPerformanceJson: text("dimension_performance_json"),
+  adjustmentHistoryJson: text("adjustment_history_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_ail_dp_user").on(t.userId),
+  tenantIdx: index("idx_ail_dp_tenant").on(t.tenantId),
+}));
+
+// AIL Types
+export type AilUserIntelligenceProfile = typeof ailUserIntelligenceProfiles.$inferSelect;
+export type AilSignalLedger = typeof ailSignalLedger.$inferSelect;
+export type AilFailureModeRegistry = typeof ailFailureModeRegistry.$inferSelect;
+export type AilRetestQueue = typeof ailRetestQueue.$inferSelect;
+export type AilPersonaProfile = typeof ailPersonaProfiles.$inferSelect;
+export type AilOrgContext = typeof ailOrgContext.$inferSelect;
+export type AilNarrativeState = typeof ailNarrativeState.$inferSelect;
+export type AilStakeholderRelationship = typeof ailStakeholderRelationships.$inferSelect;
+export type AilNarrativeEvent = typeof ailNarrativeEvents.$inferSelect;
+export type AilNarrativeThread = typeof ailNarrativeThreads.$inferSelect;
+export type AilDifficultyProfile = typeof ailDifficultyProfiles.$inferSelect;

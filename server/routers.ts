@@ -12,6 +12,7 @@ import { reportRouter } from "./routers/report";
 import { auditRouter } from "./routers/audit";
 import { dashboardRouter } from "./routers/dashboard";
 import { contentRouter } from "./routers/content";
+import { intelligenceRouter } from "./routers/intelligence";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -26,6 +27,7 @@ export const appRouter = router({
   audit: auditRouter,
   dashboard: dashboardRouter,
   content: contentRouter,
+  intelligence: intelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;
