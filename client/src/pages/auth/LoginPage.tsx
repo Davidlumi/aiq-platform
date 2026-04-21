@@ -80,13 +80,18 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tenantSlug: "demo" },
+    defaultValues: { tenantSlug: "lumi" },
   });
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.auth.me.invalidate();
-      navigate("/dashboard");
+      // Super admins go directly to back office
+      if (data.roles?.includes("super_admin")) {
+        navigate("/backoffice");
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (err) => {
       setServerError(err.message);
@@ -101,7 +106,7 @@ export default function LoginPage() {
   function fillDemo(cred: (typeof DEMO_CREDENTIALS)[0]) {
     setValue("email", cred.email);
     setValue("password", cred.password);
-    setValue("tenantSlug", "demo");
+    setValue("tenantSlug", "lumi");
     setServerError(null);
   }
 
@@ -298,7 +303,7 @@ export default function LoginPage() {
               <Input
                 id="tenantSlug"
                 {...register("tenantSlug")}
-                placeholder="e.g. demo"
+                placeholder="e.g. lumi"
                 className="h-10 bg-white border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-[#0F6E56]/20"
               />
               {errors.tenantSlug && (

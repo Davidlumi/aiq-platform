@@ -29,6 +29,7 @@ import {
   FolderOpen,
   Layers,
   BookMarked,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -100,6 +101,13 @@ const NAV_ITEMS: NavItem[] = [
     path: "/admin/tenants",
     icon: Building2,
     roles: ["platform_super_admin"],
+    section: "admin",
+  },
+  {
+    label: "Back Office",
+    path: "/backoffice",
+    icon: ShieldCheck,
+    roles: ["super_admin"],
     section: "admin",
   },
 ];

@@ -132,6 +132,9 @@
 - [x] Seed all content into DB and wire to adaptive assessment engine (baseline phase now pulls from content_scenarios)
 - [x] Content Management System UI: scenario browser with filters, version history, admin CRUD (AssessmentContentPage)
 - [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future)
+
+## Bug Fixes
+- [x] Assessment session page: answer options bug — deferred (old dataset wiped, clean slate)
 - [x] Full QA of content system: 50/50 tests passing, 0 TypeScript errors
 
 ## Demo Org & Assessment Stress Test
@@ -202,3 +205,14 @@
 - [x] Implement orientation simulation behavioural inference (answer time, confidence patterns)
 - [x] Implement early-stage difficulty logic: signal diversity mode for first 2 sessions
 - [x] Add cold_start flag and 0.5 confidence threshold to persona classification engine
+
+## Clean Slate + Back-Office Build
+- [x] Wipe all assessment engine data (sessions, answers, scores, content scenarios, options, blueprints, AIL tables, demo users, demo tenants)
+- [x] Create master admin user: david@lumihr.co.uk, role=super_admin, tenant=lumi (platform owner tenant)
+- [x] Add super_admin role to users table enum (already existed in roles table)
+- [x] Build /backoffice route (super_admin only, hidden from regular nav)
+- [x] Back-office: Organisations tab — list all tenants, create org, edit org (name, slug, domain, status)
+- [x] Back-office: Users tab — list all users across all orgs, create user, edit user, reset password, assign role, suspend/activate
+- [x] Back-office: tRPC procedures: backoffice.listOrgs, backoffice.createOrg, backoffice.updateOrg, backoffice.listUsers, backoffice.createUser, backoffice.updateUser, backoffice.resetPassword, backoffice.assignRole, backoffice.stats
+- [x] Guard all backoffice procedures with super_admin check
+- [x] Login page: default org code changed to lumi, super_admin redirects to /backoffice on login

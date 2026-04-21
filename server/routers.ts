@@ -13,6 +13,7 @@ import { auditRouter } from "./routers/audit";
 import { dashboardRouter } from "./routers/dashboard";
 import { contentRouter } from "./routers/content";
 import { intelligenceRouter } from "./routers/intelligence";
+import { backofficeRouter } from "./routers/backoffice";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -28,6 +29,7 @@ export const appRouter = router({
   dashboard: dashboardRouter,
   content: contentRouter,
   intelligence: intelligenceRouter,
+  backoffice: backofficeRouter,
 });
 
 export type AppRouter = typeof appRouter;

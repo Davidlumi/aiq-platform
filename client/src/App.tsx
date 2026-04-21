@@ -43,6 +43,7 @@ import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
 import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
 import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
+import BackOfficePage from "./pages/backoffice/BackOfficePage";
 
 function ProtectedRoute({
   component: Component,
@@ -143,10 +144,12 @@ function Router() {
       <Route path="/admin/assessments">
         <ProtectedRoute component={AssessmentBlueprintsPage} />
       </Route>
-      <Route path="/admin/scenarios">
+       <Route path="/admin/scenarios">
         <ProtectedRoute component={AssessmentContentPage} />
       </Route>
-
+      <Route path="/backoffice">
+        <ProtectedRoute component={BackOfficePage} />
+      </Route>
       {/* 404 */}
       <Route component={NotFound} />
     </Switch>
