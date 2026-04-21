@@ -160,9 +160,9 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
 }));
 
 export const assessmentAnswers = mysqlTable("assessment_answers", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+  id: varchar("id", { length: 36 }).primaryKey().notNull(),
   sessionId: varchar("session_id", { length: 36 }).notNull(),
-  itemId: varchar("item_id", { length: 36 }).notNull(),
+  itemId: varchar("item_id", { length: 100 }).notNull(),
   selectedValueJson: json("selected_value_json"),
   freeText: text("free_text"),
   confidenceScore: decimal("confidence_score", { precision: 5, scale: 4 }),

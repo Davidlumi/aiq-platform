@@ -374,6 +374,15 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (existing[0]) return { sessionId: existing[0].id, resumed: true };
+      // Validate blueprint exists
+      const blueprint = await db
+        .select({ id: assessmentBlueprints.id })
+        .from(assessmentBlueprints)
+        .where(eq(assessmentBlueprints.id, input.blueprintId))
+        .limit(1);
+      if (!blueprint[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: `Blueprint '${input.blueprintId}' not found` });
+      }
       const sessionId = nanoid();
       await db.insert(assessmentSessions).values({
         id: sessionId,

@@ -133,3 +133,11 @@
 - [x] Content Management System UI: scenario browser with filters, version history, admin CRUD (AssessmentContentPage)
 - [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future)
 - [x] Full QA of content system: 50/50 tests passing, 0 TypeScript errors
+
+## Demo Org & Assessment Stress Test
+- [x] Design demo org hierarchy: 22 HR roles across 8 families, reporting lines, org chart
+- [x] Seed demo users: 33 users covering all 22 HR roles with org hierarchy and reporting lines
+- [x] Seed assessment sessions: 85.7% completion rate (30/35 sessions completed), 512+ answers, 30 scores
+- [x] Stress test: 43/43 tests passing (100%) — concurrent sessions, edge cases, blueprint validation, SQL injection, performance
+- [x] assessment_answers.item_id expanded to VARCHAR(100) to support cs- prefixed content scenario IDs
+- [x] Verify dashboard data reflects demo org state correctly
