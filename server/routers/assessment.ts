@@ -19,6 +19,8 @@ import {
   assessmentScores,
   assessmentSessions,
   auditLogs,
+  contentScenarioOptions,
+  contentScenarios,
   credibilityScores,
   decisionLogs,
   riskScores,
@@ -91,23 +93,41 @@ async function enrichAnswers(
 ): Promise<AnswerData[]> {
   return Promise.all(
     answers.map(async (a) => {
-      const item = await db
-        .select({ difficulty: assessmentItems.difficulty, metadataJson: assessmentItems.metadataJson })
-        .from(assessmentItems)
-        .where(eq(assessmentItems.id, a.itemId))
-        .limit(1);
       let riskLevel = "Medium";
       let capabilityKey = "execution";
       let interactionType = "situational_judgement";
+      let itemDifficulty = 2;
       let optionPosition: number | null = null;
-      try {
-        const meta = (typeof item[0]?.metadataJson === "string"
-          ? JSON.parse(item[0].metadataJson as string)
-          : (item[0]?.metadataJson ?? {})) as Record<string, unknown>;
-        riskLevel = (meta.risk_level as string) ?? "Medium";
-        capabilityKey = (meta.capability_key as string) ?? "execution";
-        interactionType = (meta.interaction_type as string) ?? "situational_judgement";
-      } catch {}
+      // Handle content_scenarios items (cs- prefix)
+      if (a.itemId.startsWith("cs-")) {
+        const scenarioId = a.itemId.slice(3);
+        const cs = await db
+          .select({ difficulty: contentScenarios.difficulty, riskLevel: contentScenarios.riskLevel, capabilityKey: contentScenarios.capabilityKey, interactionType: contentScenarios.interactionType })
+          .from(contentScenarios)
+          .where(eq(contentScenarios.id, scenarioId))
+          .limit(1);
+        if (cs[0]) {
+          riskLevel = cs[0].riskLevel;
+          capabilityKey = cs[0].capabilityKey;
+          interactionType = cs[0].interactionType;
+          itemDifficulty = cs[0].difficulty;
+        }
+      } else {
+        const item = await db
+          .select({ difficulty: assessmentItems.difficulty, metadataJson: assessmentItems.metadataJson })
+          .from(assessmentItems)
+          .where(eq(assessmentItems.id, a.itemId))
+          .limit(1);
+        try {
+          const meta = (typeof item[0]?.metadataJson === "string"
+            ? JSON.parse(item[0].metadataJson as string)
+            : (item[0]?.metadataJson ?? {})) as Record<string, unknown>;
+          riskLevel = (meta.risk_level as string) ?? "Medium";
+          capabilityKey = (meta.capability_key as string) ?? "execution";
+          interactionType = (meta.interaction_type as string) ?? "situational_judgement";
+          itemDifficulty = item[0]?.difficulty ?? 2;
+        } catch {}
+      }
       if (a.selectedValueJson) {
         try {
           const selectedVal = typeof a.selectedValueJson === "string"
@@ -137,13 +157,65 @@ async function enrichAnswers(
         signalDeltasJson: a.signalDeltasJson ?? {},
         eventCodesJson: a.eventCodesJson ?? [],
         riskLevel,
-        difficulty: item[0]?.difficulty ?? 2,
+        difficulty: itemDifficulty,
         capabilityKey,
         interactionType,
         optionPosition,
       };
     })
   );
+}
+
+// ─── Helper: Get next item from content_scenarios library ───────────────────
+
+async function getNextContentScenario(
+  answeredItemIds: string[],
+  answeredCount: number,
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
+) {
+  const targetDifficulty = answeredCount < 3 ? 2 : answeredCount < 7 ? 3 : 4;
+  const contentAnsweredIds = answeredItemIds.filter(id => id.startsWith("cs-")).map(id => id.slice(3));
+  const candidates = await db
+    .select()
+    .from(contentScenarios)
+    .where(eq(contentScenarios.status, "published"))
+    .limit(200);
+  const unanswered = candidates
+    .filter(s => !contentAnsweredIds.includes(s.id))
+    .sort((a, b) => Math.abs(a.difficulty - targetDifficulty) - Math.abs(b.difficulty - targetDifficulty));
+  if (unanswered.length === 0) return null;
+  const scenario = unanswered[0];
+  const options = await db
+    .select()
+    .from(contentScenarioOptions)
+    .where(eq(contentScenarioOptions.scenarioId, scenario.id))
+    .orderBy(contentScenarioOptions.optionOrder);
+  const itemId = `cs-${scenario.id}`;
+  return {
+    id: itemId,
+    itemType: scenario.interactionType,
+    prompt: [scenario.scenario, scenario.constraint, scenario.question].filter(Boolean).join("\n\n"),
+    difficulty: scenario.difficulty,
+    title: scenario.title,
+    scenario: scenario.scenario,
+    constraint: scenario.constraint ?? "",
+    question: scenario.question,
+    capability: CAPABILITY_DISPLAY[scenario.capabilityKey] ?? scenario.capabilityKey,
+    capabilityKey: scenario.capabilityKey,
+    workflow: scenario.workflowKey ?? "",
+    riskLevel: scenario.riskLevel,
+    interactionType: scenario.interactionType,
+    interactionId: scenario.interactionId,
+    primarySignal: scenario.primarySignal ?? scenario.capabilityKey,
+    displayOrder: answeredCount + 1,
+    isGenerated: false,
+    options: options.map((opt, i) => ({
+      id: `${itemId}-opt-${i}`,
+      label: opt.label,
+      value: opt.value,
+      optionOrder: opt.optionOrder,
+    })),
+  };
 }
 
 // ─── Helper: Get next static item ────────────────────────────────────────────
@@ -384,7 +456,12 @@ export const assessmentRouter = router({
 
       if (session[0].state === "in_progress" && answeredCount < MINIMUM_EVIDENCE.targetItems) {
         if (phase === "baseline") {
-          nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
+          // Try content_scenarios library first (new canonical source)
+          nextItem = await getNextContentScenario(answeredItemIds, answeredCount, db);
+          // Fall back to blueprint-linked assessmentItems if content library is empty
+          if (!nextItem) {
+            nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
+          }
         }
 
         if ((phase === "adaptive" || phase === "validation") && !nextItem) {

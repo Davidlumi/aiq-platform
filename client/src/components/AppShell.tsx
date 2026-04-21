@@ -28,6 +28,7 @@ import {
   Bell,
   FolderOpen,
   Layers,
+  BookMarked,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +78,13 @@ const NAV_ITEMS: NavItem[] = [
     label: "Blueprints",
     path: "/admin/assessments",
     icon: Layers,
+    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
+    section: "admin",
+  },
+  {
+    label: "Scenario Library",
+    path: "/admin/scenarios",
+    icon: BookMarked,
     roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
     section: "admin",
   },

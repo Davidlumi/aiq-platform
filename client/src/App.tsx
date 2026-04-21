@@ -40,6 +40,7 @@ import UsersPage from "./pages/admin/UsersPage";
 import TenantsPage from "./pages/admin/TenantsPage";
 import ContentCMSPage from "./pages/admin/ContentCMSPage";
 import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
+import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
 
 function ProtectedRoute({
   component: Component,
@@ -134,6 +135,9 @@ function Router() {
       </Route>
       <Route path="/admin/assessments">
         <ProtectedRoute component={AssessmentBlueprintsPage} />
+      </Route>
+      <Route path="/admin/scenarios">
+        <ProtectedRoute component={AssessmentContentPage} />
       </Route>
 
       {/* 404 */}

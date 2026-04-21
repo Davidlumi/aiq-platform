@@ -517,3 +517,125 @@ export type Simulation = typeof simulations.$inferSelect;
 export type SimulationSession = typeof simulationSessions.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type ReportJob = typeof reportJobs.$inferSelect;
+
+// ─── Content System ───────────────────────────────────────────────────────────
+
+export const contentRoles = mysqlTable("content_roles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  label: varchar("label", { length: 200 }).notNull(),
+  family: varchar("family", { length: 100 }).notNull(),
+  description: text("description"),
+  aiUsagePatternsJson: json("ai_usage_patterns_json").$type<string[]>().$default(() => ([])),
+  capabilityWeightingsJson: json("capability_weightings_json").$type<Record<string, number>>().$default(() => ({})),
+  failurePointsJson: json("failure_points_json").$type<string[]>().$default(() => ([])),
+  riskLevel: mysqlEnum("risk_level", ["low", "medium", "high", "critical"]).notNull().default("medium"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export const contentWorkflows = mysqlTable("content_workflows", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  domain: varchar("domain", { length: 100 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  stepsJson: json("steps_json").$type<Array<{ step: number; action: string; aiUsage?: string; riskPoint?: string }>>().$default(() => ([])),
+  aiUsagePointsJson: json("ai_usage_points_json").$type<string[]>().$default(() => ([])),
+  riskPointsJson: json("risk_points_json").$type<string[]>().$default(() => ([])),
+  governanceRequirementsJson: json("governance_requirements_json").$type<string[]>().$default(() => ([])),
+  applicableRoleKeysJson: json("applicable_role_keys_json").$type<string[]>().$default(() => ([])),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export const contentScenarios = mysqlTable("content_scenarios", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  interactionId: varchar("interaction_id", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  domain: varchar("domain", { length: 100 }).notNull(),
+  capabilityKey: varchar("capability_key", { length: 50 }).notNull(),
+  interactionType: varchar("interaction_type", { length: 50 }).notNull(),
+  difficulty: int("difficulty").notNull().default(2),
+  riskLevel: mysqlEnum("risk_level", ["Low", "Medium", "High", "Critical"]).notNull().default("Medium"),
+  governanceSensitive: boolean("governance_sensitive").notNull().default(false),
+  scenario: text("scenario").notNull(),
+  constraint: text("constraint"),
+  question: text("question").notNull(),
+  workflowKey: varchar("workflow_key", { length: 100 }),
+  roleKeysJson: json("role_keys_json").$type<string[]>().$default(() => ([])),
+  failureModeKeysJson: json("failure_mode_keys_json").$type<string[]>().$default(() => ([])),
+  tagsJson: json("tags_json").$type<string[]>().$default(() => ([])),
+  primarySignal: varchar("primary_signal", { length: 100 }),
+  ambiguityLevel: mysqlEnum("ambiguity_level", ["low", "medium", "high"]).notNull().default("medium"),
+  status: mysqlEnum("status", ["draft", "published", "archived", "under_review"]).notNull().default("draft"),
+  version: int("version").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  domainCapIdx: index("idx_content_scenarios_domain_cap").on(t.domain, t.capabilityKey),
+  statusIdx: index("idx_content_scenarios_status").on(t.status),
+}));
+
+export const contentScenarioOptions = mysqlTable("content_scenario_options", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  scenarioId: varchar("scenario_id", { length: 36 }).notNull(),
+  optionOrder: int("option_order").notNull(),
+  label: text("label").notNull(),
+  value: varchar("value", { length: 100 }).notNull(),
+  outcomeClass: varchar("outcome_class", { length: 50 }),
+  signalDeltasJson: json("signal_deltas_json").$type<Record<string, number>>().$default(() => ({})),
+  rationaleText: text("rationale_text"),
+  isOptimal: boolean("is_optimal").notNull().default(false),
+});
+
+export const contentScenarioAnchors = mysqlTable("content_scenario_anchors", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  scenarioId: varchar("scenario_id", { length: 36 }).notNull(),
+  anchorKey: varchar("anchor_key", { length: 50 }).notNull(),
+  anchorLabel: varchar("anchor_label", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  scoreRange: varchar("score_range", { length: 20 }),
+});
+
+export const contentFailureModes = mysqlTable("content_failure_modes", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  label: varchar("label", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  hrExamplesJson: json("hr_examples_json").$type<string[]>().$default(() => ([])),
+  riskImplicationsJson: json("risk_implications_json").$type<string[]>().$default(() => ([])),
+  capabilityKeysJson: json("capability_keys_json").$type<string[]>().$default(() => ([])),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull().default("medium"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const contentTags = mysqlTable("content_tags", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  label: varchar("label", { length: 200 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const contentVersions = mysqlTable("content_versions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  scenarioId: varchar("scenario_id", { length: 36 }).notNull(),
+  version: int("version").notNull(),
+  changeType: mysqlEnum("change_type", ["created", "edited", "reviewed", "published", "archived"]).notNull(),
+  changedBy: varchar("changed_by", { length: 36 }),
+  changeSummary: text("change_summary"),
+  snapshotJson: json("snapshot_json").$type<Record<string, unknown>>().$default(() => ({})),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  scenarioVersionIdx: index("idx_content_versions_scenario").on(t.scenarioId, t.version),
+}));
+
+export type ContentRole = typeof contentRoles.$inferSelect;
+export type ContentWorkflow = typeof contentWorkflows.$inferSelect;
+export type ContentScenario = typeof contentScenarios.$inferSelect;
+export type ContentScenarioOption = typeof contentScenarioOptions.$inferSelect;
+export type ContentScenarioAnchor = typeof contentScenarioAnchors.$inferSelect;
+export type ContentFailureMode = typeof contentFailureModes.$inferSelect;
+export type ContentTag = typeof contentTags.$inferSelect;
+export type ContentVersion = typeof contentVersions.$inferSelect;

@@ -121,15 +121,15 @@
 - [x] Full end-to-end QA of adaptive flow across multiple roles
 
 ## AIQ Assessment Content System (Full Build)
-- [ ] DB schema: content_roles, content_workflows, content_scenarios, content_scenario_options, content_scenario_anchors, content_failure_modes, content_tags, content_versions
-- [ ] Role architecture: 22 roles across 8 families with workflows, AI usage patterns, capability weightings, failure points
-- [ ] Workflow library: 13 domains with step-by-step flows, AI usage points, risk points, governance requirements
-- [ ] Scenario library: 200+ base scenarios with full metadata, scoring anchors, failure tags, interaction types
-- [ ] AI failure mode library: 10 failure types with HR examples and risk implications
-- [ ] Governance/ER high-risk case library: ER, redundancy, bias, legal scenarios
-- [ ] Content tagging system: role, workflow, capability, interaction type, difficulty, risk, ambiguity, failure mode, governance sensitivity
-- [ ] Content versioning: version tracking, auditability, comparability
-- [ ] Seed all content into DB and wire to adaptive assessment engine
-- [ ] Content Management System UI: scenario browser with filters, version history, admin CRUD
-- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation
-- [ ] Full QA of content system
+- [x] DB schema: content_roles, content_workflows, content_scenarios, content_scenario_options, content_scenario_anchors, content_failure_modes, content_tags, content_versions
+- [x] Role architecture: 22 roles across 8 families with workflows, AI usage patterns, capability weightings, failure points
+- [x] Workflow library: 13 workflow domains seeded with AI usage levels and domain classification
+- [x] Scenario library: 79 scenarios across 14 domains with full metadata, 316 options, 66 scoring anchors, failure tags, interaction types
+- [x] AI failure mode library: 10 failure types with HR examples and risk implications
+- [x] Governance/ER high-risk case library: ER, redundancy, bias, legal scenarios (tagged governance_sensitive=true)
+- [x] Content tagging system: 34 tags across capability/risk/interaction/governance categories
+- [x] Content versioning: version tracking, auditability, comparability (content_versions table + router)
+- [x] Seed all content into DB and wire to adaptive assessment engine (baseline phase now pulls from content_scenarios)
+- [x] Content Management System UI: scenario browser with filters, version history, admin CRUD (AssessmentContentPage)
+- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future)
+- [x] Full QA of content system: 50/50 tests passing, 0 TypeScript errors
