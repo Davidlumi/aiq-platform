@@ -21,16 +21,46 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Brain, Shield, BarChart3, BookOpen, Building2, Settings, FileText, Zap } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+type NavSection = {
+  section: string;
+  items: { icon: React.ElementType; label: string; path: string }[];
+};
+
+const navSections: NavSection[] = [
+  {
+    section: "Platform",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+      { icon: Brain, label: "Assessments", path: "/assessment" },
+      { icon: Zap, label: "Simulations", path: "/simulations" },
+      { icon: BarChart3, label: "Analytics", path: "/analytics" },
+    ],
+  },
+  {
+    section: "Development",
+    items: [
+      { icon: BookOpen, label: "Learning", path: "/learning" },
+      { icon: FileText, label: "My Reports", path: "/reports" },
+    ],
+  },
+  {
+    section: "Admin",
+    items: [
+      { icon: Users, label: "Users", path: "/admin/users" },
+      { icon: Building2, label: "Org Context", path: "/admin/org-context" },
+      { icon: Shield, label: "Content", path: "/admin/content" },
+      { icon: Settings, label: "Blueprints", path: "/admin/assessments" },
+    ],
+  },
 ];
+
+const menuItems = navSections.flatMap(s => s.items);
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -178,27 +208,34 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+          <SidebarContent className="gap-0 overflow-y-auto">
+            {navSections.map(section => (
+              <div key={section.section}>
+                {!isCollapsed && (
+                  <p className="px-4 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    {section.section}
+                  </p>
+                )}
+                <SidebarMenu className="px-2 py-0.5">
+                  {section.items.map(item => {
+                    const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className="h-9 transition-all font-normal"
+                        >
+                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </div>
+            ))}
           </SidebarContent>
 
           <SidebarFooter className="p-3">

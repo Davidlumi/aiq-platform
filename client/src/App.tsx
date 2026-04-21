@@ -41,6 +41,8 @@ import TenantsPage from "./pages/admin/TenantsPage";
 import ContentCMSPage from "./pages/admin/ContentCMSPage";
 import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
 import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
+import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
+import OrgContextPage from "./pages/admin/OrgContextPage";
 
 function ProtectedRoute({
   component: Component,
@@ -83,6 +85,8 @@ function Router() {
       <Route path="/">
         <RootRedirect />
       </Route>
+      {/* Onboarding */}
+      <Route path="/onboarding" component={OnboardingWizard} />
 
       {/* Protected routes */}
       <Route path="/dashboard">
@@ -130,6 +134,9 @@ function Router() {
       <Route path="/admin/tenants">
         <ProtectedRoute component={TenantsPage} />
       </Route>
+      <Route path="/admin/org-context">
+        <ProtectedRoute component={OrgContextPage} />
+      </Route>
       <Route path="/admin/content">
         <ProtectedRoute component={ContentCMSPage} />
       </Route>
@@ -156,6 +163,8 @@ function RootRedirect() {
     );
   }
   if (!user) return <Redirect to="/login" />;
+  // Route new users to onboarding wizard
+  if (!(user as any).onboardingCompleted) return <Redirect to="/onboarding" />;
   return <Redirect to="/dashboard" />;
 }
 

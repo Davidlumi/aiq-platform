@@ -53,6 +53,11 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("last_signed_in"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  experienceLevel: mysqlEnum("experience_level", ["junior", "mid", "senior", "principal"]),
+  aiUsageLevel: mysqlEnum("ai_usage_level", ["none", "occasional", "regular", "advanced"]),
+  jobFunction: varchar("job_function", { length: 100 }),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),

@@ -14,6 +14,7 @@ import { COOKIE_NAME } from "../../shared/const";
 import { users, tenants } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { applyColdStart } from "../ail/coldStart";
 
 export const authRouter = router({
   // Get current user with roles
@@ -28,8 +29,52 @@ export const authRouter = router({
       tenantId: ctx.user.tenantId,
       status: ctx.user.status,
       roles,
+      onboardingCompleted: ctx.user.onboardingCompleted ?? false,
+      experienceLevel: ctx.user.experienceLevel ?? null,
+      aiUsageLevel: ctx.user.aiUsageLevel ?? null,
+      jobFunction: ctx.user.jobFunction ?? null,
     };
   }),
+
+  // Complete onboarding wizard — seeds AIL cold start
+  completeOnboarding: protectedProcedure
+    .input(z.object({
+      experienceLevel: z.enum(["junior", "mid", "senior", "principal"]),
+      aiUsageLevel: z.enum(["none", "occasional", "regular", "advanced"]),
+      jobFunction: z.string().min(1).max(100),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      await db.update(users)
+        .set({
+          onboardingCompleted: true,
+          experienceLevel: input.experienceLevel,
+          aiUsageLevel: input.aiUsageLevel,
+          jobFunction: input.jobFunction,
+          onboardingCompletedAt: new Date(),
+        })
+        .where(eq(users.id, ctx.user.id));
+      // Seed AIL cold start from onboarding signals (non-blocking)
+      // Map auth enum values to coldStart enum values
+      const expLevelMap: Record<string, "junior" | "mid" | "senior" | "director" | "executive"> = {
+        junior: "junior", mid: "mid", senior: "senior", principal: "director",
+      };
+      const aiLevelMap: Record<string, "never" | "occasionally" | "regularly" | "daily"> = {
+        none: "never", occasional: "occasionally", regular: "regularly", advanced: "daily",
+      };
+      applyColdStart({
+        userId: ctx.user.id,
+        tenantId: ctx.user.tenantId,
+        experienceLevel: expLevelMap[input.experienceLevel] ?? "mid",
+        aiUsageLevel: aiLevelMap[input.aiUsageLevel] ?? "occasionally",
+        primaryDomain: input.jobFunction,
+        governanceFamiliarity: "moderate",
+        selfAssessedStrength: "judgement",
+        selfAssessedWeakness: "data_interpretation",
+      }).catch(() => {});
+      return { success: true };
+    }),
 
   // Login with email + password
   login: publicProcedure

@@ -10,12 +10,14 @@
  * - Actions: View Learning Plan, Back to Dashboard, Retake
  */
 
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -30,6 +32,11 @@ import {
   TrendingUp,
   TrendingDown,
   Info,
+  Brain,
+  Target,
+  FileText,
+  Lightbulb,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -267,7 +274,6 @@ export default function AssessmentResultsPage() {
         <ArrowLeft className="w-3.5 h-3.5" />
         Back to Assessments
       </button>
-
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Results</h1>
@@ -275,6 +281,25 @@ export default function AssessmentResultsPage() {
           AIQ V9.2 Standard Assessment · Completed {completedAt}
         </p>
       </div>
+      {/* ── Three-Layer Tabs ── */}
+      <Tabs defaultValue="summary" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="summary" className="gap-1.5 text-xs">
+            <Target className="w-3.5 h-3.5" />
+            Summary
+          </TabsTrigger>
+          <TabsTrigger value="deepdive" className="gap-1.5 text-xs">
+            <Brain className="w-3.5 h-3.5" />
+            Deep Dive
+          </TabsTrigger>
+          <TabsTrigger value="development" className="gap-1.5 text-xs">
+            <Lightbulb className="w-3.5 h-3.5" />
+            Development
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── TAB 1: SUMMARY ── */}
+        <TabsContent value="summary" className="space-y-6">
 
       {/* ── Readiness State Banner ── */}
       <Card className={cn("border-2", stateConfig.bg)}>
@@ -517,6 +542,140 @@ export default function AssessmentResultsPage() {
         decision-making patterns in the assessed interactions and are not a measure of general intelligence
         or professional competence. This report is for development purposes only.
       </p>
+        </TabsContent>
+
+        {/* ── TAB 2: DEEP DIVE ── */}
+        <TabsContent value="deepdive" className="space-y-6">
+          {/* Capability Breakdown (already rendered in summary, re-render here with more detail) */}
+          {sortedCapabilities.length > 0 && (
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground">Capability Breakdown</CardTitle>
+                <p className="text-xs text-muted-foreground">Signal-weighted scores across all 6 capability domains.</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {sortedCapabilities.map(cap => (
+                  <CapabilityBar key={cap.key} displayName={cap.displayName} score={cap.score} colour={cap.colour} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {/* Signal Profile */}
+          {sortedSignals.length > 0 && (
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground">Signal Profile</CardTitle>
+                <p className="text-xs text-muted-foreground">Top signals detected across all interactions.</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {sortedSignals.map(([signal, value]) => {
+                    const isPositive = value > 0;
+                    return (
+                      <div key={signal} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                        <div className="flex items-center gap-2">
+                          {isPositive
+                            ? <TrendingUp className="w-3.5 h-3.5 text-[#228833]" />
+                            : <TrendingDown className="w-3.5 h-3.5 text-[#EE6677]" />}
+                          <span className="text-xs text-foreground">{signal.replace(/_/g, " ")}</span>
+                        </div>
+                        <span className={cn("text-xs font-bold tabular-nums", isPositive ? "text-[#228833]" : "text-[#EE6677]")}
+                        >{isPositive ? "+" : ""}{typeof value === "number" ? value.toFixed(1) : value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {/* Governance Profile */}
+          {breakdown.governanceProfile && (
+            <Card className="border-border">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#3B4EFF]" />
+                  Governance Profile
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
+                    <p className="text-xl font-bold font-sora text-foreground">
+                      {Math.round((breakdown.governanceProfile as any).score ?? 0)}
+                      <span className="text-sm font-normal text-muted-foreground">/100</span>
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
+                    <p className="text-sm font-bold font-sora text-foreground capitalize">
+                      {(breakdown.governanceProfile as any).band ?? "Not assessed"}
+                    </p>
+                  </div>
+                </div>
+                {(breakdown.governanceProfile as any).bypasses > 0 && (
+                  <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ── TAB 3: DEVELOPMENT ── */}
+        <TabsContent value="development" className="space-y-6">
+          {/* Narrative */}
+          {narrative && (
+            <Card className="border-border">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <FileText className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                    <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {/* Development Recommendations */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-[#3B4EFF]" />
+                Development Recommendations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {sortedCapabilities.slice(-3).map(cap => (
+                <div key={cap.key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: cap.colour }} />
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Score: {cap.score}/100 — Focus area for development. Review governance and validation practices in this domain.
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {sortedCapabilities.length === 0 && (
+                <p className="text-sm text-muted-foreground">Complete more assessments to unlock personalised development recommendations.</p>
+              )}
+            </CardContent>
+          </Card>
+          {/* Actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button onClick={() => navigate("/learning")} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2">
+              <BookOpen className="w-4 h-4" />
+              View Learning Plan
+            </Button>
+            <Button onClick={() => navigate("/assessment")} variant="outline" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Retake Assessment
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
