@@ -327,6 +327,7 @@ function buildAdaptiveContext(
     Object.entries(capabilityScores).map(([k, v]) => [k, { score: v.score, signalCount: v.signalCount }])
   ) as Record<CapabilityKey, { score: number; signalCount: number }>;
 
+  // B5: Include declaredSeniority from resolved role archetype for seniority-inconsistency detection
   const answerRecords: AnswerRecord[] = answers.map(a => ({
     itemId: a.itemId,
     capabilityKey: a.capabilityKey,
@@ -337,6 +338,7 @@ function buildAdaptiveContext(
     confidenceScore: a.confidenceScore,
     interactionType: a.interactionType,
     riskLevel: a.riskLevel,
+    declaredSeniority: roleArchetype.seniority,
   }));
   const contradictions = detectContradictions(answerRecords);
 
@@ -376,7 +378,8 @@ function buildAdaptiveContext(
     riskExposure,
     gamingAnalysis,
     // B6: Use updated 2-arg signature — capabilityKey is now stored on the pair
-    contradictionProbes: contradictions.pairs.slice(0, 2).map(pair =>
+    // D3: Respect high-scrutiny probe cap (3 probes when scrutiny is high, 2 otherwise)
+    contradictionProbes: contradictions.pairs.slice(0, gamingAnalysis.scrutinyLevel === "high" ? 3 : 2).map(pair =>
       generateContradictionProbeSpec(pair, roleArchetype.id)
     ),
     roleArchetype,
@@ -691,12 +694,14 @@ export const assessmentRouter = router({
       };
 
       const phase = determineSessionPhase(answeredCount, MINIMUM_EVIDENCE.targetItems);
+      // D2: Pass roleHint into computeState so role-specific evidence thresholds are applied
       const state = SessionController.computeState(
         session[0].id,
         ctx.user.id,
         session[0].blueprintId,
         answers,
-        MINIMUM_EVIDENCE.targetItems
+        MINIMUM_EVIDENCE.targetItems,
+        roleHint
       );
 
        let nextItem: NextItem | null = null;

@@ -9,6 +9,7 @@
  * B2: capabilityKey stored directly on ContradictionPair (no brittle string parsing)
  * B3: Cross-capability contradiction detection added
  * B4: Time-pressure inconsistency detection added
+ * B5: Seniority-inconsistent response detection added
  */
 
 export interface AnswerRecord {
@@ -19,6 +20,8 @@ export interface AnswerRecord {
   confidenceScore: number;
   interactionType: string;
   riskLevel: string;
+  /** B5: Optional — user's declared seniority level for seniority-inconsistency detection */
+  declaredSeniority?: string | null;
 }
 
 export interface ContradictionPair {
@@ -44,6 +47,40 @@ export interface ContradictionResult {
  * A contradiction is when a user demonstrates strong capability in one item
  * but critical failure in a comparable item within the same capability domain.
  */
+/**
+ * B5: Seniority levels ordered from most junior to most senior.
+ * Used to detect when a user's reasoning pattern is inconsistent with their declared level.
+ */
+const SENIORITY_ORDER: Record<string, number> = {
+  junior: 1,
+  associate: 1,
+  coordinator: 1,
+  advisor: 2,
+  mid: 2,
+  specialist: 2,
+  senior: 3,
+  manager: 3,
+  lead: 3,
+  director: 4,
+  head: 4,
+  vp: 5,
+  executive: 5,
+  "c-suite": 5,
+};
+
+/**
+ * Infer a seniority rank from a free-form seniority string.
+ * Returns 0 if the string is unrecognised (no detection applied).
+ */
+function resolveSeniorityRank(seniority: string | null | undefined): number {
+  if (!seniority) return 0;
+  const lower = seniority.toLowerCase();
+  for (const [key, rank] of Object.entries(SENIORITY_ORDER)) {
+    if (lower.includes(key)) return rank;
+  }
+  return 0;
+}
+
 export function detectContradictions(
   answers: AnswerRecord[],
   /** B1: Set of item IDs that are contradiction probe answers */
@@ -174,6 +211,37 @@ export function detectContradictions(
       capabilityKey: "judgement",
       contradictionType: "cross_capability",
     });
+  }
+
+  // B5: Seniority-inconsistent response detection
+  // Detects when a user's answer quality is systematically below what their declared seniority implies.
+  // Only fires when all answers carry a consistent declaredSeniority and the pattern is clear.
+  const seniorityValues = answers
+    .map(a => resolveSeniorityRank(a.declaredSeniority))
+    .filter(r => r > 0);
+  if (seniorityValues.length >= 5) {
+    const declaredRank = seniorityValues[0]; // All answers share the same user seniority
+    const allSameSeniority = seniorityValues.every(r => r === declaredRank);
+    if (allSameSeniority && declaredRank >= 3) {
+      // Senior+ user: expect fewer failures and critical_failures
+      const failureRate = answers.filter(a =>
+        a.outcomeClass === "failure" || a.outcomeClass === "critical_failure"
+      ).length / answers.length;
+      // Senior+ users should not fail >40% of items — that's inconsistent with declared level
+      if (failureRate > 0.40) {
+        const worstItem = answers.find(a => a.outcomeClass === "critical_failure") ??
+          answers.find(a => a.outcomeClass === "failure") ??
+          answers[0];
+        const bestItem = answers.find(a => a.outcomeClass === "strong") ?? answers[answers.length - 1];
+        pairs.push({
+          itemA: bestItem.itemId,
+          itemB: worstItem.itemId,
+          reason: `Seniority inconsistency: declared ${answers[0].declaredSeniority ?? "senior"} but ${Math.round(failureRate * 100)}% failure rate — inconsistent with expected capability at this level`,
+          capabilityKey: worstItem.capabilityKey,
+          contradictionType: "calibration",
+        });
+      }
+    }
   }
 
   const count = pairs.length;

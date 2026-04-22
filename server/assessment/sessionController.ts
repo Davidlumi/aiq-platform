@@ -96,17 +96,23 @@ export interface AnswerData {
 export class SessionController {
   /**
    * Compute the current session state from answers and items.
-   * This is called on every getSession request.
+   * D2: Accepts optional userRoleHint to apply role-specific minimum safe thresholds.
+   * When a role is resolved, its minimumSafeThresholds are used for evidence sufficiency
+   * instead of the global MINIMUM_EVIDENCE constants.
    */
   static computeState(
     sessionId: string,
     userId: string,
     blueprintId: string,
     answers: AnswerData[],
-    totalTarget: number = MINIMUM_EVIDENCE.targetItems
+    totalTarget: number = MINIMUM_EVIDENCE.targetItems,
+    userRoleHint?: string | null
   ): SessionState {
     const answeredCount = answers.length;
     const phase = determineSessionPhase(answeredCount, totalTarget);
+
+    // D2: Resolve role archetype for role-aware evidence thresholds
+    const roleArchetype = resolveRoleArchetype(userRoleHint);
 
     // Compute interaction type usage
     const interactionTypesUsed: Record<string, number> = {};
@@ -130,6 +136,7 @@ export class SessionController {
     const highRiskAnswerCount = answers.filter(a => a.riskLevel === "High").length;
 
     // Contradiction detection
+    // D2/B5: Include declaredSeniority from resolved role archetype for seniority-inconsistency detection
     const answerRecords: AnswerRecord[] = answers.map(a => ({
       itemId: a.itemId,
       capabilityKey: a.capabilityKey,
@@ -140,6 +147,7 @@ export class SessionController {
       confidenceScore: a.confidenceScore,
       interactionType: a.interactionType,
       riskLevel: a.riskLevel,
+      declaredSeniority: roleArchetype.seniority,
     }));
     const contradictions = detectContradictions(answerRecords);
 
@@ -161,11 +169,22 @@ export class SessionController {
     const distinctInteractionTypes = Object.keys(interactionTypesUsed).length;
     const highRiskProportion = answeredCount > 0 ? highRiskAnswerCount / answeredCount : 0;
 
-    // R1: Per-capability coverage — all 6 capability domains must have ≥ signalsPerCapability contributions
+    // R1: Per-capability coverage
+    // D2: Use role-specific minimum safe thresholds when available.
+    // High-governance roles (HRBP, ER Specialist) require stronger evidence in governance/judgement.
+    // The threshold is: max(global_minimum, role_minimum_safe_threshold / 20) signals per capability.
+    // Dividing by 20 converts the 0-100 score threshold to a proportional signal count threshold.
     const ALL_CAPABILITIES: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
-    const uncoveredCapabilities = ALL_CAPABILITIES.filter(
-      cap => (capabilitySignalCounts[cap] ?? 0) < MINIMUM_EVIDENCE.signalsPerCapability
-    );
+    const uncoveredCapabilities = ALL_CAPABILITIES.filter(cap => {
+      const signalCount = capabilitySignalCounts[cap] ?? 0;
+      const roleThreshold = roleArchetype.minimumSafeThresholds[cap];
+      // Convert role score threshold (0-100) to a signal count requirement:
+      // higher score threshold → more signals needed to be confident.
+      // Scale: threshold 60 → 3 signals, threshold 70 → 3.5 → 4, threshold 80 → 4
+      const roleSignalRequirement = roleThreshold ? Math.ceil(roleThreshold / 20) : MINIMUM_EVIDENCE.signalsPerCapability;
+      const required = Math.max(MINIMUM_EVIDENCE.signalsPerCapability, roleSignalRequirement);
+      return signalCount < required;
+    });
     const allCapabilitiesCovered = uncoveredCapabilities.length === 0;
 
     // R6: Contradiction resolution — if contradictions block classification, evidence is not sufficient
@@ -246,6 +265,7 @@ export class SessionController {
     ) as Record<CapabilityKey, { score: number; signalCount: number }>;
 
     // Build contradiction probes if needed
+    // B5: Include declaredSeniority from resolved role archetype for seniority-inconsistency detection
     const answerRecords: AnswerRecord[] = answers.map(a => ({
       itemId: a.itemId,
       capabilityKey: a.capabilityKey,
@@ -256,6 +276,7 @@ export class SessionController {
       confidenceScore: a.confidenceScore,
       interactionType: a.interactionType,
       riskLevel: a.riskLevel,
+      declaredSeniority: roleArchetype.seniority,
     }));
     // Build anti-gaming analysis (must come before contradiction probes — D3 uses scrutinyLevel)
     const gamingAnswers = answers.map(a => ({
@@ -347,6 +368,7 @@ export class SessionController {
     );
 
     // Contradiction detection
+    // D2/B5: Include declaredSeniority from resolved role archetype for seniority-inconsistency detection
     const answerRecords: AnswerRecord[] = answers.map(a => ({
       itemId: a.itemId,
       capabilityKey: a.capabilityKey,
@@ -357,6 +379,7 @@ export class SessionController {
       confidenceScore: a.confidenceScore,
       interactionType: a.interactionType,
       riskLevel: a.riskLevel,
+      declaredSeniority: roleArchetype.seniority,
     }));
     const contradictions = detectContradictions(answerRecords);
 
