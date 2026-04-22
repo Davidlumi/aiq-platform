@@ -42,6 +42,10 @@ export const authRouter = router({
       experienceLevel: z.enum(["junior", "mid", "senior", "principal"]),
       aiUsageLevel: z.enum(["none", "occasional", "regular", "advanced"]),
       jobFunction: z.string().min(1).max(100),
+      seniorityLevel: z.string().max(50).optional(),
+      sector: z.string().max(100).optional(),
+      aiToolsUsed: z.string().optional(),
+      roleFamily: z.string().max(100).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -53,6 +57,10 @@ export const authRouter = router({
           aiUsageLevel: input.aiUsageLevel,
           jobFunction: input.jobFunction,
           onboardingCompletedAt: new Date(),
+          seniorityLevel: input.seniorityLevel ?? null,
+          sector: input.sector ?? null,
+          aiToolsUsed: input.aiToolsUsed ?? null,
+          roleFamily: input.roleFamily ?? null,
         })
         .where(eq(users.id, ctx.user.id));
       // Seed AIL cold start from onboarding signals (non-blocking)

@@ -236,3 +236,14 @@
 
 ## Bug Fixes (Round 5)
 - [x] Fix unterminated JSX in AssessmentResultsPage.tsx (line 545) — fixed by correcting indentation of all summary TabsContent children (11 edits); 0 TypeScript errors confirmed
+
+## Pre-Assessment Profiling Modal (Full Implementation)
+- [ ] Multi-step profiling modal: Step 1 — role family + specific role; Step 2 — seniority level; Step 3 — AI experience (self-reported); Step 4 — context (sector, team size, AI tool usage)
+- [ ] Role options: all 22 roles across 8 families from the role architecture
+- [ ] Seniority levels: Graduate/Early Career, Practitioner, Senior Practitioner, Manager/Lead, Director/Head, C-Suite/VP
+- [ ] AI experience: None (never used), Beginner (tried a few tools), Intermediate (regular user), Advanced (power user/builder)
+- [ ] Context questions: primary sector, team size, most-used AI tools (multi-select)
+- [ ] Persist profiling data to user profile in DB (users table or separate user_profiles table)
+- [ ] Pass role+seniority+experience as roleHint to startSession for adaptive engine calibration
+- [ ] Skip option: allow users to skip profiling (uses default calibration)
+- [ ] Show profiling completion status on AssessmentPage (completed vs pending)

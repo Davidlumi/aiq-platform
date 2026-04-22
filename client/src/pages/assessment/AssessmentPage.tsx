@@ -2,7 +2,7 @@
  * Assessment Landing Page — AiQ Enterprise Platform
  *
  * Implements the V9.2 assessment landing specification with pre-assessment profiling:
- * - Pre-assessment intake: role, seniority, AI experience level
+ * - Pre-assessment intake: role, seniority, AI experience level, sector
  * - Purpose panel explaining the AIQ V9.2 Standard Assessment
  * - Blueprint info: 50 interactions, 6 capability domains, ~35 minutes
  * - Active session resume card (if in_progress session exists)
@@ -16,13 +16,6 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import {
   ClipboardList,
   Play,
@@ -40,9 +33,8 @@ import {
   AlertTriangle,
   ShieldAlert,
   HelpCircle,
-  User,
-  Sparkles,
 } from "lucide-react";
+import { ProfilingModal, type ProfilingData } from "@/components/ProfilingModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -55,29 +47,6 @@ const CAPABILITY_DOMAINS = [
   { key: "appropriateness",     label: "AI Appropriateness",      icon: Gavel,     colour: "#EE6677", description: "Knowing when AI use is appropriate" },
   { key: "workflow",            label: "AI Workflow Application", icon: Workflow,  colour: "#66CCEE", description: "Integrating AI into professional workflows" },
   { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#BBBBBB", description: "Interpreting and challenging AI-generated data" },
-];
-
-// ─── Role Options (matching roleArchetypes.ts) ────────────────────────────────
-
-const ROLE_OPTIONS = [
-  { value: "hrbp",             label: "HR Business Partner" },
-  { value: "hr_generalist",    label: "HR Generalist" },
-  { value: "hr_advisor",       label: "HR Advisor" },
-  { value: "talent_acquisition", label: "Talent Acquisition Specialist" },
-  { value: "er_specialist",    label: "Employee Relations Specialist" },
-  { value: "ld_specialist",    label: "L&D Specialist" },
-  { value: "people_analytics", label: "People Analytics Specialist" },
-  { value: "hr_ops",           label: "HR Operations Specialist" },
-  { value: "reward",           label: "Reward & Compensation Specialist" },
-  { value: "hr_leader",        label: "HR Leader / CHRO" },
-  { value: "hr_professional",  label: "Other HR Professional" },
-];
-
-const AI_EXPERIENCE_OPTIONS = [
-  { value: "none",         label: "No experience — I haven't used AI tools in my work" },
-  { value: "beginner",     label: "Beginner — I've tried a few AI tools occasionally" },
-  { value: "intermediate", label: "Intermediate — I use AI tools regularly in my role" },
-  { value: "advanced",     label: "Advanced — AI is central to how I work day-to-day" },
 ];
 
 // ─── Readiness State Config ───────────────────────────────────────────────────
@@ -109,125 +78,6 @@ function SessionStateBadge({ state }: { state: string }) {
   );
 }
 
-// ─── Pre-Assessment Profiling Modal ──────────────────────────────────────────
-
-interface ProfilingModalProps {
-  open: boolean;
-  onClose: () => void;
-  onStart: (roleHint: string, aiExperience: string) => void;
-  isPending: boolean;
-}
-
-function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingModalProps) {
-  const [role, setRole] = useState("");
-  const [aiExperience, setAiExperience] = useState("");
-
-  const canStart = role !== "" && aiExperience !== "";
-
-  const handleStart = () => {
-    if (!canStart) return;
-    // Encode both role and experience into the roleHint string
-    const roleHint = `${role}::${aiExperience}`;
-    onStart(roleHint, aiExperience);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-[#3B4EFF]/10 flex items-center justify-center">
-              <User className="w-4 h-4 text-[#3B4EFF]" />
-            </div>
-            <DialogTitle className="text-lg font-semibold font-sora">Before You Begin</DialogTitle>
-          </div>
-          <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-            Tell us a little about your role and experience with AI. This helps calibrate the assessment
-            to your context — questions will be more relevant and your results more meaningful.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-5 pt-1">
-          {/* Role selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-[#3B4EFF]" />
-              What best describes your HR role?
-            </label>
-            <div className="grid grid-cols-1 gap-1.5 max-h-52 overflow-y-auto pr-1">
-              {ROLE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setRole(opt.value)}
-                  className={cn(
-                    "text-left px-3 py-2.5 rounded-lg border text-sm transition-all",
-                    role === opt.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/8 text-[#3B4EFF] font-medium"
-                      : "border-border hover:border-[#3B4EFF]/40 text-foreground"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* AI experience */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#3B4EFF]" />
-              How would you describe your current experience with AI tools?
-            </label>
-            <div className="space-y-1.5">
-              {AI_EXPERIENCE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setAiExperience(opt.value)}
-                  className={cn(
-                    "w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all",
-                    aiExperience === opt.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/8 text-[#3B4EFF] font-medium"
-                      : "border-border hover:border-[#3B4EFF]/40 text-foreground"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Privacy note */}
-          <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-            This information is used only to personalise your assessment experience. It does not affect your score.
-          </p>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-1">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStart}
-              disabled={!canStart || isPending}
-              className="flex-1 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
-            >
-              <Play className="w-4 h-4 mr-1.5" />
-              {isPending ? "Starting…" : "Start Assessment"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AssessmentPage() {
@@ -236,6 +86,8 @@ export default function AssessmentPage() {
 
   const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
   const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
+
+  const onboardingMutation = trpc.auth.completeOnboarding.useMutation();
 
   const startMutation = trpc.assessment.startSession.useMutation({
     onSuccess: result => {
@@ -254,9 +106,29 @@ export default function AssessmentPage() {
     setShowProfiling(true);
   };
 
-  const handleProfilingStart = (roleHint: string) => {
+  const handleProfilingStart = async (data: ProfilingData) => {
     const blueprintId = defaultBlueprint?.id;
     if (!blueprintId) return;
+
+    // Build roleHint from profiling data for the adaptive engine
+    const roleHint = `${data.jobFunction || data.roleFamily}::${data.aiUsageLevel}`;
+
+    // Persist profile data to the user record
+    try {
+      await onboardingMutation.mutateAsync({
+        jobFunction: data.jobFunction,
+        seniorityLevel: data.seniorityLevel,
+        experienceLevel: data.experienceLevel,
+        aiUsageLevel: data.aiUsageLevel,
+        aiToolsUsed: data.aiToolsUsed,
+        sector: data.sector,
+        roleFamily: data.roleFamily,
+      });
+    } catch {
+      // Non-fatal: profile save failed but we can still start the assessment
+      toast.warning("Profile data could not be saved, but your assessment will continue.");
+    }
+
     startMutation.mutate({ blueprintId, roleHint });
   };
 
@@ -271,7 +143,7 @@ export default function AssessmentPage() {
         open={showProfiling}
         onClose={() => setShowProfiling(false)}
         onStart={handleProfilingStart}
-        isPending={startMutation.isPending}
+        isPending={startMutation.isPending || onboardingMutation.isPending}
       />
 
       {/* ── Page Header ── */}

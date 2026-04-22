@@ -58,6 +58,10 @@ export const users = mysqlTable("users", {
   aiUsageLevel: mysqlEnum("ai_usage_level", ["none", "occasional", "regular", "advanced"]),
   jobFunction: varchar("job_function", { length: 100 }),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
+  seniorityLevel: varchar("seniority_level", { length: 50 }),
+  sector: varchar("sector", { length: 100 }),
+  aiToolsUsed: text("ai_tools_used"),
+  roleFamily: varchar("role_family", { length: 100 }),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),
