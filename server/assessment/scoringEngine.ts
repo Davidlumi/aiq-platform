@@ -216,6 +216,10 @@ export function computeSignalScores(
     outcomeClass: string | null;
     riskLevel: string;
     difficulty: number;
+    /** Optional: 0.0–1.0 confidence score from confidence slider */
+    confidenceScore?: number;
+    /** Optional: milliseconds taken to answer */
+    timeToAnswerMs?: number;
   }>
 ): Record<SignalKey, number> {
   const acc: Record<string, number> = {};
@@ -238,6 +242,50 @@ export function computeSignalScores(
       const multiplier = baseDelta >= 0 ? riskMult.positive : riskMult.negative;
       const weightedDelta = baseDelta * multiplier * diffWeight * outcomeMod;
       acc[signal] = (acc[signal] ?? 0) + weightedDelta;
+    }
+
+    // ── T1-1: Confidence Calibration Signal ──────────────────────────────────
+    // Adds calibration_index delta based on confidence-correctness alignment.
+    // High confidence + strong outcome = well-calibrated (positive signal)
+    // High confidence + failure outcome = overconfident (negative signal)
+    const conf = answer.confidenceScore ?? 0.5;
+    const outcome = answer.outcomeClass ?? "acceptable";
+    let calibrationDelta = 0;
+    if (conf > 0.7 && outcome === "strong") {
+      calibrationDelta = 1.0;  // Confident and correct — well calibrated
+    } else if (conf > 0.7 && (outcome === "failure" || outcome === "critical_failure")) {
+      calibrationDelta = -1.5; // Confident and wrong — overconfident failure
+    } else if (conf > 0.7 && outcome === "weak") {
+      calibrationDelta = -0.5; // Confident but weak — mild overconfidence
+    } else if (conf < 0.3 && outcome === "strong") {
+      calibrationDelta = 0.5;  // Humble but correct — under-confident
+    } else if (conf < 0.3 && (outcome === "failure" || outcome === "critical_failure")) {
+      calibrationDelta = -0.3; // Low confidence and wrong — at least self-aware
+    }
+    if (calibrationDelta !== 0) {
+      const calibMult = calibrationDelta >= 0 ? riskMult.positive : riskMult.negative;
+      acc["calibration_index"] = (acc["calibration_index"] ?? 0) + calibrationDelta * calibMult * diffWeight;
+    }
+
+    // ── T1-4: Time-to-Answer Scoring ─────────────────────────────────────────
+    // Fast correct answers indicate fluency; very slow answers may indicate
+    // uncertainty or gaming. Applied to timing_integrity signal.
+    const timeMs = answer.timeToAnswerMs;
+    if (timeMs !== undefined && timeMs > 0) {
+      let timingDelta = 0;
+      if (outcome === "strong" && timeMs < 30000) {
+        timingDelta = 0.5;   // Fast and correct — demonstrates fluency
+      } else if (outcome === "strong" && timeMs > 120000) {
+        timingDelta = -0.2;  // Very slow even when correct — slight uncertainty
+      } else if ((outcome === "failure" || outcome === "critical_failure") && timeMs < 8000) {
+        timingDelta = -0.5;  // Extremely fast failure — not reading carefully
+      } else if (timeMs > 180000) {
+        timingDelta = -0.3;  // Excessively long (> 3 min) — minor penalty
+      }
+      if (timingDelta !== 0) {
+        const timeMult = timingDelta >= 0 ? riskMult.positive : riskMult.negative;
+        acc["timing_integrity"] = (acc["timing_integrity"] ?? 0) + timingDelta * timeMult * diffWeight;
+      }
     }
   }
 

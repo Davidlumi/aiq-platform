@@ -262,6 +262,7 @@ async function persistAndBuildNextItem(
       outcomeClass: opt.outcomeClass,
       signalDeltasJson: opt.signalDeltas,
       eventCodesJson: opt.eventCodes,
+      rationaleText: opt.rationale ?? null,
     });
   }
 
@@ -314,6 +315,8 @@ function buildAdaptiveContext(
       outcomeClass: a.outcomeClass,
       riskLevel: a.riskLevel,
       difficulty: a.difficulty,
+      confidenceScore: a.confidenceScore,
+      timeToAnswerMs: a.timeToAnswerMs,
     }))
   );
   const capabilityScores = computeCapabilityScores(signalScores);
@@ -692,9 +695,13 @@ export const assessmentRouter = router({
         MINIMUM_EVIDENCE.targetItems
       );
 
-      let nextItem: NextItem | null = null;
-
-      if (session[0].state === "in_progress" && answeredCount < MINIMUM_EVIDENCE.targetItems) {
+       let nextItem: NextItem | null = null;
+      // T1-3: Generate next item when in_progress AND not yet at target items
+      // AND evidence is not yet sufficient (early completion will handle that case)
+      const shouldGenerateNextItem = session[0].state === "in_progress" &&
+        answeredCount < MINIMUM_EVIDENCE.targetItems &&
+        !state.evidenceSufficient;
+      if (shouldGenerateNextItem) {
         // ── Step 1: Check for pre-generated pending item (zero latency) ────────
         const pendingNextItem = meta.pendingNextItem as NextItem | null;
         if (pendingNextItem && pendingNextItem.id && !answeredItemIds.includes(pendingNextItem.id)) {
@@ -736,8 +743,11 @@ export const assessmentRouter = router({
         }
       }
 
+      // T1-2: Early completion — allow completion once evidence is sufficient,
+      // even before all targetItems are answered (minimum 20 items required)
       const isComplete = session[0].state !== "in_progress" ||
-        (answeredCount >= MINIMUM_EVIDENCE.targetItems && !nextItem);
+        (answeredCount >= MINIMUM_EVIDENCE.targetItems && !nextItem) ||
+        (state.evidenceSufficient && answeredCount >= MINIMUM_EVIDENCE.totalItems);
 
       return {
         session: session[0],
@@ -792,21 +802,28 @@ export const assessmentRouter = router({
       let outcomeClass: string | null = null;
       let signalDeltasJson: unknown = null;
       let eventCodesJson: unknown = null;
-
+      let rationaleText: string | null = null;
+      // Also fetch all options so we can return rationale for all choices
+      let allOptionsRationale: Array<{ value: string; rationaleText: string | null; outcomeClass: string | null }> = [];
       if (input.selectedValue) {
         const options = await db
           .select()
           .from(assessmentItemOptions)
           .where(eq(assessmentItemOptions.itemId, input.itemId));
+        allOptionsRationale = options.map(o => ({
+          value: o.value,
+          rationaleText: o.rationaleText ?? null,
+          outcomeClass: o.outcomeClass ?? null,
+        }));
         const selected = options.find(o => o.value === input.selectedValue);
         if (selected) {
           correctness = selected.isCorrect ?? null;
           outcomeClass = selected.outcomeClass ?? null;
           signalDeltasJson = selected.signalDeltasJson ?? null;
           eventCodesJson = selected.eventCodesJson ?? null;
+          rationaleText = selected.rationaleText ?? null;
         }
       }
-
       // Save answer
       await db.insert(assessmentAnswers).values({
         id: nanoid(),
@@ -904,7 +921,7 @@ export const assessmentRouter = router({
         })();
       }
 
-      return { success: true, correctness, outcomeClass };
+      return { success: true, correctness, outcomeClass, rationaleText, allOptionsRationale };
     }),
 
   // ── Complete session and compute full adaptive scores ──────────────────────
@@ -1142,6 +1159,43 @@ export const assessmentRouter = router({
         };
       }
 
+       // T3-9: Fetch previous completed sessions for longitudinal tracking
+      const previousSessions = await db
+        .select()
+        .from(assessmentSessions)
+        .where(
+          and(
+            eq(assessmentSessions.userId, ctx.user.id),
+            eq(assessmentSessions.tenantId, ctx.user.tenantId),
+            eq(assessmentSessions.state, "completed")
+          )
+        )
+        .orderBy(assessmentSessions.completedAt)
+        .limit(10);
+      const longitudinalData = await Promise.all(
+        previousSessions.map(async s => {
+          const prevScore = await db
+            .select()
+            .from(assessmentScores)
+            .where(eq(assessmentScores.sessionId, s.id))
+            .limit(1);
+          if (!prevScore[0]) return null;
+          let prevBreakdown: Record<string, unknown> = {};
+          try {
+            prevBreakdown = (typeof prevScore[0].scoreBreakdownJson === "string"
+              ? JSON.parse(prevScore[0].scoreBreakdownJson as string)
+              : (prevScore[0].scoreBreakdownJson ?? {})) as Record<string, unknown>;
+          } catch {}
+          const prevCapScores = (prevBreakdown.capabilityScores ?? {}) as Record<string, number>;
+          return {
+            sessionId: s.id,
+            completedAt: s.completedAt,
+            overallScore: parseFloat(String(prevScore[0].overallScore)),
+            capabilityScores: prevCapScores,
+            readinessState: (prevBreakdown.readiness as { state?: string })?.state ?? "unknown",
+          };
+        })
+      );
       return {
         session: session[0],
         score: {
@@ -1152,9 +1206,9 @@ export const assessmentRouter = router({
             capabilityScores: enrichedCapScores,
           },
         },
+        longitudinalData: longitudinalData.filter(Boolean),
       };
     }),
-
   // ── Get user's assessment history ──────────────────────────────────────────
   history: protectedProcedure
     .input(z.object({ userId: z.string().optional() }))
@@ -1186,8 +1240,18 @@ export const assessmentRouter = router({
               ? JSON.parse(score[0].scoreBreakdownJson as string)
               : (score[0]?.scoreBreakdownJson ?? {})) as Record<string, unknown>;
           } catch {}
+          // T2-7: Include answeredCount for in-progress sessions
+          let answeredCount = 0;
+          if (s.state === "in_progress") {
+            const answers = await db
+              .select({ id: assessmentAnswers.id })
+              .from(assessmentAnswers)
+              .where(eq(assessmentAnswers.sessionId, s.id));
+            answeredCount = answers.length;
+          }
           return {
             ...s,
+            answeredCount: s.state === "in_progress" ? answeredCount : undefined,
             score: score[0] ? {
               ...score[0],
               overallScore: parseFloat(String(score[0].overallScore)),

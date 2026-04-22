@@ -35,6 +35,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { ProfilingModal, type ProfilingData } from "@/components/ProfilingModal";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -110,8 +111,21 @@ export default function AssessmentPage() {
     const blueprintId = defaultBlueprint?.id;
     if (!blueprintId) return;
 
-    // Build roleHint from profiling data for the adaptive engine
-    const roleHint = `${data.jobFunction || data.roleFamily}::${data.aiUsageLevel}`;
+    // T2-8: Build roleHint using roleFamily ID first (maps directly to ROLE_ARCHETYPES keys)
+    // roleFamily IDs: talent, learning, hrbp, analytics, reward, governance, operations, other
+    // These map to: talent_acquisition, ld_specialist, hrbp, people_analytics, reward, hr_professional, hr_ops, hr_professional
+    const ROLE_FAMILY_TO_ARCHETYPE: Record<string, string> = {
+      talent: "talent_acquisition",
+      learning: "ld_specialist",
+      hrbp: "hrbp",
+      analytics: "people_analytics",
+      reward: "reward",
+      governance: "hr_professional",
+      operations: "hr_ops",
+      other: "hr_professional",
+    };
+    const archetypeId = ROLE_FAMILY_TO_ARCHETYPE[data.roleFamily] ?? data.roleFamily;
+    const roleHint = `${archetypeId}::${data.aiUsageLevel}`;
 
     // Persist profile data to the user record
     try {
@@ -169,7 +183,7 @@ export default function AssessmentPage() {
       {/* ── Active Session Resume Card ── */}
       {activeSession && (
         <Card className="border-2 border-[#EE8866]/30 bg-[#EE8866]/4">
-          <CardContent className="p-5">
+          <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#EE8866]/15 flex items-center justify-center shrink-0">
@@ -192,6 +206,23 @@ export default function AssessmentPage() {
                 Resume
               </Button>
             </div>
+            {/* T2-7: Show progress bar for in-progress session */}
+            {(activeSession as any).answeredCount !== undefined && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {(activeSession as any).answeredCount} of 30 questions answered
+                  </span>
+                  <span className="text-xs font-semibold text-[#EE8866]">
+                    {Math.round(((activeSession as any).answeredCount / 30) * 100)}% complete
+                  </span>
+                </div>
+                <Progress
+                  value={Math.round(((activeSession as any).answeredCount / 30) * 100)}
+                  className="h-1.5"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

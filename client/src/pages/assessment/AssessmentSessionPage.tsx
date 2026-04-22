@@ -445,6 +445,13 @@ export default function AssessmentSessionPage() {
   // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
   const [isGenerating, setIsGenerating] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // T2-5: Rationale reveal state — shown after answer submission
+  const [rationaleData, setRationaleData] = useState<{
+    rationaleText: string | null;
+    allOptionsRationale: Array<{ value: string; rationaleText: string | null; outcomeClass: string | null }>;
+    selectedValue: string;
+    outcomeClass: string | null;
+  } | null>(null);
 
   const { data: sessionData, isLoading, error: sessionError, refetch } = trpc.assessment.session.useQuery(
     { sessionId: sessionId! },
@@ -456,12 +463,26 @@ export default function AssessmentSessionPage() {
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
 
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
-    onSuccess: () => {
-      setSelectedValue("");
-      setConfidence(50);
-      setItemStartTime(Date.now());
-      setIsGenerating(true);
-      refetch();
+    onSuccess: (data) => {
+      // T2-5: Show rationale if available before advancing to next question
+      const hasRationale = data.allOptionsRationale?.some((o: any) => o.rationaleText);
+      if (hasRationale) {
+        setRationaleData({
+          rationaleText: data.rationaleText ?? null,
+          allOptionsRationale: data.allOptionsRationale ?? [],
+          selectedValue: selectedValue,
+          outcomeClass: data.outcomeClass ?? null,
+        });
+        // Pre-fetch next item in background while user reads rationale
+        setIsGenerating(true);
+        refetch();
+      } else {
+        setSelectedValue("");
+        setConfidence(50);
+        setItemStartTime(Date.now());
+        setIsGenerating(true);
+        refetch();
+      }
     },
     onError: err => toast.error(err.message),
   });
@@ -550,6 +571,96 @@ export default function AssessmentSessionPage() {
             {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // T2-5: Rationale reveal — show after answer, before next question
+  if (rationaleData) {
+    const outcomeColors: Record<string, string> = {
+      strong: "#228833",
+      acceptable: "#CCBB44",
+      weak: "#EE8866",
+      failure: "#EE6677",
+      critical_failure: "#AA0000",
+    };
+    const outcomeLabels: Record<string, string> = {
+      strong: "Strong response",
+      acceptable: "Acceptable response",
+      weak: "Weak response",
+      failure: "Incorrect response",
+      critical_failure: "Critical failure",
+    };
+    const outcomeColor = outcomeColors[rationaleData.outcomeClass ?? ""] ?? "#4477AA";
+    const outcomeLabel = outcomeLabels[rationaleData.outcomeClass ?? ""] ?? "Response recorded";
+    return (
+      <div className="p-6 space-y-5 max-w-2xl">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">
+              Question {answeredCount} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+            </span>
+            <span className="text-xs text-muted-foreground">{progress}% complete</span>
+          </div>
+          <Progress value={progress} className="h-1.5" />
+        </div>
+        <Card className="border-border shadow-sm">
+          <CardContent className="p-6 space-y-4">
+            {/* Outcome badge */}
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold"
+              style={{ color: outcomeColor, backgroundColor: `${outcomeColor}12`, borderColor: `${outcomeColor}30` }}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {outcomeLabel}
+            </div>
+            {/* Selected option rationale */}
+            {rationaleData.rationaleText && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Why this matters</p>
+                <p className="text-sm text-foreground leading-relaxed">{rationaleData.rationaleText}</p>
+              </div>
+            )}
+            {/* All options rationale */}
+            {rationaleData.allOptionsRationale.filter(o => o.rationaleText && o.value !== rationaleData.selectedValue).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Other options</p>
+                {rationaleData.allOptionsRationale
+                  .filter(o => o.rationaleText && o.value !== rationaleData.selectedValue)
+                  .map(o => (
+                    <div
+                      key={o.value}
+                      className="p-3 rounded-lg border border-border bg-muted/30 space-y-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center text-xs font-bold text-muted-foreground">
+                          {o.value?.toUpperCase?.()}
+                        </span>
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: outcomeColors[o.outcomeClass ?? ""] ?? "#888" }}
+                        >
+                          {outcomeLabels[o.outcomeClass ?? ""] ?? ""}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed pl-7">{o.rationaleText}</p>
+                    </div>
+                  ))}
+              </div>
+            )}
+            <Button
+              onClick={() => {
+                setRationaleData(null);
+                setSelectedValue("");
+                setConfidence(50);
+                setItemStartTime(Date.now());
+              }}
+              className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+            >
+              Continue <ChevronRight className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

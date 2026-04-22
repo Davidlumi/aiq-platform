@@ -151,6 +151,7 @@ export const assessmentItemOptions = mysqlTable("assessment_item_options", {
   outcomeClass: varchar("outcome_class", { length: 50 }),
   signalDeltasJson: json("signal_deltas_json").$default(() => ({})),
   eventCodesJson: json("event_codes_json").$default(() => ([])),
+  rationaleText: text("rationale_text"),
 });
 
 export const assessmentSessions = mysqlTable("assessment_sessions", {

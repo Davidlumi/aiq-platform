@@ -212,6 +212,8 @@ export class SessionController {
         outcomeClass: a.outcomeClass,
         riskLevel: a.riskLevel,
         difficulty: a.difficulty,
+        confidenceScore: a.confidenceScore,
+        timeToAnswerMs: a.timeToAnswerMs,
       }))
     );
     const capabilityScores = computeCapabilityScores(signalScores);
@@ -296,6 +298,8 @@ export class SessionController {
         outcomeClass: a.outcomeClass,
         riskLevel: a.riskLevel,
         difficulty: a.difficulty,
+        confidenceScore: a.confidenceScore,
+        timeToAnswerMs: a.timeToAnswerMs,
       }))
     );
 

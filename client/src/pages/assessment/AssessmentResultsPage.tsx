@@ -39,8 +39,179 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  ResponsiveContainer,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ReferenceLine,
+} from "recharts";
 
-// ─── Readiness State Config ───────────────────────────────────────────────────
+// ─── Radar Chart Component ────────────────────────────────────────────────────
+
+function RadarCapabilityChart({
+  capabilities,
+}: {
+  capabilities: Array<{ key: string; displayName: string; score: number; colour: string }>;
+}) {
+  const data = capabilities.map(cap => ({
+    subject: cap.displayName.replace("AI ", ""),
+    score: cap.score,
+    fullMark: 100,
+  }));
+  return (
+    <div className="w-full" style={{ height: 260 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+          <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.5} />
+          <PolarAngleAxis
+            dataKey="subject"
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "8px",
+              fontSize: 12,
+            }}
+            formatter={(value: number) => [`${value}`, "Score"]}
+          />
+          <Radar
+            name="Score"
+            dataKey="score"
+            stroke="#3B4EFF"
+            fill="#3B4EFF"
+            fillOpacity={0.15}
+            strokeWidth={2}
+            dot={{ r: 4, fill: "#3B4EFF", strokeWidth: 0 }}
+          />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── Longitudinal Tracking Chart (T3-9) ─────────────────────────────────────
+
+interface LongitudinalEntry {
+  sessionId: string;
+  completedAt: number | null;
+  overallScore: number;
+  capabilityScores: Record<string, number>;
+  readinessState: string;
+}
+
+function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
+  if (data.length < 2) {
+    return (
+      <Card className="border-border">
+        <CardContent className="p-5 text-center">
+          <TrendingUp className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm font-semibold text-foreground">Longitudinal Tracking</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Complete at least 2 assessments to see your capability trend over time.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = data.map((s, i) => ({
+    name: s.completedAt
+      ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+      : `S${i + 1}`,
+    score: Math.round(s.overallScore),
+  }));
+
+  const capKeys = Array.from(new Set(data.flatMap(s => Object.keys(s.capabilityScores))));
+  const capColors = ["#3B4EFF", "#228833", "#EE6677", "#CCBB44", "#66CCEE", "#AA3377"];
+
+  const capChartData = data.map((s, i) => {
+    const entry: Record<string, string | number> = {
+      name: s.completedAt
+        ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+        : `S${i + 1}`,
+    };
+    capKeys.forEach(k => { entry[k] = Math.round(s.capabilityScores[k] ?? 0); });
+    return entry;
+  });
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[#3B4EFF]" />
+          Capability Trend
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Overall score and capability scores across your {data.length} completed assessments.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Overall Score</p>
+          <ResponsiveContainer width="100%" height={140}>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <Tooltip
+                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: "hsl(var(--foreground))" }}
+              />
+              <ReferenceLine y={70} stroke="#228833" strokeDasharray="4 2" strokeWidth={1}
+                label={{ value: "Safe", position: "right", fontSize: 9, fill: "#228833" }} />
+              <ReferenceLine y={50} stroke="#CCBB44" strokeDasharray="4 2" strokeWidth={1}
+                label={{ value: "At Risk", position: "right", fontSize: 9, fill: "#CCBB44" }} />
+              <Line type="monotone" dataKey="score" stroke="#3B4EFF" strokeWidth={2}
+                dot={{ r: 4, fill: "#3B4EFF" }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        {capKeys.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Capability Domains</p>
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={capChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                />
+                {capKeys.map((k, i) => (
+                  <Line key={k} type="monotone" dataKey={k} stroke={capColors[i % capColors.length]}
+                    strokeWidth={1.5} dot={{ r: 3 }}
+                    name={k.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {capKeys.map((k, i) => (
+                <div key={k} className="flex items-center gap-1.5">
+                  <div className="w-3 h-0.5 rounded" style={{ backgroundColor: capColors[i % capColors.length] }} />
+                  <span className="text-xs text-muted-foreground">
+                    {k.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 const READINESS_CONFIG = {
   safe: {
@@ -223,6 +394,7 @@ export default function AssessmentResultsPage() {
   }
 
   const { score } = data;
+  const longitudinalData = ((data as any).longitudinalData ?? []) as LongitudinalEntry[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const breakdown = (score.breakdown ?? {}) as any;
   const overallScore = Math.round(score.overallScore ?? 0);
@@ -372,6 +544,10 @@ export default function AssessmentResultsPage() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* T2-6: Radar chart overview */}
+                {sortedCapabilities.length >= 3 && (
+                  <RadarCapabilityChart capabilities={sortedCapabilities} />
+                )}
                 {sortedCapabilities.map(cap => (
                   <CapabilityBar
                     key={cap.key}
@@ -546,6 +722,8 @@ export default function AssessmentResultsPage() {
 
         {/* ── TAB 2: DEEP DIVE ── */}
         <TabsContent value="deepdive" className="space-y-6">
+          {/* T3-9: Longitudinal Tracking Chart */}
+          <LongitudinalChart data={longitudinalData} />
           {/* Capability Breakdown (already rendered in summary, re-render here with more detail) */}
           {sortedCapabilities.length > 0 && (
             <Card className="border-border">

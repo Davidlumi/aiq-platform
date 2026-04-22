@@ -261,6 +261,49 @@ const INTERACTION_TYPE_INSTRUCTIONS: Record<InteractionType, string> = {
   confidence_calibration: `Present a scenario where the person must assess their own certainty about an AI output or decision, and choose the action that best reflects appropriate epistemic humility. The scenario should make it tempting to be either overconfident or excessively cautious. Include specific details about the AI output quality and the stakes involved.`,
 };
 
+// ─── T3-10: Few-Shot Examples ─────────────────────────────────────────────────
+// One compact, well-formed example per interaction type. Used as structural
+// reference only — the LLM must NOT copy scenario content.
+const FEW_SHOT_EXAMPLES: Partial<Record<InteractionType, string>> = {
+  situational_judgement: JSON.stringify({
+    title: "AI Screening Output Requires Validation",
+    scenario: "You are an HR Business Partner. The AI recruitment screening tool has ranked 12 candidates for a senior analyst role, flagging 3 as 'Strong Recommend'. You notice the top-ranked candidate has an unusual career gap that the AI did not flag.",
+    constraint: "Hiring manager wants shortlist names by end of day.",
+    question: "What is the most appropriate next step before sending the shortlist?",
+    options: [
+      { label: "A", text: "Review all 3 AI-recommended candidates manually, check the career gap context, and adjust the shortlist if needed before sending.", outcomeClass: "strong", signalDeltas: { validation_accuracy: 2.0, judgement_quality: 1.5 }, eventCodes: ["VALIDATE_BEFORE_USE"], rationale: "Demonstrates proportionate validation — catches a potential AI blind spot without over-engineering the process." },
+      { label: "B", text: "Send the AI shortlist as-is — the tool has a strong track record and the hiring manager trusts it.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, validation_accuracy: -2.0 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance — ignores a visible signal that requires human review." },
+      { label: "C", text: "Reject the AI shortlist entirely and re-screen all 12 candidates manually.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 }, eventCodes: ["AI_AVOIDANCE"], rationale: "Over-caution — discards valid AI work unnecessarily." },
+      { label: "D", text: "Ask the AI tool to re-run the screening with different parameters before reviewing.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 }, eventCodes: ["RERUN_WITHOUT_REVIEW"], rationale: "Acceptable but inefficient — re-running does not address the specific gap identified." }
+    ]
+  }),
+  scenario_critique: JSON.stringify({
+    title: "AI Redundancy Communication Contains Compliance Gap",
+    scenario: "You are an Employee Relations Manager. You asked an AI writing assistant to draft a redundancy consultation letter. The letter looks professional and covers most required points.",
+    constraint: "Legal review is unavailable today and letters must go out tomorrow.",
+    question: "What is the most significant problem with this AI-generated letter?",
+    ai_output: "Dear [Employee Name], Following a review of our business structure, we regret to inform you that your role of Senior Data Analyst has been identified as at risk of redundancy. We are entering a 30-day consultation period beginning 15 May 2025. During this time, we will explore all reasonable alternatives to redundancy, including redeployment opportunities. You are invited to a consultation meeting on 20 May 2025 at 10:00am. Please confirm your attendance. We value your contributions and will support you through this process. Yours sincerely, HR Department.",
+    options: [
+      { label: "A", text: "The letter does not inform the employee of their right to be accompanied at the consultation meeting, which is a statutory requirement under UK employment law.", outcomeClass: "strong", signalDeltas: { validation_accuracy: 2.5, governance_quality: 2.0 }, eventCodes: ["COMPLIANCE_GAP_IDENTIFIED"], rationale: "Correctly identifies the specific statutory omission — the right to be accompanied is a legal requirement the AI missed." },
+      { label: "B", text: "The tone is too formal and may cause unnecessary distress to the employee.", outcomeClass: "weak", signalDeltas: { cosmetic_focus_risk: -1.5, validation_accuracy: -1.0 }, eventCodes: ["COSMETIC_FOCUS"], rationale: "Focuses on tone rather than the substantive compliance gap — a common AI literacy failure." },
+      { label: "C", text: "The letter does not specify the exact redundancy payment amount.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.5, governance_quality: 0.5 }, eventCodes: ["MINOR_OMISSION"], rationale: "A valid but minor point — payment amounts are typically confirmed later in the process." },
+      { label: "D", text: "The consultation period of 30 days is too short for a senior role.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.0, governance_quality: -1.5 }, eventCodes: ["INCORRECT_LEGAL_CLAIM"], rationale: "Factually incorrect — 30 days is the minimum for fewer than 100 redundancies under UK law." }
+    ]
+  }),
+  risk_judgement: JSON.stringify({
+    title: "AI Sentiment Analysis Used for Performance Review",
+    scenario: "Your HRIS vendor has added an AI sentiment analysis feature that analyses employee email tone to produce a 'collaboration score'. Your line manager wants to include these scores in the upcoming performance review cycle.",
+    constraint: "Performance reviews begin in 3 weeks and the manager is enthusiastic about the new feature.",
+    question: "What is the most appropriate governance response?",
+    options: [
+      { label: "A", text: "Advise the manager that using AI sentiment analysis in performance decisions raises significant legal, ethical, and data protection concerns that require formal review before any use.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correctly identifies the multi-dimensional risk and triggers appropriate governance — not just a blanket refusal." },
+      { label: "B", text: "Allow a pilot with 5 employees to test the feature before rolling it out more widely.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "A pilot does not resolve the legal and ethical issues — it just delays them while creating additional risk." },
+      { label: "C", text: "Use the scores as one of many data points, ensuring no single metric determines an outcome.", outcomeClass: "weak", signalDeltas: { governance_quality: -1.0, blind_acceptance_risk: -1.5 }, eventCodes: ["PARTIAL_GOVERNANCE"], rationale: "Underestimates the risk — using unvalidated AI sentiment data in any part of a performance decision is problematic regardless of weighting." },
+      { label: "D", text: "Decline to use the feature entirely and remove it from the HRIS configuration.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 }, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary — the right response is governance review, not immediate removal." }
+    ]
+  }),
+};
+
 export async function generateAdaptiveItem(vars: GenerationVariables): Promise<GeneratedItem> {
   const roleContext = `${vars.roleArchetype.displayName} (${vars.roleArchetype.family})`;
   const workflowContext = vars.workflowContext.replace(/_/g, " ");
@@ -341,7 +384,7 @@ ${vars.contradictionIntent ? "\nIMPORTANT: This is a contradiction probe. The sc
 
 Interaction type instruction:
 ${INTERACTION_TYPE_INSTRUCTIONS[vars.interactionType]}
-
+${FEW_SHOT_EXAMPLES[vars.interactionType] ? `\nExample of a well-formed item for this interaction type (structural reference ONLY — do NOT copy scenario, characters, or options):\n${FEW_SHOT_EXAMPLES[vars.interactionType]}` : ""}
 Return ONLY valid JSON. No markdown fences, no explanation, no text outside the JSON object.`;
 
   // Build JSON schema dynamically based on required fields
@@ -402,6 +445,23 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     const content = response.choices?.[0]?.message?.content;
     if (!content) throw new Error("No content from LLM");
     const parsed = typeof content === "string" ? JSON.parse(content) : content;
+
+    // ── T3-11: Item quality validation (non-fatal — logs warnings, does not reject) ──────────────────
+    {
+      const opts: any[] = parsed.options ?? [];
+      const errs: string[] = [];
+      if (opts.length !== 4) errs.push(`options.length=${opts.length} (expected 4)`);
+      const strongCount = opts.filter((o) => o.outcomeClass === "strong").length;
+      if (strongCount !== 1) errs.push(`strong options=${strongCount} (expected 1)`);
+      const failCount = opts.filter((o) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure").length;
+      if (failCount < 1) errs.push(`failure/critical_failure options=${failCount} (expected ≥1)`);
+      if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short (${parsed.scenario?.length ?? 0} chars)`);
+      const minSignals = opts.every((o) => Object.keys(o.signalDeltas ?? {}).length >= 2);
+      if (!minSignals) errs.push("one or more options have <2 signal deltas");
+      if (errs.length > 0) {
+        console.warn(`[adaptiveEngine] T3-11 quality check failed [${vars.interactionType}]:`, errs.join(" | "));
+      }
+    }
 
     return {
       title: parsed.title ?? "Assessment Item",
