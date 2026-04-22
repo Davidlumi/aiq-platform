@@ -286,3 +286,30 @@
 ### Problem 9: No visual differentiation between question types — everything looks identical
 - [x] Fixed: interaction_type now set correctly in all 49 items' metadata
 - [x] The capability badge and interaction type instruction text now match the actual question content
+
+## Assessment Interaction Type Rendering Overhaul
+
+- [x] Audit all 8 interaction types and define what distinct UI each should have
+- [x] Redesign AssessmentSessionPage to branch rendering by interactionType
+- [x] scenario_critique: AiOutputBlock with "AI-Generated Output / Evaluate this output" header (purple accent)
+- [x] error_detection: AiOutputBlock with "AI-Generated Output / Find the error" header (red accent)
+- [x] output_improvement: AiOutputBlock with "AI-Generated Output / Identify improvements" header (amber accent)
+- [x] prioritisation: constraint shown with teal accent, options have priority framing
+- [x] risk_judgement: constraint shown as "Risk Factor" with red accent
+- [x] governance_decision: constraint shown as "Policy Context" with green accent
+- [x] data_interpretation: DataContextBlock with "Data / AI Insight / Interpret this output" header (teal accent)
+- [x] situational_judgement: standard scenario/constraint layout
+- [x] Each type gets unique accent colour, icon, and section header label
+- [x] Question text rendered as actual question with accent colour
+- [x] Instruction text rendered as italic subtext below question
+- [x] Generating state: spinner card shown while LLM generates next item (polling every 2.5s)
+- [x] AssessmentSessionPage fully rewritten with 11 interaction type configs
+
+## Adaptive Engine Rebuild (LLM-First)
+
+- [x] adaptiveEngine.ts: rewritten with richer LLM prompts per interaction type, ai_output field in GeneratedItem, user context (sector, seniority, AI usage) in GenerationVariables
+- [x] assessment.ts session procedure: LLM-first always — static items only as fallback for first session; pre-generated item cache in session metadata; user profile fetched and passed to generation context; prior session scores used for calibration
+- [x] submitAnswer: triggers async background generation of next item, stores in pendingNextItem in session metadata
+- [x] AssessmentSessionPage: polling every 2.5s while generating, GeneratingState spinner shown, stops polling when nextItem arrives
+- [x] aiOutput and dataContext fields passed through nextItem to frontend
+- [x] TypeScript: 0 errors

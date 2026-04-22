@@ -1,26 +1,36 @@
 /**
- * Assessment Session Page — AiQ Enterprise Platform
+ * Assessment Session Page — AiQ Enterprise Platform (v2)
  *
- * Uses the session.nextItem from the assessment router which includes:
- * - title, scenario, constraint, capability, workflow, riskLevel
+ * Renders each of the 8 interaction types with a distinct visual treatment:
+ *
+ * 1. situational_judgement  — scenario + constraint + MCQ
+ * 2. prioritisation         — scenario + constraint + ranked MCQ (coloured priority badge)
+ * 3. risk_judgement         — scenario + red risk framing + MCQ
+ * 4. governance_decision    — scenario + policy framing + MCQ
+ * 5. scenario_critique      — scenario + AI OUTPUT block (evaluate this) + MCQ
+ * 6. output_improvement     — scenario + AI OUTPUT block (improve this) + MCQ
+ * 7. error_detection        — scenario + AI OUTPUT block (find the error) + MCQ
+ * 8. data_interpretation    — scenario + DATA CONTEXT block + MCQ
+ *
+ * The nextItem from the server includes:
+ * - title, scenario, constraint, question, interactionType
+ * - aiOutput (for critique/improvement/error types)
+ * - dataContext (for data_interpretation)
  * - options with label/value (scoring data stripped server-side)
- * - progress tracking via answeredCount / totalItems
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
 import { toast } from "sonner";
 import {
-  Clock,
   ChevronRight,
   CheckCircle2,
   Award,
@@ -30,6 +40,13 @@ import {
   Briefcase,
   Target,
   ArrowLeft,
+  Bot,
+  BarChart3,
+  Scale,
+  Layers,
+  Search,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +69,258 @@ const RISK_CONFIG = {
   Low:    { color: "text-[#228833] bg-[#228833]/8 border-[#228833]/30", icon: Target },
 } as const;
 
+// ─── Interaction type config ──────────────────────────────────────────────────
+
+type InteractionTypeKey =
+  | "situational_judgement"
+  | "prioritisation"
+  | "risk_judgement"
+  | "governance_decision"
+  | "scenario_critique"
+  | "output_improvement"
+  | "error_detection"
+  | "data_interpretation"
+  | "multi_step_workflow"
+  | "contradiction_probe"
+  | "confidence_calibration";
+
+interface InteractionConfig {
+  label: string;
+  instruction: string;
+  questionLabel: string;
+  /** Whether this type shows an AI Output block */
+  hasAiOutput: boolean;
+  /** Whether this type shows a Data Context block */
+  hasDataContext: boolean;
+  /** Visual accent for the question section */
+  accent: string;
+  icon: React.ElementType;
+}
+
+const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
+  situational_judgement: {
+    label: "Situational Judgement",
+    instruction: "Select the response that best demonstrates sound professional judgement.",
+    questionLabel: "What do you do?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#4477AA",
+    icon: Scale,
+  },
+  prioritisation: {
+    label: "Prioritisation",
+    instruction: "Select the action that should be prioritised first given the constraints.",
+    questionLabel: "What do you prioritise?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#66CCEE",
+    icon: Layers,
+  },
+  risk_judgement: {
+    label: "Risk Judgement",
+    instruction: "Assess the level of risk and select the most appropriate response.",
+    questionLabel: "What is the most appropriate response to this risk?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#EE6677",
+    icon: AlertTriangle,
+  },
+  governance_decision: {
+    label: "Governance Decision",
+    instruction: "Select the response that best aligns with AI governance and compliance requirements.",
+    questionLabel: "What is the correct governance action?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#228833",
+    icon: Shield,
+  },
+  scenario_critique: {
+    label: "AI Output Critique",
+    instruction: "Evaluate the AI-generated output below. Select the most significant problem with it.",
+    questionLabel: "What is the most significant problem with this AI output?",
+    hasAiOutput: true,
+    hasDataContext: false,
+    accent: "#AA3377",
+    icon: Search,
+  },
+  output_improvement: {
+    label: "Output Improvement",
+    instruction: "Review the AI-generated output below. Select the best way to improve it.",
+    questionLabel: "How should this output be improved?",
+    hasAiOutput: true,
+    hasDataContext: false,
+    accent: "#CCBB44",
+    icon: Sparkles,
+  },
+  error_detection: {
+    label: "Error Detection",
+    instruction: "Examine the AI output below carefully. Identify the most significant error or risk.",
+    questionLabel: "What is the most significant error in this AI output?",
+    hasAiOutput: true,
+    hasDataContext: false,
+    accent: "#EE6677",
+    icon: Search,
+  },
+  data_interpretation: {
+    label: "Data Interpretation",
+    instruction: "Interpret the data or AI-generated insight below. Select the most accurate conclusion.",
+    questionLabel: "What does this data tell you?",
+    hasAiOutput: false,
+    hasDataContext: true,
+    accent: "#66CCEE",
+    icon: BarChart3,
+  },
+  multi_step_workflow: {
+    label: "Workflow Sequencing",
+    instruction: "Consider the full sequence of steps and select the most appropriate next action.",
+    questionLabel: "What is the next step in this workflow?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#4477AA",
+    icon: Layers,
+  },
+  contradiction_probe: {
+    label: "Consistency Check",
+    instruction: "Review your earlier response and select the most consistent answer.",
+    questionLabel: "Which answer is most consistent with your earlier response?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#AA3377",
+    icon: Scale,
+  },
+  confidence_calibration: {
+    label: "Confidence Calibration",
+    instruction: "Reflect on your certainty and select the response that best reflects your actual confidence level.",
+    questionLabel: "How certain are you about this?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#4477AA",
+    icon: Target,
+  },
+};
+
+function getInteractionConfig(interactionType: string): InteractionConfig {
+  return INTERACTION_CONFIGS[interactionType] ?? {
+    label: "Assessment Question",
+    instruction: "Select the most appropriate response.",
+    questionLabel: "What is the most appropriate action?",
+    hasAiOutput: false,
+    hasDataContext: false,
+    accent: "#4477AA",
+    icon: Scale,
+  };
+}
+
+// ─── AI Output Block ──────────────────────────────────────────────────────────
+
+function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | "improvement" | "error" }) {
+  const configs = {
+    critique: {
+      label: "AI-Generated Output",
+      sublabel: "Evaluate this output",
+      borderColor: "border-[#AA3377]/30",
+      bgColor: "bg-[#AA3377]/4",
+      labelColor: "text-[#AA3377]",
+      iconColor: "text-[#AA3377]",
+    },
+    improvement: {
+      label: "AI-Generated Output",
+      sublabel: "Identify improvements",
+      borderColor: "border-[#CCBB44]/30",
+      bgColor: "bg-[#CCBB44]/4",
+      labelColor: "text-[#CCBB44]",
+      iconColor: "text-[#CCBB44]",
+    },
+    error: {
+      label: "AI-Generated Output",
+      sublabel: "Find the error",
+      borderColor: "border-[#EE6677]/30",
+      bgColor: "bg-[#EE6677]/4",
+      labelColor: "text-[#EE6677]",
+      iconColor: "text-[#EE6677]",
+    },
+  };
+  const cfg = configs[mode];
+
+  return (
+    <div className={cn("rounded-xl border-2 p-4", cfg.borderColor, cfg.bgColor)}>
+      <div className="flex items-center gap-2 mb-3">
+        <Bot className={cn("w-4 h-4", cfg.iconColor)} />
+        <div>
+          <p className={cn("text-xs font-bold uppercase tracking-wider", cfg.labelColor)}>
+            {cfg.label}
+          </p>
+          <p className="text-xs text-muted-foreground">{cfg.sublabel}</p>
+        </div>
+      </div>
+      <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-mono text-xs">
+          {content}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Data Context Block ───────────────────────────────────────────────────────
+
+function DataContextBlock({ content }: { content: string }) {
+  return (
+    <div className="rounded-xl border-2 border-[#66CCEE]/30 bg-[#66CCEE]/4 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="w-4 h-4 text-[#66CCEE]" />
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#66CCEE]">
+            Data / AI Insight
+          </p>
+          <p className="text-xs text-muted-foreground">Interpret this output</p>
+        </div>
+      </div>
+      <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-mono text-xs">
+          {content}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Generating State ─────────────────────────────────────────────────────────
+
+function GeneratingState({ answeredCount, totalItems }: { answeredCount: number; totalItems: number }) {
+  const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
+  return (
+    <div className="p-6 space-y-5 max-w-2xl">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-foreground">
+            Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+          </span>
+          <span className="text-xs text-muted-foreground">{progress}% complete</span>
+        </div>
+        <Progress value={progress} className="h-1.5" />
+      </div>
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 text-[#3B4EFF] animate-spin" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              The adaptive engine is generating a question tailored to your profile and responses so far.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Bot className="w-3 h-3" />
+            <span>Adaptive AI assessment engine</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Completion Screen ────────────────────────────────────────────────────────
 
 function CompletionScreen({
@@ -69,12 +338,10 @@ function CompletionScreen({
     unknown:  { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border" },
   };
   const stateConfig = STATE_CONFIGS[primaryState] ?? { label: "Assessed", color: "text-foreground", bg: "bg-muted/20 border-border" };
-
   const capabilityScores = result?.capabilityScores ?? {};
 
   return (
     <div className="p-6 space-y-6 max-w-2xl">
-      {/* Hero */}
       <div className="text-center py-6">
         <div className="w-20 h-20 rounded-full bg-[#3B4EFF]/8 border-2 border-[#3B4EFF]/20 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="w-10 h-10 text-[#3B4EFF]" />
@@ -85,23 +352,15 @@ function CompletionScreen({
         </p>
       </div>
 
-      {/* Readiness State */}
       {result && (
         <div className={cn("rounded-2xl border-2 p-5 text-center", stateConfig.bg)}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-            Readiness State
-          </p>
-          <p className={cn("text-3xl font-bold font-sora", stateConfig.color)}>
-            {stateConfig.label}
-          </p>
-          <p className={cn("text-5xl font-bold mt-2", stateConfig.color)}>
-            {Math.round(result.overallScore)}
-          </p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Readiness State</p>
+          <p className={cn("text-3xl font-bold font-sora", stateConfig.color)}>{stateConfig.label}</p>
+          <p className={cn("text-5xl font-bold mt-2", stateConfig.color)}>{Math.round(result.overallScore)}</p>
           <p className="text-sm text-muted-foreground">overall score</p>
         </div>
       )}
 
-      {/* Capability Breakdown */}
       {result && Object.keys(capabilityScores).length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -131,7 +390,6 @@ function CompletionScreen({
               />
             </ExplanationDrawer>
           </div>
-
           {Object.entries(capabilityScores).map(([key, score]) => (
             <div key={key} className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-40 truncate capitalize">
@@ -140,16 +398,10 @@ function CompletionScreen({
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${score}%`,
-                    backgroundColor: CAPABILITY_COLOURS[key] ?? "#4477AA",
-                  }}
+                  style={{ width: `${score}%`, backgroundColor: CAPABILITY_COLOURS[key] ?? "#4477AA" }}
                 />
               </div>
-              <span
-                className="text-xs font-bold w-8 text-right"
-                style={{ color: CAPABILITY_COLOURS[key] ?? "#4477AA" }}
-              >
+              <span className="text-xs font-bold w-8 text-right" style={{ color: CAPABILITY_COLOURS[key] ?? "#4477AA" }}>
                 {score as number}
               </span>
             </div>
@@ -157,7 +409,6 @@ function CompletionScreen({
         </div>
       )}
 
-      {/* Credibility + Risk */}
       {result && (
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-border p-3 text-center">
@@ -173,19 +424,11 @@ function CompletionScreen({
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex gap-3">
-        <Button
-          onClick={() => onNavigate("/learning")}
-          className="flex-1 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
-        >
+        <Button onClick={() => onNavigate("/learning")} className="flex-1 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
           View Learning Plan
         </Button>
-        <Button
-          onClick={() => onNavigate("/dashboard")}
-          variant="outline"
-          className="flex-1"
-        >
+        <Button onClick={() => onNavigate("/dashboard")} variant="outline" className="flex-1">
           Back to Dashboard
         </Button>
       </div>
@@ -199,6 +442,10 @@ export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
 
+  // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
+  const [isGenerating, setIsGenerating] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const { data: sessionData, isLoading, error: sessionError, refetch } = trpc.assessment.session.useQuery(
     { sessionId: sessionId! },
     { enabled: !!sessionId, refetchOnWindowFocus: false, retry: false }
@@ -206,13 +453,14 @@ export default function AssessmentSessionPage() {
 
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [confidence, setConfidence] = useState<number>(50);
-  const [startTime] = useState<number>(Date.now());
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
+
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: () => {
       setSelectedValue("");
       setConfidence(50);
       setItemStartTime(Date.now());
+      setIsGenerating(true);
       refetch();
     },
     onError: err => toast.error(err.message),
@@ -220,11 +468,36 @@ export default function AssessmentSessionPage() {
 
   const completeMutation = trpc.assessment.completeSession.useMutation({
     onSuccess: () => {
-      // Navigate to the dedicated results page
       navigate(`/assessment/${sessionId}/results`);
     },
     onError: err => toast.error(err.message),
   });
+
+  // When we get a nextItem, stop the generating state
+  useEffect(() => {
+    if (sessionData?.nextItem) {
+      setIsGenerating(false);
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    }
+  }, [sessionData?.nextItem]);
+
+  // Poll every 2.5s while generating to pick up the pre-generated item
+  useEffect(() => {
+    if (isGenerating && !sessionData?.nextItem) {
+      pollingRef.current = setInterval(() => {
+        refetch();
+      }, 2500);
+    }
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [isGenerating, sessionData?.nextItem, refetch]);
 
   if (isLoading) {
     return (
@@ -281,13 +554,9 @@ export default function AssessmentSessionPage() {
     );
   }
 
-  // No next item loaded
-  if (!nextItem) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Loading next question…</p>
-      </div>
-    );
+  // Generating state — waiting for LLM to produce next item
+  if (isGenerating || !nextItem) {
+    return <GeneratingState answeredCount={answeredCount} totalItems={totalItems} />;
   }
 
   const handleSubmit = () => {
@@ -305,9 +574,18 @@ export default function AssessmentSessionPage() {
     });
   };
 
-  const capabilityColor = CAPABILITY_COLOURS[nextItem.capabilityKey] ?? "#4477AA";
-  const riskLevel = nextItem.riskLevel as keyof typeof RISK_CONFIG;
+  const interactionType = (nextItem as any).interactionType ?? "situational_judgement";
+  const iConfig = getInteractionConfig(interactionType);
+  const capabilityColor = CAPABILITY_COLOURS[(nextItem as any).capabilityKey] ?? "#4477AA";
+  const riskLevel = (nextItem as any).riskLevel as keyof typeof RISK_CONFIG;
   const riskConfig = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Medium;
+  const aiOutput = (nextItem as any).aiOutput as string | undefined;
+  const dataContext = (nextItem as any).dataContext as string | undefined;
+
+  // Determine AI output mode for visual framing
+  const aiOutputMode: "critique" | "improvement" | "error" =
+    interactionType === "output_improvement" ? "improvement" :
+    interactionType === "error_detection" ? "error" : "critique";
 
   return (
     <div className="p-6 space-y-5 max-w-2xl">
@@ -333,102 +611,143 @@ export default function AssessmentSessionPage() {
       {/* Question card */}
       <Card className="border-border shadow-sm">
         <CardContent className="p-6 space-y-5">
+
           {/* Meta badges */}
           <div className="flex flex-wrap items-center gap-2">
-            {nextItem.capability && (
+            {/* Interaction type badge */}
+            <span
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border"
+              style={{
+                color: iConfig.accent,
+                backgroundColor: `${iConfig.accent}12`,
+                borderColor: `${iConfig.accent}30`,
+              }}
+            >
+              <iConfig.icon className="w-3 h-3" />
+              {iConfig.label}
+            </span>
+
+            {/* Capability badge */}
+            {(nextItem as any).capability && (
               <span
-                className="text-xs font-semibold px-2.5 py-1 rounded-full border"
+                className="text-xs font-medium px-2 py-0.5 rounded-full border"
                 style={{
                   color: capabilityColor,
-                  backgroundColor: `${capabilityColor}12`,
-                  borderColor: `${capabilityColor}30`,
+                  backgroundColor: `${capabilityColor}10`,
+                  borderColor: `${capabilityColor}25`,
                 }}
               >
-                {nextItem.capability}
+                {(nextItem as any).capability}
               </span>
             )}
-            {nextItem.workflow && (
+
+            {/* Workflow */}
+            {(nextItem as any).workflow && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Briefcase className="w-3 h-3" />
-                {nextItem.workflow}
+                {(nextItem as any).workflow}
               </span>
             )}
-            {nextItem.riskLevel && (
+
+            {/* Risk level */}
+            {(nextItem as any).riskLevel && (
               <span className={cn("flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border", riskConfig.color)}>
                 <riskConfig.icon className="w-3 h-3" />
-                {nextItem.riskLevel} Risk
+                {(nextItem as any).riskLevel} Risk
               </span>
             )}
+
             <span className="text-xs text-muted-foreground ml-auto">
-              Level {nextItem.difficulty}
+              Level {(nextItem as any).difficulty}
             </span>
           </div>
 
           {/* Title */}
-          {nextItem.title && (
+          {(nextItem as any).title && (
             <h2 className="text-base font-bold text-foreground font-sora leading-snug">
-              {nextItem.title}
+              {(nextItem as any).title}
             </h2>
           )}
 
           {/* Scenario */}
-          {nextItem.scenario && (
+          {(nextItem as any).scenario && (
             <div className="bg-muted/40 rounded-xl p-4 border border-border">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Scenario
               </p>
-              <p className="text-sm text-foreground leading-relaxed">{nextItem.scenario}</p>
+              <p className="text-sm text-foreground leading-relaxed">{(nextItem as any).scenario}</p>
             </div>
           )}
 
-          {/* Constraint */}
-          {nextItem.constraint && (
+          {/* Constraint — only for non-AI-output types */}
+          {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (
             <div className="bg-[#EE8866]/6 rounded-xl p-3 border border-[#EE8866]/20">
               <p className="text-xs font-semibold text-[#EE8866] uppercase tracking-wider mb-1">
                 Constraint
               </p>
-              <p className="text-sm text-foreground">{nextItem.constraint}</p>
+              <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
             </div>
+          )}
+
+          {/* Risk framing for risk_judgement */}
+          {interactionType === "risk_judgement" && (nextItem as any).constraint && (
+            <div className="bg-[#EE6677]/6 rounded-xl p-3 border border-[#EE6677]/20">
+              <p className="text-xs font-semibold text-[#EE6677] uppercase tracking-wider mb-1">
+                Risk Factor
+              </p>
+              <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
+            </div>
+          )}
+
+          {/* Governance framing */}
+          {interactionType === "governance_decision" && (nextItem as any).constraint && (
+            <div className="bg-[#228833]/6 rounded-xl p-3 border border-[#228833]/20">
+              <p className="text-xs font-semibold text-[#228833] uppercase tracking-wider mb-1">
+                Policy Context
+              </p>
+              <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
+            </div>
+          )}
+
+          {/* AI Output block — for critique/improvement/error types */}
+          {iConfig.hasAiOutput && aiOutput && (
+            <AiOutputBlock content={aiOutput} mode={aiOutputMode} />
+          )}
+
+          {/* Fallback if AI output type but no aiOutput field */}
+          {iConfig.hasAiOutput && !aiOutput && (nextItem as any).constraint && (
+            <AiOutputBlock content={(nextItem as any).constraint} mode={aiOutputMode} />
+          )}
+
+          {/* Data Context block */}
+          {iConfig.hasDataContext && dataContext && (
+            <DataContextBlock content={dataContext} />
+          )}
+
+          {/* Fallback if data type but no dataContext */}
+          {iConfig.hasDataContext && !dataContext && (nextItem as any).constraint && (
+            <DataContextBlock content={(nextItem as any).constraint} />
           )}
 
           {/* Question prompt */}
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {(nextItem as any).question || "What do you do?"}
+            <p
+              className="text-xs font-bold uppercase tracking-wider mb-2"
+              style={{ color: iConfig.accent }}
+            >
+              {(nextItem as any).question || iConfig.questionLabel}
+            </p>
+            <p className="text-xs text-muted-foreground italic border-l-2 pl-3 py-0.5" style={{ borderColor: `${iConfig.accent}50` }}>
+              {iConfig.instruction}
             </p>
           </div>
-
-          {/* Interaction type instruction */}
-          {(() => {
-            const iType = (nextItem as any).interactionType ?? "situational_judgement";
-            // Keys match the InteractionType enum values stored in DB
-            const instructions: Record<string, string> = {
-              situational_judgement:  "Select the response that best demonstrates sound professional judgement.",
-              scenario_critique:      "Evaluate the AI output and select the most appropriate critique.",
-              output_improvement:     "Identify the best way to improve the AI-generated output.",
-              error_detection:        "Identify the most significant error or risk in the AI output.",
-              prioritisation:         "Select the action that should be prioritised first given the constraints.",
-              risk_judgement:         "Assess the level of risk and select the most appropriate response.",
-              data_interpretation:    "Interpret the data or AI insight and select the most accurate conclusion.",
-              governance_decision:    "Select the response that best aligns with AI governance and compliance requirements.",
-              multi_step_workflow:    "Consider the full sequence of steps and select the most appropriate next action.",
-              contradiction_probe:    "Review your earlier response and select the most consistent answer.",
-              confidence_calibration: "Reflect on your certainty and select the response that best reflects your actual confidence level.",
-            };
-            const instruction = instructions[iType] ?? "Select the most appropriate response.";
-            return (
-              <p className="text-xs text-muted-foreground italic border-l-2 border-[#3B4EFF]/30 pl-3 py-0.5">
-                {instruction}
-              </p>
-            );
-          })()}
 
           {/* Options */}
           {nextItem.options && nextItem.options.length > 0 && (
             <div className="space-y-2">
-              {nextItem.options.map((option: any) => (
+              {nextItem.options.map((option: any, idx: number) => (
                 <button
-                  key={option.id}
+                  key={option.id ?? idx}
                   onClick={() => setSelectedValue(option.value)}
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
@@ -445,7 +764,7 @@ export default function AssessmentSessionPage() {
                         : "border-border text-muted-foreground"
                     )}
                   >
-                    {option.value?.toUpperCase()}
+                    {option.value?.toUpperCase?.() ?? String.fromCharCode(65 + idx)}
                   </span>
                   <span className="leading-relaxed">{option.label}</span>
                 </button>
@@ -480,8 +799,13 @@ export default function AssessmentSessionPage() {
             disabled={submitMutation.isPending || !selectedValue}
             className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
           >
-            {submitMutation.isPending ? "Saving…" : answeredCount + 1 === totalItems ? "Submit Final Answer" : "Next Question"}
-            <ChevronRight className="w-4 h-4" />
+            {submitMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving…
+              </>
+            ) : answeredCount + 1 === totalItems ? "Submit Final Answer" : "Next Question"}
+            {!submitMutation.isPending && <ChevronRight className="w-4 h-4" />}
           </Button>
         </CardContent>
       </Card>
