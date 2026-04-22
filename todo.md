@@ -488,3 +488,16 @@
 ## Marketing Copy Update (Apr 22)
 
 - [x] MK1: Rewrite MarketingPage.tsx with updated copy — Hero, Problem, Solution, What AiQ Does, Example, What You Get, Why AiQ, Beta Programme, Why Join Now, Final Close sections
+
+## Marketing Page — Claude Feedback Improvements (Apr 23)
+
+- [x] CF1: Split hero — two-column layout: left copy, right product mockup card (scenario simulation with options + confidence bar); add beta partners logo strip below hero
+- [x] CF2: Replace "The Solution" card grid with a horizontal 4-step "How AiQ works" flow diagram (Configure → Simulate → Measure → Improve) with arrows and caption
+- [x] CF3: Unify branding — replace "HR AiQ" with "AiQ" in nav/logo/footer everywhere
+- [x] CF4: New hero headline — "Measure how your people actually use AI. / Then improve it." (green); new subhead
+- [x] CF5: Add "See inside an AiQ assessment" section between What You Get and Why AiQ — capability dashboard mockup with realistic metrics, line chart, insights panel
+- [x] CF6: Replace icons in card grids with monospace number tags "01" "02" etc in brand green; remove tinted icon circles
+- [x] CF7: Merge "Why Join Now" into Beta Programme section as bullet reasons; remove standalone section
+- [x] CF8: Remove or replace "Built with forward-thinking organisations" line (no logos to show)
+- [x] CF9: Remove duplicate "Open to organisations with 10+ HR professionals" line from hero; keep only near final CTA
+- [x] CF10: Add visual element to Final Close section (outcome diagram or quote card)
