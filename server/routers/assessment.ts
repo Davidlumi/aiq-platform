@@ -571,8 +571,8 @@ export const assessmentRouter = router({
               await db.insert(assessmentItemOptions).values({
                 id: `${generatedItemId}-opt-${i}`,
                 itemId: generatedItemId,
-                label: opt.label,
-                value: opt.label.toLowerCase(),
+                label: opt.text,            // full answer text for display
+                value: opt.label.toLowerCase(), // a/b/c/d for scoring
                 optionOrder: i + 1,
                 isCorrect: opt.outcomeClass === "strong",
                 scoreWeight: (opt.outcomeClass === "strong" ? 1 : opt.outcomeClass === "acceptable" ? 0.5 : 0) as any,
@@ -601,8 +601,8 @@ export const assessmentRouter = router({
               isGenerated: true,
               options: generated.options.map((opt, i) => ({
                 id: `${generatedItemId}-opt-${i}`,
-                label: opt.label,
-                value: opt.label.toLowerCase(),
+                label: opt.text,            // full answer text for display
+                value: opt.label.toLowerCase(), // a/b/c/d for scoring
                 optionOrder: i + 1,
               })),
             };

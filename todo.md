@@ -226,3 +226,10 @@
 
 ## Bug Fixes (Round 4)
 - [x] Assessment fails to launch when clicking Start Assessment — fixed (blueprint was wiped in clean-slate; re-seeded bp-aiq-v9-standard with 49 items and 196 options under tenant-lumi-platform; verified end-to-end launch and option rendering)
+
+## Assessment QA & Improvements
+- [x] Fix option rendering bug: adaptive generated items stored opt.label (letter) instead of opt.text (full answer text) — fixed in assessment.ts saveGeneratedItem; stale items cleaned from DB
+- [x] Add pre-assessment profiling step: ProfilingModal added to AssessmentPage; captures role (11 options) and AI experience (4 levels); passes role::experience as roleHint to startSession
+- [x] Fix resolveRoleArchetype: now handles role::experience format with direct ID lookup before fuzzy matching
+- [x] Fix assessment stalling: root cause was missing option text on generated items (now fixed); stale sessions with broken options cleaned from DB
+- [ ] QA report: document all issues found and suggested improvements (pending checkpoint)

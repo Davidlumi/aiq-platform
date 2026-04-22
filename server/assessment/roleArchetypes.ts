@@ -303,7 +303,11 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
 /** Map a user's job title or role string to a role archetype */
 export function resolveRoleArchetype(roleHint?: string | null): RoleArchetype {
   if (!roleHint) return ROLE_ARCHETYPES.hr_professional;
-  const lower = roleHint.toLowerCase();
+  // Support new format: "role_id::ai_experience" — extract just the role part
+  const rolePart = roleHint.includes("::") ? roleHint.split("::")[0].trim() : roleHint;
+  // Direct ID match first (most reliable — used by pre-assessment profiling modal)
+  if (rolePart in ROLE_ARCHETYPES) return ROLE_ARCHETYPES[rolePart as keyof typeof ROLE_ARCHETYPES];
+  const lower = rolePart.toLowerCase();
   if (lower.includes("chro") || lower.includes("chief") || lower.includes("director") || lower.includes("vp")) return ROLE_ARCHETYPES.hr_leader;
   if (lower.includes("hrbp") || lower.includes("business partner")) return ROLE_ARCHETYPES.hrbp;
   if (lower.includes("talent") || lower.includes("recruit") || lower.includes("ta ") || lower.includes("acquisition")) return ROLE_ARCHETYPES.talent_acquisition;
