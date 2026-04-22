@@ -219,3 +219,7 @@
 
 ## Bug Fixes (Round 2)
 - [x] Back-office New User form: unable to add users for HR DataHub org — fixed (replaced Radix Select with native HTML select inside Dialog to resolve portal z-index/click-intercept issue)
+
+## Bug Fixes (Round 3)
+- [x] Login page: add helper text clarifying org code is the slug (e.g. hr-datahub), not the display name
+- [x] Auth router: remove all hardcoded tenant-demo-001 fallbacks — login now requires org code, register uses tenantSlug, password reset searches across all tenants

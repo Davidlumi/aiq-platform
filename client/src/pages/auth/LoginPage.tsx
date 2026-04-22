@@ -303,11 +303,15 @@ export default function LoginPage() {
               <Input
                 id="tenantSlug"
                 {...register("tenantSlug")}
-                placeholder="e.g. lumi"
+                placeholder="e.g. hr-datahub"
                 className="h-10 bg-white border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-[#0F6E56]/20"
               />
-              {errors.tenantSlug && (
+              {errors.tenantSlug ? (
                 <p className="text-xs text-red-600">{errors.tenantSlug.message}</p>
+              ) : (
+                <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                  Use the short code provided by your administrator (e.g. <span style={{ fontFamily: "'DM Mono', monospace", color: "#6B7280" }}>hr-datahub</span>), not the organisation display name.
+                </p>
               )}
             </div>
 

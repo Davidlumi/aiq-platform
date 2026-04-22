@@ -100,8 +100,8 @@ export const authRouter = router({
         if (!tenant[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant not found" });
         tenantId = tenant[0].id;
       } else {
-        // Default to demo tenant for now
-        tenantId = "tenant-demo-001";
+        // No tenant slug provided — require it
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Organisation code is required" });
       }
 
       const user = await getUserByEmail(tenantId, input.email);
@@ -168,7 +168,17 @@ export const authRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const tenantId = "tenant-demo-001"; // Default tenant for self-registration
+      // Resolve tenant from slug for self-registration
+      if (!input.tenantSlug) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Organisation code is required" });
+      }
+      const tenantRow = await db
+        .select()
+        .from(tenants)
+        .where(eq(tenants.slug, input.tenantSlug))
+        .limit(1);
+      if (!tenantRow[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Organisation not found" });
+      const tenantId = tenantRow[0].id;
 
       const existing = await getUserByEmail(tenantId, input.email);
       if (existing) {
@@ -214,7 +224,13 @@ export const authRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const user = await getUserByEmail("tenant-demo-001", input.email);
+      // Search across all tenants for password reset (email must be unique per tenant, but we search broadly)
+      const allUserRows = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, input.email.toLowerCase()))
+        .limit(1);
+      const user = allUserRows[0] ?? null;
       // Always return success to avoid email enumeration
       if (!user) return { success: true };
 
