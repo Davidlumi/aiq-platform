@@ -199,9 +199,9 @@ export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
 
-  const { data: sessionData, isLoading, refetch } = trpc.assessment.session.useQuery(
+  const { data: sessionData, isLoading, error: sessionError, refetch } = trpc.assessment.session.useQuery(
     { sessionId: sessionId! },
-    { enabled: !!sessionId, refetchOnWindowFocus: false }
+    { enabled: !!sessionId, refetchOnWindowFocus: false, retry: false }
   );
 
   const [selectedValue, setSelectedValue] = useState<string>("");
@@ -236,10 +236,11 @@ export default function AssessmentSessionPage() {
     );
   }
 
-  if (!sessionData) {
+  if (!sessionData || sessionError) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Session not found</p>
+      <div className="p-6 text-center space-y-3">
+        <p className="text-muted-foreground font-medium">Session not found or has expired.</p>
+        <p className="text-sm text-muted-foreground">This can happen if the session was reset. Please start a new assessment.</p>
         <Button onClick={() => navigate("/assessment")} className="mt-4">Back to Assessments</Button>
       </div>
     );

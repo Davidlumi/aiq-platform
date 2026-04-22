@@ -8,7 +8,7 @@
  */
 
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, notLike, like } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
@@ -231,7 +231,8 @@ async function getNextStaticItem(
     .where(
       and(
         eq(assessmentItems.blueprintId, blueprintId),
-        eq(assessmentItems.status, "published")
+        eq(assessmentItems.status, "published"),
+        notLike(assessmentItems.id, "gen-%")  // exclude LLM-generated items
       )
     );
   const unanswered = allStaticItems
@@ -474,6 +475,65 @@ export const assessmentRouter = router({
         }
 
         if ((phase === "adaptive" || phase === "validation") && !nextItem) {
+          // First: check if there are already unanswered generated items for this session
+          // (avoids re-generating when a previous gen item was never answered)
+          const existingGenItems = await db
+            .select({ id: assessmentItems.id, metadataJson: assessmentItems.metadataJson })
+            .from(assessmentItems)
+            .where(
+              and(
+                eq(assessmentItems.blueprintId, session[0].blueprintId),
+                eq(assessmentItems.status, "published"),
+                like(assessmentItems.id, "gen-%")
+              )
+            );
+          const unansweredGen = existingGenItems.filter(i => !answeredItemIds.includes(i.id));
+          if (unansweredGen.length > 0) {
+            // Reuse the oldest unanswered generated item instead of creating a new one
+            const genItem = unansweredGen[0];
+            const genItemFull = await db
+              .select()
+              .from(assessmentItems)
+              .where(eq(assessmentItems.id, genItem.id))
+              .limit(1);
+            if (genItemFull[0]) {
+              const genOptions = await db
+                .select()
+                .from(assessmentItemOptions)
+                .where(eq(assessmentItemOptions.itemId, genItemFull[0].id))
+                .orderBy(assessmentItemOptions.optionOrder);
+              let genMeta: Record<string, unknown> = {};
+              try { genMeta = (typeof genItemFull[0].metadataJson === "string" ? JSON.parse(genItemFull[0].metadataJson as string) : (genItemFull[0].metadataJson ?? {})) as Record<string, unknown>; } catch {}
+              nextItem = {
+                id: genItemFull[0].id,
+                itemType: genItemFull[0].itemType,
+                prompt: genItemFull[0].prompt ?? "",
+                difficulty: genItemFull[0].difficulty,
+                title: (genMeta.title as string) ?? "",
+                scenario: (genMeta.scenario as string) ?? "",
+                constraint: (genMeta.constraint as string) ?? "",
+                question: (genMeta.question as string) ?? "What do you do?",
+                capability: (genMeta.capability as string) ?? "",
+                capabilityKey: (genMeta.capability_key as string) ?? "execution",
+                workflow: (genMeta.workflow as string) ?? "",
+                riskLevel: (genMeta.risk_level as string) ?? "Medium",
+                interactionType: (genMeta.interaction_type as string) ?? "situational_judgement",
+                interactionId: (genMeta.interaction_id as string) ?? "",
+                primarySignal: (genMeta.primary_signal as string) ?? "",
+                displayOrder: answeredCount + 1,
+                isGenerated: true,
+                options: genOptions.map((opt, i) => ({
+                  id: `${genItemFull[0].id}-opt-${i}`,
+                  label: opt.label,
+                  value: opt.value,
+                  optionOrder: opt.optionOrder,
+                })),
+              };
+            }
+          }
+          if (nextItem) {
+            // Already have a generated item to serve
+          } else
           try {
             const signalScores = computeSignalScores(
               answers.map(a => ({
