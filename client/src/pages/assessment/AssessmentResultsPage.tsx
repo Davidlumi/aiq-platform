@@ -1,13 +1,15 @@
-/**
+/*
  * Assessment Results Page — AiQ Enterprise Platform
  *
- * Implements the V9.2 results view specification from Volume 02A:
- * - Readiness State banner (safe / at_risk / unsafe / unknown)
- * - Overall score with credibility and risk indicators
- * - Capability breakdown (6 domains with bars and scores)
- * - Signal profile (positive and risk signals)
- * - Narrative text (learner-facing, from Vol 02A Appendix C)
- * - Actions: View Learning Plan, Back to Dashboard, Retake
+ * UX improvements applied:
+ * UX-1: Deep Dive tab no longer duplicates Summary content — shows only longitudinal chart,
+ *        LLM narrative, and expanded signal breakdown with per-capability grouping.
+ * UX-2: Development tab leads with LLM narrative (strengths/gaps/priorities) instead of
+ *        generic static boilerplate.
+ * UX-3: Score Summary card shows actual question count with early-completion label instead
+ *        of hard-coded "/50".
+ * UX-10: LongitudinalChart dots are coloured by readiness state; role-threshold reference
+ *         line added at y=75 (safe threshold).
  */
 
 import { useState } from "react";
@@ -16,7 +18,6 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   CheckCircle2,
@@ -36,8 +37,8 @@ import {
   Target,
   FileText,
   Lightbulb,
-  User,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -53,7 +54,61 @@ import {
   YAxis,
   CartesianGrid,
   ReferenceLine,
+  Dot,
 } from "recharts";
+
+// ─── Readiness / Credibility / Risk config ────────────────────────────────────
+
+const READINESS_CONFIG = {
+  safe: {
+    label: "AI-Ready",
+    description: "Demonstrates consistent, appropriate application of AI tools with strong governance awareness.",
+    color: "text-[#228833]",
+    bg: "border-[#228833]/30 bg-[#228833]/5",
+    barColor: "#228833",
+    icon: CheckCircle2,
+    dotColor: "#228833",
+  },
+  at_risk: {
+    label: "Developing",
+    description: "Shows emerging capability but inconsistencies suggest further development is needed before unsupervised AI use.",
+    color: "text-[#EE8866]",
+    bg: "border-[#EE8866]/30 bg-[#EE8866]/5",
+    barColor: "#EE8866",
+    icon: AlertTriangle,
+    dotColor: "#EE8866",
+  },
+  unsafe: {
+    label: "Not Yet Ready",
+    description: "Significant gaps identified. Structured development and supervised AI use recommended.",
+    color: "text-[#EE6677]",
+    bg: "border-[#EE6677]/30 bg-[#EE6677]/5",
+    barColor: "#EE6677",
+    icon: ShieldAlert,
+    dotColor: "#EE6677",
+  },
+  unknown: {
+    label: "Insufficient Data",
+    description: "Not enough evidence to classify readiness. Complete more assessment interactions.",
+    color: "text-muted-foreground",
+    bg: "border-border",
+    barColor: "#888888",
+    icon: HelpCircle,
+    dotColor: "#888888",
+  },
+} as const;
+
+const CREDIBILITY_CONFIG = {
+  high: { label: "High Credibility", color: "text-[#228833]", bg: "bg-[#228833]/10" },
+  medium: { label: "Medium Credibility", color: "text-[#EE8866]", bg: "bg-[#EE8866]/10" },
+  low: { label: "Low Credibility", color: "text-[#EE6677]", bg: "bg-[#EE6677]/10" },
+} as const;
+
+const RISK_CONFIG = {
+  low: { label: "Low Risk", color: "text-[#228833]", bg: "bg-[#228833]/10" },
+  medium: { label: "Medium Risk", color: "text-[#EE8866]", bg: "bg-[#EE8866]/10" },
+  high: { label: "High Risk", color: "text-[#EE6677]", bg: "bg-[#EE6677]/10" },
+} as const;
 
 // ─── Radar Chart Component ────────────────────────────────────────────────────
 
@@ -100,7 +155,7 @@ function RadarCapabilityChart({
   );
 }
 
-// ─── Longitudinal Tracking Chart (T3-9) ─────────────────────────────────────
+// ─── Longitudinal Tracking Chart (UX-10: readiness dots + threshold line) ────
 
 interface LongitudinalEntry {
   sessionId: string;
@@ -108,6 +163,14 @@ interface LongitudinalEntry {
   overallScore: number;
   capabilityScores: Record<string, number>;
   readinessState: string;
+}
+
+// Custom dot coloured by readiness state
+function ReadinessDot(props: any) {
+  const { cx, cy, payload } = props;
+  const state = (payload?.readinessState ?? "unknown") as keyof typeof READINESS_CONFIG;
+  const color = READINESS_CONFIG[state]?.dotColor ?? "#888888";
+  return <circle cx={cx} cy={cy} r={6} fill={color} stroke="hsl(var(--background))" strokeWidth={2} />;
 }
 
 function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
@@ -128,153 +191,81 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
   const chartData = data.map((s, i) => ({
     name: s.completedAt
       ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-      : `S${i + 1}`,
-    score: Math.round(s.overallScore),
+      : `Session ${i + 1}`,
+    score: s.overallScore,
+    readinessState: s.readinessState,
   }));
-
-  const capKeys = Array.from(new Set(data.flatMap(s => Object.keys(s.capabilityScores))));
-  const capColors = ["#3B4EFF", "#228833", "#EE6677", "#CCBB44", "#66CCEE", "#AA3377"];
-
-  const capChartData = data.map((s, i) => {
-    const entry: Record<string, string | number> = {
-      name: s.completedAt
-        ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-        : `S${i + 1}`,
-    };
-    capKeys.forEach(k => { entry[k] = Math.round(s.capabilityScores[k] ?? 0); });
-    return entry;
-  });
 
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-[#3B4EFF]" />
-          Capability Trend
+          Progress Over Time
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Overall score and capability scores across your {data.length} completed assessments.
-        </p>
+        <div className="flex items-center gap-4 flex-wrap mt-1">
+          {(["safe", "at_risk", "unsafe"] as const).map(state => (
+            <div key={state} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: READINESS_CONFIG[state].dotColor }} />
+              <span className="text-xs text-muted-foreground">{READINESS_CONFIG[state].label}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-0.5 border-t-2 border-dashed border-[#228833]/60" />
+            <span className="text-xs text-muted-foreground">Safe threshold (75)</span>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Overall Score</p>
-          <ResponsiveContainer width="100%" height={140}>
-            <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+      <CardContent>
+        <div style={{ height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <Tooltip
-                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  fontSize: 12,
+                }}
+                formatter={(value: number) => [`${value}`, "Overall Score"]}
               />
-              <ReferenceLine y={70} stroke="#228833" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "Safe", position: "right", fontSize: 9, fill: "#228833" }} />
-              <ReferenceLine y={50} stroke="#CCBB44" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "At Risk", position: "right", fontSize: 9, fill: "#CCBB44" }} />
-              <Line type="monotone" dataKey="score" stroke="#3B4EFF" strokeWidth={2}
-                dot={{ r: 4, fill: "#3B4EFF" }} activeDot={{ r: 6 }} />
+              {/* UX-10: Safe threshold reference line */}
+              <ReferenceLine
+                y={75}
+                stroke="#228833"
+                strokeDasharray="4 4"
+                strokeOpacity={0.6}
+                label={{ value: "Safe", position: "right", fontSize: 10, fill: "#228833" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="#3B4EFF"
+                strokeWidth={2}
+                dot={<ReadinessDot />}
+                activeDot={{ r: 8 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        {capKeys.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Capability Domains</p>
-            <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={capChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
-                />
-                {capKeys.map((k, i) => (
-                  <Line key={k} type="monotone" dataKey={k} stroke={capColors[i % capColors.length]}
-                    strokeWidth={1.5} dot={{ r: 3 }}
-                    name={k.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-3 mt-2">
-              {capKeys.map((k, i) => (
-                <div key={k} className="flex items-center gap-1.5">
-                  <div className="w-3 h-0.5 rounded" style={{ backgroundColor: capColors[i % capColors.length] }} />
-                  <span className="text-xs text-muted-foreground">
-                    {k.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 }
 
-
-const READINESS_CONFIG = {
-  safe: {
-    label: "Safe to Deploy",
-    description: "You are demonstrating strong, credible AI capability across the assessed domains.",
-    icon: CheckCircle2,
-    color: "text-[#228833]",
-    bg: "bg-[#228833]/6 border-[#228833]/25",
-    barColor: "#228833",
-    scoreBg: "bg-[#228833]/10",
-  },
-  at_risk: {
-    label: "At Risk",
-    description: "You show capability in some areas but evidence suggests risk in higher-stakes AI decisions.",
-    icon: AlertTriangle,
-    color: "text-[#EE8866]",
-    bg: "bg-[#EE8866]/6 border-[#EE8866]/25",
-    barColor: "#EE8866",
-    scoreBg: "bg-[#EE8866]/10",
-  },
-  unsafe: {
-    label: "Unsafe",
-    description: "The current evidence indicates material risk in your AI use. Remediation is required before reassessment.",
-    icon: ShieldAlert,
-    color: "text-[#EE6677]",
-    bg: "bg-[#EE6677]/6 border-[#EE6677]/25",
-    barColor: "#EE6677",
-    scoreBg: "bg-[#EE6677]/10",
-  },
-  unknown: {
-    label: "Not Assessed",
-    description: "Insufficient data to determine a readiness state.",
-    icon: HelpCircle,
-    color: "text-muted-foreground",
-    bg: "bg-muted/20 border-border",
-    barColor: "#BBBBBB",
-    scoreBg: "bg-muted/20",
-  },
-} as const;
-
-const CREDIBILITY_CONFIG = {
-  high:   { label: "High Credibility",   color: "text-[#228833]", bg: "bg-[#228833]/8" },
-  medium: { label: "Medium Credibility", color: "text-[#EE8866]", bg: "bg-[#EE8866]/8" },
-  low:    { label: "Low Credibility",    color: "text-[#EE6677]", bg: "bg-[#EE6677]/8" },
-} as const;
-
-const RISK_CONFIG = {
-  high:   { label: "High Risk",   color: "text-[#EE6677]", bg: "bg-[#EE6677]/8" },
-  medium: { label: "Medium Risk", color: "text-[#EE8866]", bg: "bg-[#EE8866]/8" },
-  low:    { label: "Low Risk",    color: "text-[#228833]", bg: "bg-[#228833]/8" },
-} as const;
-
 // ─── Score Ring ───────────────────────────────────────────────────────────────
 
-function ScoreRing({ score, color, size = 120 }: { score: number; color: string; size?: number }) {
+function ScoreRing({ score, color, size = 100 }: { score: number; color: string; size?: number }) {
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="rotate-[-90deg]">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/30" />
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -347,9 +338,7 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
           <span className="text-xs text-[#EE8866] bg-[#EE8866]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
         )}
       </div>
-      <span
-        className={cn("text-xs font-bold tabular-nums", isPositive ? "text-[#228833]" : "text-[#EE6677]")}
-      >
+      <span className={cn("text-xs font-bold tabular-nums", isPositive ? "text-[#228833]" : "text-[#EE6677]")}>
         {isPositive ? "+" : ""}{delta.toFixed(1)}
       </span>
     </div>
@@ -396,7 +385,6 @@ export default function AssessmentResultsPage() {
 
   const { score } = data;
   const longitudinalData = ((data as any).longitudinalData ?? []) as LongitudinalEntry[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const breakdown = (score.breakdown ?? {}) as any;
   const overallScore = Math.round(score.overallScore ?? 0);
   const readiness = breakdown.readiness as { state?: string; label?: string; description?: string } | undefined;
@@ -407,6 +395,9 @@ export default function AssessmentResultsPage() {
   const llmNarrative = (breakdown.llmNarrative ?? null) as { strengths: string; gaps: string; priorities: string } | null;
   const capabilityScores = breakdown.capabilityScores ?? {};
   const signalScores = breakdown.signalScores ?? {};
+  const totalAnswers = breakdown.totalAnswers ?? 0;
+  const targetItems = breakdown.targetItems ?? 49;
+  const isEarlyCompletion = totalAnswers < targetItems;
 
   const stateConfig = READINESS_CONFIG[primaryState] ?? READINESS_CONFIG.unknown;
   const StateIcon = stateConfig.icon;
@@ -423,10 +414,10 @@ export default function AssessmentResultsPage() {
     }))
     .sort((a, b) => b.score - a.score);
 
-  // Sort signals: positive first, then risk signals
+  // Sort signals by absolute delta descending, show top 12
   const sortedSignals = Object.entries(signalScores as Record<string, number>)
     .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
-    .slice(0, 12); // Show top 12 signals
+    .slice(0, 12);
 
   const completedAt = data.session.completedAt
     ? new Date(data.session.completedAt).toLocaleDateString("en-GB", {
@@ -448,6 +439,7 @@ export default function AssessmentResultsPage() {
         <ArrowLeft className="w-3.5 h-3.5" />
         Back to Assessments
       </button>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Results</h1>
@@ -455,6 +447,7 @@ export default function AssessmentResultsPage() {
           AIQ V9.2 Standard Assessment · Completed {completedAt}
         </p>
       </div>
+
       {/* ── Three-Layer Tabs ── */}
       <Tabs defaultValue="summary" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -472,51 +465,53 @@ export default function AssessmentResultsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ── TAB 1: SUMMARY ── */}
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 1: SUMMARY
+            Contains: readiness banner, narrative, capability breakdown (radar +
+            bars), signal profile, contradiction profile, governance profile,
+            score summary, actions, disclaimer.
+        ══════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="summary" className="space-y-6">
 
-          {/* ── Readiness State Banner ── */}
+          {/* Readiness State Banner */}
           <Card className={cn("border-2", stateConfig.bg)}>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-6">
-              {/* Score ring */}
-              <div className="shrink-0">
-                <ScoreRing score={overallScore} color={stateConfig.barColor} size={120} />
-              </div>
-              {/* State info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
-                  <span className={cn("text-xs font-semibold uppercase tracking-wider", stateConfig.color)}>
-                    Readiness State
-                  </span>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-6">
+                <div className="shrink-0">
+                  <ScoreRing score={overallScore} color={stateConfig.barColor} size={120} />
                 </div>
-                <h2 className={cn("text-2xl font-bold font-sora", stateConfig.color)}>
-                  {stateConfig.label}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  {stateConfig.description}
-                </p>
-                {/* Credibility + Risk badges */}
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", credConfig.color, credConfig.bg)}>
-                    <Award className="w-3 h-3 inline mr-1" />
-                    {credConfig.label}
-                  </span>
-                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", riskConfig.color, riskConfig.bg)}>
-                    <Shield className="w-3 h-3 inline mr-1" />
-                    {riskConfig.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Model: V9.2 · {breakdown.totalAnswers ?? 0} questions
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
+                    <span className={cn("text-xs font-semibold uppercase tracking-wider", stateConfig.color)}>
+                      Readiness State
+                    </span>
+                  </div>
+                  <h2 className={cn("text-2xl font-bold font-sora", stateConfig.color)}>
+                    {stateConfig.label}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    {stateConfig.description}
+                  </p>
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", credConfig.color, credConfig.bg)}>
+                      <Award className="w-3 h-3 inline mr-1" />
+                      {credConfig.label}
+                    </span>
+                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", riskConfig.color, riskConfig.bg)}>
+                      <Shield className="w-3 h-3 inline mr-1" />
+                      {riskConfig.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Model: V9.2 · {totalAnswers} questions
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
+            </CardContent>
           </Card>
 
-          {/* ── Narrative ── */}
+          {/* Narrative */}
           {narrative && (
             <Card className="border-border">
               <CardContent className="p-5">
@@ -533,7 +528,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* ── Capability Breakdown ── */}
+          {/* Capability Breakdown */}
           {sortedCapabilities.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
@@ -541,12 +536,11 @@ export default function AssessmentResultsPage() {
                   Capability Breakdown
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Scores are derived from signal-weighted deltas across all 50 interactions.
+                  Scores are derived from signal-weighted deltas across all answered interactions.
                   Each capability domain maps to multiple performance and risk signals.
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* T2-6: Radar chart overview */}
                 {sortedCapabilities.length >= 3 && (
                   <RadarCapabilityChart capabilities={sortedCapabilities} />
                 )}
@@ -576,7 +570,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* ── Signal Profile ── */}
+          {/* Signal Profile */}
           {sortedSignals.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
@@ -598,7 +592,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* ── Contradiction Profile ── */}
+          {/* Contradiction Profile */}
           {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
             <Card className="border-[#EE6677]/30 bg-[#EE6677]/5">
               <CardContent className="p-5">
@@ -626,7 +620,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* ── Governance Profile ── */}
+          {/* Governance Profile */}
           {breakdown.governanceProfile && (
             <Card className="border-border">
               <CardContent className="p-5">
@@ -660,16 +654,21 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* ── Score Summary ── */}
+          {/* UX-3: Score Summary — actual question count with early-completion label */}
           <Card className="border-border">
             <CardContent className="p-5">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Questions Answered</p>
                   <p className="text-2xl font-bold text-foreground font-sora">
-                    {breakdown.totalAnswers ?? 0}
-                    <span className="text-sm font-normal text-muted-foreground">/50</span>
+                    {totalAnswers}
                   </p>
+                  {isEarlyCompletion && (
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <Zap className="w-3 h-3 text-[#228833]" />
+                      <span className="text-[10px] text-[#228833] font-semibold">Early completion</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
@@ -687,7 +686,7 @@ export default function AssessmentResultsPage() {
             </CardContent>
           </Card>
 
-          {/* ── Actions ── */}
+          {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={() => navigate("/learning")}
@@ -714,7 +713,7 @@ export default function AssessmentResultsPage() {
             </Button>
           </div>
 
-          {/* ── Disclaimer ── */}
+          {/* Disclaimer */}
           <p className="text-xs text-muted-foreground text-center pb-4">
             Results are generated by the AIQ V9.2 signal-delta scoring model. Scores reflect demonstrated
             decision-making patterns in the assessed interactions and are not a measure of general intelligence
@@ -722,12 +721,19 @@ export default function AssessmentResultsPage() {
           </p>
         </TabsContent>
 
-        {/* ── TAB 2: DEEP DIVE ── */}
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 2: DEEP DIVE
+            UX-1: Contains ONLY content exclusive to this tab — no duplication
+            of capability bars / signal profile / governance profile from Summary.
+            Shows: longitudinal tracking, LLM narrative, expanded signal breakdown
+            grouped by positive vs risk signals.
+        ══════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="deepdive" className="space-y-6">
-          {/* T3-9: Longitudinal Tracking Chart */}
+
+          {/* UX-10: Longitudinal Tracking with readiness dots + threshold line */}
           <LongitudinalChart data={longitudinalData} />
 
-          {/* R9: LLM-generated personalised development narrative */}
+          {/* LLM Development Narrative (also shown in Development tab) */}
           {llmNarrative && (
             <Card className="border-[#3B4EFF]/30 bg-[#3B4EFF]/5">
               <CardHeader className="pb-3">
@@ -755,123 +761,176 @@ export default function AssessmentResultsPage() {
               </CardContent>
             </Card>
           )}
-          {/* Capability Breakdown (already rendered in summary, re-render here with more detail) */}
-          {sortedCapabilities.length > 0 && (
-            <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">Capability Breakdown</CardTitle>
-                <p className="text-xs text-muted-foreground">Signal-weighted scores across all 6 capability domains.</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {sortedCapabilities.map(cap => (
-                  <CapabilityBar key={cap.key} displayName={cap.displayName} score={cap.score} colour={cap.colour} />
-                ))}
-              </CardContent>
-            </Card>
-          )}
-          {/* Signal Profile */}
+
+          {/* Expanded Signal Breakdown — grouped by positive vs risk */}
           {sortedSignals.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">Signal Profile</CardTitle>
-                <p className="text-xs text-muted-foreground">Top signals detected across all interactions.</p>
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Full Signal Breakdown
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  All {sortedSignals.length} signals detected, sorted by magnitude. Positive signals indicate
+                  demonstrated capability; negative signals indicate risk patterns or gaps.
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {sortedSignals.map(([signal, value]) => {
-                    const isPositive = value > 0;
-                    return (
-                      <div key={signal} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                        <div className="flex items-center gap-2">
-                          {isPositive
-                            ? <TrendingUp className="w-3.5 h-3.5 text-[#228833]" />
-                            : <TrendingDown className="w-3.5 h-3.5 text-[#EE6677]" />}
-                          <span className="text-xs text-foreground">{signal.replace(/_/g, " ")}</span>
-                        </div>
-                        <span className={cn("text-xs font-bold tabular-nums", isPositive ? "text-[#228833]" : "text-[#EE6677]")}
-                        >{isPositive ? "+" : ""}{typeof value === "number" ? value.toFixed(1) : value}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {/* Governance Profile */}
-          {breakdown.governanceProfile && (
-            <Card className="border-border">
-              <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#3B4EFF]" />
-                  Governance Profile
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
-                    <p className="text-xl font-bold font-sora text-foreground">
-                      {Math.round((breakdown.governanceProfile as any).score ?? 0)}
-                      <span className="text-sm font-normal text-muted-foreground">/100</span>
+                {/* Positive signals */}
+                {sortedSignals.filter(([, v]) => (v as number) > 0).length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-[#228833] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      Positive Signals ({sortedSignals.filter(([, v]) => (v as number) > 0).length})
                     </p>
+                    <div className="divide-y divide-border/40">
+                      {sortedSignals
+                        .filter(([, v]) => (v as number) > 0)
+                        .map(([signal, delta]) => (
+                          <SignalRow key={signal} signal={signal} delta={delta as number} />
+                        ))}
+                    </div>
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
-                    <p className="text-sm font-bold font-sora text-foreground capitalize">
-                      {(breakdown.governanceProfile as any).band ?? "Not assessed"}
+                )}
+                {/* Risk signals */}
+                {sortedSignals.filter(([, v]) => (v as number) <= 0).length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-[#EE6677] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <TrendingDown className="w-3.5 h-3.5" />
+                      Risk Signals ({sortedSignals.filter(([, v]) => (v as number) <= 0).length})
                     </p>
+                    <div className="divide-y divide-border/40">
+                      {sortedSignals
+                        .filter(([, v]) => (v as number) <= 0)
+                        .map(([signal, delta]) => (
+                          <SignalRow key={signal} signal={signal} delta={delta as number} />
+                        ))}
+                    </div>
                   </div>
-                </div>
-                {(breakdown.governanceProfile as any).bypasses > 0 && (
-                  <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
-                  </p>
                 )}
               </CardContent>
             </Card>
           )}
+
+          {/* Technical metadata — only in deep dive */}
+          <Card className="border-border">
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Assessment Metadata
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Model Version</p>
+                  <p className="font-semibold text-foreground">{breakdown.modelVersion ?? "V9.2"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Questions Answered</p>
+                  <p className="font-semibold text-foreground">
+                    {totalAnswers}{isEarlyCompletion ? " (early completion)" : ""}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Credibility Band</p>
+                  <p className="font-semibold text-foreground capitalize">{credibilityBand}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Risk Band</p>
+                  <p className="font-semibold text-foreground capitalize">{riskBand}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* ── TAB 3: DEVELOPMENT ── */}
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 3: DEVELOPMENT
+            UX-2: Leads with LLM narrative (strengths/gaps/priorities) instead
+            of generic static boilerplate. Falls back to capability-based
+            recommendations only when llmNarrative is unavailable.
+        ══════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="development" className="space-y-6">
-          {/* Narrative */}
-          {narrative && (
-            <Card className="border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <FileText className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
-                    <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
-                  </div>
+
+          {/* UX-2: LLM narrative as primary content */}
+          {llmNarrative ? (
+            <Card className="border-[#3B4EFF]/30 bg-[#3B4EFF]/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#3B4EFF]" />
+                  Personalised Development Report
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Generated from your full capability profile and response patterns.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="p-4 rounded-xl bg-[#228833]/8 border border-[#228833]/20 space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#228833] uppercase tracking-wide flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Your Strengths
+                  </h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#EE8866]/8 border border-[#EE8866]/20 space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#EE8866] uppercase tracking-wide flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Development Areas
+                  </h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#3B4EFF] uppercase tracking-wide flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5" />
+                    Immediate Priorities
+                  </h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
                 </div>
               </CardContent>
             </Card>
-          )}
-          {/* Development Recommendations */}
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-[#3B4EFF]" />
-                Development Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {sortedCapabilities.slice(-3).map(cap => (
-                <div key={cap.key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: cap.colour }} />
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Score: {cap.score}/100 — Focus area for development. Review governance and validation practices in this domain.
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {sortedCapabilities.length === 0 && (
-                <p className="text-sm text-muted-foreground">Complete more assessments to unlock personalised development recommendations.</p>
+          ) : (
+            /* Fallback: static narrative + lowest-3-capabilities card */
+            <>
+              {narrative && (
+                <Card className="border-border">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                        <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
+              {sortedCapabilities.length > 0 && (
+                <Card className="border-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-[#3B4EFF]" />
+                      Development Focus Areas
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Based on your lowest-scoring capability domains.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {sortedCapabilities.slice(-3).map(cap => (
+                      <div key={cap.key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                        <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: cap.colour }} />
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Score: {cap.score}/100 — Focus area for development.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button onClick={() => navigate("/learning")} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2">

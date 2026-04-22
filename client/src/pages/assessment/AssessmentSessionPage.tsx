@@ -19,7 +19,7 @@
  * - options with label/value (scoring data stripped server-side)
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ─── Capability colours ───────────────────────────────────────────────────────
 
@@ -450,7 +451,9 @@ export default function AssessmentSessionPage() {
     rationaleText: string | null;
     allOptionsRationale: Array<{ value: string; rationaleText: string | null; outcomeClass: string | null }>;
     selectedValue: string;
+    selectedLabel: string; // UX-5: label of the chosen option
     outcomeClass: string | null;
+    isLastQuestion: boolean; // UX-7: auto-trigger complete after rationale
   } | null>(null);
 
   const { data: sessionData, isLoading, error: sessionError, refetch } = trpc.assessment.session.useQuery(
@@ -461,17 +464,23 @@ export default function AssessmentSessionPage() {
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [confidence, setConfidence] = useState<number>(50);
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
+  // UX-6: Elapsed timer
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: (data) => {
       // T2-5: Show rationale if available before advancing to next question
       const hasRationale = data.allOptionsRationale?.some((o: any) => o.rationaleText);
       if (hasRationale) {
+        const chosenOption = sessionData?.nextItem?.options?.find((o: any) => o.value === selectedValue);
         setRationaleData({
           rationaleText: data.rationaleText ?? null,
           allOptionsRationale: data.allOptionsRationale ?? [],
           selectedValue: selectedValue,
+          selectedLabel: chosenOption?.label ?? "",
           outcomeClass: data.outcomeClass ?? null,
+          isLastQuestion: data.isComplete === true,
         });
         // Pre-fetch next item in background while user reads rationale
         setIsGenerating(true);
@@ -493,6 +502,25 @@ export default function AssessmentSessionPage() {
     },
     onError: err => toast.error(err.message),
   });
+
+  // UX-6: Start/reset elapsed timer when a new item appears
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setElapsedSeconds(0);
+    if (sessionData?.nextItem && !rationaleData) {
+      timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionData?.nextItem?.id]);
+
+  // Stop timer when rationale is shown
+  useEffect(() => {
+    if (rationaleData && timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [rationaleData]);
 
   // When we get a nextItem, stop the generating state
   useEffect(() => {
@@ -606,14 +634,20 @@ export default function AssessmentSessionPage() {
         </div>
         <Card className="border-border shadow-sm">
           <CardContent className="p-6 space-y-4">
-            {/* Outcome badge */}
+            {/* UX-5: Outcome badge + selected option label */}
             <div
               className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold"
               style={{ color: outcomeColor, backgroundColor: `${outcomeColor}12`, borderColor: `${outcomeColor}30` }}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              {outcomeLabel}
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{outcomeLabel}</span>
             </div>
+            {rationaleData.selectedLabel && (
+              <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">Your answer</span>
+                <span className="text-foreground">{rationaleData.selectedLabel}</span>
+              </div>
+            )}
             {/* Selected option rationale */}
             {rationaleData.rationaleText && (
               <div className="space-y-1.5">
@@ -648,17 +682,32 @@ export default function AssessmentSessionPage() {
                   ))}
               </div>
             )}
-            <Button
-              onClick={() => {
-                setRationaleData(null);
-                setSelectedValue("");
-                setConfidence(50);
-                setItemStartTime(Date.now());
-              }}
-              className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
-            >
-              Continue <ChevronRight className="w-4 h-4" />
-            </Button>
+            {/* UX-7: if last question, show Complete Assessment instead of Continue */}
+            {rationaleData.isLastQuestion ? (
+              <Button
+                onClick={() => {
+                  setRationaleData(null);
+                  completeMutation.mutate({ sessionId: sessionId! });
+                }}
+                disabled={completeMutation.isPending}
+                className="w-full bg-[#228833] hover:bg-[#228833]/90 text-white gap-2"
+              >
+                {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
+                {!completeMutation.isPending && <CheckCircle2 className="w-4 h-4" />}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  setRationaleData(null);
+                  setSelectedValue("");
+                  setConfidence(50);
+                  setItemStartTime(Date.now());
+                }}
+                className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+              >
+                Continue <ChevronRight className="w-4 h-4" />
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -670,7 +719,7 @@ export default function AssessmentSessionPage() {
     return <GeneratingState answeredCount={answeredCount} totalItems={totalItems} />;
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (!selectedValue) {
       toast.error("Please select an answer before continuing");
       return;
@@ -683,10 +732,29 @@ export default function AssessmentSessionPage() {
       confidenceScore: confidence / 100,
       timeToAnswerMs: timeTaken,
     });
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedValue, confidence, itemStartTime, sessionId, nextItem?.id]);
+
+  // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
+  useEffect(() => {
+    if (!nextItem || rationaleData) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const options = nextItem.options ?? [];
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= options.length) {
+        setSelectedValue(options[num - 1].value);
+      } else if (e.key === "Enter" && selectedValue) {
+        handleSubmit();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [nextItem, rationaleData, selectedValue, handleSubmit]);
 
   const interactionType = (nextItem as any).interactionType ?? "situational_judgement";
   const iConfig = getInteractionConfig(interactionType);
+  const formatElapsed = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
   const capabilityColor = CAPABILITY_COLOURS[(nextItem as any).capabilityKey] ?? "#4477AA";
   const riskLevel = (nextItem as any).riskLevel as keyof typeof RISK_CONFIG;
   const riskConfig = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Medium;
@@ -725,18 +793,29 @@ export default function AssessmentSessionPage() {
 
           {/* Meta badges */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Interaction type badge */}
-            <span
-              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border"
-              style={{
-                color: iConfig.accent,
-                backgroundColor: `${iConfig.accent}12`,
-                borderColor: `${iConfig.accent}30`,
-              }}
-            >
-              <iConfig.icon className="w-3 h-3" />
-              {iConfig.label}
-            </span>
+            {/* UX-9: Interaction type badge with tooltip */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border cursor-help"
+                    style={{
+                      color: iConfig.accent,
+                      backgroundColor: `${iConfig.accent}12`,
+                      borderColor: `${iConfig.accent}30`,
+                    }}
+                  >
+                    <iConfig.icon className="w-3 h-3" />
+                    {iConfig.label}
+                    <Info className="w-3 h-3 opacity-60" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  <p className="font-semibold mb-0.5">{iConfig.label}</p>
+                  <p className="text-muted-foreground">{iConfig.instruction}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {/* Capability badge */}
             {(nextItem as any).capability && (
@@ -768,8 +847,9 @@ export default function AssessmentSessionPage() {
               </span>
             )}
 
-            <span className="text-xs text-muted-foreground ml-auto">
-              Level {(nextItem as any).difficulty}
+            {/* UX-6: Elapsed timer */}
+            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+              <span className="opacity-60">⏱</span> {formatElapsed(elapsedSeconds)} · Level {(nextItem as any).difficulty}
             </span>
           </div>
 
@@ -853,7 +933,7 @@ export default function AssessmentSessionPage() {
             </p>
           </div>
 
-          {/* Options */}
+          {/* Options — UX-4: keyboard hint shown below */}
           {nextItem.options && nextItem.options.length > 0 && (
             <div className="space-y-2">
               {nextItem.options.map((option: any, idx: number) => (
@@ -875,11 +955,12 @@ export default function AssessmentSessionPage() {
                         : "border-border text-muted-foreground"
                     )}
                   >
-                    {option.value?.toUpperCase?.() ?? String.fromCharCode(65 + idx)}
+                    {idx + 1}
                   </span>
                   <span className="leading-relaxed">{option.label}</span>
                 </button>
               ))}
+              <p className="text-xs text-muted-foreground pt-1 pl-1">Press <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">1</kbd>–<kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">{nextItem.options.length}</kbd> to select · <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">Enter</kbd> to submit</p>
             </div>
           )}
 

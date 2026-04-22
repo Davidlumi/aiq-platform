@@ -924,7 +924,13 @@ export const assessmentRouter = router({
         })();
       }
 
-      return { success: true, correctness, outcomeClass, rationaleText, allOptionsRationale };
+      // Compute isComplete so the frontend can show "Complete Assessment" after the last rationale (UX-7)
+      const allAnswersFinal = await db
+        .select({ id: assessmentAnswers.id })
+        .from(assessmentAnswers)
+        .where(eq(assessmentAnswers.sessionId, input.sessionId));
+      const isCompleteNow = allAnswersFinal.length >= MINIMUM_EVIDENCE.targetItems;
+      return { success: true, correctness, outcomeClass, rationaleText, allOptionsRationale, isComplete: isCompleteNow };
     }),
 
   // ── Complete session and compute full adaptive scores ──────────────────────

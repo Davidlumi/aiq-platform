@@ -12,10 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Users, Briefcase, BarChart3, Shield, BookOpen, Settings2,
   ChevronRight, ChevronLeft, Check, Zap, Brain, AlertTriangle,
   Building2, Layers, Globe, Factory, HeartPulse, GraduationCap,
+  HelpCircle, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -232,6 +234,15 @@ const SECTORS = [
 export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingModalProps) {
   const [step, setStep] = useState(1);
   const totalSteps = 4;
+  const [toolsExpanded, setToolsExpanded] = useState(false);
+
+  // UX-8: Why we ask tooltips per step
+  const WHY_WE_ASK: Record<number, string> = {
+    1: "Role family determines which capability domains matter most for your assessment. An HRBP faces different AI risks than a People Analyst.",
+    2: "Your specific role and seniority calibrates question difficulty. A Coordinator and a Director face different expectations.",
+    3: "AI experience level sets your starting difficulty. Honest answers lead to a more accurate score — there's no penalty for low experience.",
+    4: "Sector context lets us weight scenarios towards your industry's specific regulatory and ethical landscape.",
+  };
 
   // Form state
   const [selectedFamily, setSelectedFamily] = useState<string>("");
@@ -297,11 +308,20 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                 Help us calibrate your assessment — takes about 60 seconds
               </p>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-muted-foreground">
-                Step {step} of {totalSteps}
-              </span>
-            </div>
+            {/* UX-8: Why we ask tooltip */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Why we ask</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[220px] text-xs">
+                  {WHY_WE_ASK[step]}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <Progress value={progress} className="h-1.5" />
           {/* Step labels */}
@@ -464,6 +484,14 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                   Be honest — there's no right answer. This calibrates the difficulty of your first questions.
                 </p>
               </div>
+              {/* UX-8: Profile context reminder */}
+              {selectedRole && selectedSeniority && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="text-xs shrink-0">{selectedRole}</Badge>
+                  <span>·</span>
+                  <span>{SENIORITY_LEVELS.find(s => s.id === selectedSeniority)?.label}</span>
+                </div>
+              )}
 
               {/* AI experience level */}
               <div className="grid grid-cols-1 gap-2.5">
@@ -508,31 +536,46 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                 })}
               </div>
 
-              {/* AI tools used */}
+              {/* UX-8: Collapsible AI tools section */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Which AI tools have you used? <span className="font-normal normal-case">(optional — select all that apply)</span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {AI_TOOLS.map(tool => {
-                    const isSelected = selectedTools.includes(tool);
-                    return (
-                      <button
-                        key={tool}
-                        onClick={() => toggleTool(tool)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full border text-xs font-medium transition-all",
-                          isSelected
-                            ? "border-[#3B4EFF] bg-[#3B4EFF] text-white"
-                            : "border-border text-muted-foreground hover:border-[#3B4EFF]/50 hover:text-foreground"
-                        )}
-                      >
-                        {isSelected && <Check className="w-3 h-3 inline mr-1" />}
-                        {tool}
-                      </button>
-                    );
-                  })}
-                </div>
+                <button
+                  onClick={() => setToolsExpanded(e => !e)}
+                  className="flex items-center gap-2 w-full text-left group"
+                >
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex-1">
+                    Which AI tools have you used?
+                    <span className="font-normal normal-case ml-1">(optional)</span>
+                    {selectedTools.length > 0 && (
+                      <Badge variant="secondary" className="ml-2 text-[10px] py-0">{selectedTools.length} selected</Badge>
+                    )}
+                  </p>
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform",
+                    toolsExpanded ? "rotate-180" : ""
+                  )} />
+                </button>
+                {toolsExpanded && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {AI_TOOLS.map(tool => {
+                      const isSelected = selectedTools.includes(tool);
+                      return (
+                        <button
+                          key={tool}
+                          onClick={() => toggleTool(tool)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full border text-xs font-medium transition-all",
+                            isSelected
+                              ? "border-[#3B4EFF] bg-[#3B4EFF] text-white"
+                              : "border-border text-muted-foreground hover:border-[#3B4EFF]/50 hover:text-foreground"
+                          )}
+                        >
+                          {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                          {tool}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
