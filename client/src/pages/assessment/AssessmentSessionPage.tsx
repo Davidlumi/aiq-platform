@@ -200,6 +200,21 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
   },
 };
 
+// P6: Interaction type purpose explanations — shown as a contextual banner above each question
+const INTERACTION_PURPOSE: Record<string, string> = {
+  situational_judgement:  "Tests your ability to apply professional judgement in realistic AI-assisted HR scenarios.",
+  prioritisation:         "Assesses how you balance competing priorities when AI tools surface multiple options.",
+  risk_judgement:         "Measures your ability to identify and respond proportionately to AI-related risks.",
+  governance_decision:    "Evaluates your knowledge of AI governance requirements and compliance obligations.",
+  scenario_critique:      "Tests your ability to critically evaluate AI-generated outputs before acting on them.",
+  output_improvement:     "Assesses your skill in identifying and correcting weaknesses in AI-generated content.",
+  error_detection:        "Measures your ability to spot factual errors, hallucinations, or logical flaws in AI outputs.",
+  data_interpretation:    "Tests how accurately you interpret and contextualise AI-generated data and analytics.",
+  multi_step_workflow:    "Evaluates your ability to sequence AI-assisted HR workflows correctly and safely.",
+  contradiction_probe:    "Checks the consistency of your responses across related scenarios.",
+  confidence_calibration: "Measures how accurately your self-assessed confidence aligns with your response quality.",
+};
+
 function getInteractionConfig(interactionType: string): InteractionConfig {
   return INTERACTION_CONFIGS[interactionType] ?? {
     label: "Assessment Question",
@@ -288,8 +303,25 @@ function DataContextBlock({ content }: { content: string }) {
 
 // ─── Generating State ─────────────────────────────────────────────────────────
 
+const GENERATING_STEPS = [
+  { label: "Analysing your response pattern",      delay: 0    },
+  { label: "Identifying capability gaps",           delay: 900  },
+  { label: "Selecting optimal question type",       delay: 1800 },
+  { label: "Generating scenario for your role",     delay: 2800 },
+  { label: "Validating item quality",               delay: 4000 },
+];
+
 function GeneratingState({ answeredCount, totalItems }: { answeredCount: number; totalItems: number }) {
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const timers = GENERATING_STEPS.slice(1).map((step, i) =>
+      setTimeout(() => setActiveStep(i + 1), step.delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   return (
     <div className="p-6 space-y-5 max-w-2xl">
       <div className="space-y-3">
@@ -302,19 +334,41 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
         <Progress value={progress} className="h-1.5" />
       </div>
       <Card className="border-border shadow-sm">
-        <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-[#3B4EFF] animate-spin" />
+        <CardContent className="p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 flex items-center justify-center shrink-0">
+              <Loader2 className="w-4 h-4 text-[#3B4EFF] animate-spin" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
+              <p className="text-xs text-muted-foreground">Tailored to your profile and responses so far</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              The adaptive engine is generating a question tailored to your profile and responses so far.
-            </p>
+          <div className="space-y-2.5">
+            {GENERATING_STEPS.map((step, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-2.5 text-xs transition-all duration-500",
+                  i < activeStep ? "text-[#228833]" :
+                  i === activeStep ? "text-foreground" :
+                  "text-muted-foreground/40"
+                )}
+              >
+                {i < activeStep ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#228833]" />
+                ) : i === activeStep ? (
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-[#3B4EFF]" />
+                ) : (
+                  <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
+                )}
+                <span className={i === activeStep ? "font-medium" : ""}>{step.label}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border pt-3">
             <Bot className="w-3 h-3" />
-            <span>Adaptive AI assessment engine</span>
+            <span>Adaptive AI assessment engine · Each question is unique to you</span>
           </div>
         </CardContent>
       </Card>
@@ -326,71 +380,71 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
 
 function CompletionScreen({
   result,
+  sessionId,
   onNavigate,
 }: {
   result: any;
+  sessionId: string;
   onNavigate: (path: string) => void;
 }) {
   const primaryState = result?.primaryState ?? "unknown";
-  const STATE_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
-    safe:     { label: "Safe to Deploy", color: "text-[#228833]", bg: "bg-[#228833]/8 border-[#228833]/30" },
-    at_risk:  { label: "At Risk",        color: "text-[#EE8866]", bg: "bg-[#EE8866]/8 border-[#EE8866]/30" },
-    unsafe:   { label: "Unsafe",         color: "text-[#EE6677]", bg: "bg-[#EE6677]/8 border-[#EE6677]/30" },
-    unknown:  { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border" },
+  const STATE_CONFIGS: Record<string, { label: string; color: string; bg: string; description: string }> = {
+    safe:     { label: "Safe to Deploy", color: "text-[#228833]", bg: "bg-[#228833]/8 border-[#228833]/30", description: "Your responses demonstrate the judgement and governance awareness needed for safe AI use in your role." },
+    at_risk:  { label: "At Risk",        color: "text-[#EE8866]", bg: "bg-[#EE8866]/8 border-[#EE8866]/30", description: "Some capability gaps were identified. Your learning plan will target these areas specifically." },
+    unsafe:   { label: "Unsafe",         color: "text-[#EE6677]", bg: "bg-[#EE6677]/8 border-[#EE6677]/30", description: "Significant risks were detected. Completing your learning plan before using AI tools is strongly recommended." },
+    unknown:  { label: "Insufficient Data", color: "text-muted-foreground", bg: "bg-muted/20 border-border", description: "More responses are needed to produce a reliable classification. Consider completing a full session." },
+    insufficient_evidence: { label: "Insufficient Evidence", color: "text-muted-foreground", bg: "bg-muted/20 border-border", description: "The assessment did not collect enough evidence to classify your readiness reliably. A full session is recommended." },
   };
-  const stateConfig = STATE_CONFIGS[primaryState] ?? { label: "Assessed", color: "text-foreground", bg: "bg-muted/20 border-border" };
+  const stateConfig = STATE_CONFIGS[primaryState] ?? { label: "Assessed", color: "text-foreground", bg: "bg-muted/20 border-border", description: "" };
   const capabilityScores = result?.capabilityScores ?? {};
+  const confidenceBand = result?.classificationConfidence?.band;
+  const confidenceLabel = result?.classificationConfidence?.label;
+  const caveat = result?.classificationConfidence?.caveat;
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl">
-      <div className="text-center py-6">
-        <div className="w-20 h-20 rounded-full bg-[#3B4EFF]/8 border-2 border-[#3B4EFF]/20 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-10 h-10 text-[#3B4EFF]" />
+    <div className="p-6 space-y-5 max-w-2xl">
+      <div className="text-center py-5">
+        <div className="w-16 h-16 rounded-full bg-[#3B4EFF]/8 border-2 border-[#3B4EFF]/20 flex items-center justify-center mx-auto mb-3">
+          <CheckCircle2 className="w-8 h-8 text-[#3B4EFF]" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Complete</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Your capability profile has been updated. Your learning plan will reflect these results.
+        <h1 className="text-xl font-bold text-foreground font-sora">Assessment Complete</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm">
+          Your capability profile has been updated.
         </p>
       </div>
 
       {result && (
-        <div className={cn("rounded-2xl border-2 p-5 text-center", stateConfig.bg)}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Readiness State</p>
-          <p className={cn("text-3xl font-bold font-sora", stateConfig.color)}>{stateConfig.label}</p>
-          <p className={cn("text-5xl font-bold mt-2", stateConfig.color)}>{Math.round(result.overallScore)}</p>
-          <p className="text-sm text-muted-foreground">overall score</p>
+        <div className={cn("rounded-2xl border-2 p-5", stateConfig.bg)}>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Readiness Classification</p>
+          <div className="flex items-baseline gap-3">
+            <p className={cn("text-2xl font-bold font-sora", stateConfig.color)}>{stateConfig.label}</p>
+            <p className={cn("text-4xl font-bold", stateConfig.color)}>{Math.round(result.overallScore)}</p>
+          </div>
+          {stateConfig.description && (
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stateConfig.description}</p>
+          )}
+          {caveat && (
+            <div className="flex items-start gap-1.5 mt-3 text-xs text-[#EE8866]">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>{caveat}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* P8: Confidence band */}
+      {confidenceBand && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border">
+          <Award className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Classification confidence: <span className="font-semibold text-foreground capitalize">{confidenceLabel ?? confidenceBand}</span>
+          </p>
         </div>
       )}
 
       {result && Object.keys(capabilityScores).length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Capability Breakdown</h3>
-            <ExplanationDrawer
-              trigger={
-                <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <Info className="w-3 h-3" />
-                  How scores are calculated
-                </button>
-              }
-              title="Signal-Weighted Capability Scoring"
-              subtitle="Each answer carries signal deltas that accumulate across the assessment"
-            >
-              <ScoreBreakdown
-                overallScore={Math.round(result.overallScore)}
-                confidenceLevel={result.credibilityBand}
-                dataPoints={Object.keys(capabilityScores).length}
-                lastUpdated={new Date().toLocaleDateString()}
-                factors={Object.entries(capabilityScores).map(([key, score]) => ({
-                  name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                  score: score as number,
-                  weight: 1 / Object.keys(capabilityScores).length,
-                  description: `Signal-weighted score for ${key.replace(/_/g, " ")}`,
-                  color: CAPABILITY_COLOURS[key] ?? "#4477AA",
-                }))}
-              />
-            </ExplanationDrawer>
-          </div>
+          <h3 className="text-sm font-semibold text-foreground">Capability Breakdown</h3>
           {Object.entries(capabilityScores).map(([key, score]) => (
             <div key={key} className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-40 truncate capitalize">
@@ -410,28 +464,21 @@ function CompletionScreen({
         </div>
       )}
 
-      {result && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border p-3 text-center">
-            <Award className="w-5 h-5 text-[#3B4EFF] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Credibility</p>
-            <p className="text-sm font-bold capitalize text-foreground">{result.credibilityBand}</p>
-          </div>
-          <div className="rounded-xl border border-border p-3 text-center">
-            <Shield className="w-5 h-5 text-[#3B4EFF] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Risk Level</p>
-            <p className="text-sm font-bold capitalize text-foreground">{result.riskBand}</p>
-          </div>
+      <div className="space-y-2">
+        <Button
+          onClick={() => onNavigate(`/assessment/${sessionId}/results`)}
+          className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+        >
+          View Full Results <ChevronRight className="w-4 h-4" />
+        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => onNavigate("/learning")} variant="outline" className="text-sm">
+            Learning Plan
+          </Button>
+          <Button onClick={() => onNavigate("/dashboard")} variant="outline" className="text-sm">
+            Dashboard
+          </Button>
         </div>
-      )}
-
-      <div className="flex gap-3">
-        <Button onClick={() => onNavigate("/learning")} className="flex-1 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
-          View Learning Plan
-        </Button>
-        <Button onClick={() => onNavigate("/dashboard")} variant="outline" className="flex-1">
-          Back to Dashboard
-        </Button>
       </div>
     </div>
   );
@@ -581,25 +628,42 @@ export default function AssessmentSessionPage() {
     return null;
   }
 
-  // All answered — show complete button
+  // All answered — show completion screen
   if (isComplete && answeredCount > 0) {
-    return (
-      <div className="p-6 space-y-6 max-w-2xl">
-        <div className="text-center py-8">
-          <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-foreground font-sora">All questions answered</h2>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Click below to calculate your capability scores and update your learning plan.
-          </p>
-          <Button
-            onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
-            disabled={completeMutation.isPending}
-            className="mt-6 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
-          >
-            {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
-          </Button>
+    if (!completeMutation.isSuccess) {
+      return (
+        <div className="p-6 space-y-6 max-w-2xl">
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-foreground font-sora">You've answered all {answeredCount} questions</h2>
+            <p className="text-muted-foreground mt-2 text-sm max-w-sm mx-auto leading-relaxed">
+              The engine is ready to compute your capability profile across all six domains. This takes a few seconds.
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#228833]" /> {answeredCount} responses recorded</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#228833]" /> 6 capability domains</span>
+            </div>
+            <Button
+              onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
+              disabled={completeMutation.isPending}
+              className="mt-6 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2 min-w-[200px]"
+            >
+              {completeMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Calculating scores…</>
+              ) : (
+                <>Generate My Results <ChevronRight className="w-4 h-4" /></>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      );
+    }
+    return (
+      <CompletionScreen
+        result={completeMutation.data}
+        sessionId={sessionId!}
+        onNavigate={navigate}
+      />
     );
   }
 
@@ -918,6 +982,16 @@ export default function AssessmentSessionPage() {
           {/* Fallback if data type but no dataContext */}
           {iConfig.hasDataContext && !dataContext && (nextItem as any).constraint && (
             <DataContextBlock content={(nextItem as any).constraint} />
+          )}
+
+          {/* P6: Interaction purpose banner */}
+          {INTERACTION_PURPOSE[interactionType] && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {INTERACTION_PURPOSE[interactionType]}
+              </p>
+            </div>
           )}
 
           {/* Question prompt */}

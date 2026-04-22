@@ -450,3 +450,24 @@
 - [x] F6d: Add test: seniority-inconsistency detection fires when senior user has >40% failure rate
 - [x] F6e: Add test: `safe` classification is blocked when confidence band is `low`
 - [x] F6f: Add test: signal delta consistency validation rejects a `strong` option with net-negative target capability deltas
+
+## PM End-to-End Assessment Experience Review
+
+### Tier 1 — Critical UX
+- [x] P1: Profiling modal — add estimated time per step ("~10 seconds") so users don't abandon mid-flow
+- [x] P2: Session page — show capability being assessed as a plain-English sentence above the question card ("This question tests your AI Judgement")
+- [x] P3: Session page — confidence slider default changed from 50 to 70; add three labelled anchors: "Guessing", "Fairly sure", "Certain"
+- [x] P4: Rationale panel — after answer reveal, show which capability was tested and what signal it measured, in plain English
+- [x] P5: Results page — percentile ranks from normEngine are computed but not displayed; surface them on every capability bar ("62 · 54th percentile")
+- [x] P6: Results page — "Retake Assessment" button navigates to /assessment landing; change to pre-open profiling modal directly
+- [x] P7: Generating state — add animated step list ("Analysing responses… Selecting capability gap… Generating scenario…") instead of generic spinner
+- [x] P8: Assessment landing — add "Your last score" mini-bar to each capability domain card when prior score exists
+
+### Tier 2 — Quality and Trust
+- [x] P9: Results page — replace internal signal key names with plain-English labels and one-line descriptions in Signal Profile section
+- [x] P10: Results page — disclaimer at bottom is tiny muted text; replace with a visible styled notice box
+- [x] P11: Session page — add soft "typical: ~Xs" hint next to elapsed timer for each interaction type
+- [x] P12: ProfilingModal — move compact profile summary to the ready screen (step 4 footer) so users confirm before starting
+- [x] P13: Results page — add normGroupVersion to Assessment Metadata card in Deep Dive tab
+- [x] P14: Session page — keyboard shortcut hint should be persistent in question header, not only below options
+- [x] P15: Results page — LLM narrative is duplicated in Deep Dive and Development tabs; Deep Dive should show condensed version with "See full report →" link to Development tab

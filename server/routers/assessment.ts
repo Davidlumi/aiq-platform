@@ -1104,6 +1104,16 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         modelVersion: "adaptive-v2",
         // R9: LLM-generated personalised development narrative (null if generation failed)
         llmNarrative: llmNarrative ?? null,
+        // F3/F4: Percentile ranks, norm group version, and classification confidence gate
+        percentileRanks: results.percentileRanks,
+        normGroupVersion: results.normGroupVersion,
+        classificationConfidence: {
+          band: results.confidenceGate.confidenceBand.band,
+          label: results.confidenceGate.confidenceBand.label,
+          wasDowngraded: results.confidenceGate.wasDowngraded,
+          caveat: results.confidenceGate.caveat,
+        },
+        targetItems: 49,
       };
 
       await db.insert(assessmentScores).values({
@@ -1406,6 +1416,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
               ...score[0],
               overallScore: parseFloat(String(score[0].overallScore)),
               primaryState: (breakdown.readiness as { state?: string })?.state ?? null,
+              capabilityScores: (breakdown.capabilityScores as Record<string, number>) ?? null,
             } : null,
           };
         })

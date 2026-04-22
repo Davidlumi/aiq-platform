@@ -645,10 +645,19 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    <Zap className="w-3 h-3 inline mr-1 text-[#3B4EFF]" />
-                    Your assessment will be calibrated to your role and experience level from question 1.
-                  </p>
+                  <div className="mt-2 space-y-1.5">
+                    <p className="text-xs text-muted-foreground">
+                      <Zap className="w-3 h-3 inline mr-1 text-[#3B4EFF]" />
+                      Your assessment will be calibrated to your role and experience level from question 1.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground">~35 minutes</span>
+                      {" "}· 50 adaptive interactions · 6 capability domains
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      We measure: AI Execution, AI Judgement, AI Risk &amp; Governance, AI Appropriateness, AI Workflow Application, and AI Data &amp; Insight.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

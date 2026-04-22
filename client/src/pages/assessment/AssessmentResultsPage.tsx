@@ -41,6 +41,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
 import {
   RadarChart,
   Radar,
@@ -293,10 +294,14 @@ function CapabilityBar({
   displayName,
   score,
   colour,
+  percentile,
+  normGroupLabel,
 }: {
   displayName: string;
   score: number;
   colour: string;
+  percentile?: number;
+  normGroupLabel?: string;
 }) {
   const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
   const bandColor = score >= 75 ? "#228833" : score >= 55 ? "#EE8866" : "#EE6677";
@@ -305,6 +310,11 @@ function CapabilityBar({
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">{displayName}</span>
         <div className="flex items-center gap-2">
+          {percentile !== undefined && (
+            <span className="text-xs text-muted-foreground" title={normGroupLabel ? `Compared to ${normGroupLabel}` : undefined}>
+              {percentile}th %ile
+            </span>
+          )}
           <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
           <span className="text-sm font-bold w-8 text-right" style={{ color: colour }}>{score}</span>
         </div>
@@ -315,37 +325,92 @@ function CapabilityBar({
           style={{ width: `${score}%`, backgroundColor: colour }}
         />
       </div>
+      {percentile !== undefined && (
+        <div className="relative h-1 bg-muted/40 rounded-full overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full opacity-50"
+            style={{ width: `${percentile}%`, backgroundColor: colour }}
+          />
+          <div className="absolute top-0 h-full w-px bg-foreground/30" style={{ left: "50%" }} />
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Signal Row ───────────────────────────────────────────────────────────────
 
+const SIGNAL_GLOSSARY: Record<string, string> = {
+  governance_quality:          "How well you apply AI governance principles, including data privacy, compliance, and appropriate oversight.",
+  judgement_quality:           "The quality of your decision-making when AI outputs require human evaluation or escalation.",
+  validation_quality:          "How thoroughly you verify AI outputs before acting on them.",
+  execution_quality:           "How effectively you apply AI tools to complete HR tasks accurately and efficiently.",
+  workflow_quality:            "How well you integrate AI into HR workflows without creating bottlenecks or errors.",
+  data_quality:                "The rigour you apply when interpreting AI-generated data, statistics, or reports.",
+  blind_acceptance_risk:       "Risk of accepting AI outputs without sufficient critical evaluation.",
+  hallucination_acceptance_risk: "Risk of treating AI-fabricated information as factual without verification.",
+  governance_bypass_risk:      "Risk of using AI in ways that circumvent required governance or compliance controls.",
+  unsafe_hr_decision_risk:     "Risk of making HR decisions using AI in contexts where human judgement is legally or ethically required.",
+  over_reliance_risk:          "Risk of depending on AI to a degree that undermines your own professional judgement.",
+  inappropriate_use_risk:      "Risk of applying AI to tasks where its use is inappropriate, disproportionate, or harmful.",
+  weak_judgement_risk:         "Risk of poor-quality decisions that are superficially plausible but lack substantive reasoning.",
+  poor_validation_risk:        "Risk of insufficient checking of AI outputs before they influence real decisions.",
+  confidence_calibration:      "How accurately your self-assessed confidence aligns with the quality of your answers.",
+  over_caution_risk:           "Risk of excessive caution that prevents appropriate and proportionate AI use.",
+  escalation_quality:          "How appropriately you identify situations that require human escalation or senior review.",
+  context_sensitivity:         "How well you adapt AI use to the specific context, sensitivity, and stakes of each situation.",
+  output_improvement_quality:  "How effectively you identify and correct errors or weaknesses in AI-generated outputs.",
+  error_detection_quality:     "How accurately you spot factual errors, hallucinations, or logical flaws in AI outputs.",
+  scenario_critique_quality:   "How well you evaluate AI-generated scenarios for appropriateness and risk.",
+  data_interpretation_quality: "How accurately you interpret and contextualise AI-generated data and analytics.",
+};
+
 function SignalRow({ signal, delta }: { signal: string; delta: number }) {
   const isPositive = delta > 0;
   const isRisk = signal.includes("_risk") || signal.includes("_index");
   const displayName = signal.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const glossaryEntry = SIGNAL_GLOSSARY[signal];
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         {isPositive ? (
           <TrendingUp className="w-3.5 h-3.5 text-[#228833] shrink-0" />
         ) : (
           <TrendingDown className="w-3.5 h-3.5 text-[#EE6677] shrink-0" />
         )}
-        <span className="text-xs text-foreground">{displayName}</span>
-        {isRisk && (
-          <span className="text-xs text-[#EE8866] bg-[#EE8866]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
-        )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-foreground">{displayName}</span>
+            {isRisk && (
+              <span className="text-xs text-[#EE8866] bg-[#EE8866]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
+            )}
+          </div>
+          {glossaryEntry && (
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{glossaryEntry}</p>
+          )}
+        </div>
       </div>
-      <span className={cn("text-xs font-bold tabular-nums", isPositive ? "text-[#228833]" : "text-[#EE6677]")}>
+      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-[#228833]" : "text-[#EE6677]")}>
         {isPositive ? "+" : ""}{delta.toFixed(1)}
       </span>
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Capability Development Actions ─────────────────────────────────────────
+
+const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = {
+  governance:        "Review your organisation's AI governance policy and practice identifying which decisions require human sign-off. Complete the Governance & Compliance module in your learning plan.",
+  judgement:         "Practice scenario-based exercises where you must decide when to escalate AI outputs. Focus on the Judgement & Escalation module and seek feedback from a senior colleague on two real AI-assisted decisions.",
+  validation:        "Build a personal checklist for verifying AI outputs before acting on them. Apply it to your next three AI-generated documents and note any errors caught.",
+  execution:         "Identify one HR workflow where you currently avoid AI and experiment with it under supervision. Review the Practical AI Use module for structured guidance.",
+  workflow:          "Map one end-to-end HR process and identify where AI could reduce manual effort without introducing risk. Discuss the design with your manager before implementing.",
+  data_literacy:     "Take one AI-generated report and manually verify three of its key statistics against source data. Complete the Data Interpretation module to strengthen your analytical confidence.",
+  critical_thinking: "For your next AI-assisted task, write a two-sentence critique of the AI output before acting on it. This habit builds the reflective practice that distinguishes strong AI users.",
+  ethics:            "Review the ethical AI use guidelines for HR and identify one recent decision where AI was involved. Consider whether the process met the standard and discuss with your HR governance lead.",
+};
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function AssessmentResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -398,6 +463,11 @@ export default function AssessmentResultsPage() {
   const totalAnswers = breakdown.totalAnswers ?? 0;
   const targetItems = breakdown.targetItems ?? 49;
   const isEarlyCompletion = totalAnswers < targetItems;
+  // P1/P2: Percentile ranks and norm group
+  const percentileRanks = (breakdown.percentileRanks ?? {}) as Record<string, { percentile: number; label: string; normGroupLabel: string; isSynthetic: boolean }>;
+  const normGroupVersion = (breakdown.normGroupVersion ?? null) as string | null;
+  // P3: Classification confidence gate caveat
+  const classificationConfidence = (breakdown.classificationConfidence ?? null) as { band: string; label: string; wasDowngraded: boolean; caveat: string | null } | null;
 
   const stateConfig = READINESS_CONFIG[primaryState] ?? READINESS_CONFIG.unknown;
   const StateIcon = stateConfig.icon;
@@ -505,11 +575,59 @@ export default function AssessmentResultsPage() {
                     <span className="text-xs text-muted-foreground">
                       Model: V9.2 · {totalAnswers} questions
                     </span>
+                    {/* P15: ExplanationDrawer — score transparency */}
+                    <ExplanationDrawer
+                      trigger={
+                        <button className="text-xs text-[#3B4EFF] underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity">
+                          <Info className="w-3 h-3" />
+                          How is this calculated?
+                        </button>
+                      }
+                      title="How your AiQ score is calculated"
+                      subtitle="A transparent breakdown of the six capability domains that make up your readiness profile"
+                    >
+                      <ScoreBreakdown
+                        overallScore={overallScore}
+                        confidenceLevel={
+                          (classificationConfidence?.band === "high" ? "high"
+                          : classificationConfidence?.band === "medium" ? "medium"
+                          : "low") as "high" | "medium" | "low"
+                        }
+                        dataPoints={totalAnswers}
+                        lastUpdated={data.session.completedAt
+                          ? new Date(data.session.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                          : "today"}
+                        factors={sortedCapabilities.map(cap => ({
+                          name: cap.displayName,
+                          score: Math.round(cap.score),
+                          weight: Math.round(100 / Math.max(sortedCapabilities.length, 1)),
+                          description: SIGNAL_GLOSSARY[cap.key] ?? cap.displayName,
+                          color: cap.colour,
+                        }))}
+                      />
+                    </ExplanationDrawer>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* P3: Classification confidence gate caveat */}
+          {classificationConfidence?.caveat && (
+            <Card className="border-[#EE8866]/40 bg-[#EE8866]/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-[#EE8866] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-[#EE8866] uppercase tracking-wider mb-1">
+                      Confidence Notice
+                    </p>
+                    <p className="text-sm text-foreground leading-relaxed">{classificationConfidence.caveat}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Narrative */}
           {narrative && (
@@ -550,6 +668,8 @@ export default function AssessmentResultsPage() {
                     displayName={cap.displayName}
                     score={cap.score}
                     colour={cap.colour}
+                    percentile={percentileRanks[cap.key]?.percentile}
+                    normGroupLabel={percentileRanks[cap.key]?.normGroupLabel}
                   />
                 ))}
                 {/* Score bands legend */}
@@ -566,6 +686,14 @@ export default function AssessmentResultsPage() {
                     </div>
                   ))}
                 </div>
+                {/* P4: Norm group disclosure */}
+                {normGroupVersion && (
+                  <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1.5">
+                    <Info className="w-3 h-3 shrink-0" />
+                    Percentile ranks are based on synthetic baseline distributions ({normGroupVersion}).
+                    They will be recalibrated as real assessment data accumulates.
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
@@ -917,10 +1045,13 @@ export default function AssessmentResultsPage() {
                     {sortedCapabilities.slice(-3).map(cap => (
                       <div key={cap.key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                         <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: cap.colour }} />
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Score: {cap.score}/100 — Focus area for development.
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
+                            <span className="text-xs font-bold" style={{ color: cap.colour }}>{cap.score}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            {CAPABILITY_DEVELOPMENT_ACTIONS[cap.key] ?? "Practice applying this capability in realistic HR scenarios. Review the relevant module in your learning plan."}
                           </p>
                         </div>
                       </div>

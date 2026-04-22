@@ -98,6 +98,11 @@ export default function AssessmentPage() {
     onError: err => toast.error(err.message),
   });
 
+  // P12: derive prior capability scores from last completed session
+  const lastCompletedSession = sessions?.find((s: any) => s.state === "completed");
+  const lastCapabilityScores: Record<string, number> = lastCompletedSession?.score?.capabilityScores ?? {};
+  const hasCompletedBefore = !!lastCompletedSession;
+
   const handleStartClick = () => {
     const blueprintId = defaultBlueprint?.id;
     if (!blueprintId) {
@@ -148,7 +153,7 @@ export default function AssessmentPage() {
 
   // Find any in-progress session
   const activeSession = sessions?.find(s => s.state === "in_progress");
-  const hasCompletedBefore = sessions?.some(s => s.state === "completed") ?? false;
+  // hasCompletedBefore is derived above from lastCompletedSession
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
@@ -264,9 +269,23 @@ export default function AssessmentPage() {
                   >
                     <Icon className="w-3.5 h-3.5" style={{ color: domain.colour }} />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground leading-tight">{domain.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{domain.description}</p>
+                    {/* P12: Show prior score if available */}
+                    {lastCapabilityScores[domain.key] !== undefined && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${lastCapabilityScores[domain.key]}%`, backgroundColor: domain.colour }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold shrink-0" style={{ color: domain.colour }}>
+                          {Math.round(lastCapabilityScores[domain.key])}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
