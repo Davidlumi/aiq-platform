@@ -381,14 +381,16 @@ function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; o
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Organisation *</Label>
-            <Select value={tenantId} onValueChange={setTenantId}>
-              <SelectTrigger><SelectValue placeholder="Select organisation…" /></SelectTrigger>
-              <SelectContent>
-                {orgs.map(o => (
-                  <SelectItem key={o.id} value={o.id}>{o.name} ({o.slug})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={tenantId}
+              onChange={e => setTenantId(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="" disabled>Select organisation…</option>
+              {orgs.map(o => (
+                <option key={o.id} value={o.id}>{o.name} ({o.slug})</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

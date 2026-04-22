@@ -216,3 +216,6 @@
 - [x] Back-office: tRPC procedures: backoffice.listOrgs, backoffice.createOrg, backoffice.updateOrg, backoffice.listUsers, backoffice.createUser, backoffice.updateUser, backoffice.resetPassword, backoffice.assignRole, backoffice.stats
 - [x] Guard all backoffice procedures with super_admin check
 - [x] Login page: default org code changed to lumi, super_admin redirects to /backoffice on login
+
+## Bug Fixes (Round 2)
+- [x] Back-office New User form: unable to add users for HR DataHub org — fixed (replaced Radix Select with native HTML select inside Dialog to resolve portal z-index/click-intercept issue)
