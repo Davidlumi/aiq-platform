@@ -2,7 +2,8 @@
  * AiQ Marketing Landing Page
  *
  * Public page — no authentication required.
- * Routes: / (when unauthenticated) and /about
+ * Brand: Dark Slate (#1E293B) hero, Primary Green (#10B981) CTAs,
+ *        Mint Accent (#34D399) highlights, AiQ logo with smile.
  */
 
 import { Link } from "wouter";
@@ -27,6 +28,35 @@ import {
   FlaskConical,
 } from "lucide-react";
 
+// ─── AiQ Logo SVG ─────────────────────────────────────────────────────────────
+
+function AiQLogo({ size = 40 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" aria-label="AiQ logo">
+      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <text
+        x="100"
+        y="120"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fontSize="64"
+        fontWeight="800"
+        fill="white"
+        textAnchor="middle"
+        letterSpacing="-3"
+      >
+        A<tspan fill="#34D399">i</tspan>Q
+      </text>
+      <path
+        d="M 60 135 Q 100 150 140 135"
+        stroke="#34D399"
+        strokeWidth="5"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const CAPABILITIES = [
@@ -35,48 +65,48 @@ const CAPABILITIES = [
     name: "AI Judgement",
     description:
       "Identifies when AI outputs require human verification before acting on them — the single most critical skill for HR professionals using AI tools.",
-    color: "text-violet-600",
-    bg: "bg-violet-50",
+    color: "#8B5CF6",
+    bg: "#8B5CF615",
   },
   {
     icon: Shield,
-    name: "Governance & Compliance",
+    name: "Risk Governance",
     description:
       "Applies data protection, employment law, and organisational policy correctly when AI is involved in HR decisions.",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    color: "#EC4899",
+    bg: "#EC489915",
   },
   {
     icon: AlertTriangle,
-    name: "Bias & Fairness",
+    name: "AI Literacy",
     description:
       "Detects and mitigates AI-amplified bias in recruitment, performance, and compensation workflows.",
-    color: "text-amber-600",
-    bg: "bg-amber-50",
+    color: "#10B981",
+    bg: "#10B98115",
   },
   {
     icon: TrendingUp,
-    name: "Strategic Application",
+    name: "AI Execution",
     description:
       "Selects the right AI tool for the right task and knows when not to use AI — avoiding over-reliance and misapplication.",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    color: "#3B82F6",
+    bg: "#3B82F615",
   },
   {
     icon: Users,
-    name: "Employee Experience",
+    name: "Data Stewardship",
     description:
       "Maintains human-centred practice when AI mediates sensitive employee interactions, from wellbeing to disciplinary processes.",
-    color: "text-rose-600",
-    bg: "bg-rose-50",
+    color: "#F59E0B",
+    bg: "#F59E0B15",
   },
   {
     icon: Lock,
-    name: "Data & Privacy",
+    name: "Workflow Collaboration",
     description:
       "Handles employee data correctly when feeding HR systems with AI — understanding consent, retention, and access controls.",
-    color: "text-slate-600",
-    bg: "bg-slate-50",
+    color: "#06B6D4",
+    bg: "#06B6D415",
   },
 ];
 
@@ -148,7 +178,6 @@ const TESTIMONIALS = [
     title: "Chief People Officer",
     company: "Meridian Group",
     size: "42-person HR team",
-    status: "Beta participant",
   },
   {
     quote:
@@ -157,7 +186,6 @@ const TESTIMONIALS = [
     title: "VP People Operations",
     company: "NovaCare Health",
     size: "85-person HR team",
-    status: "Beta participant",
   },
   {
     quote:
@@ -166,7 +194,6 @@ const TESTIMONIALS = [
     title: "Head of HR",
     company: "Vertex Retail",
     size: "28-person HR team",
-    status: "Beta participant",
   },
 ];
 
@@ -183,28 +210,41 @@ const BETA_BENEFITS = [
 
 function NavBar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1E293B]/95 backdrop-blur-sm border-b border-white/10">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-            <Brain className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-3">
+          <AiQLogo size={36} />
+          <div>
+            <span className="font-bold text-lg text-white tracking-tight">HR AiQ</span>
+            <Badge
+              className="ml-2 text-xs font-medium"
+              style={{ background: "#10B98120", color: "#34D399", border: "1px solid #10B98140" }}
+            >
+              Beta
+            </Badge>
           </div>
-          <span className="font-bold text-xl text-slate-900 tracking-tight">AiQ</span>
-          <Badge variant="secondary" className="text-xs font-medium ml-1">Beta</Badge>
         </div>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How it works</a>
-          <a href="#capabilities" className="hover:text-slate-900 transition-colors">Capabilities</a>
-          <a href="#beta" className="hover:text-slate-900 transition-colors">Beta programme</a>
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+          <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
+          <a href="#capabilities" className="hover:text-white transition-colors">Capabilities</a>
+          <a href="#beta" className="hover:text-white transition-colors">Beta programme</a>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:text-white hover:bg-white/10"
+            >
               Sign in
             </Button>
           </Link>
           <Link href="/beta">
-            <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white">
+            <Button
+              size="sm"
+              style={{ background: "#10B981", color: "white" }}
+              className="hover:opacity-90 font-semibold"
+            >
               Apply for beta
             </Button>
           </Link>
@@ -216,37 +256,74 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section className="pt-32 pb-24 px-6 bg-gradient-to-b from-slate-50 to-white">
+    <section
+      className="pt-32 pb-28 px-6"
+      style={{
+        background: "linear-gradient(135deg, #1E293B 0%, #0F172A 50%, #1E293B 100%)",
+      }}
+    >
       <div className="max-w-4xl mx-auto text-center">
-        <Badge className="mb-6 bg-violet-100 text-violet-700 border-violet-200 hover:bg-violet-100">
-          <FlaskConical className="w-3 h-3 mr-1.5" />
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium mb-8"
+          style={{ background: "#10B98120", color: "#34D399", border: "1px solid #10B98140" }}
+        >
+          <FlaskConical className="w-3.5 h-3.5" />
           Free beta programme — limited to 25 organisations
-        </Badge>
-        <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight tracking-tight mb-6">
+        </div>
+        <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight mb-6">
           Does your HR team know{" "}
-          <span className="text-violet-600">when not to trust AI?</span>
+          <span style={{ color: "#34D399" }}>when not to trust AI?</span>
         </h1>
-        <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed mb-10">
+        <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
           AiQ is the first adaptive capability assessment built specifically for HR professionals.
           It identifies exactly where your team's AI judgement breaks down — before it causes a
           compliance failure, a biased decision, or a governance breach.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/beta">
-            <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-white px-8 h-12 text-base font-semibold">
+            <Button
+              size="lg"
+              className="px-8 h-12 text-base font-bold shadow-lg hover:opacity-90"
+              style={{ background: "#10B981", color: "white" }}
+            >
               Apply for the free beta
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
           <a href="#how-it-works">
-            <Button size="lg" variant="outline" className="px-8 h-12 text-base font-semibold border-slate-300 text-slate-700 hover:bg-slate-50">
+            <Button
+              size="lg"
+              variant="outline"
+              className="px-8 h-12 text-base font-semibold border-white/20 text-white hover:bg-white/10 bg-transparent"
+            >
               See how it works
             </Button>
           </a>
         </div>
-        <p className="mt-5 text-sm text-slate-500">
+        <p className="mt-5 text-sm text-slate-400">
           Open to organisations with 10+ HR professionals · No credit card required
         </p>
+
+        {/* Readiness indicator preview */}
+        <div className="mt-16 flex flex-wrap justify-center gap-4">
+          {[
+            { label: "Safe", pct: "92%", color: "#10B981", bg: "#10B98120" },
+            { label: "At Risk", pct: "68%", color: "#F59E0B", bg: "#F59E0B20" },
+            { label: "Unsafe", pct: "42%", color: "#DC2626", bg: "#DC262620" },
+          ].map((r) => (
+            <div
+              key={r.label}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+              style={{ background: r.bg, color: r.color, border: `1px solid ${r.color}40` }}
+            >
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: r.color }}
+              />
+              {r.label} — {r.pct}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -254,7 +331,7 @@ function HeroSection() {
 
 function ProblemSection() {
   return (
-    <section className="py-20 px-6 bg-slate-900">
+    <section className="py-20 px-6" style={{ background: "#0F172A" }}>
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-white mb-4">
@@ -269,33 +346,43 @@ function ProblemSection() {
           {FAILURE_MODES.map((fm) => (
             <div
               key={fm.label}
-              className="flex items-start gap-4 bg-slate-800 rounded-xl p-5"
+              className="flex items-start gap-4 rounded-xl p-5"
+              style={{ background: "#1E293B" }}
             >
               <div
-                className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                  fm.risk === "Critical"
-                    ? "bg-red-500"
-                    : fm.risk === "High"
-                    ? "bg-amber-500"
-                    : "bg-yellow-400"
-                }`}
+                className="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{
+                  background:
+                    fm.risk === "Critical"
+                      ? "#DC2626"
+                      : fm.risk === "High"
+                      ? "#F59E0B"
+                      : "#FCD34D",
+                }}
               />
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-white text-sm">{fm.label}</p>
                 <p className="text-slate-400 text-sm mt-0.5">{fm.description}</p>
               </div>
-              <Badge
-                className={`ml-auto flex-shrink-0 text-xs ${
-                  fm.risk === "Critical"
-                    ? "bg-red-900/50 text-red-300 border-red-800"
-                    : fm.risk === "High"
-                    ? "bg-amber-900/50 text-amber-300 border-amber-800"
-                    : "bg-yellow-900/50 text-yellow-300 border-yellow-800"
-                }`}
-                variant="outline"
+              <span
+                className="text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0"
+                style={{
+                  background:
+                    fm.risk === "Critical"
+                      ? "#DC262620"
+                      : fm.risk === "High"
+                      ? "#F59E0B20"
+                      : "#FCD34D20",
+                  color:
+                    fm.risk === "Critical"
+                      ? "#F87171"
+                      : fm.risk === "High"
+                      ? "#FCD34D"
+                      : "#FDE68A",
+                }}
               >
                 {fm.risk}
-              </Badge>
+              </span>
             </div>
           ))}
         </div>
@@ -312,7 +399,9 @@ function HowItWorksSection() {
     <section id="how-it-works" className="py-24 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">How AiQ works</h2>
+          <h2 className="text-3xl font-bold mb-4" style={{ color: "#0E1726" }}>
+            How AiQ works
+          </h2>
           <p className="text-lg text-slate-600 max-w-xl mx-auto">
             Not a quiz. An adaptive engine that builds a capability profile unique to each person's role.
           </p>
@@ -320,30 +409,38 @@ function HowItWorksSection() {
         <div className="grid md:grid-cols-2 gap-8">
           {HOW_IT_WORKS.map((step) => (
             <div key={step.step} className="flex gap-5">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-violet-600 flex items-center justify-center">
+              <div
+                className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ background: "#10B981" }}
+              >
                 <span className="text-white font-bold text-sm">{step.step}</span>
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900 text-lg mb-2">{step.title}</h3>
+                <h3 className="font-semibold text-lg mb-2" style={{ color: "#0E1726" }}>
+                  {step.title}
+                </h3>
                 <p className="text-slate-600 leading-relaxed">{step.description}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-16 bg-slate-50 rounded-2xl p-8 border border-slate-200">
+        <div
+          className="mt-16 rounded-2xl p-8 border"
+          style={{ background: "#F7F8FA", borderColor: "#E5E7EB" }}
+        >
           <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <p className="text-4xl font-bold text-violet-600 mb-2">22</p>
-              <p className="text-slate-600 text-sm font-medium">Capability signals measured per session</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-violet-600 mb-2">6</p>
-              <p className="text-slate-600 text-sm font-medium">Core capability domains assessed</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-violet-600 mb-2">~35</p>
-              <p className="text-slate-600 text-sm font-medium">Minutes per assessment session</p>
-            </div>
+            {[
+              { value: "22", label: "Capability signals measured per session" },
+              { value: "6", label: "Core capability domains assessed" },
+              { value: "~35", label: "Minutes per assessment session" },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <p className="text-4xl font-bold mb-2" style={{ color: "#10B981" }}>
+                  {stat.value}
+                </p>
+                <p className="text-slate-600 text-sm font-medium">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -353,10 +450,12 @@ function HowItWorksSection() {
 
 function CapabilitiesSection() {
   return (
-    <section id="capabilities" className="py-24 px-6 bg-slate-50">
+    <section id="capabilities" className="py-24 px-6" style={{ background: "#F7F8FA" }}>
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Six capability domains</h2>
+          <h2 className="text-3xl font-bold mb-4" style={{ color: "#0E1726" }}>
+            Six capability domains
+          </h2>
           <p className="text-lg text-slate-600 max-w-xl mx-auto">
             Every domain is assessed with role-specific scenarios — an HRBP sees different questions
             than a Talent Acquisition specialist or an ER advisor.
@@ -364,12 +463,21 @@ function CapabilitiesSection() {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {CAPABILITIES.map((cap) => (
-            <Card key={cap.name} className="border-slate-200 hover:shadow-md transition-shadow">
+            <Card
+              key={cap.name}
+              className="hover:shadow-md transition-shadow"
+              style={{ borderColor: "#E5E7EB", background: "#FFFFFF" }}
+            >
               <CardContent className="p-6">
-                <div className={`w-10 h-10 rounded-lg ${cap.bg} flex items-center justify-center mb-4`}>
-                  <cap.icon className={`w-5 h-5 ${cap.color}`} />
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
+                  style={{ background: cap.bg }}
+                >
+                  <cap.icon className="w-5 h-5" style={{ color: cap.color }} />
                 </div>
-                <h3 className="font-semibold text-slate-900 mb-2">{cap.name}</h3>
+                <h3 className="font-semibold mb-2" style={{ color: "#0E1726" }}>
+                  {cap.name}
+                </h3>
                 <p className="text-slate-600 text-sm leading-relaxed">{cap.description}</p>
               </CardContent>
             </Card>
@@ -385,14 +493,16 @@ function TestimonialsSection() {
     <section className="py-24 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">From our beta cohort</h2>
+          <h2 className="text-3xl font-bold mb-4" style={{ color: "#0E1726" }}>
+            From our beta cohort
+          </h2>
           <p className="text-lg text-slate-600">
             Three of the organisations already approved for the beta programme.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t) => (
-            <Card key={t.name} className="border-slate-200">
+            <Card key={t.name} style={{ borderColor: "#E5E7EB" }}>
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -402,17 +512,27 @@ function TestimonialsSection() {
                 <p className="text-slate-700 text-sm leading-relaxed flex-1 mb-5 italic">
                   "{t.quote}"
                 </p>
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="font-semibold text-slate-900 text-sm">{t.name}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">{t.title} · {t.company}</p>
+                <div className="border-t pt-4" style={{ borderColor: "#F3F4F6" }}>
+                  <p className="font-semibold text-sm" style={{ color: "#0E1726" }}>
+                    {t.name}
+                  </p>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    {t.title} · {t.company}
+                  </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      <Building2 className="w-3 h-3 mr-1" />
+                    <span
+                      className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full"
+                      style={{ background: "#F3F4F6", color: "#6B7280" }}
+                    >
+                      <Building2 className="w-3 h-3" />
                       {t.size}
-                    </Badge>
-                    <Badge className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-                      {t.status}
-                    </Badge>
+                    </span>
+                    <span
+                      className="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full"
+                      style={{ background: "#10B98115", color: "#059669" }}
+                    >
+                      Beta participant
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -426,32 +546,42 @@ function TestimonialsSection() {
 
 function BetaSection() {
   return (
-    <section id="beta" className="py-24 px-6 bg-violet-600">
+    <section
+      id="beta"
+      className="py-24 px-6"
+      style={{ background: "#1E293B" }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <Badge className="mb-5 bg-white/20 text-white border-white/30 hover:bg-white/20">
-            <FlaskConical className="w-3 h-3 mr-1.5" />
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium mb-6"
+            style={{ background: "#10B98120", color: "#34D399", border: "1px solid #10B98140" }}
+          >
+            <FlaskConical className="w-3.5 h-3.5" />
             Free beta programme
-          </Badge>
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
             Join the founding cohort
           </h2>
-          <p className="text-lg text-violet-100 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
             We are accepting 25 organisations into the free beta programme. Places are allocated
             on a rolling basis. Applications from organisations with fewer than 10 HR professionals
             are not eligible for this cohort.
           </p>
         </div>
-        <div className="bg-white/10 rounded-2xl p-8 mb-10 border border-white/20">
+        <div
+          className="rounded-2xl p-8 mb-10"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
           <h3 className="font-semibold text-white mb-5 flex items-center gap-2">
-            <Zap className="w-4 h-4" />
+            <Zap className="w-4 h-4" style={{ color: "#34D399" }} />
             What beta participants receive
           </h3>
           <div className="grid md:grid-cols-2 gap-3">
             {BETA_BENEFITS.map((benefit) => (
               <div key={benefit} className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-violet-200 flex-shrink-0 mt-0.5" />
-                <p className="text-violet-100 text-sm leading-relaxed">{benefit}</p>
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#34D399" }} />
+                <p className="text-slate-300 text-sm leading-relaxed">{benefit}</p>
               </div>
             ))}
           </div>
@@ -460,13 +590,14 @@ function BetaSection() {
           <Link href="/beta">
             <Button
               size="lg"
-              className="bg-white text-violet-700 hover:bg-violet-50 px-10 h-14 text-base font-bold shadow-lg"
+              className="px-10 h-14 text-base font-bold shadow-lg hover:opacity-90"
+              style={{ background: "#10B981", color: "white" }}
             >
               Apply for the free beta
               <ChevronRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
-          <p className="mt-4 text-violet-200 text-sm">
+          <p className="mt-4 text-sm" style={{ color: "#6B7280" }}>
             Applications reviewed within 3 business days · No commitment required
           </p>
         </div>
@@ -477,9 +608,14 @@ function BetaSection() {
 
 function EligibilitySection() {
   return (
-    <section className="py-16 px-6 bg-slate-50 border-t border-slate-200">
+    <section
+      className="py-16 px-6 border-t"
+      style={{ background: "#F7F8FA", borderColor: "#E5E7EB" }}
+    >
       <div className="max-w-3xl mx-auto text-center">
-        <h3 className="text-xl font-semibold text-slate-900 mb-3">Beta eligibility criteria</h3>
+        <h3 className="text-xl font-semibold mb-3" style={{ color: "#0E1726" }}>
+          Beta eligibility criteria
+        </h3>
         <p className="text-slate-600 mb-6">
           The free beta programme is designed for organisations with established HR functions.
           To qualify, your organisation must meet all of the following:
@@ -490,10 +626,18 @@ function EligibilitySection() {
             { icon: Target, label: "Active AI adoption", sub: "At least one AI tool in HR workflows" },
             { icon: Building2, label: "Any sector", sub: "Private, public, or third sector" },
           ].map((item) => (
-            <div key={item.label} className="bg-white rounded-xl p-5 border border-slate-200">
-              <item.icon className="w-6 h-6 text-violet-600 mx-auto mb-3" />
-              <p className="font-semibold text-slate-900 text-sm">{item.label}</p>
-              <p className="text-slate-500 text-xs mt-1">{item.sub}</p>
+            <div
+              key={item.label}
+              className="rounded-xl p-5 border"
+              style={{ background: "#FFFFFF", borderColor: "#E5E7EB" }}
+            >
+              <item.icon className="w-6 h-6 mx-auto mb-3" style={{ color: "#10B981" }} />
+              <p className="font-semibold text-sm" style={{ color: "#0E1726" }}>
+                {item.label}
+              </p>
+              <p className="text-xs mt-1" style={{ color: "#6B7280" }}>
+                {item.sub}
+              </p>
             </div>
           ))}
         </div>
@@ -504,21 +648,26 @@ function EligibilitySection() {
 
 function Footer() {
   return (
-    <footer className="py-10 px-6 bg-slate-900 border-t border-slate-800">
+    <footer
+      className="py-10 px-6 border-t"
+      style={{ background: "#0F172A", borderColor: "#1E293B" }}
+    >
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
-            <Brain className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-white">AiQ</span>
+        <div className="flex items-center gap-3">
+          <AiQLogo size={28} />
+          <span className="font-bold text-white">HR AiQ</span>
           <span className="text-slate-500 text-sm">· Enterprise HR Capability Intelligence</span>
         </div>
         <div className="flex items-center gap-6 text-sm text-slate-500">
-          <Link href="/beta" className="hover:text-slate-300 transition-colors">Apply for beta</Link>
-          <Link href="/login" className="hover:text-slate-300 transition-colors">Sign in</Link>
+          <Link href="/beta" className="hover:text-slate-300 transition-colors">
+            Apply for beta
+          </Link>
+          <Link href="/login" className="hover:text-slate-300 transition-colors">
+            Sign in
+          </Link>
         </div>
         <p className="text-slate-600 text-xs">
-          © {new Date().getFullYear()} AiQ. Assessment results are diagnostic indicators, not employment decisions.
+          © {new Date().getFullYear()} HR AiQ. Assessment results are diagnostic indicators, not employment decisions.
         </p>
       </div>
     </footer>
