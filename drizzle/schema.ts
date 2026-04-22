@@ -873,6 +873,30 @@ export const ailNarrativeThreads = mysqlTable("ail_narrative_threads", {
   statusIdx: index("idx_ail_nt_status").on(t.currentStatus),
 }));
 
+export const betaApplications = mysqlTable("beta_applications", {
+  id:              int("id").primaryKey().autoincrement(),
+  // Contact
+  contactFirstName:varchar("contact_first_name", { length: 100 }).notNull(),
+  contactLastName: varchar("contact_last_name",  { length: 100 }).notNull(),
+  contactEmail:    varchar("contact_email",      { length: 255 }).notNull().unique(),
+  contactTitle:    varchar("contact_title",      { length: 150 }).notNull(),
+  // Company
+  companyName:     varchar("company_name",       { length: 200 }).notNull(),
+  sector:          varchar("sector",             { length: 100 }).notNull(),
+  companySize:     varchar("company_size",       { length: 50 }).notNull(),
+  hrTeamSize:      int("hr_team_size").notNull(),
+  // Application
+  useCase:         text("use_case").notNull(),
+  currentAiTools:  text("current_ai_tools"),
+  motivation:      text("motivation").notNull(),
+  linkedinUrl:     varchar("linkedin_url",       { length: 500 }),
+  // Status
+  status:          varchar("status",             { length: 30 }).notNull().default("pending"),
+  notes:           text("notes"),
+  createdAt:       int("created_at").notNull(),
+  updatedAt:       int("updated_at").notNull(),
+});
+
 export const ailDifficultyProfiles = mysqlTable("ail_difficulty_profiles", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique(),

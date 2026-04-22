@@ -471,3 +471,16 @@
 - [x] P13: Results page — add normGroupVersion to Assessment Metadata card in Deep Dive tab
 - [x] P14: Session page — keyboard shortcut hint should be persistent in question header, not only below options
 - [x] P15: Results page — LLM narrative is duplicated in Deep Dive and Development tabs; Deep Dive should show condensed version with "See full report →" link to Development tab
+
+## Marketing Website & Beta Programme
+
+- [ ] M1: Add `beta_applications` table to schema — company-level: contact name/email/title, company name, sector, total HR team size (must be ≥10 to qualify), use_case, current_ai_tools, motivation, status (pending/approved/rejected/waitlisted), notes, created_at
+- [ ] M2: Run migration 0008_beta_applications.sql to create the table
+- [ ] M3: Create `server/routers/waitlist.ts` with publicProcedure `apply` (validates hrTeamSize ≥ 10, returns ineligible error otherwise) and protectedProcedure `list`/`updateStatus`
+- [ ] M4: Wire `waitlistRouter` into `server/routers.ts`
+- [ ] M5: Build `client/src/pages/marketing/MarketingHomePage.tsx` — full marketing landing page with hero, social proof, capability showcase, how-it-works, beta CTA
+- [ ] M6: Build `client/src/pages/marketing/BetaApplicationPage.tsx` — multi-step beta application form
+- [ ] M7: Update `App.tsx` — `/` route renders MarketingHomePage (public), `/beta` renders BetaApplicationPage (public), logged-in users redirected to /dashboard from both
+- [ ] M8: Add Waitlist tab to BackOfficePage — list all applications, status filter, approve/reject actions
+- [ ] M9: Seed 10+ realistic company beta applications via SQL in migration 0008 (mix of approved, pending, waitlisted statuses; all with hrTeamSize ≥ 10)
+- [ ] M10: Add vitest tests for waitlist.apply (eligible company, ineligible <10 HR employees, duplicate email) and waitlist.list procedures

@@ -44,6 +44,9 @@ import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
 import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
+// Marketing pages (public)
+import MarketingPage from "./pages/marketing/MarketingPage";
+import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
 
 function ProtectedRoute({
   component: Component,
@@ -150,6 +153,9 @@ function Router() {
       <Route path="/backoffice">
         <ProtectedRoute component={BackOfficePage} />
       </Route>
+      {/* Marketing pages — public */}
+      <Route path="/about" component={MarketingPage} />
+      <Route path="/beta" component={BetaApplicationPage} />
       {/* 404 */}
       <Route component={NotFound} />
     </Switch>
@@ -165,7 +171,7 @@ function RootRedirect() {
       </div>
     );
   }
-  if (!user) return <Redirect to="/login" />;
+  if (!user) return <MarketingPage />;
   // Route new users to onboarding wizard
   if (!(user as any).onboardingCompleted) return <Redirect to="/onboarding" />;
   return <Redirect to="/dashboard" />;

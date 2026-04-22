@@ -14,6 +14,7 @@ import { dashboardRouter } from "./routers/dashboard";
 import { contentRouter } from "./routers/content";
 import { intelligenceRouter } from "./routers/intelligence";
 import { backofficeRouter } from "./routers/backoffice";
+import { waitlistRouter } from "./routers/waitlist";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   content: contentRouter,
   intelligence: intelligenceRouter,
   backoffice: backofficeRouter,
+  waitlist: waitlistRouter,
 });
 
 export type AppRouter = typeof appRouter;

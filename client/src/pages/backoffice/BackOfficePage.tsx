@@ -46,11 +46,275 @@ import {
   Check,
   Eye,
   EyeOff,
+  FlaskConical,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  ChevronDown,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "orgs" | "users";
+type Tab = "dashboard" | "orgs" | "users" | "beta";
+
+// ─── Beta Applications Tab ────────────────────────────────────────────────────
+const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
+type ApplicationStatus = typeof APPLICATION_STATUSES[number];
+
+function AppStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+    pending:    { label: "Pending",    className: "bg-amber-50 text-amber-700 border-amber-200",       icon: Clock },
+    approved:   { label: "Approved",   className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
+    rejected:   { label: "Rejected",   className: "bg-red-50 text-red-700 border-red-200",             icon: XCircle },
+    waitlisted: { label: "Waitlisted", className: "bg-blue-50 text-blue-700 border-blue-200",          icon: Clock },
+  };
+  const c = config[status] ?? { label: status, className: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock };
+  const Icon = c.icon;
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border", c.className)}>
+      <Icon className="w-3 h-3" />
+      {c.label}
+    </span>
+  );
+}
+
+function BetaApplicationsTab() {
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editNotes, setEditNotes] = useState<{ id: number; notes: string } | null>(null);
+  const utils = trpc.useUtils();
+
+  const { data: applications, isLoading } = trpc.waitlist.list.useQuery({
+    status: statusFilter,
+    limit: 200,
+    offset: 0,
+  });
+
+  const { data: stats } = trpc.waitlist.stats.useQuery();
+
+  const updateMutation = trpc.waitlist.update.useMutation({
+    onSuccess: () => {
+      utils.waitlist.list.invalidate();
+      utils.waitlist.stats.invalidate();
+      toast.success("Application updated");
+      setEditNotes(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleStatusChange = (id: number, status: ApplicationStatus) => {
+    updateMutation.mutate({ id, status });
+  };
+
+  const handleSaveNotes = (id: number) => {
+    if (!editNotes) return;
+    updateMutation.mutate({ id, notes: editNotes.notes });
+  };
+
+  const statCards = [
+    { label: "Total",      value: (stats as any)?.total ?? 0,      color: "text-slate-700" },
+    { label: "Pending",    value: (stats as any)?.pending ?? 0,    color: "text-amber-600" },
+    { label: "Approved",   value: (stats as any)?.approved ?? 0,   color: "text-emerald-600" },
+    { label: "Waitlisted", value: (stats as any)?.waitlisted ?? 0, color: "text-blue-600" },
+    { label: "Rejected",   value: (stats as any)?.rejected ?? 0,   color: "text-red-600" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Stats */}
+      <div className="grid grid-cols-5 gap-3">
+        {statCards.map((s) => (
+          <Card key={s.label} className="border-border">
+            <CardContent className="p-4 text-center">
+              <p className={cn("text-2xl font-bold", s.color)}>{s.value}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-sm text-muted-foreground">Filter:</span>
+        {(["all", ...APPLICATION_STATUSES] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={cn(
+              "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
+              statusFilter === s
+                ? "bg-[#3B4EFF] text-white border-[#3B4EFF]"
+                : "bg-background text-muted-foreground border-border hover:border-[#3B4EFF] hover:text-[#3B4EFF]"
+            )}
+          >
+            {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : !applications?.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <FlaskConical className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No applications{statusFilter !== "all" ? ` with status "${statusFilter}"` : ""} yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {applications.map((app) => (
+            <div key={app.id} className="border border-border rounded-xl overflow-hidden">
+              {/* Row */}
+              <div
+                className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-foreground text-sm">
+                      {app.contactFirstName} {app.contactLastName}
+                    </span>
+                    <span className="text-muted-foreground text-xs">&middot;</span>
+                    <span className="text-muted-foreground text-sm">{app.companyName}</span>
+                    <AppStatusBadge status={app.status} />
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                    <span>{app.contactEmail}</span>
+                    <span>&middot;</span>
+                    <span>{app.sector}</span>
+                    <span>&middot;</span>
+                    <span>{app.hrTeamSize} HR staff</span>
+                    <span>&middot;</span>
+                    <span>{new Date(app.createdAt * 1000).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform flex-shrink-0",
+                    expandedId === app.id && "rotate-180"
+                  )}
+                />
+              </div>
+
+              {/* Expanded detail */}
+              {expandedId === app.id && (
+                <div className="border-t border-border bg-muted/20 p-5 space-y-5">
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {/* Contact */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Contact</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Name:</span> {app.contactFirstName} {app.contactLastName}</p>
+                        <p><span className="text-muted-foreground">Title:</span> {app.contactTitle}</p>
+                        <p><span className="text-muted-foreground">Email:</span>{" "}
+                          <a href={`mailto:${app.contactEmail}`} className="text-[#3B4EFF] hover:underline">{app.contactEmail}</a>
+                        </p>
+                        {app.linkedinUrl && (
+                          <p>
+                            <span className="text-muted-foreground">LinkedIn:</span>{" "}
+                            <a href={app.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#3B4EFF] hover:underline inline-flex items-center gap-1">
+                              View profile <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Organisation */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Organisation</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Company:</span> {app.companyName}</p>
+                        <p><span className="text-muted-foreground">Sector:</span> {app.sector}</p>
+                        <p><span className="text-muted-foreground">Size:</span> {app.companySize} employees</p>
+                        <p><span className="text-muted-foreground">HR team:</span> <strong>{app.hrTeamSize}</strong> professionals</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Use case */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Current AI usage</h4>
+                    <p className="text-sm text-foreground leading-relaxed">{app.useCase}</p>
+                    {app.currentAiTools && (
+                      <p className="text-sm text-muted-foreground mt-1"><span className="font-medium">Tools:</span> {app.currentAiTools}</p>
+                    )}
+                  </div>
+
+                  {/* Motivation */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Motivation</h4>
+                    <p className="text-sm text-foreground leading-relaxed">{app.motivation}</p>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Admin notes</h4>
+                    {editNotes?.id === app.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          className="w-full border border-border rounded-lg p-2 text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-[#3B4EFF]/30"
+                          rows={3}
+                          value={editNotes.notes}
+                          onChange={(e) => setEditNotes({ id: app.id, notes: e.target.value })}
+                          placeholder="Add internal notes..."
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveNotes(app.id)}
+                            disabled={updateMutation.isPending}
+                            className="bg-[#3B4EFF] hover:bg-[#2d3fd9] text-white h-8 text-xs"
+                          >
+                            {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save notes"}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditNotes(null)} className="h-8 text-xs">Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                        onClick={() => setEditNotes({ id: app.id, notes: app.notes ?? "" })}
+                      >
+                        {app.notes ? app.notes : <span className="italic">No notes &mdash; click to add</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
+                    <span className="text-xs text-muted-foreground mr-1">Change status:</span>
+                    {APPLICATION_STATUSES.filter((s) => s !== app.status).map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant="outline"
+                        disabled={updateMutation.isPending}
+                        onClick={() => handleStatusChange(app.id, s)}
+                        className={cn(
+                          "h-7 text-xs border",
+                          s === "approved"   && "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
+                          s === "rejected"   && "border-red-300 text-red-700 hover:bg-red-50",
+                          s === "waitlisted" && "border-blue-300 text-blue-700 hover:bg-blue-50",
+                          s === "pending"    && "border-amber-300 text-amber-700 hover:bg-amber-50",
+                        )}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Status badge helpers ─────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -750,9 +1014,10 @@ export default function BackOfficePage() {
   }
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "dashboard", label: "Dashboard",    icon: LayoutDashboard },
     { id: "orgs",      label: "Organisations", icon: Building2 },
-    { id: "users",     label: "Users", icon: Users },
+    { id: "users",     label: "Users",         icon: Users },
+    { id: "beta",      label: "Beta Applications", icon: FlaskConical },
   ];
 
   return (
@@ -791,6 +1056,7 @@ export default function BackOfficePage() {
       {tab === "dashboard" && <DashboardTab />}
       {tab === "orgs"      && <OrgsTab />}
       {tab === "users"     && <UsersTab orgs={orgs ?? []} />}
+      {tab === "beta"      && <BetaApplicationsTab />}
     </div>
   );
 }
