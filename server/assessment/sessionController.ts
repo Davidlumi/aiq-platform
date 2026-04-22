@@ -44,7 +44,7 @@ export const MINIMUM_EVIDENCE = {
   signalsPerCapability: 3,
   distinctInteractionTypes: 5,
   highRiskProportion: 0.25,
-  targetItems: 50,
+  targetItems: 49,  // Matches static blueprint bank exactly — no LLM generation needed for standard sessions
 };
 
 // ─── Session State ────────────────────────────────────────────────────────────

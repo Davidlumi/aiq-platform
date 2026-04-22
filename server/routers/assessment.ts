@@ -465,16 +465,16 @@ export const assessmentRouter = router({
       let nextItem: NextItem | null = null;
 
       if (session[0].state === "in_progress" && answeredCount < MINIMUM_EVIDENCE.targetItems) {
-        if (phase === "baseline") {
-          // Try content_scenarios library first (new canonical source)
-          nextItem = await getNextContentScenario(answeredItemIds, answeredCount, db);
-          // Fall back to blueprint-linked assessmentItems if content library is empty
-          if (!nextItem) {
-            nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
-          }
+        // ALWAYS try static items first (content_scenarios → blueprint items).
+        // This ensures zero LLM latency for the first 49 questions.
+        // LLM generation only kicks in once the static bank is exhausted.
+        nextItem = await getNextContentScenario(answeredItemIds, answeredCount, db);
+        if (!nextItem) {
+          nextItem = await getNextStaticItem(session[0].blueprintId, answeredItemIds, db);
         }
 
-        if ((phase === "adaptive" || phase === "validation") && !nextItem) {
+        // Only attempt LLM generation when static items are exhausted AND we still need more
+        if (!nextItem && (phase === "adaptive" || phase === "validation")) {
           // First: check if there are already unanswered generated items for this session
           // (avoids re-generating when a previous gen item was never answered)
           const existingGenItems = await db

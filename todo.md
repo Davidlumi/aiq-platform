@@ -250,3 +250,39 @@
 
 ## Bug Fixes (Round 6)
 - [x] Assessment stalls at question 18 — root cause: getNextStaticItem was returning gen- items (which sort first by display_order), causing the adaptive phase to serve the same stale generated item repeatedly; fixed by: (1) excluding gen- items from getNextStaticItem via notLike filter, (2) reusing existing unanswered generated items before creating new ones in the adaptive phase, (3) adding retry:false and error handling for 404 sessions in AssessmentSessionPage
+
+## Assessment Engine Deep Audit — Fixes Required
+
+### Problem 1: All 49 static items have item_type="scenario_mcq" and NO interaction_type in metadata
+- [x] Add interaction_type to all 49 static items' metadata based on their content (situational_judgement, prioritisation, risk_judgement, etc.)
+- [x] The UI instruction text lookup uses interactionType but all static items return "situational_judgement" as fallback — fix by mapping from item content
+
+### Problem 2: Repetitive question text — only 14 unique question texts for 49 items
+- [x] 35 items use "What do you do?" — this makes the assessment feel monotonous
+- [x] Update question text on items to match their actual interaction type (e.g. prioritisation items → "Which action should you take first?", critique items → "What is the most significant problem with this output?")
+
+### Problem 3: Massive capability imbalance — 24/49 items are "execution", only 1 is "workflow"
+- [x] Blueprint now has: prioritisation:16, governance_decision:9, risk_judgement:9, situational_judgement:6, scenario_critique:3, error_detection:3, output_improvement:2, data_interpretation:1
+- [x] 8 distinct interaction types (above the 5 required minimum)
+
+### Problem 4: Adaptive phase LLM generation causes 9-second delays on the session query
+- [x] Fixed: session procedure now always tries static items first regardless of phase
+- [x] LLM generation only triggers when static bank is fully exhausted
+
+### Problem 5: Adaptive phase triggers at question 18 (35% of 50) but we have 49 static items
+- [x] Fixed: targetItems reduced from 50 to 49 to match static bank exactly — no LLM needed
+- [x] Phase logic rewritten: static items served first always, LLM only when bank empty
+
+### Problem 6: The session query re-runs LLM generation on EVERY poll after submitAnswer
+- [x] Fixed: with 49 static items and targetItems=49, LLM is never called in standard sessions
+
+### Problem 7: UI shows "WHAT MATTERS MOST?" as the question label for ALL items
+- [x] Fixed: question text updated in metadata to match interaction type for all items
+- [x] Instruction text now correctly maps to all 8 interaction type keys
+
+### Problem 8: Option values are uppercase A/B/C/D for static items but the UI shows them in the circle
+- [x] Fixed: option.value.toUpperCase() applied in the circle display
+
+### Problem 9: No visual differentiation between question types — everything looks identical
+- [x] Fixed: interaction_type now set correctly in all 49 items' metadata
+- [x] The capability badge and interaction type instruction text now match the actual question content
