@@ -79,7 +79,7 @@ function QuickLink({
 }) {
   return (
     <Link href={path}>
-      <div className="bg-card border border-border rounded-xl p-4 hover:shadow-md hover:border-[#3B4EFF]/30 transition-all cursor-pointer group">
+      <div className="bg-card border border-border rounded-xl p-4 hover:shadow-md hover:border-[#10B981]/30 transition-all cursor-pointer group">
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
           style={{ backgroundColor: `${color}12` }}
@@ -91,7 +91,7 @@ function QuickLink({
             <p className="text-sm font-semibold text-foreground">{label}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-[#3B4EFF] transition-colors mt-0.5" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-[#10B981] transition-colors mt-0.5" />
         </div>
       </div>
     </Link>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
             </Button>
           </Link>
           <Link href="/reports">
-            <Button size="sm" className="gap-2 text-xs bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
+            <Button size="sm" className="gap-2 text-xs bg-[#10B981] hover:bg-[#10B981]/90 text-white">
               <FileText className="w-3.5 h-3.5" />
               Reports
             </Button>
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
           label="Total Users"
           value={data?.totalUsers ?? 0}
           icon={Users}
-          color="#3B4EFF"
+          color="#10B981"
         />
         <StatCard
           label="Tenants"
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Administration</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <QuickLink label="User Management"    path="/admin/users"    icon={Users}         desc="Manage users and roles"        color="#3B4EFF" />
+          <QuickLink label="User Management"    path="/admin/users"    icon={Users}         desc="Manage users and roles"        color="#10B981" />
           <QuickLink label="Tenant Management"  path="/admin/tenants"  icon={Building2}     desc="Configure tenant settings"     color="#AA3377" />
           <QuickLink label="Policy Rules"       path="/policy"         icon={Shield}        desc="Manage policy engine rules"    color="#EE8866" />
           <QuickLink label="Audit Log"          path="/audit"          icon={FileText}      desc="View all system audit events"  color="#4477AA" />
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
               Recent Platform Activity
             </CardTitle>
             <Link href="/audit">
-              <button className="text-xs text-[#3B4EFF] hover:underline flex items-center gap-1">
+              <button className="text-xs text-[#10B981] hover:underline flex items-center gap-1">
                 View all <ChevronRight className="w-3 h-3" />
               </button>
             </Link>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
             {data?.recentActivity?.length ? (
               data.recentActivity.map((log: any) => (
                 <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#3B4EFF] mt-2 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-2 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{log.action}</p>
                     <p className="text-xs text-muted-foreground">

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 // ─── Modality Config ──────────────────────────────────────────────────────────
 
 const MODALITY_CONFIG: Record<string, { label: string; color: string }> = {
-  micro_lesson:      { label: "Micro",        color: "#3B4EFF" },
+  micro_lesson:      { label: "Micro",        color: "#10B981" },
   scenario:          { label: "Scenario",     color: "#AA3377" },
   scenario_practice: { label: "Practice",     color: "#AA3377" },
   simulation:        { label: "Simulation",   color: "#EE8866" },
@@ -100,7 +100,7 @@ function ContentCard({ item }: { item: any }) {
         </div>
 
         {/* Title */}
-        <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-[#3B4EFF] transition-colors line-clamp-2">
+        <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-[#10B981] transition-colors line-clamp-2">
           {item.title}
         </p>
 
@@ -123,7 +123,7 @@ function ContentCard({ item }: { item: any }) {
                   key={d}
                   className="w-1.5 h-3 rounded-sm"
                   style={{
-                    backgroundColor: d <= item.difficulty ? "#3B4EFF" : "#E5E7EB",
+                    backgroundColor: d <= item.difficulty ? "#10B981" : "#E5E7EB",
                   }}
                 />
               ))}
@@ -136,12 +136,12 @@ function ContentCard({ item }: { item: any }) {
               Done
             </span>
           ) : progressPct > 0 ? (
-            <span className="text-xs text-[#3B4EFF] font-medium flex items-center gap-1">
+            <span className="text-xs text-[#10B981] font-medium flex items-center gap-1">
               <Play className="w-3 h-3" />
               {progressPct}%
             </span>
           ) : (
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#3B4EFF] transition-colors" />
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#10B981] transition-colors" />
           )}
         </div>
       </CardContent>

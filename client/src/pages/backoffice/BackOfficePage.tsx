@@ -145,8 +145,8 @@ function BetaApplicationsTab() {
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
               statusFilter === s
-                ? "bg-[#3B4EFF] text-white border-[#3B4EFF]"
-                : "bg-background text-muted-foreground border-border hover:border-[#3B4EFF] hover:text-[#3B4EFF]"
+                ? "bg-[#10B981] text-white border-[#10B981]"
+                : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
             )}
           >
             {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -211,12 +211,12 @@ function BetaApplicationsTab() {
                         <p><span className="text-muted-foreground">Name:</span> {app.contactFirstName} {app.contactLastName}</p>
                         <p><span className="text-muted-foreground">Title:</span> {app.contactTitle}</p>
                         <p><span className="text-muted-foreground">Email:</span>{" "}
-                          <a href={`mailto:${app.contactEmail}`} className="text-[#3B4EFF] hover:underline">{app.contactEmail}</a>
+                          <a href={`mailto:${app.contactEmail}`} className="text-[#10B981] hover:underline">{app.contactEmail}</a>
                         </p>
                         {app.linkedinUrl && (
                           <p>
                             <span className="text-muted-foreground">LinkedIn:</span>{" "}
-                            <a href={app.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#3B4EFF] hover:underline inline-flex items-center gap-1">
+                            <a href={app.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#10B981] hover:underline inline-flex items-center gap-1">
                               View profile <ExternalLink className="w-3 h-3" />
                             </a>
                           </p>
@@ -256,7 +256,7 @@ function BetaApplicationsTab() {
                     {editNotes?.id === app.id ? (
                       <div className="space-y-2">
                         <textarea
-                          className="w-full border border-border rounded-lg p-2 text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-[#3B4EFF]/30"
+                          className="w-full border border-border rounded-lg p-2 text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
                           rows={3}
                           value={editNotes.notes}
                           onChange={(e) => setEditNotes({ id: app.id, notes: e.target.value })}
@@ -267,7 +267,7 @@ function BetaApplicationsTab() {
                             size="sm"
                             onClick={() => handleSaveNotes(app.id)}
                             disabled={updateMutation.isPending}
-                            className="bg-[#3B4EFF] hover:bg-[#2d3fd9] text-white h-8 text-xs"
+                            className="bg-[#10B981] hover:bg-[#2d3fd9] text-white h-8 text-xs"
                           >
                             {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save notes"}
                           </Button>
@@ -339,7 +339,7 @@ function DashboardTab() {
   const { data: stats, isLoading } = trpc.backoffice.stats.useQuery();
 
   const statCards = [
-    { label: "Total Organisations", value: stats?.totalOrgs ?? 0, sub: `${stats?.activeOrgs ?? 0} active, ${stats?.trialOrgs ?? 0} trial`, icon: Building2, color: "#3B4EFF" },
+    { label: "Total Organisations", value: stats?.totalOrgs ?? 0, sub: `${stats?.activeOrgs ?? 0} active, ${stats?.trialOrgs ?? 0} trial`, icon: Building2, color: "#10B981" },
     { label: "Total Users", value: stats?.totalUsers ?? 0, sub: `${stats?.activeUsers ?? 0} active`, icon: Users, color: "#10B981" },
     { label: "New Users (30d)", value: stats?.newUsersLast30Days ?? 0, sub: "registered in last 30 days", icon: TrendingUp, color: "#F59E0B" },
     { label: "Platform Health", value: "OK", sub: "all systems operational", icon: Activity, color: "#6366F1" },
@@ -389,13 +389,13 @@ function DashboardTab() {
           ].map((a) => (
             <button
               key={a.label}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-[#3B4EFF]/40 hover:bg-[#3B4EFF]/4 transition-all text-left group"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-[#10B981]/40 hover:bg-[#10B981]/4 transition-all text-left group"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#3B4EFF]/8 flex items-center justify-center shrink-0">
-                <a.icon className="w-4 h-4 text-[#3B4EFF]" />
+              <div className="w-8 h-8 rounded-lg bg-[#10B981]/8 flex items-center justify-center shrink-0">
+                <a.icon className="w-4 h-4 text-[#10B981]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground group-hover:text-[#3B4EFF] transition-colors">{a.label}</p>
+                <p className="text-sm font-medium text-foreground group-hover:text-[#10B981] transition-colors">{a.label}</p>
                 <p className="text-xs text-muted-foreground">{a.desc}</p>
               </div>
             </button>
@@ -464,7 +464,7 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
           <Button
             onClick={() => createMutation.mutate({ name, slug, primaryDomain: domain || undefined, status })}
             disabled={!name || !slug || createMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
           >
             {createMutation.isPending ? "Creating…" : "Create Organisation"}
           </Button>
@@ -518,7 +518,7 @@ function EditOrgDialog({ org, onClose, onSaved }: { org: any; onClose: () => voi
           <Button
             onClick={() => updateMutation.mutate({ tenantId: org.id, name, primaryDomain: domain || undefined, status })}
             disabled={updateMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
           >
             {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </Button>
@@ -551,7 +551,7 @@ function OrgsTab() {
         </div>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
           New Organisation
@@ -710,7 +710,7 @@ function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; o
           <Button
             onClick={() => createMutation.mutate({ tenantId, email, firstName, lastName, password, roleKey, jobFunction: jobFunction || undefined })}
             disabled={!tenantId || !email || !firstName || !lastName || !password || createMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
           >
             {createMutation.isPending ? "Creating…" : "Create User"}
           </Button>
@@ -763,7 +763,7 @@ function ResetPasswordDialog({ user, onClose }: { user: any; onClose: () => void
           <Button
             onClick={() => resetMutation.mutate({ userId: user.id, newPassword: password })}
             disabled={password.length < 8 || resetMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
           >
             {resetMutation.isPending ? "Resetting…" : "Reset Password"}
           </Button>
@@ -852,7 +852,7 @@ function EditUserDialog({ user, onClose, onSaved, orgs }: { user: any; onClose: 
           <Button
             onClick={handleSave}
             disabled={updateMutation.isPending || assignRoleMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
           >
             {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </Button>
@@ -900,7 +900,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
         </Select>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
           New User
@@ -934,7 +934,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
                   <td className="px-4 py-3 text-xs text-muted-foreground max-w-[160px] truncate">{u.tenantName}</td>
                   <td className="px-4 py-3">
                     {u.roles.length > 0 ? (
-                      <span className="text-xs font-medium text-[#3B4EFF] bg-[#3B4EFF]/8 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-[#10B981] bg-[#10B981]/8 px-2 py-0.5 rounded-full">
                         {u.roles[0].replace(/_/g, " ")}
                       </span>
                     ) : (
@@ -1024,8 +1024,8 @@ export default function BackOfficePage() {
     <div className="p-6 space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#3B4EFF]/10 flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5 text-[#3B4EFF]" />
+        <div className="w-10 h-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
+          <ShieldCheck className="w-5 h-5 text-[#10B981]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground font-sora">Back Office</h1>
@@ -1042,7 +1042,7 @@ export default function BackOfficePage() {
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
               tab === t.id
-                ? "border-[#3B4EFF] text-[#3B4EFF]"
+                ? "border-[#10B981] text-[#10B981]"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >

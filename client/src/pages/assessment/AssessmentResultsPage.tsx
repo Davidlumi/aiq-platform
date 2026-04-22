@@ -144,11 +144,11 @@ function RadarCapabilityChart({
           <Radar
             name="Score"
             dataKey="score"
-            stroke="#3B4EFF"
-            fill="#3B4EFF"
+            stroke="#10B981"
+            fill="#10B981"
             fillOpacity={0.15}
             strokeWidth={2}
-            dot={{ r: 4, fill: "#3B4EFF", strokeWidth: 0 }}
+            dot={{ r: 4, fill: "#10B981", strokeWidth: 0 }}
           />
         </RadarChart>
       </ResponsiveContainer>
@@ -201,7 +201,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[#3B4EFF]" />
+          <TrendingUp className="w-4 h-4 text-[#10B981]" />
           Progress Over Time
         </CardTitle>
         <div className="flex items-center gap-4 flex-wrap mt-1">
@@ -244,7 +244,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="#3B4EFF"
+                stroke="#10B981"
                 strokeWidth={2}
                 dot={<ReadinessDot />}
                 activeDot={{ r: 8 }}
@@ -578,7 +578,7 @@ export default function AssessmentResultsPage() {
                     {/* P15: ExplanationDrawer — score transparency */}
                     <ExplanationDrawer
                       trigger={
-                        <button className="text-xs text-[#3B4EFF] underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity">
+                        <button className="text-xs text-[#10B981] underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity">
                           <Info className="w-3 h-3" />
                           How is this calculated?
                         </button>
@@ -634,9 +634,9 @@ export default function AssessmentResultsPage() {
             <Card className="border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Info className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                  <Info className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">
+                    <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1.5">
                       Your Results Narrative
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
@@ -753,7 +753,7 @@ export default function AssessmentResultsPage() {
             <Card className="border-border">
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#3B4EFF]" />
+                  <Shield className="w-4 h-4 text-[#10B981]" />
                   Governance Profile
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -818,7 +818,7 @@ export default function AssessmentResultsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={() => navigate("/learning")}
-              className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+              className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
             >
               <BookOpen className="w-4 h-4" />
               View Learning Plan
@@ -863,10 +863,10 @@ export default function AssessmentResultsPage() {
 
           {/* LLM Development Narrative (also shown in Development tab) */}
           {llmNarrative && (
-            <Card className="border-[#3B4EFF]/30 bg-[#3B4EFF]/5">
+            <Card className="border-[#10B981]/30 bg-[#10B981]/5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#3B4EFF]" />
+                  <Sparkles className="w-4 h-4 text-[#10B981]" />
                   Your Development Narrative
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -883,7 +883,7 @@ export default function AssessmentResultsPage() {
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wide">Priorities</h4>
+                  <h4 className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">Priorities</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
                 </div>
               </CardContent>
@@ -980,10 +980,10 @@ export default function AssessmentResultsPage() {
 
           {/* UX-2: LLM narrative as primary content */}
           {llmNarrative ? (
-            <Card className="border-[#3B4EFF]/30 bg-[#3B4EFF]/5">
+            <Card className="border-[#10B981]/30 bg-[#10B981]/5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#3B4EFF]" />
+                  <Sparkles className="w-4 h-4 text-[#10B981]" />
                   Personalised Development Report
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -1005,8 +1005,8 @@ export default function AssessmentResultsPage() {
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#3B4EFF] uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-[#10B981]/20 space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#10B981] uppercase tracking-wide flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5" />
                     Immediate Priorities
                   </h4>
@@ -1021,9 +1021,9 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3">
-                      <FileText className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                      <FileText className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                        <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
                         <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
                       </div>
                     </div>
@@ -1034,7 +1034,7 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-[#3B4EFF]" />
+                      <Lightbulb className="w-4 h-4 text-[#10B981]" />
                       Development Focus Areas
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">
@@ -1064,7 +1064,7 @@ export default function AssessmentResultsPage() {
 
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button onClick={() => navigate("/learning")} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2">
+            <Button onClick={() => navigate("/learning")} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2">
               <BookOpen className="w-4 h-4" />
               View Learning Plan
             </Button>

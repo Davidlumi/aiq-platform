@@ -81,7 +81,7 @@ function ScenarioPracticeRenderer({ item }: { item: any }) {
   ];
   return (
     <div className="space-y-6">
-      <Card className="border-l-4" style={{ borderLeftColor: "#3B4EFF" }}>
+      <Card className="border-l-4" style={{ borderLeftColor: "#10B981" }}>
         <CardContent className="pt-4">
           <p className="text-sm font-medium text-muted-foreground mb-2">Scenario</p>
           <p className="text-base text-foreground leading-relaxed">{scenario}</p>
@@ -95,10 +95,10 @@ function ScenarioPracticeRenderer({ item }: { item: any }) {
             onClick={() => !revealed && setSelected(opt.id)}
             className={cn(
               "w-full text-left p-4 rounded-lg border-2 transition-all text-sm",
-              selected === opt.id && !revealed && "border-[#3B4EFF] bg-[#EEF0FF]",
+              selected === opt.id && !revealed && "border-[#10B981] bg-[#EEF0FF]",
               revealed && opt.correct && "border-green-500 bg-green-50",
               revealed && selected === opt.id && !opt.correct && "border-red-400 bg-red-50",
-              !selected || (selected !== opt.id && !revealed) ? "border-border hover:border-[#3B4EFF]/40" : ""
+              !selected || (selected !== opt.id && !revealed) ? "border-border hover:border-[#10B981]/40" : ""
             )}
           >
             <span className="font-medium mr-2">{opt.id.toUpperCase()}.</span>{opt.label}
@@ -109,7 +109,7 @@ function ScenarioPracticeRenderer({ item }: { item: any }) {
         ))}
       </div>
       {selected && !revealed && (
-        <Button onClick={() => setRevealed(true)} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
+        <Button onClick={() => setRevealed(true)} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white">
           Submit Answer
         </Button>
       )}
@@ -140,10 +140,10 @@ function ReflectionRenderer({ item }: { item: any }) {
         value={answer}
         onChange={e => setAnswer(e.target.value)}
         placeholder="Write your reflection here…"
-        className="w-full h-40 p-3 rounded-lg border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#3B4EFF]/30"
+        className="w-full h-40 p-3 rounded-lg border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
       />
       {!saved ? (
-        <Button onClick={() => setSaved(true)} disabled={!answer.trim()} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
+        <Button onClick={() => setSaved(true)} disabled={!answer.trim()} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white">
           Save Reflection
         </Button>
       ) : (
@@ -203,7 +203,7 @@ function ChecklistRenderer({ item }: { item: any }) {
               next.has(i) ? next.delete(i) : next.add(i);
               return next;
             })}
-            className="mt-0.5 w-4 h-4 rounded accent-[#3B4EFF]"
+            className="mt-0.5 w-4 h-4 rounded accent-[#10B981]"
           />
           <span className={cn("text-sm", checked.has(i) && "line-through text-muted-foreground")}>{it}</span>
         </label>
@@ -222,7 +222,7 @@ function InfographicRenderer({ item }: { item: any }) {
         <img src={imageUrl} alt={item.title} className="w-full rounded-lg border border-border" />
       ) : (
         <div className="rounded-lg bg-gradient-to-br from-[#EEF0FF] to-[#F0F9FF] border border-border p-8 text-center">
-          <Award className="w-12 h-12 text-[#3B4EFF] mx-auto mb-3" />
+          <Award className="w-12 h-12 text-[#10B981] mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Visual infographic — {item.title}</p>
         </div>
       )}
@@ -289,7 +289,7 @@ export default function ModulePlayerPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-[#3B4EFF] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-[#10B981] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-muted-foreground">Loading module…</p>
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function ModulePlayerPage() {
   const capability: string = meta?.capability ?? meta?.capabilityLabel ?? "";
   const description: string = meta?.description ?? meta?.summary ?? "";
   const estimatedMinutes: number = meta?.estimatedMinutes ?? meta?.estimated_minutes ?? Math.round((item.durationSeconds ?? 600) / 60);
-  const capColour = CAP_COLOURS[capabilityKey] ?? "#3B4EFF";
+  const capColour = CAP_COLOURS[capabilityKey] ?? "#10B981";
   const TypeIcon = CONTENT_TYPE_ICONS[item.contentType] ?? FileText;
   const Renderer = RENDERERS[item.contentType] ?? DefaultRenderer;
 
@@ -355,7 +355,7 @@ export default function ModulePlayerPage() {
             <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{estimatedMinutes} min</span>
             {meta?.author && <span>By {meta.author}</span>}
             {meta?.researchCitations && (
-              <span className="text-[#3B4EFF]">{meta.researchCitations.length} research citation{meta.researchCitations.length !== 1 ? "s" : ""}</span>
+              <span className="text-[#10B981]">{meta.researchCitations.length} research citation{meta.researchCitations.length !== 1 ? "s" : ""}</span>
             )}
           </div>
         </CardHeader>
@@ -381,9 +381,9 @@ export default function ModulePlayerPage() {
 
       {/* Key takeaways */}
       {meta?.keyTakeaways && meta.keyTakeaways.length > 0 && (
-        <Card className="bg-[#EEF0FF]/50 border-[#3B4EFF]/20">
+        <Card className="bg-[#EEF0FF]/50 border-[#10B981]/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-[#3B4EFF] flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-[#10B981] flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Key Takeaways
             </CardTitle>
           </CardHeader>
@@ -391,7 +391,7 @@ export default function ModulePlayerPage() {
             <ul className="space-y-2">
               {meta.keyTakeaways.map((t: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <ChevronRight className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                  <ChevronRight className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
                   {t}
                 </li>
               ))}
@@ -424,7 +424,7 @@ export default function ModulePlayerPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Library
         </Button>
         {!completed ? (
-          <Button onClick={handleComplete} className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2">
+          <Button onClick={handleComplete} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2">
             Mark as Complete <CheckCircle2 className="w-4 h-4" />
           </Button>
         ) : (

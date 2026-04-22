@@ -501,3 +501,13 @@
 - [x] CF8: Remove or replace "Built with forward-thinking organisations" line (no logos to show)
 - [x] CF9: Remove duplicate "Open to organisations with 10+ HR professionals" line from hero; keep only near final CTA
 - [x] CF10: Add visual element to Final Close section (outcome diagram or quote card)
+
+## Assessment Brand Update (Apr 2026)
+
+- [x] BR1: Update index.css — sidebar-primary and active states to use brand green #10B981 (not indigo #3B4EFF)
+- [x] BR2: Rebrand OnboardingWizard — replace all #3B4EFF with brand green #10B981
+- [x] BR3: Rebrand ProfilingModal — replace all #3B4EFF with brand green #10B981
+- [x] BR4: Rebrand AssessmentPage — replace #3B4EFF, update header/CTA to brand green
+- [x] BR5: Rebrand AssessmentSessionPage — replace #3B4EFF, update progress bar, selected states, submit button
+- [x] BR6: Rebrand AssessmentResultsPage — replace #3B4EFF, update charts, learning plan section
+- [x] BR7: Verify 0 TypeScript errors after brand update — 0 errors confirmed

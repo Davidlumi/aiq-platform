@@ -47,7 +47,7 @@ const CAPABILITY_DOMAINS = [
   { key: "governance",          label: "AI Risk & Governance",    icon: Shield,    colour: "#228833", description: "Risk identification and governance application" },
   { key: "appropriateness",     label: "AI Appropriateness",      icon: Gavel,     colour: "#EE6677", description: "Knowing when AI use is appropriate" },
   { key: "workflow",            label: "AI Workflow Application", icon: Workflow,  colour: "#66CCEE", description: "Integrating AI into professional workflows" },
-  { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#BBBBBB", description: "Interpreting and challenging AI-generated data" },
+  { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#228833", description: "Interpreting and challenging AI-generated data" },
 ];
 
 // ─── Readiness State Config ───────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export default function AssessmentPage() {
           <Button
             onClick={handleStartClick}
             disabled={startMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2 shrink-0"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 shrink-0"
           >
             <Play className="w-4 h-4" />
             {startMutation.isPending ? "Starting…" : hasCompletedBefore ? "Retake Assessment" : "Start Assessment"}
@@ -236,7 +236,7 @@ export default function AssessmentPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-[#3B4EFF]" />
+            <ClipboardList className="w-5 h-5 text-[#10B981]" />
             <CardTitle className="text-base font-semibold">About the AIQ V9.2 Standard Assessment</CardTitle>
           </div>
         </CardHeader>
@@ -301,7 +301,7 @@ export default function AssessmentPage() {
               { label: "Model Version", value: "V9.2" },
             ].map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-lg font-bold text-[#3B4EFF] font-sora">{stat.value}</p>
+                <p className="text-lg font-bold text-[#10B981] font-sora">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
@@ -327,7 +327,7 @@ export default function AssessmentPage() {
               <Button
                 onClick={handleStartClick}
                 disabled={startMutation.isPending}
-                className="mt-4 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+                className="mt-4 bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
               >
                 <Play className="w-4 h-4" />
                 Start First Assessment
@@ -350,7 +350,7 @@ export default function AssessmentPage() {
                 <Card
                   key={session.id}
                   className={cn(
-                    "border-border hover:border-[#3B4EFF]/30 transition-colors cursor-pointer",
+                    "border-border hover:border-[#10B981]/30 transition-colors cursor-pointer",
                     session.state === "in_progress" && "border-[#EE8866]/30"
                   )}
                   onClick={() => {

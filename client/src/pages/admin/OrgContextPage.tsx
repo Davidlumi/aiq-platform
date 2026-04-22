@@ -152,7 +152,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#3B4EFF]" />
+            <Building2 className="w-4 h-4 text-[#10B981]" />
             Organisation Profile
           </CardTitle>
         </CardHeader>
@@ -168,8 +168,8 @@ export default function OrgContextPage() {
                   className={cn(
                     "text-xs rounded-lg border px-3 py-2 text-left transition-all",
                     sector === s.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5 text-foreground font-medium"
-                      : "border-border text-muted-foreground hover:border-[#3B4EFF]/40"
+                      ? "border-[#10B981] bg-[#10B981]/5 text-foreground font-medium"
+                      : "border-border text-muted-foreground hover:border-[#10B981]/40"
                   )}
                 >
                   {s.label}
@@ -189,7 +189,7 @@ export default function OrgContextPage() {
                 value={headcount}
                 onChange={e => setHeadcount(e.target.value)}
                 placeholder="e.g. 3800"
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#3B4EFF]/30"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
               />
             </div>
             <div>
@@ -202,8 +202,8 @@ export default function OrgContextPage() {
                     className={cn(
                       "text-xs rounded-lg border px-2 py-1.5 transition-all",
                       structure === s.value
-                        ? "border-[#3B4EFF] bg-[#3B4EFF]/5 text-foreground font-medium"
-                        : "border-border text-muted-foreground hover:border-[#3B4EFF]/40"
+                        ? "border-[#10B981] bg-[#10B981]/5 text-foreground font-medium"
+                        : "border-border text-muted-foreground hover:border-[#10B981]/40"
                     )}
                   >
                     {s.label}
@@ -224,8 +224,8 @@ export default function OrgContextPage() {
                   className={cn(
                     "text-xs rounded-lg border px-3 py-2 flex-1 transition-all",
                     hrInfluence === h.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5 text-foreground font-medium"
-                      : "border-border text-muted-foreground hover:border-[#3B4EFF]/40"
+                      ? "border-[#10B981] bg-[#10B981]/5 text-foreground font-medium"
+                      : "border-border text-muted-foreground hover:border-[#10B981]/40"
                   )}
                 >
                   {h.label}
@@ -240,7 +240,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[#3B4EFF]" />
+            <Shield className="w-4 h-4 text-[#10B981]" />
             Risk Appetite & AI Maturity
           </CardTitle>
         </CardHeader>
@@ -256,11 +256,11 @@ export default function OrgContextPage() {
                   className={cn(
                     "w-full text-left rounded-lg border px-4 py-3 transition-all",
                     riskAppetite === r.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5"
-                      : "border-border hover:border-[#3B4EFF]/40"
+                      ? "border-[#10B981] bg-[#10B981]/5"
+                      : "border-border hover:border-[#10B981]/40"
                   )}
                 >
-                  <p className={cn("text-xs font-semibold", riskAppetite === r.value ? "text-[#3B4EFF]" : "text-foreground")}>{r.label}</p>
+                  <p className={cn("text-xs font-semibold", riskAppetite === r.value ? "text-[#10B981]" : "text-foreground")}>{r.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
                 </button>
               ))}
@@ -280,11 +280,11 @@ export default function OrgContextPage() {
                   className={cn(
                     "w-full text-left rounded-lg border px-4 py-3 transition-all",
                     aiMaturity === a.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5"
-                      : "border-border hover:border-[#3B4EFF]/40"
+                      ? "border-[#10B981] bg-[#10B981]/5"
+                      : "border-border hover:border-[#10B981]/40"
                   )}
                 >
-                  <p className={cn("text-xs font-semibold", aiMaturity === a.value ? "text-[#3B4EFF]" : "text-foreground")}>{a.label}</p>
+                  <p className={cn("text-xs font-semibold", aiMaturity === a.value ? "text-[#10B981]" : "text-foreground")}>{a.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
                 </button>
               ))}
@@ -297,7 +297,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#3B4EFF]" />
+            <Settings className="w-4 h-4 text-[#10B981]" />
             Governance & Policies
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -346,7 +346,7 @@ export default function OrgContextPage() {
         <Button
           onClick={handleSave}
           disabled={upsert.isPending}
-          className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
         >
           {upsert.isPending ? "Saving..." : "Save Configuration"}
         </Button>

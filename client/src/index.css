@@ -98,20 +98,20 @@
   --card-foreground:      #0E1726;
   --popover:              #FFFFFF;
   --popover-foreground:   #0E1726;
-  --primary:              #3B4EFF;  /* Brand indigo — canonical from brand repo */
+  --primary:              #10B981;  /* AiQ Primary Green — canonical brand action colour */
   --primary-foreground:   #FFFFFF;
   --secondary:            #F2F4F8;
   --secondary-foreground: #0E1726;
   --muted:                #F2F4F6;
   --muted-foreground:     #6B7280;
-  --accent:               #EEF0FF;  /* indigo-50 */
-  --accent-foreground:    #3B4EFF;
+  --accent:               #ECFDF5;  /* green-50 */
+  --accent-foreground:    #059669;
   --destructive:          #DC2626;
   --destructive-foreground: #FFFFFF;
   --border:               #E5E7EB;
   --input:                transparent;
   --input-background:     #FFFFFF;
-  --ring:                 #BAC0FD;
+  --ring:                 #6EE7B7;
 
   /* ── Charts — colorblind-safe capability colours ── */
   --chart-1: #4477AA;
@@ -123,12 +123,12 @@
   /* ── Sidebar — WHITE per canonical brand repo ── */
   --sidebar:                        #ffffff;
   --sidebar-foreground:             #0E1726;
-  --sidebar-primary:                #3B4EFF;
+  --sidebar-primary:                #10B981;
   --sidebar-primary-foreground:     #ffffff;
-  --sidebar-accent:                 #F5F6FF;
-  --sidebar-accent-foreground:      #3B4EFF;
+  --sidebar-accent:                 #ECFDF5;
+  --sidebar-accent-foreground:      #059669;
   --sidebar-border:                 #EAECF0;
-  --sidebar-ring:                   #BAC0FD;
+  --sidebar-ring:                   #6EE7B7;
 }
 
 /* ─── Dark theme (hero / certificate / premium surfaces only) ────────────── */
@@ -200,9 +200,9 @@
     @apply cursor-pointer;
   }
 
-  /* WCAG 2.2 AA focus ring — brand indigo */
+  /* WCAG 2.2 AA focus ring — brand green */
   :focus-visible {
-    outline: 3px solid #3B4EFF;
+    outline: 3px solid #10B981;
     outline-offset: 2px;
   }
 }

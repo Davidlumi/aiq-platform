@@ -60,7 +60,7 @@ const CAPABILITY_COLOURS: Record<string, string> = {
   appropriateness:     "#EE6677",
   validation:          "#EE8866",
   prioritisation:      "#66CCEE",
-  data_interpretation: "#BBBBBB",
+  data_interpretation: "#228833",
   workflow_application:"#4477AA",
 };
 
@@ -336,8 +336,8 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
       <Card className="border-border shadow-sm">
         <CardContent className="p-6 space-y-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 flex items-center justify-center shrink-0">
-              <Loader2 className="w-4 h-4 text-[#3B4EFF] animate-spin" />
+            <div className="w-9 h-9 rounded-full bg-[#10B981]/8 border border-[#10B981]/20 flex items-center justify-center shrink-0">
+              <Loader2 className="w-4 h-4 text-[#10B981] animate-spin" />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
@@ -358,7 +358,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
                 {i < activeStep ? (
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#228833]" />
                 ) : i === activeStep ? (
-                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-[#3B4EFF]" />
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-[#10B981]" />
                 ) : (
                   <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
                 )}
@@ -404,8 +404,8 @@ function CompletionScreen({
   return (
     <div className="p-6 space-y-5 max-w-2xl">
       <div className="text-center py-5">
-        <div className="w-16 h-16 rounded-full bg-[#3B4EFF]/8 border-2 border-[#3B4EFF]/20 flex items-center justify-center mx-auto mb-3">
-          <CheckCircle2 className="w-8 h-8 text-[#3B4EFF]" />
+        <div className="w-16 h-16 rounded-full bg-[#10B981]/8 border-2 border-[#10B981]/20 flex items-center justify-center mx-auto mb-3">
+          <CheckCircle2 className="w-8 h-8 text-[#10B981]" />
         </div>
         <h1 className="text-xl font-bold text-foreground font-sora">Assessment Complete</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">
@@ -467,7 +467,7 @@ function CompletionScreen({
       <div className="space-y-2">
         <Button
           onClick={() => onNavigate(`/assessment/${sessionId}/results`)}
-          className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+          className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
         >
           View Full Results <ChevronRight className="w-4 h-4" />
         </Button>
@@ -646,7 +646,7 @@ export default function AssessmentSessionPage() {
             <Button
               onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
               disabled={completeMutation.isPending}
-              className="mt-6 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2 min-w-[200px]"
+              className="mt-6 bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 min-w-[200px]"
             >
               {completeMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Calculating scores…</>
@@ -767,7 +767,7 @@ export default function AssessmentSessionPage() {
                   setConfidence(50);
                   setItemStartTime(Date.now());
                 }}
-                className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+                className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
               >
                 Continue <ChevronRight className="w-4 h-4" />
               </Button>
@@ -1017,15 +1017,15 @@ export default function AssessmentSessionPage() {
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value
-                      ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/20"
-                      : "border-border hover:border-[#3B4EFF]/40 hover:bg-muted/30"
+                      ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/20"
+                      : "border-border hover:border-[#10B981]/40 hover:bg-muted/30"
                   )}
                 >
                   <span
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-[#3B4EFF] bg-[#3B4EFF] text-white"
+                        ? "border-[#10B981] bg-[#10B981] text-white"
                         : "border-border text-muted-foreground"
                     )}
                   >
@@ -1044,7 +1044,7 @@ export default function AssessmentSessionPage() {
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 How confident are you in this answer?
               </Label>
-              <span className="text-sm font-bold text-[#3B4EFF]">{confidence}%</span>
+              <span className="text-sm font-bold text-[#10B981]">{confidence}%</span>
             </div>
             <Slider
               value={[confidence]}
@@ -1063,7 +1063,7 @@ export default function AssessmentSessionPage() {
           <Button
             onClick={handleSubmit}
             disabled={submitMutation.isPending || !selectedValue}
-            className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+            className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
           >
             {submitMutation.isPending ? (
               <>

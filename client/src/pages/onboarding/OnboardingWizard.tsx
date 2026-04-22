@@ -145,7 +145,7 @@ export default function OnboardingWizard() {
       {/* Header */}
       <div className="w-full max-w-xl mb-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-[#3B4EFF] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center">
             <Brain className="w-4 h-4 text-white" />
           </div>
           <span className="text-lg font-bold text-foreground font-sora">AiQ</span>
@@ -198,7 +198,7 @@ export default function OnboardingWizard() {
             <Button
               onClick={handleNext}
               disabled={!canProceed}
-              className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+              className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
             >
               Continue
               <ChevronRight className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function OnboardingWizard() {
             <Button
               onClick={handleFinish}
               disabled={!canProceed || completeOnboarding.isPending}
-              className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+              className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
             >
               {completeOnboarding.isPending ? "Setting up..." : "Start My Assessment"}
               <CheckCircle2 className="w-4 h-4" />
@@ -225,8 +225,8 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <Card className="border-border">
       <CardContent className="p-8 text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-[#3B4EFF]/8 border border-[#3B4EFF]/20 flex items-center justify-center mx-auto">
-          <Shield className="w-8 h-8 text-[#3B4EFF]" />
+        <div className="w-16 h-16 rounded-2xl bg-[#10B981]/8 border border-[#10B981]/20 flex items-center justify-center mx-auto">
+          <Shield className="w-8 h-8 text-[#10B981]" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground font-sora mb-2">
@@ -244,7 +244,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             { icon: BarChart3, label: "Actionable", desc: "Drives development" },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="rounded-xl bg-muted/40 p-3">
-              <Icon className="w-4 h-4 text-[#3B4EFF] mb-1.5" />
+              <Icon className="w-4 h-4 text-[#10B981] mb-1.5" />
               <p className="text-xs font-semibold text-foreground">{label}</p>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
@@ -252,7 +252,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         </div>
         <Button
           onClick={onNext}
-          className="w-full bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+          className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
         >
           Get Started
           <ChevronRight className="w-4 h-4" />
@@ -289,8 +289,8 @@ function SelectionStep({
             className={cn(
               "w-full text-left rounded-xl border-2 p-4 transition-all",
               selected === opt.value
-                ? "border-[#3B4EFF] bg-[#3B4EFF]/5"
-                : "border-border hover:border-[#3B4EFF]/40 bg-card"
+                ? "border-[#10B981] bg-[#10B981]/5"
+                : "border-border hover:border-[#10B981]/40 bg-card"
             )}
           >
             <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ function SelectionStep({
                 <p className="text-xs text-muted-foreground">{opt.description}</p>
               </div>
               {selected === opt.value && (
-                <CheckCircle2 className="w-4 h-4 text-[#3B4EFF] ml-auto shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-[#10B981] ml-auto shrink-0" />
               )}
             </div>
           </button>
@@ -335,12 +335,12 @@ function JobFunctionStep({
             className={cn(
               "text-left rounded-xl border-2 p-3 transition-all",
               selected === value
-                ? "border-[#3B4EFF] bg-[#3B4EFF]/5"
-                : "border-border hover:border-[#3B4EFF]/40 bg-card"
+                ? "border-[#10B981] bg-[#10B981]/5"
+                : "border-border hover:border-[#10B981]/40 bg-card"
             )}
           >
             <div className="flex items-center gap-2">
-              <Icon className={cn("w-4 h-4 shrink-0", selected === value ? "text-[#3B4EFF]" : "text-muted-foreground")} />
+              <Icon className={cn("w-4 h-4 shrink-0", selected === value ? "text-[#10B981]" : "text-muted-foreground")} />
               <p className="text-xs font-medium text-foreground leading-tight">{label}</p>
             </div>
           </button>

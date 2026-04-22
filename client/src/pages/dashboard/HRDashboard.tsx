@@ -130,7 +130,7 @@ export default function HRDashboard() {
             </Button>
           </Link>
           <Link href="/reports">
-            <Button size="sm" className="gap-2 text-xs bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
+            <Button size="sm" className="gap-2 text-xs bg-[#10B981] hover:bg-[#10B981]/90 text-white">
               <FileText className="w-3.5 h-3.5" />
               Reports
             </Button>
@@ -243,7 +243,7 @@ export default function HRDashboard() {
               Recent Policy Incidents
             </CardTitle>
             <Link href="/policy">
-              <button className="text-xs text-[#3B4EFF] hover:underline flex items-center gap-1">
+              <button className="text-xs text-[#10B981] hover:underline flex items-center gap-1">
                 View all <ChevronRight className="w-3 h-3" />
               </button>
             </Link>

@@ -72,7 +72,7 @@ export function ExplanationDrawer({
               className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
               style={{ background: "#EEF0FF" }}
             >
-              <Info className="w-4 h-4" style={{ color: "#3B4EFF" }} />
+              <Info className="w-4 h-4" style={{ color: "#10B981" }} />
             </div>
             <div>
               <h2

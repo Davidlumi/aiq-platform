@@ -48,7 +48,7 @@ const ROLE_FAMILIES = [
     label: "Talent & Recruitment",
     description: "Hiring, talent acquisition, employer branding",
     icon: Users,
-    colour: "#3B4EFF",
+    colour: "#10B981",
     roles: [
       "Talent Acquisition Partner",
       "Recruiter",
@@ -195,7 +195,7 @@ const AI_EXPERIENCE_LEVELS = [
     label: "Advanced practitioner",
     description: "I integrate AI into most tasks and evaluate outputs critically",
     usageLevel: "advanced" as const,
-    colour: "#3B4EFF",
+    colour: "#10B981",
     icon: "●",
   },
 ];
@@ -330,13 +330,13 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
               <div key={label} className="flex items-center gap-1">
                 <div className={cn(
                   "flex items-center gap-1 text-xs",
-                  i + 1 < step ? "text-[#3B4EFF] font-medium" :
+                  i + 1 < step ? "text-[#10B981] font-medium" :
                   i + 1 === step ? "text-foreground font-semibold" :
                   "text-muted-foreground"
                 )}>
                   <div className={cn(
                     "w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold",
-                    i + 1 < step ? "bg-[#3B4EFF] text-white" :
+                    i + 1 < step ? "bg-[#10B981] text-white" :
                     i + 1 === step ? "bg-foreground text-background" :
                     "bg-muted text-muted-foreground"
                   )}>
@@ -372,8 +372,8 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       className={cn(
                         "flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all",
                         isSelected
-                          ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/30"
-                          : "border-border hover:border-[#3B4EFF]/40 hover:bg-muted/30"
+                          ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/30"
+                          : "border-border hover:border-[#10B981]/40 hover:bg-muted/30"
                       )}
                     >
                       <div
@@ -385,7 +385,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       <div className="min-w-0">
                         <p className={cn(
                           "text-sm font-semibold leading-tight",
-                          isSelected ? "text-[#3B4EFF]" : "text-foreground"
+                          isSelected ? "text-[#10B981]" : "text-foreground"
                         )}>
                           {fam.label}
                         </p>
@@ -393,7 +393,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       </div>
                       {isSelected && (
                         <div className="ml-auto shrink-0">
-                          <div className="w-5 h-5 rounded-full bg-[#3B4EFF] flex items-center justify-center">
+                          <div className="w-5 h-5 rounded-full bg-[#10B981] flex items-center justify-center">
                             <Check className="w-3 h-3 text-white" />
                           </div>
                         </div>
@@ -428,8 +428,8 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                         className={cn(
                           "flex items-center justify-between px-4 py-2.5 rounded-lg border text-left text-sm transition-all",
                           isSelected
-                            ? "border-[#3B4EFF] bg-[#3B4EFF]/5 text-[#3B4EFF] font-medium ring-1 ring-[#3B4EFF]/30"
-                            : "border-border hover:border-[#3B4EFF]/40 text-foreground"
+                            ? "border-[#10B981] bg-[#10B981]/5 text-[#10B981] font-medium ring-1 ring-[#10B981]/30"
+                            : "border-border hover:border-[#10B981]/40 text-foreground"
                         )}
                       >
                         {role}
@@ -453,20 +453,20 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                         className={cn(
                           "flex items-center justify-between px-4 py-2.5 rounded-lg border text-left transition-all",
                           isSelected
-                            ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/30"
-                            : "border-border hover:border-[#3B4EFF]/40"
+                            ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/30"
+                            : "border-border hover:border-[#10B981]/40"
                         )}
                       >
                         <div>
                           <p className={cn(
                             "text-sm font-medium",
-                            isSelected ? "text-[#3B4EFF]" : "text-foreground"
+                            isSelected ? "text-[#10B981]" : "text-foreground"
                           )}>
                             {level.label}
                           </p>
                           <p className="text-xs text-muted-foreground">{level.description}</p>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-[#3B4EFF] shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#10B981] shrink-0" />}
                       </button>
                     );
                   })}
@@ -504,8 +504,8 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       className={cn(
                         "flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all",
                         isSelected
-                          ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/30"
-                          : "border-border hover:border-[#3B4EFF]/40 hover:bg-muted/20"
+                          ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/30"
+                          : "border-border hover:border-[#10B981]/40 hover:bg-muted/20"
                       )}
                     >
                       <div
@@ -520,14 +520,14 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           "text-sm font-semibold",
-                          isSelected ? "text-[#3B4EFF]" : "text-foreground"
+                          isSelected ? "text-[#10B981]" : "text-foreground"
                         )}>
                           {level.label}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">{level.description}</p>
                       </div>
                       {isSelected && (
-                        <div className="w-5 h-5 rounded-full bg-[#3B4EFF] flex items-center justify-center shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-[#10B981] flex items-center justify-center shrink-0">
                           <Check className="w-3 h-3 text-white" />
                         </div>
                       )}
@@ -565,8 +565,8 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                           className={cn(
                             "px-3 py-1.5 rounded-full border text-xs font-medium transition-all",
                             isSelected
-                              ? "border-[#3B4EFF] bg-[#3B4EFF] text-white"
-                              : "border-border text-muted-foreground hover:border-[#3B4EFF]/50 hover:text-foreground"
+                              ? "border-[#10B981] bg-[#10B981] text-white"
+                              : "border-border text-muted-foreground hover:border-[#10B981]/50 hover:text-foreground"
                           )}
                         >
                           {isSelected && <Check className="w-3 h-3 inline mr-1" />}
@@ -601,24 +601,24 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       className={cn(
                         "flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all",
                         isSelected
-                          ? "border-[#3B4EFF] bg-[#3B4EFF]/5 ring-1 ring-[#3B4EFF]/30"
-                          : "border-border hover:border-[#3B4EFF]/40 hover:bg-muted/20"
+                          ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/30"
+                          : "border-border hover:border-[#10B981]/40 hover:bg-muted/20"
                       )}
                     >
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
-                        isSelected ? "bg-[#3B4EFF]/15" : "bg-muted"
+                        isSelected ? "bg-[#10B981]/15" : "bg-muted"
                       )}>
-                        <Icon className={cn("w-4 h-4", isSelected ? "text-[#3B4EFF]" : "text-muted-foreground")} />
+                        <Icon className={cn("w-4 h-4", isSelected ? "text-[#10B981]" : "text-muted-foreground")} />
                       </div>
                       <p className={cn(
                         "text-xs font-medium leading-tight",
-                        isSelected ? "text-[#3B4EFF]" : "text-foreground"
+                        isSelected ? "text-[#10B981]" : "text-foreground"
                       )}>
                         {sec.label}
                       </p>
                       {isSelected && (
-                        <div className="w-4 h-4 rounded-full bg-[#3B4EFF] flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full bg-[#10B981] flex items-center justify-center">
                           <Check className="w-2.5 h-2.5 text-white" />
                         </div>
                       )}
@@ -647,7 +647,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                   </div>
                   <div className="mt-2 space-y-1.5">
                     <p className="text-xs text-muted-foreground">
-                      <Zap className="w-3 h-3 inline mr-1 text-[#3B4EFF]" />
+                      <Zap className="w-3 h-3 inline mr-1 text-[#10B981]" />
                       Your assessment will be calibrated to your role and experience level from question 1.
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -688,8 +688,8 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                   key={i}
                   className={cn(
                     "rounded-full transition-all",
-                    i + 1 < step ? "w-2 h-2 bg-[#3B4EFF]" :
-                    i + 1 === step ? "w-4 h-2 bg-[#3B4EFF]" :
+                    i + 1 < step ? "w-2 h-2 bg-[#10B981]" :
+                    i + 1 === step ? "w-4 h-2 bg-[#10B981]" :
                     "w-2 h-2 bg-muted"
                   )}
                 />
@@ -699,7 +699,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
             <Button
               onClick={handleNext}
               disabled={!canAdvance() || isPending}
-              className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2 min-w-[120px]"
+              className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 min-w-[120px]"
             >
               {isPending ? (
                 <>

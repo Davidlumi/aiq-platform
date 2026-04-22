@@ -31,7 +31,7 @@ const EVENT_CONFIG: Record<string, { label: string; colour: string; icon: React.
   admin:          { label: "Admin",       colour: "#EE8866", icon: Monitor },
   auth:           { label: "Auth",        colour: "#228833", icon: Lock },
   learning:       { label: "Learning",    colour: "#66CCEE", icon: CheckCircle2 },
-  user:           { label: "User",        colour: "#3B4EFF", icon: User },
+  user:           { label: "User",        colour: "#10B981", icon: User },
 };
 
 function getEventCategory(action: string): string {
@@ -179,8 +179,8 @@ export default function AuditLogPage() {
               className={cn(
                 "p-2.5 rounded-lg border text-center transition-all",
                 categoryFilter === key
-                  ? "border-[#3B4EFF] bg-[#EEF0FF]"
-                  : "border-border hover:border-[#3B4EFF]/30 bg-card"
+                  ? "border-[#10B981] bg-[#EEF0FF]"
+                  : "border-border hover:border-[#10B981]/30 bg-card"
               )}
             >
               <Icon className="w-4 h-4 mx-auto mb-1" style={{ color: cfg.colour }} />

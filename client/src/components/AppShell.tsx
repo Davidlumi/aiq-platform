@@ -263,14 +263,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       <span
                         onClick={() => setMobileOpen(false)}
                         className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer select-none", collapsed && "justify-center px-2")}
-                        style={{ fontFamily: "'Sora', sans-serif", fontSize: "13.5px", fontWeight: active ? 600 : 400, color: active ? "#3B4EFF" : "#6B7280", background: active ? "#F5F6FF" : "transparent" }}
+                        style={{ fontFamily: "'Sora', sans-serif", fontSize: "13.5px", fontWeight: active ? 600 : 400, color: active ? "#10B981" : "#6B7280", background: active ? "#ECFDF5" : "transparent" }}
                         onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; (e.currentTarget as HTMLElement).style.color = "#374151"; } }}
                         onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#6B7280"; } }}
                         title={collapsed ? item.label : undefined}
                       >
-                        <Icon className={cn("shrink-0 w-[18px] h-[18px]", active ? "text-[#3B4EFF]" : "text-[#9CA3AF]")} />
+                        <Icon className={cn("shrink-0 w-[18px] h-[18px]", active ? "text-[#10B981]" : "text-[#9CA3AF]")} />
                         {!collapsed && <span>{item.label}</span>}
-                        {active && !collapsed && (<span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: "#3B4EFF" }} />)}
+                        {active && !collapsed && (<span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />)}
                       </span>
                     </Link>
                   </li>
@@ -288,10 +288,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <button
               className={cn("w-full flex items-center gap-3 p-2 rounded-lg transition-colors", collapsed && "justify-center")}
               style={{ color: "#6B7280" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#F5F6FF")}
+              onMouseEnter={e => (e.currentTarget.style.background = "#ECFDF5")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "#EEF0FF", color: "#3B4EFF" }}>{initials}</div>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "#ECFDF5", color: "#10B981" }}>{initials}</div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: "#0E1726", fontFamily: "'Sora', sans-serif" }}>{displayName}</p>
@@ -305,7 +305,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none" style={{ fontFamily: "'Sora', sans-serif" }}>{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
-                <p className="text-xs font-medium" style={{ color: "#3B4EFF", fontFamily: "'Sora', sans-serif" }}>{roleLabel}</p>
+                <p className="text-xs font-medium" style={{ color: "#10B981", fontFamily: "'Sora', sans-serif" }}>{roleLabel}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -402,7 +402,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <button
               className="p-2 rounded-lg transition-colors"
               style={{ color: "#6B7280" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#F5F6FF")}
+              onMouseEnter={e => (e.currentTarget.style.background = "#ECFDF5")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               <Bell className="w-5 h-5" />
@@ -411,10 +411,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <button
                   className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors"
-                  onMouseEnter={e => (e.currentTarget.style.background = "#F5F6FF")}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#ECFDF5")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#EEF0FF", color: "#3B4EFF" }}>{initials}</div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#ECFDF5", color: "#10B981" }}>{initials}</div>
                   <div className="hidden sm:block text-left">
                     <p className="text-sm font-semibold leading-none" style={{ color: "#0E1726", fontFamily: "'Sora', sans-serif" }}>{displayName}</p>
                     <p className="text-xs leading-none mt-0.5" style={{ color: "#9CA3AF", fontFamily: "'Sora', sans-serif" }}>{roleLabel}</p>

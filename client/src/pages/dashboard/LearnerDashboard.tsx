@@ -313,7 +313,7 @@ export default function LearnerDashboard() {
             Complete your capability assessment to establish your readiness profile and receive a personalised learning plan.
           </p>
           <Link href="/assessment">
-            <Button className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white">
+            <Button className="bg-[#10B981] hover:bg-[#10B981]/90 text-white">
               <ClipboardList className="w-4 h-4 mr-2" />
               Start Assessment
             </Button>
@@ -335,11 +335,11 @@ export default function LearnerDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2 font-sora">
-                <BookOpen className="w-4 h-4 text-[#3B4EFF]" />
+                <BookOpen className="w-4 h-4 text-[#10B981]" />
                 Learning Plan
               </CardTitle>
               <Link href="/learning">
-                <Button variant="ghost" size="sm" className="text-[#3B4EFF] h-7 px-2 text-xs">
+                <Button variant="ghost" size="sm" className="text-[#10B981] h-7 px-2 text-xs">
                   View plan <ChevronRight className="w-3 h-3 ml-1" />
                 </Button>
               </Link>
@@ -364,7 +364,7 @@ export default function LearnerDashboard() {
                 <BookOpen className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground mb-3">No active learning plan</p>
                 <Link href="/assessment">
-                  <Button size="sm" className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white text-xs">
+                  <Button size="sm" className="bg-[#10B981] hover:bg-[#10B981]/90 text-white text-xs">
                     Take Assessment to Generate Plan
                   </Button>
                 </Link>
@@ -377,7 +377,7 @@ export default function LearnerDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 font-sora">
-              <Calendar className="w-4 h-4 text-[#3B4EFF]" />
+              <Calendar className="w-4 h-4 text-[#10B981]" />
               Revalidation Schedule
             </CardTitle>
           </CardHeader>

@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 // ─── Modality Config ──────────────────────────────────────────────────────────
 
 const MODALITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  microlearning:    { label: "Micro",       color: "#3B4EFF", bg: "#3B4EFF12" },
+  microlearning:    { label: "Micro",       color: "#10B981", bg: "#10B98112" },
   scenario:         { label: "Scenario",    color: "#AA3377", bg: "#AA337712" },
   simulation:       { label: "Simulation",  color: "#EE8866", bg: "#EE886612" },
   coach_prompt:     { label: "Coaching",    color: "#228833", bg: "#22883312" },
@@ -102,7 +102,7 @@ function LearningItemCard({
       className={cn(
         "border border-border rounded-xl bg-card transition-all duration-200",
         isCompleted && "opacity-60",
-        !isCompleted && "hover:border-[#3B4EFF]/30 hover:shadow-sm"
+        !isCompleted && "hover:border-[#10B981]/30 hover:shadow-sm"
       )}
     >
       <div className="p-4">
@@ -112,7 +112,7 @@ function LearningItemCard({
             className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5",
               isCompleted  ? "bg-[#228833]/12 text-[#228833]" :
-              isInProgress ? "bg-[#3B4EFF]/12 text-[#3B4EFF]" :
+              isInProgress ? "bg-[#10B981]/12 text-[#10B981]" :
                              "bg-muted text-muted-foreground"
             )}
           >
@@ -154,7 +154,7 @@ function LearningItemCard({
               {item.rationale && (
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-[#3B4EFF] transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-[#10B981] transition-colors"
                 >
                   <Lightbulb className="w-3 h-3" />
                   Why assigned
@@ -165,7 +165,7 @@ function LearningItemCard({
 
             {/* Why-assigned rationale (expanded) */}
             {expanded && item.rationale && (
-              <div className="mt-2 p-2.5 rounded-lg bg-[#3B4EFF]/4 border border-[#3B4EFF]/15">
+              <div className="mt-2 p-2.5 rounded-lg bg-[#10B981]/4 border border-[#10B981]/15">
                 <p className="text-xs text-foreground/80 leading-relaxed">{item.rationale}</p>
               </div>
             )}
@@ -182,7 +182,7 @@ function LearningItemCard({
                   size="sm"
                   onClick={onComplete}
                   disabled={isPending}
-                  className="gap-1.5 text-xs h-7 bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white"
+                  className="gap-1.5 text-xs h-7 bg-[#10B981] hover:bg-[#10B981]/90 text-white"
                 >
                   <Play className="w-3 h-3" />
                   Continue
@@ -192,7 +192,7 @@ function LearningItemCard({
                   size="sm"
                   onClick={onStart}
                   disabled={isPending}
-                  className="gap-1.5 text-xs h-7 bg-muted text-muted-foreground hover:bg-[#3B4EFF]/10 hover:text-[#3B4EFF]"
+                  className="gap-1.5 text-xs h-7 bg-muted text-muted-foreground hover:bg-[#10B981]/10 hover:text-[#10B981]"
                 >
                   <Play className="w-3 h-3" />
                   Start
@@ -254,7 +254,7 @@ export default function LearningPlanPage() {
           <Button
             onClick={() => generateMutation.mutate({})}
             disabled={generateMutation.isPending}
-            className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
           >
             <Zap className="w-4 h-4" />
             {generateMutation.isPending ? "Generating…" : "Generate Learning Plan"}
@@ -321,7 +321,7 @@ export default function LearningPlanPage() {
             <p className="text-sm font-semibold text-foreground">Overall Progress</p>
             <p className="text-xs text-muted-foreground">{completed} of {total} modules completed</p>
           </div>
-          <span className="text-2xl font-bold text-[#3B4EFF]">{percent}%</span>
+          <span className="text-2xl font-bold text-[#10B981]">{percent}%</span>
         </div>
         <Progress value={percent} className="h-2.5" />
         {inProgress > 0 && (

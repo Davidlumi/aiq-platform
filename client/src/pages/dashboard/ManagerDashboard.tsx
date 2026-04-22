@@ -191,7 +191,7 @@ export default function ManagerDashboard() {
             label: "Team Members",
             value: dist?.total ?? 0,
             icon: Users,
-            color: "#3B4EFF",
+            color: "#10B981",
           },
           {
             label: "Safe to Deploy",
@@ -331,7 +331,7 @@ export default function ManagerDashboard() {
                           <div className="flex items-center gap-2.5">
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                              style={{ backgroundColor: "#3B4EFF" }}
+                              style={{ backgroundColor: "#10B981" }}
                             >
                               {(u.firstName?.[0] ?? "?").toUpperCase()}
                             </div>
