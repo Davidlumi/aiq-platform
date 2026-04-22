@@ -223,3 +223,6 @@
 ## Bug Fixes (Round 3)
 - [x] Login page: add helper text clarifying org code is the slug (e.g. hr-datahub), not the display name
 - [x] Auth router: remove all hardcoded tenant-demo-001 fallbacks — login now requires org code, register uses tenantSlug, password reset searches across all tenants
+
+## Bug Fixes (Round 4)
+- [x] Assessment fails to launch when clicking Start Assessment — fixed (blueprint was wiped in clean-slate; re-seeded bp-aiq-v9-standard with 49 items and 196 options under tenant-lumi-platform; verified end-to-end launch and option rendering)
