@@ -301,247 +301,247 @@ export default function AssessmentResultsPage() {
         {/* ── TAB 1: SUMMARY ── */}
         <TabsContent value="summary" className="space-y-6">
 
-      {/* ── Readiness State Banner ── */}
-      <Card className={cn("border-2", stateConfig.bg)}>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-6">
-            {/* Score ring */}
-            <div className="shrink-0">
-              <ScoreRing score={overallScore} color={stateConfig.barColor} size={120} />
-            </div>
-            {/* State info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
-                <span className={cn("text-xs font-semibold uppercase tracking-wider", stateConfig.color)}>
-                  Readiness State
-                </span>
+          {/* ── Readiness State Banner ── */}
+          <Card className={cn("border-2", stateConfig.bg)}>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-6">
+              {/* Score ring */}
+              <div className="shrink-0">
+                <ScoreRing score={overallScore} color={stateConfig.barColor} size={120} />
               </div>
-              <h2 className={cn("text-2xl font-bold font-sora", stateConfig.color)}>
-                {stateConfig.label}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                {stateConfig.description}
-              </p>
-              {/* Credibility + Risk badges */}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", credConfig.color, credConfig.bg)}>
-                  <Award className="w-3 h-3 inline mr-1" />
-                  {credConfig.label}
-                </span>
-                <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", riskConfig.color, riskConfig.bg)}>
-                  <Shield className="w-3 h-3 inline mr-1" />
-                  {riskConfig.label}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Model: V9.2 · {breakdown.totalAnswers ?? 0} questions
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Narrative ── */}
-      {narrative && (
-        <Card className="border-border">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-3">
-              <Info className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">
-                  Your Results Narrative
-                </p>
-                <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Capability Breakdown ── */}
-      {sortedCapabilities.length > 0 && (
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Capability Breakdown
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Scores are derived from signal-weighted deltas across all 50 interactions.
-              Each capability domain maps to multiple performance and risk signals.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {sortedCapabilities.map(cap => (
-              <CapabilityBar
-                key={cap.key}
-                displayName={cap.displayName}
-                score={cap.score}
-                colour={cap.colour}
-              />
-            ))}
-            {/* Score bands legend */}
-            <div className="flex items-center gap-4 pt-2 flex-wrap">
-              {[
-                { label: "Strong", range: "75–100", color: "#228833" },
-                { label: "Developing", range: "55–74", color: "#EE8866" },
-                { label: "Needs Work", range: "35–54", color: "#EE6677" },
-                { label: "Critical", range: "0–34", color: "#AA3377" },
-              ].map(b => (
-                <div key={b.label} className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
-                  <span className="text-xs text-muted-foreground">{b.label} ({b.range})</span>
+              {/* State info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
+                  <span className={cn("text-xs font-semibold uppercase tracking-wider", stateConfig.color)}>
+                    Readiness State
+                  </span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Signal Profile ── */}
-      {sortedSignals.length > 0 && (
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Signal Profile
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Cumulative signal deltas from all answered interactions, weighted by risk level and difficulty.
-              Positive values indicate capability; negative values indicate risk patterns.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-border/40">
-              {sortedSignals.map(([signal, delta]) => (
-                <SignalRow key={signal} signal={signal} delta={delta as number} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Contradiction Profile ── */}
-      {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
-        <Card className="border-[#EE6677]/30 bg-[#EE6677]/5">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-[#EE6677] shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-foreground font-sora mb-1">Contradiction Profile</h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  {(breakdown.contradictionProfile as any).detected} inconsistenc{(breakdown.contradictionProfile as any).detected === 1 ? 'y' : 'ies'} detected across your responses.
-                  Contradictions reduce credibility and may indicate uncertainty or inconsistent application of judgement.
+                <h2 className={cn("text-2xl font-bold font-sora", stateConfig.color)}>
+                  {stateConfig.label}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  {stateConfig.description}
                 </p>
-                {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
-                  <div className="space-y-2">
-                    {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
-                      <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#EE6677]/20">
-                        <span className="font-medium text-[#EE6677]">Inconsistency {i + 1}:</span>{" "}
-                        {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
-                      </div>
-                    ))}
+                {/* Credibility + Risk badges */}
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", credConfig.color, credConfig.bg)}>
+                    <Award className="w-3 h-3 inline mr-1" />
+                    {credConfig.label}
+                  </span>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", riskConfig.color, riskConfig.bg)}>
+                    <Shield className="w-3 h-3 inline mr-1" />
+                    {riskConfig.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Model: V9.2 · {breakdown.totalAnswers ?? 0} questions
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          </Card>
+
+          {/* ── Narrative ── */}
+          {narrative && (
+            <Card className="border-border">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <Info className="w-4 h-4 text-[#3B4EFF] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wider mb-1.5">
+                      Your Results Narrative
+                    </p>
+                    <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Capability Breakdown ── */}
+          {sortedCapabilities.length > 0 && (
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Capability Breakdown
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Scores are derived from signal-weighted deltas across all 50 interactions.
+                  Each capability domain maps to multiple performance and risk signals.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {sortedCapabilities.map(cap => (
+                  <CapabilityBar
+                    key={cap.key}
+                    displayName={cap.displayName}
+                    score={cap.score}
+                    colour={cap.colour}
+                  />
+                ))}
+                {/* Score bands legend */}
+                <div className="flex items-center gap-4 pt-2 flex-wrap">
+                  {[
+                    { label: "Strong", range: "75–100", color: "#228833" },
+                    { label: "Developing", range: "55–74", color: "#EE8866" },
+                    { label: "Needs Work", range: "35–54", color: "#EE6677" },
+                    { label: "Critical", range: "0–34", color: "#AA3377" },
+                  ].map(b => (
+                    <div key={b.label} className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
+                      <span className="text-xs text-muted-foreground">{b.label} ({b.range})</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Signal Profile ── */}
+          {sortedSignals.length > 0 && (
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Signal Profile
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Cumulative signal deltas from all answered interactions, weighted by risk level and difficulty.
+                  Positive values indicate capability; negative values indicate risk patterns.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-border/40">
+                  {sortedSignals.map(([signal, delta]) => (
+                    <SignalRow key={signal} signal={signal} delta={delta as number} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Contradiction Profile ── */}
+          {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
+            <Card className="border-[#EE6677]/30 bg-[#EE6677]/5">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-[#EE6677] shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-foreground font-sora mb-1">Contradiction Profile</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {(breakdown.contradictionProfile as any).detected} inconsistenc{(breakdown.contradictionProfile as any).detected === 1 ? 'y' : 'ies'} detected across your responses.
+                      Contradictions reduce credibility and may indicate uncertainty or inconsistent application of judgement.
+                    </p>
+                    {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
+                      <div className="space-y-2">
+                        {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
+                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#EE6677]/20">
+                            <span className="font-medium text-[#EE6677]">Inconsistency {i + 1}:</span>{" "}
+                            {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Governance Profile ── */}
+          {breakdown.governanceProfile && (
+            <Card className="border-border">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#3B4EFF]" />
+                  Governance Profile
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
+                    <p className="text-xl font-bold font-sora text-foreground">
+                      {Math.round((breakdown.governanceProfile as any).score ?? 0)}
+                      <span className="text-sm font-normal text-muted-foreground">/100</span>
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
+                    <p className="text-sm font-bold font-sora text-foreground capitalize">
+                      {(breakdown.governanceProfile as any).band ?? "Not assessed"}
+                    </p>
+                  </div>
+                </div>
+                {(breakdown.governanceProfile as any).bypasses > 0 && (
+                  <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
+                    These are flagged for review by your HR governance team.
+                  </p>
                 )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* ── Governance Profile ── */}
-      {breakdown.governanceProfile && (
-        <Card className="border-border">
-          <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#3B4EFF]" />
-              Governance Profile
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
-                <p className="text-xl font-bold font-sora text-foreground">
-                  {Math.round((breakdown.governanceProfile as any).score ?? 0)}
-                  <span className="text-sm font-normal text-muted-foreground">/100</span>
-                </p>
+          {/* ── Score Summary ── */}
+          <Card className="border-border">
+            <CardContent className="p-5">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Questions Answered</p>
+                  <p className="text-2xl font-bold text-foreground font-sora">
+                    {breakdown.totalAnswers ?? 0}
+                    <span className="text-sm font-normal text-muted-foreground">/50</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
+                  <p className="text-2xl font-bold font-sora" style={{ color: stateConfig.barColor }}>
+                    {overallScore}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Model Version</p>
+                  <p className="text-sm font-bold text-foreground font-sora">
+                    {breakdown.modelVersion ?? "V9.2"}
+                  </p>
+                </div>
               </div>
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
-                <p className="text-sm font-bold font-sora text-foreground capitalize">
-                  {(breakdown.governanceProfile as any).band ?? "Not assessed"}
-                </p>
-              </div>
-            </div>
-            {(breakdown.governanceProfile as any).bypasses > 0 && (
-              <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
-                These are flagged for review by your HR governance team.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
 
-      {/* ── Score Summary ── */}
-      <Card className="border-border">
-        <CardContent className="p-5">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Questions Answered</p>
-              <p className="text-2xl font-bold text-foreground font-sora">
-                {breakdown.totalAnswers ?? 0}
-                <span className="text-sm font-normal text-muted-foreground">/50</span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
-              <p className="text-2xl font-bold font-sora" style={{ color: stateConfig.barColor }}>
-                {overallScore}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Model Version</p>
-              <p className="text-sm font-bold text-foreground font-sora">
-                {breakdown.modelVersion ?? "V9.2"}
-              </p>
-            </div>
+          {/* ── Actions ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button
+              onClick={() => navigate("/learning")}
+              className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              View Learning Plan
+            </Button>
+            <Button
+              onClick={() => navigate("/dashboard")}
+              variant="outline"
+              className="gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+            <Button
+              onClick={() => navigate("/assessment")}
+              variant="outline"
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Retake Assessment
+            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* ── Actions ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Button
-          onClick={() => navigate("/learning")}
-          className="bg-[#3B4EFF] hover:bg-[#3B4EFF]/90 text-white gap-2"
-        >
-          <BookOpen className="w-4 h-4" />
-          View Learning Plan
-        </Button>
-        <Button
-          onClick={() => navigate("/dashboard")}
-          variant="outline"
-          className="gap-2"
-        >
-          <LayoutDashboard className="w-4 h-4" />
-          Back to Dashboard
-        </Button>
-        <Button
-          onClick={() => navigate("/assessment")}
-          variant="outline"
-          className="gap-2"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Retake Assessment
-        </Button>
-      </div>
-
-      {/* ── Disclaimer ── */}
-      <p className="text-xs text-muted-foreground text-center pb-4">
-        Results are generated by the AIQ V9.2 signal-delta scoring model. Scores reflect demonstrated
-        decision-making patterns in the assessed interactions and are not a measure of general intelligence
-        or professional competence. This report is for development purposes only.
-      </p>
+          {/* ── Disclaimer ── */}
+          <p className="text-xs text-muted-foreground text-center pb-4">
+            Results are generated by the AIQ V9.2 signal-delta scoring model. Scores reflect demonstrated
+            decision-making patterns in the assessed interactions and are not a measure of general intelligence
+            or professional competence. This report is for development purposes only.
+          </p>
         </TabsContent>
 
         {/* ── TAB 2: DEEP DIVE ── */}

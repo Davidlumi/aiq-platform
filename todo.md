@@ -232,4 +232,7 @@
 - [x] Add pre-assessment profiling step: ProfilingModal added to AssessmentPage; captures role (11 options) and AI experience (4 levels); passes role::experience as roleHint to startSession
 - [x] Fix resolveRoleArchetype: now handles role::experience format with direct ID lookup before fuzzy matching
 - [x] Fix assessment stalling: root cause was missing option text on generated items (now fixed); stale sessions with broken options cleaned from DB
-- [ ] QA report: document all issues found and suggested improvements (pending checkpoint)
+- [x] QA report: delivered to user with all issues and suggested improvements
+
+## Bug Fixes (Round 5)
+- [x] Fix unterminated JSX in AssessmentResultsPage.tsx (line 545) — fixed by correcting indentation of all summary TabsContent children (11 edits); 0 TypeScript errors confirmed
