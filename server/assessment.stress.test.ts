@@ -32,6 +32,13 @@ const INTERACTION_TYPE_ROTATION: string[] = [
   "situational_judgement", "error_detection", "output_improvement", "data_interpretation",
   "scenario_critique", "prioritisation", "risk_judgement", "governance_decision",
 ];
+// Rotate through all 6 capability domains so R1 per-capability coverage check passes
+const CAPABILITY_KEY_ROTATION: string[] = [
+  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
+  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
+  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
+  "execution", "judgement",
+];
 
 vi.mock("./_core/llm", () => ({
   invokeLLM: vi.fn(async ({ messages, response_format }: { messages?: unknown[]; response_format?: unknown }) => {
@@ -39,6 +46,7 @@ vi.mock("./_core/llm", () => ({
     const needsAiOutput = schema?.properties?.ai_output !== undefined;
     const needsDataContext = schema?.properties?.data_context !== undefined;
     const interactionType = INTERACTION_TYPE_ROTATION[llmCallCount % INTERACTION_TYPE_ROTATION.length];
+    const capabilityKey = CAPABILITY_KEY_ROTATION[llmCallCount % CAPABILITY_KEY_ROTATION.length];
     llmCallCount++;
     return {
       choices: [{
@@ -48,7 +56,7 @@ vi.mock("./_core/llm", () => ({
             scenario: "Your AI tool has drafted a recruitment email for a senior HR Business Partner role. The email will be sent to 200 passive candidates sourced from LinkedIn.",
             constraint: "You have 10 minutes before the email is scheduled to send. You can make one change.",
             question: "What is the most significant problem with this output?",
-            capability_key: "judgement",
+            capability_key: capabilityKey,
             workflow: "Recruitment & Selection",
             risk_level: "High",
             interaction_type: interactionType,
@@ -101,7 +109,8 @@ function buildAnswerSet(count: number, overrides: Partial<AnswerData> = {}): Ans
     "governance_decision", "scenario_critique", "error_detection",
     "output_improvement", "data_interpretation",
   ];
-  const capabilityKeys = ["execution", "judgement", "risk", "workflow", "appropriateness", "governance"];
+  // Must match ALL_CAPABILITIES in sessionController.ts: execution, judgement, governance, appropriateness, workflow, data_interpretation
+  const capabilityKeys = ["execution", "judgement", "data_interpretation", "workflow", "appropriateness", "governance"];
   return Array.from({ length: count }, (_, i) => mockAnswer({
     itemId: `item-${i}`,
     interactionType: interactionTypes[i % interactionTypes.length],
@@ -185,6 +194,9 @@ function buildVars(overrides: Partial<GenerationVariables> = {}): GenerationVari
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
+
+// Reset LLM call counter before each test so rotation is deterministic
+beforeEach(() => { llmCallCount = 0; });
 
 describe("Assessment Engine — Phase Determination", () => {
   it("returns baseline for first 30% of items", () => {
@@ -570,6 +582,8 @@ describe("Assessment Engine — MINIMUM_EVIDENCE Model", () => {
 describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
   it("simulates a complete session end-to-end with LLM generation", async () => {
     const sessionAnswers: AnswerData[] = [];
+    // Cycle through all 6 capability domains to satisfy R1 per-capability coverage check
+    const ALL_CAPS = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"] as const;
 
     for (let i = 0; i < MINIMUM_EVIDENCE.totalItems; i++) {
       const ctx = buildCtx(sessionAnswers, { answeredCount: i });
@@ -594,7 +608,8 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
       sessionAnswers.push(mockAnswer({
         itemId: `gen-item-${i}`,
         interactionType: item.interactionType as InteractionType,
-        capabilityKey: item.capabilityKey,
+        // Force capability rotation so R1 per-capability coverage check passes
+        capabilityKey: ALL_CAPS[i % ALL_CAPS.length],
         riskLevel: forcedRiskLevel,
         difficulty: item.difficulty as 1 | 2 | 3,
         outcomeClass: strongOption.outcomeClass,

@@ -296,10 +296,110 @@ const FEW_SHOT_EXAMPLES: Partial<Record<InteractionType, string>> = {
     constraint: "Performance reviews begin in 3 weeks and the manager is enthusiastic about the new feature.",
     question: "What is the most appropriate governance response?",
     options: [
-      { label: "A", text: "Advise the manager that using AI sentiment analysis in performance decisions raises significant legal, ethical, and data protection concerns that require formal review before any use.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correctly identifies the multi-dimensional risk and triggers appropriate governance — not just a blanket refusal." },
-      { label: "B", text: "Allow a pilot with 5 employees to test the feature before rolling it out more widely.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "A pilot does not resolve the legal and ethical issues — it just delays them while creating additional risk." },
-      { label: "C", text: "Use the scores as one of many data points, ensuring no single metric determines an outcome.", outcomeClass: "weak", signalDeltas: { governance_quality: -1.0, blind_acceptance_risk: -1.5 }, eventCodes: ["PARTIAL_GOVERNANCE"], rationale: "Underestimates the risk — using unvalidated AI sentiment data in any part of a performance decision is problematic regardless of weighting." },
-      { label: "D", text: "Decline to use the feature entirely and remove it from the HRIS configuration.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 }, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary — the right response is governance review, not immediate removal." }
+      { label: "A", text: "Advise the manager that using AI sentiment analysis in performance decisions raises significant legal, ethical, and data protection concerns that require formal review before any use.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correctly identifies the multi-dimensional risk and triggers appropriate governance \u2014 not just a blanket refusal." },
+      { label: "B", text: "Allow a pilot with 5 employees to test the feature before rolling it out more widely.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "A pilot does not resolve the legal and ethical issues \u2014 it just delays them while creating additional risk." },
+      { label: "C", text: "Use the scores as one of many data points, ensuring no single metric determines an outcome.", outcomeClass: "weak", signalDeltas: { governance_quality: -1.0, blind_acceptance_risk: -1.5 }, eventCodes: ["PARTIAL_GOVERNANCE"], rationale: "Underestimates the risk \u2014 using unvalidated AI sentiment data in any part of a performance decision is problematic regardless of weighting." },
+      { label: "D", text: "Decline to use the feature entirely and remove it from the HRIS configuration.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 }, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary \u2014 the right response is governance review, not immediate removal." }
+    ]
+  }),
+  // R4: Additional few-shot examples for all remaining interaction types
+  output_improvement: JSON.stringify({
+    title: "AI Onboarding Email Needs Tone Correction",
+    scenario: "You asked your AI writing assistant to draft a welcome email for a new starter joining a sensitive ER investigation team. The draft is factually accurate but has a significant tone problem.",
+    constraint: "The new starter joins tomorrow and the email must go out today.",
+    question: "Which improvement action is most important before sending this email?",
+    ai_output: "Hi Alex! Welcome to the team! We're so excited to have you join us. You'll be working on some really interesting employee relations cases \u2014 it can get pretty intense sometimes but it's always rewarding! Your manager Sarah will show you the ropes. Looking forward to having you on board! \ud83d\ude0a",
+    options: [
+      { label: "A", text: "Rewrite the email to use formal, professional language appropriate for a sensitive ER role, removing the casual tone and emoji.", outcomeClass: "strong", signalDeltas: { execution_quality: 2.0, judgement_quality: 1.5 }, eventCodes: ["TONE_CORRECTION"], rationale: "Correctly identifies the core problem: the casual tone is inappropriate for a role handling sensitive employee matters." },
+      { label: "B", text: "Add more detail about the specific cases Alex will be working on to make the welcome more personalised.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.0, appropriateness_boundary: -1.5 }, eventCodes: ["CONFIDENTIALITY_BREACH"], rationale: "Adding case details to a welcome email would breach confidentiality before the employee has even started." },
+      { label: "C", text: "Remove the emoji but keep the friendly tone \u2014 a warm welcome is important for new starter engagement.", outcomeClass: "weak", signalDeltas: { judgement_quality: -1.0, execution_quality: -0.5 }, eventCodes: ["PARTIAL_FIX"], rationale: "Removes the most visible issue but misses the deeper tone problem inappropriate for a sensitive role context." },
+      { label: "D", text: "Send the email as-is and address tone expectations during the onboarding conversation.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, over_reliance_risk: -0.5 }, eventCodes: ["DEFER_CORRECTION"], rationale: "Acceptable as a fallback but misses the opportunity to set the right professional tone from day one." }
+    ]
+  }),
+  error_detection: JSON.stringify({
+    title: "AI Policy Summary Contains Hallucinated Statute",
+    scenario: "You asked an AI assistant to summarise your organisation's obligations under UK data protection law for a board briefing. The summary looks authoritative and well-structured.",
+    constraint: "The board briefing is in 2 hours and legal counsel is unavailable.",
+    question: "What is the specific error in this AI-generated summary?",
+    ai_output: "Under the UK Data Protection Act 2018 and GDPR, organisations must appoint a Data Protection Officer (DPO) if they process personal data at scale. The ICO's 2023 AI Guidance (Circular 47/2023) requires all HR AI tools to undergo a Data Protection Impact Assessment before deployment. Employee data used for AI training must be anonymised under Section 89A of the DPA 2018. Retention periods for AI-processed HR data must not exceed 3 years without explicit consent.",
+    options: [
+      { label: "A", text: "ICO Circular 47/2023 does not exist \u2014 the AI has hallucinated a specific regulatory reference that could mislead the board.", outcomeClass: "strong", signalDeltas: { hallucination_acceptance_risk: 2.5, validation_accuracy: 2.0 }, eventCodes: ["HALLUCINATION_DETECTED"], rationale: "Correctly identifies the hallucinated citation \u2014 a critical AI literacy skill when using AI for compliance content." },
+      { label: "B", text: "The 3-year retention limit is incorrect \u2014 there is no universal retention period under UK GDPR.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 1.0, governance_quality: 0.5 }, eventCodes: ["VALID_CONCERN"], rationale: "A valid concern but secondary \u2014 the hallucinated regulatory citation is the more critical error to flag first." },
+      { label: "C", text: "The summary is too technical for a board audience and should be simplified.", outcomeClass: "weak", signalDeltas: { cosmetic_focus_risk: -1.5, validation_accuracy: -1.0 }, eventCodes: ["COSMETIC_FOCUS"], rationale: "Focuses on presentation rather than the substantive accuracy error \u2014 a common AI literacy gap." },
+      { label: "D", text: "The DPO appointment requirement is overstated \u2014 not all organisations processing personal data at scale must appoint a DPO.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.0, governance_quality: -1.5 }, eventCodes: ["MISSED_CRITICAL_ERROR"], rationale: "While partially true, this misses the hallucinated citation entirely \u2014 the most dangerous error in a board compliance document." }
+    ]
+  }),
+  prioritisation: JSON.stringify({
+    title: "Competing AI Workflow Tasks Under Time Pressure",
+    scenario: "It is Friday afternoon. You have three AI-assisted tasks outstanding: (1) an AI-drafted redundancy letter that needs review before Monday, (2) an AI-generated engagement survey analysis your director wants for a Monday morning meeting, and (3) an AI screening shortlist for a role closing today.",
+    constraint: "You have 90 minutes remaining before the office closes.",
+    question: "In what order should you prioritise these tasks?",
+    options: [
+      { label: "A", text: "Shortlist review first (legal deadline today), then redundancy letter (legal document, Monday deadline), then engagement analysis (advisory, Monday meeting).", outcomeClass: "strong", signalDeltas: { judgement_quality: 2.0, workflow_application_quality: 1.5 }, eventCodes: ["CORRECT_PRIORITY"], rationale: "Correctly sequences by legal risk and deadline \u2014 the shortlist has a hard deadline today, the redundancy letter carries legal risk, and the analysis is advisory." },
+      { label: "B", text: "Engagement analysis first \u2014 it's for a director and the Monday meeting is high-visibility.", outcomeClass: "failure", signalDeltas: { judgement_quality: -2.0, unsafe_hr_decision_risk: -1.5 }, eventCodes: ["WRONG_PRIORITY"], rationale: "Prioritises visibility over legal obligation \u2014 missing the shortlist deadline and leaving a redundancy letter unreviewed are both higher-risk failures." },
+      { label: "C", text: "Redundancy letter first \u2014 legal documents always take priority regardless of deadline.", outcomeClass: "weak", signalDeltas: { judgement_quality: -1.0, workflow_application_quality: -0.5 }, eventCodes: ["RIGID_PRIORITY"], rationale: "The redundancy letter is important but the shortlist closes today \u2014 rigid rules without deadline awareness is a judgement gap." },
+      { label: "D", text: "Shortlist first, then engagement analysis, then redundancy letter \u2014 the letter can wait until Monday morning.", outcomeClass: "acceptable", signalDeltas: { judgement_quality: 0.5, workflow_application_quality: 0.5 }, eventCodes: ["PARTIAL_PRIORITY"], rationale: "Correct on the shortlist but deprioritises the legal document \u2014 acceptable if Monday morning genuinely allows time for thorough review." }
+    ]
+  }),
+  data_interpretation: JSON.stringify({
+    title: "AI Attrition Analysis Contains Misleading Correlation",
+    scenario: "Your people analytics platform has produced an AI-generated attrition risk report. The report identifies a strong correlation and makes a causal recommendation.",
+    constraint: "The CHRO wants to act on this data in next week's workforce planning meeting.",
+    question: "What is the most important limitation to flag before presenting this analysis?",
+    data_context: "AI Attrition Risk Report Q1 2025: Employees who completed fewer than 2 training courses in the past 12 months are 3.4x more likely to leave within 6 months (p<0.01, n=847). Recommendation: Mandate 3+ training courses per employee per quarter to reduce attrition by an estimated 40%. Confidence: High. Note: Analysis excludes employees on parental leave or long-term sick absence.",
+    options: [
+      { label: "A", text: "The analysis confuses correlation with causation \u2014 low training completion may be a symptom of disengagement rather than its cause, making the 40% reduction estimate unreliable.", outcomeClass: "strong", signalDeltas: { data_interpretation_quality: 2.5, judgement_quality: 1.5 }, eventCodes: ["CAUSATION_TRAP_IDENTIFIED"], rationale: "Correctly identifies the core analytical flaw \u2014 mandating training based on a correlation that may be a symptom would not address the underlying attrition drivers." },
+      { label: "B", text: "The sample size of 847 is too small to draw reliable conclusions.", outcomeClass: "weak", signalDeltas: { data_interpretation_quality: -0.5, blind_acceptance_risk: -1.0 }, eventCodes: ["INCORRECT_CRITIQUE"], rationale: "847 is a reasonable sample size for this type of analysis \u2014 this critique is statistically incorrect." },
+      { label: "C", text: "The exclusion of employees on parental leave or sick absence may bias the results.", outcomeClass: "acceptable", signalDeltas: { data_interpretation_quality: 1.0, governance_quality: 0.5 }, eventCodes: ["VALID_LIMITATION"], rationale: "A valid methodological concern but secondary \u2014 the causation issue is more fundamental to the recommendation's validity." },
+      { label: "D", text: "The p-value of <0.01 confirms the finding is statistically significant and the recommendation should be implemented.", outcomeClass: "failure", signalDeltas: { data_interpretation_quality: -2.5, blind_acceptance_risk: -2.0 }, eventCodes: ["STAT_SIG_MISUSE"], rationale: "Statistical significance does not imply causation or practical significance \u2014 this is a fundamental data literacy failure." }
+    ]
+  }),
+  governance_decision: JSON.stringify({
+    title: "AI Tool Used Without Data Processing Agreement",
+    scenario: "A hiring manager has been using a free AI CV screening tool for the past 3 months without informing HR. You discover this when reviewing a shortlist. The tool has processed 240 candidate CVs.",
+    constraint: "The hiring manager has already made verbal offers to two candidates from this shortlist.",
+    question: "What is the correct governance response?",
+    options: [
+      { label: "A", text: "Pause the process, inform your DPO or legal team immediately, assess whether a data breach notification is required, and review whether the shortlist can be used.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correct multi-step response \u2014 identifies the data protection breach, triggers appropriate escalation, and protects the organisation." },
+      { label: "B", text: "Retrospectively obtain a data processing agreement with the tool vendor to regularise the situation.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["RETROACTIVE_COVER"], rationale: "A retrospective DPA does not resolve the breach that has already occurred \u2014 this approach attempts to cover up rather than address the issue." },
+      { label: "C", text: "Proceed with the verbal offers since the candidates have already been selected \u2014 disrupting the process would cause more harm.", outcomeClass: "weak", signalDeltas: { governance_quality: -2.0, unsafe_hr_decision_risk: -1.5 }, eventCodes: ["HARM_AVOIDANCE_RATIONALISATION"], rationale: "Prioritises operational convenience over legal obligation \u2014 the breach must be assessed regardless of downstream impact." },
+      { label: "D", text: "Document the incident internally and implement a policy to prevent future unauthorised AI tool use.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, execution_quality: 0.5 }, eventCodes: ["POLICY_RESPONSE"], rationale: "Good for prevention but insufficient as an immediate response \u2014 the current breach still requires escalation and assessment." }
+    ]
+  }),
+  multi_step_workflow: JSON.stringify({
+    title: "AI Job Description Workflow \u2014 Correct Next Step",
+    scenario: "You are using an AI tool to create a job description for a new People Analytics Manager role. The AI has generated a draft JD based on the job title and department. You have reviewed it and identified that it contains generic competencies not specific to your organisation's context.",
+    constraint: "The role needs to be posted externally by end of week.",
+    question: "What is the most important next step in this workflow?",
+    options: [
+      { label: "A", text: "Provide the AI with specific context about your organisation's analytics maturity, tech stack, and team structure, then regenerate the competencies section.", outcomeClass: "strong", signalDeltas: { workflow_application_quality: 2.0, execution_quality: 1.5 }, eventCodes: ["CONTEXTUAL_REFINEMENT"], rationale: "Correct use of AI iteration \u2014 provides the specific context needed to make the output fit-for-purpose rather than accepting generic output." },
+      { label: "B", text: "Post the JD as-is \u2014 generic competencies are standard practice and will attract a broad candidate pool.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, execution_quality: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Accepts generic AI output without validation \u2014 a generic JD for a specialist role will attract mismatched candidates." },
+      { label: "C", text: "Manually rewrite the entire JD from scratch \u2014 AI-generated JDs are not reliable for specialist roles.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 }, eventCodes: ["AI_AVOIDANCE"], rationale: "Over-caution \u2014 discards valid AI work when targeted refinement would be more efficient." },
+      { label: "D", text: "Send the draft to the hiring manager for their input before making any changes.", outcomeClass: "acceptable", signalDeltas: { workflow_application_quality: 0.5, execution_quality: 0.5 }, eventCodes: ["STAKEHOLDER_INPUT"], rationale: "Reasonable but inefficient \u2014 the AI limitation is already identified and can be addressed directly without adding a stakeholder loop." }
+    ]
+  }),
+  contradiction_probe: JSON.stringify({
+    title: "AI Screening Tool \u2014 Different Context, Same Principle",
+    scenario: "You are reviewing a shortlist produced by an AI video interview analysis tool. The tool has scored candidates on 'communication effectiveness' based on speech patterns and facial expression analysis. The top-ranked candidate is from a non-native English speaking background.",
+    constraint: "The hiring manager wants to proceed to offer stage today.",
+    question: "What is the most important concern to raise before proceeding?",
+    options: [
+      { label: "A", text: "The AI tool's scoring criteria may systematically disadvantage non-native English speakers, creating indirect discrimination risk that requires review before any hiring decision.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["BIAS_RISK_IDENTIFIED"], rationale: "Correctly identifies the protected characteristic risk \u2014 AI tools using speech and facial analysis have documented bias against non-native speakers." },
+      { label: "B", text: "The candidate ranked highest, so the tool appears to be working correctly \u2014 proceed to offer.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Ranking position does not validate the scoring methodology \u2014 this misses the systemic bias risk entirely." },
+      { label: "C", text: "Request a manual review of the bottom-ranked candidates to check for any obvious errors.", outcomeClass: "weak", signalDeltas: { validation_accuracy: -0.5, governance_quality: -1.0 }, eventCodes: ["PARTIAL_REVIEW"], rationale: "Addresses individual errors but misses the systemic bias concern affecting the entire scoring methodology." },
+      { label: "D", text: "Inform the hiring manager that AI video analysis tools require a bias audit before use in hiring decisions.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.5, appropriateness_boundary: 1.0 }, eventCodes: ["GOVERNANCE_FLAG"], rationale: "Correct direction but less specific than identifying the immediate protected characteristic risk in this specific case." }
+    ]
+  }),
+  confidence_calibration: JSON.stringify({
+    title: "AI Engagement Analysis \u2014 Calibrating Certainty",
+    scenario: "An AI platform has analysed your organisation's annual engagement survey and produced a summary identifying 'psychological safety' as the primary driver of low engagement in the Finance team. The analysis is based on 23 responses from a team of 31.",
+    constraint: "The Finance Director wants a specific action plan by end of week.",
+    question: "What level of confidence is appropriate when presenting this finding?",
+    options: [
+      { label: "A", text: "Present the finding as a hypothesis requiring validation \u2014 the 74% response rate is reasonable but the sample is small and a single AI analysis should not drive a specific action plan without further investigation.", outcomeClass: "strong", signalDeltas: { calibration_index: 2.0, data_interpretation_quality: 1.5 }, eventCodes: ["APPROPRIATE_UNCERTAINTY"], rationale: "Demonstrates appropriate epistemic humility \u2014 acknowledges the finding without over-claiming certainty from a single AI analysis." },
+      { label: "B", text: "Present the finding as confirmed \u2014 74% response rate is statistically sufficient and the AI platform is enterprise-grade.", outcomeClass: "failure", signalDeltas: { calibration_index: -2.5, blind_acceptance_risk: -2.0 }, eventCodes: ["OVERCONFIDENCE"], rationale: "Overconfident \u2014 response rate and tool quality do not validate a causal claim from a single survey cycle." },
+      { label: "C", text: "Decline to present the finding until a follow-up focus group has been conducted.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, calibration_index: -0.5 }, eventCodes: ["OVER_CAUTION"], rationale: "Over-cautious \u2014 the finding is worth sharing as a hypothesis even before additional validation." },
+      { label: "D", text: "Present the finding with a clear caveat about sample size and recommend a follow-up pulse survey before committing to an action plan.", outcomeClass: "acceptable", signalDeltas: { calibration_index: 1.0, data_interpretation_quality: 1.0 }, eventCodes: ["CALIBRATED_PRESENTATION"], rationale: "Good approach but slightly less precise than framing it explicitly as a hypothesis \u2014 the distinction matters for how the Finance Director will act on it." }
     ]
   }),
 };
@@ -421,48 +521,22 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     schemaRequired.push("data_context");
   }
 
-  try {
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "assessment_item",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: schemaProperties,
-            required: schemaRequired,
-            additionalProperties: false,
-          },
-        },
-      },
-    });
+  // R5: Quality validation helper (T3-11 upgraded to retry loop)
+  function validateItemQuality(parsed: any): string[] {
+    const opts: any[] = parsed.options ?? [];
+    const errs: string[] = [];
+    if (opts.length !== 4) errs.push(`options.length=${opts.length} (expected 4)`);
+    const strongCount = opts.filter((o: any) => o.outcomeClass === "strong").length;
+    if (strongCount !== 1) errs.push(`strong options=${strongCount} (expected 1)`);
+    const failCount = opts.filter((o: any) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure").length;
+    if (failCount < 1) errs.push(`failure/critical_failure options=${failCount} (expected \u22651)`);
+    if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short (${parsed.scenario?.length ?? 0} chars)`);
+    const minSignals = opts.every((o: any) => Object.keys(o.signalDeltas ?? {}).length >= 2);
+    if (!minSignals) errs.push("one or more options have <2 signal deltas");
+    return errs;
+  }
 
-    const content = response.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No content from LLM");
-    const parsed = typeof content === "string" ? JSON.parse(content) : content;
-
-    // ── T3-11: Item quality validation (non-fatal — logs warnings, does not reject) ──────────────────
-    {
-      const opts: any[] = parsed.options ?? [];
-      const errs: string[] = [];
-      if (opts.length !== 4) errs.push(`options.length=${opts.length} (expected 4)`);
-      const strongCount = opts.filter((o) => o.outcomeClass === "strong").length;
-      if (strongCount !== 1) errs.push(`strong options=${strongCount} (expected 1)`);
-      const failCount = opts.filter((o) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure").length;
-      if (failCount < 1) errs.push(`failure/critical_failure options=${failCount} (expected ≥1)`);
-      if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short (${parsed.scenario?.length ?? 0} chars)`);
-      const minSignals = opts.every((o) => Object.keys(o.signalDeltas ?? {}).length >= 2);
-      if (!minSignals) errs.push("one or more options have <2 signal deltas");
-      if (errs.length > 0) {
-        console.warn(`[adaptiveEngine] T3-11 quality check failed [${vars.interactionType}]:`, errs.join(" | "));
-      }
-    }
-
+  function buildResult(parsed: any): GeneratedItem {
     return {
       title: parsed.title ?? "Assessment Item",
       scenario: parsed.scenario ?? "",
@@ -486,10 +560,74 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
       })),
       metadata: vars,
     };
-  } catch (err) {
-    console.error("[adaptiveEngine] LLM generation failed:", err);
-    return generateFallbackItem(vars);
   }
+
+  const MAX_RETRIES = 2;
+  let lastParsed: any = null;
+  let lastQualityErrors: string[] = [];
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // R5: On retry, append quality failure feedback to the user prompt
+      const retryNote = attempt > 0 && lastQualityErrors.length > 0
+        ? `\n\nIMPORTANT: Your previous response failed quality validation. Issues found: ${lastQualityErrors.join("; ")}. Please fix these issues in your response.`
+        : "";
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt + retryNote },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "assessment_item",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: schemaProperties,
+              required: schemaRequired,
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const content = response.choices?.[0]?.message?.content;
+      if (!content) throw new Error("No content from LLM");
+      const parsed = typeof content === "string" ? JSON.parse(content) : content;
+      lastParsed = parsed;
+
+      // R5: Run quality validation — retry if errors found and attempts remain
+      const qualityErrors = validateItemQuality(parsed);
+      if (qualityErrors.length > 0) {
+        lastQualityErrors = qualityErrors;
+        if (attempt < MAX_RETRIES) {
+          console.warn(`[adaptiveEngine] R5 quality retry ${attempt + 1}/${MAX_RETRIES} [${vars.interactionType}]:`, qualityErrors.join(" | "));
+          continue; // retry
+        } else {
+          // Final attempt still has errors — log and use best available result
+          console.warn(`[adaptiveEngine] R5 quality check: using best-effort result after ${MAX_RETRIES} retries [${vars.interactionType}]:`, qualityErrors.join(" | "));
+        }
+      }
+
+      return buildResult(parsed);
+    } catch (err) {
+      if (attempt === MAX_RETRIES) {
+        console.error("[adaptiveEngine] LLM generation failed after retries:", err);
+        // If we have a partially valid result from a previous attempt, use it
+        if (lastParsed) {
+          console.warn("[adaptiveEngine] Using best-effort result from previous attempt");
+          return buildResult(lastParsed);
+        }
+        return generateFallbackItem(vars);
+      }
+      console.warn(`[adaptiveEngine] LLM attempt ${attempt + 1} failed, retrying:`, err);
+    }
+  }
+
+  // Should never reach here, but TypeScript requires a return
+  return generateFallbackItem(vars);
 }
 
 // ─── Fallback Item ────────────────────────────────────────────────────────────

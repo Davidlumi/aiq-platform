@@ -31,7 +31,9 @@ import {
   contentScenarios,
   credibilityScores,
   decisionLogs,
+  revalidationSchedules,
   riskScores,
+  tenantSettings,
   userStates,
   users,
 } from "../../drizzle/schema";
@@ -64,6 +66,7 @@ import {
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
+import { invokeLLM } from "../_core/llm";
 import type { CapabilityKey } from "../assessment/roleArchetypes";
 
 // ─── Capability Display + Colour Maps ────────────────────────────────────────
@@ -961,6 +964,85 @@ export const assessmentRouter = router({
 
       const results = SessionController.computeResults(answers, roleHint);
 
+      // R9: Generate LLM-powered personalised development narrative
+      let llmNarrative: { strengths: string; gaps: string; priorities: string } | null = null;
+      try {
+        const capSummary = Object.entries(results.capabilityScores)
+          .map(([k, v]) => `${k}: ${Math.round(v.score)}/100`)
+          .join(", ");
+        const topStrengths = Object.entries(results.capabilityScores)
+          .sort((a, b) => b[1].score - a[1].score)
+          .slice(0, 2)
+          .map(([k]) => k.replace(/_/g, " "))
+          .join(" and ");
+        const topGaps = Object.entries(results.capabilityScores)
+          .sort((a, b) => a[1].score - b[1].score)
+          .slice(0, 2)
+          .map(([k]) => k.replace(/_/g, " "))
+          .join(" and ");
+        const roleArchetypeName = results.roleArchetype?.displayName ?? "HR professional";
+        const readinessLabel = results.readiness.state;
+
+        const narrativeResp = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert AI capability coach writing personalised assessment feedback for HR professionals. 
+Write in a professional, direct, and encouraging tone. Be specific — reference the actual capability scores provided. 
+Do NOT use bullet points or headers. Write in flowing prose. Each paragraph should be 2-4 sentences.`,
+            },
+            {
+              role: "user",
+              content: `Write a 3-paragraph development narrative for a ${roleArchetypeName} who just completed an AI capability assessment.
+
+Assessment results:
+- Overall score: ${Math.round(results.overallScore)}/100
+- Readiness state: ${readinessLabel}
+- Capability scores: ${capSummary}
+- Key strengths: ${topStrengths}
+- Key gaps: ${topGaps}
+- Governance flag: ${results.failureModes.governanceFlag ? "Yes — governance concerns detected" : "No"}
+- Over-reliance risk: ${results.failureModes.modes.includes("over_reliance") ? "Yes" : "No"}
+
+Paragraph 1 (Strengths): What this person does well in their AI capability profile. Reference specific capabilities.
+Paragraph 2 (Gaps): Where the most significant development opportunities lie. Be honest but constructive.
+Paragraph 3 (Priorities): The 2-3 most important actions they should take to improve their AI readiness in their role.
+
+Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each containing one paragraph of plain prose text.`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "development_narrative",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  strengths: { type: "string" },
+                  gaps: { type: "string" },
+                  priorities: { type: "string" },
+                },
+                required: ["strengths", "gaps", "priorities"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const narrativeContent = narrativeResp.choices?.[0]?.message?.content;
+        if (narrativeContent) {
+          const parsed = typeof narrativeContent === "string" ? JSON.parse(narrativeContent) : narrativeContent;
+          llmNarrative = {
+            strengths: parsed.strengths ?? "",
+            gaps: parsed.gaps ?? "",
+            priorities: parsed.priorities ?? "",
+          };
+        }
+      } catch (narrativeErr) {
+        // Non-fatal — fall back to rule-based narrative from SessionController
+        console.warn("[assessment] R9: LLM narrative generation failed, using rule-based fallback:", narrativeErr);
+      }
+
       const capabilityScoresFlat: Record<string, number> = {};
       for (const [key, val] of Object.entries(results.capabilityScores)) {
         capabilityScoresFlat[key] = val.score;
@@ -1008,6 +1090,8 @@ export const assessmentRouter = router({
         avgConfidence: results.avgConfidence,
         riskBand: results.riskBand,
         modelVersion: "adaptive-v2",
+        // R9: LLM-generated personalised development narrative (null if generation failed)
+        llmNarrative: llmNarrative ?? null,
       };
 
       await db.insert(assessmentScores).values({
@@ -1100,6 +1184,59 @@ export const assessmentRouter = router({
         }),
       });
 
+      // R11: Create revalidation schedule based on readiness state and tenant settings
+      try {
+        // Fetch tenant-specific revalidation intervals (fall back to defaults)
+        const tSettings = await db
+          .select()
+          .from(tenantSettings)
+          .where(eq(tenantSettings.tenantId, ctx.user.tenantId))
+          .limit(1);
+        const daysLow = tSettings[0]?.revalidationDaysLow ?? 90;
+        const daysMedium = tSettings[0]?.revalidationDaysMedium ?? 60;
+        const daysHigh = tSettings[0]?.revalidationDaysHigh ?? 30;
+
+        // Map readiness state to revalidation interval
+        // ReadinessState = "safe" | "at_risk" | "unsafe" | "unknown"
+        const revalDays =
+          results.readiness.state === "safe" ? daysLow :
+          results.readiness.state === "at_risk" ? daysMedium :
+          daysHigh; // unsafe or unknown — highest urgency
+
+        const dueAt = new Date();
+        dueAt.setDate(dueAt.getDate() + revalDays);
+
+        const triggerReason =
+          results.readiness.state === "safe"
+            ? `Routine revalidation — ${daysLow}-day cycle (safe readiness state)`
+            : results.readiness.state === "at_risk"
+            ? `Enhanced monitoring — ${daysMedium}-day cycle (at-risk readiness state)`
+            : `Priority revalidation — ${daysHigh}-day cycle (${results.readiness.state} readiness state)`;
+
+        // Cancel any existing pending revalidation schedules for this user
+        await db
+          .update(revalidationSchedules)
+          .set({ status: "superseded" })
+          .where(
+            and(
+              eq(revalidationSchedules.userId, ctx.user.id),
+              eq(revalidationSchedules.status, "pending")
+            )
+          );
+
+        // Insert new revalidation schedule
+        await db.insert(revalidationSchedules).values({
+          id: nanoid(),
+          userId: ctx.user.id,
+          dueAt,
+          triggerReason,
+          status: "pending",
+        });
+      } catch (revalErr) {
+        // Non-fatal — log but do not block session completion
+        console.warn("[assessment] R11: Failed to create revalidation schedule:", revalErr);
+      }
+
       return {
         overallScore: results.overallScore,
         credibilityScore,
@@ -1110,6 +1247,7 @@ export const assessmentRouter = router({
         capabilityScores: results.capabilityScores,
         signalScores: results.signalScores,
         narrative: results.narrative,
+        llmNarrative: llmNarrative ?? null,
         confidenceProfile: results.confidenceProfile,
         failureModes: results.failureModes,
         contradictions: results.contradictions,

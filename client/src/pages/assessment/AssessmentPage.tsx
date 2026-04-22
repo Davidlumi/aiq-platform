@@ -211,14 +211,14 @@ export default function AssessmentPage() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {(activeSession as any).answeredCount} of 30 questions answered
+                    {(activeSession as any).answeredCount} of {(activeSession as any).totalTarget ?? 49} questions answered
                   </span>
                   <span className="text-xs font-semibold text-[#EE8866]">
-                    {Math.round(((activeSession as any).answeredCount / 30) * 100)}% complete
+                    {Math.round(((activeSession as any).answeredCount / ((activeSession as any).totalTarget ?? 49)) * 100)}% complete
                   </span>
                 </div>
                 <Progress
-                  value={Math.round(((activeSession as any).answeredCount / 30) * 100)}
+                  value={Math.round(((activeSession as any).answeredCount / ((activeSession as any).totalTarget ?? 49)) * 100)}
                   className="h-1.5"
                 />
               </div>

@@ -37,6 +37,7 @@ import {
   FileText,
   Lightbulb,
   User,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -403,6 +404,7 @@ export default function AssessmentResultsPage() {
   const credibilityBand = (breakdown.credibilityBand ?? breakdown.credibility_band ?? (breakdown.confidenceProfile as any)?.band ?? "medium") as keyof typeof CREDIBILITY_CONFIG;
   const riskBand = (breakdown.riskBand ?? breakdown.risk_band ?? "medium") as keyof typeof RISK_CONFIG;
   const narrative = (typeof breakdown.narrative === "string" ? breakdown.narrative : (breakdown.narrative as any)?.text) ?? "";
+  const llmNarrative = (breakdown.llmNarrative ?? null) as { strengths: string; gaps: string; priorities: string } | null;
   const capabilityScores = breakdown.capabilityScores ?? {};
   const signalScores = breakdown.signalScores ?? {};
 
@@ -724,6 +726,35 @@ export default function AssessmentResultsPage() {
         <TabsContent value="deepdive" className="space-y-6">
           {/* T3-9: Longitudinal Tracking Chart */}
           <LongitudinalChart data={longitudinalData} />
+
+          {/* R9: LLM-generated personalised development narrative */}
+          {llmNarrative && (
+            <Card className="border-[#3B4EFF]/30 bg-[#3B4EFF]/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#3B4EFF]" />
+                  Your Development Narrative
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  AI-generated personalised feedback based on your assessment responses and capability profile.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-[#228833] uppercase tracking-wide">Strengths</h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-[#EE8866] uppercase tracking-wide">Development Areas</h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-[#3B4EFF] uppercase tracking-wide">Priorities</h4>
+                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {/* Capability Breakdown (already rendered in summary, re-render here with more detail) */}
           {sortedCapabilities.length > 0 && (
             <Card className="border-border">

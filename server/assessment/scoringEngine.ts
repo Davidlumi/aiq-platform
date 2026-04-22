@@ -210,6 +210,26 @@ export function detectFailureModes(
 
 // ─── Signal Score Computation ─────────────────────────────────────────────────
 
+/**
+ * R7: Per-interaction-type timing thresholds (milliseconds).
+ * Different interaction types have different expected completion times.
+ * scenario_critique and risk_judgement require more reading time than quick_fire.
+ */
+const INTERACTION_TYPE_TIMING_MS: Record<string, { fast: number; slow: number; tooFast: number }> = {
+  situational_judgement:  { fast: 30_000, slow: 120_000, tooFast: 8_000 },
+  scenario_critique:      { fast: 45_000, slow: 150_000, tooFast: 12_000 },
+  risk_judgement:         { fast: 40_000, slow: 140_000, tooFast: 10_000 },
+  ethical_dilemma:        { fast: 35_000, slow: 130_000, tooFast: 10_000 },
+  priority_ranking:       { fast: 35_000, slow: 120_000, tooFast: 8_000 },
+  output_evaluation:      { fast: 40_000, slow: 150_000, tooFast: 12_000 },
+  tool_selection:         { fast: 25_000, slow: 100_000, tooFast: 7_000 },
+  quick_fire:             { fast: 15_000, slow:  60_000, tooFast: 4_000 },
+  data_interpretation:    { fast: 40_000, slow: 150_000, tooFast: 12_000 },
+  governance_check:       { fast: 30_000, slow: 120_000, tooFast: 8_000 },
+  contradiction_probe:    { fast: 35_000, slow: 130_000, tooFast: 10_000 },
+};
+const DEFAULT_TIMING_MS = { fast: 30_000, slow: 120_000, tooFast: 8_000 };
+
 export function computeSignalScores(
   answers: Array<{
     signalDeltasJson: unknown;
@@ -220,6 +240,8 @@ export function computeSignalScores(
     confidenceScore?: number;
     /** Optional: milliseconds taken to answer */
     timeToAnswerMs?: number;
+    /** R7: Optional interaction type for per-type timing thresholds */
+    interactionType?: string;
   }>
 ): Record<SignalKey, number> {
   const acc: Record<string, number> = {};
@@ -267,20 +289,24 @@ export function computeSignalScores(
       acc["calibration_index"] = (acc["calibration_index"] ?? 0) + calibrationDelta * calibMult * diffWeight;
     }
 
-    // ── T1-4: Time-to-Answer Scoring ─────────────────────────────────────────
+    // ── T1-4 + R7: Time-to-Answer Scoring with per-interaction-type thresholds ──
     // Fast correct answers indicate fluency; very slow answers may indicate
     // uncertainty or gaming. Applied to timing_integrity signal.
     const timeMs = answer.timeToAnswerMs;
     if (timeMs !== undefined && timeMs > 0) {
+      // R7: Use per-type thresholds if interactionType is provided
+      const timingThresholds = (answer.interactionType && INTERACTION_TYPE_TIMING_MS[answer.interactionType])
+        ? INTERACTION_TYPE_TIMING_MS[answer.interactionType]
+        : DEFAULT_TIMING_MS;
       let timingDelta = 0;
-      if (outcome === "strong" && timeMs < 30000) {
+      if (outcome === "strong" && timeMs < timingThresholds.fast) {
         timingDelta = 0.5;   // Fast and correct — demonstrates fluency
-      } else if (outcome === "strong" && timeMs > 120000) {
+      } else if (outcome === "strong" && timeMs > timingThresholds.slow) {
         timingDelta = -0.2;  // Very slow even when correct — slight uncertainty
-      } else if ((outcome === "failure" || outcome === "critical_failure") && timeMs < 8000) {
+      } else if ((outcome === "failure" || outcome === "critical_failure") && timeMs < timingThresholds.tooFast) {
         timingDelta = -0.5;  // Extremely fast failure — not reading carefully
-      } else if (timeMs > 180000) {
-        timingDelta = -0.3;  // Excessively long (> 3 min) — minor penalty
+      } else if (timeMs > timingThresholds.slow * 1.5) {
+        timingDelta = -0.3;  // Excessively long — minor penalty
       }
       if (timingDelta !== 0) {
         const timeMult = timingDelta >= 0 ? riskMult.positive : riskMult.negative;
@@ -364,10 +390,29 @@ export function computeCapabilityScores(
   return result;
 }
 
-export function computeOverallScore(capabilityScores: Record<CapabilityKey, CapabilityScore>): number {
-  const scores = Object.values(capabilityScores).map(c => c.score);
-  if (scores.length === 0) return 50;
-  return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
+/**
+ * R10: Capability-weighted overall score.
+ * Uses role archetype's capabilityWeights if provided; falls back to equal weighting.
+ */
+export function computeOverallScore(
+  capabilityScores: Record<CapabilityKey, CapabilityScore>,
+  capabilityWeights?: Record<CapabilityKey, number>
+): number {
+  const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+  if (!capabilityWeights) {
+    // Equal weighting fallback
+    const scores = ALL_CAPS.map(cap => capabilityScores[cap]?.score ?? 50);
+    return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
+  }
+  // Weighted sum — weights should sum to 1.0
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const cap of ALL_CAPS) {
+    const w = capabilityWeights[cap] ?? (1 / ALL_CAPS.length);
+    weightedSum += (capabilityScores[cap]?.score ?? 50) * w;
+    totalWeight += w;
+  }
+  return Math.round(totalWeight > 0 ? weightedSum / totalWeight : 50);
 }
 
 // ─── Readiness Classification ─────────────────────────────────────────────────
@@ -382,11 +427,20 @@ export interface ReadinessClassification {
   governanceAction: string | null;
 }
 
+/**
+ * R3: Role-specific readiness classification.
+ * Uses role archetype's minimumSafeThresholds to detect capability-specific failures,
+ * in addition to the global score-based gates.
+ */
 export function classifyReadiness(
   overallScore: number,
   riskBand: "low" | "medium" | "high",
   failureModes: FailureModeResult,
-  evidenceSufficient: boolean
+  evidenceSufficient: boolean,
+  /** R3: Per-capability scores to check against role-specific minimum safe thresholds */
+  capabilityScores?: Record<CapabilityKey, CapabilityScore>,
+  /** R3: Role archetype minimum safe thresholds */
+  minimumSafeThresholds?: Record<CapabilityKey, number>
 ): ReadinessClassification {
   if (!evidenceSufficient) {
     return {
@@ -398,31 +452,50 @@ export function classifyReadiness(
     };
   }
 
-  if (failureModes.classificationImpact === "block" || (riskBand === "high" && overallScore < 45)) {
+  // R3: Check role-specific minimum safe thresholds
+  const thresholdFailures: CapabilityKey[] = [];
+  const criticalThresholdFailures: CapabilityKey[] = [];
+  if (capabilityScores && minimumSafeThresholds) {
+    const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+    for (const cap of ALL_CAPS) {
+      const score = capabilityScores[cap]?.score ?? 50;
+      const threshold = minimumSafeThresholds[cap] ?? 60;
+      if (score < threshold - 15) criticalThresholdFailures.push(cap);
+      else if (score < threshold) thresholdFailures.push(cap);
+    }
+  }
+
+  if (failureModes.classificationImpact === "block" || (riskBand === "high" && overallScore < 45) || criticalThresholdFailures.length >= 2) {
+    const roleNote = criticalThresholdFailures.length >= 2
+      ? ` Critical gaps detected in ${criticalThresholdFailures.slice(0, 2).map(c => c.replace(/_/g, " ")).join(" and ")} relative to your role profile.`
+      : "";
     return {
       state: "unsafe",
       label: "Unsafe to Deploy",
-      description: "Critical failure modes or high-risk patterns detected. Immediate remediation required before AI use.",
+      description: `Critical failure modes or high-risk patterns detected. Immediate remediation required before AI use.${roleNote}`,
       colour: "#EF4444",
       governanceAction: "governance_hold",
     };
   }
 
-  if (failureModes.classificationImpact === "downgrade" || riskBand === "high" || overallScore < 45) {
+  if (failureModes.classificationImpact === "downgrade" || riskBand === "high" || overallScore < 45 || criticalThresholdFailures.length >= 1 || thresholdFailures.length >= 2) {
+    const roleNote = (criticalThresholdFailures.length + thresholdFailures.length) > 0
+      ? ` Your role profile requires stronger performance in ${[...criticalThresholdFailures, ...thresholdFailures].slice(0, 2).map(c => c.replace(/_/g, " ")).join(" and ")}.`
+      : "";
     return {
       state: "at_risk",
       label: "At Risk",
-      description: "Significant gaps or risk patterns detected. Supervised use only with mandatory remediation.",
+      description: `Significant gaps or risk patterns detected. Supervised use only with mandatory remediation.${roleNote}`,
       colour: "#F59E0B",
       governanceAction: "restricted_use",
     };
   }
 
-  if (overallScore >= 75 && (riskBand === "low" || riskBand === "medium")) {
+  if (overallScore >= 75 && thresholdFailures.length === 0 && (riskBand === "low" || riskBand === "medium")) {
     return {
       state: "safe",
       label: "Safe to Deploy",
-      description: "Strong, credible AI capability demonstrated across assessed domains.",
+      description: "Strong, credible AI capability demonstrated across assessed domains, meeting your role-specific thresholds.",
       colour: "#10B981",
       governanceAction: null,
     };
@@ -459,10 +532,12 @@ export function computeConfidenceProfile(
   highRiskAnswers: number,
   contradictionCount: number,
   consistencyScore: number,
-  antiGamingScore: number
+  antiGamingScore: number,
+  /** R2: Target item count for evidence depth normalisation. Defaults to 49 (MINIMUM_EVIDENCE.targetItems). */
+  targetItems: number = 49
 ): ConfidenceProfile {
-  // Evidence depth: how many answers vs minimum required (50)
-  const evidenceDepth = Math.min(1, totalAnswers / 50);
+  // Evidence depth: how many answers vs target item count (R2: was hard-coded to 50)
+  const evidenceDepth = Math.min(1, totalAnswers / targetItems);
 
   // Evidence breadth: how many capabilities have at least 3 signal contributions
   const capabilitiesCovered = Object.values(capabilityScores).filter(c => c.signalCount >= 3).length;

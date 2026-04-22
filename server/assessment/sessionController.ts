@@ -154,13 +154,24 @@ export class SessionController {
 
     // Evidence sufficiency check
     const distinctInteractionTypes = Object.keys(interactionTypesUsed).length;
-    const allCapabilitiesCovered = Object.keys(capabilitySignalCounts).length >= 6;
     const highRiskProportion = answeredCount > 0 ? highRiskAnswerCount / answeredCount : 0;
+
+    // R1: Per-capability coverage — all 6 capability domains must have ≥ signalsPerCapability contributions
+    const ALL_CAPABILITIES: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+    const uncoveredCapabilities = ALL_CAPABILITIES.filter(
+      cap => (capabilitySignalCounts[cap] ?? 0) < MINIMUM_EVIDENCE.signalsPerCapability
+    );
+    const allCapabilitiesCovered = uncoveredCapabilities.length === 0;
+
+    // R6: Contradiction resolution — if contradictions block classification, evidence is not sufficient
+    const contradictionBlocksClassification = contradictions.blockClassification === true;
 
     const evidenceSufficient =
       answeredCount >= MINIMUM_EVIDENCE.totalItems &&
       distinctInteractionTypes >= MINIMUM_EVIDENCE.distinctInteractionTypes &&
-      highRiskProportion >= MINIMUM_EVIDENCE.highRiskProportion;
+      highRiskProportion >= MINIMUM_EVIDENCE.highRiskProportion &&
+      allCapabilitiesCovered &&
+      !contradictionBlocksClassification;
 
     // Completion blockers
     const completionBlockers: string[] = [];
@@ -172,6 +183,12 @@ export class SessionController {
     }
     if (highRiskProportion < MINIMUM_EVIDENCE.highRiskProportion) {
       completionBlockers.push(`At least 25% high-risk items required`);
+    }
+    if (!allCapabilitiesCovered) {
+      completionBlockers.push(`Insufficient evidence in: ${uncoveredCapabilities.join(", ")} (need ≥${MINIMUM_EVIDENCE.signalsPerCapability} signals each)`);
+    }
+    if (contradictionBlocksClassification) {
+      completionBlockers.push(`Unresolved contradictions detected — contradiction probe required before classification`);
     }
 
     const canComplete = completionBlockers.length === 0;
@@ -300,12 +317,14 @@ export class SessionController {
         difficulty: a.difficulty,
         confidenceScore: a.confidenceScore,
         timeToAnswerMs: a.timeToAnswerMs,
+        interactionType: a.interactionType,  // R7: per-type timing thresholds
       }))
     );
 
     // Capability scores
     const capabilityScores = computeCapabilityScores(signalScores);
-    const overallScore = computeOverallScore(capabilityScores);
+    // R10: Use role-specific capability weights for overall score
+    const overallScore = computeOverallScore(capabilityScores, roleArchetype.capabilityWeights);
 
     // Failure mode detection
     const failureModes = detectFailureModes(
@@ -363,7 +382,8 @@ export class SessionController {
       highRiskAnswers,
       contradictions.count,
       consistencyScore,
-      gamingAnalysis.score
+      gamingAnalysis.score,
+      MINIMUM_EVIDENCE.targetItems  // R2: pass actual target for evidence depth normalisation
     );
 
     // Risk band
@@ -371,12 +391,14 @@ export class SessionController {
       failureModes.governanceFlag ? "high" :
       overallScore >= 75 ? "low" : "medium";
 
-    // Readiness classification
+    // Readiness classification (R3: pass capability scores + role thresholds)
     const readiness = classifyReadiness(
       overallScore,
       riskBand,
       failureModes,
-      answers.length >= MINIMUM_EVIDENCE.totalItems
+      answers.length >= MINIMUM_EVIDENCE.totalItems,
+      capabilityScores,
+      roleArchetype.minimumSafeThresholds
     );
 
     // Narrative selection
