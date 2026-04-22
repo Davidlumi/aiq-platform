@@ -3,6 +3,11 @@
  *
  * Implements the full signal system, anchor framework, failure mode detection,
  * risk weighting, and capability score computation per the AIQ specification.
+ *
+ * Improvements (Batch E):
+ * E1: Timing map updated to match all 11 current InteractionType enum values
+ * E2: Capability score scale factor is dynamic (prevents dilution with many signals)
+ * E3: blockCount now counts unique failure modes only (prevents inflation)
  */
 
 import type { CapabilityKey } from "./roleArchetypes";
@@ -197,8 +202,14 @@ export function detectFailureModes(
   }
 
   const uniqueModes = modes.filter((v, i, a) => a.indexOf(v) === i);
+  // E3: blockCount now counts unique blocking failure modes only (not per-answer occurrences)
+  // This prevents a single repeated pattern from inflating the classification impact.
+  const uniqueBlockingModes = new Set(
+    modes.filter(m => ["blind_ai_acceptance", "hallucination_acceptance", "unsafe_hr_decisioning", "governance_bypass", "critical_failure_response"].includes(m))
+  );
+  const uniqueBlockCount = uniqueBlockingModes.size;
   const classificationImpact: "none" | "downgrade" | "block" =
-    blockCount >= 3 ? "block" : blockCount >= 1 ? "downgrade" : "none";
+    uniqueBlockCount >= 3 ? "block" : uniqueBlockCount >= 1 ? "downgrade" : "none";
 
   return {
     detected: uniqueModes.length > 0,
@@ -215,18 +226,21 @@ export function detectFailureModes(
  * Different interaction types have different expected completion times.
  * scenario_critique and risk_judgement require more reading time than quick_fire.
  */
+// E1: Timing map aligned to all 11 current InteractionType enum values.
+// Old stale keys (ethical_dilemma, priority_ranking, output_evaluation, tool_selection,
+// quick_fire, governance_check) removed; all 11 canonical types added.
 const INTERACTION_TYPE_TIMING_MS: Record<string, { fast: number; slow: number; tooFast: number }> = {
-  situational_judgement:  { fast: 30_000, slow: 120_000, tooFast: 8_000 },
-  scenario_critique:      { fast: 45_000, slow: 150_000, tooFast: 12_000 },
-  risk_judgement:         { fast: 40_000, slow: 140_000, tooFast: 10_000 },
-  ethical_dilemma:        { fast: 35_000, slow: 130_000, tooFast: 10_000 },
-  priority_ranking:       { fast: 35_000, slow: 120_000, tooFast: 8_000 },
-  output_evaluation:      { fast: 40_000, slow: 150_000, tooFast: 12_000 },
-  tool_selection:         { fast: 25_000, slow: 100_000, tooFast: 7_000 },
-  quick_fire:             { fast: 15_000, slow:  60_000, tooFast: 4_000 },
-  data_interpretation:    { fast: 40_000, slow: 150_000, tooFast: 12_000 },
-  governance_check:       { fast: 30_000, slow: 120_000, tooFast: 8_000 },
-  contradiction_probe:    { fast: 35_000, slow: 130_000, tooFast: 10_000 },
+  situational_judgement:   { fast: 30_000, slow: 120_000, tooFast:  8_000 },
+  scenario_critique:       { fast: 45_000, slow: 150_000, tooFast: 12_000 },
+  output_improvement:      { fast: 45_000, slow: 150_000, tooFast: 12_000 },
+  error_detection:         { fast: 40_000, slow: 150_000, tooFast: 12_000 },
+  prioritisation:          { fast: 35_000, slow: 120_000, tooFast:  8_000 },
+  risk_judgement:          { fast: 40_000, slow: 140_000, tooFast: 10_000 },
+  data_interpretation:     { fast: 40_000, slow: 150_000, tooFast: 12_000 },
+  governance_decision:     { fast: 30_000, slow: 120_000, tooFast:  8_000 },
+  multi_step_workflow:     { fast: 35_000, slow: 130_000, tooFast: 10_000 },
+  contradiction_probe:     { fast: 35_000, slow: 130_000, tooFast: 10_000 },
+  confidence_calibration:  { fast: 25_000, slow: 100_000, tooFast:  8_000 },
 };
 const DEFAULT_TIMING_MS = { fast: 30_000, slow: 120_000, tooFast: 8_000 };
 
@@ -377,7 +391,11 @@ export function computeCapabilityScores(
   for (const cap of ALL_CAPS) {
     const { sum, count } = capAccum[cap];
     const avgDelta = count > 0 ? sum / count : 0;
-    const score = Math.max(0, Math.min(100, Math.round(50 + avgDelta * 12.5)));
+    // E2: Dynamic scale factor prevents score dilution with many signals.
+    // With few signals (count<=3) use 12.5 for sensitivity; with many signals
+    // reduce the multiplier so extreme sums don't push past 0-100 bounds.
+    const scaleFactor = count <= 3 ? 12.5 : Math.max(5.0, 12.5 / Math.sqrt(count / 3));
+    const score = Math.max(0, Math.min(100, Math.round(50 + avgDelta * scaleFactor)));
     result[cap as CapabilityKey] = {
       score,
       displayName: CAPABILITY_DISPLAY[cap as CapabilityKey],

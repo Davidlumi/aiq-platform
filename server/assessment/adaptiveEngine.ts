@@ -215,17 +215,25 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
   if (phase === "adaptive") {
     const weakest = findWeakestCapability(ctx.capabilityScores, ctx.roleArchetype, ctx.priorCapabilityScores);
     const preferredTypes = CAPABILITY_INTERACTION_MAP[weakest] ?? ["situational_judgement"];
-    const leastUsed = findLeastUsedType(preferredTypes, ctx.interactionTypesUsed);
+    // C3: Weight type selection by both usage count AND capability score gap.
+    // Types that have been used but haven't yet produced strong evidence are preferred.
+    const weakestScore = ctx.capabilityScores[weakest]?.score ?? 50;
+    const gapWeight = Math.max(0, (75 - weakestScore) / 25); // 0–1 gap urgency
+    const leastUsed = findLeastUsedTypeWithGap(preferredTypes, ctx.interactionTypesUsed, gapWeight);
     return buildVariables(weakest, leastUsed, ctx, phase, { difficulty: 2, ambiguity: "medium" });
   }
 
   // Priority 5: Validation — confirm/challenge strongest capability
+  // C1: Vary validation interaction type instead of always using contradiction_probe.
+  // Rotate through high-difficulty types to avoid predictable validation pattern.
   if (phase === "validation") {
     const strongest = findStrongestCapability(ctx.capabilityScores, ctx.roleArchetype);
-    return buildVariables(strongest, "contradiction_probe", ctx, phase, {
+    const validationTypes: InteractionType[] = ["contradiction_probe", "risk_judgement", "governance_decision", "scenario_critique"];
+    const leastUsedValidationType = findLeastUsedType(validationTypes, ctx.interactionTypesUsed);
+    return buildVariables(strongest, leastUsedValidationType, ctx, phase, {
       difficulty: 3,
       riskLevel: "High",
-      contradictionIntent: true,
+      contradictionIntent: leastUsedValidationType === "contradiction_probe",
     });
   }
 
@@ -716,12 +724,23 @@ function getCapabilityForInteractionType(type: InteractionType): CapabilityKey {
 
 function selectBaselineCapability(ctx: AdaptiveSelectionContext): CapabilityKey {
   const caps: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+  // C4: When prior session scores exist, start baseline with the weakest prior capability.
+  // This ensures returning users are challenged from question 1, not just from adaptive phase.
+  const hasCurrentEvidence = caps.some(c => (ctx.capabilityScores[c]?.signalCount ?? 0) > 0);
+  if (!hasCurrentEvidence && ctx.priorCapabilityScores && Object.keys(ctx.priorCapabilityScores).length > 0) {
+    const priorEntries = Object.entries(ctx.priorCapabilityScores) as Array<[CapabilityKey, number]>;
+    return priorEntries.sort((a, b) =>
+      (ctx.roleArchetype.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1]) / 100 -
+      (ctx.roleArchetype.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1]) / 100
+    )[0][0];
+  }
   return caps.sort((a, b) =>
     (ctx.capabilityScores[a]?.signalCount ?? 0) - (ctx.capabilityScores[b]?.signalCount ?? 0)
   )[0];
 }
 
 function selectBaselineInteractionType(used: Record<InteractionType, number>): InteractionType {
+  // C2: confidence_calibration added to baseline rotation.
   const baselineTypes: InteractionType[] = [
     "situational_judgement",
     "scenario_critique",
@@ -731,6 +750,7 @@ function selectBaselineInteractionType(used: Record<InteractionType, number>): I
     "error_detection",
     "governance_decision",
     "data_interpretation",
+    "confidence_calibration",
   ];
   return [...baselineTypes].sort((a, b) => (used[a] ?? 0) - (used[b] ?? 0))[0];
 }
@@ -775,12 +795,30 @@ function buildVariables(
   };
 }
 
+// C3: Gap-weighted type selection — prefers types with both low usage and high gap urgency
+function findLeastUsedTypeWithGap(
+  types: InteractionType[],
+  used: Record<InteractionType, number>,
+  gapWeight: number
+): InteractionType {
+  // Score each type: lower usage + higher gap urgency = lower score (preferred)
+  return [...types].sort((a, b) => {
+    const usageA = used[a] ?? 0;
+    const usageB = used[b] ?? 0;
+    // When gap is urgent (gapWeight close to 1), strongly prefer least-used types
+    // When gap is small (gapWeight close to 0), treat all types equally by usage
+    return (usageA * (1 + gapWeight)) - (usageB * (1 + gapWeight));
+  })[0] ?? types[0];
+}
+
 function buildVariablesFromInjection(
   injection: InjectionSpec,
   role: RoleArchetype,
   phase: SessionPhase,
   ctx?: AdaptiveSelectionContext
 ): GenerationVariables {
+  // C5: Rotate through role workflows for injections instead of always using workflows[0]
+  const workflowIndex = ctx ? ctx.answeredCount % role.workflows.length : 0;
   return {
     roleArchetype: role,
     targetCapability: injection.targetCapability as CapabilityKey,
@@ -788,7 +826,7 @@ function buildVariablesFromInjection(
     difficulty: 3,
     riskLevel: injection.riskLevel,
     ambiguity: "high",
-    workflowContext: role.workflows[0] ?? "general_hr",
+    workflowContext: role.workflows[workflowIndex] ?? role.workflows[0] ?? "general_hr",
     aiOutputQuality: injection.type === "trap" ? "misleading" : "flawed",
     aiFailureMode: injection.type === "trap" ? "governance_bypass" : null,
     governanceSensitivity: role.governanceSensitivity,

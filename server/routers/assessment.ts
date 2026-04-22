@@ -375,8 +375,9 @@ function buildAdaptiveContext(
     interactionTypesUsed,
     riskExposure,
     gamingAnalysis,
+    // B6: Use updated 2-arg signature — capabilityKey is now stored on the pair
     contradictionProbes: contradictions.pairs.slice(0, 2).map(pair =>
-      generateContradictionProbeSpec(pair, "execution", roleArchetype.id)
+      generateContradictionProbeSpec(pair, roleArchetype.id)
     ),
     roleArchetype,
     orgIntent: DEFAULT_ORG_INTENT,

@@ -12,6 +12,11 @@
  * - At least 30% of items at High risk level
  * - At least 1 contradiction probe if contradictions detected
  * - Minimum 20 items before any classification attempt
+ *
+ * Improvements (Batch D):
+ * D1: selectNarrative is now a fallback only — LLM narrative is preferred at results level
+ * D2: computeState receives roleArchetype-aware evidence thresholds
+ * D3: Contradiction probe count cap raised to 3 when scrutinyLevel is "high"
  */
 
 import type { CapabilityKey } from "./roleArchetypes";
@@ -252,12 +257,7 @@ export class SessionController {
       interactionType: a.interactionType,
       riskLevel: a.riskLevel,
     }));
-    const contradictions = detectContradictions(answerRecords);
-    const contradictionProbes = contradictions.pairs
-      .slice(0, 2)
-      .map(pair => generateContradictionProbeSpec(pair, pair.reason.split(" ")[4] ?? "judgement", roleArchetype.id));
-
-    // Build anti-gaming analysis
+    // Build anti-gaming analysis (must come before contradiction probes — D3 uses scrutinyLevel)
     const gamingAnswers = answers.map(a => ({
       selectedValue: a.selectedValue,
       optionPosition: a.optionPosition,
@@ -270,6 +270,13 @@ export class SessionController {
       interactionType: a.interactionType,
     }));
     const gamingAnalysis = analyseGamingPatterns(gamingAnswers);
+
+    // D3: Raise probe cap to 3 when scrutiny is high
+    const probeLimit = gamingAnalysis.scrutinyLevel === "high" ? 3 : 2;
+    const contradictions = detectContradictions(answerRecords);
+    const contradictionProbes = contradictions.pairs
+      .slice(0, probeLimit)
+      .map(pair => generateContradictionProbeSpec(pair, roleArchetype.id));
 
     // Build risk exposure counts
     const riskExposure = {
@@ -401,7 +408,8 @@ export class SessionController {
       roleArchetype.minimumSafeThresholds
     );
 
-    // Narrative selection
+    // D1: Narrative — static template is a fallback only; LLM narrative is preferred
+    // and surfaced at the results level (assessment.ts completeSession)
     const narrative = selectNarrative(readiness.state, capabilityScores, roleArchetype.id);
 
     return {
