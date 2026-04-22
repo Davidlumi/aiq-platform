@@ -313,3 +313,17 @@
 - [x] AssessmentSessionPage: polling every 2.5s while generating, GeneratingState spinner shown, stops polling when nextItem arrives
 - [x] aiOutput and dataContext fields passed through nextItem to frontend
 - [x] TypeScript: 0 errors
+
+## Assessment Stress Test & Bug Fixes
+
+- [x] Write automated stress test: full session lifecycle (start → generate → submit × N → complete → score)
+- [x] Test LLM generation: all 8 interaction types generate valid items with correct fields
+- [x] Test pre-generation cache: pendingNextItem stored and served correctly
+- [x] Test submitAnswer: confidence rating stored, answer recorded, next item pre-generated
+- [x] Test session completion: isComplete triggers correctly at targetItems
+- [x] Test scoring: capability scores computed correctly from answers
+- [x] Test cold start: first-ever session with no prior scores
+- [x] Test returning user: prior session scores used for calibration
+- [x] Test error handling: LLM failure fallback, malformed JSON response, timeout
+- [x] Fix all bugs found during stress test
+- [x] 43/43 tests passing — phase boundaries, role archetype resolution, generation variables, LLM item generation, scoring engine, session controller, full session simulation, returning user calibration

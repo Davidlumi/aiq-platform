@@ -213,7 +213,7 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
 
   // Priority 4: Adaptive — target weakest capability
   if (phase === "adaptive") {
-    const weakest = findWeakestCapability(ctx.capabilityScores, ctx.roleArchetype);
+    const weakest = findWeakestCapability(ctx.capabilityScores, ctx.roleArchetype, ctx.priorCapabilityScores);
     const preferredTypes = CAPABILITY_INTERACTION_MAP[weakest] ?? ["situational_judgement"];
     const leastUsed = findLeastUsedType(preferredTypes, ctx.interactionTypesUsed);
     return buildVariables(weakest, leastUsed, ctx, phase, { difficulty: 2, ambiguity: "medium" });
@@ -460,8 +460,18 @@ function generateFallbackItem(vars: GenerationVariables): GeneratedItem {
 
 function findWeakestCapability(
   scores: Record<CapabilityKey, { score: number; signalCount: number }>,
-  role: RoleArchetype
+  role: RoleArchetype,
+  priorCapabilityScores?: Record<string, number> | null
 ): CapabilityKey {
+  // If current session has no evidence yet, use prior scores to target the weakest capability
+  const hasCurrentEvidence = Object.values(scores).some(v => v.signalCount > 0);
+  if (!hasCurrentEvidence && priorCapabilityScores && Object.keys(priorCapabilityScores).length > 0) {
+    const priorEntries = Object.entries(priorCapabilityScores) as Array<[CapabilityKey, number]>;
+    return priorEntries.sort((a, b) =>
+      (role.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1]) / 100 -
+      (role.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1]) / 100
+    )[0][0];
+  }
   const caps = Object.entries(scores) as Array<[CapabilityKey, { score: number; signalCount: number }]>;
   if (caps.length === 0) return "execution";
   return caps.sort((a, b) =>
