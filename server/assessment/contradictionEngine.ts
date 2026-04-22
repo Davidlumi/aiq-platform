@@ -166,7 +166,10 @@ export function detectContradictions(
     }
   }
 
-  // B3: Cross-capability contradictions
+  // B3 + F5a: Cross-capability contradictions
+  // F5a: Require at least 3 answers per capability before cross-capability detection fires
+  // (prevents false positives from small samples where 1 strong + 1 weak is noise)
+  const MIN_CROSS_CAP_ANSWERS = 3;
   const governanceAnswers = byCapability["governance"] ?? [];
   const executionAnswers = byCapability["execution"] ?? [];
   const judgementAnswers = byCapability["judgement"] ?? [];
@@ -181,10 +184,12 @@ export function detectContradictions(
     ? judgementAnswers.reduce((s, a) => s + (a.signalDeltas.judgement_quality ?? 0), 0) / judgementAnswers.length
     : 0;
 
+  // F5b: Raise signal thresholds for cross-capability detection to reduce false positives
+  // avgGovernanceSignal > 1.8 (was 1.5) and avgExecutionSignal < -1.2 (was -1.0)
   // Strong governance + weak execution = governance knowledge without practical skill
   if (
-    governanceAnswers.length >= 2 && executionAnswers.length >= 2 &&
-    avgGovernanceSignal > 1.5 && avgExecutionSignal < -1.0
+    governanceAnswers.length >= MIN_CROSS_CAP_ANSWERS && executionAnswers.length >= MIN_CROSS_CAP_ANSWERS &&
+    avgGovernanceSignal > 1.8 && avgExecutionSignal < -1.2
   ) {
     const govItem = governanceAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? governanceAnswers[0].itemId;
     const execItem = executionAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? executionAnswers[0].itemId;
@@ -199,8 +204,8 @@ export function detectContradictions(
 
   // Strong governance + weak judgement = compliance awareness without genuine judgement
   if (
-    governanceAnswers.length >= 2 && judgementAnswers.length >= 2 &&
-    avgGovernanceSignal > 1.5 && avgJudgementSignal < -1.0
+    governanceAnswers.length >= MIN_CROSS_CAP_ANSWERS && judgementAnswers.length >= MIN_CROSS_CAP_ANSWERS &&
+    avgGovernanceSignal > 1.8 && avgJudgementSignal < -1.2
   ) {
     const govItem = governanceAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? governanceAnswers[0].itemId;
     const judgItem = judgementAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? judgementAnswers[0].itemId;
@@ -244,19 +249,30 @@ export function detectContradictions(
     }
   }
 
-  const count = pairs.length;
+  // F5c: Cap total pairs to 5 to prevent a single bad session from generating
+  // an unmanageable number of probes. Prioritise within-capability and calibration
+  // pairs over cross-capability pairs (which are higher false-positive risk).
+  const priorityOrder: ContradictionPair["contradictionType"][] = [
+    "calibration", "within_capability", "time_pressure", "cross_capability",
+  ];
+  const sortedPairs = [...pairs].sort(
+    (a, b) => priorityOrder.indexOf(a.contradictionType) - priorityOrder.indexOf(b.contradictionType)
+  );
+  const cappedPairs = sortedPairs.slice(0, 5);
+
+  const count = cappedPairs.length;
   const requiresProbe = count >= 1;
-  const blockClassification = count >= 3;
+  const blockClassification = count >= 3;  // 3+ unresolved contradictions block classification
   const confidencePenalty = Math.max(0.3, 1 - count * 0.15);
 
   // B1: resolved is true when all pairs have at least one item answered as a probe
   const resolved = resolvedProbeItemIds && resolvedProbeItemIds.size > 0
-    ? pairs.every(p => resolvedProbeItemIds.has(p.itemA) || resolvedProbeItemIds.has(p.itemB))
+    ? cappedPairs.every(p => resolvedProbeItemIds.has(p.itemA) || resolvedProbeItemIds.has(p.itemB))
     : false;
 
   return {
     count,
-    pairs,
+    pairs: cappedPairs,
     resolved,
     requiresProbe,
     confidencePenalty,
@@ -272,6 +288,18 @@ export function generateContradictionProbeSpec(
   contradiction: ContradictionPair,
   roleArchetypeId: string
 ): ContradictionProbeSpec {
+  // F5d: mustInclude signals are now capability-specific rather than always governance+judgement
+  const CAPABILITY_PROBE_SIGNALS: Record<string, string[]> = {
+    governance:          ["governance_quality", "governance_bypass_risk"],
+    judgement:           ["judgement_quality", "discrimination_quality"],
+    execution:           ["execution_quality", "validation_accuracy"],
+    appropriateness:     ["appropriateness_boundary", "unsafe_hr_decision_risk"],
+    workflow:            ["workflow_application_quality", "validation_accuracy"],
+    data_interpretation: ["data_interpretation_quality", "judgement_quality"],
+  };
+  const mustInclude = CAPABILITY_PROBE_SIGNALS[contradiction.capabilityKey]
+    ?? ["governance_quality", "judgement_quality"];
+
   return {
     type: "contradiction_probe",
     targetCapability: contradiction.capabilityKey,
@@ -282,7 +310,7 @@ export function generateContradictionProbeSpec(
     riskLevel: "High",
     ambiguity: "high",
     intent: "contradiction_resolution",
-    mustInclude: ["governance_quality", "judgement_quality"],
+    mustInclude,
   };
 }
 

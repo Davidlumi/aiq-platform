@@ -529,10 +529,31 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     schemaRequired.push("data_context");
   }
 
-  // R5: Quality validation helper (T3-11 upgraded to retry loop)
+  // ── Canonical signal → capability map (mirrors scoringEngine.ts SIGNAL_TO_CAPABILITY) ──
+  const CANONICAL_SIGNAL_TO_CAP: Record<string, string> = {
+    execution_quality: "execution", prioritisation_quality: "execution",
+    validation_accuracy: "execution", timing_integrity: "execution", consistency_index: "execution",
+    judgement_quality: "judgement", discrimination_quality: "judgement",
+    over_caution_risk: "judgement", avoidance_risk: "judgement", calibration_index: "judgement",
+    governance_quality: "governance", over_reliance_risk: "governance",
+    blind_acceptance_risk: "governance", contradiction_index: "governance",
+    governance_bypass_risk: "governance", hallucination_acceptance_risk: "governance",
+    appropriateness_boundary: "appropriateness", automation_expansion_risk: "appropriateness",
+    cosmetic_focus_risk: "appropriateness", unsafe_hr_decision_risk: "appropriateness",
+    workflow_application_quality: "workflow",
+    data_interpretation_quality: "data_interpretation",
+  };
+  const TRIVIALLY_OBVIOUS_FAILURE_PHRASES = [
+    "ignore", "delete without", "never check", "always trust the ai",
+    "blindly accept", "no review needed", "skip validation",
+  ];
+
+  // R5 + F1 + F2: Quality validation helper
   function validateItemQuality(parsed: any): string[] {
     const opts: any[] = parsed.options ?? [];
     const errs: string[] = [];
+
+    // ── Structural checks ────────────────────────────────────────────────────
     if (opts.length !== 4) errs.push(`options.length=${opts.length} (expected 4)`);
     const strongCount = opts.filter((o: any) => o.outcomeClass === "strong").length;
     if (strongCount !== 1) errs.push(`strong options=${strongCount} (expected 1)`);
@@ -541,6 +562,86 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short (${parsed.scenario?.length ?? 0} chars)`);
     const minSignals = opts.every((o: any) => Object.keys(o.signalDeltas ?? {}).length >= 2);
     if (!minSignals) errs.push("one or more options have <2 signal deltas");
+
+    // ── F1a: Strong option must have net-positive deltas for target capability ──
+    const strongOpt = opts.find((o: any) => o.outcomeClass === "strong");
+    if (strongOpt) {
+      const deltas: Record<string, number> = strongOpt.signalDeltas ?? {};
+      const capSum = Object.entries(deltas)
+        .filter(([sig]) => CANONICAL_SIGNAL_TO_CAP[sig] === vars.targetCapability)
+        .reduce((s, [, v]) => s + (v as number), 0);
+      if (capSum < 0) {
+        errs.push(`strong option has net-negative deltas for target capability '${vars.targetCapability}' (sum=${capSum.toFixed(2)}) — strong option must demonstrate the target capability`);
+      }
+    }
+
+    // ── F1b: Failure option must have net-negative deltas for target capability ──
+    const failOpt = opts.find((o: any) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure");
+    if (failOpt) {
+      const deltas: Record<string, number> = failOpt.signalDeltas ?? {};
+      const capSum = Object.entries(deltas)
+        .filter(([sig]) => CANONICAL_SIGNAL_TO_CAP[sig] === vars.targetCapability)
+        .reduce((s, [, v]) => s + (v as number), 0);
+      if (capSum > 0) {
+        errs.push(`failure option has net-positive deltas for target capability '${vars.targetCapability}' (sum=${capSum.toFixed(2)}) — failure option must penalise the target capability`);
+      }
+    }
+
+    // ── F1c: No delta outside -3.0 to +3.0 ──────────────────────────────────
+    for (const opt of opts) {
+      for (const [sig, val] of Object.entries(opt.signalDeltas ?? {})) {
+        const v = val as number;
+        if (v < -3.0 || v > 3.0) {
+          errs.push(`option ${opt.label} signal '${sig}' delta=${v} is outside allowed range [-3.0, 3.0]`);
+        }
+      }
+    }
+
+    // ── F1d: All signal keys must be canonical ────────────────────────────────
+    for (const opt of opts) {
+      for (const sig of Object.keys(opt.signalDeltas ?? {})) {
+        if (!CANONICAL_SIGNAL_TO_CAP[sig]) {
+          errs.push(`option ${opt.label} uses non-canonical signal key '${sig}' — must be one of the 22 canonical signals`);
+        }
+      }
+    }
+
+    // ── F2a: Failure option must not contain trivially obvious failure phrases ─
+    if (failOpt) {
+      const failText = (failOpt.text ?? "").toLowerCase();
+      const obviousPhrase = TRIVIALLY_OBVIOUS_FAILURE_PHRASES.find(p => failText.includes(p));
+      if (obviousPhrase) {
+        errs.push(`failure option text contains trivially obvious phrase '${obviousPhrase}' — failure options must be plausible to someone with limited AI literacy`);
+      }
+    }
+
+    // ── F2b: No two options should be near-duplicate (>80% text overlap) ─────
+    for (let i = 0; i < opts.length; i++) {
+      for (let j = i + 1; j < opts.length; j++) {
+        const a = (opts[i].text ?? "").toLowerCase();
+        const b = (opts[j].text ?? "").toLowerCase();
+        if (a.length > 20 && b.length > 20) {
+          // Simple word-overlap check
+          const wordsA = new Set(a.split(/\s+/));
+          const wordsB = new Set(b.split(/\s+/));
+          const intersection = Array.from(wordsA).filter(w => wordsB.has(w)).length;
+          const overlap = intersection / Math.min(wordsA.size, wordsB.size);
+          if (overlap > 0.85) {
+            errs.push(`options ${opts[i].label} and ${opts[j].label} have >85% word overlap (${(overlap * 100).toFixed(0)}%) — options must be meaningfully distinct`);
+          }
+        }
+      }
+    }
+
+    // ── F2c: Strong option must not be the shortest option (a tell) ──────────
+    if (strongOpt && opts.length === 4) {
+      const lengths = opts.map((o: any) => (o.text ?? "").length);
+      const strongLength = (strongOpt.text ?? "").length;
+      if (strongLength === Math.min(...lengths) && strongLength < 60) {
+        errs.push(`strong option is the shortest option (${strongLength} chars) — this is a tell; strong options must be as detailed as other options`);
+      }
+    }
+
     return errs;
   }
 

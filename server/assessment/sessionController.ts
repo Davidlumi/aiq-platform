@@ -41,6 +41,8 @@ import {
 } from "./scoringEngine";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "./contradictionEngine";
 import { analyseGamingPatterns } from "./antiGamingEngine";
+import { computeAllPercentiles, NORM_GROUP_VERSION } from "./normEngine";
+import { applyClassificationConfidenceGate } from "./classificationConfidenceGate";
 
 // ─── Minimum Evidence Requirements ───────────────────────────────────────────
 
@@ -431,17 +433,42 @@ export class SessionController {
       roleArchetype.minimumSafeThresholds
     );
 
+    // F4: Apply classification confidence gate
+    // A "safe" classification requires compositeConfidence >= 0.55.
+    // Below that threshold the classification is downgraded to "at_risk" with a caveat.
+    // "unsafe" is never suppressed — risk signals are always surfaced.
+    // Map scoringEngine's "unknown" state to the gate's "insufficient_evidence" state.
+    const gateInputState: "safe" | "at_risk" | "unsafe" | "insufficient_evidence" =
+      readiness.state === "unknown" ? "insufficient_evidence" : readiness.state;
+    const gateResult = applyClassificationConfidenceGate(
+      gateInputState,
+      confidenceProfile.overall
+    );
+    const gatedReadiness = gateResult.wasDowngraded
+      ? { ...readiness, state: gateResult.state as typeof readiness.state }
+      : readiness;
+
+    // F3: Compute percentile ranks for all 6 capabilities
+    const percentileRanks = computeAllPercentiles(
+      capabilityScores,
+      roleArchetype.family,
+      roleArchetype.seniority
+    );
+
     // D1: Narrative — static template is a fallback only; LLM narrative is preferred
     // and surfaced at the results level (assessment.ts completeSession)
-    const narrative = selectNarrative(readiness.state, capabilityScores, roleArchetype.id);
+    const narrative = selectNarrative(gatedReadiness.state, capabilityScores, roleArchetype.id);
 
     return {
       overallScore,
       capabilityScores,
       signalScores,
-      readiness,
+      readiness: gatedReadiness,
       narrative,
       confidenceProfile,
+      confidenceGate: gateResult,
+      percentileRanks,
+      normGroupVersion: NORM_GROUP_VERSION,
       failureModes,
       contradictions,
       gamingAnalysis,

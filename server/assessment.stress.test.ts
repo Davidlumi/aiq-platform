@@ -62,9 +62,9 @@ vi.mock("./_core/llm", () => ({
             interaction_type: interactionType,
             difficulty: 3,
             options: [
-              { label: "A", text: "The email uses informal language inappropriate for senior candidates.", outcomeClass: "acceptable", signalDeltas: { quality_control: 0.3, judgement_quality: 0.2 }, eventCodes: ["QC-01"], rationale: "Acceptable but not the most critical issue." },
-              { label: "B", text: "The email contains no salary range, which is now legally required in some jurisdictions.", outcomeClass: "strong", signalDeltas: { governance_adherence: 0.8, risk_awareness: 0.5 }, eventCodes: ["GOV-01", "RISK-01"], rationale: "Correct — compliance gap is the most significant problem." },
-              { label: "C", text: "The email is too long and candidates won't read it.", outcomeClass: "weak", signalDeltas: { quality_control: -0.2, cosmetic_focus_risk: -0.3 }, eventCodes: [], rationale: "Minor cosmetic issue, not the most significant problem." },
+              { label: "A", text: "The email uses informal language inappropriate for senior candidates.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.3, judgement_quality: 0.2 }, eventCodes: ["QC-01"], rationale: "Acceptable but not the most critical issue." },
+              { label: "B", text: "The email contains no salary range, which is now legally required in some jurisdictions.", outcomeClass: "strong", signalDeltas: { governance_quality: 0.8, appropriateness_boundary: 0.5 }, eventCodes: ["GOV-01", "RISK-01"], rationale: "Correct — compliance gap is the most significant problem." },
+              { label: "C", text: "The email is too long and candidates won't read it.", outcomeClass: "weak", signalDeltas: { validation_accuracy: -0.2, cosmetic_focus_risk: -0.3 }, eventCodes: [], rationale: "Minor cosmetic issue, not the most significant problem." },
               { label: "D", text: "Send the email immediately without any review — the AI tool is reliable.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, validation_accuracy: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Critical failure — blind acceptance without any validation." },
             ],
             ...(needsAiOutput ? { ai_output: "Dear [Candidate Name],\n\nWe are excited to reach out about an exceptional opportunity for a Senior HR Business Partner at Acme Corp. This role offers a competitive package and the chance to shape our people strategy. The position reports directly to the CHRO and offers significant autonomy.\n\nPlease reply if you are interested in learning more.\n\nBest regards,\nTalent Acquisition Team" } : {}),
@@ -91,7 +91,7 @@ function mockAnswer(overrides: Partial<AnswerData> = {}): AnswerData {
     confidenceScore: 0.7,
     timeToAnswerMs: 15000,
     outcomeClass: "strong",
-    signalDeltasJson: { governance_adherence: 0.8, risk_awareness: 0.5 },
+    signalDeltasJson: { governance_quality: 0.8, judgement_quality: 0.5 },
     eventCodesJson: [],
     riskLevel: "High",
     difficulty: 3,
@@ -316,7 +316,7 @@ describe("Assessment Engine — Generation Variables", () => {
 
   it("increases difficulty for returning users with high prior scores", () => {
     const ctx = buildCtx(buildAnswerSet(5), {
-      priorCapabilityScores: { execution: 90, judgement: 88, risk: 85, workflow: 82, appropriateness: 87, governance: 91 },
+      priorCapabilityScores: { execution: 90, judgement: 88, data_interpretation: 85, workflow: 82, appropriateness: 87, governance: 91 },
     });
     const vars = selectNextGenerationVariables(ctx);
     expect(vars.difficulty).toBeGreaterThanOrEqual(2);
@@ -474,8 +474,8 @@ describe("Assessment Engine — Scoring Engine", () => {
   });
 
   it("penalises harmful answers in scoring", () => {
-    const goodAnswers = buildAnswerSet(10, { outcomeClass: "strong", signalDeltasJson: { governance_adherence: 0.8 } });
-    const badAnswers = buildAnswerSet(10, { outcomeClass: "harmful", signalDeltasJson: { governance_adherence: -0.8 } });
+    const goodAnswers = buildAnswerSet(10, { outcomeClass: "strong", signalDeltasJson: { governance_quality: 0.8 } });
+    const badAnswers = buildAnswerSet(10, { outcomeClass: "harmful", signalDeltasJson: { governance_quality: -0.8 } });
     const goodSignals = computeSignalScores(goodAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
     const badSignals = computeSignalScores(badAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
     const goodCap = computeCapabilityScores(goodSignals);
@@ -496,14 +496,14 @@ describe("Assessment Engine — Scoring Engine", () => {
 describe("Assessment Engine — Session Controller", () => {
   it("blocks completion when fewer than minimum items answered", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems - 1);
-    const state = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems);
+    const state = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems, "hr_generalist");
     expect(state.canComplete).toBe(false);
     expect(state.completionBlockers.length).toBeGreaterThan(0);
   });
 
   it("allows completion when evidence is sufficient", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems);
-    const state = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems);
+    const state = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems, "hr_generalist");
     expect(state.evidenceSufficient).toBe(true);
     expect(state.canComplete).toBe(true);
   });
@@ -525,7 +525,7 @@ describe("Assessment Engine — Session Controller", () => {
       selectedValue: "A",
       optionPosition: 1,
     });
-    const state = SessionController.computeState("s1", "u1", "bp1", rapidAnswers, MINIMUM_EVIDENCE.targetItems);
+    const state = SessionController.computeState("s1", "u1", "bp1", rapidAnswers, MINIMUM_EVIDENCE.targetItems, "hr_generalist");
     // Rapid answers should trigger gaming scrutiny
     expect(state.gamingScrutinyLevel).toBeDefined();
   });
@@ -549,7 +549,7 @@ describe("Assessment Engine — Session Controller", () => {
   it("handles a session with all weak answers (low score)", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems, {
       outcomeClass: "weak",
-      signalDeltasJson: { governance_adherence: -0.3, risk_awareness: -0.2 },
+      signalDeltasJson: { governance_quality: -0.3, judgement_quality: -0.2 },
     });
     const results = SessionController.computeResults(answers, "hrbp");
     expect(results.overallScore).toBeLessThan(60);
@@ -558,7 +558,7 @@ describe("Assessment Engine — Session Controller", () => {
   it("handles a session with all strong answers (high score)", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems, {
       outcomeClass: "strong",
-      signalDeltasJson: { governance_adherence: 0.9, risk_awareness: 0.8, quality_control: 0.7 },
+      signalDeltasJson: { governance_quality: 0.9, judgement_quality: 0.8, execution_quality: 0.7 },
     });
     const results = SessionController.computeResults(answers, "hrbp");
     expect(results.overallScore).toBeGreaterThan(50);
@@ -619,7 +619,7 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
     }
 
     // Verify session can complete
-    const state = SessionController.computeState("s1", "u1", "bp1", sessionAnswers, MINIMUM_EVIDENCE.targetItems);
+    const state = SessionController.computeState("s1", "u1", "bp1", sessionAnswers, MINIMUM_EVIDENCE.targetItems, "hrbp");
     console.log("[DEBUG] evidenceSufficient:", state.evidenceSufficient);
     console.log("[DEBUG] canComplete:", state.canComplete);
     console.log("[DEBUG] completionBlockers:", state.completionBlockers);

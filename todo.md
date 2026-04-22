@@ -412,3 +412,41 @@
 - [x] E1: Missing interaction types in INTERACTION_TYPE_TIMING_MS — timing map has old type names (ethical_dilemma, priority_ranking, output_evaluation, tool_selection, quick_fire, governance_check) that don't match current InteractionType enum; add all 11 current types with appropriate thresholds
 - [x] E2: Capability score normalisation — dynamic scale factor — `computeCapabilityScores` uses `50 + avgDelta * 12.5` which can produce scores outside 0-100 for extreme signal sums; already clamped but the scale factor (12.5) should be dynamic based on signal count to prevent dilution with many signals
 - [x] E3: Failure mode deduplication — blockCount now counts unique modes only — `detectFailureModes` can push the same mode multiple times (e.g. "blind_ai_acceptance" pushed for every answer with that signal); already deduplicated at the end but blockCount counts duplicates, inflating classification impact
+
+## CPO Credibility Improvements
+
+### F1: LLM Item Quality Gate — Signal Delta Consistency
+- [x] F1a: Validate that the `strong` option's signal deltas are net-positive for the target capability (sum of deltas for target capability signals > 0)
+- [x] F1b: Validate that the `failure`/`critical_failure` option's deltas are net-negative for the target capability
+- [x] F1c: Validate that no option has a delta outside the range -3.0 to +3.0
+- [x] F1d: Validate that all signal keys in generated deltas are canonical (exist in SIGNAL_TO_CAPABILITY map)
+- [x] F1e: On validation failure, append specific feedback to retry prompt and re-request
+
+### F2: LLM Item Quality Gate — Option Plausibility Guard
+- [x] F2a: Detect trivially obvious failure options (options containing "ignore", "delete", "never check", "always trust the AI" verbatim) and flag for retry
+- [x] F2b: Detect duplicate or near-duplicate option texts (Levenshtein distance < 20% of length) and flag for retry
+- [x] F2c: Validate that the `strong` option text is not the shortest option (a tell that it is the "safe" answer)
+
+### F3: Contradiction Detection — False Positive Guards
+- [x] F3a: Cross-capability contradiction: only fire when BOTH capabilities have ≥3 signal contributions (not just 1 answer each)
+- [x] F3b: Seniority-inconsistency: route to `learning_gap` flag rather than `contradiction` type — it should not block classification, only trigger a learning plan recommendation
+- [x] F3c: Time-pressure inconsistency: require ≥2 matching pairs before firing (not just 1 fast failure vs 1 slow success)
+
+### F4: Classification Confidence Gate
+- [x] F4a: Block `safe` classification when confidence band is `low` — return `unknown` with explanation instead
+- [x] F4b: Surface confidence band prominently in the results UI alongside the readiness state
+- [x] F4c: Add `classificationConfidence` field to the results object returned by the router
+
+### F5: Norm Group Percentile Engine
+- [x] F5a: Create `server/assessment/normEngine.ts` with a `computePercentile(score, capabilityKey, roleFamily)` function using a seeded bootstrap distribution
+- [x] F5b: Seed the norm engine with synthetic baseline distributions per role family (junior/mid/senior × 6 capabilities) derived from the scoring model's expected range
+- [x] F5c: Add `percentileRanks` to the results object so scores are contextualised (e.g. "governance: 62 — 54th percentile for HR Generalists")
+- [x] F5d: Add a schema migration to store `normGroupVersion` on the session results so future real-data recalibrations are traceable
+
+### F6: Test Suite — Fix Stale Fixtures
+- [x] F6a: Replace non-canonical signal keys (`governance_adherence`, `risk_awareness`, `quality_control`) in stress test and debug test with canonical keys from SIGNAL_TO_CAPABILITY
+- [x] F6b: Update all `computeState(...)` call sites in tests to use the new 6-argument signature with roleHint
+- [x] F6c: Add test: role-aware evidence thresholds — HRBP requires ≥4 governance signals before `evidenceSufficient`
+- [x] F6d: Add test: seniority-inconsistency detection fires when senior user has >40% failure rate
+- [x] F6e: Add test: `safe` classification is blocked when confidence band is `low`
+- [x] F6f: Add test: signal delta consistency validation rejects a `strong` option with net-negative target capability deltas
