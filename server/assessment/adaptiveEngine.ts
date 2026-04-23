@@ -166,6 +166,15 @@ export interface AdaptiveSelectionContext {
   userSeniority?: string | null;
   userAiUsageLevel?: string | null;
   priorCapabilityScores?: Record<string, number> | null;
+  // I1: Capability saturation — stop probing a capability once signalCount >= CAP_SATURATION_LIMIT
+  // I5: Workflow context rotation — avoid repeating the same workflow in consecutive items
+  // I6: Within-session difficulty escalation — track consecutive strong answers
+  // I7: Capability over-probe guard — track consecutive items per capability
+  recentWorkflows?: string[];          // last N workflow contexts used
+  consecutiveStrongAnswers?: number;   // count of consecutive strong/acceptable outcomes
+  recentCapabilities?: CapabilityKey[]; // last N capabilities targeted
+  // I4: Cross-session deduplication — static item IDs seen in prior sessions
+  priorSeenStaticItemIds?: string[];
 }
 
 export interface OrgIntent {
@@ -183,6 +192,20 @@ export const DEFAULT_ORG_INTENT: OrgIntent = {
   criticalWorkflows: ["recruitment", "employee_relations", "performance_management"],
   governanceSensitivity: "high",
 };
+
+// ─── Adaptive Guard Constants ────────────────────────────────────────────────
+
+/** I1: Maximum signal count per capability before it is considered saturated */
+export const CAP_SATURATION_LIMIT = 8;
+
+/** I7: Maximum consecutive items targeting the same capability before forced rotation */
+const MAX_CONSECUTIVE_SAME_CAPABILITY = 3;
+
+/** I6: Consecutive strong answers needed to escalate difficulty by 1 level */
+const STREAK_ESCALATION_THRESHOLD = 3;
+
+/** I5: Number of recent workflows to track for rotation guard */
+const WORKFLOW_HISTORY_WINDOW = 3;
 
 // ─── Select Next Generation Variables ────────────────────────────────────────
 
@@ -215,16 +238,37 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
     return buildVariables(cap, requiredType, ctx, phase);
   }
 
-  // Priority 4: Adaptive — target weakest capability
+  // Priority 4: Adaptive — target weakest non-saturated capability
   if (phase === "adaptive") {
-    const weakest = findWeakestCapability(ctx.capabilityScores, ctx.roleArchetype, ctx.priorCapabilityScores);
+    // I1: Exclude saturated capabilities (signalCount >= CAP_SATURATION_LIMIT)
+    const saturatedCaps = new Set(
+      Object.entries(ctx.capabilityScores)
+        .filter(([, v]) => v.signalCount >= CAP_SATURATION_LIMIT)
+        .map(([k]) => k as CapabilityKey)
+    );
+    // I7: Detect capability over-probe — if last MAX_CONSECUTIVE_SAME_CAPABILITY items targeted same cap, force rotation
+    const recentCaps = ctx.recentCapabilities ?? [];
+    const lastCap = recentCaps[recentCaps.length - 1];
+    const consecutiveSameCap = lastCap
+      ? recentCaps.slice(-MAX_CONSECUTIVE_SAME_CAPABILITY).filter(c => c === lastCap).length
+      : 0;
+    const overProbedCap = consecutiveSameCap >= MAX_CONSECUTIVE_SAME_CAPABILITY ? lastCap : null;
+    const weakest = findWeakestCapability(
+      ctx.capabilityScores,
+      ctx.roleArchetype,
+      ctx.priorCapabilityScores,
+      saturatedCaps,
+      overProbedCap ?? undefined
+    );
     const preferredTypes = CAPABILITY_INTERACTION_MAP[weakest] ?? ["situational_judgement"];
     // C3: Weight type selection by both usage count AND capability score gap.
-    // Types that have been used but haven't yet produced strong evidence are preferred.
     const weakestScore = ctx.capabilityScores[weakest]?.score ?? 50;
     const gapWeight = Math.max(0, (75 - weakestScore) / 25); // 0–1 gap urgency
     const leastUsed = findLeastUsedTypeWithGap(preferredTypes, ctx.interactionTypesUsed, gapWeight);
-    return buildVariables(weakest, leastUsed, ctx, phase, { difficulty: 2, ambiguity: "medium" });
+    // I6: Escalate difficulty if user is on a strong-answer streak
+    const streak = ctx.consecutiveStrongAnswers ?? 0;
+    const escalatedDifficulty: 1 | 2 | 3 = streak >= STREAK_ESCALATION_THRESHOLD ? 3 : 2;
+    return buildVariables(weakest, leastUsed, ctx, phase, { difficulty: escalatedDifficulty, ambiguity: "medium" });
   }
 
   // Priority 5: Validation — confirm/challenge strongest capability
@@ -753,25 +797,96 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
 }
 
 // ─── Fallback Item ────────────────────────────────────────────────────────────
+// I8: 6 capability-specific fallback templates replace the single generic item.
+// Each template targets the primary signal pattern for that capability domain.
+
+const CAPABILITY_FALLBACK_TEMPLATES: Record<CapabilityKey, (vars: GenerationVariables) => Omit<GeneratedItem, "interactionType" | "capability" | "capabilityKey" | "workflow" | "riskLevel" | "difficulty" | "metadata">> = {
+  execution: (vars) => ({
+    title: "AI Output Validation Before Use",
+    scenario: `You are a ${vars.roleArchetype.displayName}. An AI tool has produced a draft ${vars.workflowContext.replace(/_/g, " ")} document. It looks professionally formatted but you have not yet reviewed the content in detail.`,
+    constraint: "The document needs to be sent to stakeholders within the hour.",
+    question: "What is the most appropriate next step before sending?",
+    options: [
+      { label: "A", text: "Read through the document carefully, check all facts and claims, correct any issues, then send.", outcomeClass: "strong", signalDeltas: { execution_quality: 2.0, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["VALIDATE_BEFORE_USE"] as string[], rationale: "Proportionate validation before use — the correct execution pattern." },
+      { label: "B", text: "Send it immediately — the AI tool is reliable and the formatting looks right.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, validation_accuracy: -2.0 } as Record<string, number>, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance without content review — a critical execution failure." },
+      { label: "C", text: "Discard the AI draft and write the document from scratch to be safe.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 } as Record<string, number>, eventCodes: ["AI_AVOIDANCE"], rationale: "Unnecessary avoidance — discards valid AI work without cause." },
+      { label: "D", text: "Ask a colleague to review it before you send, without reviewing it yourself.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["DELEGATE_REVIEW"], rationale: "Acceptable but inefficient — you should review it yourself first." },
+    ],
+  }),
+  judgement: (vars) => ({
+    title: "Evaluating AI Recommendation Quality",
+    scenario: `You are a ${vars.roleArchetype.displayName}. An AI system has recommended a course of action for a ${vars.workflowContext.replace(/_/g, " ")} situation. The recommendation is well-structured but you are uncertain whether the AI has considered all relevant factors.`,
+    constraint: "A decision is needed before the end of the day.",
+    question: "How should you approach evaluating this AI recommendation?",
+    options: [
+      { label: "A", text: "Identify the key assumptions the AI has made, check whether they hold in this specific context, and adjust the recommendation accordingly.", outcomeClass: "strong", signalDeltas: { judgement_quality: 2.0, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["ASSUMPTION_CHECK"], rationale: "Sound judgement — tests the AI's assumptions rather than accepting the surface recommendation." },
+      { label: "B", text: "Accept the recommendation — the AI has access to more data than you do.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, judgement_quality: -2.0 } as Record<string, number>, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind deference to AI — abdicates professional judgement." },
+      { label: "C", text: "Reject the recommendation and make the decision based solely on your own experience.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, judgement_quality: -0.5 } as Record<string, number>, eventCodes: ["AI_AVOIDANCE"], rationale: "Ignores potentially valuable AI input without a substantive reason." },
+      { label: "D", text: "Ask the AI to regenerate the recommendation with different parameters.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["RERUN_WITHOUT_REVIEW"], rationale: "Acceptable but does not address the underlying uncertainty about the recommendation's validity." },
+    ],
+  }),
+  governance: (vars) => ({
+    title: "AI Use Governance Decision",
+    scenario: `You are a ${vars.roleArchetype.displayName}. A colleague wants to use an AI tool to automate a step in the ${vars.workflowContext.replace(/_/g, " ")} process that currently involves human review of sensitive employee data.`,
+    constraint: "The colleague believes this will save significant time and wants to proceed this week.",
+    question: "What is the most appropriate governance response?",
+    options: [
+      { label: "A", text: "Advise that this change requires a data protection impact assessment and formal approval before any AI automation of sensitive data review.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 } as Record<string, number>, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correct governance response — automation of sensitive data review requires formal oversight." },
+      { label: "B", text: "Allow the colleague to proceed — efficiency gains justify the change.", outcomeClass: "critical_failure", signalDeltas: { governance_bypass_risk: -3.0, unsafe_hr_decision_risk: -2.5 } as Record<string, number>, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "Critical governance failure — bypasses required oversight for sensitive data processing." },
+      { label: "C", text: "Allow a limited pilot with one employee's data to test the approach first.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.0, governance_quality: -1.5 } as Record<string, number>, eventCodes: ["PILOT_WITHOUT_APPROVAL"], rationale: "A pilot does not resolve the governance requirement — it just delays it while creating additional risk." },
+      { label: "D", text: "Block the change entirely and prohibit any AI use in this workflow.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 } as Record<string, number>, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary — the right response is governance review, not blanket prohibition." },
+    ],
+  }),
+  appropriateness: (vars) => ({
+    title: "Assessing AI Appropriateness for a Sensitive Decision",
+    scenario: `You are a ${vars.roleArchetype.displayName}. Your organisation is considering using AI to support ${vars.workflowContext.replace(/_/g, " ")} decisions that affect individual employees. The AI vendor claims high accuracy.`,
+    constraint: "Senior leadership is enthusiastic and wants a recommendation within the week.",
+    question: "What is the most appropriate response to this proposal?",
+    options: [
+      { label: "A", text: "Conduct a structured appropriateness review covering legal compliance, bias risk, explainability, and employee impact before making any recommendation.", outcomeClass: "strong", signalDeltas: { appropriateness_boundary: 2.5, governance_quality: 2.0 } as Record<string, number>, eventCodes: ["APPROPRIATENESS_REVIEW"], rationale: "Correct approach — vendor accuracy claims do not address the full range of appropriateness concerns." },
+      { label: "B", text: "Recommend adoption — high accuracy means the AI is ready to use.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, appropriateness_boundary: -2.0 } as Record<string, number>, eventCodes: ["ACCURACY_CONFLATION"], rationale: "Conflates accuracy with appropriateness — a common and serious AI literacy failure." },
+      { label: "C", text: "Recommend against AI use in any HR decision-making context.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, appropriateness_boundary: -0.5 } as Record<string, number>, eventCodes: ["BLANKET_REFUSAL"], rationale: "Overly broad — appropriateness is context-specific, not a blanket prohibition." },
+      { label: "D", text: "Ask the vendor to provide a bias audit report before deciding.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, appropriateness_boundary: 0.5 } as Record<string, number>, eventCodes: ["PARTIAL_DUE_DILIGENCE"], rationale: "A good start but incomplete — bias audit is one of several required checks." },
+    ],
+  }),
+  workflow: (vars) => ({
+    title: "AI Integration into a Multi-Step HR Workflow",
+    scenario: `You are a ${vars.roleArchetype.displayName}. You are redesigning the ${vars.workflowContext.replace(/_/g, " ")} workflow to incorporate AI assistance. You need to decide which steps AI should support and which require human ownership.`,
+    constraint: "The redesigned workflow must go live next month.",
+    question: "Which approach to AI integration is most appropriate?",
+    options: [
+      { label: "A", text: "Map each step against criteria for AI suitability (data quality, sensitivity, reversibility, explainability) and assign human ownership to steps that fail any criterion.", outcomeClass: "strong", signalDeltas: { workflow_application_quality: 2.5, governance_quality: 1.5 } as Record<string, number>, eventCodes: ["STRUCTURED_INTEGRATION"], rationale: "Systematic approach — applies clear criteria rather than intuition to AI integration decisions." },
+      { label: "B", text: "Automate all steps where the AI tool is available — maximise efficiency.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, workflow_application_quality: -2.0 } as Record<string, number>, eventCodes: ["OVER_AUTOMATION"], rationale: "Over-automation without suitability assessment — creates significant governance and quality risk." },
+      { label: "C", text: "Keep all steps human-owned and use AI only for drafting final outputs.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, workflow_application_quality: -1.0 } as Record<string, number>, eventCodes: ["UNDER_INTEGRATION"], rationale: "Under-utilises AI — misses legitimate efficiency and quality improvements." },
+      { label: "D", text: "Ask each team member which steps they would like AI to support.", outcomeClass: "acceptable", signalDeltas: { workflow_application_quality: 0.5, governance_quality: -0.5 } as Record<string, number>, eventCodes: ["PREFERENCE_BASED_INTEGRATION"], rationale: "Inclusive but insufficient — individual preferences should not be the primary driver of AI integration decisions." },
+    ],
+  }),
+  data_interpretation: (vars) => ({
+    title: "Interpreting AI-Generated Data Analysis",
+    scenario: `You are a ${vars.roleArchetype.displayName}. An AI analytics tool has produced a report on ${vars.workflowContext.replace(/_/g, " ")} outcomes, showing a strong correlation between two variables. The report suggests this correlation indicates a causal relationship.`,
+    constraint: "You need to present findings to the leadership team tomorrow.",
+    question: "How should you interpret and present this finding?",
+    options: [
+      { label: "A", text: "Present the correlation as a finding, clearly distinguish it from causation, note the AI's limitation in inferring causation, and recommend further investigation before drawing conclusions.", outcomeClass: "strong", signalDeltas: { data_interpretation_quality: 2.5, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["CORRELATION_CAUSATION_DISTINCTION"], rationale: "Correct interpretation — distinguishes correlation from causation and maintains appropriate epistemic humility." },
+      { label: "B", text: "Present the AI's causal claim directly — the tool is designed for this type of analysis.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.5, data_interpretation_quality: -2.0 } as Record<string, number>, eventCodes: ["CAUSAL_CLAIM_ACCEPTED"], rationale: "Accepts an unsupported causal claim — a fundamental data interpretation failure." },
+      { label: "C", text: "Exclude this finding from the report as the AI may have made an error.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, data_interpretation_quality: -0.5 } as Record<string, number>, eventCodes: ["FINDING_SUPPRESSED"], rationale: "Overcautious — a valid correlation finding should be reported with appropriate caveats, not suppressed." },
+      { label: "D", text: "Ask the AI to rerun the analysis to confirm the finding before presenting.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["RERUN_FOR_CONFIRMATION"], rationale: "Reasonable but insufficient — rerunning does not resolve the correlation/causation distinction." },
+    ],
+  }),
+};
 
 function generateFallbackItem(vars: GenerationVariables): GeneratedItem {
+  // I8: Use capability-specific template if available, otherwise use execution template
+  const templateFn = CAPABILITY_FALLBACK_TEMPLATES[vars.targetCapability] ?? CAPABILITY_FALLBACK_TEMPLATES.execution;
+  const template = templateFn(vars);
   return {
-    title: "AI Output Review",
-    scenario: `You are working as a ${vars.roleArchetype.displayName}. An AI tool has generated an output for a ${vars.workflowContext.replace(/_/g, " ")} task. The output looks mostly correct but you notice some elements that require attention before you can use it.`,
-    constraint: "You need to make a decision within the next few minutes.",
-    question: "What is the most appropriate action?",
+    ...template,
     interactionType: vars.interactionType,
     capability: vars.targetCapability,
     capabilityKey: vars.targetCapability,
     workflow: vars.workflowContext,
     riskLevel: vars.riskLevel,
     difficulty: vars.difficulty,
-    options: [
-      { label: "A", text: "Review the output carefully, identify any issues, correct them, and then use it.", outcomeClass: "strong", signalDeltas: { execution_quality: 1.5, validation_accuracy: 1.5, judgement_quality: 1.0 }, eventCodes: ["VALIDATE_BEFORE_USE"], rationale: "Demonstrates appropriate validation and proportionate use of AI output." },
-      { label: "B", text: "Use the output as-is since it looks correct and you trust the AI tool.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, validation_accuracy: -1.5, over_reliance_risk: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance without validation — a critical AI literacy failure." },
-      { label: "C", text: "Do not use the AI output at all and complete the task manually from scratch.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, avoidance_risk: -1.0, workflow_application_quality: -0.5 }, eventCodes: ["AI_AVOIDANCE"], rationale: "Over-caution — avoids AI entirely when proportionate use would be appropriate." },
-      { label: "D", text: "Escalate to your manager before doing anything with the output.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 0.5, over_caution_risk: -0.5, timing_integrity: -0.5 }, eventCodes: ["UNNECESSARY_ESCALATION"], rationale: "Acceptable but overly cautious — escalation is not required for this level of decision." },
-    ],
     metadata: vars,
   };
 }
@@ -781,20 +896,34 @@ function generateFallbackItem(vars: GenerationVariables): GeneratedItem {
 function findWeakestCapability(
   scores: Record<CapabilityKey, { score: number; signalCount: number }>,
   role: RoleArchetype,
-  priorCapabilityScores?: Record<string, number> | null
+  priorCapabilityScores?: Record<string, number> | null,
+  // I1: Exclude saturated capabilities
+  saturatedCaps?: Set<CapabilityKey>,
+  // I7: Exclude over-probed capability
+  overProbedCap?: CapabilityKey
 ): CapabilityKey {
-  // If current session has no evidence yet, use prior scores to target the weakest capability
+  const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+  const isExcluded = (k: CapabilityKey) =>
+    (saturatedCaps?.has(k) ?? false) || k === overProbedCap;
+  // If current session has no evidence yet, use prior scores to target the weakest non-excluded capability
   const hasCurrentEvidence = Object.values(scores).some(v => v.signalCount > 0);
   if (!hasCurrentEvidence && priorCapabilityScores && Object.keys(priorCapabilityScores).length > 0) {
-    const priorEntries = Object.entries(priorCapabilityScores) as Array<[CapabilityKey, number]>;
-    return priorEntries.sort((a, b) =>
-      (role.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1]) / 100 -
-      (role.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1]) / 100
-    )[0][0];
+    const priorEntries = (Object.entries(priorCapabilityScores) as Array<[CapabilityKey, number]>)
+      .filter(([k]) => !isExcluded(k));
+    if (priorEntries.length > 0) {
+      return priorEntries.sort((a, b) =>
+        (role.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1]) / 100 -
+        (role.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1]) / 100
+      )[0][0];
+    }
   }
-  const caps = Object.entries(scores) as Array<[CapabilityKey, { score: number; signalCount: number }]>;
-  if (caps.length === 0) return "execution";
-  return caps.sort((a, b) =>
+  const caps = (Object.entries(scores) as Array<[CapabilityKey, { score: number; signalCount: number }]>)
+    .filter(([k]) => !isExcluded(k));
+  // Fallback: if all caps are excluded (all saturated), use all caps
+  const activeCaps = caps.length > 0 ? caps :
+    (ALL_CAPS.map(k => [k, scores[k] ?? { score: 50, signalCount: 0 }] as [CapabilityKey, { score: number; signalCount: number }]));
+  if (activeCaps.length === 0) return "execution";
+  return activeCaps.sort((a, b) =>
     (role.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1].score) / 100 -
     (role.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1].score) / 100
   )[0][0];
@@ -880,7 +1009,11 @@ function buildVariables(
   const highRiskCount = ctx.riskExposure["High"] ?? 0;
   const totalAnswered = ctx.answeredCount;
   const baseDifficulty: 1 | 2 | 3 = phase === "baseline" ? 1 : phase === "adaptive" ? 2 : 3;
-  const workflowContext = role.workflows[ctx.answeredCount % role.workflows.length] ?? "general_hr";
+  // I5: Workflow rotation guard — pick a workflow not used in the last WORKFLOW_HISTORY_WINDOW items
+  const recentWorkflows = ctx.recentWorkflows ?? [];
+  const availableWorkflows = role.workflows.filter(w => !recentWorkflows.slice(-WORKFLOW_HISTORY_WINDOW).includes(w));
+  const workflowPool = availableWorkflows.length > 0 ? availableWorkflows : role.workflows;
+  const workflowContext = workflowPool[ctx.answeredCount % workflowPool.length] ?? "general_hr";
   const riskLevel: "Low" | "Medium" | "High" =
     highRiskCount < totalAnswered * 0.25 ? "High" :
     highRiskCount > totalAnswered * 0.5 ? "Low" : "Medium";

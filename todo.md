@@ -661,3 +661,16 @@
 - [ ] S12.2: Add Section 22 — Changelog v2.1 with rationale for each change
 - [ ] S12.3: Update Known Gaps section (mark addressed items, list v2.2 roadmap)
 - [ ] S12.4: Convert to PDF
+
+## Adaptive Learning Improvements (Apr 23 2026)
+
+- [x] I1: Capability saturation cap — stop probing a capability once signalCount ≥ 8 (adaptiveEngine.ts: findWeakestCapability filters saturated caps)
+- [x] I2: Wire assessment completion into AIL pipeline — processAssessmentThroughAIL called at end of completeSession (assessment.ts)
+- [x] I3: Capability-mapped learning plans — generatePlan now reads scoreBreakdownJson.capabilityScores and prioritises content tagged to weakest 3 capabilities (learning.ts: buildCapabilityMappedPlan)
+- [x] I4: Cross-session item deduplication — priorSeenStaticItemIds loaded at session start from prior completed sessions; passed to getEmergencyFallbackItem (assessment.ts)
+- [x] I5: Workflow context rotation guard — recentWorkflowContexts tracked in session metadata; buildVariables avoids repeating same workflow context in consecutive items (adaptiveEngine.ts)
+- [x] I6: Within-session difficulty escalation — consecutiveStrongAnswers tracked; after 3 consecutive strong answers difficulty increases by 1 (adaptiveEngine.ts + assessment.ts)
+- [x] I7: Capability over-probe guard — consecutiveCapabilityProbes tracked; after 3 consecutive items on same capability, engine rotates to next weakest (adaptiveEngine.ts + assessment.ts)
+- [x] I8: Fallback item diversity — 6 capability-specific fallback templates (execution, judgement, risk, workflow, appropriateness, data) replace 1 generic template (adaptiveEngine.ts: generateFallbackItem)
+- [x] I9: Learning plan completion trigger — updateProgress auto-marks plan as completed and regenerates a new capability-mapped plan when all required items are done (learning.ts)
+- [x] I10: Persona classification engine wired into assessment difficulty — getPersonaAdaptedParameters called at session start; personaDifficultyOffset applied to starting difficulty (assessment.ts)

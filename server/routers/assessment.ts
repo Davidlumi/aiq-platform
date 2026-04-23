@@ -73,6 +73,10 @@ import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
 import type { CapabilityKey } from "../assessment/roleArchetypes";
+// I2: AIL bridge — wire assessment completion into the AIL pipeline
+import { processAssessmentThroughAIL } from "../ail/userIntelligenceProfile";
+// I10: Persona classification — use persona profile to influence assessment difficulty
+import { getPersonaProfile, getPersonaAdaptedParameters } from "../ail/personaClassificationEngine";
 
 // ─── Capability Display + Colour Maps ────────────────────────────────────────
 
@@ -322,7 +326,9 @@ function buildAdaptiveContext(
     aiAmbition?: string | null;
     strategicPriorities?: string[] | null;
     governanceSensitivity?: "low" | "medium" | "high" | "critical";
-  } | null
+  } | null,
+  // I4/I5/I6/I7: Session tracking state for adaptive improvements
+  sessionMetaForTracking?: Record<string, unknown> | null
 ): { ctx: AdaptiveSelectionContext; generationVars: ReturnType<typeof selectNextGenerationVariables> } {
   const signalScores = computeSignalScores(
     answers.map(a => ({
@@ -405,6 +411,12 @@ function buildAdaptiveContext(
     userSeniority: userProfile.seniority,
     userAiUsageLevel: userProfile.aiUsageLevel,
     priorCapabilityScores,
+    // I4: Cross-session deduplication
+    priorSeenStaticItemIds: (sessionMetaForTracking?.priorSeenStaticItemIds as string[]) ?? [],
+    // I5/I6/I7: Within-session tracking state
+    recentWorkflows: (sessionMetaForTracking?.recentWorkflows as string[]) ?? [],
+    consecutiveStrongAnswers: (sessionMetaForTracking?.consecutiveStrongAnswers as number) ?? 0,
+    recentCapabilities: (sessionMetaForTracking?.recentCapabilities as CapabilityKey[]) ?? [],
   };
 
   const generationVars = selectNextGenerationVariables(ctx);
@@ -417,7 +429,9 @@ async function getEmergencyFallbackItem(
   blueprintId: string,
   answeredItemIds: string[],
   answeredCount: number,
-  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  // I4: Cross-session deduplication — exclude static items seen in prior sessions
+  priorSeenStaticItemIds: string[] = []
 ): Promise<NextItem | null> {
   const allStaticItems = await db
     .select({ id: assessmentItems.id, metadataJson: assessmentItems.metadataJson })
@@ -429,9 +443,15 @@ async function getEmergencyFallbackItem(
         notLike(assessmentItems.id, "gen-%")
       )
     );
-  const unanswered = allStaticItems
-    .filter(i => !answeredItemIds.includes(i.id))
-    .sort((a, b) => {
+  const allExcluded = new Set([...answeredItemIds, ...priorSeenStaticItemIds]);
+  // First try to find items not seen in this session OR prior sessions
+  let unanswered = allStaticItems
+    .filter(i => !allExcluded.has(i.id));
+  // If all items have been seen across sessions, fall back to only excluding current-session items
+  if (unanswered.length === 0) {
+    unanswered = allStaticItems.filter(i => !answeredItemIds.includes(i.id));
+  }
+  unanswered.sort((a, b) => {
       let ma: Record<string, unknown> = {}, mb: Record<string, unknown> = {};
       try { ma = (typeof a.metadataJson === "string" ? JSON.parse(a.metadataJson as string) : (a.metadataJson ?? {})) as Record<string, unknown>; } catch {}
       try { mb = (typeof b.metadataJson === "string" ? JSON.parse(b.metadataJson as string) : (b.metadataJson ?? {})) as Record<string, unknown>; } catch {}
@@ -625,6 +645,41 @@ export const assessmentRouter = router({
         }
       }
 
+      // I4: Cross-session deduplication — load static item IDs seen in prior sessions
+      let priorSeenStaticItemIds: string[] = [];
+      if (priorSessions.length > 0) {
+        const priorSessionIds = priorSessions.map(s => s.id);
+        try {
+          const priorAnswers = await db
+            .select({ itemId: assessmentAnswers.itemId })
+            .from(assessmentAnswers)
+            .where(
+              and(
+                ...priorSessionIds.map(sid => eq(assessmentAnswers.sessionId, sid))
+              )
+            );
+          // Only deduplicate static items (not LLM-generated ones which start with gen-)
+          priorSeenStaticItemIds = Array.from(new Set(
+            priorAnswers
+              .map(a => a.itemId)
+              .filter(id => !id.startsWith("gen-") && !id.startsWith("cs-"))
+          ));
+        } catch {}
+      }
+      // I10: Persona-adapted difficulty — load persona profile and use it to influence starting difficulty
+      let personaStartingDifficulty: 1 | 2 | 3 = 1;
+      let personaTimePressure = false;
+      if (personaAdaptationActive) {
+        try {
+          const personaProfile = await getPersonaProfile(ctx.user.id);
+          if (personaProfile && personaProfile.primaryPersona !== "unclassified") {
+            const adapted = getPersonaAdaptedParameters(personaProfile.primaryPersona);
+            // Map persona time pressure to starting difficulty
+            personaStartingDifficulty = adapted.timePressure === "high" ? 2 : 1;
+            personaTimePressure = adapted.timePressure !== "low";
+          }
+        } catch {}
+      }
       const sessionId = nanoid();
       await db.insert(assessmentSessions).values({
         id: sessionId,
@@ -641,6 +696,15 @@ export const assessmentRouter = router({
           priorCapabilityScores,
           // S9: Record whether persona adaptation was active for this session
           personaAdaptationActive,
+          // I4: Cross-session deduplication
+          priorSeenStaticItemIds,
+          // I10: Persona-adapted starting difficulty
+          personaStartingDifficulty,
+          personaTimePressure,
+          // I6/I7: Tracking state for within-session difficulty escalation and over-probe guard
+          consecutiveStrongAnswers: 0,
+          recentCapabilities: [] as string[],
+          recentWorkflows: [] as string[],
           pendingNextItem: null,
         },
       });
@@ -765,7 +829,8 @@ export const assessmentRouter = router({
               roleHint,
               userProfile,
               priorCapabilityScores,
-              orgCtx
+              orgCtx,
+              meta // I4/I5/I6/I7: pass session tracking state
             );
             // C2.2: Pass org context fields into generation vars for LLM prompt
             if (orgCtx) {
@@ -789,11 +854,14 @@ export const assessmentRouter = router({
 
         // ── Step 3: Emergency fallback — static item ──────────────────────────
         if (!nextItem) {
+          // I4: Pass prior-session seen items to avoid repeating static items
+          const priorSeenIds = (meta.priorSeenStaticItemIds as string[]) ?? [];
           nextItem = await getEmergencyFallbackItem(
             session[0].blueprintId,
             answeredItemIds,
             answeredCount,
-            db
+            db,
+            priorSeenIds
           );
         }
       }
@@ -963,20 +1031,20 @@ export const assessmentRouter = router({
               strategicPriorities: (() => { try { return JSON.parse(preGenOrgContextRow[0].strategicPrioritiesJson ?? "[]") as string[]; } catch { return null; } })(),
               governanceSensitivity: (preGenOrgContextRow[0].riskAppetiteOverall === "risk_averse" ? "critical" : preGenOrgContextRow[0].riskAppetiteOverall === "risk_tolerant" ? "medium" : "high") as "low" | "medium" | "high" | "critical",
             } : null;
-            const { generationVars } = buildAdaptiveContext(
+              const { generationVars, ctx: adaptiveCtx } = buildAdaptiveContext(
               answers,
               newAnsweredCount,
               roleHint,
               userProfile,
               priorCapabilityScores,
-              preGenOrgCtx
+              preGenOrgCtx,
+              sessionMeta // I4/I5/I6/I7: pass session tracking state
             );
             if (preGenOrgCtx) {
               (generationVars as any).orgAiTools = preGenOrgCtx.aiTools;
               (generationVars as any).orgAiAmbition = preGenOrgCtx.aiAmbition;
               (generationVars as any).orgStrategicPriorities = preGenOrgCtx.strategicPriorities;
             }
-
             const generated = await generateAdaptiveItem(generationVars);
             const pendingItem = await persistAndBuildNextItem(
               generated,
@@ -986,17 +1054,29 @@ export const assessmentRouter = router({
               generationVars.evidenceObjective,
               db
             );
-
-            // Store the pre-generated item in session metadata
+            // I6/I7: Update within-session tracking state
+            const lastAnswer = answers[answers.length - 1];
+            const lastOutcome = lastAnswer?.outcomeClass ?? null;
+            const prevConsecutive = (sessionMeta.consecutiveStrongAnswers as number) ?? 0;
+            const newConsecutive = lastOutcome === "strong" ? prevConsecutive + 1 : 0;
+            const prevRecentCaps = (sessionMeta.recentCapabilities as string[]) ?? [];
+            const newRecentCaps = [...prevRecentCaps.slice(-4), generationVars.targetCapability];
+            const prevRecentWorkflows = (sessionMeta.recentWorkflows as string[]) ?? [];
+            const newRecentWorkflows = [...prevRecentWorkflows.slice(-4), generationVars.workflowContext];
+            // Store the pre-generated item and updated tracking state in session metadata
             await db
               .update(assessmentSessions)
               .set({
                 sessionMetadataJson: {
                   ...sessionMeta,
                   pendingNextItem: pendingItem,
+                  consecutiveStrongAnswers: newConsecutive,
+                  recentCapabilities: newRecentCaps,
+                  recentWorkflows: newRecentWorkflows,
                 },
               })
               .where(eq(assessmentSessions.id, input.sessionId));
+            void adaptiveCtx; // suppress unused warning
           } catch (err) {
             console.error("[assessment.submitAnswer] Pre-generation failed (non-fatal):", err);
           }
@@ -1373,11 +1453,36 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           triggerReason,
           status: "pending",
         });
-      } catch (revalErr) {
+       } catch (revalErr) {
         // Non-fatal — log but do not block session completion
         console.warn("[assessment] R11: Failed to create revalidation schedule:", revalErr);
       }
-
+      // I2: Wire assessment completion into the AIL pipeline (non-fatal, fire-and-forget)
+      try {
+        // Build signal deltas from all answers for the AIL signal ledger
+        const ailSignalDeltas: Record<string, number> = {};
+        for (const ans of answers) {
+          try {
+            const deltas = typeof ans.signalDeltasJson === "string"
+              ? JSON.parse(ans.signalDeltasJson as string) as Record<string, number>
+              : (ans.signalDeltasJson as Record<string, number>) ?? {};
+            for (const [k, v] of Object.entries(deltas)) {
+              ailSignalDeltas[k] = (ailSignalDeltas[k] ?? 0) + v;
+            }
+          } catch {}
+        }
+        const ailFailureModes = results.failureModes.modes ?? [];
+        await processAssessmentThroughAIL({
+          userId: ctx.user.id,
+          tenantId: ctx.user.tenantId,
+          assessmentId: input.sessionId,
+          signalDeltas: ailSignalDeltas,
+          failureModesTriggered: ailFailureModes,
+          finalScore: results.overallScore,
+        });
+      } catch (ailErr) {
+        console.warn("[assessment] I2: AIL bridge call failed (non-fatal):", ailErr);
+      }
       return {
         overallScore: results.overallScore,
         credibilityScore,
