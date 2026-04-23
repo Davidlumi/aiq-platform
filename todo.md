@@ -579,3 +579,85 @@
 - [x] RR2: Build `ReasoningTab` component in BackOfficePage — filterable table/card view: filter by org, user, capability, interaction_type, readiness state; each row expandable to show full scenario, selected option, reasoning text, confidence, and time
 - [x] RR3: Wire ReasoningTab into BackOfficePage as a new "Reasoning Review" tab
 - [ ] RR4: Add vitest test for listReasoningAnswers procedure (pending)
+
+## v2.1 Remediation and Calibration Cycle (Apr 23 2026)
+
+### S1 — Score Transform Calibration Infrastructure
+- [ ] S1.1: Migration 0011 — scoring_config table (id, version, intercept, multiplier, is_active, calibration_source, calibration_sample_size, calibrated_at, notes)
+- [ ] S1.2: Migration 0012 — scoringConfigVersion column on assessment_scores
+- [ ] S1.3: Refactor computeCapabilityScore to read active scoring_config row; replace hard-coded 50+Σ/count×50 with intercept+Σ/count×multiplier
+- [ ] S1.4: Back-office admin tab showing current config, history, and scaffolded proposed-calibration section
+- [ ] S1.5: Unit test — updating scoring config produces predictably different output on fixed input
+
+### S2 — Confidence Floor on Readiness Classification
+- [ ] S2.1: Add unknown_insufficient_evidence as canonical readiness state
+- [ ] S2.2: Add confidence-floor check (< 0.50) before readiness precedence hierarchy; return diagnostic payload with 2 weakest factors and suggested actions
+- [ ] S2.3: Update narrative generator for unknown_insufficient_evidence state
+- [ ] S2.4: Update results UI ReadinessCard to render new state with neutral styling
+- [ ] S2.5: Stress test — low-confidence session returns unknown_insufficient_evidence
+
+### S3 — Governing Constraint Field
+- [ ] S3.1: Extend results record with governing_constraint field (capability, score, band, threshold_required, gap, drove_classification)
+- [ ] S3.2: Populate governing_constraint on every classification (weakest domain for safe, governing domain for others)
+- [ ] S3.3: Update results UI header to show governing constraint line when classification != safe
+- [ ] S3.4: Update LLM narrative prompt to reference governing constraint by name in first sentence
+
+### S4 — Required Reasoning on High-Signal Items
+- [ ] S4.1: Migration 0013 — reasoning_required boolean column on assessment_items (default false)
+- [ ] S4.2: Set reasoning_required = true for high/critical risk items, validation phase items, governance_decision and risk_judgement types
+- [ ] S4.3: Session UI — show required reasoning textarea by default when reasoning_required = true; disable submit until >=40 chars
+- [ ] S4.4: submitAnswer server-side validation — reject if reasoning_required and reasoning_text < 40 chars
+- [ ] S4.5: Add reasoning_completeness factor (weight 0.05) to confidence profile; redistribute evidence_depth 0.25 -> 0.20
+- [ ] S4.6: Vitest tests for required reasoning validation
+
+### S5 — Replace Precise Synthetic Percentiles with Bands
+- [ ] S5.1: Add percentile_band computed property to capability results (top_quartile/above_average/below_average/bottom_quartile)
+- [ ] S5.2: Update results UI — stop showing precise percentile numbers; show band with "(provisional benchmark)" label and tooltip
+- [ ] S5.3: Keep precise_percentile_provisional in API payload for analytics
+- [ ] S5.4: Add ProvisionalBanner component — shown when normGroupVersion <= 1
+- [ ] S5.5: Update results page to show provisional banner
+
+### S6 — Soften Governance Action Language
+- [ ] S6.1: Update governance actions to recommended language (Safe/Developing/At Risk/Unsafe/Unknown)
+- [ ] S6.2: Update all user-facing surfaces (results page, narrative generator)
+- [ ] S6.3: Add footer disclaimer on results page
+- [ ] S6.4: Grep and remove all "suspended", "mandatory", "restricted use", "governance hold" from user-facing strings
+
+### S7 — Structured Role Picker
+- [ ] S7.1: Migration 0014 — role_archetype_id column on assessment_sessions; role_hint_freetext for telemetry
+- [ ] S7.2: Build RolePicker component — 2-step: family picker -> role picker; free-text fallback
+- [ ] S7.3: Update ProfilingModal to use RolePicker
+- [ ] S7.4: Remove keyword-match resolveRoleArchetype from hot path; retain as legacy utility
+
+### S8 — Baseline Sector Tagging
+- [ ] S8.1: Migration 0015 — sector_applicability JSON array + tool_agnostic boolean on content_scenarios
+- [ ] S8.2: Seed sector_vocabulary reference table (10 sectors)
+- [ ] S8.3: Update baseline item selector with 3-tier preference (sector-specific -> tool-agnostic -> any)
+- [ ] S8.4: Audit existing 79 scenarios; flag 10-15 sector-specific ones; TODO content review for 20 new sector scenarios
+
+### S9 — AIL Persona Adaptation Feature Flag
+- [ ] S9.1: Add ail.persona_adaptation_enabled feature flag (default false)
+- [ ] S9.2: Gate persona-based difficulty adjustment behind flag; always compute and persist persona
+- [ ] S9.3: Add gating threshold check (>=100 sessions per persona) on admin scoring config page
+- [ ] S9.4: Add in-code comment on OverCautious persona risk for governance-heavy roles
+
+### S10 — Organisation-Configurable Thresholds
+- [ ] S10.1: Migration 0016 — organisation_capability_thresholds table (org_id, archetype_id, capability, minimum_safe_threshold)
+- [ ] S10.2: API validation — org thresholds must be >= archetype default
+- [ ] S10.3: Readiness classification and narrative consume org threshold override where present
+- [ ] S10.4: Admin UI /admin/thresholds — 22x6 grid, read-only defaults, editable overrides, audit log
+- [ ] S10.5: Narrative references org-override when it is the governing constraint
+
+### S11 — Content Library Expansion
+- [ ] S11.1: Author 8 prioritisation items across mixed HR domains
+- [ ] S11.2: Author 6 confidence_calibration items
+- [ ] S11.3: Author 4 additional error_detection items
+- [ ] S11.4: Author 4 additional output_improvement items
+- [ ] S11.5: Seed all 22 new items into content_scenarios with correct tags
+- [ ] S11.6: Add CI check — content library must have >=5 items per required interaction type
+
+### S12 — Documentation
+- [ ] S12.1: Update architecture document to v2.1 (all 12 sections reflected)
+- [ ] S12.2: Add Section 22 — Changelog v2.1 with rationale for each change
+- [ ] S12.3: Update Known Gaps section (mark addressed items, list v2.2 roadmap)
+- [ ] S12.4: Convert to PDF

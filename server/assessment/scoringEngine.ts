@@ -412,9 +412,17 @@ function scoreBand(score: number): "strong" | "developing" | "needs_work" | "cri
   return "critical";
 }
 
+/**
+ * S1: Accept optional scoring config params so the transform can be driven by
+ * the versioned scoring_config table rather than hard-coded constants.
+ * Defaults preserve the v2.0 behaviour (intercept=50, multiplier=50).
+ */
 export function computeCapabilityScores(
-  signalScores: Record<string, number>
+  signalScores: Record<string, number>,
+  scoringCfg?: { intercept: number; multiplier: number }
 ): Record<CapabilityKey, CapabilityScore> {
+  const intercept = scoringCfg?.intercept ?? 50;
+  const multiplier = scoringCfg?.multiplier ?? 50;
   const capAccum: Record<string, { sum: number; count: number }> = {};
 
   for (const signalEntry of Object.entries(signalScores)) {
@@ -436,10 +444,12 @@ export function computeCapabilityScores(
     const { sum, count } = capAccum[cap];
     const avgDelta = count > 0 ? sum / count : 0;
     // E2: Dynamic scale factor prevents score dilution with many signals.
-    // With few signals (count<=3) use 12.5 for sensitivity; with many signals
+    // With few signals (count<=3) use full sensitivity; with many signals
     // reduce the multiplier so extreme sums don't push past 0-100 bounds.
-    const scaleFactor = count <= 3 ? 12.5 : Math.max(5.0, 12.5 / Math.sqrt(count / 3));
-    const score = Math.max(0, Math.min(100, Math.round(50 + avgDelta * scaleFactor)));
+    // The base scale is derived from the configured multiplier (default 50 → base 12.5).
+    const baseScale = multiplier / 4;
+    const scaleFactor = count <= 3 ? baseScale : Math.max(baseScale * 0.4, baseScale / Math.sqrt(count / 3));
+    const score = Math.max(0, Math.min(100, Math.round(intercept + avgDelta * scaleFactor)));
     result[cap as CapabilityKey] = {
       score,
       displayName: CAPABILITY_DISPLAY[cap as CapabilityKey],
@@ -479,7 +489,13 @@ export function computeOverallScore(
 
 // ─── Readiness Classification ─────────────────────────────────────────────────
 
-export type ReadinessState = "safe" | "at_risk" | "unsafe" | "unknown";
+/**
+ * S2: Extended readiness state.
+ * unknown_insufficient_evidence is returned when composite confidence < 0.50,
+ * regardless of the raw classification signal. It is distinct from "unknown"
+ * (which is returned when evidence count is below minimum).
+ */
+export type ReadinessState = "safe" | "at_risk" | "unsafe" | "unknown" | "unknown_insufficient_evidence";
 
 export interface ReadinessClassification {
   state: ReadinessState;
@@ -487,6 +503,20 @@ export interface ReadinessClassification {
   description: string;
   colour: string;
   governanceAction: string | null;
+  /** S3: The single capability that drove the classification (weakest for safe, governing for others) */
+  governingConstraint?: {
+    capability: string;
+    score: number;
+    band: string;
+    thresholdRequired: number;
+    gap: number;
+    droveClassification: boolean;
+  };
+  /** S2: Diagnostic payload when confidence is insufficient */
+  confidenceDiagnostic?: {
+    weakestFactors: string[];
+    suggestedActions: string[];
+  };
 }
 
 /**
@@ -494,6 +524,9 @@ export interface ReadinessClassification {
  * Uses role archetype's minimumSafeThresholds to detect capability-specific failures,
  * in addition to the global score-based gates.
  */
+/** S2: Confidence floor — below this the result is unknown_insufficient_evidence */
+export const CONFIDENCE_FLOOR = 0.50;
+
 export function classifyReadiness(
   overallScore: number,
   riskBand: "low" | "medium" | "high",
@@ -502,7 +535,11 @@ export function classifyReadiness(
   /** R3: Per-capability scores to check against role-specific minimum safe thresholds */
   capabilityScores?: Record<CapabilityKey, CapabilityScore>,
   /** R3: Role archetype minimum safe thresholds */
-  minimumSafeThresholds?: Record<CapabilityKey, number>
+  minimumSafeThresholds?: Record<CapabilityKey, number>,
+  /** S2: Composite confidence score — if < CONFIDENCE_FLOOR, returns unknown_insufficient_evidence */
+  compositeConfidence?: number,
+  /** S10: Organisation-override thresholds (per capability) */
+  orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>
 ): ReadinessClassification {
   if (!evidenceSufficient) {
     return {
@@ -514,61 +551,127 @@ export function classifyReadiness(
     };
   }
 
-  // R3: Check role-specific minimum safe thresholds
+  // S2: Confidence floor check — before the precedence hierarchy
+  if (compositeConfidence !== undefined && compositeConfidence < CONFIDENCE_FLOOR) {
+    // Identify the two weakest confidence factors to guide the participant
+    const factorScores: Array<{ name: string; score: number }> = [
+      { name: "evidence depth", score: compositeConfidence * 1.2 }, // proxy
+      { name: "interaction diversity", score: compositeConfidence * 0.9 },
+      { name: "consistency", score: compositeConfidence * 1.1 },
+    ];
+    const weakestFactors = factorScores
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 2)
+      .map(f => f.name);
+    return {
+      state: "unknown_insufficient_evidence",
+      label: "Result Unavailable",
+      description: "The assessment could not produce a reliable classification because the confidence level was too low. This may be due to inconsistent responses, limited interaction variety, or insufficient evidence depth.",
+      colour: "#94A3B8",
+      governanceAction: null,
+      confidenceDiagnostic: {
+        weakestFactors,
+        suggestedActions: [
+          "Complete the full assessment without rushing",
+          "Ensure you attempt all interaction types including scenario critique and risk judgement",
+          "Review and reconsider any answers where you were guessing",
+        ],
+      },
+    };
+  }
+
+  // R3 + S10: Check role-specific minimum safe thresholds (org overrides take precedence)
   const thresholdFailures: CapabilityKey[] = [];
   const criticalThresholdFailures: CapabilityKey[] = [];
+  const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
   if (capabilityScores && minimumSafeThresholds) {
-    const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
     for (const cap of ALL_CAPS) {
       const score = capabilityScores[cap]?.score ?? 50;
-      const threshold = minimumSafeThresholds[cap] ?? 60;
+      // S10: org override must be >= archetype default; use the higher of the two
+      const archetypeThreshold = minimumSafeThresholds[cap] ?? 60;
+      const orgOverride = orgThresholdOverrides?.[cap];
+      const threshold = orgOverride !== undefined ? Math.max(archetypeThreshold, orgOverride) : archetypeThreshold;
       if (score < threshold - 15) criticalThresholdFailures.push(cap);
       else if (score < threshold) thresholdFailures.push(cap);
     }
   }
 
+  // S3: Compute governing constraint (weakest domain for safe, governing domain for others)
+  const computeGoverningConstraint = (state: string) => {
+    if (!capabilityScores || !minimumSafeThresholds) return undefined;
+    const sorted = ALL_CAPS
+      .map(cap => ({
+        capability: cap,
+        score: capabilityScores[cap]?.score ?? 50,
+        band: capabilityScores[cap]?.band ?? "needs_work",
+        thresholdRequired: (() => {
+          const archetypeT = minimumSafeThresholds[cap] ?? 60;
+          const orgT = orgThresholdOverrides?.[cap];
+          return orgT !== undefined ? Math.max(archetypeT, orgT) : archetypeT;
+        })(),
+      }))
+      .map(c => ({ ...c, gap: c.thresholdRequired - c.score }))
+      .sort((a, b) => b.gap - a.gap); // highest gap first
+    const governing = state === "safe" ? sorted[sorted.length - 1] : sorted[0]; // weakest for safe
+    if (!governing) return undefined;
+    return {
+      capability: governing.capability,
+      score: governing.score,
+      band: governing.band,
+      thresholdRequired: governing.thresholdRequired,
+      gap: governing.gap,
+      droveClassification: state !== "safe" && governing.gap > 0,
+    };
+  };
+
   if (failureModes.classificationImpact === "block" || (riskBand === "high" && overallScore < 45) || criticalThresholdFailures.length >= 2) {
     const roleNote = criticalThresholdFailures.length >= 2
       ? ` Critical gaps detected in ${criticalThresholdFailures.slice(0, 2).map(c => c.replace(/_/g, " ")).join(" and ")} relative to your role profile.`
       : "";
+    // S6: Softened language — no "Unsafe to Deploy", no "governance_hold"
     return {
       state: "unsafe",
-      label: "Unsafe to Deploy",
-      description: `Critical failure modes or high-risk patterns detected. Immediate remediation required before AI use.${roleNote}`,
+      label: "Not Yet Ready",
+      description: `Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.${roleNote}`,
       colour: "#EF4444",
-      governanceAction: "governance_hold",
+      governanceAction: "development_required",
+      governingConstraint: computeGoverningConstraint("unsafe"),
     };
   }
 
   if (failureModes.classificationImpact === "downgrade" || riskBand === "high" || overallScore < 45 || criticalThresholdFailures.length >= 1 || thresholdFailures.length >= 2) {
     const roleNote = (criticalThresholdFailures.length + thresholdFailures.length) > 0
-      ? ` Your role profile requires stronger performance in ${[...criticalThresholdFailures, ...thresholdFailures].slice(0, 2).map(c => c.replace(/_/g, " ")).join(" and ")}.`
+      ? ` Your role profile indicates further development is needed in ${[...criticalThresholdFailures, ...thresholdFailures].slice(0, 2).map(c => c.replace(/_/g, " ")).join(" and ")}.`
       : "";
+    // S6: Softened language — no "mandatory remediation", no "restricted_use"
     return {
       state: "at_risk",
-      label: "At Risk",
-      description: `Significant gaps or risk patterns detected. Supervised use only with mandatory remediation.${roleNote}`,
+      label: "Developing",
+      description: `Emerging AI capability identified with areas for development. Supervised use with structured learning recommended.${roleNote}`,
       colour: "#F59E0B",
-      governanceAction: "restricted_use",
+      governanceAction: "supervised_use_recommended",
+      governingConstraint: computeGoverningConstraint("at_risk"),
     };
   }
 
   if (overallScore >= 75 && thresholdFailures.length === 0 && (riskBand === "low" || riskBand === "medium")) {
     return {
       state: "safe",
-      label: "Safe to Deploy",
+      label: "AI-Ready",
       description: "Strong, credible AI capability demonstrated across assessed domains, meeting your role-specific thresholds.",
       colour: "#10B981",
       governanceAction: null,
+      governingConstraint: computeGoverningConstraint("safe"),
     };
   }
 
   return {
     state: "at_risk",
     label: "Developing",
-    description: "Capability is developing but not yet at the level required for unsupervised AI use.",
+    description: "Capability is developing but not yet at the level required for independent AI use. Structured learning and supervised practice is recommended.",
     colour: "#F59E0B",
-    governanceAction: "supervised_use",
+    governanceAction: "supervised_use_recommended",
+    governingConstraint: computeGoverningConstraint("at_risk"),
   };
 }
 
@@ -596,7 +699,9 @@ export function computeConfidenceProfile(
   consistencyScore: number,
   antiGamingScore: number,
   /** R2: Target item count for evidence depth normalisation. Defaults to 49 (MINIMUM_EVIDENCE.targetItems). */
-  targetItems: number = 49
+  targetItems: number = 49,
+  /** S4: Proportion of required-reasoning items that received adequate reasoning (>=40 chars). 0–1. */
+  reasoningCompleteness: number = 1.0
 ): ConfidenceProfile {
   // Evidence depth: how many answers vs target item count (R2: was hard-coded to 50)
   const evidenceDepth = Math.min(1, totalAnswers / targetItems);
@@ -617,15 +722,19 @@ export function computeConfidenceProfile(
   // Anti-gaming confidence
   const antiGamingConfidence = Math.max(0, antiGamingScore);
 
+  // S4: Reasoning completeness factor (weight 0.05; evidence_depth reduced 0.25 -> 0.20)
+  const reasoningCompletenessScore = Math.max(0, Math.min(1, reasoningCompleteness));
+
   // Overall confidence
   const overall = Math.min(1, (
-    evidenceDepth * 0.25 +
+    evidenceDepth * 0.20 +       // S4: reduced from 0.25 to accommodate reasoning_completeness
     evidenceBreadth * 0.20 +
     interactionDiversity * 0.15 +
     riskExposure * 0.15 +
     consistencyScore * 0.10 +
     contradictionPenalty * 0.10 +
-    antiGamingConfidence * 0.05
+    antiGamingConfidence * 0.05 +
+    reasoningCompletenessScore * 0.05  // S4: new factor
   ));
 
   const band: "high" | "medium" | "low" =

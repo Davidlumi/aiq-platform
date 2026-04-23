@@ -6,7 +6,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems } from "../../drizzle/schema";
+import {
+  tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems,
+  scoringConfig, organisationCapabilityThresholds, sectorVocabulary,
+} from "../../drizzle/schema";
 import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { hashPassword, generateResetToken } from "../auth";
@@ -411,6 +414,131 @@ export const backofficeRouter = router({
       const paginated = enriched.slice((page - 1) * pageSize, page * pageSize);
       return { records: paginated, total, page, pageSize };
     }),
+
+  // ── S1: Scoring Config Management ───────────────────────────────────────────
+
+  listScoringConfigs: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+    return db.select().from(scoringConfig).orderBy(desc(scoringConfig.createdAt));
+  }),
+
+  createScoringConfig: protectedProcedure
+    .input(z.object({
+      version: z.string().min(1),
+      intercept: z.number().min(0).max(100),
+      multiplier: z.number().min(0.1).max(5),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      // Deactivate all existing configs
+      await db.update(scoringConfig).set({ isActive: false });
+      const id = nanoid();
+      // scoringConfig uses int autoincrement id; version must be int
+      const versionNum = parseInt(input.version, 10) || 1;
+      await db.insert(scoringConfig).values({
+        version: versionNum,
+        capabilityScoreIntercept: input.intercept.toString() as any,
+        capabilityScoreMultiplier: input.multiplier.toString() as any,
+        isActive: true,
+        notes: input.description ?? null,
+        calibrationSource: "synthetic_default",
+      });
+      return { success: true };
+    }),
+
+  activateScoringConfig: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      await db.update(scoringConfig).set({ isActive: false });
+      const idNum = parseInt(input.id, 10);
+      await db.update(scoringConfig).set({ isActive: true }).where(eq(scoringConfig.id, idNum));
+      return { success: true };
+    }),
+
+  // ── S10: Org Capability Thresholds ─────────────────────────────────────────
+
+  listOrgThresholds: protectedProcedure
+    .input(z.object({ orgId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      return db
+        .select()
+        .from(organisationCapabilityThresholds)
+        .where(eq(organisationCapabilityThresholds.orgId, input.orgId));
+    }),
+
+  upsertOrgThreshold: protectedProcedure
+    .input(z.object({
+      orgId: z.string(),
+      archetypeId: z.string(),
+      capability: z.string(),
+      minimumSafeThreshold: z.number().min(0).max(100),
+      rationale: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      // Check if row exists
+      const existing = await db
+        .select({ id: organisationCapabilityThresholds.id })
+        .from(organisationCapabilityThresholds)
+        .where(and(
+          eq(organisationCapabilityThresholds.orgId, input.orgId),
+          eq(organisationCapabilityThresholds.archetypeId, input.archetypeId),
+          eq(organisationCapabilityThresholds.capability, input.capability)
+        ));
+      if (existing.length > 0) {
+        await db
+          .update(organisationCapabilityThresholds)
+          .set({
+            minimumSafeThreshold: input.minimumSafeThreshold,
+            updatedBy: ctx.user.id,
+          })
+          .where(eq(organisationCapabilityThresholds.id, existing[0].id));
+        return { id: existing[0].id };
+      } else {
+        const id = nanoid();
+        await db.insert(organisationCapabilityThresholds).values({
+          id,
+          orgId: input.orgId,
+          archetypeId: input.archetypeId,
+          capability: input.capability,
+          minimumSafeThreshold: input.minimumSafeThreshold,
+          updatedBy: ctx.user.id,
+        });
+        return { id };
+      }
+    }),
+
+  deleteOrgThreshold: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      await db.delete(organisationCapabilityThresholds).where(eq(organisationCapabilityThresholds.id, input.id));
+      return { success: true };
+    }),
+
+  // ── S8: Sector Vocabulary ──────────────────────────────────────────────────
+
+  listSectors: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+    return db.select().from(sectorVocabulary).orderBy(asc(sectorVocabulary.label));
+  }),
 
   // ── Platform stats ─────────────────────────────────────────────────────────
   stats: protectedProcedure.query(async ({ ctx }) => {

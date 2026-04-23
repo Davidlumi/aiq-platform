@@ -66,6 +66,9 @@ import {
   type OrgIntent,
 } from "../assessment/adaptiveEngine";
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
+import { getActiveScoringConfig } from "../assessment/scoringConfig";
+import { shouldApplyPersonaAdaptation } from "../assessment/featureFlags";
+import { organisationCapabilityThresholds } from "../../drizzle/schema";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
@@ -595,8 +598,11 @@ export const assessmentRouter = router({
       const isBaseline = priorSessions.length === 0;
 
       // Fetch prior capability scores for adaptive calibration
+      // S9: Only apply if persona adaptation feature flag is enabled AND user has sufficient history
       let priorCapabilityScores: Record<string, number> | null = null;
-      if (!isBaseline) {
+      const priorSessionCount = priorSessions.length;
+      const personaAdaptationActive = shouldApplyPersonaAdaptation(priorSessionCount);
+      if (!isBaseline && personaAdaptationActive) {
         const priorScore = await db
           .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
           .from(assessmentScores)
@@ -633,6 +639,8 @@ export const assessmentRouter = router({
           engineVersion: "adaptive-v2",
           isBaseline,
           priorCapabilityScores,
+          // S9: Record whether persona adaptation was active for this session
+          personaAdaptationActive,
           pendingNextItem: null,
         },
       });
@@ -1039,7 +1047,51 @@ export const assessmentRouter = router({
         roleHint = (meta.roleHint as string) ?? null;
       } catch {}
 
-      const results = SessionController.computeResults(answers, roleHint);
+      // S1: Load active scoring config version
+      const activeScoringCfg = await getActiveScoringConfig();
+
+      // S10: Load org-level capability threshold overrides
+      let orgThresholdOverrides: Partial<Record<string, number>> | undefined;
+      try {
+        const roleArchetypeForThresholds = resolveRoleArchetype(roleHint);
+        const orgThresholds = await db
+          .select()
+          .from(organisationCapabilityThresholds)
+          .where(
+            and(
+              eq(organisationCapabilityThresholds.orgId, ctx.user.tenantId),
+              eq(organisationCapabilityThresholds.archetypeId, roleArchetypeForThresholds.id)
+            )
+          );
+        if (orgThresholds.length > 0) {
+          orgThresholdOverrides = {};
+          for (const row of orgThresholds) {
+            orgThresholdOverrides[row.capability] = row.minimumSafeThreshold;
+          }
+        }
+      } catch { /* non-fatal */ }
+
+      // S4: Compute reasoning completeness for confidence profile
+      // Count items with reasoning_required=true and check if reasoningText was provided
+      let reasoningCompleteness = 1.0;
+      try {
+        const requiredReasoningItems = await db
+          .select({ id: assessmentItems.id })
+          .from(assessmentItems)
+          .where(eq(assessmentItems.reasoningRequired, true));
+        const requiredIds = new Set(requiredReasoningItems.map(r => r.id));
+        if (requiredIds.size > 0) {
+          const answersForRequired = rawAnswers.filter(a => requiredIds.has(a.itemId));
+          const adequateReasoning = answersForRequired.filter(
+            a => a.reasoningText && a.reasoningText.length >= 40
+          ).length;
+          reasoningCompleteness = answersForRequired.length > 0
+            ? adequateReasoning / answersForRequired.length
+            : 1.0;
+        }
+      } catch { /* non-fatal */ }
+
+      const results = SessionController.computeResults(answers, roleHint, activeScoringCfg, orgThresholdOverrides as any, reasoningCompleteness);
 
       // R9: Generate LLM-powered personalised development narrative
       let llmNarrative: { strengths: string; gaps: string; priorities: string } | null = null;
@@ -1188,6 +1240,8 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         scoreBreakdownJson: JSON.stringify(scoreBreakdown),
         signalScoresJson: JSON.stringify(results.signalScores),
         modelVersion: "adaptive-v2",
+        // S1: stamp the scoring config version used for this result
+        scoringConfigVersion: activeScoringCfg.version,
       });
 
       const credibilityScore = results.confidenceProfile.overall;

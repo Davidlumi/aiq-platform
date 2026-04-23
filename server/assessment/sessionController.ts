@@ -334,7 +334,13 @@ export class SessionController {
    */
   static computeResults(
     answers: AnswerData[],
-    userRoleHint?: string | null
+    userRoleHint?: string | null,
+    /** S1: Active scoring config (intercept + multiplier) */
+    scoringCfg?: { intercept: number; multiplier: number },
+    /** S10: Org-level capability threshold overrides */
+    orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>,
+    /** S4: Proportion of required-reasoning items that received adequate reasoning */
+    reasoningCompleteness: number = 1.0
   ) {
     const roleArchetype = resolveRoleArchetype(userRoleHint);
 
@@ -351,8 +357,8 @@ export class SessionController {
       }))
     );
 
-    // Capability scores
-    const capabilityScores = computeCapabilityScores(signalScores);
+    // Capability scores — S1: use versioned scoring config
+    const capabilityScores = computeCapabilityScores(signalScores, scoringCfg);
     // R10: Use role-specific capability weights for overall score
     const overallScore = computeOverallScore(capabilityScores, roleArchetype.capabilityWeights);
 
@@ -415,7 +421,8 @@ export class SessionController {
       contradictions.count,
       consistencyScore,
       gamingAnalysis.score,
-      MINIMUM_EVIDENCE.targetItems  // R2: pass actual target for evidence depth normalisation
+      MINIMUM_EVIDENCE.targetItems,  // R2: pass actual target for evidence depth normalisation
+      reasoningCompleteness           // S4: reasoning completeness factor
     );
 
     // Risk band
@@ -423,14 +430,16 @@ export class SessionController {
       failureModes.governanceFlag ? "high" :
       overallScore >= 75 ? "low" : "medium";
 
-    // Readiness classification (R3: pass capability scores + role thresholds)
+    // Readiness classification (R3 + S2 + S10: pass capability scores, role thresholds, confidence, org overrides)
     const readiness = classifyReadiness(
       overallScore,
       riskBand,
       failureModes,
       answers.length >= MINIMUM_EVIDENCE.totalItems,
       capabilityScores,
-      roleArchetype.minimumSafeThresholds
+      roleArchetype.minimumSafeThresholds,
+      confidenceProfile.overall,  // S2: confidence floor check
+      orgThresholdOverrides       // S10: org threshold overrides
     );
 
     // F4: Apply classification confidence gate
@@ -439,7 +448,9 @@ export class SessionController {
     // "unsafe" is never suppressed — risk signals are always surfaced.
     // Map scoringEngine's "unknown" state to the gate's "insufficient_evidence" state.
     const gateInputState: "safe" | "at_risk" | "unsafe" | "insufficient_evidence" =
-      readiness.state === "unknown" ? "insufficient_evidence" : readiness.state;
+      (readiness.state === "unknown" || readiness.state === "unknown_insufficient_evidence")
+        ? "insufficient_evidence"
+        : readiness.state;
     const gateResult = applyClassificationConfidenceGate(
       gateInputState,
       confidenceProfile.overall

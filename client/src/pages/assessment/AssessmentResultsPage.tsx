@@ -63,7 +63,8 @@ import {
 const READINESS_CONFIG = {
   safe: {
     label: "AI-Ready",
-    description: "Demonstrates consistent, appropriate application of AI tools with strong governance awareness.",
+    // S6: softened — no "governance" or "deploy" language
+    description: "Demonstrates consistent, appropriate application of AI tools with strong awareness of risks and limitations.",
     color: "text-[#228833]",
     bg: "border-[#228833]/30 bg-[#228833]/5",
     barColor: "#228833",
@@ -72,7 +73,8 @@ const READINESS_CONFIG = {
   },
   at_risk: {
     label: "Developing",
-    description: "Shows emerging capability but inconsistencies suggest further development is needed before unsupervised AI use.",
+    // S6: softened — no "mandatory remediation" or "restricted use"
+    description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
     color: "text-[#EE8866]",
     bg: "border-[#EE8866]/30 bg-[#EE8866]/5",
     barColor: "#EE8866",
@@ -81,7 +83,8 @@ const READINESS_CONFIG = {
   },
   unsafe: {
     label: "Not Yet Ready",
-    description: "Significant gaps identified. Structured development and supervised AI use recommended.",
+    // S6: softened — no "governance hold" or "unsafe to deploy"
+    description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
     color: "text-[#EE6677]",
     bg: "border-[#EE6677]/30 bg-[#EE6677]/5",
     barColor: "#EE6677",
@@ -91,6 +94,16 @@ const READINESS_CONFIG = {
   unknown: {
     label: "Insufficient Data",
     description: "Not enough evidence to classify readiness. Complete more assessment interactions.",
+    color: "text-muted-foreground",
+    bg: "border-border",
+    barColor: "#888888",
+    icon: HelpCircle,
+    dotColor: "#888888",
+  },
+  // S2: new state for low-confidence results
+  unknown_insufficient_evidence: {
+    label: "Result Unavailable",
+    description: "The assessment could not produce a reliable classification due to low confidence. This may be due to inconsistent responses or limited interaction variety.",
     color: "text-muted-foreground",
     bg: "border-border",
     barColor: "#888888",
@@ -294,13 +307,14 @@ function CapabilityBar({
   displayName,
   score,
   colour,
-  percentile,
+  percentileBandLabel,
   normGroupLabel,
 }: {
   displayName: string;
   score: number;
   colour: string;
-  percentile?: number;
+  /** S5: Use band label instead of precise percentile */
+  percentileBandLabel?: string;
   normGroupLabel?: string;
 }) {
   const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
@@ -310,9 +324,12 @@ function CapabilityBar({
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">{displayName}</span>
         <div className="flex items-center gap-2">
-          {percentile !== undefined && (
-            <span className="text-xs text-muted-foreground" title={normGroupLabel ? `Compared to ${normGroupLabel}` : undefined}>
-              {percentile}th %ile
+          {percentileBandLabel && (
+            <span
+              className="text-xs text-muted-foreground"
+              title={normGroupLabel ? `Compared to ${normGroupLabel} (provisional — based on synthetic baseline)` : "Provisional — based on synthetic baseline"}
+            >
+              {percentileBandLabel}
             </span>
           )}
           <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
@@ -325,15 +342,6 @@ function CapabilityBar({
           style={{ width: `${score}%`, backgroundColor: colour }}
         />
       </div>
-      {percentile !== undefined && (
-        <div className="relative h-1 bg-muted/40 rounded-full overflow-hidden">
-          <div
-            className="absolute left-0 top-0 h-full rounded-full opacity-50"
-            style={{ width: `${percentile}%`, backgroundColor: colour }}
-          />
-          <div className="absolute top-0 h-full w-px bg-foreground/30" style={{ left: "50%" }} />
-        </div>
-      )}
     </div>
   );
 }
@@ -463,8 +471,8 @@ export default function AssessmentResultsPage() {
   const totalAnswers = breakdown.totalAnswers ?? 0;
   const targetItems = breakdown.targetItems ?? 49;
   const isEarlyCompletion = totalAnswers < targetItems;
-  // P1/P2: Percentile ranks and norm group
-  const percentileRanks = (breakdown.percentileRanks ?? {}) as Record<string, { percentile: number; label: string; normGroupLabel: string; isSynthetic: boolean }>;
+  // P1/P2: Percentile ranks and norm group (S5: use band labels)
+  const percentileRanks = (breakdown.percentileRanks ?? {}) as Record<string, { percentile: number; percentileBand: string; percentileBandLabel: string; label: string; normGroupLabel: string; isSynthetic: boolean }>;
   const normGroupVersion = (breakdown.normGroupVersion ?? null) as string | null;
   // P3: Classification confidence gate caveat
   const classificationConfidence = (breakdown.classificationConfidence ?? null) as { band: string; label: string; wasDowngraded: boolean; caveat: string | null } | null;
@@ -668,7 +676,7 @@ export default function AssessmentResultsPage() {
                     displayName={cap.displayName}
                     score={cap.score}
                     colour={cap.colour}
-                    percentile={percentileRanks[cap.key]?.percentile}
+                    percentileBandLabel={percentileRanks[cap.key]?.percentileBandLabel}
                     normGroupLabel={percentileRanks[cap.key]?.normGroupLabel}
                   />
                 ))}
@@ -686,13 +694,16 @@ export default function AssessmentResultsPage() {
                     </div>
                   ))}
                 </div>
-                {/* P4: Norm group disclosure */}
+                {/* S5: Provisional percentile band disclosure */}
                 {normGroupVersion && (
-                  <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1.5">
-                    <Info className="w-3 h-3 shrink-0" />
-                    Percentile ranks are based on synthetic baseline distributions ({normGroupVersion}).
-                    They will be recalibrated as real assessment data accumulates.
-                  </p>
+                  <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 px-3 py-2 mt-1">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <Info className="w-3 h-3 shrink-0" />
+                      <span>
+                        <strong>Provisional benchmark:</strong> Relative standing is shown as broad quartile bands rather than precise percentiles. These benchmarks are based on synthetic baseline distributions ({normGroupVersion}) and will be recalibrated once sufficient real-world assessment data is available.
+                      </span>
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>

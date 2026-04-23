@@ -255,9 +255,33 @@ function normalCDF(x: number, mean: number, stdDev: number): number {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * S5: Coarse percentile band to replace precise synthetic percentile display.
+ * Precise percentiles are retained internally but the UI should show bands only
+ * until real-data recalibration is complete.
+ */
+export type PercentileBand = "bottom_quartile" | "lower_mid" | "upper_mid" | "top_quartile";
+
+export const PERCENTILE_BAND_LABELS: Record<PercentileBand, string> = {
+  bottom_quartile: "Bottom quartile",
+  lower_mid:       "Lower-mid range",
+  upper_mid:       "Upper-mid range",
+  top_quartile:    "Top quartile",
+};
+
+export function scoreToPercentileBand(percentile: number): PercentileBand {
+  if (percentile < 25) return "bottom_quartile";
+  if (percentile < 50) return "lower_mid";
+  if (percentile < 75) return "upper_mid";
+  return "top_quartile";
+}
+
 export interface PercentileResult {
-  percentile: number;        // 1–99 integer percentile rank
-  label: string;             // Human-readable label, e.g. "54th percentile"
+  percentile: number;        // 1–99 integer percentile rank (internal use only)
+  /** S5: Coarse band — use this for display until empirical recalibration */
+  percentileBand: PercentileBand;
+  percentileBandLabel: string;
+  label: string;             // Human-readable label, e.g. "54th percentile" (internal)
   normGroupLabel: string;    // e.g. "mid-level HR Generalists"
   normGroupVersion: string;  // e.g. "synthetic-v1"
   isSynthetic: boolean;      // true until replaced with empirical data
@@ -287,8 +311,11 @@ export function computePercentile(
     const fallback = SYNTHETIC_NORMS.generalist.mid[capabilityKey];
     const p = Math.round(normalCDF(score, fallback.mean, fallback.stdDev) * 100);
     const percentile = Math.max(1, Math.min(99, p));
+    const band = scoreToPercentileBand(percentile);
     return {
       percentile,
+      percentileBand: band,
+      percentileBandLabel: PERCENTILE_BAND_LABELS[band],
       label: `${percentile}${ordinalSuffix(percentile)} percentile`,
       normGroupLabel: "mid-level HR professionals (fallback)",
       normGroupVersion: NORM_GROUP_VERSION,
@@ -299,9 +326,12 @@ export function computePercentile(
   const p = Math.round(normalCDF(score, dist.mean, dist.stdDev) * 100);
   const percentile = Math.max(1, Math.min(99, p));
   const normGroupLabel = `${tier}-level ${familyLabel(family)}`;
+  const band = scoreToPercentileBand(percentile);
 
   return {
     percentile,
+    percentileBand: band,
+    percentileBandLabel: PERCENTILE_BAND_LABELS[band],
     label: `${percentile}${ordinalSuffix(percentile)} percentile`,
     normGroupLabel,
     normGroupVersion: NORM_GROUP_VERSION,

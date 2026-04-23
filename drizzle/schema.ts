@@ -137,6 +137,8 @@ export const assessmentItems = mysqlTable("assessment_items", {
   difficulty: int("difficulty").notNull().default(2),
   activeVersion: int("active_version").notNull().default(1),
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
+  // S4: required reasoning flag for high-signal items
+  reasoningRequired: boolean("reasoning_required").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -197,6 +199,8 @@ export const assessmentScores = mysqlTable("assessment_scores", {
   signalScoresJson: json("signal_scores_json").$default(() => ({})),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
   modelVersion: varchar("model_version", { length: 20 }).notNull().default("v1"),
+  // S1: versioned scoring transform reference
+  scoringConfigVersion: int("scoring_config_version").notNull().default(1),
 });
 
 // ─── Credibility, Risk, State ─────────────────────────────────────────────────
@@ -584,6 +588,10 @@ export const contentScenarios = mysqlTable("content_scenarios", {
   tagsJson: json("tags_json").$type<string[]>().$default(() => ([])),
   primarySignal: varchar("primary_signal", { length: 100 }),
   ambiguityLevel: mysqlEnum("ambiguity_level", ["low", "medium", "high"]).notNull().default("medium"),
+  /** S8: Sector applicability — empty array means universal (all sectors) */
+  sectorApplicability: json("sector_applicability").$type<string[]>().$default(() => ([])),
+  /** S8: True if item does not reference any specific AI tool */
+  toolAgnostic: boolean("tool_agnostic").notNull().default(false),
   status: mysqlEnum("status", ["draft", "published", "archived", "under_review"]).notNull().default("draft"),
   version: int("version").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -919,6 +927,50 @@ export const ailDifficultyProfiles = mysqlTable("ail_difficulty_profiles", {
   userIdx: index("idx_ail_dp_user").on(t.userId),
   tenantIdx: index("idx_ail_dp_tenant").on(t.tenantId),
 }));
+
+// ─── S1: Scoring Config ──────────────────────────────────────────────────────
+
+export const scoringConfig = mysqlTable("scoring_config", {
+  id: int("id").primaryKey().autoincrement(),
+  version: int("version").notNull().unique(),
+  capabilityScoreIntercept: decimal("capability_score_intercept", { precision: 6, scale: 2 }).notNull().default("50.00"),
+  capabilityScoreMultiplier: decimal("capability_score_multiplier", { precision: 6, scale: 2 }).notNull().default("50.00"),
+  isActive: boolean("is_active").notNull().default(false),
+  calibrationSource: mysqlEnum("calibration_source", ["synthetic_default", "pilot_cohort", "empirical"]).notNull().default("synthetic_default"),
+  calibrationSampleSize: int("calibration_sample_size"),
+  calibratedAt: timestamp("calibrated_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── S10: Organisation-Configurable Thresholds ────────────────────────────────
+
+export const organisationCapabilityThresholds = mysqlTable("organisation_capability_thresholds", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  orgId: varchar("org_id", { length: 36 }).notNull(),
+  archetypeId: varchar("archetype_id", { length: 50 }).notNull(),
+  capability: varchar("capability", { length: 50 }).notNull(),
+  minimumSafeThreshold: int("minimum_safe_threshold").notNull(),
+  updatedBy: varchar("updated_by", { length: 36 }),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  orgArchetypeCapIdx: index("idx_org_thresholds_org_archetype_cap").on(t.orgId, t.archetypeId, t.capability),
+}));
+
+// ─── S8: Sector Vocabulary ────────────────────────────────────────────────────
+
+export const sectorVocabulary = mysqlTable("sector_vocabulary", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 50 }).notNull().unique(),
+  label: varchar("label", { length: 100 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type ScoringConfig = typeof scoringConfig.$inferSelect;
+export type OrganisationCapabilityThreshold = typeof organisationCapabilityThresholds.$inferSelect;
+export type SectorVocabulary = typeof sectorVocabulary.$inferSelect;
 
 // AIL Types
 export type AilUserIntelligenceProfile = typeof ailUserIntelligenceProfiles.$inferSelect;

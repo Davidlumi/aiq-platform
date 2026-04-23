@@ -17,6 +17,7 @@ import {
   contentFailureModes,
   contentTags,
   contentVersions,
+  sectorVocabulary,
   type ContentScenario,
   type User,
 } from "../../drizzle/schema";
@@ -196,6 +197,10 @@ const scenariosRouter = router({
         tags: z.array(z.string()).optional(),
         workflowKey: z.string().optional(),
         roleKey: z.string().optional(),
+        /** S8: Filter by sector applicability key */
+        sectorKey: z.string().optional(),
+        /** S8: If true, return only tool-agnostic items */
+        toolAgnosticOnly: z.boolean().optional(),
         page: z.number().default(1),
         pageSize: z.number().default(20),
       })
@@ -232,6 +237,19 @@ const scenariosRouter = router({
           const scenarioTags = (r.tagsJson as string[]) ?? [];
           return filterTags.some((tag) => scenarioTags.includes(tag));
         });
+      }
+      // S8: Sector applicability filter
+      if (p.sectorKey) {
+        const sk = p.sectorKey;
+        rows = rows.filter((r) => {
+          const sectors = (r.sectorApplicability as string[]) ?? [];
+          // Empty array means "all sectors" (universal)
+          return sectors.length === 0 || sectors.includes(sk) || sectors.includes("all");
+        });
+      }
+      // S8: Tool-agnostic filter
+      if (p.toolAgnosticOnly) {
+        rows = rows.filter((r) => r.toolAgnostic === true);
       }
       if (p.search) {
         const q = p.search.toLowerCase();
