@@ -980,3 +980,11 @@
 ### Rationale Screen Loading Animation
 - [x] Add loading animation to rationale reveal screen — shown immediately after answer submission while explanation is being generated
 - [x] Animate transition from loading state to full rationale content (fade/slide in)
+
+### Back Office — Delete Users & Companies
+- [x] Add `backoffice.deleteUser` tRPC procedure (hard-delete with full cascade: sessions, answers, scores, AIL profiles, learning plans, simulations, policy evaluations)
+- [x] Add `backoffice.deleteCompany` tRPC procedure (cascade: all users + their data, org thresholds, tenant settings, tenant row)
+- [x] Add delete button + confirmation dialog to BO Users table row
+- [x] Add delete button + confirmation dialog to BO Companies table row
+- [x] Prevent deleting own account (owner guard)
+- [x] Prevent deleting platform tenant (lumi slug guard)

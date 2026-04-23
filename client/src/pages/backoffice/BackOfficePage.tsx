@@ -19,6 +19,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -545,9 +555,19 @@ function OrgsTab() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editOrg, setEditOrg] = useState<any>(null);
+  const [deleteOrgTarget, setDeleteOrgTarget] = useState<any>(null);
   const utils = trpc.useUtils();
 
   const { data: orgs, isLoading, refetch } = trpc.backoffice.listOrgs.useQuery({ search: search || undefined });
+
+  const deleteCompanyMutation = trpc.backoffice.deleteCompany.useMutation({
+    onSuccess: () => {
+      toast.success("Organisation permanently deleted");
+      setDeleteOrgTarget(null);
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   return (
     <div className="space-y-4">
@@ -596,14 +616,26 @@ function OrgsTab() {
                   <td className="px-4 py-3 text-muted-foreground">{org.userCount}</td>
                   <td className="px-4 py-3"><StatusBadge status={org.status ?? "active"} /></td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditOrg(org)}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditOrg(org)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                        title="Edit organisation"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteOrgTarget(org)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        title="Delete organisation permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -621,6 +653,35 @@ function OrgsTab() {
 
       <CreateOrgDialog open={showCreate} onClose={() => setShowCreate(false)} onCreated={refetch} />
       {editOrg && <EditOrgDialog org={editOrg} onClose={() => setEditOrg(null)} onSaved={refetch} />}
+
+      {deleteOrgTarget && (
+        <AlertDialog open onOpenChange={(open) => { if (!open) setDeleteOrgTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-sora flex items-center gap-2 text-destructive">
+                <Trash2 className="w-4 h-4" />
+                Delete Organisation
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  <p>You are about to permanently delete <strong className="text-foreground">{deleteOrgTarget.name}</strong> and all its data.</p>
+                  <p className="text-destructive font-medium">This will irreversibly remove all users, assessment sessions, scores, and intelligence profiles in this organisation.</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteCompanyMutation.mutate({ tenantId: deleteOrgTarget.id })}
+                disabled={deleteCompanyMutation.isPending}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              >
+                {deleteCompanyMutation.isPending ? "Deleting…" : "Delete Permanently"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
@@ -881,6 +942,16 @@ function UsersTab({ orgs }: { orgs: any[] }) {
   const [showCreate, setShowCreate] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
   const [resetUser, setResetUser] = useState<any>(null);
+  const [deleteUserTarget, setDeleteUserTarget] = useState<any>(null);
+
+  const deleteUserMutation = trpc.backoffice.deleteUser.useMutation({
+    onSuccess: () => {
+      toast.success("User permanently deleted");
+      setDeleteUserTarget(null);
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const { data, isLoading, refetch } = trpc.backoffice.listUsers.useQuery({
     tenantId: filterTenant !== "all" ? filterTenant : undefined,
@@ -977,6 +1048,15 @@ function UsersTab({ orgs }: { orgs: any[] }) {
                       >
                         <KeyRound className="w-3.5 h-3.5" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteUserTarget(u)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        title="Delete user permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -1001,6 +1081,35 @@ function UsersTab({ orgs }: { orgs: any[] }) {
       <CreateUserDialog open={showCreate} onClose={() => setShowCreate(false)} onCreated={refetch} orgs={orgs} />
       {editUser && <EditUserDialog user={editUser} onClose={() => setEditUser(null)} onSaved={refetch} orgs={orgs} />}
       {resetUser && <ResetPasswordDialog user={resetUser} onClose={() => setResetUser(null)} />}
+
+      {deleteUserTarget && (
+        <AlertDialog open onOpenChange={(open) => { if (!open) setDeleteUserTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-sora flex items-center gap-2 text-destructive">
+                <Trash2 className="w-4 h-4" />
+                Delete User
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  <p>You are about to permanently delete <strong className="text-foreground">{deleteUserTarget.firstName} {deleteUserTarget.lastName}</strong> ({deleteUserTarget.email}).</p>
+                  <p className="text-destructive font-medium">All assessment sessions, scores, learning plans, and intelligence profiles for this user will be permanently removed. This cannot be undone.</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteUserMutation.mutate({ userId: deleteUserTarget.id })}
+                disabled={deleteUserMutation.isPending}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              >
+                {deleteUserMutation.isPending ? "Deleting…" : "Delete Permanently"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

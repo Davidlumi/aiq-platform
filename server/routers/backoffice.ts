@@ -10,6 +10,13 @@ import {
   tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems,
   scoringConfig, organisationCapabilityThresholds, sectorVocabulary,
   antiGamingThresholds, llmItemReviewQueue, assessmentReviewFlags,
+  userPersonas, userStates, credibilityScores, riskScores, decisionLogs,
+  revalidationSchedules, learningPlans, learningPlanItems, contentProgress,
+  policyEvaluations, reportJobs, assessmentScores, assessmentAnswerTelemetry,
+  ailUserIntelligenceProfiles, ailSignalLedger, ailRetestQueue, ailPersonaProfiles,
+  ailNarrativeState, ailStakeholderRelationships, ailNarrativeEvents, ailNarrativeThreads,
+  ailDifficultyProfiles, simulationSessions, simulationSessionEvents, simulationResults,
+  tenantSettings,
 } from "../../drizzle/schema";
 import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -666,7 +673,155 @@ export const backofficeRouter = router({
     return db.select().from(sectorVocabulary).orderBy(asc(sectorVocabulary.label));
   }),
 
-  // ── Platform stats ─────────────────────────────────────────────────────────
+   // ── Delete User (hard delete with full cascade) ────────────────────────────
+  deleteUser: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      if (input.userId === ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You cannot delete your own account." });
+      }
+      // 1. Cascade: session-linked data
+      const sessions = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.userId, input.userId));
+      const sessionIds = sessions.map(s => s.id);
+      if (sessionIds.length > 0) {
+        await db.delete(assessmentAnswerTelemetry).where(inArray(assessmentAnswerTelemetry.sessionId, sessionIds));
+        await db.delete(assessmentAnswers).where(inArray(assessmentAnswers.sessionId, sessionIds));
+        await db.delete(assessmentScores).where(inArray(assessmentScores.sessionId, sessionIds));
+        await db.delete(assessmentReviewFlags).where(inArray(assessmentReviewFlags.sessionId, sessionIds));
+      }
+      await db.delete(policyEvaluations).where(eq(policyEvaluations.userId, input.userId));
+      await db.delete(assessmentSessions).where(eq(assessmentSessions.userId, input.userId));
+      // 2. Simulation data
+      const simSessions = await db
+        .select({ id: simulationSessions.id })
+        .from(simulationSessions)
+        .where(eq(simulationSessions.userId, input.userId));
+      const simSessionIds = simSessions.map(s => s.id);
+      if (simSessionIds.length > 0) {
+        await db.delete(simulationSessionEvents).where(inArray(simulationSessionEvents.sessionId, simSessionIds));
+        await db.delete(simulationResults).where(inArray(simulationResults.sessionId, simSessionIds));
+      }
+      await db.delete(simulationSessions).where(eq(simulationSessions.userId, input.userId));
+      // 3. Learning data
+      const plans = await db
+        .select({ id: learningPlans.id })
+        .from(learningPlans)
+        .where(eq(learningPlans.userId, input.userId));
+      const planIds = plans.map(p => p.id);
+      if (planIds.length > 0) {
+        await db.delete(learningPlanItems).where(inArray(learningPlanItems.learningPlanId, planIds));
+      }
+      await db.delete(learningPlans).where(eq(learningPlans.userId, input.userId));
+      await db.delete(contentProgress).where(eq(contentProgress.userId, input.userId));
+      // 4. AIL / intelligence data
+      await db.delete(ailSignalLedger).where(eq(ailSignalLedger.userId, input.userId));
+      await db.delete(ailRetestQueue).where(eq(ailRetestQueue.userId, input.userId));
+      await db.delete(ailPersonaProfiles).where(eq(ailPersonaProfiles.userId, input.userId));
+      await db.delete(ailUserIntelligenceProfiles).where(eq(ailUserIntelligenceProfiles.userId, input.userId));
+      await db.delete(ailNarrativeState).where(eq(ailNarrativeState.userId, input.userId));
+      await db.delete(ailStakeholderRelationships).where(eq(ailStakeholderRelationships.userId, input.userId));
+      await db.delete(ailNarrativeEvents).where(eq(ailNarrativeEvents.userId, input.userId));
+      await db.delete(ailNarrativeThreads).where(eq(ailNarrativeThreads.userId, input.userId));
+      await db.delete(ailDifficultyProfiles).where(eq(ailDifficultyProfiles.userId, input.userId));
+      // 5. Scoring / state data
+      await db.delete(credibilityScores).where(eq(credibilityScores.userId, input.userId));
+      await db.delete(riskScores).where(eq(riskScores.userId, input.userId));
+      await db.delete(userStates).where(eq(userStates.userId, input.userId));
+      await db.delete(decisionLogs).where(eq(decisionLogs.userId, input.userId));
+      await db.delete(revalidationSchedules).where(eq(revalidationSchedules.userId, input.userId));
+      await db.delete(reportJobs).where(eq(reportJobs.requestedBy, input.userId));
+      // 6. User profile data
+      await db.delete(userPersonas).where(eq(userPersonas.userId, input.userId));
+      await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
+      // 7. Finally delete the user
+      await db.delete(users).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
+
+  // ── Delete Company (hard delete with full cascade) ───────────────────────
+  deleteCompany: protectedProcedure
+    .input(z.object({ tenantId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      if (input.tenantId === ctx.user.tenantId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You cannot delete your own organisation." });
+      }
+      const tenant = await db.select().from(tenants).where(eq(tenants.id, input.tenantId)).limit(1);
+      if (!tenant[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Organisation not found." });
+      if (tenant[0].slug === "lumi") throw new TRPCError({ code: "FORBIDDEN", message: "Cannot delete the platform tenant." });
+      // Get all users in the tenant
+      const tenantUsers = await db.select({ id: users.id }).from(users).where(eq(users.tenantId, input.tenantId));
+      const userIds = tenantUsers.map(u => u.id);
+      if (userIds.length > 0) {
+        const sessions = await db
+          .select({ id: assessmentSessions.id })
+          .from(assessmentSessions)
+          .where(eq(assessmentSessions.tenantId, input.tenantId));
+        const sessionIds = sessions.map(s => s.id);
+        if (sessionIds.length > 0) {
+          await db.delete(assessmentAnswerTelemetry).where(inArray(assessmentAnswerTelemetry.sessionId, sessionIds));
+          await db.delete(assessmentAnswers).where(inArray(assessmentAnswers.sessionId, sessionIds));
+          await db.delete(assessmentScores).where(inArray(assessmentScores.sessionId, sessionIds));
+          await db.delete(assessmentReviewFlags).where(inArray(assessmentReviewFlags.sessionId, sessionIds));
+        }
+        await db.delete(policyEvaluations).where(inArray(policyEvaluations.userId, userIds));
+        await db.delete(assessmentSessions).where(eq(assessmentSessions.tenantId, input.tenantId));
+        const simSessions = await db
+          .select({ id: simulationSessions.id })
+          .from(simulationSessions)
+          .where(eq(simulationSessions.tenantId, input.tenantId));
+        const simSessionIds = simSessions.map(s => s.id);
+        if (simSessionIds.length > 0) {
+          await db.delete(simulationSessionEvents).where(inArray(simulationSessionEvents.sessionId, simSessionIds));
+          await db.delete(simulationResults).where(inArray(simulationResults.sessionId, simSessionIds));
+        }
+        await db.delete(simulationSessions).where(eq(simulationSessions.tenantId, input.tenantId));
+        const plans = await db
+          .select({ id: learningPlans.id })
+          .from(learningPlans)
+          .where(eq(learningPlans.tenantId, input.tenantId));
+        const planIds = plans.map(p => p.id);
+        if (planIds.length > 0) {
+          await db.delete(learningPlanItems).where(inArray(learningPlanItems.learningPlanId, planIds));
+        }
+        await db.delete(learningPlans).where(eq(learningPlans.tenantId, input.tenantId));
+        await db.delete(contentProgress).where(inArray(contentProgress.userId, userIds));
+        await db.delete(ailSignalLedger).where(inArray(ailSignalLedger.userId, userIds));
+        await db.delete(ailRetestQueue).where(inArray(ailRetestQueue.userId, userIds));
+        await db.delete(ailPersonaProfiles).where(inArray(ailPersonaProfiles.userId, userIds));
+        await db.delete(ailUserIntelligenceProfiles).where(inArray(ailUserIntelligenceProfiles.userId, userIds));
+        await db.delete(ailNarrativeState).where(inArray(ailNarrativeState.userId, userIds));
+        await db.delete(ailStakeholderRelationships).where(inArray(ailStakeholderRelationships.userId, userIds));
+        await db.delete(ailNarrativeEvents).where(inArray(ailNarrativeEvents.userId, userIds));
+        await db.delete(ailNarrativeThreads).where(inArray(ailNarrativeThreads.userId, userIds));
+        await db.delete(ailDifficultyProfiles).where(inArray(ailDifficultyProfiles.userId, userIds));
+        await db.delete(credibilityScores).where(inArray(credibilityScores.userId, userIds));
+        await db.delete(riskScores).where(inArray(riskScores.userId, userIds));
+        await db.delete(userStates).where(inArray(userStates.userId, userIds));
+        await db.delete(decisionLogs).where(eq(decisionLogs.tenantId, input.tenantId));
+        await db.delete(revalidationSchedules).where(inArray(revalidationSchedules.userId, userIds));
+        await db.delete(reportJobs).where(eq(reportJobs.tenantId, input.tenantId));
+        await db.delete(userPersonas).where(inArray(userPersonas.userId, userIds));
+        await db.delete(userRoles).where(eq(userRoles.tenantId, input.tenantId));
+        await db.delete(users).where(eq(users.tenantId, input.tenantId));
+      }
+      // Tenant-level config
+      await db.delete(organisationCapabilityThresholds).where(eq(organisationCapabilityThresholds.orgId, input.tenantId));
+      await db.delete(tenantSettings).where(eq(tenantSettings.tenantId, input.tenantId));
+      // Finally delete the tenant
+      await db.delete(tenants).where(eq(tenants.id, input.tenantId));
+      return { success: true };
+    }),
+
+  // ── Platform stats ──────────────────────────────────────────────────
   stats: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
