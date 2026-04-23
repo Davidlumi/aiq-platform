@@ -995,3 +995,24 @@
 
 ### Bug Fix — submitAnswer timeToFirstInteractionMs negative value
 - [x] Fix: timeToFirstInteractionMs can be negative — root cause: Continue button didn't reset firstInteractionTime to null. Fixed in Continue handler + added server-side Math.max(0,...) clamp as belt-and-suspenders guard
+
+### Feature — Assessment Results Review & Benchmarking
+- [x] Add `assessment.getSessionResult` tRPC procedure returning full capability scores, readiness classification, score breakdown, failure modes, and governance action
+- [x] Add `assessment.getBenchmarks` tRPC procedure returning role-level and platform-wide percentile benchmarks for each capability (synthetic norms, handles both flat-number and {score,weight} capabilityScores formats)
+- [x] Build ResultsReviewPage at /assessment/:sessionId/results with: readiness badge, overall score gauge, capability radar chart, per-capability score bars with benchmark overlays, score breakdown table, failure modes section, and improvement recommendations
+- [ ] Add "View Results" button to CompletionScreen (end of assessment)
+- [ ] Add "View Results" link to assessment history cards on the Assessment landing page
+- [x] Register /assessment/:sessionId/results route in App.tsx
+- [ ] Write vitest tests for getSessionResult and getBenchmarks procedures
+
+### Feature — Benchmarks Tab on Assessment Results Page (Apr 23 2026)
+- [x] Export `getNormMeans()` from server/assessment/normEngine.ts
+- [x] Add `getBenchmarks` tRPC procedure to assessment router — queries assessmentScores, resolves role archetype, returns capability scores vs role mean vs platform mean
+- [x] Add Benchmarks tab (4th tab) to AssessmentResultsPage with grid-cols-4 TabsList
+- [x] Grouped bar chart: Your Score (green) / Role Average (teal) / Platform Average (amber) per capability
+- [x] Detailed comparison table with delta indicators (TrendingUp/TrendingDown/Minus)
+- [x] Percentile context mini-cards with score bar and role/platform averages
+- [x] Synthetic data disclaimer when isSynthetic=true
+- [x] Fix: getBenchmarks procedure now handles both flat-number and {score,weight} capabilityScores formats
+- [x] Browser verified: all 6 capabilities show correct scores, chart renders, table shows deltas
+- [x] TypeScript: 0 errors, 355/355 tests passing

@@ -67,6 +67,7 @@ import {
 } from "../assessment/adaptiveEngine";
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
 import { getActiveScoringConfig } from "../assessment/scoringConfig";
+import { getNormMeans } from "../assessment/normEngine";
 import {
   shouldApplyPersonaAdaptation,
   isValidationPhaseRandomised,
@@ -2104,4 +2105,76 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
     .query(() => ({
       validationPhaseRandomised: isValidationPhaseRandomised(),
     })),
+
+  // ── Benchmark comparison data ──────────────────────────────────────────────
+  getBenchmarks: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Load session to get role/seniority metadata
+      const session = await db
+        .select({ sessionMetadataJson: assessmentSessions.sessionMetadataJson })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)))
+        .limit(1);
+      if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const meta = (typeof session[0].sessionMetadataJson === "string"
+        ? JSON.parse(session[0].sessionMetadataJson as string)
+        : (session[0].sessionMetadataJson ?? {})) as Record<string, unknown>;
+
+      const roleHint = (meta.roleHint as string) ?? null;
+      const seniorityHint = (meta.seniorityHint as string) ?? null;
+      const archetype = resolveRoleArchetype(roleHint);
+
+      // Get norm means for the user's role family × seniority tier
+      const normMeans = getNormMeans(
+        archetype.family ?? roleHint,
+        archetype.seniority ?? seniorityHint
+      );
+
+      // Load the user's actual capability scores for this session
+      // capabilityScores are stored inside scoreBreakdownJson.capabilityScores
+      const scores = await db
+        .select()
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, input.sessionId))
+        .limit(1);
+
+      const breakdown = (typeof scores[0]?.scoreBreakdownJson === "string"
+        ? JSON.parse(scores[0].scoreBreakdownJson as string)
+        : (scores[0]?.scoreBreakdownJson ?? {})) as Record<string, unknown>;
+      const capabilityScoresRaw = (breakdown.capabilityScores ?? {}) as Record<string, number | { score: number; weight?: number }>;
+      // Helper: extract numeric score from either flat number or {score, weight} object
+      const extractScore = (val: number | { score: number; weight?: number } | undefined): number => {
+        if (val === undefined || val === null) return 0;
+        if (typeof val === "number") return val;
+        return val.score ?? 0;
+      };
+
+      const ALL_CAPS = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"] as const;
+
+      const capabilities = ALL_CAPS.map(cap => ({
+        key: cap,
+        displayName: CAPABILITY_DISPLAY[cap] ?? cap,
+        colour: CAPABILITY_COLOURS[cap] ?? "#888888",
+        userScore: Math.round(extractScore(capabilityScoresRaw[cap])),
+        roleMean: normMeans[cap].roleMean,
+        platformMean: normMeans[cap].platformMean,
+        stdDev: normMeans[cap].stdDev,
+      }));
+
+      const roleArchetype = resolveRoleArchetype(roleHint);
+      return {
+        capabilities,
+        roleLabel: roleArchetype.displayName ?? roleHint ?? "HR Professional",
+        seniorityLabel: archetype.seniority ?? seniorityHint ?? "mid",
+        normGroupVersion: "synthetic-v1",
+        isSynthetic: true,
+      };
+    }),
 });

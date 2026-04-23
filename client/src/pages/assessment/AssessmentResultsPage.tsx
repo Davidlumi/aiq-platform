@@ -46,6 +46,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   Minus,
+  BarChart2,
+  Users,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -68,6 +71,10 @@ import {
   CartesianGrid,
   ReferenceLine,
   Dot,
+  BarChart,
+  Bar,
+  Legend,
+  Cell,
 } from "recharts";
 
 // ─── Readiness / Credibility / Risk config ────────────────────────────────────
@@ -498,6 +505,13 @@ export default function AssessmentResultsPage() {
       { enabled: !!sessionId && showExplanation, refetchOnWindowFocus: false }
     );
 
+  // Benchmark comparison data
+  const { data: benchmarkData, isLoading: benchmarkLoading } =
+    trpc.assessment.getBenchmarks.useQuery(
+      { sessionId: sessionId! },
+      { enabled: !!sessionId, refetchOnWindowFocus: false }
+    );
+
   // WS4.3: Flag for review
   const flagMutation = trpc.assessment.flagForReview.useMutation({
     onSuccess: (res: any) => {
@@ -617,7 +631,7 @@ export default function AssessmentResultsPage() {
 
       {/* ── Three-Layer Tabs ── */}
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="summary" className="gap-1.5 text-xs">
             <Target className="w-3.5 h-3.5" />
             Summary
@@ -629,6 +643,10 @@ export default function AssessmentResultsPage() {
           <TabsTrigger value="development" className="gap-1.5 text-xs">
             <Lightbulb className="w-3.5 h-3.5" />
             Development
+          </TabsTrigger>
+          <TabsTrigger value="benchmarks" className="gap-1.5 text-xs">
+            <BarChart2 className="w-3.5 h-3.5" />
+            Benchmarks
           </TabsTrigger>
         </TabsList>
 
@@ -1283,6 +1301,211 @@ export default function AssessmentResultsPage() {
               Retake Assessment
             </Button>
           </div>
+        </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 4: BENCHMARKS
+            Contains: grouped bar chart (user vs role avg vs platform avg),
+            comparison table, percentile context, synthetic data disclaimer.
+        ══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="benchmarks" className="space-y-6">
+          {benchmarkLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+            </div>
+          ) : !benchmarkData ? (
+            <Card className="border-border">
+              <CardContent className="p-8 text-center">
+                <BarChart2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm font-semibold text-foreground">Benchmark data unavailable</p>
+                <p className="text-xs text-muted-foreground mt-1">Complete the assessment to see how you compare.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-[#4477AA]/10">
+                  <BarChart2 className="w-5 h-5 text-[#4477AA]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Benchmark Comparison</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Your scores compared against {benchmarkData.roleLabel} ({benchmarkData.seniorityLabel}-level)
+                    and the platform-wide average across all HR professionals.
+                  </p>
+                </div>
+              </div>
+
+              {/* Grouped Bar Chart */}
+              <Card className="border-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold text-foreground">Score Comparison by Capability</CardTitle>
+                  <div className="flex items-center gap-5 flex-wrap mt-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm bg-[#10B981]" />
+                      <span className="text-xs text-muted-foreground">Your Score</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm bg-[#4477AA]" />
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Users className="w-3 h-3" /> Role Average
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm bg-[#CCBB44]" />
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Globe className="w-3 h-3" /> Platform Average
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={benchmarkData.capabilities.map(c => ({
+                          name: c.displayName.replace("AI ", ""),
+                          "Your Score": c.userScore,
+                          "Role Average": c.roleMean,
+                          "Platform Average": c.platformMean,
+                        }))}
+                        margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                        barCategoryGap="25%"
+                        barGap={2}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            fontSize: 12,
+                          }}
+                          formatter={(value: number, name: string) => [`${value}`, name]}
+                        />
+                        <ReferenceLine y={75} stroke="#228833" strokeDasharray="4 4" strokeOpacity={0.5}
+                          label={{ value: "Safe", position: "right", fontSize: 9, fill: "#228833" }}
+                        />
+                        <Bar dataKey="Your Score" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="Role Average" fill="#4477AA" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="Platform Average" fill="#CCBB44" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Comparison Table */}
+              <Card className="border-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold text-foreground">Detailed Comparison</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Capability</th>
+                          <th className="text-center px-3 py-2.5 text-[#10B981] font-medium">Your Score</th>
+                          <th className="text-center px-3 py-2.5 text-[#4477AA] font-medium">Role Avg</th>
+                          <th className="text-center px-3 py-2.5 text-[#CCBB44] font-medium">Platform Avg</th>
+                          <th className="text-center px-3 py-2.5 text-muted-foreground font-medium">vs Role</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {benchmarkData.capabilities.map((cap, i) => {
+                          const diff = cap.userScore - cap.roleMean;
+                          const isAbove = diff > 0;
+                          const isBelow = diff < -5;
+                          return (
+                            <tr key={cap.key} className={cn("border-b border-border/50", i % 2 === 0 ? "bg-muted/20" : "")}>
+                              <td className="px-4 py-2.5">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
+                                  <span className="font-medium text-foreground">{cap.displayName.replace("AI ", "")}</span>
+                                </div>
+                              </td>
+                              <td className="text-center px-3 py-2.5 font-semibold text-foreground">{cap.userScore}</td>
+                              <td className="text-center px-3 py-2.5 text-muted-foreground">{cap.roleMean}</td>
+                              <td className="text-center px-3 py-2.5 text-muted-foreground">{cap.platformMean}</td>
+                              <td className="text-center px-3 py-2.5">
+                                <span className={cn(
+                                  "inline-flex items-center gap-0.5 font-medium",
+                                  isAbove ? "text-[#228833]" : isBelow ? "text-[#EE6677]" : "text-muted-foreground"
+                                )}>
+                                  {isAbove ? <TrendingUp className="w-3 h-3" /> : isBelow ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                                  {isAbove ? `+${diff}` : diff}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Percentile Context Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {benchmarkData.capabilities.map(cap => {
+                  const diff = cap.userScore - cap.roleMean;
+                  const sigmas = cap.stdDev > 0 ? diff / cap.stdDev : 0;
+                  const percentileApprox = Math.round(Math.min(99, Math.max(1, 50 + sigmas * 34)));
+                  return (
+                    <Card key={cap.key} className="border-border">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
+                          <span className="text-xs font-semibold text-foreground truncate">{cap.displayName.replace("AI ", "")}</span>
+                        </div>
+                        <div className="text-2xl font-bold text-foreground">{cap.userScore}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">~{percentileApprox}th percentile</div>
+                        <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${cap.userScore}%`,
+                              backgroundColor: cap.userScore >= 75 ? "#228833" : cap.userScore >= 55 ? "#EE8866" : "#EE6677",
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                          <span>Role avg: {cap.roleMean}</span>
+                          <span>Platform: {cap.platformMean}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Synthetic data disclaimer */}
+              {benchmarkData.isSynthetic && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/40 border border-border">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium">Benchmark data note:</span> Role and platform averages are currently
+                    based on synthetic reference distributions (norm group version: {benchmarkData.normGroupVersion}).
+                    These will be replaced with empirical data as the platform accumulates real assessment results.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>

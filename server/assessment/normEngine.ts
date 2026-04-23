@@ -358,6 +358,33 @@ export function computeAllPercentiles(
   ) as Record<CapabilityKey, PercentileResult>;
 }
 
+/**
+ * Return norm distribution means for a given role family × seniority tier.
+ * Used by the getBenchmarks tRPC procedure to show role-level and platform
+ * averages alongside the user's own scores in the results UI.
+ */
+export function getNormMeans(
+  roleFamily?: string | null,
+  seniority?: string | null
+): Record<CapabilityKey, { roleMean: number; platformMean: number; stdDev: number }> {
+  const family = resolveRoleFamily(roleFamily);
+  const tier = resolveSeniorityTier(seniority);
+  const ALL_CAPS: CapabilityKey[] = [
+    "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
+  ];
+  const result = {} as Record<CapabilityKey, { roleMean: number; platformMean: number; stdDev: number }>;
+  for (const cap of ALL_CAPS) {
+    const roleDist = SYNTHETIC_NORMS[family]?.[tier]?.[cap] ?? SYNTHETIC_NORMS.generalist.mid[cap];
+    // Platform mean = average across all role families for this seniority tier
+    const allFamilyMeans = (Object.values(SYNTHETIC_NORMS) as Record<SeniorityTier, Record<CapabilityKey, NormDistribution>>[]).map(
+      f => f[tier]?.[cap]?.mean ?? 60
+    );
+    const platformMean = Math.round(allFamilyMeans.reduce((a, b) => a + b, 0) / allFamilyMeans.length);
+    result[cap] = { roleMean: roleDist.mean, platformMean, stdDev: roleDist.stdDev };
+  }
+  return result;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function ordinalSuffix(n: number): string {
