@@ -67,11 +67,13 @@ import {
 } from "../assessment/adaptiveEngine";
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
 import { getActiveScoringConfig } from "../assessment/scoringConfig";
-import { shouldApplyPersonaAdaptation } from "../assessment/featureFlags";
+import { shouldApplyPersonaAdaptation, isValidationPhaseRandomised } from "../assessment/featureFlags";
 import { organisationCapabilityThresholds } from "../../drizzle/schema";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
+import { runQualityGate, buildReviewQueueRow, recordLlmGenerationSuccess, recordLlmGenerationFailure } from "../assessment/llmQualityGate";
+import { llmItemReviewQueue, assessmentReviewFlags, assessmentAnswerTelemetry } from "../../drizzle/schema";
 import type { CapabilityKey } from "../assessment/roleArchetypes";
 // I2: AIL bridge — wire assessment completion into the AIL pipeline
 import { processAssessmentThroughAIL } from "../ail/userIntelligenceProfile";
@@ -839,15 +841,25 @@ export const assessmentRouter = router({
               (generationVars as any).orgStrategicPriorities = orgCtx.strategicPriorities;
             }
             const generated = await generateAdaptiveItem(generationVars);
-            nextItem = await persistAndBuildNextItem(
-              generated,
-              session[0].blueprintId,
-              answeredCount,
-              phase,
-              generationVars.evidenceObjective,
-              db
-            );
+            recordLlmGenerationSuccess();
+            // WS3: Run quality gate on generated item
+            const qgResult = runQualityGate(generated);
+            if (!qgResult.passed) {
+              const reviewRow = buildReviewQueueRow(generated, qgResult, session[0].id);
+              await db.insert(llmItemReviewQueue).values(reviewRow).catch(() => {});
+              console.warn("[WS3] Item failed quality gate, routed to review:", qgResult.failedCheckers);
+            } else {
+              nextItem = await persistAndBuildNextItem(
+                generated,
+                session[0].blueprintId,
+                answeredCount,
+                phase,
+                generationVars.evidenceObjective,
+                db
+              );
+            }
           } catch (err) {
+            recordLlmGenerationFailure();
             console.error("[assessment.session] LLM generation failed, using fallback:", err);
           }
         }
@@ -1083,6 +1095,54 @@ export const assessmentRouter = router({
         })();
       }
 
+      // WS5: Write answer-level telemetry row (non-fatal)
+      try {
+        await db.insert(assessmentAnswerTelemetry).values({
+          id: nanoid(),
+          sessionId: input.sessionId,
+          itemId: input.itemId,
+          userId: ctx.user.id,
+          totalActiveMs: input.timeToAnswerMs,
+          revisionCount: 0,
+          focusLossCount: 0,
+        });
+      } catch { /* non-fatal */ }
+
+      // WS1.3: Write contribution breakdown to the answer row (non-fatal)
+      if (signalDeltasJson && outcomeClass) {
+        try {
+          const deltas = typeof signalDeltasJson === "string"
+            ? JSON.parse(signalDeltasJson as string) as Record<string, number>
+            : signalDeltasJson as Record<string, number>;
+          const contributionBreakdown = {
+            outcomeClass,
+            signalDeltas: deltas,
+            capabilityKey: null as string | null, // enriched from item metadata below
+            difficulty: null as number | null,
+            riskLevel: null as string | null,
+          };
+          // Enrich with item metadata
+          if (input.itemId.startsWith("cs-")) {
+            const cs = await db.select({ capabilityKey: contentScenarios.capabilityKey, difficulty: contentScenarios.difficulty, riskLevel: contentScenarios.riskLevel })
+              .from(contentScenarios).where(eq(contentScenarios.id, input.itemId.slice(3))).limit(1);
+            if (cs[0]) { contributionBreakdown.capabilityKey = cs[0].capabilityKey; contributionBreakdown.difficulty = cs[0].difficulty; contributionBreakdown.riskLevel = cs[0].riskLevel; }
+          } else {
+            const item = await db.select({ difficulty: assessmentItems.difficulty, metadataJson: assessmentItems.metadataJson })
+              .from(assessmentItems).where(eq(assessmentItems.id, input.itemId)).limit(1);
+            if (item[0]) {
+              const m = (typeof item[0].metadataJson === "string" ? JSON.parse(item[0].metadataJson as string) : (item[0].metadataJson ?? {})) as Record<string, unknown>;
+              contributionBreakdown.capabilityKey = (m.capability_key as string) ?? null;
+              contributionBreakdown.difficulty = item[0].difficulty ?? null;
+              contributionBreakdown.riskLevel = (m.risk_level as string) ?? null;
+            }
+          }
+          // Update the answer row with the breakdown
+          await db.update(assessmentAnswers)
+            .set({ contributionBreakdownJson: JSON.stringify(contributionBreakdown) })
+            .where(and(eq(assessmentAnswers.sessionId, input.sessionId), eq(assessmentAnswers.itemId, input.itemId)));
+        } catch { /* non-fatal */ }
+      }
+
       // Compute isComplete so the frontend can show "Complete Assessment" after the last rationale (UX-7)
       const allAnswersFinal = await db
         .select({ id: assessmentAnswers.id })
@@ -1171,7 +1231,16 @@ export const assessmentRouter = router({
         }
       } catch { /* non-fatal */ }
 
-      const results = SessionController.computeResults(answers, roleHint, activeScoringCfg, orgThresholdOverrides as any, reasoningCompleteness);
+      const results = SessionController.computeResults(answers, roleHint, {
+        intercept: activeScoringCfg.intercept,
+        multiplier: activeScoringCfg.multiplier,
+        // WS1.1: v2.2 sum+clip params (undefined = use v2.1 legacy formula)
+        contributionCap: activeScoringCfg.contributionCap,
+        contributionMultiplier: activeScoringCfg.contributionMultiplier,
+        // WS1.2: configurable failure-mode thresholds
+        blockingFailureMinItems: activeScoringCfg.blockingFailureMinItems,
+        downgradeFailureMinItems: activeScoringCfg.downgradeFailureMinItems,
+      }, orgThresholdOverrides as any, reasoningCompleteness);
 
       // R9: Generate LLM-powered personalised development narrative
       let llmNarrative: { strengths: string; gaps: string; priorities: string } | null = null;
@@ -1706,4 +1775,218 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         .where(eq(assessmentItems.id, input.itemId));
       return { success: true };
     }),
+
+  // ── WS1.4: Classification explanation ─────────────────────────────────────
+  getClassificationExplanation: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const score = await db
+        .select()
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, input.sessionId))
+        .limit(1);
+      if (!score[0]) throw new TRPCError({ code: "NOT_FOUND", message: "No score found for this session" });
+      // Verify the session belongs to this user or is accessible by their org
+      const session = await db
+        .select({ userId: assessmentSessions.userId, tenantId: assessmentSessions.tenantId })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.id, input.sessionId))
+        .limit(1);
+      if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      const isOwner = session[0].userId === ctx.user.id;
+      if (!isOwner) throw new TRPCError({ code: "FORBIDDEN" });
+
+      let breakdown: Record<string, unknown> = {};
+      try {
+        breakdown = (typeof score[0].scoreBreakdownJson === "string"
+          ? JSON.parse(score[0].scoreBreakdownJson as string)
+          : (score[0].scoreBreakdownJson ?? {})) as Record<string, unknown>;
+      } catch {}
+
+      const readiness = (breakdown.readiness as { state?: string; label?: string; description?: string }) ?? {};
+      const capabilityScores = (breakdown.capabilityScores ?? {}) as Record<string, number>;
+      const failureModes = (breakdown.failureModes ?? { governanceFlag: false, modes: [] }) as { governanceFlag: boolean; modes: string[] };
+      const confidenceProfile = (breakdown.confidenceProfile ?? { overall: 0.5 }) as { overall: number };
+      const scoringConfigVersion = score[0].scoringConfigVersion ?? "unknown";
+
+      // Build a plain-language explanation of the classification
+      const state = readiness.state ?? "unknown";
+      const isUnknown = state === "unknown" || state === "unknown_insufficient_evidence";
+
+      const topStrengths = Object.entries(capabilityScores)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(([k]) => k.replace(/_/g, " "));
+
+      const topGaps = Object.entries(capabilityScores)
+        .sort((a, b) => a[1] - b[1])
+        .slice(0, 2)
+        .map(([k]) => k.replace(/_/g, " "));
+
+      const factors: Array<{ factor: string; direction: "positive" | "negative" | "neutral"; detail: string }> = [];
+
+      // Overall score factor
+      const overallScore = parseFloat(String(score[0].overallScore));
+      factors.push({
+        factor: "Overall capability score",
+        direction: overallScore >= 65 ? "positive" : overallScore >= 45 ? "neutral" : "negative",
+        detail: `Your overall score of ${Math.round(overallScore)}/100 ${overallScore >= 65 ? "meets" : "is below"} the threshold for this classification band.`,
+      });
+
+      // Confidence factor
+      const confScore = confidenceProfile.overall;
+      factors.push({
+        factor: "Assessment confidence",
+        direction: confScore >= 0.6 ? "positive" : confScore >= 0.4 ? "neutral" : "negative",
+        detail: confScore >= 0.6
+          ? "Sufficient evidence was gathered to make a reliable classification."
+          : confScore >= 0.4
+          ? "Moderate evidence was gathered. The classification carries some uncertainty."
+          : "Limited evidence was gathered. The classification should be treated as provisional.",
+      });
+
+      // Governance flag
+      if (failureModes.governanceFlag) {
+        factors.push({
+          factor: "Governance concern detected",
+          direction: "negative",
+          detail: "One or more responses indicated a pattern of bypassing or underweighting governance considerations. This is a significant factor in the classification.",
+        });
+      }
+
+      // Failure modes
+      for (const mode of failureModes.modes ?? []) {
+        factors.push({
+          factor: `Failure mode: ${mode.replace(/_/g, " ")}`,
+          direction: "negative",
+          detail: `A '${mode.replace(/_/g, " ")}' pattern was detected in your responses, which influenced the classification.`,
+        });
+      }
+
+      return {
+        state,
+        label: readiness.label ?? state,
+        description: readiness.description ?? "",
+        isProvisional: isUnknown || confScore < 0.4,
+        overallScore: Math.round(overallScore),
+        topStrengths,
+        topGaps,
+        factors,
+        scoringConfigVersion,
+        confidenceBand: confScore >= 0.75 ? "high" : confScore >= 0.5 ? "medium" : "low",
+      };
+    }),
+
+  // ── WS4.3: Flag session for review ────────────────────────────────────────
+  flagForReview: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      reason: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Verify the session belongs to this user
+      const session = await db
+        .select({ userId: assessmentSessions.userId })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.id, input.sessionId))
+        .limit(1);
+      if (!session[0] || session[0].userId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      // Check for existing flag
+      const existing = await db
+        .select({ id: assessmentReviewFlags.id })
+        .from(assessmentReviewFlags)
+        .where(and(
+          eq(assessmentReviewFlags.sessionId, input.sessionId),
+          eq(assessmentReviewFlags.userId, ctx.user.id),
+          eq(assessmentReviewFlags.status, "pending")
+        ))
+        .limit(1);
+      if (existing[0]) {
+        return { success: true, flagId: existing[0].id, alreadyFlagged: true };
+      }
+      const flagId = nanoid();
+      await db.insert(assessmentReviewFlags).values({
+        id: flagId,
+        sessionId: input.sessionId,
+        userId: ctx.user.id,
+        reason: input.reason ?? null,
+        status: "pending",
+      });
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "assessment.session.flagged_for_review",
+        targetType: "assessment_session",
+        targetId: input.sessionId,
+        metadataJson: JSON.stringify({ reason: input.reason ?? null }),
+      });
+      return { success: true, flagId, alreadyFlagged: false };
+    }),
+
+  // ── WS4.4/4.5: Save and resume session ────────────────────────────────────
+  // Sessions are automatically resumable within 48 hours of last activity.
+  // This procedure returns the current resume state for an in-progress session.
+  getResumeState: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const session = await db
+        .select()
+        .from(assessmentSessions)
+        .where(and(
+          eq(assessmentSessions.id, input.sessionId),
+          eq(assessmentSessions.userId, ctx.user.id)
+        ))
+        .limit(1);
+      if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const meta = (typeof session[0].sessionMetadataJson === "string"
+        ? JSON.parse(session[0].sessionMetadataJson as string)
+        : (session[0].sessionMetadataJson ?? {})) as Record<string, unknown>;
+
+      const answeredCount = await db
+        .select({ count: assessmentAnswers.id })
+        .from(assessmentAnswers)
+        .where(eq(assessmentAnswers.sessionId, input.sessionId));
+      const answered = answeredCount.length;
+
+      // WS4.5: Model version pinning — return the model version used when the session started
+      const pinnedModelVersion = (meta.pinnedModelVersion as string) ?? "adaptive-v2";
+
+      // WS4.4: 48-hour resume window
+      const lastActivityAt = session[0].createdAt;
+      const hoursSinceLastActivity = lastActivityAt
+        ? (Date.now() - new Date(lastActivityAt).getTime()) / (1000 * 60 * 60)
+        : 0;
+      const isResumeWindowOpen = hoursSinceLastActivity < 48;
+      const resumeWindowExpiresAt = lastActivityAt
+        ? new Date(new Date(lastActivityAt).getTime() + 48 * 60 * 60 * 1000)
+        : null;
+
+      return {
+        sessionId: input.sessionId,
+        state: session[0].state,
+        answeredCount: answered,
+        targetItems: MINIMUM_EVIDENCE.targetItems,
+        progressPct: Math.round((answered / MINIMUM_EVIDENCE.targetItems) * 100),
+        isResumeWindowOpen,
+        resumeWindowExpiresAt,
+        pinnedModelVersion,
+        roleHint: (meta.roleHint as string) ?? null,
+      };
+    }),
+
+  // ── WS4.6: Feature flag status (for frontend gating) ──────────────────────
+  getFeatureFlags: protectedProcedure
+    .query(() => ({
+      validationPhaseRandomised: isValidationPhaseRandomised(),
+    })),
 });

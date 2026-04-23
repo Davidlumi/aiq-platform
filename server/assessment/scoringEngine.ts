@@ -167,7 +167,9 @@ export interface FailureModeResult {
  * "this single answer's weighted contribution to this signal was -1.5 or worse".
  */
 export function detectFailureModes(
-  answers: Array<{ outcomeClass: string | null; signalDeltas: Record<string, number>; eventCodes: string[] }>
+  answers: Array<{ outcomeClass: string | null; signalDeltas: Record<string, number>; eventCodes: string[] }>,
+  /** WS1.2: Configurable thresholds from scoring_config. Defaults: blocking=2, downgrade=1 */
+  opts?: { blockingFailureMinItems?: number; downgradeFailureMinItems?: number }
 ): FailureModeResult {
   const modes: string[] = [];
   let governanceFlag = false;
@@ -233,8 +235,11 @@ export function detectFailureModes(
     modes.filter(m => ["blind_ai_acceptance", "hallucination_acceptance", "unsafe_hr_decisioning", "governance_bypass", "critical_failure_response"].includes(m))
   );
   const uniqueBlockCount = uniqueBlockingModes.size;
+  // WS1.2: Use configurable thresholds from scoring_config (default: block>=2, downgrade>=1)
+  const blockingMin = opts?.blockingFailureMinItems ?? 2;
+  const downgradeMin = opts?.downgradeFailureMinItems ?? 1;
   const classificationImpact: "none" | "downgrade" | "block" =
-    uniqueBlockCount >= 3 ? "block" : uniqueBlockCount >= 1 ? "downgrade" : "none";
+    uniqueBlockCount >= blockingMin ? "block" : uniqueBlockCount >= downgradeMin ? "downgrade" : "none";
 
   return {
     detected: uniqueModes.length > 0,
@@ -413,16 +418,24 @@ function scoreBand(score: number): "strong" | "developing" | "needs_work" | "cri
 }
 
 /**
- * S1: Accept optional scoring config params so the transform can be driven by
- * the versioned scoring_config table rather than hard-coded constants.
- * Defaults preserve the v2.0 behaviour (intercept=50, multiplier=50).
+ * WS1.1: v2.2 sum+clip formula replaces the v2.1 mean-based formula.
+ * Formula: score = intercept + clip(Σ weighted_deltas, -cap, +cap) × contributionMultiplier
+ * This fixes the monotonicity bug in v2.1 where adding a positive-delta answer could
+ * lower the score by reducing the average.
+ *
+ * Defaults: intercept=50, contributionCap=8.0, contributionMultiplier=6.25
+ * (v2.1 legacy params intercept/multiplier accepted but ignored in v2.2 path)
  */
 export function computeCapabilityScores(
   signalScores: Record<string, number>,
-  scoringCfg?: { intercept: number; multiplier: number }
+  scoringCfg?: { intercept: number; multiplier: number; contributionCap?: number; contributionMultiplier?: number }
 ): Record<CapabilityKey, CapabilityScore> {
   const intercept = scoringCfg?.intercept ?? 50;
-  const multiplier = scoringCfg?.multiplier ?? 50;
+  // WS1.1: v2.2 sum+clip parameters (fall back to v2.1 behaviour if not provided)
+  const contributionCap = scoringCfg?.contributionCap;
+  const contributionMultiplier = scoringCfg?.contributionMultiplier;
+  const useV22Formula = contributionCap !== undefined && contributionMultiplier !== undefined;
+
   const capAccum: Record<string, { sum: number; count: number }> = {};
 
   for (const signalEntry of Object.entries(signalScores)) {
@@ -442,14 +455,19 @@ export function computeCapabilityScores(
   const result = {} as Record<CapabilityKey, CapabilityScore>;
   for (const cap of ALL_CAPS) {
     const { sum, count } = capAccum[cap];
-    const avgDelta = count > 0 ? sum / count : 0;
-    // E2: Dynamic scale factor prevents score dilution with many signals.
-    // With few signals (count<=3) use full sensitivity; with many signals
-    // reduce the multiplier so extreme sums don't push past 0-100 bounds.
-    // The base scale is derived from the configured multiplier (default 50 → base 12.5).
-    const baseScale = multiplier / 4;
-    const scaleFactor = count <= 3 ? baseScale : Math.max(baseScale * 0.4, baseScale / Math.sqrt(count / 3));
-    const score = Math.max(0, Math.min(100, Math.round(intercept + avgDelta * scaleFactor)));
+    let score: number;
+    if (useV22Formula) {
+      // WS1.1 v2.2: sum+clip formula — monotonicity preserved
+      const clipped = Math.max(-contributionCap!, Math.min(contributionCap!, sum));
+      score = Math.max(0, Math.min(100, Math.round(intercept + clipped * contributionMultiplier!)));
+    } else {
+      // v2.1 legacy mean-based formula (preserved for in-flight sessions pinned to v2.1 config)
+      const multiplier = scoringCfg?.multiplier ?? 50;
+      const avgDelta = count > 0 ? sum / count : 0;
+      const baseScale = multiplier / 4;
+      const scaleFactor = count <= 3 ? baseScale : Math.max(baseScale * 0.4, baseScale / Math.sqrt(count / 3));
+      score = Math.max(0, Math.min(100, Math.round(intercept + avgDelta * scaleFactor)));
+    }
     result[cap as CapabilityKey] = {
       score,
       displayName: CAPABILITY_DISPLAY[cap as CapabilityKey],

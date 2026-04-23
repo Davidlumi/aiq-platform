@@ -45,3 +45,31 @@ export const PERSONA_ADAPTATION_MIN_SESSIONS = 3;
 export function shouldApplyPersonaAdaptation(priorSessionCount: number): boolean {
   return isPersonaAdaptationEnabled() && priorSessionCount >= PERSONA_ADAPTATION_MIN_SESSIONS;
 }
+
+// ─── WS2.1: Outcome-Conditional Anti-Gaming Flag ──────────────────────────────
+/**
+ * WS2.1: Whether outcome-conditional anti-gaming pattern detection is enabled.
+ * When enabled, the anti-gaming engine applies stricter scrutiny to answer
+ * sequences that are suspiciously consistent with a single outcome class
+ * (e.g. all "strong" answers on governance items regardless of difficulty).
+ * Reads from ANTI_GAMING_OUTCOME_CONDITIONAL env var.
+ * Defaults to true (enabled) — this is a safety feature.
+ */
+export function isOutcomeConditionalAntiGamingEnabled(): boolean {
+  const val = process.env.ANTI_GAMING_OUTCOME_CONDITIONAL;
+  return val !== "false" && val !== "0"; // default ON
+}
+
+// ─── WS4.6: Validation Phase Order Randomisation Flag ─────────────────────────
+/**
+ * WS4.6: Whether the validation phase item order is randomised within the
+ * adaptive session. When enabled, validation-phase items are interleaved
+ * with adaptive items rather than served as a distinct final block.
+ * This reduces order effects and recency bias in validation responses.
+ * Reads from VALIDATION_PHASE_ORDER_RANDOMISED env var.
+ * Defaults to false (disabled) — enable after sufficient A/B validation.
+ */
+export function isValidationPhaseRandomised(): boolean {
+  const val = process.env.VALIDATION_PHASE_ORDER_RANDOMISED;
+  return val === "true" || val === "1";
+}

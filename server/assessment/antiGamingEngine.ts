@@ -30,7 +30,47 @@ export type GamingPattern =
   | "inconsistent_responses"
   | "polished_shallow"     // strong governance language but weak execution
   | "pattern_cycling"      // cycles through A→B→C→D positions
-  | "outcome_cycling";     // cycles through outcome classes (strong→acceptable→weak→strong)
+  | "outcome_cycling"      // cycles through outcome classes (strong→acceptable→weak→strong)
+  // WS2.1: Outcome-conditional patterns
+  | "outcome_conditional_safe"   // always picks safe on high-risk items, strong on low-risk
+  | "seniority_inconsistent";    // WS2.2: answers inconsistent with declared seniority
+
+/**
+ * WS2.1: Feature flag — enable outcome-conditional anti-gaming detection.
+ * Disabled by default until calibration data is available.
+ */
+// WS2.1: Outcome-conditional detection defaults ON; set ANTI_GAMING_OUTCOME_CONDITIONAL=false to disable
+export const ANTI_GAMING_OUTCOME_CONDITIONAL =
+  process.env.ANTI_GAMING_OUTCOME_CONDITIONAL !== "false" && process.env.ANTI_GAMING_OUTCOME_CONDITIONAL !== "0";
+
+/**
+ * WS2.2: Role-aware anti-gaming thresholds.
+ * Keyed by role family (e.g. "specialist", "generalist", "leader").
+ * Falls back to DEFAULT_THRESHOLDS if role family not found.
+ */
+export interface RoleAwareGamingThresholds {
+  alwaysSafeAcceptableRate: number;
+  alwaysSafeStrongMax: number;
+  speedGamingRate: number;
+  alwaysEscalateRate: number;
+  alwaysCautiousRate: number;
+}
+
+const DEFAULT_GAMING_THRESHOLDS: RoleAwareGamingThresholds = {
+  alwaysSafeAcceptableRate: 0.75,
+  alwaysSafeStrongMax: 0.10,
+  speedGamingRate: 0.50,
+  alwaysEscalateRate: 0.60,
+  alwaysCautiousRate: 0.55,
+};
+
+// WS2.2: Specialist roles are expected to be more decisive — tighter thresholds
+const ROLE_GAMING_THRESHOLDS: Record<string, RoleAwareGamingThresholds> = {
+  specialist: { ...DEFAULT_GAMING_THRESHOLDS, alwaysSafeAcceptableRate: 0.70, speedGamingRate: 0.45 },
+  leader:     { ...DEFAULT_GAMING_THRESHOLDS, alwaysSafeAcceptableRate: 0.70, alwaysEscalateRate: 0.55 },
+  generalist: DEFAULT_GAMING_THRESHOLDS,
+  coordinator: DEFAULT_GAMING_THRESHOLDS,
+};
 
 export interface InjectionSpec {
   type: "trap" | "clean_case" | "comparable_scenario" | "format_variation";
@@ -61,7 +101,27 @@ const SPEED_THRESHOLDS_BY_TYPE: Record<string, number> = {
 const DEFAULT_SPEED_THRESHOLD = 8_000;
 
 /**
+ * WS2.3: Extended anti-gaming audit event codes.
+ * These are appended to the eventCodesJson on the answer record when a pattern is detected.
+ */
+export const GAMING_AUDIT_EVENT_CODES: Record<GamingPattern, string> = {
+  always_safe_choice:        "GAMING_ALWAYS_SAFE",
+  always_escalate:           "GAMING_ALWAYS_ESCALATE",
+  always_cautious:           "GAMING_ALWAYS_CAUTIOUS",
+  option_position_bias:      "GAMING_POSITION_BIAS",
+  speed_gaming:              "GAMING_SPEED",
+  inconsistent_responses:    "GAMING_INCONSISTENT",
+  polished_shallow:          "GAMING_POLISHED_SHALLOW",
+  pattern_cycling:           "GAMING_PATTERN_CYCLE",
+  outcome_cycling:           "GAMING_OUTCOME_CYCLE",
+  outcome_conditional_safe:  "GAMING_OUTCOME_CONDITIONAL",
+  seniority_inconsistent:    "GAMING_SENIORITY_INCONSISTENT",
+};
+
+/**
  * Analyse answer history for gaming patterns.
+ * WS2.2: Accepts optional roleFamily for role-aware thresholds.
+ * WS2.2: Accepts optional declaredSeniority for seniority-inconsistency suppression.
  */
 export function analyseGamingPatterns(
   answers: Array<{
@@ -72,7 +132,12 @@ export function analyseGamingPatterns(
     confidenceScore: number;
     signalDeltas: Record<string, number>;
     interactionType: string;
-  }>
+    riskLevel?: string; // WS2.1: needed for outcome-conditional detection
+  }>,
+  /** WS2.2: Role family for role-aware thresholds (e.g. "specialist", "generalist") */
+  roleFamily?: string,
+  /** WS2.2: Declared seniority level (1-4) for seniority-inconsistency suppression */
+  declaredSeniority?: number
 ): GamingAnalysis {
   if (answers.length < 5) {
     return {
@@ -87,11 +152,14 @@ export function analyseGamingPatterns(
   const patterns: GamingPattern[] = [];
   const injections: InjectionSpec[] = [];
 
+  // WS2.2: Resolve role-aware thresholds
+  const thresholds = ROLE_GAMING_THRESHOLDS[roleFamily ?? ""] ?? DEFAULT_GAMING_THRESHOLDS;
+
   // ── Pattern 1: Always safe choice ────────────────────────────────────────
   // If >75% of outcomes are "acceptable" (never strong, never weak), user is playing safe
   const acceptableRate = answers.filter(a => a.outcomeClass === "acceptable").length / answers.length;
   const strongRate = answers.filter(a => a.outcomeClass === "strong").length / answers.length;
-  if (acceptableRate > 0.75 && strongRate < 0.1) {
+  if (acceptableRate > thresholds.alwaysSafeAcceptableRate && strongRate < thresholds.alwaysSafeStrongMax) {
     patterns.push("always_safe_choice");
     injections.push({
       type: "trap",
@@ -104,7 +172,7 @@ export function analyseGamingPatterns(
 
   // ── Pattern 2: Always escalate ────────────────────────────────────────────
   const escalateSignals = answers.filter(a => (a.signalDeltas.over_caution_risk ?? 0) < -0.5).length;
-  if (escalateSignals / answers.length > 0.6) {
+  if (escalateSignals / answers.length > thresholds.alwaysEscalateRate) {
     patterns.push("always_escalate");
     injections.push({
       type: "clean_case",
@@ -122,7 +190,7 @@ export function analyseGamingPatterns(
     (a.signalDeltas.over_caution_risk ?? 0) < -0.5 ||
     (a.signalDeltas.avoidance_risk ?? 0) < -0.5
   ).length;
-  if (cautiousSignals / answers.length > 0.55 && !patterns.includes("always_escalate")) {
+  if (cautiousSignals / answers.length > thresholds.alwaysCautiousRate && !patterns.includes("always_escalate")) {
     patterns.push("always_cautious");
     injections.push({
       type: "clean_case",
@@ -159,7 +227,7 @@ export function analyseGamingPatterns(
     const threshold = SPEED_THRESHOLDS_BY_TYPE[a.interactionType] ?? DEFAULT_SPEED_THRESHOLD;
     return a.timeToAnswerMs < threshold;
   }).length;
-  if (speedGamingCount / answers.length > 0.5) {
+  if (speedGamingCount / answers.length > thresholds.speedGamingRate) {
     patterns.push("speed_gaming");
     injections.push({
       type: "trap",
@@ -224,6 +292,39 @@ export function analyseGamingPatterns(
     }
     if (semanticCycleCount > (vals.length - 5) * 0.4) {
       patterns.push("outcome_cycling");
+    }
+  }
+
+  // ── Pattern 10: Outcome-conditional safe (WS2.1) ─────────────────────────
+  // Detects users who pick safe/acceptable on high-risk items but strong on low-risk items
+  // This is a sign of strategic gaming: appearing competent on easy items, deferring on hard ones
+  if (ANTI_GAMING_OUTCOME_CONDITIONAL && answers.length >= 8) {
+    const highRiskAnswers = answers.filter(a => a.riskLevel === "High" || a.riskLevel === "Critical");
+    const lowRiskAnswers = answers.filter(a => a.riskLevel === "Low");
+    if (highRiskAnswers.length >= 3 && lowRiskAnswers.length >= 3) {
+      const highRiskSafeRate = highRiskAnswers.filter(a => a.outcomeClass === "acceptable" || a.outcomeClass === "weak").length / highRiskAnswers.length;
+      const lowRiskStrongRate = lowRiskAnswers.filter(a => a.outcomeClass === "strong").length / lowRiskAnswers.length;
+      if (highRiskSafeRate > 0.70 && lowRiskStrongRate > 0.70) {
+        patterns.push("outcome_conditional_safe");
+        injections.push({
+          type: "trap",
+          targetPattern: "outcome_conditional_safe",
+          targetCapability: "governance",
+          riskLevel: "High",
+          interactionType: "governance_decision",
+        });
+      }
+    }
+  }
+
+  // ── Pattern 11: Seniority-inconsistent (WS2.2) ───────────────────────────
+  // Suppresses seniority-inconsistent flags for junior users (seniority level 1)
+  // who are expected to be more cautious and less decisive
+  if (declaredSeniority !== undefined && declaredSeniority >= 3) {
+    // Senior users (level 3+) should not be consistently picking weak/failure outcomes
+    const weakRate = answers.filter(a => a.outcomeClass === "weak" || a.outcomeClass === "failure").length / answers.length;
+    if (weakRate > 0.50) {
+      patterns.push("seniority_inconsistent");
     }
   }
 

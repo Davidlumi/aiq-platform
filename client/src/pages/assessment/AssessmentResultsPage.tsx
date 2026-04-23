@@ -1,8 +1,8 @@
 /*
- * Assessment Results Page — AiQ Enterprise Platform
+ * Assessment Results Page - AiQ Enterprise Platform
  *
  * UX improvements applied:
- * UX-1: Deep Dive tab no longer duplicates Summary content — shows only longitudinal chart,
+ * UX-1: Deep Dive tab no longer duplicates Summary content - shows only longitudinal chart,
  *        LLM narrative, and expanded signal breakdown with per-capability grouping.
  * UX-2: Development tab leads with LLM narrative (strengths/gaps/priorities) instead of
  *        generic static boilerplate.
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -39,6 +40,12 @@ import {
   Lightbulb,
   Sparkles,
   Zap,
+  ChevronDown,
+  ChevronUp,
+  Flag,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -68,7 +75,7 @@ import {
 const READINESS_CONFIG = {
   safe: {
     label: "AI-Ready",
-    // S6: softened — no "governance" or "deploy" language
+    // S6: softened - no "governance" or "deploy" language
     description: "Demonstrates consistent, appropriate application of AI tools with strong awareness of risks and limitations.",
     color: "text-[#228833]",
     bg: "border-[#228833]/30 bg-[#228833]/5",
@@ -78,7 +85,7 @@ const READINESS_CONFIG = {
   },
   at_risk: {
     label: "Developing",
-    // S6: softened — no "mandatory remediation" or "restricted use"
+    // S6: softened - no "mandatory remediation" or "restricted use"
     description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
     color: "text-[#EE8866]",
     bg: "border-[#EE8866]/30 bg-[#EE8866]/5",
@@ -88,7 +95,7 @@ const READINESS_CONFIG = {
   },
   unsafe: {
     label: "Not Yet Ready",
-    // S6: softened — no "governance hold" or "unsafe to deploy"
+    // S6: softened - no "governance hold" or "unsafe to deploy"
     description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
     color: "text-[#EE6677]",
     bg: "border-[#EE6677]/30 bg-[#EE6677]/5",
@@ -309,9 +316,9 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
 // ─── Percentile Band Badge with Tooltip ─────────────────────────────────────
 
 const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
-  "Top 20%":        { colour: "#228833", description: "Your score places you in the top fifth of your peer group — a strong result relative to HR professionals at a similar level and role." },
+  "Top 20%":        { colour: "#228833", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
   "Above average":  { colour: "#44bb99", description: "Your score is above the midpoint for your peer group. You are performing better than most HR professionals at a similar level and role." },
-  "Around average": { colour: "#EE8866", description: "Your score is close to the typical result for your peer group. This is a normal starting point — most capability development happens from here." },
+  "Around average": { colour: "#EE8866", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
   "Below average":  { colour: "#EE6677", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
   "Bottom 20%":     { colour: "#CC3311", description: "Your score is in the bottom fifth of your peer group. Focused development in this capability is recommended before taking on AI-assisted decisions in this area." },
 };
@@ -350,7 +357,7 @@ function PercentileBandBadge({
         {normGroupLabel && (
           <p className="mt-1.5 opacity-70 italic">Compared to: {normGroupLabel}</p>
         )}
-        <p className="mt-1.5 opacity-60 italic">Provisional — based on synthetic baseline distributions.</p>
+        <p className="mt-1.5 opacity-60 italic">Provisional - based on synthetic baseline distributions.</p>
       </TooltipContent>
     </UITooltip>
   );
@@ -476,11 +483,35 @@ const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = {
 export default function AssessmentResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [flagged, setFlagged] = useState(false);
 
   const { data, isLoading, error } = trpc.assessment.results.useQuery(
     { sessionId: sessionId! },
     { enabled: !!sessionId, refetchOnWindowFocus: false }
   );
+
+  // WS1.4: Classification explanation (lazy - only fetched when panel is opened)
+  const { data: explanationData, isLoading: explanationLoading } =
+    trpc.assessment.getClassificationExplanation.useQuery(
+      { sessionId: sessionId! },
+      { enabled: !!sessionId && showExplanation, refetchOnWindowFocus: false }
+    );
+
+  // WS4.3: Flag for review
+  const flagMutation = trpc.assessment.flagForReview.useMutation({
+    onSuccess: (res: any) => {
+      setFlagged(true);
+      if (res.alreadyFlagged) {
+        toast.warning("Already flagged - this session has already been submitted for review.");
+      } else {
+        toast.success("Session flagged for review - a member of the assessment team will review your results.");
+      }
+    },
+    onError: () => {
+      toast.error("Could not submit flag - please try again later.");
+    },
+  });
 
   if (isLoading) {
     return (
@@ -636,7 +667,7 @@ export default function AssessmentResultsPage() {
                     <span className="text-xs text-muted-foreground">
                       Model: V9.2 · {totalAnswers} questions
                     </span>
-                    {/* P15: ExplanationDrawer — score transparency */}
+                    {/* P15: ExplanationDrawer - score transparency */}
                     <ExplanationDrawer
                       trigger={
                         <button className="text-xs text-[#10B981] underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity">
@@ -846,7 +877,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* UX-3: Score Summary — actual question count with early-completion label */}
+          {/* UX-3: Score Summary - actual question count with early-completion label */}
           <Card className="border-border">
             <CardContent className="p-5">
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -877,6 +908,89 @@ export default function AssessmentResultsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* WS4.2: Why this classification? expandable panel */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <button
+                onClick={() => setShowExplanation(v => !v)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                  Why this classification?
+                </CardTitle>
+                {showExplanation
+                  ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              </button>
+            </CardHeader>
+            {showExplanation && (
+              <CardContent className="pt-0 space-y-3">
+                {explanationLoading && <Skeleton className="h-24 w-full" />}
+                {explanationData && (
+                  <>
+                    {(explanationData as any).isProvisional && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 px-3 py-2">
+                        <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                          <Info className="w-3 h-3 shrink-0" />
+                          This classification is provisional due to limited evidence or low assessment confidence.
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {((explanationData as any).factors ?? []).map((f: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2.5 text-sm">
+                          {f.direction === "positive" ? (
+                            <ThumbsUp className="w-4 h-4 text-[#228833] shrink-0 mt-0.5" />
+                          ) : f.direction === "negative" ? (
+                            <ThumbsDown className="w-4 h-4 text-[#EE6677] shrink-0 mt-0.5" />
+                          ) : (
+                            <Minus className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                          )}
+                          <div>
+                            <span className="font-medium text-foreground">{f.factor}: </span>
+                            <span className="text-muted-foreground">{f.detail}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {((explanationData as any).topStrengths ?? []).length > 0 && (
+                      <div className="rounded-md bg-[#228833]/5 border border-[#228833]/20 px-3 py-2">
+                        <p className="text-xs font-semibold text-[#228833] mb-1">Top strengths</p>
+                        <p className="text-xs text-muted-foreground">{(explanationData as any).topStrengths.join(" · ")}</p>
+                      </div>
+                    )}
+                    {((explanationData as any).topGaps ?? []).length > 0 && (
+                      <div className="rounded-md bg-[#EE6677]/5 border border-[#EE6677]/20 px-3 py-2">
+                        <p className="text-xs font-semibold text-[#EE6677] mb-1">Development priorities</p>
+                        <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">
+                      Scoring model: {(explanationData as any).scoringConfigVersion} · Confidence: {(explanationData as any).confidenceBand}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            )}
+          </Card>
+
+          {/* WS4.3: Flag for review */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
+              disabled={flagged || flagMutation.isPending}
+              onClick={() => {
+                if (sessionId) flagMutation.mutate({ sessionId, reason: "Participant-initiated review request" });
+              }}
+            >
+              <Flag className="w-3.5 h-3.5" />
+              {flagged ? "Flagged for review" : "Flag this result for review"}
+            </Button>
+          </div>
 
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -915,7 +1029,7 @@ export default function AssessmentResultsPage() {
 
         {/* ══════════════════════════════════════════════════════════════════════
             TAB 2: DEEP DIVE
-            UX-1: Contains ONLY content exclusive to this tab — no duplication
+            UX-1: Contains ONLY content exclusive to this tab - no duplication
             of capability bars / signal profile / governance profile from Summary.
             Shows: longitudinal tracking, LLM narrative, expanded signal breakdown
             grouped by positive vs risk signals.
@@ -954,7 +1068,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Expanded Signal Breakdown — grouped by positive vs risk */}
+          {/* Expanded Signal Breakdown - grouped by positive vs risk */}
           {sortedSignals.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
@@ -1003,7 +1117,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Technical metadata — only in deep dive */}
+          {/* Technical metadata - only in deep dive */}
           <Card className="border-border">
             <CardContent className="p-5">
               <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">

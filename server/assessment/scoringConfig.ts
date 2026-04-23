@@ -1,12 +1,13 @@
 /**
- * S1: Scoring Config Loader
+ * WS1.1/WS1.2: Scoring Config Loader
  *
  * Reads the active scoring_config row from the database and caches it in memory
  * for the lifetime of the process (TTL: 5 minutes). This avoids a DB round-trip
  * on every score computation while still picking up admin-applied config changes
  * within a reasonable window.
  *
- * Default (fallback): intercept=50, multiplier=50 — matches the v2.0 hard-coded formula.
+ * v2.2 adds contributionCap, contributionMultiplier (sum+clip formula params)
+ * and blockingFailureMinItems, downgradeFailureMinItems (failure-mode thresholds).
  */
 
 import { getDb } from "../db";
@@ -17,6 +18,12 @@ export interface ActiveScoringConfig {
   version: number;
   intercept: number;
   multiplier: number;
+  // WS1.1: v2.2 sum+clip formula params (undefined = use v2.1 mean-based formula)
+  contributionCap?: number;
+  contributionMultiplier?: number;
+  // WS1.2: failure-mode evidence thresholds
+  blockingFailureMinItems: number;
+  downgradeFailureMinItems: number;
   calibrationSource: string;
 }
 
@@ -24,6 +31,11 @@ const DEFAULT_CONFIG: ActiveScoringConfig = {
   version: 1,
   intercept: 50,
   multiplier: 50,
+  // v2.1 defaults — no sum+clip params means legacy formula is used
+  contributionCap: undefined,
+  contributionMultiplier: undefined,
+  blockingFailureMinItems: 2,
+  downgradeFailureMinItems: 1,
   calibrationSource: "synthetic_default",
 };
 
@@ -52,10 +64,20 @@ export async function getActiveScoringConfig(): Promise<ActiveScoringConfig> {
       _cache = DEFAULT_CONFIG;
     } else {
       const row = rows[0];
+      const cap = row.contributionCap !== null && row.contributionCap !== undefined
+        ? parseFloat(row.contributionCap as unknown as string)
+        : undefined;
+      const mult = row.contributionMultiplier !== null && row.contributionMultiplier !== undefined
+        ? parseFloat(row.contributionMultiplier as unknown as string)
+        : undefined;
       _cache = {
         version: row.version,
         intercept: parseFloat(row.capabilityScoreIntercept as unknown as string),
         multiplier: parseFloat(row.capabilityScoreMultiplier as unknown as string),
+        contributionCap: cap,
+        contributionMultiplier: mult,
+        blockingFailureMinItems: row.blockingFailureMinItems ?? 2,
+        downgradeFailureMinItems: row.downgradeFailureMinItems ?? 1,
         calibrationSource: row.calibrationSource,
       };
     }

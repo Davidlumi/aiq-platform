@@ -335,8 +335,8 @@ export class SessionController {
   static computeResults(
     answers: AnswerData[],
     userRoleHint?: string | null,
-    /** S1: Active scoring config (intercept + multiplier) */
-    scoringCfg?: { intercept: number; multiplier: number },
+    /** WS1.1/WS1.2: Active scoring config (intercept + multiplier + v2.2 sum+clip + failure thresholds) */
+    scoringCfg?: { intercept: number; multiplier: number; contributionCap?: number; contributionMultiplier?: number; blockingFailureMinItems?: number; downgradeFailureMinItems?: number },
     /** S10: Org-level capability threshold overrides */
     orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>,
     /** S4: Proportion of required-reasoning items that received adequate reasoning */
@@ -357,12 +357,12 @@ export class SessionController {
       }))
     );
 
-    // Capability scores — S1: use versioned scoring config
+    // Capability scores — WS1.1: use versioned scoring config (v2.2 sum+clip if params present)
     const capabilityScores = computeCapabilityScores(signalScores, scoringCfg);
     // R10: Use role-specific capability weights for overall score
     const overallScore = computeOverallScore(capabilityScores, roleArchetype.capabilityWeights);
 
-    // Failure mode detection
+    // Failure mode detection — WS1.2: pass configurable thresholds from scoring config
     const failureModes = detectFailureModes(
       answers.map(a => ({
         outcomeClass: a.outcomeClass,
@@ -372,7 +372,12 @@ export class SessionController {
         eventCodes: (() => {
           try { return typeof a.eventCodesJson === "string" ? JSON.parse(a.eventCodesJson) : (a.eventCodesJson as string[]) ?? []; } catch { return []; }
         })(),
-      }))
+      })),
+      // WS1.2: pass configurable thresholds from scoring_config
+      {
+        blockingFailureMinItems: scoringCfg?.blockingFailureMinItems,
+        downgradeFailureMinItems: scoringCfg?.downgradeFailureMinItems,
+      }
     );
 
     // Contradiction detection

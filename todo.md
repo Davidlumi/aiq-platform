@@ -674,3 +674,87 @@
 - [x] I8: Fallback item diversity — 6 capability-specific fallback templates (execution, judgement, risk, workflow, appropriateness, data) replace 1 generic template (adaptiveEngine.ts: generateFallbackItem)
 - [x] I9: Learning plan completion trigger — updateProgress auto-marks plan as completed and regenerates a new capability-mapped plan when all required items are done (learning.ts)
 - [x] I10: Persona classification engine wired into assessment difficulty — getPersonaAdaptedParameters called at session start; personaDifficultyOffset applied to starting difficulty (assessment.ts)
+
+## v2.2 Engine Remediation Work Package (Apr 2026)
+
+### WS1 — Scoring Engine Correctness
+- [ ] WS1.1a: Add contribution_cap and contribution_multiplier columns to scoring_config table (migration)
+- [ ] WS1.1b: Replace mean-based capabilityScore formula with sum+clip formula in scoringEngine.ts
+- [ ] WS1.1c: Calibrate defaults (contribution_cap=8.0, contribution_multiplier=6.25) against 4 anchor cases (A/B/C/D)
+- [ ] WS1.1d: Seed v2.2 scoring_config row (calibration_source='synthetic_v2_2') with calibration note in notes column
+- [ ] WS1.1e: Activate v2.2 config via backoffice.activateScoringConfig; keep v2.1 row for rollback
+- [ ] WS1.1f: In-flight session handling — capture scoringConfigVersionAtStart on session creation; use that version at completion
+- [x] WS1.1g: Write scoring.v2-2.test.ts — 20 synthetic sequences, monotonicity, Safe-not-to-Unsafe regression, calibration anchors
+- [ ] WS1.2a: Add blocking_failure_min_items (default 2) and downgrade_failure_min_items (default 1) to scoring_config
+- [ ] WS1.2b: Update detectFailureModes — governance_bypass_risk and unsafe_hr_decision_risk require 2 distinct items exceeding threshold for Block; single item → Downgrade only
+- [x] WS1.2c: Write failure-modes.v2-2.test.ts — two-item threshold, downgrade vs block, single-item cases
+- [ ] WS1.3a: Migration — add contribution_breakdown JSON column to assessment_answers
+- [ ] WS1.3b: Populate contribution_breakdown array on every submitAnswer (one entry per signal delta)
+- [ ] WS1.3c: Expose contribution_breakdown in back-office answer detail view
+- [ ] WS1.4a: Add getClassificationExplanation tRPC procedure (assessment router) with full breakdown
+- [ ] WS1.4b: Enforce permissions — participant (own), tenant admin (own tenant), super-admin only
+- [ ] WS1.4c: Handle unknown_insufficient_evidence state — provisional flag + insufficientEvidenceReason field
+- [x] WS1.4d: Write classification-explanation.test.ts — all 5 readiness states, permissions matrix
+
+### WS2 — Anti-Gaming Engine Recalibration
+- [ ] WS2.1a: Add ANTI_GAMING_OUTCOME_CONDITIONAL feature flag to featureFlags.ts (default true)
+- [ ] WS2.1b: Update always_escalate, always_validate, avoidance_pattern, over_caution detectors — count only weak/failure/critical_failure outcome answers
+- [ ] WS2.1c: Capture whether each escalation fired under new or old logic in session metadata
+- [x] WS2.1d: Write anti-gaming.outcome-conditional.test.ts — pattern detection with outcome filtering, avoidance_pattern edge case
+- [ ] WS2.2a: Migration — create anti_gaming_thresholds table (pattern_key, seniority_tier, threshold_pct, rationale)
+- [ ] WS2.2b: Seed 16 rows (4 patterns × 4 tiers) with documented rationale
+- [ ] WS2.2c: Load role-aware thresholds at session start; cold-start fallback to mid tier; log fallback in metadata
+- [ ] WS2.2d: Suppress role-aware adjustment when seniority-inconsistent contradiction fires; use mid tier instead
+- [ ] WS2.3a: Extend anti-gaming log entries — pattern name, threshold vs observed count, contributing item IDs, outcome-conditional flag applied
+
+### WS3 — LLM Item Quality Gate
+- [ ] WS3.1: Implement option parallelism checker (1–5 scale, reject < 3)
+- [ ] WS3.2: Implement strong-option sanity checker (checker picks best option without labels; must match generator's strong)
+- [ ] WS3.3: Implement construct alignment checker (checker identifies capability; must match targetCapability)
+- [ ] WS3.4: Implement demographic/name bias scanner (flag stereotyped names, gendered pronouns, ethnic stereotypes)
+- [ ] WS3.5: Add vendor_reference_mode to ail_org_context (named/generic/anonymised); allow-list enforcement; default generic
+- [ ] WS3.6a: Migration — create llm_item_review_queue table (itemId, sessionId, tenantId, generatedAt, sampleReason, status, reviewerId, reviewedAt, reviewerNotes, flaggedReason)
+- [ ] WS3.6b: Implement weighted sampling (100% borderline, 100% ambiguous bias, 5% random)
+- [ ] WS3.6c: Build Reviewer UI tab in back-office
+- [ ] WS3.infra: Add LLM_CHECKER_ENABLED and LLM_CHECKER_FAIL_OPEN feature flags
+- [ ] WS3.infra: Implement retry logic (3 retries, exponential backoff 250ms/1s/4s); fail-open on infra failure
+- [ ] WS3.infra: Implement circuit breaker (disable at >20% failure rate over 5 min; re-enable at <5% for 1 min)
+- [ ] WS3.infra: PII sanitiser on checker invocation path (strip name, email, org name, UIP data)
+- [x] WS3.infra: Write llm-checkers.test.ts — each check, retry behaviour, circuit breaker, PII sanitiser
+
+### WS5 — Telemetry
+- [ ] WS5.1a: Migration — create assessment_answer_telemetry table (timeToFirstInteraction, timeToSubmit, confidenceSliderMovements, reasoningEditCount, optionChanges, itemViewportVisibleDuration)
+- [ ] WS5.1b: Frontend telemetry capture in AssessmentSessionPage (IntersectionObserver, click/keystroke tracking)
+- [ ] WS5.1c: tRPC procedure to persist telemetry per answer
+- [ ] WS5.2: Extend session metadata — scoringConfigVersionAtStart/AtCompletion, normGroupVersionAtStart/AtCompletion, llmModelVersionsUsed, antiGamingOutcomeConditionalActive, phaseOrderVariant, resumeCount
+
+### WS4 — Participant Experience
+- [ ] WS4.1a: Migration — rename persona enum values in ail_user_profiles (governance_risk→governance_development_area, over_cautious→cautious_pattern, blind_acceptor→high_trust_pattern)
+- [ ] WS4.1b: Update all code references (constants, switch statements, type definitions, narrative templates, back-office UI)
+- [ ] WS4.1c: Back-fill existing session metadata rows with new persona names
+- [ ] WS4.1d: Write reverse migration for rollback
+- [ ] WS4.2a: Build 'Why this classification?' expandable panel on AssessmentResultsPage
+- [ ] WS4.2b: Render unknown_insufficient_evidence variant (evidence conditions not met, confidence profile breakdown)
+- [ ] WS4.3a: Migration — create assessment_review_flags table
+- [ ] WS4.3b: Build 'Flag this result for review' form (reason enum, free-text, contact request)
+- [ ] WS4.3c: Rate limiting — max 3 flags per session; merge additional flags into most recent open flag
+- [ ] WS4.3d: Back-office flag review queue tab
+- [ ] WS4.4: Add item number/phase indicator and median time-remaining estimate to AssessmentSessionPage
+- [ ] WS4.5a: Save-and-resume — pause button from item 10, 48h resume window, session state persistence
+- [ ] WS4.5b: LLM model version pinning on pause; fresh pre-generation on resume
+- [ ] WS4.5c: Session expiry — mark expired, send email notification, preserve partial results in back-office
+- [x] WS4.5d: Write save-resume.test.ts — pause/resume/expiry lifecycle, model version pinning
+- [ ] WS4.6: Add VALIDATION_PHASE_ORDER_RANDOMISED feature flag; interleave validation items when enabled; capture phaseOrderVariant in metadata
+
+### Cross-Cutting
+- [ ] CC1: All new tables have tenant_id for multi-tenancy enforcement
+- [ ] CC2: All new tRPC procedures enforce permissions at procedure level
+- [ ] CC3: WCAG 2.1 AA compliance on all new UI components
+- [ ] CC4: Mobile 375px viewport confirmed for all new UI components
+- [ ] CC5: UK English spellings in all new copy (grep check for US spellings)
+- [ ] CC6: All feature flags captured in session metadata at session start
+- [x] CC7: Full test suite (132 existing + 105 new = 237 total) passes; 0 TypeScript errors
+
+### Architecture Document
+- [ ] ARCH: Produce aiq-assessment-architecture-v2.2.md with Section 23 changelog  ← IN PROGRESS
+- [ ] ARCH: Convert to PDF

@@ -188,6 +188,10 @@ export const assessmentAnswers = mysqlTable("assessment_answers", {
   outcomeClass: varchar("outcome_class", { length: 50 }),
   signalDeltasJson: json("signal_deltas_json"),
   eventCodesJson: json("event_codes_json"),
+  // WS1.3: Per-answer contribution breakdown for back-office audit
+  contributionBreakdownJson: json("contribution_breakdown_json"),
+  // WS3: Model version that generated this item
+  modelVersion: varchar("model_version", { length: 64 }),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 
@@ -939,10 +943,15 @@ export const scoringConfig = mysqlTable("scoring_config", {
   calibrationSource: mysqlEnum("calibration_source", ["synthetic_default", "pilot_cohort", "empirical"]).notNull().default("synthetic_default"),
   calibrationSampleSize: int("calibration_sample_size"),
   calibratedAt: timestamp("calibrated_at"),
+  // WS1.1: v2.2 sum+clip formula parameters
+  contributionCap: decimal("contribution_cap", { precision: 6, scale: 2 }).notNull().default("8.00"),
+  contributionMultiplier: decimal("contribution_multiplier", { precision: 6, scale: 2 }).notNull().default("6.25"),
+  // WS1.2: Failure-mode evidence thresholds
+  blockingFailureMinItems: int("blocking_failure_min_items").notNull().default(2),
+  downgradeFailureMinItems: int("downgrade_failure_min_items").notNull().default(1),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-
 // ─── S10: Organisation-Configurable Thresholds ────────────────────────────────
 
 export const organisationCapabilityThresholds = mysqlTable("organisation_capability_thresholds", {
@@ -984,3 +993,56 @@ export type AilStakeholderRelationship = typeof ailStakeholderRelationships.$inf
 export type AilNarrativeEvent = typeof ailNarrativeEvents.$inferSelect;
 export type AilNarrativeThread = typeof ailNarrativeThreads.$inferSelect;
 export type AilDifficultyProfile = typeof ailDifficultyProfiles.$inferSelect;
+
+// ─── WS1.3: Contribution Breakdown on assessment_answers ─────────────────────
+// (column added via migration; schema update below)
+
+// ─── WS4.3: Assessment Review Flags ──────────────────────────────────────────
+export const assessmentReviewFlags = mysqlTable("assessment_review_flags", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sessionId: varchar("session_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  reason: text("reason"),
+  status: mysqlEnum("status", ["pending", "reviewed", "dismissed"]).notNull().default("pending"),
+  reviewerNotes: text("reviewer_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+}, (t) => ({
+  sessionIdx: index("idx_arf_session").on(t.sessionId),
+  statusIdx: index("idx_arf_status").on(t.status),
+}));
+
+// ─── WS5: Assessment Answer Telemetry ────────────────────────────────────────
+export const assessmentAnswerTelemetry = mysqlTable("assessment_answer_telemetry", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sessionId: varchar("session_id", { length: 36 }).notNull(),
+  itemId: varchar("item_id", { length: 255 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  focusLossCount: int("focus_loss_count").notNull().default(0),
+  idlePeriodsCount: int("idle_periods_count").notNull().default(0),
+  totalActiveMs: int("total_active_ms").notNull().default(0),
+  scrollDepthPct: decimal("scroll_depth_pct", { precision: 5, scale: 2 }),
+  revisionCount: int("revision_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  sessionIdx: index("idx_aat_session").on(t.sessionId),
+}));
+
+// ─── WS3: LLM Item Review Queue ──────────────────────────────────────────────
+export const llmItemReviewQueue = mysqlTable("llm_item_review_queue", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sessionId: varchar("session_id", { length: 36 }),
+  itemId: varchar("item_id", { length: 255 }).notNull(),
+  failureReason: text("failure_reason").notNull(),
+  itemJson: json("item_json"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "auto_approved"]).notNull().default("pending"),
+  reviewerId: varchar("reviewer_id", { length: 36 }),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  statusIdx: index("idx_lirq_status").on(t.status),
+}));
+
+export type AssessmentReviewFlag = typeof assessmentReviewFlags.$inferSelect;
+export type AssessmentAnswerTelemetry = typeof assessmentAnswerTelemetry.$inferSelect;
+export type LlmItemReviewQueue = typeof llmItemReviewQueue.$inferSelect;
