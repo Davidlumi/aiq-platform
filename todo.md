@@ -976,3 +976,7 @@
 - [x] UX-02: "Explain your thinking" textarea was hidden for `error_detection` and `output_improvement` types — extended to all output-facing interaction types
 - [x] UX-03: "Other Options" in rationale screen showed letter labels (A/B/C/D) while question screen showed numbers (1/2/3/4) — fixed to use numeric position from `sessionData.nextItem.options`
 - [x] UX-04: Back to Assessments button navigated away without confirmation — added `AlertDialog` confirmation with "Stay" / "Leave & Save" options
+
+### Rationale Screen Loading Animation
+- [x] Add loading animation to rationale reveal screen — shown immediately after answer submission while explanation is being generated
+- [x] Animate transition from loading state to full rationale content (fade/slide in)

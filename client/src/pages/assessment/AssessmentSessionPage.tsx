@@ -519,6 +519,8 @@ export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  // Rationale loading: true from submit click until rationale content is ready to reveal
+  const [rationaleLoading, setRationaleLoading] = useState(false);
 
   // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
   const [isGenerating, setIsGenerating] = useState(false);
@@ -558,14 +560,19 @@ export default function AssessmentSessionPage() {
       const hasRationale = data.allOptionsRationale?.some((o: any) => o.rationaleText);
       if (hasRationale) {
         const chosenOption = sessionData?.nextItem?.options?.find((o: any) => o.value === selectedValue);
-        setRationaleData({
-          rationaleText: data.rationaleText ?? null,
-          allOptionsRationale: data.allOptionsRationale ?? [],
-          selectedValue: selectedValue,
-          selectedLabel: chosenOption?.label ?? "",
-          outcomeClass: data.outcomeClass ?? null,
-          isLastQuestion: data.isComplete === true,
-        });
+        // Brief artificial delay so the skeleton is visible for at least 600ms
+        // This prevents a jarring instant snap from loading to content
+        setTimeout(() => {
+          setRationaleData({
+            rationaleText: data.rationaleText ?? null,
+            allOptionsRationale: data.allOptionsRationale ?? [],
+            selectedValue: selectedValue,
+            selectedLabel: chosenOption?.label ?? "",
+            outcomeClass: data.outcomeClass ?? null,
+            isLastQuestion: data.isComplete === true,
+          });
+          setRationaleLoading(false);
+        }, 600);
         // Pre-fetch next item in background while user reads rationale
         setIsGenerating(true);
         refetch();
@@ -581,7 +588,10 @@ export default function AssessmentSessionPage() {
         refetch();
       }
     },
-    onError: err => toast.error(err.message),
+    onError: (err) => {
+      setRationaleLoading(false);
+      toast.error(err.message);
+    },
   });
 
   const completeMutation = trpc.assessment.completeSession.useMutation({
@@ -647,6 +657,7 @@ export default function AssessmentSessionPage() {
     const currentItem = sessionData?.nextItem;
     if (!currentItem) return;
     const timeTaken = Math.round(Date.now() - itemStartTime);
+    setRationaleLoading(true);
     submitMutation.mutate({
       sessionId: sessionId!,
       itemId: currentItem.id,
@@ -766,8 +777,61 @@ export default function AssessmentSessionPage() {
     );
   }
 
+  // T2-5a: Rationale loading skeleton — shown immediately after submit, before rationale arrives
+  if (rationaleLoading && !rationaleData) {
+    return (
+      <div className="p-6 space-y-5 max-w-2xl animate-in fade-in duration-200">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">
+              Question {answeredCount} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+            </span>
+            <span className="text-xs text-muted-foreground">{progress}% complete</span>
+          </div>
+          <Progress value={progress} className="h-1.5" />
+        </div>
+        <Card className="border-border shadow-sm">
+          <CardContent className="p-6 space-y-5">
+            {/* Pulsing analysis indicator */}
+            <div className="flex items-center gap-3 px-3 py-3 rounded-lg border border-border bg-muted/20">
+              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#10B981] opacity-20" />
+                <span className="relative inline-flex h-5 w-5 rounded-full bg-[#10B981]/30 items-center justify-center">
+                  <Bot className="w-3 h-3 text-[#10B981]" />
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-foreground">Analysing your response…</p>
+                <p className="text-xs text-muted-foreground">Generating personalised explanation</p>
+              </div>
+            </div>
+            {/* Skeleton lines */}
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-14 w-full rounded-lg" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-28 rounded" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-4/5 rounded" />
+              <Skeleton className="h-4 w-3/5 rounded" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24 rounded" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+            </div>
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // T2-5: Rationale reveal — show after answer, before next question
   if (rationaleData) {
+    // Stagger delays for section cascade animation
+    const stagger = (i: number) => ({ style: { animationDelay: `${i * 80}ms` } });
     const outcomeColors: Record<string, string> = {
       strong: "#228833",
       acceptable: "#CCBB44",
@@ -785,7 +849,7 @@ export default function AssessmentSessionPage() {
     const outcomeColor = outcomeColors[rationaleData.outcomeClass ?? ""] ?? "#4477AA";
     const outcomeLabel = outcomeLabels[rationaleData.outcomeClass ?? ""] ?? "Response recorded";
     return (
-      <div className="p-6 space-y-5 max-w-2xl">
+      <div className="p-6 space-y-5 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
@@ -799,28 +863,37 @@ export default function AssessmentSessionPage() {
           <CardContent className="p-6 space-y-4">
             {/* UX-5: Outcome badge + selected option label */}
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold"
-              style={{ color: outcomeColor, backgroundColor: `${outcomeColor}12`, borderColor: `${outcomeColor}30` }}
+              className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold"
+              style={{ color: outcomeColor, backgroundColor: `${outcomeColor}12`, borderColor: `${outcomeColor}30`, ...stagger(0).style }}
             >
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{outcomeLabel}</span>
             </div>
             {rationaleData.selectedLabel && (
-              <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm">
+              <div
+                className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm"
+                {...stagger(1)}
+              >
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">Your answer</span>
                 <span className="text-foreground">{rationaleData.selectedLabel}</span>
               </div>
             )}
             {/* Selected option rationale */}
             {rationaleData.rationaleText && (
-              <div className="space-y-1.5">
+              <div
+                className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both space-y-1.5"
+                {...stagger(2)}
+              >
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Why this matters</p>
                 <p className="text-sm text-foreground leading-relaxed">{rationaleData.rationaleText}</p>
               </div>
             )}
             {/* All options rationale */}
             {rationaleData.allOptionsRationale.filter(o => o.rationaleText && o.value !== rationaleData.selectedValue).length > 0 && (
-              <div className="space-y-2">
+              <div
+                className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both space-y-2"
+                {...stagger(3)}
+              >
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Other options</p>
                 {rationaleData.allOptionsRationale
                   .filter(o => o.rationaleText && o.value !== rationaleData.selectedValue)
@@ -851,32 +924,38 @@ export default function AssessmentSessionPage() {
               </div>
             )}
             {/* UX-7: if last question, show Complete Assessment instead of Continue */}
-            {rationaleData.isLastQuestion ? (
-              <Button
-                onClick={() => {
-                  setRationaleData(null);
-                  completeMutation.mutate({ sessionId: sessionId! });
-                }}
-                disabled={completeMutation.isPending}
-                className="w-full bg-[#228833] hover:bg-[#228833]/90 text-white gap-2"
-              >
-                {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
-                {!completeMutation.isPending && <CheckCircle2 className="w-4 h-4" />}
-              </Button>
-            ) : (
-              <Button
-                onClick={() => {
-                  setRationaleData(null);
-                  setSelectedValue("");
-                  setConfidence(50);
-                  setReasoningText(""); // C2.1: reset reasoning
-                  setItemStartTime(Date.now());
-                }}
-                className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
-              >
-                Continue <ChevronRight className="w-4 h-4" />
-              </Button>
-            )}
+            <div
+              className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both"
+              {...stagger(4)}
+            >
+              {rationaleData.isLastQuestion ? (
+                <Button
+                  onClick={() => {
+                    setRationaleData(null);
+                    completeMutation.mutate({ sessionId: sessionId! });
+                  }}
+                  disabled={completeMutation.isPending}
+                  className="w-full bg-[#228833] hover:bg-[#228833]/90 text-white gap-2"
+                >
+                  {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
+                  {!completeMutation.isPending && <CheckCircle2 className="w-4 h-4" />}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setRationaleData(null);
+                    setRationaleLoading(false);
+                    setSelectedValue("");
+                    setConfidence(50);
+                    setReasoningText(""); // C2.1: reset reasoning
+                    setItemStartTime(Date.now());
+                  }}
+                  className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+                >
+                  Continue <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
