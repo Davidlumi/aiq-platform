@@ -7,7 +7,7 @@
  * Improvements (Batch E):
  * E1: Timing map updated to match all 11 current InteractionType enum values
  * E2: Capability score scale factor is dynamic (prevents dilution with many signals)
- * E3: blockCount now counts unique failure modes only (prevents inflation)
+ * E3 (Completion Pass): blockCount counts per-answer occurrences (item counting), not unique modes
  */
 
 import type { CapabilityKey } from "./roleArchetypes";
@@ -229,17 +229,17 @@ export function detectFailureModes(
   }
 
   const uniqueModes = modes.filter((v, i, a) => a.indexOf(v) === i);
-  // E3: blockCount now counts unique blocking failure modes only (not per-answer occurrences)
-  // This prevents a single repeated pattern from inflating the classification impact.
-  const uniqueBlockingModes = new Set(
-    modes.filter(m => ["blind_ai_acceptance", "hallucination_acceptance", "unsafe_hr_decisioning", "governance_bypass", "critical_failure_response"].includes(m))
-  );
-  const uniqueBlockCount = uniqueBlockingModes.size;
+  // WS1.2 Completion Pass: Use per-answer item counting, not unique-mode counting.
+  // The two-item threshold prevents a SINGLE bad answer from blocking a session;
+  // it does NOT require failures across multiple categories.
+  // blockCount = total per-answer blocking mode triggers (accumulated above).
+  // allModeCount = total per-answer triggers of any mode type.
+  const allModeCount = modes.length;
   // WS1.2: Use configurable thresholds from scoring_config (default: block>=2, downgrade>=1)
   const blockingMin = opts?.blockingFailureMinItems ?? 2;
   const downgradeMin = opts?.downgradeFailureMinItems ?? 1;
   const classificationImpact: "none" | "downgrade" | "block" =
-    uniqueBlockCount >= blockingMin ? "block" : uniqueBlockCount >= downgradeMin ? "downgrade" : "none";
+    blockCount >= blockingMin ? "block" : allModeCount >= downgradeMin ? "downgrade" : "none";
 
   return {
     detected: uniqueModes.length > 0,

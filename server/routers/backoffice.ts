@@ -9,6 +9,7 @@ import { getDb } from "../db";
 import {
   tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems,
   scoringConfig, organisationCapabilityThresholds, sectorVocabulary,
+  antiGamingThresholds, llmItemReviewQueue, assessmentReviewFlags,
 } from "../../drizzle/schema";
 import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -530,11 +531,136 @@ export const backofficeRouter = router({
       await db.delete(organisationCapabilityThresholds).where(eq(organisationCapabilityThresholds.id, input.id));
       return { success: true };
     }),
-
-  // ── S8: Sector Vocabulary ──────────────────────────────────────────────────
-
-  listSectors: protectedProcedure.query(async ({ ctx }) => {
+  // ── WS2.2: Anti-gaming threshold management ───────────────────────────────
+  listAntiGamingThresholds: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+    return db.select().from(antiGamingThresholds).orderBy(asc(antiGamingThresholds.roleKey));
+  }),
+  upsertAntiGamingThreshold: protectedProcedure
+    .input(z.object({
+      roleKey: z.string().max(80),
+      alwaysSafeChoiceRate: z.number().min(0).max(1),
+      alwaysEscalateRate: z.number().min(0).max(1),
+      alwaysCautiousRate: z.number().min(0).max(1),
+      optionPositionBiasRate: z.number().min(0).max(1),
+      strongAnswerMaxRate: z.number().min(0).max(1),
+      outcomeConditionalRate: z.number().min(0).max(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      const existing = await db.select({ id: antiGamingThresholds.id })
+        .from(antiGamingThresholds)
+        .where(eq(antiGamingThresholds.roleKey, input.roleKey))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(antiGamingThresholds)
+          .set({
+            alwaysSafeChoiceRate: String(input.alwaysSafeChoiceRate),
+            alwaysEscalateRate: String(input.alwaysEscalateRate),
+            alwaysCautiousRate: String(input.alwaysCautiousRate),
+            optionPositionBiasRate: String(input.optionPositionBiasRate),
+            strongAnswerMaxRate: String(input.strongAnswerMaxRate),
+            outcomeConditionalRate: String(input.outcomeConditionalRate),
+            updatedAt: Date.now(),
+          })
+          .where(eq(antiGamingThresholds.id, existing[0].id));
+        return { id: existing[0].id, action: "updated" };
+      }
+      const id = nanoid();
+      await db.insert(antiGamingThresholds).values({
+        id,
+        roleKey: input.roleKey,
+        alwaysSafeChoiceRate: String(input.alwaysSafeChoiceRate),
+        alwaysEscalateRate: String(input.alwaysEscalateRate),
+        alwaysCautiousRate: String(input.alwaysCautiousRate),
+        optionPositionBiasRate: String(input.optionPositionBiasRate),
+        strongAnswerMaxRate: String(input.strongAnswerMaxRate),
+        outcomeConditionalRate: String(input.outcomeConditionalRate),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      return { id, action: "created" };
+    }),
+  deleteAntiGamingThreshold: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      await db.delete(antiGamingThresholds).where(eq(antiGamingThresholds.id, input.id));
+      return { success: true };
+    }),
+  // ── WS3: LLM item review queue ───────────────────────────────────────────────
+  listLlmReviewQueue: protectedProcedure
+    .input(z.object({
+      status: z.enum(["pending", "approved", "rejected", "auto_approved", "all"]).optional().default("pending"),
+      limit: z.number().int().min(1).max(100).optional().default(50),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      if (input.status !== "all") {
+        return db.select().from(llmItemReviewQueue)
+          .where(eq(llmItemReviewQueue.status, input.status as "pending" | "approved" | "rejected" | "auto_approved"))
+          .orderBy(desc(llmItemReviewQueue.createdAt))
+          .limit(input.limit);
+      }
+      return db.select().from(llmItemReviewQueue)
+        .orderBy(desc(llmItemReviewQueue.createdAt))
+        .limit(input.limit);
+    }),
+  updateLlmReviewStatus: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      status: z.enum(["approved", "rejected"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      await db.update(llmItemReviewQueue)
+        .set({ status: input.status })
+        .where(eq(llmItemReviewQueue.id, input.id));
+      return { success: true };
+    }),
+  // ── WS4.3: Session review flags queue ────────────────────────────────────────
+  listSessionReviewFlags: protectedProcedure
+    .input(z.object({
+      status: z.enum(["pending", "reviewed", "all"]).optional().default("pending"),
+      limit: z.number().int().min(1).max(100).optional().default(50),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      if (input.status !== "all") {
+        return db.select().from(assessmentReviewFlags)
+          .where(eq(assessmentReviewFlags.status, input.status))
+          .orderBy(desc(assessmentReviewFlags.createdAt))
+          .limit(input.limit);
+      }
+      return db.select().from(assessmentReviewFlags)
+        .orderBy(desc(assessmentReviewFlags.createdAt))
+        .limit(input.limit);
+    }),
+  resolveSessionReviewFlag: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+      await db.update(assessmentReviewFlags)
+        .set({ status: "reviewed" })
+        .where(eq(assessmentReviewFlags.id, input.id));
+      return { success: true };
+    }),
+  // ── S8: Sector Vocabulary ─────────────────────────────────────────────────────
+  listSectors: protectedProcedure.query(async ({ ctx }) => {    const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(sectorVocabulary).orderBy(asc(sectorVocabulary.label));

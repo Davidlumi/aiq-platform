@@ -10,6 +10,8 @@ import {
   varchar,
   index,
   unique,
+  smallint,
+  bigint,
 } from "drizzle-orm/mysql-core";
 
 // ─── Tenants ─────────────────────────────────────────────────────────────────
@@ -166,6 +168,11 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   completedAt: timestamp("completed_at"),
   invalidatedAt: timestamp("invalidated_at"),
   sessionMetadataJson: json("session_metadata_json").$default(() => ({})),
+  // WS5.2: Session metadata additions
+  normGroupVersion: varchar("norm_group_version", { length: 20 }),
+  localeCode: varchar("locale_code", { length: 10 }).default("en-GB"),
+  deviceType: varchar("device_type", { length: 20 }),
+  scoringConfigVersionAtStart: int("scoring_config_version_at_start"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   userStateIdx: index("idx_assessment_sessions_user_state").on(t.tenantId, t.userId, t.startedAt),
@@ -767,6 +774,8 @@ export const ailPersonaProfiles = mysqlTable("ail_persona_profiles", {
   highConfidenceOverconfidence: boolean("high_confidence_overconfidence").notNull().default(false),
   narrativeSummary: text("narrative_summary"),
   narrativeUpdatedAt: timestamp("narrative_updated_at"),
+  // WS4.1: Participant-facing softened label
+  softenedLabel: varchar("softened_label", { length: 120 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1023,6 +1032,13 @@ export const assessmentAnswerTelemetry = mysqlTable("assessment_answer_telemetry
   totalActiveMs: int("total_active_ms").notNull().default(0),
   scrollDepthPct: decimal("scroll_depth_pct", { precision: 5, scale: 2 }),
   revisionCount: int("revision_count").notNull().default(0),
+  // WS5.1: Extended telemetry columns
+  timeToFirstInteractionMs: int("time_to_first_interaction_ms"),
+  timeToSubmitMs: int("time_to_submit_ms"),
+  confidenceRatingRaw: decimal("confidence_rating_raw", { precision: 3, scale: 2 }),
+  deviceType: varchar("device_type", { length: 20 }),
+  browserType: varchar("browser_type", { length: 40 }),
+  screenWidthPx: smallint("screen_width_px"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   sessionIdx: index("idx_aat_session").on(t.sessionId),
@@ -1046,3 +1062,26 @@ export const llmItemReviewQueue = mysqlTable("llm_item_review_queue", {
 export type AssessmentReviewFlag = typeof assessmentReviewFlags.$inferSelect;
 export type AssessmentAnswerTelemetry = typeof assessmentAnswerTelemetry.$inferSelect;
 export type LlmItemReviewQueue = typeof llmItemReviewQueue.$inferSelect;
+
+// ─── WS2.2: Anti-Gaming Thresholds ───────────────────────────────────────────
+export const antiGamingThresholds = mysqlTable("anti_gaming_thresholds", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  roleKey: varchar("role_key", { length: 100 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }),
+  alwaysSafeChoiceRate: decimal("always_safe_choice_rate", { precision: 5, scale: 4 }).notNull().default("0.7500" as any),
+  alwaysEscalateRate: decimal("always_escalate_rate", { precision: 5, scale: 4 }).notNull().default("0.7000" as any),
+  alwaysCautiousRate: decimal("always_cautious_rate", { precision: 5, scale: 4 }).notNull().default("0.6000" as any),
+  optionPositionBiasRate: decimal("option_position_bias_rate", { precision: 5, scale: 4 }).notNull().default("0.7000" as any),
+  strongAnswerMaxRate: decimal("strong_answer_max_rate", { precision: 5, scale: 4 }).notNull().default("0.1000" as any),
+  outcomeConditionalRate: decimal("outcome_conditional_rate", { precision: 5, scale: 4 }).notNull().default("0.8000" as any),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  roleKeyTenantIdx: unique("uq_agt_role_tenant").on(t.roleKey, t.tenantId),
+  tenantIdx: index("idx_agt_tenant").on(t.tenantId),
+}));
+
+export type AntiGamingThreshold = typeof antiGamingThresholds.$inferSelect;
+
+

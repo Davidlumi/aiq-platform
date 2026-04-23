@@ -16,6 +16,7 @@ import {
   ailUserIntelligenceProfiles,
 } from "../../drizzle/schema";
 import { getPersonaProfile } from "./personaClassificationEngine";
+import { getPersonaLabel } from "../assessment/featureFlags";
 import { getOrganisationalClimate } from "./emotionalDynamicsLayer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -199,19 +200,11 @@ export async function generateCapabilityReport(
     };
   });
 
-  // ── 2. Build persona section ───────────────────────────────────────────────
-  const personaLabels: Record<string, string> = {
-    strong_validator: "Strong Validator",
-    overconfident_decision_maker: "Overconfident Decision-Maker",
-    risk_averse_escalator: "Risk-Averse Escalator",
-    passive_deferrer: "Passive Deferrer",
-    governance_anchor_under_pressure: "Governance Anchor Under Pressure",
-    unclassified: "Developing Profile",
-  };
-
+  // ── 2. Build persona section ─────────────────────────────────────────────────────
+  // WS4.1: Use softened participant-facing labels via feature flag
   const persona = {
     type: personaProfile?.primaryPersona ?? "unclassified",
-    label: personaLabels[personaProfile?.primaryPersona ?? "unclassified"] ?? "Developing Profile",
+    label: getPersonaLabel(personaProfile?.primaryPersona ?? "unclassified"),
     confidence: parseFloat(String(personaProfile?.personaConfidence ?? "0")),
     narrative: personaProfile?.narrativeSummary ?? "",
     dimensions: {

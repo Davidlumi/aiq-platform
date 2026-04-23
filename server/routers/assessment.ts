@@ -67,7 +67,13 @@ import {
 } from "../assessment/adaptiveEngine";
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
 import { getActiveScoringConfig } from "../assessment/scoringConfig";
-import { shouldApplyPersonaAdaptation, isValidationPhaseRandomised } from "../assessment/featureFlags";
+import {
+  shouldApplyPersonaAdaptation,
+  isValidationPhaseRandomised,
+  isLlmCheckerEnabled,
+  isSaveAndResumeEnabled,
+  getPersonaLabel,
+} from "../assessment/featureFlags";
 import { organisationCapabilityThresholds } from "../../drizzle/schema";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
@@ -577,6 +583,9 @@ export const assessmentRouter = router({
     .input(z.object({
       blueprintId: z.string(),
       roleHint: z.string().optional(),
+      // WS5.2: Session metadata
+      deviceType: z.enum(["desktop", "tablet", "mobile"]).optional(),
+      localeCode: z.string().max(10).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -682,6 +691,12 @@ export const assessmentRouter = router({
           }
         } catch {}
       }
+      // WS5.2: Fetch active scoring config version for session pinning
+      let sessionScoringConfigVersion: number | null = null;
+      try {
+        const cfg = await getActiveScoringConfig();
+        sessionScoringConfigVersion = cfg?.version ?? null;
+      } catch {}
       const sessionId = nanoid();
       await db.insert(assessmentSessions).values({
         id: sessionId,
@@ -708,9 +723,14 @@ export const assessmentRouter = router({
           recentCapabilities: [] as string[],
           recentWorkflows: [] as string[],
           pendingNextItem: null,
+          // WS5.2: Session metadata
+          pinnedModelVersion: "adaptive-v2",
         },
+        // WS5.2: Top-level session metadata columns
+        deviceType: input.deviceType ?? null,
+        localeCode: input.localeCode ?? "en-GB",
+        scoringConfigVersionAtStart: sessionScoringConfigVersion,
       });
-
       await db.insert(auditLogs).values({
         id: nanoid(),
         tenantId: ctx.user.tenantId,
@@ -842,8 +862,8 @@ export const assessmentRouter = router({
             }
             const generated = await generateAdaptiveItem(generationVars);
             recordLlmGenerationSuccess();
-            // WS3: Run quality gate on generated item
-            const qgResult = runQualityGate(generated);
+            // WS3: Run quality gate on generated item (gated by LLM_CHECKER_ENABLED flag)
+            const qgResult = isLlmCheckerEnabled() ? runQualityGate(generated) : { passed: true, failedCheckers: [] as import("../assessment/llmQualityGate").QualityCheckerName[], details: {} as Record<import("../assessment/llmQualityGate").QualityCheckerName, { passed: boolean; reason?: string }>, routedToReview: false };
             if (!qgResult.passed) {
               const reviewRow = buildReviewQueueRow(generated, qgResult, session[0].id);
               await db.insert(llmItemReviewQueue).values(reviewRow).catch(() => {});
@@ -916,6 +936,12 @@ export const assessmentRouter = router({
         reasoningText: z.string().max(2000).optional(),
         confidenceScore: z.number().min(0).max(1).optional(),
         timeToAnswerMs: z.number().int().min(0),
+        // WS5.1: Extended telemetry fields
+        timeToFirstInteractionMs: z.number().int().min(0).optional(),
+        confidenceRatingRaw: z.number().min(0).max(1).optional(),
+        deviceType: z.enum(["desktop", "tablet", "mobile"]).optional(),
+        browserType: z.string().max(40).optional(),
+        screenWidthPx: z.number().int().min(0).max(9999).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1105,6 +1131,13 @@ export const assessmentRouter = router({
           totalActiveMs: input.timeToAnswerMs,
           revisionCount: 0,
           focusLossCount: 0,
+          // WS5.1: Extended telemetry fields
+          timeToFirstInteractionMs: input.timeToFirstInteractionMs ?? null,
+          timeToSubmitMs: input.timeToAnswerMs,
+          confidenceRatingRaw: input.confidenceRatingRaw != null ? String(input.confidenceRatingRaw) : null,
+          deviceType: input.deviceType ?? null,
+          browserType: input.browserType ?? null,
+          screenWidthPx: input.screenWidthPx ?? null,
         });
       } catch { /* non-fatal */ }
 
@@ -1936,6 +1969,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
   getResumeState: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ input, ctx }) => {
+      if (!isSaveAndResumeEnabled()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Save-and-resume is currently disabled." });
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const session = await db

@@ -59,11 +59,17 @@ import {
   Timer,
   BarChart3,
   Filter,
+  Shield,
+  AlertTriangle,
+  Sliders,
+  Flag,
+  ListChecks,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning";
+type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "session_flags";
 
 // ─── Beta Applications Tab ────────────────────────────────────────────────────
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
@@ -1282,6 +1288,267 @@ function ReasoningTab() {
   );
 }
 
+// ─── WS2.2: Anti-Gaming Thresholds Tab ──────────────────────────────────────
+function AntiGamingTab() {
+  const utils = trpc.useUtils();
+  const { data: thresholds, isLoading } = trpc.backoffice.listAntiGamingThresholds.useQuery();
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<Record<string, string>>({});
+
+  const upsert = trpc.backoffice.upsertAntiGamingThreshold.useMutation({
+    onSuccess: () => { utils.backoffice.listAntiGamingThresholds.invalidate(); setEditing(null); toast.success("Threshold saved"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const del = trpc.backoffice.deleteAntiGamingThreshold.useMutation({
+    onSuccess: () => { utils.backoffice.listAntiGamingThresholds.invalidate(); toast.success("Threshold deleted"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const FIELDS = [
+    { key: "alwaysSafeChoiceRate",   label: "Always-safe choice rate" },
+    { key: "alwaysEscalateRate",     label: "Always-escalate rate" },
+    { key: "alwaysCautiousRate",     label: "Always-cautious rate" },
+    { key: "optionPositionBiasRate", label: "Option-position bias rate" },
+    { key: "strongAnswerMaxRate",    label: "Strong-answer max rate" },
+    { key: "outcomeConditionalRate", label: "Outcome-conditional rate" },
+  ] as const;
+
+  const openEdit = (row: any) => {
+    setEditing(row);
+    const f: Record<string, string> = { roleKey: row.roleKey };
+    FIELDS.forEach(({ key }) => { f[key] = String(row[key] ?? ""); });
+    setForm(f);
+  };
+  const openNew = () => {
+    setEditing({ id: null });
+    const f: Record<string, string> = { roleKey: "" };
+    FIELDS.forEach(({ key }) => { f[key] = "0.70"; });
+    setForm(f);
+  };
+  const handleSave = () => {
+    upsert.mutate({
+      roleKey: form.roleKey,
+      alwaysSafeChoiceRate: parseFloat(form.alwaysSafeChoiceRate),
+      alwaysEscalateRate: parseFloat(form.alwaysEscalateRate),
+      alwaysCautiousRate: parseFloat(form.alwaysCautiousRate),
+      optionPositionBiasRate: parseFloat(form.optionPositionBiasRate),
+      strongAnswerMaxRate: parseFloat(form.strongAnswerMaxRate),
+      outcomeConditionalRate: parseFloat(form.outcomeConditionalRate),
+    });
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Anti-Gaming Thresholds</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Per-role detection thresholds. Rows override the engine defaults for that role key.</p>
+        </div>
+        <Button size="sm" onClick={openNew} className="gap-1.5">
+          <Plus className="w-3.5 h-3.5" /> Add override
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+      ) : !thresholds?.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Sliders className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No role-specific overrides. Engine defaults apply to all roles.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">Role key</th>
+                {FIELDS.map(f => <th key={f.key} className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">{f.label}</th>)}
+                <th className="px-3 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {thresholds.map((row: any) => (
+                <tr key={row.id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs">{row.roleKey}</td>
+                  {FIELDS.map(f => (
+                    <td key={f.key} className="px-3 py-3 text-right tabular-nums text-xs">
+                      {(parseFloat(row[f.key]) * 100).toFixed(0)}%
+                    </td>
+                  ))}
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(row)}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => del.mutate({ id: row.id })}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Edit / Create Dialog */}
+      {editing !== null && (
+        <Dialog open onOpenChange={() => setEditing(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>{editing.id ? "Edit threshold" : "Add role override"}</DialogTitle></DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label className="text-xs">Role key</Label>
+                <Input className="mt-1" value={form.roleKey} onChange={e => setForm(p => ({ ...p, roleKey: e.target.value }))} placeholder="e.g. hr_business_partner" disabled={!!editing.id} />
+              </div>
+              {FIELDS.map(f => (
+                <div key={f.key}>
+                  <Label className="text-xs">{f.label} (0-1)</Label>
+                  <Input className="mt-1" type="number" step="0.01" min="0" max="1" value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={upsert.isPending}>{upsert.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
+// ─── WS3: LLM Item Review Queue Tab ──────────────────────────────────────────
+function LlmReviewQueueTab() {
+  const utils = trpc.useUtils();
+  const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected" | "auto_approved" | "all">("pending");
+  const { data: items, isLoading } = trpc.backoffice.listLlmReviewQueue.useQuery({ status: statusFilter, limit: 100 });
+  const updateStatus = trpc.backoffice.updateLlmReviewStatus.useMutation({
+    onSuccess: () => { utils.backoffice.listLlmReviewQueue.invalidate(); toast.success("Status updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const STATUSES = ["pending", "approved", "rejected", "auto_approved", "all"] as const;
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">LLM Item Review Queue</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Items flagged by the LLM quality gate for human review.</p>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {STATUSES.map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={cn("px-3 py-1 text-xs font-medium rounded-full border transition-colors",
+              statusFilter === s ? "bg-[#10B981] text-white border-[#10B981]" : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
+            )}>
+            {s === "all" ? "All" : s.replace("_", " ")}
+          </button>
+        ))}
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+      ) : !items?.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <ListChecks className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No items in queue{statusFilter !== "all" ? ` with status "${statusFilter}"` : ""}.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((item: any) => (
+            <div key={item.id} className="border border-border rounded-xl p-4 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-mono text-muted-foreground">{item.itemId}</p>
+                  <p className="text-sm text-foreground mt-1 leading-relaxed">{item.failureReason}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleString()}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {item.status === "pending" && (
+                    <>
+                      <Button size="sm" variant="outline" className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                        onClick={() => updateStatus.mutate({ id: item.id, status: "approved" })}>
+                        <Check className="w-3.5 h-3.5" /> Approve
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => updateStatus.mutate({ id: item.id, status: "rejected" })}>
+                        <X className="w-3.5 h-3.5" /> Reject
+                      </Button>
+                    </>
+                  )}
+                  {item.status !== "pending" && (
+                    <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border",
+                      item.status === "approved" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                      item.status === "rejected" ? "bg-red-50 text-red-700 border-red-200" :
+                      "bg-blue-50 text-blue-700 border-blue-200"
+                    )}>{item.status.replace("_", " ")}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── WS4.3: Session Review Flags Tab ─────────────────────────────────────────
+function SessionFlagsTab() {
+  const utils = trpc.useUtils();
+  const [statusFilter, setStatusFilter] = useState<"pending" | "reviewed" | "all">("pending");
+  const { data: flags, isLoading } = trpc.backoffice.listSessionReviewFlags.useQuery({ status: statusFilter, limit: 100 });
+  const resolve = trpc.backoffice.resolveSessionReviewFlag.useMutation({
+    onSuccess: () => { utils.backoffice.listSessionReviewFlags.invalidate(); toast.success("Flag resolved"); },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">Session Review Flags</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Sessions flagged by participants or the anti-gaming engine for human review.</p>
+      </div>
+      <div className="flex items-center gap-2">
+        {(["pending", "reviewed", "all"] as const).map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={cn("px-3 py-1 text-xs font-medium rounded-full border transition-colors",
+              statusFilter === s ? "bg-[#10B981] text-white border-[#10B981]" : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
+            )}>
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </button>
+        ))}
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+      ) : !flags?.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Flag className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No flagged sessions{statusFilter !== "all" ? ` with status "${statusFilter}"` : ""}.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {flags.map((flag: any) => (
+            <div key={flag.id} className="border border-border rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-mono text-muted-foreground">Session: {flag.sessionId}</p>
+                  <p className="text-sm text-foreground mt-1">{flag.flagReason ?? flag.reason ?? "No reason provided"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{new Date(flag.createdAt).toLocaleString()}</p>
+                </div>
+                {flag.status === "pending" && (
+                  <Button size="sm" variant="outline" className="gap-1 flex-shrink-0"
+                    onClick={() => resolve.mutate({ id: flag.id })}>
+                    <Check className="w-3.5 h-3.5" /> Resolve
+                  </Button>
+                )}
+                {flag.status !== "pending" && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">Reviewed</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Back-Office Page ────────────────────────────────────────────────────
 export default function BackOfficePage() {
   const { user, loading: authLoading } = useAuth();
@@ -1307,7 +1574,10 @@ export default function BackOfficePage() {
     { id: "orgs",      label: "Organisations", icon: Building2 },
     { id: "users",     label: "Users",         icon: Users },
     { id: "beta",      label: "Beta Applications", icon: FlaskConical },
-    { id: "reasoning", label: "Reasoning Review",   icon: MessageSquare },
+    { id: "reasoning",     label: "Reasoning Review",   icon: MessageSquare },
+    { id: "gaming",        label: "Anti-Gaming",         icon: Shield },
+    { id: "llm_queue",    label: "LLM Review Queue",    icon: ListChecks },
+    { id: "session_flags", label: "Session Flags",       icon: Flag },
   ];
 
   return (
@@ -1347,7 +1617,10 @@ export default function BackOfficePage() {
       {tab === "orgs"      && <OrgsTab />}
       {tab === "users"     && <UsersTab orgs={orgs ?? []} />}
       {tab === "beta"      && <BetaApplicationsTab />}
-      {tab === "reasoning" && <ReasoningTab />}
+      {tab === "reasoning"     && <ReasoningTab />}
+      {tab === "gaming"          && <AntiGamingTab />}
+      {tab === "llm_queue"       && <LlmReviewQueueTab />}
+      {tab === "session_flags"   && <SessionFlagsTab />}
     </div>
   );
 }

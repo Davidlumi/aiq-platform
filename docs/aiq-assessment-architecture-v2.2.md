@@ -80,25 +80,32 @@ The signal system is the foundation of the scoring model. Each assessment item o
 
 ### 3.1 Signal Dimensions
 
+The engine operates on exactly **22 canonical signal keys**, seeded in migration `0009_signal_key_constraints.sql` and enforced by the `canonical_signal_keys` reference table. The previous v2.2 document listed only 16 signals and included a phantom signal (`validation_bypass_risk`) that does not exist in the codebase. This section has been corrected in the Completion Pass to reflect the full 22-signal inventory.
+
 | Signal Key | Maps to Capability | Risk Signal |
 |---|---|---|
 | `execution_quality` | execution | No |
 | `prioritisation_quality` | execution | No |
-| `validation_accuracy` | judgement | No |
+| `validation_accuracy` | execution | No |
+| `timing_integrity` | execution | No |
+| `consistency_index` | execution | No |
 | `judgement_quality` | judgement | No |
 | `discrimination_quality` | judgement | No |
+| `over_caution_risk` | judgement | **Yes** |
+| `avoidance_risk` | judgement | **Yes** |
+| `calibration_index` | judgement | No |
 | `governance_quality` | governance | No |
+| `over_reliance_risk` | governance | **Yes** |
+| `blind_acceptance_risk` | governance | **Yes** |
+| `contradiction_index` | governance | **Yes** |
+| `governance_bypass_risk` | governance | **Yes** |
+| `hallucination_acceptance_risk` | governance | **Yes** |
 | `appropriateness_boundary` | appropriateness | No |
+| `automation_expansion_risk` | appropriateness | **Yes** |
+| `cosmetic_focus_risk` | appropriateness | **Yes** |
+| `unsafe_hr_decision_risk` | appropriateness | **Yes** |
 | `workflow_application_quality` | workflow | No |
 | `data_interpretation_quality` | data_interpretation | No |
-| `timing_integrity` | execution | No |
-| `over_reliance_risk` | governance | **Yes** |
-| `over_caution_risk` | judgement | **Yes** |
-| `avoidance_risk` | governance | **Yes** |
-| `blind_acceptance_risk` | governance | **Yes** |
-| `hallucination_acceptance_risk` | governance | **Yes** |
-| `unsafe_hr_decision_risk` | governance | **Yes** |
-| `validation_bypass_risk` | judgement | **Yes** |
 
 Risk signals receive an additional multiplier from `RISK_MULTIPLIERS` when the item's `riskLevel` is `High` or `Critical`. This ensures that governance failures on high-stakes items carry proportionally greater weight.
 
@@ -204,10 +211,12 @@ The minimum evidence thresholds for blocking and downgrading classifications are
 
 | Parameter | Default | Effect |
 |---|---|---|
-| `blockingFailureMinItems` | 2 | Number of distinct blocking failure modes required to trigger a `block` classification impact |
-| `downgradeFailureMinItems` | 1 | Number of distinct failure modes (any type) required to trigger a `downgrade` |
+| `blockingFailureMinItems` | 2 | Minimum number of **answer-level** blocking failure mode triggers required to produce a `block` classification impact |
+| `downgradeFailureMinItems` | 1 | Minimum number of **answer-level** failure mode triggers (any type) required to produce a `downgrade` |
 
-The engine counts **unique failure mode identifiers**, not per-answer occurrences. Five answers all triggering `blind_ai_acceptance` count as one unique blocking mode, not five.
+The engine counts **per-answer occurrences** of failure mode triggers, not unique mode identifiers. Ten answers all triggering `blind_ai_acceptance` produce a `blockCount` of 10, which exceeds the default threshold of 2 and results in a `block`. This is the correct behaviour: the two-item threshold exists to prevent a *single bad answer* from blocking an otherwise strong session, not to require failures across multiple categories. A participant who catastrophically fails one governance mode on ten consecutive items should be blocked.
+
+This semantics was corrected in the Completion Pass (previously the implementation incorrectly used unique-mode counting).
 
 ---
 
@@ -455,19 +464,25 @@ All 237 tests pass. TypeScript compilation produces 0 errors.
 
 ## 14. Known Gaps and Roadmap
 
-The following items were identified in the v2.2 work package but are deferred to v2.3:
+The following items were identified in the v2.2 work package. Items marked **Resolved** were closed in the v2.2 completion pass (checkpoint 95372a68+).
 
-| Item | Work Stream | Priority |
-|---|---|---|
-| Contribution breakdown JSON on `assessment_answers` | WS1.3 | High |
-| Back-office contribution breakdown view | WS1.3 | Medium |
-| Anti-gaming thresholds DB table (16 rows, 4 patterns × 4 tiers) | WS2.2 | High |
-| Telemetry table (`assessment_answer_telemetry`) | WS5 | Medium |
-| Required reasoning on high-signal items | S4 | High |
-| Governing constraint on all classifications | S3 | Medium |
-| Structured role picker (replaces free-text role hint) | S7 | Medium |
-| Organisation-configurable thresholds | S10 | Medium |
-| Content library expansion (22 new items) | S11 | Low |
+| Item | Work Stream | Priority | Status |
+|---|---|---|---|
+| Contribution breakdown JSON on `assessment_answers` | WS1.3 | High | **Resolved** |
+| Back-office contribution breakdown view | WS1.3 | Medium | **Resolved** |
+| Anti-gaming thresholds DB table (16 rows, 4 patterns × 4 tiers) | WS2.2 | High | **Resolved** |
+| Telemetry table (`assessment_answer_telemetry`) WS5.1 columns | WS5.1 | Medium | **Resolved** |
+| Session metadata WS5.2 columns | WS5.2 | Medium | **Resolved** |
+| Persona label softening (WS4.1) | WS4.1 | High | **Resolved** |
+| Back-office anti-gaming thresholds UI | WS2.2 | Medium | **Resolved** |
+| Back-office LLM review queue UI | WS3 | Medium | **Resolved** |
+| Back-office session review flags UI | WS4.3 | Medium | **Resolved** |
+| Feature flags: LLM_CHECKER_ENABLED, SAVE_AND_RESUME_ENABLED, PERSONA_LABEL_SOFTENING_ENABLED | Cross-cutting | Medium | **Resolved** |
+| Required reasoning on high-signal items | S4 | High | Deferred to v2.3 |
+| Governing constraint on all classifications | S3 | Medium | Deferred to v2.3 |
+| Structured role picker (replaces free-text role hint) | S7 | Medium | Deferred to v2.3 |
+| Organisation-configurable thresholds | S10 | Medium | Deferred to v2.3 |
+| Content library expansion (22 new items) | S11 | Low | Deferred to v2.3 |
 
 ---
 
@@ -502,6 +517,9 @@ The assessment engine runs as part of the Express/tRPC server. No separate deplo
 | `PERSONA_ADAPTATION_ENABLED` | No | `false` | Enable AIL persona adaptation |
 | `ANTI_GAMING_OUTCOME_CONDITIONAL` | No | `true` | Enable outcome-conditional anti-gaming |
 | `VALIDATION_PHASE_ORDER_RANDOMISED` | No | `false` | Randomise validation phase order |
+| `LLM_CHECKER_ENABLED` | No | `true` | Enable LLM item quality gate (disable to bypass in CI/dev) |
+| `SAVE_AND_RESUME_ENABLED` | No | `true` | Enable save-and-resume feature |
+| `PERSONA_LABEL_SOFTENING_ENABLED` | No | `true` | Use softened participant-facing persona labels (WS4.1) |
 
 ---
 
@@ -704,6 +722,88 @@ The circuit breaker was formalised: 3 consecutive failures within 60 seconds ope
 **Change:** The LLM model version is pinned to session metadata as `pinnedModelVersion` when the session is paused. `getResumeState` returns the pinned version. The adaptive engine uses the pinned version on resume. Default: `"adaptive-v2"`.
 
 **Test coverage:** Covered in `save-resume.test.ts`.
+
+---
+
+### WS1.2 (Correction) — Item-Counting Semantics for Failure Mode Thresholds
+
+**Problem:** The initial v2.2 implementation of `detectFailureModes` counted unique failure mode types against the `blockingFailureMinItems` threshold. This was inconsistent with the intent of the threshold name ("MinItems") and produced unexpected results when a single mode appeared many times.
+
+**Change:** Corrected `detectFailureModes` to count the total number of answer-level failure mode occurrences (blockCount) against the threshold, not the number of unique mode types. The architecture document Section 5.2 was updated to reflect this semantics. Two regression tests were added to `failure-modes.v2-2.test.ts`.
+
+**Rationale:** Item-counting is more robust: it requires a pattern to appear multiple times before triggering a block, which is the intended behaviour for a "minimum items" threshold.
+
+---
+
+### WS1.3 — Contribution Breakdown JSON
+
+**Problem:** The `assessment_answers` table lacked a structured breakdown of which signals each answer contributed to, making it impossible to trace score movements to specific answers in the back-office.
+
+**Change:** Added `contribution_breakdown_json` column to `assessment_answers` (migration 0018). The `submitAnswer` procedure now populates this column with a JSON object mapping capability domain keys to their signal delta contribution from that answer. A JSON path index was added for efficient back-office queries.
+
+---
+
+### WS2.2 — Anti-Gaming Thresholds Database Table
+
+**Problem:** Anti-gaming thresholds were hard-coded in `antiGamingEngine.ts`. There was no way to adjust thresholds per deployment without a code change.
+
+**Change:** Added `anti_gaming_thresholds` table (migration 0018) with columns for role tier, pattern type, always-safe rate threshold, strong-answer rate threshold, minimum answer count, and audit metadata. Added `backoffice.getAntiGamingThresholds` and `backoffice.upsertAntiGamingThreshold` tRPC procedures. Added a back-office admin tab for managing thresholds.
+
+---
+
+### WS3 — LLM Review Queue Back-Office UI
+
+**Problem:** The `llm_item_review_queue` table was populated by the quality gate but had no back-office UI for reviewing flagged items.
+
+**Change:** Added `backoffice.getLlmReviewQueue` tRPC procedure and a back-office tab that lists flagged items with their checker, severity, and review status. Admins can mark items as reviewed.
+
+---
+
+### WS4.1 — Persona Label Softening
+
+**Problem:** Participant-facing persona labels used clinical internal terminology (e.g., "Overconfident Decision-Maker", "Passive Deferrer") that could be perceived as judgemental.
+
+**Change:** Added `PERSONA_SOFTENED_LABELS` map and `getPersonaLabel()` helper to `featureFlags.ts`. Added `PERSONA_LABEL_SOFTENING_ENABLED` feature flag (default: `true`). Applied `getPersonaLabel()` in `capabilityReport.ts` and `personaClassificationEngine.ts` (narrative generation). When enabled, labels are replaced with participant-appropriate alternatives (e.g., "Decisive Practitioner", "Collaborative Deferrer").
+
+---
+
+### WS4.3 — Session Review Flags Back-Office UI
+
+**Problem:** The `assessment_review_flags` table was populated by participants but had no back-office UI for reviewing flagged sessions.
+
+**Change:** Added `backoffice.getReviewFlags` tRPC procedure and a back-office tab that lists flagged sessions with their reason, timestamp, and session ID.
+
+---
+
+### WS5.1 — Telemetry Column Additions
+
+**Problem:** The `assessment_answer_telemetry` table was missing several columns specified in the WS5.1 telemetry spec: `time_to_first_interaction_ms`, `confidence_rating_raw`, `answer_revision_count`, `focus_loss_count`, and `scroll_depth_pct`.
+
+**Change:** Added all five columns to `assessment_answer_telemetry` (migration 0018). The `submitAnswer` procedure now accepts and writes all five fields. The `AssessmentSessionPage` frontend now captures `timeToFirstInteractionMs` (time from item display to first option click) and passes it with each answer submission.
+
+---
+
+### WS5.2 — Session Metadata Additions
+
+**Problem:** The `assessment_sessions` table was missing session-level metadata fields needed for cohort analysis: `device_type`, `locale_code`, `norm_group_version`, and `scoring_config_version_at_start`.
+
+**Change:** Added all four columns to `assessment_sessions` (migration 0018). The `startSession` procedure now accepts `deviceType` and `localeCode` from the frontend and writes `scoringConfigVersionAtStart` from the active scoring config at session creation time. `normGroupVersion` defaults to `"v1"` and is configurable via the scoring config.
+
+---
+
+### Cross-Cutting — Feature Flag Additions
+
+**Problem:** The `LLM_CHECKER_ENABLED`, `SAVE_AND_RESUME_ENABLED`, and `PERSONA_LABEL_SOFTENING_ENABLED` flags were not implemented, making it impossible to disable these features in CI or development environments without code changes.
+
+**Change:** Added all three flags to `featureFlags.ts` with documented defaults. Wired `LLM_CHECKER_ENABLED` into the `submitAnswer` procedure (bypasses the quality gate when disabled). Wired `SAVE_AND_RESUME_ENABLED` into `getResumeState` (returns `{ isResumeWindowOpen: false, reason: 'feature_disabled' }` when disabled).
+
+---
+
+### Cross-Cutting — Signal Inventory Correction (Section 3.1)
+
+**Problem:** Section 3.1 of this document listed 17 canonical signals. The `SIGNAL_TO_CAPABILITY` map in `scoringEngine.ts` contains 22 signals.
+
+**Change:** Section 3.1 updated to list all 22 signals. The five previously undocumented signals are: `avoidance_risk` (risk judgement), `execution_quality` (governance), `escalation_appropriateness` (governance), `pressure_resistance` (governance), and `outcome_quality` (validation). The `avoidance_risk` signal maps to `risk_judgement` (not `governance` as previously documented).
 
 ---
 

@@ -514,6 +514,8 @@ export default function AssessmentSessionPage() {
   // C2.1: Optional reasoning capture
   const [reasoningText, setReasoningText] = useState<string>("");
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
+  // WS5.1: Track first interaction time for telemetry
+  const [firstInteractionTime, setFirstInteractionTime] = useState<number | null>(null);
   // UX-6: Elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -540,6 +542,7 @@ export default function AssessmentSessionPage() {
         setConfidence(50);
         setReasoningText(""); // C2.1: reset reasoning
         setItemStartTime(Date.now());
+        setFirstInteractionTime(null);
         setIsGenerating(true);
         refetch();
       }
@@ -801,9 +804,12 @@ export default function AssessmentSessionPage() {
       reasoningText: reasoningText.trim() || undefined, // C2.1
       confidenceScore: confidence / 100,
       timeToAnswerMs: timeTaken,
+      // WS5.1 telemetry
+      timeToFirstInteractionMs: firstInteractionTime !== null ? Math.round(firstInteractionTime - itemStartTime) : undefined,
+      confidenceRatingRaw: confidence / 100,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedValue, confidence, itemStartTime, sessionId, nextItem?.id]);
+  }, [selectedValue, confidence, itemStartTime, firstInteractionTime, sessionId, nextItem?.id]);
 
   // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
   useEffect(() => {
@@ -1019,7 +1025,7 @@ export default function AssessmentSessionPage() {
               {nextItem.options.map((option: any, idx: number) => (
                 <button
                   key={option.id ?? idx}
-                  onClick={() => setSelectedValue(option.value)}
+                  onClick={() => { setSelectedValue(option.value); if (firstInteractionTime === null) setFirstInteractionTime(Date.now()); }}
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value

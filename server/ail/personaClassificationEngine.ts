@@ -9,6 +9,7 @@ import { getDb } from "../db";
 import { eq, and } from "drizzle-orm";
 import { ailPersonaProfiles, ailSignalLedger, ailFailureModeRegistry } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { getPersonaLabel } from "../assessment/featureFlags";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -246,19 +247,11 @@ export async function generatePersonaNarrative(userId: string): Promise<string> 
   if (!profile[0]) return "";
 
   const p = profile[0];
-  const personaLabels: Record<PersonaType, string> = {
-    strong_validator: "Strong Validator",
-    overconfident_decision_maker: "Overconfident Decision-Maker",
-    risk_averse_escalator: "Risk-Averse Escalator",
-    passive_deferrer: "Passive Deferrer",
-    governance_anchor_under_pressure: "Governance Anchor Under Pressure",
-    unclassified: "Developing Profile",
-  };
-
+  // WS4.1: Use softened participant-facing labels via feature flag
   const prompt = `You are an expert HR capability assessor. Write a 3-sentence professional narrative summary of this HR professional's behavioural profile in the context of AI governance. Be specific, honest, and constructive. Do not use bullet points.
 
 Profile:
-- Primary Persona: ${personaLabels[p.primaryPersona as PersonaType]}
+- Primary Persona: ${getPersonaLabel(p.primaryPersona)}
 - Validation Orientation: ${p.validationOrientation}/10 (how rigorously they challenge AI outputs)
 - Governance Orientation: ${p.governanceOrientation}/10 (how well they hold legal/ethical boundaries under pressure)
 - Risk Orientation: ${p.riskOrientation}/10 (how accurately they calibrate risk)

@@ -73,3 +73,67 @@ export function isValidationPhaseRandomised(): boolean {
   const val = process.env.VALIDATION_PHASE_ORDER_RANDOMISED;
   return val === "true" || val === "1";
 }
+
+// ─── WS3: LLM Quality Gate Flag ───────────────────────────────────────────────
+/**
+ * WS3: Whether the LLM quality gate is enabled for generated items.
+ * When enabled, all AI-generated assessment items are passed through a
+ * multi-check quality gate before being served to participants.
+ * Reads from LLM_CHECKER_ENABLED env var.
+ * Defaults to true (enabled) — this is a safety feature.
+ */
+export function isLlmCheckerEnabled(): boolean {
+  const val = process.env.LLM_CHECKER_ENABLED;
+  return val !== "false" && val !== "0"; // default ON
+}
+
+// ─── WS4.4/4.5: Save-and-Resume Flag ─────────────────────────────────────────
+/**
+ * WS4.4/4.5: Whether the save-and-resume feature is enabled.
+ * When enabled, participants can pause an in-progress assessment and
+ * resume it within the 48-hour window without losing progress.
+ * Reads from SAVE_AND_RESUME_ENABLED env var.
+ * Defaults to true (enabled).
+ */
+export function isSaveAndResumeEnabled(): boolean {
+  const val = process.env.SAVE_AND_RESUME_ENABLED;
+  return val !== "false" && val !== "0"; // default ON
+}
+
+// ─── WS4.1: Persona Label Softening ──────────────────────────────────────────
+/**
+ * WS4.1: Whether participant-facing persona labels are softened.
+ * When enabled, the raw persona classification key (e.g. "overconfident_decision_maker")
+ * is replaced with a softer, participant-appropriate label (e.g. "Decisive Practitioner")
+ * in all participant-facing surfaces.
+ * Reads from PERSONA_LABEL_SOFTENING_ENABLED env var.
+ * Defaults to true (enabled) — softening is the safer default for participant experience.
+ */
+export function isPersonaLabelSofteningEnabled(): boolean {
+  const val = process.env.PERSONA_LABEL_SOFTENING_ENABLED;
+  return val !== "false" && val !== "0"; // default ON
+}
+
+/**
+ * WS4.1: Map from raw persona key to softened participant-facing label.
+ * Used when isPersonaLabelSofteningEnabled() returns true.
+ */
+export const PERSONA_SOFTENED_LABELS: Record<string, string> = {
+  strong_validator: "Structured Validator",
+  overconfident_decision_maker: "Decisive Practitioner",
+  risk_averse_escalator: "Cautious Escalator",
+  passive_deferrer: "Collaborative Deferrer",
+  governance_anchor_under_pressure: "Governance-Anchored",
+  unclassified: "Profile Building",
+};
+
+/**
+ * WS4.1: Get the participant-facing label for a persona key.
+ * Returns the softened label when the feature flag is on, otherwise the raw key.
+ */
+export function getPersonaLabel(rawKey: string): string {
+  if (isPersonaLabelSofteningEnabled()) {
+    return PERSONA_SOFTENED_LABELS[rawKey] ?? rawKey.replace(/_/g, " ");
+  }
+  return rawKey;
+}

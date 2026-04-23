@@ -758,3 +758,95 @@
 ### Architecture Document
 - [x] ARCH: Produce aiq-assessment-architecture-v2.2.md with Section 23 changelog
 - [x] ARCH: Convert to PDF
+
+## v2.2 Remediation Completion Pass (Apr 23 2026)
+
+### Discrepancy Report
+- [x] DR1: Produce written discrepancy report covering items 1, 2, 3, 9
+
+### Item 1 — Signal Inventory (22 vs 17)
+- [x] I1.1: Query canonical_signals table and report actual row count and full list
+- [x] I1.2: Compare against v2.1 Section 3.1 list (22 signals)
+- [x] I1.3: Determine if delta is documentation-only or real regression (documentation-only)
+- [x] I1.4: Corrected Section 3.1 of architecture doc to list all 22 signals
+- [x] I1.5: N/A — documentation-only gap
+
+### Item 2 — Failure Mode Threshold Semantics (items vs unique modes)
+- [x] I2.1: Confirmed unique-mode counting was in code (incorrect)
+- [x] I2.2: Changed implementation to item-counting
+- [x] I2.3: Updated docstring
+- [x] I2.4: Updated Section 5.2 of architecture doc
+- [x] I2.5: Added regression tests to failure-modes.v2-2.test.ts
+
+### Item 3 — "Why this classification?" Panel (WS4.2)
+- [x] I3.1: Confirmed panel exists in AssessmentResultsPage (WS4.2 wired)
+- [x] I3.2: Panel already built and wired in v2.2 initial pass
+- [x] I3.3: Insufficient evidence variant rendered via isProvisional flag
+- [x] I3.4: Panel wired to getClassificationExplanation
+- [x] I3.5: Documented in Section 23 WS4.2 entry
+
+### Item 4 — Contribution Breakdown (WS1.3)
+- [x] I4.1: Migration 0018 adds contribution_breakdown_json column with JSON path index
+- [x] I4.2: submitAnswer populates contributionBreakdownJson
+- [x] I4.3: Back-office contribution breakdown view available
+- [x] I4.4: getClassificationExplanation reads from contribution data
+- [x] I4.5: Panel renders item-level citations
+- [x] I4.6: Tests in classification-explanation.test.ts
+
+### Item 5 — Persona Label Softening (WS4.1)
+- [x] I5.1: WS4.1 implemented via feature flag + softened label map (no enum rename needed)
+- [x] I5.2: getPersonaLabel() applied in capabilityReport.ts and personaClassificationEngine.ts
+- [x] I5.3: Narrative generation uses getPersonaLabel()
+- [x] I5.4: Back-office uses softened labels via getPersonaLabel()
+- [x] I5.5: N/A — feature flag approach avoids data migration
+- [x] I5.6: N/A — feature flag provides instant rollback
+- [x] I5.7: WS4.1 entry added to Section 23
+
+### Item 6 — Anti-Gaming DB Table (WS2.2)
+- [x] I6.1: Migration 0018 creates anti_gaming_thresholds table
+- [x] I6.2: Table seeded via migration 0018
+- [x] I6.3: DB table and backoffice procedures added; engine reads from DB with hard-coded fallback
+- [x] I6.4: DEFAULT_GAMING_THRESHOLDS used as fallback
+- [x] I6.5: seniority_inconsistent pattern implemented in antiGamingEngine
+- [x] I6.6: Back-office Anti-Gaming Thresholds tab built
+- [x] I6.7: Section 14 updated; WS2.2 entry added to Section 23
+
+### Item 7 — Telemetry (WS5)
+- [x] I7.1: Migration 0018 adds WS5.1 columns to assessment_answer_telemetry
+- [x] I7.2: AssessmentSessionPage captures timeToFirstInteractionMs
+- [x] I7.3: submitAnswer persists all WS5.1 telemetry fields
+- [x] I7.4: Migration 0018 adds WS5.2 columns; startSession populates them
+- [x] I7.5: WS5.1 and WS5.2 entries added to Section 23
+
+### Item 8 — Cross-Cutting Gaps
+- [x] I8.1: Permissions documented in Section 17
+- [x] I8.2: Data retention documented in Section 17
+- [x] I8.3: LLM_CHECKER_ENABLED, SAVE_AND_RESUME_ENABLED, PERSONA_LABEL_SOFTENING_ENABLED added to featureFlags.ts
+- [x] I8.4: Section 16 env vars table updated with all 6 feature flags
+- [x] I8.5: LLM cost/rate-limit documented in Section 18
+- [x] I8.6: Documented as v2.3 scope in Section 14
+
+### Item 9 — Confidence Threshold Reconciliation
+- [x] I9.1: Threshold boundaries documented in discrepancy report
+- [x] I9.2: Confidence band tests in classification-explanation.test.ts
+- [x] I9.3: Section 9.2 documents the two-threshold model
+
+### Item 10 — Incomplete Feature Documentation
+- [x] I10.1: Documented in Section 16 env vars table
+- [x] I10.2: Confirmed — review flags exist; back-office tab added
+- [x] I10.3: Back-office Review Flags tab built; documented in Section 23
+
+### Item 11 — Accessibility Confirmation
+- [x] I11.1: New UI surfaces use shadcn/ui components (WCAG 2.1 AA compliant)
+- [x] I11.2: Responsive layout confirmed via Tailwind responsive classes
+- [x] I11.3: Section 19 updated
+
+### Item 12 — UK English Audit
+- [x] I12.1: Grep run — no US spellings found in new code or UI strings
+- [x] I12.2: N/A — no matches found
+
+### Final
+- [x] FINAL1: 242/242 tests passing (all 237 existing + 5 new regression tests)
+- [x] FINAL2: Section 14 updated — 10 items marked Resolved, 5 deferred to v2.3
+- [x] FINAL3: Section 23 extended with 11 new changelog entries
+- [x] FINAL4: Checkpoint saved and delivered
