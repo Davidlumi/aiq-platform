@@ -355,6 +355,9 @@ function buildAdaptiveContext(
     Object.entries(capabilityScores).map(([k, v]) => [k, { score: v.score, signalCount: v.signalCount }])
   ) as Record<CapabilityKey, { score: number; signalCount: number }>;
 
+  // Resolve role archetype early — used in answerRecords (B5) and AdaptiveSelectionContext below
+  const roleArchetype = resolveRoleArchetype(roleHint);
+
   // B5: Include declaredSeniority from resolved role archetype for seniority-inconsistency detection
   const answerRecords: AnswerRecord[] = answers.map(a => ({
     itemId: a.itemId,
@@ -395,8 +398,6 @@ function buildAdaptiveContext(
       return acc;
     }, new Map<string, number>())
   ) as Record<InteractionType, number>;
-
-  const roleArchetype = resolveRoleArchetype(roleHint);
 
   const ctx: AdaptiveSelectionContext = {
     answeredCount,

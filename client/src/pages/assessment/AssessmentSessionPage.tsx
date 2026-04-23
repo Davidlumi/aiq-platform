@@ -20,6 +20,16 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -37,6 +47,7 @@ import {
   Award,
   Shield,
   AlertTriangle,
+  AlertCircle,
   Info,
   Briefcase,
   Target,
@@ -161,7 +172,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
     hasAiOutput: true,
     hasDataContext: false,
     accent: "#EE6677",
-    icon: Search,
+    icon: AlertCircle,
   },
   data_interpretation: {
     label: "Data Interpretation",
@@ -507,6 +518,7 @@ function detectBrowserType(): string {
 export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
   // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
   const [isGenerating, setIsGenerating] = useState(false);
@@ -623,6 +635,64 @@ export default function AssessmentSessionPage() {
       }
     };
   }, [isGenerating, sessionData?.nextItem, refetch]);
+
+  // ─── ALL REMAINING HOOKS — must be declared before any early return ───────────
+
+  // handleSubmit — declared before any early return to satisfy Rules of Hooks
+  const handleSubmit = useCallback(() => {
+    if (!selectedValue) {
+      toast.error("Please select an answer before continuing");
+      return;
+    }
+    const currentItem = sessionData?.nextItem;
+    if (!currentItem) return;
+    const timeTaken = Math.round(Date.now() - itemStartTime);
+    submitMutation.mutate({
+      sessionId: sessionId!,
+      itemId: currentItem.id,
+      selectedValue,
+      reasoningText: reasoningText.trim() || undefined,
+      confidenceScore: confidence / 100,
+      timeToAnswerMs: timeTaken,
+      timeToFirstInteractionMs: firstInteractionTime !== null ? Math.round(firstInteractionTime - itemStartTime) : undefined,
+      confidenceRatingRaw: confidence / 100,
+      revisionCount,
+      focusLossCount,
+      deviceType: detectDeviceType(),
+      browserType: detectBrowserType(),
+      screenWidthPx: window.screen.width,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedValue, confidence, itemStartTime, firstInteractionTime, revisionCount, focusLossCount, sessionId, sessionData?.nextItem?.id]);
+
+  // B1: Track focus loss via visibilitychange
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setFocusLossCount(c => c + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
+  useEffect(() => {
+    const currentItem = sessionData?.nextItem;
+    if (!currentItem || rationaleData) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const options = currentItem.options ?? [];
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= options.length) {
+        setSelectedValue(options[num - 1].value);
+      } else if (e.key === "Enter" && selectedValue) {
+        handleSubmit();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [sessionData?.nextItem, rationaleData, selectedValue, handleSubmit]);
 
   if (isLoading) {
     return (
@@ -754,14 +824,18 @@ export default function AssessmentSessionPage() {
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Other options</p>
                 {rationaleData.allOptionsRationale
                   .filter(o => o.rationaleText && o.value !== rationaleData.selectedValue)
-                  .map(o => (
+                  .map(o => {
+                    // UX-10: Use numeric position (1-based) to match question screen numbering
+                    const optionIdx = (sessionData?.nextItem?.options ?? []).findIndex((opt: any) => opt.value === o.value);
+                    const optionNum = optionIdx >= 0 ? optionIdx + 1 : o.value?.toUpperCase?.();
+                    return (
                     <div
                       key={o.value}
                       className="p-3 rounded-lg border border-border bg-muted/30 space-y-1"
                     >
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center text-xs font-bold text-muted-foreground">
-                          {o.value?.toUpperCase?.()}
+                          {optionNum}
                         </span>
                         <span
                           className="text-xs font-medium"
@@ -772,7 +846,8 @@ export default function AssessmentSessionPage() {
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed pl-7">{o.rationaleText}</p>
                     </div>
-                  ))}
+                  );
+                  })}
               </div>
             )}
             {/* UX-7: if last question, show Complete Assessment instead of Continue */}
@@ -813,60 +888,6 @@ export default function AssessmentSessionPage() {
     return <GeneratingState answeredCount={answeredCount} totalItems={totalItems} />;
   }
 
-  const handleSubmit = useCallback(() => {
-    if (!selectedValue) {
-      toast.error("Please select an answer before continuing");
-      return;
-    }
-    const timeTaken = Math.round(Date.now() - itemStartTime);
-    submitMutation.mutate({
-      sessionId: sessionId!,
-      itemId: nextItem.id,
-      selectedValue,
-      reasoningText: reasoningText.trim() || undefined, // C2.1
-      confidenceScore: confidence / 100,
-      timeToAnswerMs: timeTaken,
-      // WS5.1 telemetry
-      timeToFirstInteractionMs: firstInteractionTime !== null ? Math.round(firstInteractionTime - itemStartTime) : undefined,
-      confidenceRatingRaw: confidence / 100,
-      // B1: Behavioural telemetry
-      revisionCount,
-      focusLossCount,
-      // B2: Device context telemetry
-      deviceType: detectDeviceType(),
-      browserType: detectBrowserType(),
-      screenWidthPx: window.screen.width,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedValue, confidence, itemStartTime, firstInteractionTime, revisionCount, focusLossCount, sessionId, nextItem?.id]);
-
-  // B1: Track focus loss via visibilitychange
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        setFocusLossCount(c => c + 1);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-  // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
-  useEffect(() => {
-    if (!nextItem || rationaleData) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const options = nextItem.options ?? [];
-      const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= options.length) {
-        setSelectedValue(options[num - 1].value);
-      } else if (e.key === "Enter" && selectedValue) {
-        handleSubmit();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [nextItem, rationaleData, selectedValue, handleSubmit]);
-
   const interactionType = (nextItem as any).interactionType ?? "situational_judgement";
   const iConfig = getInteractionConfig(interactionType);
   const formatElapsed = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
@@ -886,12 +907,26 @@ export default function AssessmentSessionPage() {
       {/* Back + Progress header */}
       <div className="space-y-3">
         <button
-          onClick={() => navigate("/assessment")}
+          onClick={() => setShowLeaveDialog(true)}
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Assessments
         </button>
+        <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Leave this assessment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your progress is automatically saved. You can resume from exactly where you left off from the Assessment page.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Stay</AlertDialogCancel>
+              <AlertDialogAction onClick={() => navigate("/assessment")}>Leave &amp; Save</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">
@@ -1089,8 +1124,8 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* C2.1: Optional reasoning capture — shown for judgement/governance/critique types */}
-          {["situational_judgement", "risk_judgement", "governance_decision", "scenario_critique"].includes(interactionType) && (
+          {/* C2.1: Optional reasoning capture — shown for all output-facing types */}
+          {["situational_judgement", "risk_judgement", "governance_decision", "scenario_critique", "error_detection", "output_improvement"].includes(interactionType) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">

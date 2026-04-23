@@ -960,3 +960,19 @@
 - [x] D1: MINIMUM_EVIDENCE constants moved to scoring_config columns (migration 0020); wired end-to-end
 - [x] Tests: 355/355 passing, 0 TypeScript errors
 - [x] Checkpoint saved
+
+### Stress Test — HR Role & Level Coverage (Apr 23 2026)
+
+#### Critical Bugs Fixed
+- [x] BUG-1: React hooks violation in AssessmentSessionPage — `useCallback` and two `useEffect` hooks placed after conditional `if (rationaleData)` early return, causing crash after first answer submission
+- [x] BUG-2: `roleArchetype` temporal dead zone in `assessment.ts` router — `const roleArchetype` declared after `answerRecords` map that references it, causing `ReferenceError` on every `submitAnswer` call (LLM generation fell back to pre-generated items)
+
+#### Scoring Credibility Fixes
+- [x] SC-1: Expert performers with one minor capability gap (e.g. overall=84, one domain at 65 vs threshold 70) were classified as `at_risk` — fixed by relaxing the safe gate for high scorers (>=82) with at most one minor threshold failure and no critical failures
+- [x] SC-2: Inconsistent profiles (95/95/95/95/95/30) scored same as uniform competent profiles (83 vs 78) — fixed by adding `computeConsistencyPenalty` to `computeOverallScore` (stdDev-based, capped at 8 points)
+
+#### UX/UI Fixes
+- [x] UX-01: `error_detection` interaction type used `Search` icon — changed to `AlertCircle` for semantic accuracy
+- [x] UX-02: "Explain your thinking" textarea was hidden for `error_detection` and `output_improvement` types — extended to all output-facing interaction types
+- [x] UX-03: "Other Options" in rationale screen showed letter labels (A/B/C/D) while question screen showed numbers (1/2/3/4) — fixed to use numeric position from `sessionData.nextItem.options`
+- [x] UX-04: Back to Assessments button navigated away without confirmation — added `AlertDialog` confirmation with "Stay" / "Leave & Save" options

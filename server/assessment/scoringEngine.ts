@@ -510,15 +510,33 @@ export function computeCapabilityScores(
  * R10: Capability-weighted overall score.
  * Uses role archetype's capabilityWeights if provided; falls back to equal weighting.
  */
+/**
+ * SC-2: Compute a consistency penalty based on the standard deviation of capability scores.
+ * A high variance profile (e.g., 95/95/95/95/95/30) is penalised to distinguish it from
+ * a uniformly competent profile (e.g., 78/78/78/78/78/78).
+ * Penalty is capped at 10 points and only applies when stdDev > 15.
+ */
+function computeConsistencyPenalty(scores: number[]): number {
+  const mean = scores.reduce((s, v) => s + v, 0) / scores.length;
+  const variance = scores.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / scores.length;
+  const stdDev = Math.sqrt(variance);
+  if (stdDev <= 10) return 0;
+  // Linear penalty: 0 at stdDev=10, 8 at stdDev=30+
+  // Designed so that 95/95/95/95/95/30 (stdDev≈24) scores lower than 78/78/78/78/78/78 (stdDev=0)
+  return Math.min(8, Math.round((stdDev - 10) / 2.5));
+}
+
 export function computeOverallScore(
   capabilityScores: Record<CapabilityKey, CapabilityScore>,
   capabilityWeights?: Record<CapabilityKey, number>
 ): number {
   const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+  const rawScores = ALL_CAPS.map(cap => capabilityScores[cap]?.score ?? 50);
   if (!capabilityWeights) {
     // Equal weighting fallback
-    const scores = ALL_CAPS.map(cap => capabilityScores[cap]?.score ?? 50);
-    return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
+    const avg = rawScores.reduce((s, v) => s + v, 0) / rawScores.length;
+    const penalty = computeConsistencyPenalty(rawScores);
+    return Math.max(0, Math.round(avg - penalty));
   }
   // Weighted sum — weights should sum to 1.0
   let weightedSum = 0;
@@ -528,7 +546,9 @@ export function computeOverallScore(
     weightedSum += (capabilityScores[cap]?.score ?? 50) * w;
     totalWeight += w;
   }
-  return Math.round(totalWeight > 0 ? weightedSum / totalWeight : 50);
+  const weightedAvg = totalWeight > 0 ? weightedSum / totalWeight : 50;
+  const penalty = computeConsistencyPenalty(rawScores);
+  return Math.max(0, Math.round(weightedAvg - penalty));
 }
 
 // ─── Readiness Classification ─────────────────────────────────────────────────
@@ -728,11 +748,21 @@ export function classifyReadiness(
     };
   }
 
-  if (overallScore >= 75 && thresholdFailures.length === 0 && (riskBand === "low" || riskBand === "medium")) {
+  // SC-1: Relax the safe gate for high overall scorers (>=85) with at most one minor threshold gap.
+  // An expert with a single capability at 65 (threshold 70) should not be classified as at_risk
+  // when their overall score demonstrates clear competence across all other domains.
+  // SC-1: 82 accounts for the consistency penalty that may reduce expert scores by a few points
+  const isHighScorer = overallScore >= 82;
+  const safeThresholdOk = thresholdFailures.length === 0 || (isHighScorer && thresholdFailures.length === 1 && criticalThresholdFailures.length === 0);
+  if (overallScore >= 75 && safeThresholdOk && (riskBand === "low" || riskBand === "medium")) {
+    const hasMinorGap = isHighScorer && thresholdFailures.length === 1;
+    const gapNote = hasMinorGap
+      ? ` One minor capability gap in ${thresholdFailures[0].replace(/_/g, " ")} noted — targeted development recommended.`
+      : "";
     return {
       state: "safe",
       label: "AI-Ready",
-      description: "Strong, credible AI capability demonstrated across assessed domains, meeting your role-specific thresholds.",
+      description: `Strong, credible AI capability demonstrated across assessed domains, meeting your role-specific thresholds.${gapNote}`,
       colour: "#10B981",
       governanceAction: null,
       governingConstraint: computeGoverningConstraint("safe"),
