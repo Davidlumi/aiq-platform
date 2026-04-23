@@ -830,7 +830,18 @@ export const assessmentRouter = router({
       if (shouldGenerateNextItem) {
         // ── Step 1: Check for pre-generated pending item (zero latency) ────────
         const pendingNextItem = meta.pendingNextItem as NextItem | null;
-        if (pendingNextItem && pendingNextItem.id && !answeredItemIds.includes(pendingNextItem.id)) {
+        // Validate the pending item is for the correct question position.
+        // If displayOrder doesn't match answeredCount+1, the item is stale (generated
+        // for a previous question position) and must be discarded to prevent the
+        // question counter from jumping backwards.
+        const pendingIsForCurrentPosition =
+          pendingNextItem &&
+          pendingNextItem.id &&
+          !answeredItemIds.includes(pendingNextItem.id) &&
+          (pendingNextItem.displayOrder === answeredCount + 1 ||
+            pendingNextItem.displayOrder === undefined ||
+            pendingNextItem.displayOrder === null);
+        if (pendingIsForCurrentPosition) {
           nextItem = pendingNextItem;
         }
 

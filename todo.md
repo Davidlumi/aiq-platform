@@ -1016,3 +1016,18 @@
 - [x] Fix: getBenchmarks procedure now handles both flat-number and {score,weight} capabilityScores formats
 - [x] Browser verified: all 6 capabilities show correct scores, chart renders, table shows deltas
 - [x] TypeScript: 0 errors, 355/355 tests passing
+
+### Bug Fix — Question Counter Jumping Backwards (Apr 23 2026)
+- [x] Diagnose root cause: rationale screens used `answeredCount` (0-indexed) instead of `answeredCount+1`; also added pendingNextItem staleness check (displayOrder must match answeredCount+1)
+- [x] Fix question counter: rationale loading screen and rationale reveal screen now show `answeredCount+1`
+- [x] Ensure counter is derived from server-authoritative answered count, not client-side state
+- [x] Browser verified: Q1→rationale shows Q1, Continue→Q2, rationale shows Q2, Continue→Q3 ✓
+
+### Feature — Save & Resume Assessment (Apr 23 2026)
+- [x] Verified isSaveAndResumeEnabled is active (sessions persist in DB with state=in_progress)
+- [x] Added "Save & Exit" button (green, CheckCircle2 icon) to all 3 assessment screens: main question, rationale loading, rationale reveal
+- [x] Assessment landing page shows "Assessment In Progress" banner with progress bar, answered count, and Resume button
+- [x] On resume, restores exact question state (nextItem, answered count, phase) from session metadata
+- [x] "Progress saved — resume any time from the Assessment page" toast shown on Save & Exit
+- [x] Browser verified: Save & Exit → /assessment shows resume card (2/49, 4%); Resume → Q3 ✓
+- [ ] Write vitest test for save-and-resume flow (existing save-resume.test.ts covers the server-side logic)

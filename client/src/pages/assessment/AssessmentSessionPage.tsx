@@ -784,9 +784,15 @@ export default function AssessmentSessionPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
-              Question {answeredCount} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+              Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
             </span>
-            <span className="text-xs text-muted-foreground">{progress}% complete</span>
+            <button
+              onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
+              className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Save &amp; Exit
+            </button>
           </div>
           <Progress value={progress} className="h-1.5" />
         </div>
@@ -853,9 +859,15 @@ export default function AssessmentSessionPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
-              Question {answeredCount} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+              Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
             </span>
-            <span className="text-xs text-muted-foreground">{progress}% complete</span>
+            <button
+              onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
+              className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Save &amp; Exit
+            </button>
           </div>
           <Progress value={progress} className="h-1.5" />
         </div>
@@ -988,28 +1000,48 @@ export default function AssessmentSessionPage() {
     <div className="p-6 space-y-5 max-w-2xl">
       {/* Back + Progress header */}
       <div className="space-y-3">
-        <button
-          onClick={() => setShowLeaveDialog(true)}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Assessments
-        </button>
+        {/* Top row: back link + Save & Exit button */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowLeaveDialog(true)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </button>
+          {/* Save & Exit — always visible so users know they can leave safely */}
+          <button
+            onClick={() => setShowLeaveDialog(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 hover:border-[#10B981]/60 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5 hover:bg-[#10B981]/10"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Save &amp; Exit
+          </button>
+        </div>
+
         <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Leave this assessment?</AlertDialogTitle>
+              <AlertDialogTitle>Save &amp; Exit</AlertDialogTitle>
               <AlertDialogDescription>
-                Your progress is automatically saved. You can resume from exactly where you left off from the Assessment page.
+                Your progress is automatically saved. You are on question {answeredCount + 1} of {totalItems} ({progress}% complete). You can resume from exactly where you left off from the Assessment page.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Stay</AlertDialogCancel>
-              <AlertDialogAction onClick={() => navigate("/assessment")}>Leave &amp; Save</AlertDialogAction>
+              <AlertDialogCancel>Continue Assessment</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  toast.success("Progress saved — resume any time from the Assessment page.");
+                  navigate("/assessment");
+                }}
+              >
+                Save &amp; Exit
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Question counter + progress bar */}
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">
             Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
