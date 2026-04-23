@@ -41,6 +41,11 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
 import {
   RadarChart,
@@ -301,6 +306,56 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
   );
 }
 
+// ─── Percentile Band Badge with Tooltip ─────────────────────────────────────
+
+const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
+  "Top 20%":        { colour: "#228833", description: "Your score places you in the top fifth of your peer group — a strong result relative to HR professionals at a similar level and role." },
+  "Above average":  { colour: "#44bb99", description: "Your score is above the midpoint for your peer group. You are performing better than most HR professionals at a similar level and role." },
+  "Around average": { colour: "#EE8866", description: "Your score is close to the typical result for your peer group. This is a normal starting point — most capability development happens from here." },
+  "Below average":  { colour: "#EE6677", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
+  "Bottom 20%":     { colour: "#CC3311", description: "Your score is in the bottom fifth of your peer group. Focused development in this capability is recommended before taking on AI-assisted decisions in this area." },
+};
+
+function PercentileBandBadge({
+  label,
+  normGroupLabel,
+}: {
+  label: string;
+  normGroupLabel?: string;
+}) {
+  const info = PERCENTILE_BAND_INFO[label];
+  const colour = info?.colour ?? "#888888";
+  return (
+    <UITooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="inline-flex items-center gap-1 cursor-help rounded-full px-2 py-0.5 text-xs font-medium border select-none"
+          style={{
+            color: colour,
+            borderColor: `${colour}55`,
+            backgroundColor: `${colour}18`,
+          }}
+        >
+          {label}
+          <Info className="size-3 opacity-60" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-xs text-xs leading-relaxed"
+        sideOffset={6}
+      >
+        <p className="font-semibold mb-1">{label}</p>
+        {info && <p>{info.description}</p>}
+        {normGroupLabel && (
+          <p className="mt-1.5 opacity-70 italic">Compared to: {normGroupLabel}</p>
+        )}
+        <p className="mt-1.5 opacity-60 italic">Provisional — based on synthetic baseline distributions.</p>
+      </TooltipContent>
+    </UITooltip>
+  );
+}
+
 // ─── Capability Bar ───────────────────────────────────────────────────────────
 
 function CapabilityBar({
@@ -325,12 +380,10 @@ function CapabilityBar({
         <span className="text-sm font-medium text-foreground">{displayName}</span>
         <div className="flex items-center gap-2">
           {percentileBandLabel && (
-            <span
-              className="text-xs text-muted-foreground"
-              title={normGroupLabel ? `Compared to ${normGroupLabel} (provisional — based on synthetic baseline)` : "Provisional — based on synthetic baseline"}
-            >
-              {percentileBandLabel}
-            </span>
+            <PercentileBandBadge
+              label={percentileBandLabel}
+              normGroupLabel={normGroupLabel}
+            />
           )}
           <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
           <span className="text-sm font-bold w-8 text-right" style={{ color: colour }}>{score}</span>
