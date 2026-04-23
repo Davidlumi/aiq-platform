@@ -992,3 +992,6 @@
 ### Bug Fix — Double Login Required
 - [x] Diagnose why credentials must be entered twice before session is established
 - [x] Fix the root cause: `invalidate()` only marks query stale but doesn't await refetch — replaced with `await utils.auth.me.fetch()` in LoginPage and RegisterPage so ProtectedRoute sees the user immediately on first attempt
+
+### Bug Fix — submitAnswer timeToFirstInteractionMs negative value
+- [x] Fix: timeToFirstInteractionMs can be negative — root cause: Continue button didn't reset firstInteractionTime to null. Fixed in Continue handler + added server-side Math.max(0,...) clamp as belt-and-suspenders guard

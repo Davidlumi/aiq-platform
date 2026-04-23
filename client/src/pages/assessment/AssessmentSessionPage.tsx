@@ -949,6 +949,9 @@ export default function AssessmentSessionPage() {
                     setConfidence(50);
                     setReasoningText(""); // C2.1: reset reasoning
                     setItemStartTime(Date.now());
+                    setFirstInteractionTime(null); // Fix: reset so next question doesn't inherit stale timestamp
+                    setRevisionCount(0); // B1: reset per-item counters
+                    setFocusLossCount(0);
                   }}
                   className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
                 >

@@ -944,9 +944,9 @@ export const assessmentRouter = router({
         // Shown for judgement/governance/critique item types; max 2000 chars
         reasoningText: z.string().max(2000).optional(),
         confidenceScore: z.number().min(0).max(1).optional(),
-        timeToAnswerMs: z.number().int().min(0),
+        timeToAnswerMs: z.number().int().transform(v => Math.max(0, v)),
         // WS5.1: Extended telemetry fields
-        timeToFirstInteractionMs: z.number().int().min(0).optional(),
+        timeToFirstInteractionMs: z.number().int().optional().transform(v => v !== undefined ? Math.max(0, v) : undefined),
         confidenceRatingRaw: z.number().min(0).max(1).optional(),
         deviceType: z.enum(["desktop", "tablet", "mobile"]).optional(),
         browserType: z.string().max(40).optional(),
