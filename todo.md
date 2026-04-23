@@ -572,3 +572,10 @@
 - [x] CI-2.2: Wire ailOrgContext into assessment session start — load tenant's org context at startSession and store in session metadata
 - [x] CI-2.3: Inject org context block into adaptive engine LLM prompt (sector, named AI tools, regulatory regime)
 - [x] CI-2.4: Content selector prefers sector-matching scenarios when org context available (deferred: requires sector_applicability column on content_scenarios; marked as future enhancement)
+
+## Reasoning Review View (Apr 23 2026)
+
+- [x] RR1: Add `backoffice.listReasoningAnswers` tRPC procedure — returns all assessment_answers where reasoning_text IS NOT NULL, joined with user, session, and item metadata (question text, interaction_type, capability, outcome_class, signal_deltas, confidence_rating, time_to_answer_ms)
+- [x] RR2: Build `ReasoningTab` component in BackOfficePage — filterable table/card view: filter by org, user, capability, interaction_type, readiness state; each row expandable to show full scenario, selected option, reasoning text, confidence, and time
+- [x] RR3: Wire ReasoningTab into BackOfficePage as a new "Reasoning Review" tab
+- [ ] RR4: Add vitest test for listReasoningAnswers procedure (pending)

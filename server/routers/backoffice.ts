@@ -6,8 +6,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { tenants, users, userRoles, roles } from "../../drizzle/schema";
-import { eq, and, like, or, desc, asc, ne } from "drizzle-orm";
+import { tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems } from "../../drizzle/schema";
+import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { hashPassword, generateResetToken } from "../auth";
 
@@ -303,6 +303,114 @@ export const backofficeRouter = router({
     await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(roles).orderBy(asc(roles.key));
   }),
+
+  // ── Reasoning Review ─────────────────────────────────────────────────────────
+  listReasoningAnswers: protectedProcedure
+    .input(z.object({
+      tenantId: z.string().optional(),
+      userId: z.string().optional(),
+      capability: z.string().optional(),
+      interactionType: z.string().optional(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(50),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+
+      // Fetch all answers where reasoning_text is present
+      const answers = await db
+        .select({
+          answerId: assessmentAnswers.id,
+          sessionId: assessmentAnswers.sessionId,
+          itemId: assessmentAnswers.itemId,
+          reasoningText: assessmentAnswers.reasoningText,
+          selectedValueJson: assessmentAnswers.selectedValueJson,
+          outcomeClass: assessmentAnswers.outcomeClass,
+          confidenceScore: assessmentAnswers.confidenceScore,
+          timeToAnswerMs: assessmentAnswers.timeToAnswerMs,
+          signalDeltasJson: assessmentAnswers.signalDeltasJson,
+          submittedAt: assessmentAnswers.submittedAt,
+          sessionTenantId: assessmentSessions.tenantId,
+          sessionUserId: assessmentSessions.userId,
+          sessionState: assessmentSessions.state,
+          sessionCompletedAt: assessmentSessions.completedAt,
+          itemPrompt: assessmentItems.prompt,
+          itemDifficulty: assessmentItems.difficulty,
+          itemMetadataJson: assessmentItems.metadataJson,
+        })
+        .from(assessmentAnswers)
+        .innerJoin(assessmentSessions, eq(assessmentAnswers.sessionId, assessmentSessions.id))
+        .leftJoin(assessmentItems, eq(assessmentAnswers.itemId, assessmentItems.id))
+        .where(isNotNull(assessmentAnswers.reasoningText))
+        .orderBy(desc(assessmentAnswers.submittedAt));
+
+      if (answers.length === 0) {
+        return { records: [], total: 0, page: input?.page ?? 1, pageSize: input?.pageSize ?? 50 };
+      }
+
+      // Enrich with user details
+      const userIds = Array.from(new Set(answers.map(a => a.sessionUserId)));
+      const userRows = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email, tenantId: users.tenantId })
+        .from(users)
+        .where(inArray(users.id, userIds));
+      const userMap = new Map(userRows.map(u => [u.id, u]));
+
+      // Enrich with tenant details
+      const tenantIds = Array.from(new Set(answers.map(a => a.sessionTenantId)));
+      const tenantRows = await db
+        .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
+        .from(tenants)
+        .where(inArray(tenants.id, tenantIds));
+      const tenantMap = new Map(tenantRows.map(t => [t.id, t]));
+
+      // Build enriched records
+      let enriched = answers.map(a => {
+        const meta = (a.itemMetadataJson ?? {}) as Record<string, unknown>;
+        const interactionType = String(meta.interactionType ?? meta.interaction_type ?? "situational_judgement");
+        const capability = String(meta.capability ?? meta.capabilityKey ?? "unknown");
+        const user = userMap.get(a.sessionUserId);
+        const tenant = tenantMap.get(a.sessionTenantId);
+        return {
+          answerId: a.answerId,
+          sessionId: a.sessionId,
+          itemId: a.itemId,
+          reasoningText: a.reasoningText ?? "",
+          selectedValue: a.selectedValueJson as string | null,
+          outcomeClass: a.outcomeClass ?? "unknown",
+          confidenceScore: a.confidenceScore ? parseFloat(String(a.confidenceScore)) : null,
+          timeToAnswerMs: a.timeToAnswerMs,
+          signalDeltas: a.signalDeltasJson as Record<string, number> | null,
+          submittedAt: a.submittedAt,
+          sessionState: a.sessionState,
+          sessionCompletedAt: a.sessionCompletedAt,
+          itemPrompt: a.itemPrompt ?? "(LLM-generated item)",
+          itemDifficulty: a.itemDifficulty ?? 2,
+          interactionType,
+          capability,
+          userId: a.sessionUserId,
+          userName: user ? `${user.firstName} ${user.lastName}`.trim() : "Unknown",
+          userEmail: user?.email ?? "",
+          tenantId: a.sessionTenantId,
+          tenantName: tenant?.name ?? "Unknown Org",
+          tenantSlug: tenant?.slug ?? "",
+        };
+      });
+
+      // Apply optional filters
+      if (input?.tenantId) enriched = enriched.filter(r => r.tenantId === input.tenantId);
+      if (input?.userId) enriched = enriched.filter(r => r.userId === input.userId);
+      if (input?.capability) enriched = enriched.filter(r => r.capability === input.capability);
+      if (input?.interactionType) enriched = enriched.filter(r => r.interactionType === input.interactionType);
+
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 50;
+      const total = enriched.length;
+      const paginated = enriched.slice((page - 1) * pageSize, page * pageSize);
+      return { records: paginated, total, page, pageSize };
+    }),
 
   // ── Platform stats ─────────────────────────────────────────────────────────
   stats: protectedProcedure.query(async ({ ctx }) => {

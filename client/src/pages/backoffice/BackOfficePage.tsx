@@ -53,11 +53,17 @@ import {
   ChevronDown,
   ExternalLink,
   Loader2,
+  MessageSquare,
+  ChevronUp,
+  Brain,
+  Timer,
+  BarChart3,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "orgs" | "users" | "beta";
+type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning";
 
 // ─── Beta Applications Tab ────────────────────────────────────────────────────
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
@@ -993,6 +999,289 @@ function UsersTab({ orgs }: { orgs: any[] }) {
   );
 }
 
+// ─── Reasoning Review Tab ────────────────────────────────────────────────────
+const CAPABILITY_LABELS: Record<string, string> = {
+  ai_execution:       "AI Execution",
+  ai_judgement:       "AI Judgement",
+  risk_governance:    "Risk Governance",
+  ai_appropriateness: "AI Appropriateness",
+  workflow_integration: "Workflow Integration",
+  data_interpretation: "Data & Insight",
+  unknown:            "Unknown",
+};
+
+const OUTCOME_CONFIG: Record<string, { label: string; className: string }> = {
+  strong:      { label: "Strong",      className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  adequate:    { label: "Adequate",    className: "bg-blue-50 text-blue-700 border-blue-200" },
+  partial:     { label: "Partial",     className: "bg-amber-50 text-amber-700 border-amber-200" },
+  failure:     { label: "Failure",     className: "bg-red-50 text-red-700 border-red-200" },
+  abstain:     { label: "Abstain",     className: "bg-gray-100 text-gray-600 border-gray-200" },
+  unknown:     { label: "Unknown",     className: "bg-gray-100 text-gray-500 border-gray-200" },
+};
+
+const INTERACTION_LABELS: Record<string, string> = {
+  situational_judgement: "Situational Judgement",
+  risk_judgement:        "Risk Judgement",
+  scenario_critique:     "Scenario Critique",
+  governance_decision:   "Governance Decision",
+  tool_selection:        "Tool Selection",
+  process_design:        "Process Design",
+  data_interpretation:   "Data Interpretation",
+  ethical_reasoning:     "Ethical Reasoning",
+  output_validation:     "Output Validation",
+  workflow_optimisation: "Workflow Optimisation",
+  knowledge_check:       "Knowledge Check",
+};
+
+function ReasoningTab() {
+  const [capabilityFilter, setCapabilityFilter] = useState<string>("all");
+  const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  const { data, isLoading } = trpc.backoffice.listReasoningAnswers.useQuery({
+    capability: capabilityFilter === "all" ? undefined : capabilityFilter,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  const records = data?.records ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Filtered client-side by outcome (to avoid extra round-trips)
+  const filtered = outcomeFilter === "all"
+    ? records
+    : records.filter(r => r.outcomeClass === outcomeFilter);
+
+  const capabilities = Object.keys(CAPABILITY_LABELS);
+  const outcomes = ["strong", "adequate", "partial", "failure", "abstain"];
+
+  function formatMs(ms: number) {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  function confidenceLabel(score: number | null) {
+    if (score === null) return "—";
+    const pct = Math.round(score * 100);
+    if (pct <= 25) return "Guessing";
+    if (pct <= 50) return "Unsure";
+    if (pct <= 75) return "Fairly sure";
+    return "Certain";
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-base font-semibold text-foreground font-sora">Reasoning Review</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {total} answer{total !== 1 ? "s" : ""} with captured reasoning text
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          {/* Capability filter */}
+          <Select value={capabilityFilter} onValueChange={(v) => { setCapabilityFilter(v); setPage(1); }}>
+            <SelectTrigger className="h-8 text-xs w-48">
+              <SelectValue placeholder="All capabilities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All capabilities</SelectItem>
+              {capabilities.filter(c => c !== "unknown").map(c => (
+                <SelectItem key={c} value={c}>{CAPABILITY_LABELS[c]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Outcome filter */}
+          <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
+            <SelectTrigger className="h-8 text-xs w-40">
+              <SelectValue placeholder="All outcomes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All outcomes</SelectItem>
+              {outcomes.map(o => (
+                <SelectItem key={o} value={o}>{OUTCOME_CONFIG[o]?.label ?? o}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">No reasoning captured yet</p>
+          <p className="text-xs mt-1">Reasoning text is collected for judgement, risk, critique, and governance items during assessments.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((r) => {
+            const isExpanded = expandedId === r.answerId;
+            const outcomeConf = OUTCOME_CONFIG[r.outcomeClass] ?? OUTCOME_CONFIG.unknown;
+            const capLabel = CAPABILITY_LABELS[r.capability] ?? r.capability;
+            const interLabel = INTERACTION_LABELS[r.interactionType] ?? r.interactionType;
+            return (
+              <div key={r.answerId} className="border border-border rounded-xl overflow-hidden">
+                {/* Summary row */}
+                <div
+                  className="flex items-start gap-4 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : r.answerId)}
+                >
+                  {/* Left: user + org */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm text-foreground">{r.userName}</span>
+                      <span className="text-muted-foreground text-xs">&middot;</span>
+                      <span className="text-xs text-muted-foreground">{r.tenantName}</span>
+                      <span className={cn("inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border", outcomeConf.className)}>
+                        {outcomeConf.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <Brain className="w-3 h-3" />
+                        {capLabel}
+                      </span>
+                      <span>&middot;</span>
+                      <span>{interLabel}</span>
+                      <span>&middot;</span>
+                      <span className="flex items-center gap-1">
+                        <Timer className="w-3 h-3" />
+                        {formatMs(r.timeToAnswerMs)}
+                      </span>
+                      <span>&middot;</span>
+                      <span>{new Date(r.submittedAt).toLocaleDateString()}</span>
+                    </div>
+                    {/* Reasoning preview */}
+                    {!isExpanded && r.reasoningText && (
+                      <p className="mt-2 text-xs text-muted-foreground italic line-clamp-2">
+                        &ldquo;{r.reasoningText}&rdquo;
+                      </p>
+                    )}
+                  </div>
+                  {/* Right: confidence + chevron */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-foreground">{confidenceLabel(r.confidenceScore)}</p>
+                      <p className="text-xs text-muted-foreground">confidence</p>
+                    </div>
+                    {isExpanded
+                      ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                </div>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="border-t border-border bg-muted/20 p-5 space-y-5">
+                    {/* Scenario */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Scenario</h4>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{r.itemPrompt}</p>
+                    </div>
+
+                    {/* Participant's reasoning */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Participant Reasoning</h4>
+                      <div className="bg-background rounded-lg border border-border p-4">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{r.reasoningText}</p>
+                      </div>
+                    </div>
+
+                    {/* Metadata grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-background rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Selected option</p>
+                        <p className="text-sm font-medium text-foreground">{String(r.selectedValue ?? "—").toUpperCase()}</p>
+                      </div>
+                      <div className="bg-background rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Outcome</p>
+                        <p className={cn("text-sm font-medium", outcomeConf.className.split(" ")[1])}>{outcomeConf.label}</p>
+                      </div>
+                      <div className="bg-background rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Confidence</p>
+                        <p className="text-sm font-medium text-foreground">{confidenceLabel(r.confidenceScore)}</p>
+                      </div>
+                      <div className="bg-background rounded-lg border border-border p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Time to answer</p>
+                        <p className="text-sm font-medium text-foreground">{formatMs(r.timeToAnswerMs)}</p>
+                      </div>
+                    </div>
+
+                    {/* Signal deltas */}
+                    {r.signalDeltas && Object.keys(r.signalDeltas).length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          Signal Deltas
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(r.signalDeltas).map(([signal, delta]) => (
+                            <span
+                              key={signal}
+                              className={cn(
+                                "inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border",
+                                delta > 0
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-red-50 text-red-700 border-red-200"
+                              )}
+                            >
+                              {signal.replace(/_/g, " ")}: {delta > 0 ? "+" : ""}{delta.toFixed(2)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Session link */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <div className="text-xs text-muted-foreground">
+                        <span className="font-medium">Session:</span> {r.sessionId.slice(0, 16)}…
+                        {" "}&middot;{" "}
+                        <span className={cn(
+                          "font-medium",
+                          r.sessionState === "completed" ? "text-emerald-600" : "text-amber-600"
+                        )}>
+                          {r.sessionState}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.userEmail}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-muted-foreground">
+            Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Back-Office Page ────────────────────────────────────────────────────
 export default function BackOfficePage() {
   const { user, loading: authLoading } = useAuth();
@@ -1018,6 +1307,7 @@ export default function BackOfficePage() {
     { id: "orgs",      label: "Organisations", icon: Building2 },
     { id: "users",     label: "Users",         icon: Users },
     { id: "beta",      label: "Beta Applications", icon: FlaskConical },
+    { id: "reasoning", label: "Reasoning Review",   icon: MessageSquare },
   ];
 
   return (
@@ -1057,6 +1347,7 @@ export default function BackOfficePage() {
       {tab === "orgs"      && <OrgsTab />}
       {tab === "users"     && <UsersTab orgs={orgs ?? []} />}
       {tab === "beta"      && <BetaApplicationsTab />}
+      {tab === "reasoning" && <ReasoningTab />}
     </div>
   );
 }
