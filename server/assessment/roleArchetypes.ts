@@ -20,6 +20,8 @@ export interface RoleArchetype {
   minimumSafeThresholds: Record<CapabilityKey, number>;
   /** Typical workflows this role performs */
   workflows: string[];
+  /** E1: Gaming threshold family for WS2.2 role-aware anti-gaming */
+  gamingFamily: "specialist" | "generalist" | "leader" | "coordinator";
   /** Decision authority level */
   decisionAuthority: "advisory" | "operational" | "strategic";
   /** Risk exposure level */
@@ -35,6 +37,7 @@ export interface RoleArchetype {
 export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   hrbp: {
     id: "hrbp",
+    gamingFamily: "generalist", // E1
     displayName: "HR Business Partner",
     family: "Business Partnering",
     seniority: "senior",
@@ -59,6 +62,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   hr_generalist: {
     id: "hr_generalist",
+    gamingFamily: "generalist", // E1
     displayName: "HR Generalist",
     family: "Generalist",
     seniority: "mid",
@@ -83,6 +87,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   hr_advisor: {
     id: "hr_advisor",
+    gamingFamily: "generalist", // E1
     displayName: "HR Advisor",
     family: "Advisory",
     seniority: "mid",
@@ -107,6 +112,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   talent_acquisition: {
     id: "talent_acquisition",
+    gamingFamily: "specialist", // E1
     displayName: "Talent Acquisition Specialist",
     family: "Talent Acquisition",
     seniority: "mid",
@@ -131,6 +137,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   er_specialist: {
     id: "er_specialist",
+    gamingFamily: "specialist", // E1
     displayName: "Employee Relations Specialist",
     family: "Employee Relations",
     seniority: "senior",
@@ -155,6 +162,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   ld_specialist: {
     id: "ld_specialist",
+    gamingFamily: "specialist", // E1
     displayName: "L&D Specialist",
     family: "Learning & Development",
     seniority: "mid",
@@ -179,6 +187,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   people_analytics: {
     id: "people_analytics",
+    gamingFamily: "specialist", // E1
     displayName: "People Analytics Specialist",
     family: "People Analytics",
     seniority: "senior",
@@ -203,6 +212,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   hr_ops: {
     id: "hr_ops",
+    gamingFamily: "coordinator", // E1
     displayName: "HR Operations Specialist",
     family: "HR Operations",
     seniority: "mid",
@@ -227,6 +237,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   reward: {
     id: "reward",
+    gamingFamily: "specialist", // E1
     displayName: "Reward & Compensation Specialist",
     family: "Reward",
     seniority: "senior",
@@ -251,6 +262,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   },
   hr_leader: {
     id: "hr_leader",
+    gamingFamily: "leader", // E1
     displayName: "HR Leader / CHRO",
     family: "HR Leadership",
     seniority: "lead",
@@ -276,6 +288,7 @@ export const ROLE_ARCHETYPES: Record<string, RoleArchetype> = {
   // Default fallback
   hr_professional: {
     id: "hr_professional",
+    gamingFamily: "generalist", // E1
     displayName: "HR Professional",
     family: "General",
     seniority: "mid",

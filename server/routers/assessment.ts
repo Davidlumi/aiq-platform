@@ -79,7 +79,8 @@ import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
 import { runQualityGate, buildReviewQueueRow, recordLlmGenerationSuccess, recordLlmGenerationFailure } from "../assessment/llmQualityGate";
-import { llmItemReviewQueue, assessmentReviewFlags, assessmentAnswerTelemetry } from "../../drizzle/schema";
+import { llmItemReviewQueue, assessmentReviewFlags, assessmentAnswerTelemetry, policyEvaluations, policyRules } from "../../drizzle/schema";
+import { randomUUID } from "crypto";
 import type { CapabilityKey } from "../assessment/roleArchetypes";
 // I2: AIL bridge — wire assessment completion into the AIL pipeline
 import { processAssessmentThroughAIL } from "../ail/userIntelligenceProfile";
@@ -321,6 +322,7 @@ function buildAdaptiveContext(
   answers: AnswerData[],
   answeredCount: number,
   roleHint: string | null,
+  activeScoringCfg: import("../assessment/scoringConfig").ActiveScoringConfig,
   userProfile: {
     sector?: string | null;
     seniority?: string | null;
@@ -398,7 +400,7 @@ function buildAdaptiveContext(
 
   const ctx: AdaptiveSelectionContext = {
     answeredCount,
-    totalTarget: MINIMUM_EVIDENCE.targetItems,
+    totalTarget: activeScoringCfg.evidenceTargetItems,
     capabilityScores: capabilityScoreSummary,
     interactionTypesUsed,
     riskExposure,
@@ -421,6 +423,8 @@ function buildAdaptiveContext(
     priorCapabilityScores,
     // I4: Cross-session deduplication
     priorSeenStaticItemIds: (sessionMetaForTracking?.priorSeenStaticItemIds as string[]) ?? [],
+    // A3: Persona-derived starting difficulty — read from session metadata written at session start
+    personaStartingDifficulty: (sessionMetaForTracking?.personaStartingDifficulty as 1 | 2 | 3 | undefined) ?? undefined,
     // I5/I6/I7: Within-session tracking state
     recentWorkflows: (sessionMetaForTracking?.recentWorkflows as string[]) ?? [],
     consecutiveStrongAnswers: (sessionMetaForTracking?.consecutiveStrongAnswers as number) ?? 0,
@@ -695,6 +699,7 @@ export const assessmentRouter = router({
       let sessionScoringConfigVersion: number | null = null;
       try {
         const cfg = await getActiveScoringConfig();
+      const activeScoringCfg = cfg; // D1: alias for consistency with getNextItem
         sessionScoringConfigVersion = cfg?.version ?? null;
       } catch {}
       const sessionId = nanoid();
@@ -782,6 +787,8 @@ export const assessmentRouter = router({
 
       const roleHint = (meta.roleHint as string) ?? null;
       const priorCapabilityScores = (meta.priorCapabilityScores as Record<string, number>) ?? null;
+      // D1: Load active scoring config for configurable evidence thresholds
+      const activeScoringCfg = await getActiveScoringConfig();
 
       // Fetch user profile for personalisation
       const userRow = await db
@@ -801,14 +808,14 @@ export const assessmentRouter = router({
         jobFunction: userRow[0]?.jobFunction ?? null,
       };
 
-      const phase = determineSessionPhase(answeredCount, MINIMUM_EVIDENCE.targetItems);
+      const phase = determineSessionPhase(answeredCount, activeScoringCfg.evidenceTargetItems);
       // D2: Pass roleHint into computeState so role-specific evidence thresholds are applied
       const state = SessionController.computeState(
         session[0].id,
         ctx.user.id,
         session[0].blueprintId,
         answers,
-        MINIMUM_EVIDENCE.targetItems,
+        activeScoringCfg.evidenceTargetItems,
         roleHint
       );
 
@@ -816,7 +823,7 @@ export const assessmentRouter = router({
       // T1-3: Generate next item when in_progress AND not yet at target items
       // AND evidence is not yet sufficient (early completion will handle that case)
       const shouldGenerateNextItem = session[0].state === "in_progress" &&
-        answeredCount < MINIMUM_EVIDENCE.targetItems &&
+        answeredCount < activeScoringCfg.evidenceTargetItems &&
         !state.evidenceSufficient;
       if (shouldGenerateNextItem) {
         // ── Step 1: Check for pre-generated pending item (zero latency) ────────
@@ -849,6 +856,7 @@ export const assessmentRouter = router({
               answers,
               answeredCount,
               roleHint,
+              activeScoringCfg,
               userProfile,
               priorCapabilityScores,
               orgCtx,
@@ -901,13 +909,13 @@ export const assessmentRouter = router({
       // T1-2: Early completion — allow completion once evidence is sufficient,
       // even before all targetItems are answered (minimum 20 items required)
       const isComplete = session[0].state !== "in_progress" ||
-        (answeredCount >= MINIMUM_EVIDENCE.targetItems && !nextItem) ||
+        (answeredCount >= activeScoringCfg.evidenceTargetItems && !nextItem) ||
         (state.evidenceSufficient && answeredCount >= MINIMUM_EVIDENCE.totalItems);
 
       return {
         session: session[0],
         answers: rawAnswers,
-        totalItems: MINIMUM_EVIDENCE.targetItems,
+        totalItems: activeScoringCfg.evidenceTargetItems,
         answeredCount,
         nextItem,
         isComplete,
@@ -942,6 +950,9 @@ export const assessmentRouter = router({
         deviceType: z.enum(["desktop", "tablet", "mobile"]).optional(),
         browserType: z.string().max(40).optional(),
         screenWidthPx: z.number().int().min(0).max(9999).optional(),
+        // B1: Behavioural telemetry — option revision count and focus loss count
+        revisionCount: z.number().int().min(0).optional(),
+        focusLossCount: z.number().int().min(0).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -960,6 +971,8 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active session not found" });
+      // D1: Load active scoring config for configurable evidence thresholds
+      const activeScoringCfg = await getActiveScoringConfig();
 
       // Resolve outcome from selected option
       let correctness: boolean | null = null;
@@ -1013,7 +1026,7 @@ export const assessmentRouter = router({
         .from(assessmentAnswers)
         .where(eq(assessmentAnswers.sessionId, input.sessionId))).length;
 
-      if (newAnsweredCount < MINIMUM_EVIDENCE.targetItems) {
+      if (newAnsweredCount < activeScoringCfg.evidenceTargetItems) {
         // Fire-and-forget: do not await, do not block the response
         (async () => {
           try {
@@ -1073,6 +1086,7 @@ export const assessmentRouter = router({
               answers,
               newAnsweredCount,
               roleHint,
+              activeScoringCfg,
               userProfile,
               priorCapabilityScores,
               preGenOrgCtx,
@@ -1129,8 +1143,8 @@ export const assessmentRouter = router({
           itemId: input.itemId,
           userId: ctx.user.id,
           totalActiveMs: input.timeToAnswerMs,
-          revisionCount: 0,
-          focusLossCount: 0,
+          revisionCount: input.revisionCount ?? 0,
+          focusLossCount: input.focusLossCount ?? 0,
           // WS5.1: Extended telemetry fields
           timeToFirstInteractionMs: input.timeToFirstInteractionMs ?? null,
           timeToSubmitMs: input.timeToAnswerMs,
@@ -1282,6 +1296,33 @@ export const assessmentRouter = router({
         minimumSafeClassificationConfidence: activeScoringCfg.minimumSafeClassificationConfidence,
       }, orgThresholdOverrides as any, reasoningCompleteness);
 
+      // C1: Load prior capability scores for longitudinal delta context in narrative
+      let priorCapabilityScoresForNarrative: Record<string, number> | null = null;
+      try {
+        const priorSessions = await db
+          .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+          .from(assessmentScores)
+          .innerJoin(assessmentSessions, eq(assessmentScores.sessionId, assessmentSessions.id))
+          .where(
+            and(
+              eq(assessmentSessions.userId, ctx.user.id),
+              eq(assessmentSessions.state, "completed")
+            )
+          )
+          .orderBy(desc(assessmentSessions.completedAt))
+          .limit(1);
+        if (priorSessions[0]?.scoreBreakdownJson) {
+          const priorBreakdown = typeof priorSessions[0].scoreBreakdownJson === "string"
+            ? JSON.parse(priorSessions[0].scoreBreakdownJson as string)
+            : priorSessions[0].scoreBreakdownJson as Record<string, unknown>;
+          if (priorBreakdown?.capabilityScores && typeof priorBreakdown.capabilityScores === "object") {
+            priorCapabilityScoresForNarrative = Object.fromEntries(
+              Object.entries(priorBreakdown.capabilityScores as Record<string, { score: number }>)
+                .map(([k, v]) => [k, v.score])
+            );
+          }
+        }
+      } catch { /* non-fatal */ }
       // R9: Generate LLM-powered personalised development narrative
       let llmNarrative: { strengths: string; gaps: string; priorities: string } | null = null;
       try {
@@ -1321,9 +1362,12 @@ Assessment results:
 - Key gaps: ${topGaps}
 - Governance flag: ${results.failureModes.governanceFlag ? "Yes — governance concerns detected" : "No"}
 - Over-reliance risk: ${results.failureModes.modes.includes("over_reliance") ? "Yes" : "No"}
+- C2: All failure modes detected: ${results.failureModes.modes.length > 0 ? results.failureModes.modes.join(", ") : "None"}
+- C2: Gaming scrutiny level: ${results.gamingAnalysis.scrutinyLevel}
+${priorCapabilityScoresForNarrative ? `- C1: Prior session capability scores: ${Object.entries(priorCapabilityScoresForNarrative).map(([k, v]) => `${k}: ${Math.round(v as number)}/100`).join(", ")}` : "- C1: First assessment (no prior scores available)"}
 
-Paragraph 1 (Strengths): What this person does well in their AI capability profile. Reference specific capabilities.
-Paragraph 2 (Gaps): Where the most significant development opportunities lie. Be honest but constructive.
+Paragraph 1 (Strengths): What this person does well in their AI capability profile. Reference specific capabilities and any improvements since their last assessment if prior scores are available.
+Paragraph 2 (Gaps): Where the most significant development opportunities lie. Reference any detected failure modes (e.g., over_reliance, blind_ai_acceptance, governance_bypass) if present. Be honest but constructive.
 Paragraph 3 (Priorities): The 2-3 most important actions they should take to improve their AI readiness in their role.
 
 Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each containing one paragraph of plain prose text.`,
@@ -1371,6 +1415,9 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         capabilityScores: capabilityScoresFlat,
         signalScores: results.signalScores,
         readiness: results.readiness,
+        // A4: Governance action and governing constraint (previously computed but not persisted)
+        governanceAction: results.readiness.governanceAction ?? null,
+        governingConstraint: results.readiness.governingConstraint ?? null,
         narrative: results.narrative,
         confidenceProfile: results.confidenceProfile,
         failureModes: results.failureModes,
@@ -1565,6 +1612,32 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
        } catch (revalErr) {
         // Non-fatal — log but do not block session completion
         console.warn("[assessment] R11: Failed to create revalidation schedule:", revalErr);
+      }
+      // A5: Write policyEvaluations row when gaming scrutiny is high
+      if (results.gamingAnalysis.scrutinyLevel === "high") {
+        try {
+          // Look up or use a sentinel policy rule key for automated gaming detection
+          const gamingPolicyRows = await db
+            .select({ id: policyRules.id })
+            .from(policyRules)
+            .where(eq(policyRules.key, "automated_gaming_detection"))
+            .limit(1);
+          const policyRuleId = gamingPolicyRows[0]?.id ?? "automated_gaming_detection";
+          await db.insert(policyEvaluations).values({
+            id: randomUUID(),
+            userId: ctx.user.id,
+            policyRuleId,
+            contextType: "assessment_session",
+            contextId: input.sessionId,
+            result: "flagged",
+            explanationJson: {
+              scrutinyLevel: results.gamingAnalysis.scrutinyLevel,
+              patterns: results.gamingAnalysis.patterns,
+              detectedAt: new Date().toISOString(),
+              source: "automated_gaming_detection",
+            },
+          });
+        } catch { /* non-fatal — do not block session completion */ }
       }
       // I2: Wire assessment completion into the AIL pipeline (non-fatal, fire-and-forget)
       try {

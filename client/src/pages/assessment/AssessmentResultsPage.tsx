@@ -561,6 +561,11 @@ export default function AssessmentResultsPage() {
   // P3: Classification confidence gate caveat
   const classificationConfidence = (breakdown.classificationConfidence ?? null) as { band: string; label: string; wasDowngraded: boolean; caveat: string | null } | null;
 
+  // A4: Governance action and governing constraint
+  const governanceAction = (breakdown.governanceAction ?? null) as string | null;
+  const governingConstraint = (breakdown.governingConstraint ?? null) as {
+    capability: string; score: number; band: string; thresholdRequired: number; gap: number; droveClassification: boolean;
+  } | null;
   const stateConfig = READINESS_CONFIG[primaryState] ?? READINESS_CONFIG.unknown;
   const StateIcon = stateConfig.icon;
   const credConfig = CREDIBILITY_CONFIG[credibilityBand] ?? CREDIBILITY_CONFIG.medium;
@@ -877,6 +882,33 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
+          {/* A4: Governance Action Banner */}
+          {governanceAction && (
+            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EF4444] bg-[#EF4444]/5" : "border-l-[#F59E0B] bg-[#F59E0B]/5"}`}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#EF4444]" : "text-[#F59E0B]"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground font-sora mb-1">
+                      {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supervised AI Use Recommended"}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {governanceAction === "development_required"
+                        ? "Your current capability profile indicates significant gaps that should be addressed through structured development before independent AI deployment."
+                        : "Your capability profile supports AI use with appropriate oversight. A line manager or governance lead should review AI outputs in high-stakes decisions."}
+                    </p>
+                    {governingConstraint && governingConstraint.droveClassification && (
+                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
+                        <Flag className="w-3 h-3 flex-shrink-0" />
+                        Governing constraint: <span className="font-medium text-foreground capitalize">{governingConstraint.capability.replace(/_/g, " ")}</span>
+                        {" "}(score {Math.round(governingConstraint.score)}, threshold {Math.round(governingConstraint.thresholdRequired)}, gap {Math.round(governingConstraint.gap)} points)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {/* UX-3: Score Summary - actual question count with early-completion label */}
           <Card className="border-border">
             <CardContent className="p-5">

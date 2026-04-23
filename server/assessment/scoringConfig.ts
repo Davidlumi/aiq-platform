@@ -37,6 +37,12 @@ export interface ActiveScoringConfig {
   confidenceFloor: number;
   minimumSafeClassificationConfidence: number;
   calibrationSource: string;
+  // D1: Configurable evidence sufficiency thresholds (previously MINIMUM_EVIDENCE in sessionController.ts)
+  evidenceTotalItems: number;
+  evidenceSignalsPerCapability: number;
+  evidenceDistinctInteractionTypes: number;
+  evidenceHighRiskProportion: number;
+  evidenceTargetItems: number;
 }
 
 const DEFAULT_CONFIG: ActiveScoringConfig = {
@@ -56,6 +62,12 @@ const DEFAULT_CONFIG: ActiveScoringConfig = {
   confidenceFloor: 0.50,
   minimumSafeClassificationConfidence: 0.55,
   calibrationSource: "synthetic_default",
+  // D1: defaults match the former MINIMUM_EVIDENCE compile-time constants exactly
+  evidenceTotalItems: 20,
+  evidenceSignalsPerCapability: 3,
+  evidenceDistinctInteractionTypes: 5,
+  evidenceHighRiskProportion: 0.25,
+  evidenceTargetItems: 49,
 };
 
 let _cache: ActiveScoringConfig | null = null;
@@ -111,6 +123,17 @@ export async function getActiveScoringConfig(): Promise<ActiveScoringConfig> {
         minimumSafeClassificationConfidence: row.minimumSafeClassificationConfidence !== null && row.minimumSafeClassificationConfidence !== undefined
           ? parseFloat(row.minimumSafeClassificationConfidence as unknown as string) : 0.55,
         calibrationSource: row.calibrationSource,
+        // D1: evidence sufficiency thresholds
+        evidenceTotalItems: row.evidenceTotalItems !== null && row.evidenceTotalItems !== undefined
+          ? Number(row.evidenceTotalItems) : 20,
+        evidenceSignalsPerCapability: row.evidenceSignalsPerCapability !== null && row.evidenceSignalsPerCapability !== undefined
+          ? Number(row.evidenceSignalsPerCapability) : 3,
+        evidenceDistinctInteractionTypes: row.evidenceDistinctInteractionTypes !== null && row.evidenceDistinctInteractionTypes !== undefined
+          ? Number(row.evidenceDistinctInteractionTypes) : 5,
+        evidenceHighRiskProportion: row.evidenceHighRiskProportion !== null && row.evidenceHighRiskProportion !== undefined
+          ? parseFloat(row.evidenceHighRiskProportion as unknown as string) : 0.25,
+        evidenceTargetItems: row.evidenceTargetItems !== null && row.evidenceTargetItems !== undefined
+          ? Number(row.evidenceTargetItems) : 49,
       };
     }
   } catch {

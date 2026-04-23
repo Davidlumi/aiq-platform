@@ -137,7 +137,9 @@ export function analyseGamingPatterns(
   /** WS2.2: Role family for role-aware thresholds (e.g. "specialist", "generalist") */
   roleFamily?: string,
   /** WS2.2: Declared seniority level (1-4) for seniority-inconsistency suppression */
-  declaredSeniority?: number
+  declaredSeniority?: number,
+  /** A2: DB-loaded thresholds override (from antiGamingThresholds table) */
+  dbThresholds?: Partial<RoleAwareGamingThresholds>
 ): GamingAnalysis {
   if (answers.length < 5) {
     return {
@@ -153,7 +155,11 @@ export function analyseGamingPatterns(
   const injections: InjectionSpec[] = [];
 
   // WS2.2: Resolve role-aware thresholds
-  const thresholds = ROLE_GAMING_THRESHOLDS[roleFamily ?? ""] ?? DEFAULT_GAMING_THRESHOLDS;
+  // A2: DB thresholds override takes precedence over compiled role thresholds
+  const baseThresholds = ROLE_GAMING_THRESHOLDS[roleFamily ?? ""] ?? DEFAULT_GAMING_THRESHOLDS;
+  const thresholds: RoleAwareGamingThresholds = dbThresholds
+    ? { ...baseThresholds, ...dbThresholds }
+    : baseThresholds;
 
   // ── Pattern 1: Always safe choice ────────────────────────────────────────
   // If >75% of outcomes are "acceptable" (never strong, never weak), user is playing safe

@@ -487,6 +487,23 @@ function CompletionScreen({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// B2: Device and browser detection helpers
+function detectDeviceType(): "mobile" | "tablet" | "desktop" {
+  const ua = navigator.userAgent;
+  if (/Mobi|Android|iPhone|iPod/i.test(ua)) return "mobile";
+  if (/iPad|Tablet|PlayBook/i.test(ua)) return "tablet";
+  return "desktop";
+}
+function detectBrowserType(): string {
+  const ua = navigator.userAgent;
+  if (/Edg\//i.test(ua)) return "edge";
+  if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return "chrome";
+  if (/Firefox\//i.test(ua)) return "firefox";
+  if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "safari";
+  if (/OPR\//i.test(ua)) return "opera";
+  return "other";
+}
+
 export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
@@ -516,6 +533,9 @@ export default function AssessmentSessionPage() {
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
   // WS5.1: Track first interaction time for telemetry
   const [firstInteractionTime, setFirstInteractionTime] = useState<number | null>(null);
+  // B1: Track revision count (option changes after first selection) and focus loss count
+  const [revisionCount, setRevisionCount] = useState<number>(0);
+  const [focusLossCount, setFocusLossCount] = useState<number>(0);
   // UX-6: Elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -543,6 +563,8 @@ export default function AssessmentSessionPage() {
         setReasoningText(""); // C2.1: reset reasoning
         setItemStartTime(Date.now());
         setFirstInteractionTime(null);
+        setRevisionCount(0); // B1: reset per-item counters
+        setFocusLossCount(0);
         setIsGenerating(true);
         refetch();
       }
@@ -807,10 +829,27 @@ export default function AssessmentSessionPage() {
       // WS5.1 telemetry
       timeToFirstInteractionMs: firstInteractionTime !== null ? Math.round(firstInteractionTime - itemStartTime) : undefined,
       confidenceRatingRaw: confidence / 100,
+      // B1: Behavioural telemetry
+      revisionCount,
+      focusLossCount,
+      // B2: Device context telemetry
+      deviceType: detectDeviceType(),
+      browserType: detectBrowserType(),
+      screenWidthPx: window.screen.width,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedValue, confidence, itemStartTime, firstInteractionTime, sessionId, nextItem?.id]);
+  }, [selectedValue, confidence, itemStartTime, firstInteractionTime, revisionCount, focusLossCount, sessionId, nextItem?.id]);
 
+  // B1: Track focus loss via visibilitychange
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setFocusLossCount(c => c + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
   // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
   useEffect(() => {
     if (!nextItem || rationaleData) return;
@@ -1025,7 +1064,7 @@ export default function AssessmentSessionPage() {
               {nextItem.options.map((option: any, idx: number) => (
                 <button
                   key={option.id ?? idx}
-                  onClick={() => { setSelectedValue(option.value); if (firstInteractionTime === null) setFirstInteractionTime(Date.now()); }}
+                  onClick={() => { if (selectedValue && selectedValue !== option.value) setRevisionCount(c => c + 1); setSelectedValue(option.value); if (firstInteractionTime === null) setFirstInteractionTime(Date.now()); }}
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value

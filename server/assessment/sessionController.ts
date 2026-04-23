@@ -46,12 +46,17 @@ import { applyClassificationConfidenceGate } from "./classificationConfidenceGat
 
 // ─── Minimum Evidence Requirements ───────────────────────────────────────────
 
+/** @deprecated D1: MINIMUM_EVIDENCE is now configurable via scoring_config.
+ * Use getActiveScoringConfig() and read the evidence_* fields directly in the router.
+ * This constant is kept for backward compatibility with any code that has not yet been migrated.
+ * The values here are the original defaults and will not reflect DB overrides.
+ */
 export const MINIMUM_EVIDENCE = {
   totalItems: 20,
   signalsPerCapability: 3,
   distinctInteractionTypes: 5,
   highRiskProportion: 0.25,
-  targetItems: 49,  // Matches static blueprint bank exactly — no LLM generation needed for standard sessions
+  targetItems: 49,
 };
 
 // ─── Session State ────────────────────────────────────────────────────────────
@@ -165,7 +170,9 @@ export class SessionController {
       })(),
       interactionType: a.interactionType,
     }));
-    const gamingAnalysis = analyseGamingPatterns(gamingAnswers);
+    // A2: Pass roleFamily and seniority to enable role-aware gaming thresholds
+    const _seniorityLevel = roleArchetype.seniority === "junior" ? 1 : roleArchetype.seniority === "mid" ? 2 : roleArchetype.seniority === "senior" ? 3 : 4;
+    const gamingAnalysis = analyseGamingPatterns(gamingAnswers, roleArchetype.gamingFamily, _seniorityLevel);
 
     // Evidence sufficiency check
     const distinctInteractionTypes = Object.keys(interactionTypesUsed).length;
@@ -292,7 +299,9 @@ export class SessionController {
       })(),
       interactionType: a.interactionType,
     }));
-    const gamingAnalysis = analyseGamingPatterns(gamingAnswers);
+    // A2: Pass roleFamily and seniority to enable role-aware gaming thresholds
+    const _seniorityLevel = roleArchetype.seniority === "junior" ? 1 : roleArchetype.seniority === "mid" ? 2 : roleArchetype.seniority === "senior" ? 3 : 4;
+    const gamingAnalysis = analyseGamingPatterns(gamingAnswers, roleArchetype.gamingFamily, _seniorityLevel);
 
     // D3: Raise probe cap to 3 when scrutiny is high
     const probeLimit = gamingAnalysis.scrutinyLevel === "high" ? 3 : 2;
@@ -410,7 +419,9 @@ export class SessionController {
       })(),
       interactionType: a.interactionType,
     }));
-    const gamingAnalysis = analyseGamingPatterns(gamingAnswers);
+    // A2: Pass roleFamily and seniority to enable role-aware gaming thresholds
+    const _seniorityLevel = roleArchetype.seniority === "junior" ? 1 : roleArchetype.seniority === "mid" ? 2 : roleArchetype.seniority === "senior" ? 3 : 4;
+    const gamingAnalysis = analyseGamingPatterns(gamingAnswers, roleArchetype.gamingFamily, _seniorityLevel);
 
     // Confidence profile
     const interactionTypesUsed = new Set(answers.map(a => a.interactionType));

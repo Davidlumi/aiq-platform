@@ -934,3 +934,29 @@
 - [x] Rebuild AuditorDashboard: evidence surface, incident timeline, audit feed, export button
 - [x] Rebuild AdminDashboard: platform health, scoring config status, system activity
 - [ ] Vitest tests for dashboard router procedures
+
+### Assessment Engine Improvements (Apr 23 2026)
+- [ ] A4: Surface governanceAction and governingConstraint in scoreBreakdown, results page, dashboards
+- [ ] A2+E1: Add gamingFamily to RoleArchetype, load DB thresholds, pass roleFamily to analyseGamingPatterns
+- [ ] A5: Write policyEvaluations row when scrutinyLevel=high at session completion
+- [ ] B1: Track revisionCount and focusLossCount in frontend, send in submitAnswer
+- [ ] A1: Apply WS4.6 validation phase randomisation flag in adaptiveEngine selectNextItem
+- [ ] A3: Read personaStartingDifficulty from session metadata in buildAdaptiveContext
+- [ ] C1: Load prior capability scores in completeSession, include score deltas in R9 narrative prompt
+- [ ] C2: Include failureModes.modes and gamingAnalysis.scrutinyLevel in R9 narrative prompt
+- [ ] B2: Derive and send deviceType, browserType, screenWidthPx from frontend in submitAnswer
+- [ ] D1: Move MINIMUM_EVIDENCE constants to scoring_config columns with migration 0020
+
+### Assessment Engine Improvements — COMPLETED (Apr 23 2026)
+- [x] A4: governanceAction + governingConstraint added to scoreBreakdown JSON, surfaced in AssessmentResultsPage
+- [x] A2+E1: gamingFamily field added to RoleArchetype; role-aware gaming thresholds wired through analyseGamingPatterns
+- [x] A5: policyEvaluations row written at session completion when scrutinyLevel === 'high'
+- [x] B1: revisionCount + focusLossCount tracked in frontend (AssessmentSessionPage), sent in submitAnswer
+- [x] A1: WS4.6 validation phase randomisation flag applied in adaptiveEngine.selectNextGenerationVariables
+- [x] A3: personaStartingDifficulty read from session metadata in buildAdaptiveContext
+- [x] C1: Prior capability scores loaded in completeSession, score deltas included in R9 narrative prompt
+- [x] C2: failureModes.modes and gamingAnalysis.scrutinyLevel included in R9 narrative prompt
+- [x] B2: deviceType, browserType, screenWidthPx derived and sent from frontend in submitAnswer
+- [x] D1: MINIMUM_EVIDENCE constants moved to scoring_config columns (migration 0020); wired end-to-end
+- [x] Tests: 355/355 passing, 0 TypeScript errors
+- [x] Checkpoint saved

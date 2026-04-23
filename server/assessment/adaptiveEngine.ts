@@ -21,6 +21,7 @@ import { invokeLLM } from "../_core/llm";
 import type { RoleArchetype, CapabilityKey } from "./roleArchetypes";
 import type { GamingAnalysis, InjectionSpec } from "./antiGamingEngine";
 import type { ContradictionProbeSpec } from "./contradictionEngine";
+import { isValidationPhaseRandomised } from "./featureFlags";
 
 // ─── Interaction Types ────────────────────────────────────────────────────────
 
@@ -175,6 +176,8 @@ export interface AdaptiveSelectionContext {
   recentCapabilities?: CapabilityKey[]; // last N capabilities targeted
   // I4: Cross-session deduplication — static item IDs seen in prior sessions
   priorSeenStaticItemIds?: string[];
+  // A3: Persona-derived starting difficulty (1=easy, 2=medium, 3=hard) — overrides baseline default of 1
+  personaStartingDifficulty?: 1 | 2 | 3;
 }
 
 export interface OrgIntent {
@@ -274,9 +277,20 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
   // Priority 5: Validation — confirm/challenge strongest capability
   // C1: Vary validation interaction type instead of always using contradiction_probe.
   // Rotate through high-difficulty types to avoid predictable validation pattern.
+  // A1/WS4.6: When isValidationPhaseRandomised() is true, shuffle the validation type pool
+  // so the order of challenge types is not predictable across sessions.
   if (phase === "validation") {
     const strongest = findStrongestCapability(ctx.capabilityScores, ctx.roleArchetype);
-    const validationTypes: InteractionType[] = ["contradiction_probe", "risk_judgement", "governance_decision", "scenario_critique"];
+    let validationTypes: InteractionType[] = ["contradiction_probe", "risk_judgement", "governance_decision", "scenario_critique"];
+    if (isValidationPhaseRandomised()) {
+      // Fisher-Yates shuffle — deterministic within a session (uses answeredCount as seed offset)
+      const pool = [...validationTypes];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = (ctx.answeredCount + i) % (i + 1);
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      validationTypes = pool;
+    }
     const leastUsedValidationType = findLeastUsedType(validationTypes, ctx.interactionTypesUsed);
     return buildVariables(strongest, leastUsedValidationType, ctx, phase, {
       difficulty: 3,
@@ -1008,7 +1022,8 @@ function buildVariables(
   const role = ctx.roleArchetype;
   const highRiskCount = ctx.riskExposure["High"] ?? 0;
   const totalAnswered = ctx.answeredCount;
-  const baseDifficulty: 1 | 2 | 3 = phase === "baseline" ? 1 : phase === "adaptive" ? 2 : 3;
+  // A3: Use persona-derived starting difficulty for baseline phase if available
+  const baseDifficulty: 1 | 2 | 3 = phase === "baseline" ? (ctx.personaStartingDifficulty ?? 1) : phase === "adaptive" ? 2 : 3;
   // I5: Workflow rotation guard — pick a workflow not used in the last WORKFLOW_HISTORY_WINDOW items
   const recentWorkflows = ctx.recentWorkflows ?? [];
   const availableWorkflows = role.workflows.filter(w => !recentWorkflows.slice(-WORKFLOW_HISTORY_WINDOW).includes(w));
