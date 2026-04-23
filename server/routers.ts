@@ -15,6 +15,7 @@ import { contentRouter } from "./routers/content";
 import { intelligenceRouter } from "./routers/intelligence";
 import { backofficeRouter } from "./routers/backoffice";
 import { waitlistRouter } from "./routers/waitlist";
+import { adaptiveLearningRouter } from "./routers/adaptiveLearning";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -22,6 +23,7 @@ export const appRouter = router({
   users: usersRouter,
   assessment: assessmentRouter,
   learning: learningRouter,
+  adaptiveLearning: adaptiveLearningRouter,
   simulation: simulationRouter,
   scoring: scoringRouter,
   policy: policyRouter,

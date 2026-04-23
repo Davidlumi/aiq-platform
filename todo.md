@@ -1031,3 +1031,39 @@
 - [x] "Progress saved — resume any time from the Assessment page" toast shown on Save & Exit
 - [x] Browser verified: Save & Exit → /assessment shows resume card (2/49, 4%); Resume → Q3 ✓
 - [ ] Write vitest test for save-and-resume flow (existing save-resume.test.ts covers the server-side logic)
+
+### Adaptive Learning Engine (Full Build — Apr 23 2026)
+
+#### Schema Extensions
+- [x] Add `learning_modules` table: id, key, title, capability, modality, difficulty, durationMins, levelLabel, bodyJson (rich content), metadataJson
+- [x] Add `learning_module_tags` table: moduleId, tagType, tagValue (role, workflow, risk_level, prerequisite)
+- [x] Add `gap_analyses` table: id, userId, sessionId, capabilityGapsJson, priorityOrderJson, generatedAt
+- [x] Add `spaced_repetition_queue` table: userId, moduleId, nextDueAt, intervalDays, easeFactor, repetitions
+- [x] Run migration SQL (0021_adaptive_learning_engine.sql applied)
+
+#### Server — Adaptive Engine
+- [x] server/learning/gapAnalysisEngine.ts: compute gaps vs role benchmarks, classify Critical/Developing/Proficient/Advanced
+- [x] server/learning/learningPathGenerator.ts: 70/20/10 model, spaced repetition scheduling, prerequisite sequencing, difficulty progression
+- [x] server/learning/moduleRecommender.ts: score modules by gap severity × modality fit × difficulty match × role relevance
+- [x] server/routers/adaptiveLearning.ts: getGapAnalysis, getAdaptivePlan, markModuleComplete, getSpacedRepetitionQueue, getModuleDetail, getProgress
+- [x] Registered adaptiveLearning router in server/routers.ts
+- [x] Auto-generate gap analysis + learning plan on assessment completion
+
+#### Module Library (42 rich modules seeded)
+- [x] Seed AI Execution modules (tutorial, practical, quiz, case study, scenario, reflection, coaching, video)
+- [x] Seed AI Judgement modules
+- [x] Seed AI Risk & Governance modules
+- [x] Seed AI Appropriateness modules
+- [x] Seed AI Workflow Integration modules
+- [x] Seed AI Data Interpretation modules
+- [x] Each module has rich bodyJson with: learning objectives, content sections, worked examples, reflection prompts, citations
+- [x] Fix: quiz options normalised from {id, text} objects to plain strings in QuizRenderer
+- [x] Fix: correctAnswer resolved from letter (a/b/c/d) or option id to array index
+
+#### Frontend
+- [x] Gap Analysis tab in LearningPlanPage: overall readiness card, capability breakdown bars, benchmark deltas
+- [x] Rebuilt LearningPlanPage: adaptive plan with Today/Reviews/Upcoming/Done tabs, spaced repetition schedule, modality badges
+- [x] Rebuilt ModulePlayerPage: 8 modality renderers (tutorial, practical, case study, quiz, scenario, video, reflection, coaching)
+- [x] Module player route updated to /learning/module/:moduleId
+- [x] Browser verified: Learning Plan loads with 3 today + 1 upcoming; Gap Analysis shows 6 capabilities with benchmark deltas; Quiz player renders correctly with correct/incorrect feedback and explanations
+- [x] 355/355 tests passing, 0 TypeScript errors

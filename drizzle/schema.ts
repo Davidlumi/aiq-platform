@@ -1098,3 +1098,127 @@ export const antiGamingThresholds = mysqlTable("anti_gaming_thresholds", {
 export type AntiGamingThreshold = typeof antiGamingThresholds.$inferSelect;
 
 
+
+// ─── Adaptive Learning Engine ─────────────────────────────────────────────────
+
+export const learningModules = mysqlTable("learning_modules", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  subtitle: varchar("subtitle", { length: 500 }),
+  capability: varchar("capability", { length: 100 }).notNull(), // execution|judgement|governance|appropriateness|workflow|data_insight
+  modality: mysqlEnum("modality", [
+    "tutorial",       // structured lesson with explanations
+    "practical",      // hands-on exercise / worked example
+    "case_study",     // real-world scenario analysis
+    "quiz",           // knowledge check / assessment
+    "scenario",       // situational judgement practice
+    "video",          // video lesson with transcript
+    "reflection",     // guided reflection prompt
+    "coaching",       // AI coaching dialogue
+  ]).notNull(),
+  difficulty: int("difficulty").notNull().default(1), // 1-5
+  levelLabel: varchar("level_label", { length: 50 }).notNull().default("Foundation"), // Foundation|Developing|Practitioner|Advanced|Expert
+  durationMins: int("duration_mins").notNull().default(10),
+  estimatedReadingMins: int("estimated_reading_mins").notNull().default(5),
+  status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("published"),
+  bodyJson: json("body_json").notNull().$default(() => ({})),
+  // bodyJson shape: { overview, objectives[], sections[{title, content, examples[], tips[]}], reflectionPrompts[], citations[], keyTakeaways[] }
+  metadataJson: json("metadata_json").$default(() => ({})),
+  // metadataJson: { roleRelevance: string[], prerequisites: string[], tags: string[], researchBasis: string }
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  capabilityModalityIdx: index("idx_lm_capability_modality").on(t.capability, t.modality, t.difficulty),
+  statusIdx: index("idx_lm_status").on(t.status),
+}));
+
+export const learningModuleTags = mysqlTable("learning_module_tags", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  tagType: varchar("tag_type", { length: 50 }).notNull(), // role|workflow|risk_level|prerequisite_module
+  tagValue: varchar("tag_value", { length: 100 }).notNull(),
+}, (t) => ({
+  moduleIdx: index("idx_lmt_module").on(t.moduleId),
+  tagTypeIdx: index("idx_lmt_tag_type").on(t.tagType, t.tagValue),
+}));
+
+export const gapAnalyses = mysqlTable("gap_analyses", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  sessionId: varchar("session_id", { length: 36 }),
+  capabilityGapsJson: json("capability_gaps_json").notNull().$default(() => ({})),
+  // shape: { [capability]: { score, benchmark, gap, severity: 'critical'|'developing'|'proficient'|'advanced', priority: number } }
+  priorityOrderJson: json("priority_order_json").notNull().$default(() => ([])),
+  // shape: string[] ordered by priority (most critical first)
+  overallReadinessScore: decimal("overall_readiness_score", { precision: 5, scale: 2 }).notNull().default("0"),
+  readinessBand: varchar("readiness_band", { length: 50 }).notNull().default("developing"),
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userSessionIdx: index("idx_ga_user_session").on(t.userId, t.sessionId),
+  userTenantIdx: index("idx_ga_user_tenant").on(t.userId, t.tenantId),
+}));
+
+export const adaptiveLearningPlans = mysqlTable("adaptive_learning_plans", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  gapAnalysisId: varchar("gap_analysis_id", { length: 36 }).notNull(),
+  sessionId: varchar("session_id", { length: 36 }),
+  state: mysqlEnum("state", ["active", "completed", "superseded"]).notNull().default("active"),
+  generatorVersion: varchar("generator_version", { length: 20 }).notNull().default("v3-adaptive"),
+  totalModules: int("total_modules").notNull().default(0),
+  completedModules: int("completed_modules").notNull().default(0),
+  estimatedTotalMins: int("estimated_total_mins").notNull().default(0),
+  summaryJson: json("summary_json").$default(() => ({})),
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  completedAt: bigint("completed_at", { mode: "number" }),
+}, (t) => ({
+  userStateIdx: index("idx_alp_user_state").on(t.userId, t.state),
+}));
+
+export const adaptivePlanItems = mysqlTable("adaptive_plan_items", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  planId: varchar("plan_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  orderIndex: int("order_index").notNull(),
+  phase: mysqlEnum("phase", ["foundation", "development", "practice", "validation"]).notNull().default("foundation"),
+  // 70/20/10: practice=70%, development=20%, foundation=10%
+  required: boolean("required").notNull().default(true),
+  unlockAfterModuleId: varchar("unlock_after_module_id", { length: 36 }),
+  status: mysqlEnum("status", ["locked", "available", "in_progress", "completed", "skipped"]).notNull().default("available"),
+  reasonJson: json("reason_json").$default(() => ({})),
+  // { capability, gapSeverity, modalityReason, roleRelevance }
+  assignedAt: bigint("assigned_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  startedAt: bigint("started_at", { mode: "number" }),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  scoreJson: json("score_json").$default(() => ({})),
+  // quiz/scenario scores, reflection quality, time spent
+}, (t) => ({
+  planIdx: index("idx_api_plan").on(t.planId, t.orderIndex),
+  moduleIdx: index("idx_api_module").on(t.moduleId),
+}));
+
+export const spacedRepetitionQueue = mysqlTable("spaced_repetition_queue", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  planItemId: varchar("plan_item_id", { length: 36 }),
+  nextDueAt: bigint("next_due_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  intervalDays: decimal("interval_days", { precision: 6, scale: 2 }).notNull().default("1"),
+  easeFactor: decimal("ease_factor", { precision: 4, scale: 3 }).notNull().default("2.500" as any),
+  repetitions: int("repetitions").notNull().default(0),
+  lastScore: decimal("last_score", { precision: 5, scale: 2 }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userDueIdx: index("idx_srq_user_due").on(t.userId, t.nextDueAt),
+  uniqueUserModule: unique("uq_srq_user_module").on(t.userId, t.moduleId),
+}));
+
+export type LearningModule = typeof learningModules.$inferSelect;
+export type GapAnalysis = typeof gapAnalyses.$inferSelect;
+export type AdaptiveLearningPlan = typeof adaptiveLearningPlans.$inferSelect;
+export type AdaptivePlanItem = typeof adaptivePlanItems.$inferSelect;
+export type SpacedRepetitionQueue = typeof spacedRepetitionQueue.$inferSelect;

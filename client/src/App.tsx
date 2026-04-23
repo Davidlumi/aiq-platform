@@ -111,7 +111,7 @@ function Router() {
       <Route path="/library">
         <ProtectedRoute component={ContentLibraryPage} />
       </Route>
-      <Route path="/learning/module/:contentItemId">
+      <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />
       </Route>
       <Route path="/simulations">
