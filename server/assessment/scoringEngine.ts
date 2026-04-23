@@ -104,15 +104,19 @@ export const RISK_SIGNALS: ReadonlyArray<SignalKey> = [
 // ─── Risk & Difficulty Multipliers ───────────────────────────────────────────
 
 export const RISK_MULTIPLIERS: Record<string, { positive: number; negative: number }> = {
-  Low:    { positive: 0.80, negative: 0.80 },
-  Medium: { positive: 1.00, negative: 1.15 },
-  High:   { positive: 1.05, negative: 1.35 },
+  Low:      { positive: 0.80, negative: 0.80 },
+  Medium:   { positive: 1.00, negative: 1.15 },
+  High:     { positive: 1.05, negative: 1.35 },
+  // C1.6: Critical tier — highest positive reward, significantly higher negative penalty
+  Critical: { positive: 1.15, negative: 1.55 },
 };
 
 export const DIFFICULTY_WEIGHTS: Record<number, number> = {
   1: 0.80,
   2: 1.00,
   3: 1.20,
+  // C1.6: Level 4 — advanced items with elevated weight
+  4: 1.35,
 };
 
 // ─── Outcome Classes ─────────────────────────────────────────────────────────
@@ -124,12 +128,23 @@ export type OutcomeClass =
   | "failure"
   | "critical_failure";
 
+/**
+ * C1.1: Outcome class modifiers carry the sign of the contribution.
+ * Stored signal deltas in item options MUST be unsigned magnitudes (0.0–3.0).
+ * The sign is determined entirely by this modifier:
+ *   positive modifier → delta contributes positively to the capability score
+ *   negative modifier → delta contributes negatively to the capability score
+ *
+ * This prevents the double-sign problem: a failure option storing a negative
+ * delta would be multiplied by a negative modifier, producing an incorrect
+ * positive contribution to the capability score.
+ */
 export const OUTCOME_SCORE_MODIFIER: Record<OutcomeClass, number> = {
-  strong:           1.0,
-  acceptable:       0.6,
-  weak:            -0.3,
-  failure:         -0.7,
-  critical_failure: -1.5,
+  strong:           1.0,   // Full positive contribution
+  acceptable:       0.6,   // Partial positive contribution
+  weak:            -0.3,   // Small negative contribution
+  failure:         -0.7,   // Significant negative contribution
+  critical_failure: -1.5,  // Large negative contribution (can exceed base delta)
 };
 
 // ─── Failure Mode Detection ───────────────────────────────────────────────────
@@ -141,6 +156,16 @@ export interface FailureModeResult {
   classificationImpact: "none" | "downgrade" | "block";
 }
 
+/**
+ * C1.8: Failure mode detection.
+ *
+ * IMPORTANT — threshold units: all numeric thresholds (e.g. < -1.5) are
+ * per-answer weighted signal deltas, NOT session-level sums. Each answer's
+ * signalDeltas are the raw (unsigned magnitude) values from the item option,
+ * already multiplied by the outcome modifier, risk multiplier, and difficulty
+ * weight before being passed here. A threshold of -1.5 therefore means:
+ * "this single answer's weighted contribution to this signal was -1.5 or worse".
+ */
 export function detectFailureModes(
   answers: Array<{ outcomeClass: string | null; signalDeltas: Record<string, number>; eventCodes: string[] }>
 ): FailureModeResult {
@@ -152,7 +177,7 @@ export function detectFailureModes(
     const deltas = a.signalDeltas;
     const codes = a.eventCodes;
 
-    // Blind AI acceptance
+    // Blind AI acceptance (per-answer threshold: weighted delta < -1.5)
     if ((deltas.blind_acceptance_risk ?? 0) < -1.5 || codes.includes("BLIND_ACCEPT")) {
       modes.push("blind_ai_acceptance");
       governanceFlag = true;
@@ -268,15 +293,27 @@ export function computeSignalScores(
         : (answer.signalDeltasJson as Record<string, number>) ?? {};
     } catch { continue; }
 
+    // C1.6: Explicit warnings for unknown risk/difficulty values
+    if (!(answer.riskLevel in RISK_MULTIPLIERS)) {
+      console.warn(`[scoringEngine] Unknown riskLevel "${answer.riskLevel}" — falling back to Medium`);
+    }
+    if (!(answer.difficulty in DIFFICULTY_WEIGHTS)) {
+      console.warn(`[scoringEngine] Unknown difficulty "${answer.difficulty}" — falling back to 1.0`);
+    }
     const riskMult = RISK_MULTIPLIERS[answer.riskLevel] ?? RISK_MULTIPLIERS.Medium;
     const diffWeight = DIFFICULTY_WEIGHTS[answer.difficulty] ?? 1.0;
 
-    // Apply outcome class modifier to all deltas
+    // C1.1: Outcome class modifier carries the sign.
+    // Stored deltas are treated as unsigned magnitudes (Math.abs applied).
+    // The modifier determines whether the contribution is positive or negative.
     const outcomeMod = OUTCOME_SCORE_MODIFIER[(answer.outcomeClass as OutcomeClass) ?? "acceptable"] ?? 0.6;
 
     for (const [signal, baseDelta] of Object.entries(deltas)) {
-      const multiplier = baseDelta >= 0 ? riskMult.positive : riskMult.negative;
-      const weightedDelta = baseDelta * multiplier * diffWeight * outcomeMod;
+      // Use absolute value of stored delta — sign comes entirely from outcomeMod
+      const magnitude = Math.abs(baseDelta);
+      // Risk multiplier direction follows the outcome modifier sign
+      const multiplier = outcomeMod >= 0 ? riskMult.positive : riskMult.negative;
+      const weightedDelta = magnitude * multiplier * diffWeight * outcomeMod;
       acc[signal] = (acc[signal] ?? 0) + weightedDelta;
     }
 
@@ -361,10 +398,17 @@ export const CAPABILITY_COLOURS: Record<CapabilityKey, string> = {
   data_interpretation:"#66CCEE",
 };
 
+/**
+ * C1.3: Score bands aligned with readiness classification thresholds.
+ * strong    ≥ 75  (matches "safe" readiness threshold)
+ * developing 45–74 (matches "at_risk" zone)
+ * needs_work 20–44 (lower at_risk zone)
+ * critical   < 20  (well below unsafe threshold)
+ */
 function scoreBand(score: number): "strong" | "developing" | "needs_work" | "critical" {
   if (score >= 75) return "strong";
-  if (score >= 55) return "developing";
-  if (score >= 35) return "needs_work";
+  if (score >= 45) return "developing";
+  if (score >= 20) return "needs_work";
   return "critical";
 }
 

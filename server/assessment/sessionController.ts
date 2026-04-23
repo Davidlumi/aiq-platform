@@ -482,32 +482,66 @@ export class SessionController {
 
 // ─── Narrative Templates ──────────────────────────────────────────────────────
 
+/**
+ * C1.4: Narrative leads with the weakest domain when at_risk or unsafe.
+ * Sorted by score ascending so the lowest-scoring domain is named first.
+ * This ensures the narrative is actionable rather than generic.
+ */
 function selectNarrative(
   state: string,
   capabilityScores: Record<CapabilityKey, CapabilityScore>,
   roleId: string
 ): string {
-  const weakCapabilities = Object.entries(capabilityScores)
-    .filter(([, v]) => v.score < 55)
-    .map(([k]) => k.replace(/_/g, " "));
+  // Sort capabilities by score ascending to identify weakest first
+  const sortedByScore = Object.entries(capabilityScores)
+    .sort(([, a], [, b]) => a.score - b.score);
 
-  const strongCapabilities = Object.entries(capabilityScores)
+  const weakCapabilities = sortedByScore
+    .filter(([, v]) => v.score < 45)
+    .map(([, v]) => v.displayName);
+
+  const developingCapabilities = sortedByScore
+    .filter(([, v]) => v.score >= 45 && v.score < 75)
+    .map(([, v]) => v.displayName);
+
+  const strongCapabilities = sortedByScore
     .filter(([, v]) => v.score >= 75)
-    .map(([k]) => k.replace(/_/g, " "));
+    .reverse() // Highest score first for strengths
+    .map(([, v]) => v.displayName);
+
+  // Weakest domain is the first entry in sortedByScore
+  const weakestDomain = sortedByScore[0]?.[1]?.displayName ?? "AI capability";
+  const weakestScore = sortedByScore[0]?.[1]?.score ?? 0;
 
   if (state === "safe") {
-    return `You are demonstrating strong, credible AI capability across the assessed domains. Your responses show proportionate judgement, appropriate validation behaviour, and sound governance awareness. ${strongCapabilities.length > 0 ? `Particular strengths were observed in ${strongCapabilities.slice(0, 2).join(" and ")}.` : ""} Continue to apply the same critical thinking as AI tools evolve and new use cases emerge.`;
+    const strengthStr = strongCapabilities.length > 0
+      ? `Particular strengths were observed in ${strongCapabilities.slice(0, 2).join(" and ")}.`
+      : "";
+    const developStr = developingCapabilities.length > 0
+      ? ` Continue to develop ${developingCapabilities[0]} to maintain readiness as AI use cases expand.`
+      : "";
+    return `You are demonstrating strong, credible AI capability across the assessed domains. Your responses show proportionate judgement, appropriate validation behaviour, and sound governance awareness. ${strengthStr}${developStr} Continue to apply the same critical thinking as AI tools evolve and new use cases emerge.`;
   }
 
   if (state === "at_risk") {
-    const weakStr = weakCapabilities.length > 0
-      ? `The assessment identified development needs in ${weakCapabilities.slice(0, 2).join(" and ")}.`
+    // C1.4: Lead with the weakest domain
+    const leadStr = weakCapabilities.length > 0
+      ? `The most significant development need identified is in ${weakCapabilities[0]} (score: ${weakestScore}/100).`
+      : developingCapabilities.length > 0
+      ? `The area most in need of development is ${developingCapabilities[0]}.`
       : "Some inconsistencies were detected in your responses.";
-    return `Your AI capability is developing, with some areas requiring further attention before unsupervised AI use. ${weakStr} Focus on building confidence in validating AI outputs, recognising when escalation is genuinely required, and applying governance principles proportionately. Targeted learning in these areas will strengthen your overall readiness.`;
+    const additionalStr = weakCapabilities.length > 1
+      ? ` Additional gaps were identified in ${weakCapabilities.slice(1, 3).join(" and ")}.`
+      : "";
+    return `Your AI capability is developing, with targeted improvement needed before unsupervised AI use. ${leadStr}${additionalStr} Focus on building confidence in validating AI outputs, recognising when escalation is genuinely required, and applying governance principles proportionately. Targeted learning in these areas will strengthen your overall readiness.`;
   }
 
   if (state === "unsafe") {
-    return `The assessment has identified critical gaps in AI capability that present a material risk if AI tools are used without supervision. Specific patterns were detected including insufficient validation of AI outputs, inappropriate use of AI in sensitive HR contexts, and governance bypasses. Immediate targeted development is required before AI use is appropriate. Your line manager and HR governance team should be informed of these results.`;
+    // C1.4: Lead with the weakest domain for unsafe classification
+    const criticalStr = weakCapabilities.length > 0
+      ? `The most critical gap is in ${weakCapabilities[0]} (score: ${weakestScore}/100), which presents a material risk in AI-assisted HR decisions.`
+      : `Critical patterns were detected in ${weakestDomain} that present a material risk.`;
+    return `The assessment has identified critical gaps in AI capability that require immediate attention. ${criticalStr} Specific patterns detected include insufficient validation of AI outputs, inappropriate use of AI in sensitive HR contexts, and governance bypasses. Immediate targeted development is required before AI use is appropriate. Your line manager and HR governance team should be informed of these results.`;
   }
 
   return `Insufficient evidence was collected to make a reliable readiness classification. Please complete the full assessment to receive a comprehensive capability profile.`;

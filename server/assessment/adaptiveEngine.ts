@@ -114,6 +114,10 @@ export interface GenerationVariables {
   userAiUsageLevel?: string | null;
   // Prior session capability scores for adaptive calibration
   priorCapabilityScores?: Record<string, number> | null;
+  // C2.2: Organisation context — injected from ailOrgContext when available
+  orgAiTools?: string[] | null;
+  orgAiAmbition?: string | null;
+  orgStrategicPriorities?: string[] | null;
 }
 
 // ─── Generated Item ───────────────────────────────────────────────────────────
@@ -421,6 +425,14 @@ export async function generateAdaptiveItem(vars: GenerationVariables): Promise<G
   const sectorLine = vars.userSector ? `Sector: ${vars.userSector}.` : "";
   const seniorityLine = vars.userSeniority ? `Seniority: ${vars.userSeniority}.` : "";
   const aiUsageLine = vars.userAiUsageLevel ? `AI usage level: ${vars.userAiUsageLevel}.` : "";
+  // C2.2: Org context lines for LLM prompt
+  const orgAiToolsLine = vars.orgAiTools && vars.orgAiTools.length > 0
+    ? `Organisation AI tools: ${vars.orgAiTools.slice(0, 4).join(", ")}.`
+    : "";
+  const orgAmbitionLine = vars.orgAiAmbition ? `Organisation AI ambition: ${vars.orgAiAmbition}.` : "";
+  const orgPrioritiesLine = vars.orgStrategicPriorities && vars.orgStrategicPriorities.length > 0
+    ? `Organisation strategic priorities: ${vars.orgStrategicPriorities.slice(0, 3).join("; ")}.`
+    : "";
 
   let priorPerformanceLine = "";
   if (vars.priorCapabilityScores && Object.keys(vars.priorCapabilityScores).length > 0) {
@@ -476,6 +488,7 @@ Rules for options:
 Person profile:
 - Role: ${roleContext}
 ${sectorLine ? `- ${sectorLine}` : ""}${seniorityLine ? `\n- ${seniorityLine}` : ""}${aiUsageLine ? `\n- ${aiUsageLine}` : ""}
+${orgAiToolsLine ? `- ${orgAiToolsLine}` : ""}${orgAmbitionLine ? `\n- ${orgAmbitionLine}` : ""}${orgPrioritiesLine ? `\n- ${orgPrioritiesLine}` : ""}
 ${priorPerformanceLine ? `\n${priorPerformanceLine}\n` : ""}
 Item parameters:
 - Workflow context: ${workflowContext}

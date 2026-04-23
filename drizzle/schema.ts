@@ -175,6 +175,10 @@ export const assessmentAnswers = mysqlTable("assessment_answers", {
   itemId: varchar("item_id", { length: 100 }).notNull(),
   selectedValueJson: json("selected_value_json"),
   freeText: text("free_text"),
+  // C2.1: Participant reasoning capture — optional free-text explanation of thinking
+  // Stored separately from freeText (which is used for open-ended item types)
+  // reasoningText is always optional and shown for judgement/governance/critique items
+  reasoningText: text("reasoning_text"),
   confidenceScore: decimal("confidence_score", { precision: 5, scale: 4 }),
   timeToAnswerMs: int("time_to_answer_ms").notNull().default(0),
   revisionCount: int("revision_count").notNull().default(0),

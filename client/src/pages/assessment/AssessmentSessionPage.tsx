@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
 import { toast } from "sonner";
 import {
@@ -510,6 +511,8 @@ export default function AssessmentSessionPage() {
 
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [confidence, setConfidence] = useState<number>(50);
+  // C2.1: Optional reasoning capture
+  const [reasoningText, setReasoningText] = useState<string>("");
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
   // UX-6: Elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -535,6 +538,7 @@ export default function AssessmentSessionPage() {
       } else {
         setSelectedValue("");
         setConfidence(50);
+        setReasoningText(""); // C2.1: reset reasoning
         setItemStartTime(Date.now());
         setIsGenerating(true);
         refetch();
@@ -765,6 +769,7 @@ export default function AssessmentSessionPage() {
                   setRationaleData(null);
                   setSelectedValue("");
                   setConfidence(50);
+                  setReasoningText(""); // C2.1: reset reasoning
                   setItemStartTime(Date.now());
                 }}
                 className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
@@ -793,6 +798,7 @@ export default function AssessmentSessionPage() {
       sessionId: sessionId!,
       itemId: nextItem.id,
       selectedValue,
+      reasoningText: reasoningText.trim() || undefined, // C2.1
       confidenceScore: confidence / 100,
       timeToAnswerMs: timeTaken,
     });
@@ -1035,6 +1041,31 @@ export default function AssessmentSessionPage() {
                 </button>
               ))}
               <p className="text-xs text-muted-foreground pt-1 pl-1">Press <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">1</kbd>–<kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">{nextItem.options.length}</kbd> to select · <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">Enter</kbd> to submit</p>
+            </div>
+          )}
+
+          {/* C2.1: Optional reasoning capture — shown for judgement/governance/critique types */}
+          {["situational_judgement", "risk_judgement", "governance_decision", "scenario_critique"].includes(interactionType) && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Explain your thinking <span className="font-normal normal-case">(optional)</span>
+                </Label>
+                <span className={cn(
+                  "text-xs tabular-nums",
+                  reasoningText.length > 1800 ? "text-amber-500" : "text-muted-foreground"
+                )}>
+                  {reasoningText.length}/2000
+                </span>
+              </div>
+              <Textarea
+                value={reasoningText}
+                onChange={e => setReasoningText(e.target.value)}
+                maxLength={2000}
+                rows={3}
+                placeholder="What factors shaped your decision? What would you want to verify or challenge?"
+                className="text-sm resize-none"
+              />
             </div>
           )}
 

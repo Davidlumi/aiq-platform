@@ -396,7 +396,8 @@ describe("Assessment Engine — LLM Item Generation", () => {
     const vars = buildVars();
     const item = await generateAdaptiveItem(vars);
     expect(item.options).toHaveLength(4);
-    const validOutcomes = ["strong", "acceptable", "weak", "failure", "critical_failure", "harmful"];
+    // C1.2: Only canonical outcome classes are valid
+    const validOutcomes = ["strong", "acceptable", "weak", "failure", "critical_failure"];
     item.options.forEach(opt => {
       expect(validOutcomes).toContain(opt.outcomeClass);
       expect(opt.label).toMatch(/^[A-D]$/);
@@ -473,9 +474,11 @@ describe("Assessment Engine — Scoring Engine", () => {
     });
   });
 
-  it("penalises harmful answers in scoring", () => {
+  it("penalises failure answers in scoring (C1.1: unsigned magnitudes, sign from outcome modifier)", () => {
+    // C1.2: Use canonical "failure" instead of non-canonical "harmful"
+    // C1.1: Deltas are unsigned magnitudes; sign comes from OUTCOME_SCORE_MODIFIER
     const goodAnswers = buildAnswerSet(10, { outcomeClass: "strong", signalDeltasJson: { governance_quality: 0.8 } });
-    const badAnswers = buildAnswerSet(10, { outcomeClass: "harmful", signalDeltasJson: { governance_quality: -0.8 } });
+    const badAnswers = buildAnswerSet(10, { outcomeClass: "failure", signalDeltasJson: { governance_quality: 0.8 } });
     const goodSignals = computeSignalScores(goodAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
     const badSignals = computeSignalScores(badAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
     const goodCap = computeCapabilityScores(goodSignals);
@@ -490,6 +493,33 @@ describe("Assessment Engine — Scoring Engine", () => {
     expect(signalScores).toBeDefined();
     const capabilityScores = computeCapabilityScores(signalScores);
     expect(capabilityScores).toBeDefined();
+  });
+
+  it("C1.1: DPIA worked example — strong option produces positive governance, failure option produces negative governance", () => {
+    // Scenario: DPIA review item
+    // Option B (strong): governance_quality magnitude 0.8, appropriateness_boundary magnitude 0.5
+    // Option D (failure): blind_acceptance_risk magnitude 2.0, validation_accuracy magnitude 1.5
+    // With C1.1 fix: both options store UNSIGNED magnitudes; sign comes from OUTCOME_SCORE_MODIFIER
+    const strongAnswer = [{
+      signalDeltasJson: { governance_quality: 0.8, appropriateness_boundary: 0.5 },
+      outcomeClass: "strong",
+      riskLevel: "High",
+      difficulty: 2,
+    }];
+    const failureAnswer = [{
+      signalDeltasJson: { blind_acceptance_risk: 2.0, validation_accuracy: 1.5 },
+      outcomeClass: "failure",
+      riskLevel: "High",
+      difficulty: 2,
+    }];
+    const strongSignals = computeSignalScores(strongAnswer);
+    const failureSignals = computeSignalScores(failureAnswer);
+    // Strong option: governance_quality should be POSITIVE
+    expect(strongSignals.governance_quality).toBeGreaterThan(0);
+    expect(strongSignals.appropriateness_boundary).toBeGreaterThan(0);
+    // Failure option: blind_acceptance_risk and validation_accuracy should be NEGATIVE
+    expect(failureSignals.blind_acceptance_risk).toBeLessThan(0);
+    expect(failureSignals.validation_accuracy).toBeLessThan(0);
   });
 });
 

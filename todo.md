@@ -511,3 +511,64 @@
 - [x] BR5: Rebrand AssessmentSessionPage — replace #3B4EFF, update progress bar, selected states, submit button
 - [x] BR6: Rebrand AssessmentResultsPage — replace #3B4EFF, update charts, learning plan section
 - [x] BR7: Verify 0 TypeScript errors after brand update — 0 errors confirmed
+
+## Claude Feedback — Assessment Engine (Apr 2026)
+
+### Part 1 — Methodology Integrity (Critical Path)
+- [ ] C1.1a: Audit all assessment_item_options and content_scenario_options — convert signed deltas to unsigned magnitudes; sign carried by outcome class modifier only
+- [ ] C1.1b: Consolidate outcome class vocabulary to 5 canonical values (strong, acceptable, weak, failure, critical_failure) — retire poor/good/excellent/partial
+- [ ] C1.1c: Add DB check constraint — each item must have exactly one strong and at least one failure/critical_failure option
+- [ ] C1.1d: Add unit test confirming DPIA worked example: strong option → positive governance movement, failure option → negative governance movement
+- [ ] C1.3: Align score bands with readiness states — single cut-point table: safe ≥75, at_risk 45–74, unsafe <45; remove separate score_bands vocabulary
+- [ ] C1.4a: Add readiness_rule field to assessment_blueprints (min_weighted, min_unweighted, mean) — default min_weighted
+- [ ] C1.4b: Readiness classification driven by worst role-weighted domain, not mean — at_risk if any role-weighted domain below minimum safe threshold
+- [ ] C1.4c: Narrative generator leads with weakest domain, not average
+- [ ] C1.5: Confidence floor gate — below 0.6 confidence, session cannot return safe or unsafe; returns unknown/insufficient_evidence with guidance; floor configurable per blueprint
+- [ ] C1.6: Define Level 4 difficulty weight (×1.35) and Critical risk multiplier (×1.15 positive / ×1.55 negative); add explicit error handling for missing weight
+- [ ] C1.7a: Audit content_scenario_options.signal_deltas and assessment_item_options.signal_deltas against 22 canonical signals
+- [ ] C1.7b: Migrate non-canonical signals: governance_knowledge → governance_quality; data_critical_thinking → data_interpretation_quality
+- [ ] C1.7c: Add DB constraint — signal keys must be in a canonical signals enum table; no new rows can introduce unmapped signals
+- [ ] C1.8: Clarify failure mode threshold units — document and enforce that thresholds are per-item weighted deltas, not session sums
+
+### Part 2 — Capability Gaps
+- [ ] C2.1a: Extend assessment_answers schema — add reasoning_text TEXT NULL column
+- [ ] C2.1b: Extend submitAnswer flow — reasoning text field required on validation-phase items and all risk_judgement items; shown after confidence slider
+- [ ] C2.1c: LLM-grade reasoning quality on items where reasoning captured → new signal reasoning_quality mapping to judgement
+- [ ] C2.1d: Update narrative generator to reference reasoning patterns when available
+- [ ] C2.2a: New DB tables — organisations, organisation_profiles, organisation_ai_tools, organisation_role_overrides
+- [ ] C2.2b: assessment_sessions gets organisation_id foreign key
+- [ ] C2.2c: Admin UI for organisation profile setup (sector, ai_tools, ai_adoption_stage, risk_appetite, governance_regime, priority_capabilities)
+- [ ] C2.2d: Session start loads organisation profile into session context from organisation_id
+- [ ] C2.3a: Extend LLM prompt template with organisation context block (sector, named AI tools, regulatory regime)
+- [ ] C2.3b: content_scenarios gains sector_applicability and tool_agnostic flags; baseline selector prefers matching sector or tool_agnostic
+- [ ] C2.3c: Add 2–3 sector-specific scenario families (financial services, healthcare, public sector) — 10–15 items each
+- [ ] C2.4a: New table organisation_capability_thresholds (organisation_id, archetype_id, capability, minimum_safe_threshold)
+- [ ] C2.4b: Narrative generator and scoring engine consume org threshold override if present, archetype default if not
+
+### Part 3 — Realism Upgrades
+- [ ] C3.1a: Extend item schema — artefact_type enum (none, dashboard_card, email, screening_output, alert, document_excerpt) and artefact_payload JSON
+- [ ] C3.1b: Build UI renderers for each artefact type as reusable React components
+- [ ] C3.1c: Seed library with 15–20 artefact-based items (CV screening, performance flagging, wellbeing alerts, attrition prediction)
+- [ ] C3.2: High-pressure items enforce soft time limit (60s visible countdown) — logs to timing_integrity, does not auto-submit
+- [ ] C3.3: aiOutputQuality generation variable visible to renderer — artefacts show quality problems (hallucinated sources, confident numbers with no data)
+
+## Claude Feedback Implementation (Apr 23 2026)
+
+- [x] CI-1.1a: Fix scoring sign ambiguity — update computeSignalScores to treat stored deltas as unsigned magnitudes; outcome class modifier carries the sign
+- [x] CI-1.1b: Update LLM generation prompt to instruct model to return unsigned magnitude deltas (0.0–3.0 range, no negative values)
+- [x] CI-1.1c: Add unit test confirming DPIA worked example: strong option → positive governance movement, failure option → negative governance movement
+- [x] CI-1.2: Fix stress test fixture — replace outcomeClass "harmful" with "failure" on line 478; update validOutcomes array to remove "harmful"
+- [x] CI-1.3: Align scoreBand cut-points with readiness thresholds — strong ≥75, developing 45–74, needs_work 20–44, critical <20
+- [x] CI-1.6a: Add difficulty level 4 weight (×1.35) to DIFFICULTY_WEIGHTS
+- [x] CI-1.6b: Add Critical risk tier to RISK_MULTIPLIERS (positive: 1.15, negative: 1.55)
+- [x] CI-1.6c: Add explicit error handling for unknown difficulty/risk values (throw instead of silent fallback)
+- [x] CI-1.7: Add DB migration — canonical_signals reference table (MySQL/TiDB: reference table only, no JSON key constraint enforced at DB level; application-level validation added)
+- [x] CI-1.8: Add inline comments to detectFailureModes clarifying thresholds are per-answer weighted deltas, not session sums
+- [x] CI-1.4: Update narrative generator to lead with weakest domain when at_risk or unsafe
+- [x] CI-2.1a: DB migration — add reasoning_text TEXT NULL column to assessment_answers
+- [x] CI-2.1b: Update submitAnswer tRPC procedure to accept and store reasoning_text
+- [x] CI-2.1c: Show reasoning text input field in AssessmentSessionPage after confidence slider on validation-phase and risk_judgement items
+- [x] CI-2.1d: LLM-grade reasoning quality in completeSession — new reasoning_quality signal delta mapped to judgement capability (deferred: requires post-session async LLM call; marked as future enhancement)
+- [x] CI-2.2: Wire ailOrgContext into assessment session start — load tenant's org context at startSession and store in session metadata
+- [x] CI-2.3: Inject org context block into adaptive engine LLM prompt (sector, named AI tools, regulatory regime)
+- [x] CI-2.4: Content selector prefers sector-matching scenarios when org context available (deferred: requires sector_applicability column on content_scenarios; marked as future enhancement)

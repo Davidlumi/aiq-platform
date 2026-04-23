@@ -20,6 +20,7 @@ import { and, desc, eq, isNull, notLike, like } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
+  ailOrgContext,
   assessmentAnswers,
   assessmentBlueprints,
   assessmentItemOptions,
@@ -62,6 +63,7 @@ import {
   type AdaptiveSelectionContext,
   type InteractionType,
   type GeneratedItem,
+  type OrgIntent,
 } from "../assessment/adaptiveEngine";
 import { resolveRoleArchetype } from "../assessment/roleArchetypes";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
@@ -310,7 +312,14 @@ function buildAdaptiveContext(
     aiUsageLevel?: string | null;
     jobFunction?: string | null;
   },
-  priorCapabilityScores: Record<string, number> | null
+  priorCapabilityScores: Record<string, number> | null,
+  // C2.2: Tenant org context loaded from ailOrgContext at session start
+  tenantOrgContext?: {
+    aiTools?: string[] | null;
+    aiAmbition?: string | null;
+    strategicPriorities?: string[] | null;
+    governanceSensitivity?: "low" | "medium" | "high" | "critical";
+  } | null
 ): { ctx: AdaptiveSelectionContext; generationVars: ReturnType<typeof selectNextGenerationVariables> } {
   const signalScores = computeSignalScores(
     answers.map(a => ({
@@ -383,7 +392,12 @@ function buildAdaptiveContext(
       generateContradictionProbeSpec(pair, roleArchetype.id)
     ),
     roleArchetype,
-    orgIntent: DEFAULT_ORG_INTENT,
+    // C2.2: Use tenant org context if available, otherwise fall back to DEFAULT_ORG_INTENT
+    orgIntent: tenantOrgContext ? {
+      ...DEFAULT_ORG_INTENT,
+      aiAmbition: (tenantOrgContext.aiAmbition as OrgIntent["aiAmbition"]) ?? DEFAULT_ORG_INTENT.aiAmbition,
+      governanceSensitivity: tenantOrgContext.governanceSensitivity ?? DEFAULT_ORG_INTENT.governanceSensitivity,
+    } : DEFAULT_ORG_INTENT,
     userSector: userProfile.sector,
     userSeniority: userProfile.seniority,
     userAiUsageLevel: userProfile.aiUsageLevel,
@@ -720,13 +734,37 @@ export const assessmentRouter = router({
         // ── Step 2: Generate item via LLM (primary path) ──────────────────────
         if (!nextItem) {
           try {
+            // C2.3: Load tenant org context to replace DEFAULT_ORG_INTENT
+            const orgContextRow = await db
+              .select({
+                currentAiToolsJson: ailOrgContext.currentAiToolsJson,
+                aiMaturityLevel: ailOrgContext.aiMaturityLevel,
+                strategicPrioritiesJson: ailOrgContext.strategicPrioritiesJson,
+                riskAppetiteOverall: ailOrgContext.riskAppetiteOverall,
+              })
+              .from(ailOrgContext)
+              .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+              .limit(1);
+            const orgCtx = orgContextRow[0] ? {
+              aiTools: (() => { try { return JSON.parse(orgContextRow[0].currentAiToolsJson ?? "[]") as string[]; } catch { return null; } })(),
+              aiAmbition: orgContextRow[0].aiMaturityLevel === "mature" ? "ambitious" : orgContextRow[0].aiMaturityLevel === "cautious" ? "conservative" : "moderate",
+              strategicPriorities: (() => { try { return JSON.parse(orgContextRow[0].strategicPrioritiesJson ?? "[]") as string[]; } catch { return null; } })(),
+              governanceSensitivity: (orgContextRow[0].riskAppetiteOverall === "risk_averse" ? "critical" : orgContextRow[0].riskAppetiteOverall === "risk_tolerant" ? "medium" : "high") as "low" | "medium" | "high" | "critical",
+            } : null;
             const { generationVars } = buildAdaptiveContext(
               answers,
               answeredCount,
               roleHint,
               userProfile,
-              priorCapabilityScores
+              priorCapabilityScores,
+              orgCtx
             );
+            // C2.2: Pass org context fields into generation vars for LLM prompt
+            if (orgCtx) {
+              (generationVars as any).orgAiTools = orgCtx.aiTools;
+              (generationVars as any).orgAiAmbition = orgCtx.aiAmbition;
+              (generationVars as any).orgStrategicPriorities = orgCtx.strategicPriorities;
+            }
             const generated = await generateAdaptiveItem(generationVars);
             nextItem = await persistAndBuildNextItem(
               generated,
@@ -785,6 +823,9 @@ export const assessmentRouter = router({
         itemId: z.string(),
         selectedValue: z.string().nullable(),
         freeText: z.string().optional(),
+        // C2.1: Optional reasoning capture — participant's explanation of their thinking
+        // Shown for judgement/governance/critique item types; max 2000 chars
+        reasoningText: z.string().max(2000).optional(),
         confidenceScore: z.number().min(0).max(1).optional(),
         timeToAnswerMs: z.number().int().min(0),
       })
@@ -840,6 +881,7 @@ export const assessmentRouter = router({
         itemId: input.itemId,
         selectedValueJson: input.selectedValue ? JSON.stringify(input.selectedValue) : null,
         freeText: input.freeText ?? null,
+        reasoningText: input.reasoningText ?? null, // C2.1: reasoning capture
         confidenceScore: input.confidenceScore?.toFixed(4) as any,
         timeToAnswerMs: input.timeToAnswerMs,
         correctness,
@@ -896,13 +938,36 @@ export const assessmentRouter = router({
             };
 
             const phase = determineSessionPhase(newAnsweredCount, MINIMUM_EVIDENCE.targetItems);
+            // C2.3: Load tenant org context for pre-generation
+            const preGenOrgContextRow = await db
+              .select({
+                currentAiToolsJson: ailOrgContext.currentAiToolsJson,
+                aiMaturityLevel: ailOrgContext.aiMaturityLevel,
+                strategicPrioritiesJson: ailOrgContext.strategicPrioritiesJson,
+                riskAppetiteOverall: ailOrgContext.riskAppetiteOverall,
+              })
+              .from(ailOrgContext)
+              .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+              .limit(1);
+            const preGenOrgCtx = preGenOrgContextRow[0] ? {
+              aiTools: (() => { try { return JSON.parse(preGenOrgContextRow[0].currentAiToolsJson ?? "[]") as string[]; } catch { return null; } })(),
+              aiAmbition: preGenOrgContextRow[0].aiMaturityLevel === "mature" ? "ambitious" : preGenOrgContextRow[0].aiMaturityLevel === "cautious" ? "conservative" : "moderate",
+              strategicPriorities: (() => { try { return JSON.parse(preGenOrgContextRow[0].strategicPrioritiesJson ?? "[]") as string[]; } catch { return null; } })(),
+              governanceSensitivity: (preGenOrgContextRow[0].riskAppetiteOverall === "risk_averse" ? "critical" : preGenOrgContextRow[0].riskAppetiteOverall === "risk_tolerant" ? "medium" : "high") as "low" | "medium" | "high" | "critical",
+            } : null;
             const { generationVars } = buildAdaptiveContext(
               answers,
               newAnsweredCount,
               roleHint,
               userProfile,
-              priorCapabilityScores
+              priorCapabilityScores,
+              preGenOrgCtx
             );
+            if (preGenOrgCtx) {
+              (generationVars as any).orgAiTools = preGenOrgCtx.aiTools;
+              (generationVars as any).orgAiAmbition = preGenOrgCtx.aiAmbition;
+              (generationVars as any).orgStrategicPriorities = preGenOrgCtx.strategicPriorities;
+            }
 
             const generated = await generateAdaptiveItem(generationVars);
             const pendingItem = await persistAndBuildNextItem(
