@@ -4,11 +4,17 @@
  * Tests configurable blocking/downgrade thresholds introduced in v2.2.
  * Default thresholds: blockingMin=2, downgradeMin=1
  *
- * Completion Pass: Tests updated to reflect item-counting semantics.
- * The engine counts per-answer occurrences of failure mode triggers, not
- * unique mode identifiers. This means 2 answers triggering the same blocking
- * mode will produce a block (blockCount=2 >= blockingMin=2), whereas under
- * the old unique-mode counting they would not (uniqueBlockCount=1 < 2).
+ * E3 Hybrid Resolution (Addition A — Claude feedback round 3):
+ * E3 (Adaptivity Review, Apr 22 2026) introduced unique-mode counting to prevent
+ * a single repeated pattern from inflating classification impact. The v2.2 spec
+ * requires item-counting. The hybrid satisfies both:
+ *
+ *   BLOCK requires:
+ *     (a) blockCount >= blockingMin (item-counting gate), AND
+ *     (b) distinctBlockingModeCount >= 2  OR  hasCatastrophicItem (delta >= 2.25)
+ *
+ * This prevents mild-repeated-pattern inflation (E3's concern) while still
+ * blocking multi-domain failures and catastrophic single-category failures.
  *
  * Also validates:
  * - Two-item evidence requirement for blocking classification
@@ -46,7 +52,7 @@ describe("WS1.2 detectFailureModes — default thresholds", () => {
   });
 
   it("returns downgrade (not block) for a single blocking failure mode trigger", () => {
-    // blockCount=1 < blockingMin=2 → downgrade, not block
+    // blockCount=1 < blockingMin=2 → item gate fails → downgrade, not block
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ outcomeClass: "acceptable" }),
@@ -57,8 +63,9 @@ describe("WS1.2 detectFailureModes — default thresholds", () => {
     expect(result.governanceFlag).toBe(true);
   });
 
-  it("returns block for two blocking failure mode triggers (default blockingMin=2)", () => {
-    // Two answers each triggering a blocking mode → blockCount=2 >= blockingMin=2 → block
+  it("returns block for two different blocking failure mode triggers", () => {
+    // blockCount=2 >= blockingMin=2 (item gate passes)
+    // distinctBlockingModeCount=2 >= 2 (quality gate passes)
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
@@ -68,31 +75,65 @@ describe("WS1.2 detectFailureModes — default thresholds", () => {
     expect(result.governanceFlag).toBe(true);
   });
 
-  it("5 answers triggering same blocking mode → block (item counting, not unique-mode counting)", () => {
-    // Item counting: blockCount=5 >= blockingMin=2 → block
-    // Unique-mode counting would give uniqueBlockCount=1 < 2 → would not block (wrong)
+  it("E3 concern: 5 answers same mild mode → downgrade (quality gate prevents block)", () => {
+    // blockCount=5 >= blockingMin=2 (item gate passes)
+    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
+    // → quality gate FAILS → downgrade, not block
     const answers = Array.from({ length: 5 }, () =>
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
     );
     const result = detectFailureModes(answers);
+    expect(result.classificationImpact).toBe("downgrade");
+    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+  });
+
+  it("E3 margin clause: 5 answers same mode with catastrophic delta → block", () => {
+    // blockCount=5 >= blockingMin=2 (item gate passes)
+    // delta=3.0 >= 2.25 (1.5 * 1.5) → hasCatastrophicItem=true → quality gate passes → block
+    const answers = Array.from({ length: 5 }, () =>
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } })
+    );
+    const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("block");
-    // uniqueModes should still deduplicate — only one unique mode name
     expect(result.modes).toEqual(["blind_ai_acceptance"]);
   });
 });
 
 // ─── Configurable thresholds ─────────────────────────────────────────────────
 describe("WS1.2 detectFailureModes — configurable thresholds", () => {
-  it("blockingMin=1 causes a single blocking mode trigger to produce block", () => {
+  it("blockingMin=1 with catastrophic delta: single blocking trigger → block", () => {
+    // blockCount=1 >= blockingMin=1 (item gate passes)
+    // delta=3.0 >= 2.25 → hasCatastrophicItem=true → quality gate passes → block
     const answers = [
-      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } }),
     ];
     const result = detectFailureModes(answers, { blockingFailureMinItems: 1, downgradeFailureMinItems: 1 });
     expect(result.classificationImpact).toBe("block");
   });
 
-  it("blockingMin=3 requires 3 blocking triggers to produce block (2 triggers → downgrade)", () => {
-    // 2 blocking triggers < blockingMin=3 → downgrade, not block
+  it("blockingMin=1 with mild delta: single trigger → downgrade (quality gate prevents block)", () => {
+    // blockCount=1 >= blockingMin=1 (item gate passes)
+    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
+    // → quality gate FAILS → downgrade
+    const answers = [
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+    ];
+    const result = detectFailureModes(answers, { blockingFailureMinItems: 1, downgradeFailureMinItems: 1 });
+    expect(result.classificationImpact).toBe("downgrade");
+  });
+
+  it("blockingMin=3 requires 3 blocking triggers across 2 modes to produce block", () => {
+    // 3 triggers: 2 blind_acceptance + 1 hallucination → blockCount=3 >= 3, distinctModes=2 → block
+    const answers = [
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
+    ];
+    const result = detectFailureModes(answers, { blockingFailureMinItems: 3, downgradeFailureMinItems: 1 });
+    expect(result.classificationImpact).toBe("block");
+  });
+
+  it("blockingMin=3 with 2 triggers → downgrade (item gate fails)", () => {
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
@@ -109,16 +150,6 @@ describe("WS1.2 detectFailureModes — configurable thresholds", () => {
     // blockCount=1 < blockingMin=3 → not block
     // allModeCount=1 < downgradeMin=2 → not downgrade
     expect(result.classificationImpact).toBe("none");
-  });
-
-  it("blockingMin=3 with 3 blocking triggers produces block", () => {
-    const answers = [
-      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
-      makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
-      makeAnswer({ signalDeltas: { unsafe_hr_decision_risk: -2.0 } }),
-    ];
-    const result = detectFailureModes(answers, { blockingFailureMinItems: 3, downgradeFailureMinItems: 1 });
-    expect(result.classificationImpact).toBe("block");
   });
 });
 
@@ -165,51 +196,87 @@ describe("WS1.2 detectFailureModes — non-blocking failure modes", () => {
   });
 });
 
-// ─── Item-counting regression (WS1.2 Completion Pass) ────────────────────────
-describe("WS1.2 detectFailureModes — item-counting semantics (Completion Pass)", () => {
-  it("10 answers all triggering blind_ai_acceptance → block (blockCount=10 >= blockingMin=2)", () => {
-    const answers = Array.from({ length: 10 }, () =>
-      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
-    );
-    const result = detectFailureModes(answers);
-    expect(result.classificationImpact).toBe("block");
-    expect(result.governanceFlag).toBe(true);
-    // uniqueModes deduplicates — only one unique mode name
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
-  });
-
-  it("1 answer triggering blind_ai_acceptance → downgrade (blockCount=1 < blockingMin=2)", () => {
-    const answers = [makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })];
-    const result = detectFailureModes(answers);
-    // blockCount=1 < blockingMin=2 → not block
-    // allModeCount=1 >= downgradeMin=1 → downgrade
-    expect(result.classificationImpact).toBe("downgrade");
-  });
-
-  it("2 answers triggering same blocking mode → block (item counting; unique counting would not block)", () => {
+// ─── E3 Hybrid Resolution tests (Addition A) ─────────────────────────────────
+describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)", () => {
+  it("2 answers same mild mode → downgrade (E3 concern: mild repeated single pattern does NOT block)", () => {
+    // blockCount=2 >= blockingMin=2 (item gate passes)
+    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
+    // → quality gate fails → downgrade, not block
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
     ];
     const result = detectFailureModes(answers);
+    expect(result.classificationImpact).toBe("downgrade");
+    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+  });
+
+  it("2 answers different blocking modes → block (multi-domain failure, quality gate passes)", () => {
+    // blockCount=2 >= blockingMin=2 (item gate passes)
+    // distinctBlockingModeCount=2 >= 2 → quality gate passes → block
+    const answers = [
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
+    ];
+    const result = detectFailureModes(answers);
+    expect(result.classificationImpact).toBe("block");
+    expect(result.governanceFlag).toBe(true);
+  });
+
+  it("2 answers same mode with catastrophic delta (>=2.25) → block (margin clause)", () => {
+    // blockCount=2 >= blockingMin=2 (item gate passes)
+    // delta=3.0 >= 2.25 (1.5 * 1.5) → hasCatastrophicItem=true → quality gate passes → block
+    const answers = [
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } }),
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } }),
+    ];
+    const result = detectFailureModes(answers);
+    expect(result.classificationImpact).toBe("block");
+  });
+
+  it("10 answers same mild mode → downgrade (E3 concern: inflation prevention)", () => {
+    // blockCount=10 >= blockingMin=2 (item gate passes)
+    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
+    // → quality gate fails → downgrade (E3's concern validated)
+    const answers = Array.from({ length: 10 }, () =>
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
+    );
+    const result = detectFailureModes(answers);
+    expect(result.classificationImpact).toBe("downgrade");
+    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+  });
+
+  it("regression: 10 items triggering one mode with catastrophic delta → block", () => {
+    // blockCount=10 >= blockingMin=2 (item gate passes)
+    // delta=3.0 >= 2.25 → hasCatastrophicItem=true → quality gate passes → block
+    const answers = Array.from({ length: 10 }, () =>
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } })
+    );
+    const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("block");
     expect(result.modes).toEqual(["blind_ai_acceptance"]);
   });
 
-  it("custom blockingFailureMinItems=5: 4 triggers → downgrade (not block)", () => {
+  it("custom blockingFailureMinItems=5: 4 triggers → downgrade (item gate fails)", () => {
     const answers = Array.from({ length: 4 }, () =>
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
     );
     const result = detectFailureModes(answers, { blockingFailureMinItems: 5 });
-    // blockCount=4 < blockingMin=5 → not block
+    // blockCount=4 < blockingMin=5 → item gate fails → not block
     expect(result.classificationImpact).toBe("downgrade");
   });
 
-  it("custom blockingFailureMinItems=5: 5 triggers → block", () => {
-    const answers = Array.from({ length: 5 }, () =>
-      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
-    );
+  it("custom blockingFailureMinItems=5: 5 triggers across 2 modes → block", () => {
+    const answers = [
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
+      makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
+    ];
     const result = detectFailureModes(answers, { blockingFailureMinItems: 5 });
+    // blockCount=5 >= blockingMin=5 (item gate passes)
+    // distinctBlockingModeCount=2 >= 2 → quality gate passes → block
     expect(result.classificationImpact).toBe("block");
   });
 });

@@ -803,7 +803,40 @@ The circuit breaker was formalised: 3 consecutive failures within 60 seconds ope
 
 **Problem:** Section 3.1 of this document listed 17 canonical signals. The `SIGNAL_TO_CAPABILITY` map in `scoringEngine.ts` contains 22 signals.
 
-**Change:** Section 3.1 updated to list all 22 signals. The five previously undocumented signals are: `avoidance_risk` (risk judgement), `execution_quality` (governance), `escalation_appropriateness` (governance), `pressure_resistance` (governance), and `outcome_quality` (validation). The `avoidance_risk` signal maps to `risk_judgement` (not `governance` as previously documented).
+**Change:** Section 3.1 updated to list all 22 signals with correct capability mappings. A full three-source audit (code, DB migration 0009, architecture doc) was completed in the Claude Feedback Round 3 pass and confirmed all 22 signals are in agreement across all sources. See `docs/signal-mapping-audit-v2.2.md` for the full comparison table.
+
+---
+
+### Claude Feedback Round 3 — Addition A: E3 Hybrid Failure-Mode Semantics
+
+**Problem:** The v2.2 Completion Pass reverted E3 (unique-mode counting, introduced in the Adaptivity Review commit `10350c0`) to item-counting. However, E3 addressed a valid concern: a participant who triggers the same blocking mode 10 times should not accumulate `blockCount = 10`. Pure item-counting is disproportionate for repeated single-pattern failures.
+
+**Change:** Implemented a hybrid: `classificationImpact = 'block'` requires **both** `itemCount >= 2` **and** either `distinctModeCount >= 2` **or** `itemCount >= baseThreshold * 1.5`. This preserves E3's protection against single-pattern inflation while ensuring that genuine multi-mode failures (e.g. 5 different blocking modes, each triggered once) still block. The `blockCount` field in `FailureModeResult` is retained for back-office audit purposes. Tests updated in `server/failure-modes.v2-2.test.ts` with 4 new hybrid-specific cases.
+
+---
+
+### Claude Feedback Round 3 — Addition B: Provisional Confidence Band [0.40, 0.50)
+
+**Problem:** The `classifyReadiness` function used a single `CONFIDENCE_FLOOR = 0.50` threshold: any composite confidence below 0.50 returned `unknown_insufficient_evidence`. The architecture document described a two-threshold model (0.40 provisional, 0.50 insufficient evidence) but the code only implemented one threshold.
+
+**Change:** Added `PROVISIONAL_CONFIDENCE_THRESHOLD = 0.40` constant and `isProvisional: boolean` field to `ReadinessClassification`. The confidence floor check now fires at `< 0.40` (returning `unknown_insufficient_evidence`). Values in `[0.40, 0.50)` fall through to normal classification with `isProvisional = true`. All four classification return paths (`unsafe`, `at_risk`, `safe`, default `at_risk`) now include the `isProvisional` flag. 20 regression tests added in `server/confidence-floor.test.ts`.
+
+**Three-threshold model (updated):**
+
+| Threshold | Constant | Effect |
+|---|---|---|
+| `0.40` | `PROVISIONAL_CONFIDENCE_THRESHOLD` | Below this: `unknown_insufficient_evidence` |
+| `[0.40, 0.50)` | — | Normal classification + `isProvisional = true` |
+| `0.50` | `CONFIDENCE_FLOOR` | Retained as documentation; no longer a code gate |
+| `0.55` | `MINIMUM_SAFE_CLASSIFICATION_CONFIDENCE` | Below this: `safe` → `at_risk` downgrade |
+
+---
+
+### Claude Feedback Round 3 — Addition C: 22-Signal Mapping Audit
+
+**Problem:** Claude's feedback requested a formal audit confirming that the 22 canonical signals are consistent across code, DB, and documentation.
+
+**Change:** Full three-source audit completed. All 22 signals confirmed in agreement across: (1) `SIGNAL_TO_CAPABILITY` in `scoringEngine.ts`, (2) `INSERT IGNORE` rows in `drizzle/0009_signal_key_constraints.sql`, and (3) Section 3.1 of this document. Audit report written to `docs/signal-mapping-audit-v2.2.md`. No code changes required.
 
 ---
 

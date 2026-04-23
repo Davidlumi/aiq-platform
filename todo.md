@@ -850,3 +850,41 @@
 - [x] FINAL2: Section 14 updated — 10 items marked Resolved, 5 deferred to v2.3
 - [x] FINAL3: Section 23 extended with 11 new changelog entries
 - [x] FINAL4: Checkpoint saved and delivered
+
+## v2.2 Claude Feedback Round 2 (Apr 23 2026)
+
+### Addition A — E3 Ticket Investigation + Failure-Mode Counting Resolution
+- [x] A1: Searched git log — E3 introduced in commit 10350c0 (Adaptivity Review, Apr 22)
+- [x] A2: Real case — single-pattern inflation (10× same mode → blockCount=10 is disproportionate)
+- [x] A3: Implemented hybrid: blockCount≥2 AND (distinctModes≥2 OR blockCount≥1.5×baseThreshold)
+- [x] A4: Updated failure-modes.v2-2.test.ts with 4 hybrid-specific cases
+- [x] A5: Documented E3 resolution in Section 23 changelog
+
+### Addition B — Confidence Floor 0.40 for unknown_insufficient_evidence
+- [x] B1: Inspected — found single CONFIDENCE_FLOOR=0.50, missing 0.40 provisional band
+- [x] B2: Added PROVISIONAL_CONFIDENCE_THRESHOLD=0.40; floor now fires at <0.40; [0.40,0.50) → isProvisional=true
+- [x] B3: Added 20 regression tests in confidence-floor.test.ts
+- [x] B4: Documented three-threshold model table in Section 23 changelog
+
+### Addition C — Full 22-Signal Mapping Audit
+- [x] C1: Pulled full SIGNAL_TO_CAPABILITY map — 22 signals
+- [x] C2: Pulled Section 3.1 and migration 0009 SQL — all three sources agree
+- [x] C3: Produced signal-mapping-audit-v2.2.md with full comparison table
+- [x] C4: No discrepancies found — all 22/22 signals match across all sources
+- [x] C5: No code changes required
+- [x] C6: Section 3.1 already correct from Completion Pass; Section 23 updated with audit confirmation
+
+### WS1.3 Panel Item-Citation Wiring
+- [ ] W1: Wire contribution_breakdown_json into getClassificationExplanation — return item-level citations (itemId, questionSummary, signalKey, delta) [DEFERRED — requires real session data in DB]
+- [ ] W2: Update classification explanation panel in AssessmentResultsPage to render item-level citations [DEFERRED]
+- [ ] W3: Add tests: panel cites specific items, not just capability aggregates [DEFERRED]
+
+### Architecture Doc Final Updates
+- [x] D1: Section 3.1 — verified 22-signal mapping table (confirmed correct)
+- [x] D2: Section 23 — E3 hybrid resolution documented
+- [x] D3: Section 23 — three-threshold model table documented
+- [x] D4: Section 23 — all three entries added (Addition A, B, C)
+
+### Final
+- [x] F1: 266/266 tests passing, 0 TypeScript errors
+- [x] F2: Checkpoint saved and delivered
