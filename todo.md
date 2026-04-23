@@ -916,3 +916,21 @@
 - [ ] Item 1.5: Add scoring-config-overrides.test.ts with one test per configurable threshold (6 tests)
 - [ ] Item 2 Option A: Update isProvisional code comments in scoringEngine.ts; align router assessment.ts line 1905 to use PROVISIONAL_CONFIDENCE_THRESHOLD constant
 - [ ] Item 1.6: Update architecture doc Section 4.2 (all nine scoring_config columns) and add Section 23 changelog entry
+
+### World-Class Dashboards (All User Types)
+- [x] Extend dashboard tRPC router: richer data for all 5 user types
+- [x] Rebuild LearnerDashboard: capability score cards, score ring, learning progress, revalidation countdown
+- [x] Rebuild ManagerDashboard: team readiness heatmap, risk table, revalidation alerts
+- [x] Rebuild HRDashboard: org KPI cards, capability breakdown chart, compliance funnel, incident feed
+- [x] Rebuild AuditorDashboard: evidence surface, incident timeline, audit feed, export button
+- [x] Rebuild AdminDashboard: platform health, scoring config status, system activity
+- [ ] Vitest tests for dashboard router procedures
+
+### World-Class Dashboards (All User Types)
+- [x] Extend dashboard tRPC router: richer data for all 5 user types
+- [x] Rebuild LearnerDashboard: capability score cards, score ring, learning progress, revalidation countdown
+- [x] Rebuild ManagerDashboard: team readiness heatmap, risk table, revalidation alerts
+- [x] Rebuild HRDashboard: org KPI cards, capability breakdown chart, compliance funnel, incident feed
+- [x] Rebuild AuditorDashboard: evidence surface, incident timeline, audit feed, export button
+- [x] Rebuild AdminDashboard: platform health, scoring config status, system activity
+- [ ] Vitest tests for dashboard router procedures

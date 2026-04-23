@@ -1,280 +1,226 @@
 /**
- * Admin Dashboard — AiQ Enterprise Platform
+ * Admin Dashboard — AiQ Platform
  *
- * Canonical admin view from the build bible:
- * - Platform health KPIs (users, tenants, sessions, incidents)
- * - Content library stats (80 modules)
- * - Policy engine status
- * - Assessment coverage
- * - Recent audit activity
- * - Quick navigation to all admin areas
+ * Platform health and system intelligence:
+ * - User counts (total / active / pending / suspended)
+ * - Session stats (total / completed / in-progress)
+ * - Active scoring config details
+ * - Policy incident count
+ * - Recent system activity log
  */
-
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-  Users,
-  Building2,
-  Shield,
-  TrendingUp,
-  Settings,
-  FileText,
-  BookOpen,
-  ClipboardList,
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  Database,
-  ChevronRight,
-} from "lucide-react";
-import { Link } from "wouter";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {
+  Users, Settings, Activity, ClipboardList, AlertTriangle,
+  CheckCircle, Clock, Building2, RefreshCw, Sliders,
+  ShieldCheck, UserCheck, UserX, Loader2,
+} from "lucide-react";
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-  subtext,
-}: {
-  label: string;
-  value: number | string;
-  icon: any;
-  color: string;
-  subtext?: string;
+function KpiCard({ label, value, icon: Icon, color, sub }: {
+  label: string; value: number | string; icon: any; color: string; sub?: string;
 }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
-        style={{ backgroundColor: `${color}12` }}
-      >
-        <Icon className="w-4.5 h-4.5" style={{ color }} />
-      </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-      {subtext && <p className="text-xs mt-1" style={{ color }}>{subtext}</p>}
-    </div>
-  );
-}
-
-// ─── Quick Link Card ──────────────────────────────────────────────────────────
-
-function QuickLink({
-  label,
-  path,
-  icon: Icon,
-  desc,
-  color,
-}: {
-  label: string;
-  path: string;
-  icon: any;
-  desc: string;
-  color: string;
-}) {
-  return (
-    <Link href={path}>
-      <div className="bg-card border border-border rounded-xl p-4 hover:shadow-md hover:border-[#10B981]/30 transition-all cursor-pointer group">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
-          style={{ backgroundColor: `${color}12` }}
-        >
-          <Icon className="w-4 h-4" style={{ color }} />
-        </div>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{label}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+    <Card className="border-border">
+      <CardContent className="pt-5">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>
+            <Icon className="w-4 h-4" style={{ color }} />
           </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-[#10B981] transition-colors mt-0.5" />
+          <span className="text-xs text-muted-foreground">{label}</span>
         </div>
-      </div>
-    </Link>
+        <p className="text-3xl font-bold text-foreground font-sora">{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </CardContent>
+    </Card>
   );
 }
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
   const { data, isLoading } = trpc.dashboard.admin.useQuery();
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-6xl">
+      <div className="p-6 space-y-6 max-w-7xl">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
+          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Skeleton className="h-64" /><Skeleton className="h-64" />
         </div>
-        <Skeleton className="h-64" />
       </div>
     );
   }
 
+  const cfg = data?.activeScoringConfig;
+  const activity = data?.recentActivity ?? [];
+
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
-      {/* Header */}
+    <div className="p-6 space-y-6 max-w-7xl">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground font-sora">Platform Administration</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            System-wide overview · {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
+          <p className="text-muted-foreground mt-1 text-sm">System health, user management, and scoring configuration</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/users">
-            <Button variant="outline" size="sm" className="gap-2 text-xs">
-              <Users className="w-3.5 h-3.5" />
-              Manage Users
-            </Button>
-          </Link>
-          <Link href="/reports">
-            <Button size="sm" className="gap-2 text-xs bg-[#10B981] hover:bg-[#10B981]/90 text-white">
-              <FileText className="w-3.5 h-3.5" />
-              Reports
-            </Button>
-          </Link>
-        </div>
+        <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
+          <RefreshCw className="w-3 h-3" />Refresh
+        </Button>
       </div>
 
-      {/* Platform KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Users"
-          value={data?.totalUsers ?? 0}
-          icon={Users}
-          color="#10B981"
-        />
-        <StatCard
-          label="Tenants"
-          value={data?.totalTenants ?? 0}
-          icon={Building2}
-          color="#AA3377"
-        />
-        <StatCard
-          label="Active Sessions"
-          value={data?.activeSessions ?? 0}
-          icon={Activity}
-          color="#228833"
-          subtext={data?.activeSessions ? "In progress now" : "None active"}
-        />
-        <StatCard
-          label="Policy Incidents"
-          value={data?.policyIncidents ?? 0}
-          icon={AlertTriangle}
-          color={data?.policyIncidents ? "#EE6677" : "#228833"}
-          subtext={data?.policyIncidents ? "Require review" : "All clear"}
-        />
-      </div>
-
-      {/* Platform Health Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Assessment coverage */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <ClipboardList className="w-4 h-4 text-[#4477AA]" />
-            <p className="text-sm font-semibold text-foreground">Assessment Engine</p>
-          </div>
-          <p className="text-2xl font-bold text-foreground">50</p>
-          <p className="text-xs text-muted-foreground">real questions loaded</p>
-          <div className="mt-2 flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-[#228833]" />
-            <span className="text-xs text-[#228833] font-medium">Signal scoring active</span>
-          </div>
-        </div>
-
-        {/* Content library */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-4 h-4 text-[#AA3377]" />
-            <p className="text-sm font-semibold text-foreground">Content Library</p>
-          </div>
-          <p className="text-2xl font-bold text-foreground">80</p>
-          <p className="text-xs text-muted-foreground">modules published</p>
-          <div className="mt-2 flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-[#228833]" />
-            <span className="text-xs text-[#228833] font-medium">All 7 capabilities covered</span>
-          </div>
-        </div>
-
-        {/* Policy engine */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-[#EE8866]" />
-            <p className="text-sm font-semibold text-foreground">Policy Engine</p>
-          </div>
-          <p className="text-2xl font-bold text-foreground">{data?.policyIncidents ?? 0}</p>
-          <p className="text-xs text-muted-foreground">active incidents</p>
-          <div className="mt-2 flex items-center gap-1.5">
-            {data?.policyIncidents ? (
-              <>
-                <AlertTriangle className="w-3.5 h-3.5 text-[#EE6677]" />
-                <span className="text-xs text-[#EE6677] font-medium">Review required</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-3.5 h-3.5 text-[#228833]" />
-                <span className="text-xs text-[#228833] font-medium">No incidents</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick navigation */}
+      {/* User KPIs */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Administration</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <QuickLink label="User Management"    path="/admin/users"    icon={Users}         desc="Manage users and roles"        color="#10B981" />
-          <QuickLink label="Tenant Management"  path="/admin/tenants"  icon={Building2}     desc="Configure tenant settings"     color="#AA3377" />
-          <QuickLink label="Policy Rules"       path="/policy"         icon={Shield}        desc="Manage policy engine rules"    color="#EE8866" />
-          <QuickLink label="Audit Log"          path="/audit"          icon={FileText}      desc="View all system audit events"  color="#4477AA" />
-          <QuickLink label="Reports"            path="/reports"        icon={TrendingUp}    desc="Generate and export reports"   color="#228833" />
-          <QuickLink label="System Settings"    path="/profile"        icon={Settings}      desc="Account and system settings"   color="#66CCEE" />
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Users</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard label="Total Users"     value={data?.totalUsers ?? 0}     icon={Users}     color="#4477AA" />
+          <KpiCard label="Active"          value={data?.activeUsers ?? 0}    icon={UserCheck} color="#228833" sub={`${data?.totalUsers ? Math.round(((data.activeUsers ?? 0) / data.totalUsers) * 100) : 0}% of total`} />
+          <KpiCard label="Pending"         value={data?.pendingUsers ?? 0}   icon={Clock}     color="#EE8866" />
+          <KpiCard label="Suspended"       value={data?.suspendedUsers ?? 0} icon={UserX}     color="#EE6677" />
         </div>
       </div>
 
-      {/* Recent audit activity */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-sora flex items-center gap-2">
-              <Database className="w-4 h-4 text-muted-foreground" />
-              Recent Platform Activity
+      {/* Session KPIs */}
+      <div>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Assessment Sessions</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard label="Total Sessions"     value={data?.totalSessions ?? 0}     icon={ClipboardList} color="#4477AA" />
+          <KpiCard label="Completed"          value={data?.completedSessions ?? 0} icon={CheckCircle}   color="#228833" sub={`${data?.totalSessions ? Math.round(((data.completedSessions ?? 0) / data.totalSessions) * 100) : 0}% completion rate`} />
+          <KpiCard label="In Progress"        value={data?.inProgressSessions ?? 0} icon={Loader2}      color="#EE8866" />
+          <KpiCard label="Policy Incidents"   value={data?.policyIncidents ?? 0}   icon={AlertTriangle} color="#EE6677" />
+        </div>
+      </div>
+
+      {/* Scoring config + Activity */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <Sliders className="w-4 h-4 text-[#4477AA]" />Active Scoring Configuration
             </CardTitle>
-            <Link href="/audit">
-              <button className="text-xs text-[#10B981] hover:underline flex items-center gap-1">
-                View all <ChevronRight className="w-3 h-3" />
-              </button>
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-1.5 max-h-56 overflow-y-auto">
-            {data?.recentActivity?.length ? (
-              data.recentActivity.map((log: any) => (
-                <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-2 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{log.action}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {log.targetType} · {new Date(log.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
+          </CardHeader>
+          <CardContent>
+            {cfg ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#228833]/5 border border-[#228833]/20">
+                  <span className="text-xs font-semibold text-foreground">Version</span>
+                  <span className="text-xs font-bold text-[#228833] font-mono">v{cfg.version}</span>
                 </div>
-              ))
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs text-muted-foreground">Calibration Source</span>
+                  <span className="text-xs font-semibold text-foreground capitalize">{cfg.calibrationSource?.replace(/_/g, " ") ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs text-muted-foreground">Contribution Cap</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionCap ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs text-muted-foreground">Contribution Multiplier</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionMultiplier ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs text-muted-foreground">Blocking Failure Min Items</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.blockingFailureMinItems ?? "—"}</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs text-muted-foreground">Downgrade Failure Min Items</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.downgradeFailureMinItems ?? "—"}</span>
+                </div>
+              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No recent activity
+              <div className="text-center py-8">
+                <Settings className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No active scoring configuration</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <Activity className="w-4 h-4 text-[#4477AA]" />Recent System Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {activity.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No recent activity</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                {activity.map(log => (
+                  <div key={log.id} className="flex items-start justify-between p-2 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground capitalize truncate">
+                        {log.action?.replace(/_/g, " ") ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize truncate">
+                        {log.targetType?.replace(/_/g, " ") ?? "—"}
+                        {log.actorUserId && <span className="ml-1 font-mono opacity-60">· {log.actorUserId.slice(0, 6)}</span>}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-2 flex-shrink-0 whitespace-nowrap">
+                      {new Date(log.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Platform health summary */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <ShieldCheck className="w-4 h-4 text-[#228833]" />Platform Health Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              {
+                label: "Scoring Engine",
+                status: cfg ? "Active" : "No Config",
+                ok: !!cfg,
+              },
+              {
+                label: "Active Users",
+                status: `${data?.activeUsers ?? 0} / ${data?.totalUsers ?? 0}`,
+                ok: (data?.activeUsers ?? 0) > 0,
+              },
+              {
+                label: "Session Completion",
+                status: data?.totalSessions
+                  ? `${Math.round(((data.completedSessions ?? 0) / data.totalSessions) * 100)}%`
+                  : "No data",
+                ok: data?.totalSessions ? ((data.completedSessions ?? 0) / data.totalSessions) > 0.5 : false,
+              },
+              {
+                label: "Policy Incidents",
+                status: (data?.policyIncidents ?? 0) === 0 ? "None" : `${data?.policyIncidents} active`,
+                ok: (data?.policyIncidents ?? 0) === 0,
+              },
+            ].map(item => (
+              <div key={item.label} className={cn(
+                "p-3 rounded-xl border flex flex-col gap-1",
+                item.ok ? "bg-[#228833]/5 border-[#228833]/20" : "bg-[#EE8866]/5 border-[#EE8866]/20"
+              )}>
+                <div className="flex items-center gap-1.5">
+                  {item.ok
+                    ? <CheckCircle className="w-3.5 h-3.5 text-[#228833]" />
+                    : <AlertTriangle className="w-3.5 h-3.5 text-[#EE8866]" />}
+                  <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                </div>
+                <span className={cn("text-sm font-bold font-sora", item.ok ? "text-[#228833]" : "text-[#EE8866]")}>
+                  {item.status}
+                </span>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
