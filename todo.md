@@ -756,5 +756,5 @@
 - [x] CC7: Full test suite (132 existing + 105 new = 237 total) passes; 0 TypeScript errors
 
 ### Architecture Document
-- [ ] ARCH: Produce aiq-assessment-architecture-v2.2.md with Section 23 changelog  ← IN PROGRESS
-- [ ] ARCH: Convert to PDF
+- [x] ARCH: Produce aiq-assessment-architecture-v2.2.md with Section 23 changelog
+- [x] ARCH: Convert to PDF
