@@ -958,6 +958,13 @@ export const scoringConfig = mysqlTable("scoring_config", {
   // WS1.2: Failure-mode evidence thresholds
   blockingFailureMinItems: int("blocking_failure_min_items").notNull().default(2),
   downgradeFailureMinItems: int("downgrade_failure_min_items").notNull().default(1),
+  // WS1.2 Item 1: Configurable scoring constants (previously hard-coded compile-time values)
+  baseFailureThresholdMagnitude: decimal("base_failure_threshold_magnitude", { precision: 5, scale: 3 }).notNull().default("1.500"),
+  catastrophicMarginMultiplier: decimal("catastrophic_margin_multiplier", { precision: 5, scale: 3 }).notNull().default("1.500"),
+  atRiskConfidenceFloor: decimal("at_risk_confidence_floor", { precision: 5, scale: 3 }).notNull().default("0.350"),
+  provisionalConfidenceThreshold: decimal("provisional_confidence_threshold", { precision: 5, scale: 3 }).notNull().default("0.400"),
+  confidenceFloor: decimal("confidence_floor", { precision: 5, scale: 3 }).notNull().default("0.500"),
+  minimumSafeClassificationConfidence: decimal("minimum_safe_classification_confidence", { precision: 5, scale: 3 }).notNull().default("0.550"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -335,8 +335,8 @@ export class SessionController {
   static computeResults(
     answers: AnswerData[],
     userRoleHint?: string | null,
-    /** WS1.1/WS1.2: Active scoring config (intercept + multiplier + v2.2 sum+clip + failure thresholds) */
-    scoringCfg?: { intercept: number; multiplier: number; contributionCap?: number; contributionMultiplier?: number; blockingFailureMinItems?: number; downgradeFailureMinItems?: number },
+    /** WS1.1/WS1.2: Active scoring config (intercept + multiplier + v2.2 sum+clip + failure thresholds + configurable constants) */
+    scoringCfg?: { intercept: number; multiplier: number; contributionCap?: number; contributionMultiplier?: number; blockingFailureMinItems?: number; downgradeFailureMinItems?: number; baseFailureThresholdMagnitude?: number; catastrophicMarginMultiplier?: number; atRiskConfidenceFloor?: number; provisionalConfidenceThreshold?: number; confidenceFloor?: number; minimumSafeClassificationConfidence?: number },
     /** S10: Org-level capability threshold overrides */
     orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>,
     /** S4: Proportion of required-reasoning items that received adequate reasoning */
@@ -373,10 +373,12 @@ export class SessionController {
           try { return typeof a.eventCodesJson === "string" ? JSON.parse(a.eventCodesJson) : (a.eventCodesJson as string[]) ?? []; } catch { return []; }
         })(),
       })),
-      // WS1.2: pass configurable thresholds from scoring_config
+      // WS1.2: pass configurable thresholds from scoring_config (Item 1: also pass delta constants)
       {
         blockingFailureMinItems: scoringCfg?.blockingFailureMinItems,
         downgradeFailureMinItems: scoringCfg?.downgradeFailureMinItems,
+        baseFailureThresholdMagnitude: scoringCfg?.baseFailureThresholdMagnitude,
+        catastrophicMarginMultiplier: scoringCfg?.catastrophicMarginMultiplier,
       }
     );
 
@@ -444,7 +446,10 @@ export class SessionController {
       capabilityScores,
       roleArchetype.minimumSafeThresholds,
       confidenceProfile.overall,  // S2: confidence floor check
-      orgThresholdOverrides       // S10: org threshold overrides
+      orgThresholdOverrides,      // S10: org threshold overrides
+      // WS1.2 Item 1: pass configurable confidence thresholds from scoring_config
+      scoringCfg?.provisionalConfidenceThreshold,
+      scoringCfg?.confidenceFloor
     );
 
     // F4: Apply classification confidence gate
@@ -458,7 +463,10 @@ export class SessionController {
         : readiness.state;
     const gateResult = applyClassificationConfidenceGate(
       gateInputState,
-      confidenceProfile.overall
+      confidenceProfile.overall,
+      // WS1.2 Item 1: pass configurable confidence thresholds from scoring_config
+      scoringCfg?.minimumSafeClassificationConfidence,
+      scoringCfg?.atRiskConfidenceFloor
     );
     const gatedReadiness = gateResult.wasDowngraded
       ? { ...readiness, state: gateResult.state as typeof readiness.state }

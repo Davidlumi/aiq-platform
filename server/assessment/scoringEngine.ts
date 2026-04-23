@@ -168,8 +168,8 @@ export interface FailureModeResult {
  */
 export function detectFailureModes(
   answers: Array<{ outcomeClass: string | null; signalDeltas: Record<string, number>; eventCodes: string[] }>,
-  /** WS1.2: Configurable thresholds from scoring_config. Defaults: blocking=2, downgrade=1 */
-  opts?: { blockingFailureMinItems?: number; downgradeFailureMinItems?: number }
+  /** WS1.2: Configurable thresholds from scoring_config. Defaults: blocking=2, downgrade=1, base=1.5, margin=1.5 */
+  opts?: { blockingFailureMinItems?: number; downgradeFailureMinItems?: number; baseFailureThresholdMagnitude?: number; catastrophicMarginMultiplier?: number }
 ): FailureModeResult {
   const modes: string[] = [];
   let governanceFlag = false;
@@ -182,40 +182,42 @@ export function detectFailureModes(
     const deltas = a.signalDeltas;
     const codes = a.eventCodes;
 
-    // Blind AI acceptance (per-answer threshold: weighted delta < -1.5; base threshold magnitude = 1.5)
-    if ((deltas.blind_acceptance_risk ?? 0) < -1.5 || codes.includes("BLIND_ACCEPT")) {
+    // WS1.2 Item 1: use configurable base threshold (default 1.5 preserves existing behaviour)
+    const baseThr = opts?.baseFailureThresholdMagnitude ?? 1.5;
+    // Blind AI acceptance (per-answer threshold: weighted delta < -baseThr)
+    if ((deltas.blind_acceptance_risk ?? 0) < -baseThr || codes.includes("BLIND_ACCEPT")) {
       modes.push("blind_ai_acceptance");
       governanceFlag = true;
       blockCount++;
-      (blockingDeltas["blind_ai_acceptance"] ??= []).push(Math.abs(deltas.blind_acceptance_risk ?? 1.5));
+      (blockingDeltas["blind_ai_acceptance"] ??= []).push(Math.abs(deltas.blind_acceptance_risk ?? baseThr));
     }
     // Hallucination acceptance
-    if ((deltas.hallucination_acceptance_risk ?? 0) < -1.5 || codes.includes("HALLUCINATION_ACCEPT")) {
+    if ((deltas.hallucination_acceptance_risk ?? 0) < -baseThr || codes.includes("HALLUCINATION_ACCEPT")) {
       modes.push("hallucination_acceptance");
       governanceFlag = true;
       blockCount++;
-      (blockingDeltas["hallucination_acceptance"] ??= []).push(Math.abs(deltas.hallucination_acceptance_risk ?? 1.5));
+      (blockingDeltas["hallucination_acceptance"] ??= []).push(Math.abs(deltas.hallucination_acceptance_risk ?? baseThr));
     }
     // Unsafe HR decisioning
-    if ((deltas.unsafe_hr_decision_risk ?? 0) < -1.5 || codes.includes("UNSAFE_HR_DECISION")) {
+    if ((deltas.unsafe_hr_decision_risk ?? 0) < -baseThr || codes.includes("UNSAFE_HR_DECISION")) {
       modes.push("unsafe_hr_decisioning");
       governanceFlag = true;
       blockCount++;
-      (blockingDeltas["unsafe_hr_decisioning"] ??= []).push(Math.abs(deltas.unsafe_hr_decision_risk ?? 1.5));
+      (blockingDeltas["unsafe_hr_decisioning"] ??= []).push(Math.abs(deltas.unsafe_hr_decision_risk ?? baseThr));
     }
     // Governance bypass
-    if ((deltas.governance_bypass_risk ?? 0) < -1.5 || codes.includes("GOVERNANCE_BYPASS")) {
+    if ((deltas.governance_bypass_risk ?? 0) < -baseThr || codes.includes("GOVERNANCE_BYPASS")) {
       modes.push("governance_bypass");
       governanceFlag = true;
       blockCount++;
-      (blockingDeltas["governance_bypass"] ??= []).push(Math.abs(deltas.governance_bypass_risk ?? 1.5));
+      (blockingDeltas["governance_bypass"] ??= []).push(Math.abs(deltas.governance_bypass_risk ?? baseThr));
     }
     // Critical failure outcome
     if (a.outcomeClass === "critical_failure") {
       modes.push("critical_failure_response");
       governanceFlag = true;
       blockCount++;
-      (blockingDeltas["critical_failure_response"] ??= []).push(1.5); // no delta magnitude for outcome-class triggers
+      (blockingDeltas["critical_failure_response"] ??= []).push(baseThr); // no delta magnitude for outcome-class triggers
     }
     // Poor validation
     if ((deltas.validation_accuracy ?? 0) < -2.0) {
@@ -248,8 +250,9 @@ export function detectFailureModes(
   //            — this catches catastrophic single-category failures.
   // This prevents a single mild-repeated pattern from blocking (E3's concern) while
   // still blocking genuinely severe or multi-domain failures (v2.2 spec's concern).
-  const BASE_THRESHOLD_MAGNITUDE = 1.5;
-  const CATASTROPHIC_MARGIN = 1.5; // multiplier: 1.5 * 1.5 = 2.25
+  // WS1.2 Item 1: use configurable constants from opts; defaults preserve existing behaviour
+  const BASE_THRESHOLD_MAGNITUDE = opts?.baseFailureThresholdMagnitude ?? 1.5;
+  const CATASTROPHIC_MARGIN = opts?.catastrophicMarginMultiplier ?? 1.5; // multiplier: base × margin = catastrophic threshold
   const blockingMin = opts?.blockingFailureMinItems ?? 2;
   const downgradeMin = opts?.downgradeFailureMinItems ?? 1;
 
@@ -592,7 +595,11 @@ export function classifyReadiness(
   /** S2: Composite confidence score — if < CONFIDENCE_FLOOR, returns unknown_insufficient_evidence */
   compositeConfidence?: number,
   /** S10: Organisation-override thresholds (per capability) */
-  orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>
+  orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>,
+  /** WS1.2 Item 1: configurable provisional threshold (default: PROVISIONAL_CONFIDENCE_THRESHOLD = 0.40) */
+  provisionalThreshold?: number,
+  /** WS1.2 Item 1: configurable confidence floor (default: CONFIDENCE_FLOOR = 0.50) */
+  confidenceFloorOverride?: number
 ): ReadinessClassification {
   if (!evidenceSufficient) {
     return {
@@ -607,7 +614,10 @@ export function classifyReadiness(
   // S2 + Addition B: Confidence floor check — before the precedence hierarchy.
   // Values below PROVISIONAL_CONFIDENCE_THRESHOLD (0.40) return unknown_insufficient_evidence.
   // Values in [0.40, 0.50) fall through to normal classification with isProvisional=true.
-  if (compositeConfidence !== undefined && compositeConfidence < PROVISIONAL_CONFIDENCE_THRESHOLD) {
+  // WS1.2 Item 1: use configurable thresholds; fall back to module constants
+  const provThreshold = provisionalThreshold ?? PROVISIONAL_CONFIDENCE_THRESHOLD;
+  const confFloor = confidenceFloorOverride ?? CONFIDENCE_FLOOR;
+  if (compositeConfidence !== undefined && compositeConfidence < provThreshold) {
     // Identify the two weakest confidence factors to guide the participant
     const factorScores: Array<{ name: string; score: number }> = [
       { name: "evidence depth", score: compositeConfidence * 1.2 }, // proxy
@@ -635,11 +645,12 @@ export function classifyReadiness(
     };
   }
 
-  // Addition B: Compute provisional flag — shown when confidence is in [0.40, 0.50)
+  // Addition B: Compute provisional flag — shown when confidence is in [provThreshold, confFloor)
+  // Item 2 Option A: narrow semantics — only fires in the provisional band, not on gate-downgrade.
   // The result is surfaced but flagged as provisional; participant encouraged to repeat.
   const isProvisional = compositeConfidence !== undefined
-    && compositeConfidence >= PROVISIONAL_CONFIDENCE_THRESHOLD
-    && compositeConfidence < CONFIDENCE_FLOOR;
+    && compositeConfidence >= provThreshold
+    && compositeConfidence < confFloor;
 
   // R3 + S10: Check role-specific minimum safe thresholds (org overrides take precedence)
   const thresholdFailures: CapabilityKey[] = [];

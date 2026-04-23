@@ -109,7 +109,11 @@ export interface GateResult {
  */
 export function applyClassificationConfidenceGate(
   state: "safe" | "at_risk" | "unsafe" | "insufficient_evidence",
-  compositeConfidence: number
+  compositeConfidence: number,
+  /** WS1.2 Item 1: configurable safe threshold (default: MINIMUM_SAFE_CLASSIFICATION_CONFIDENCE = 0.55) */
+  minimumSafeConfidence?: number,
+  /** WS1.2 Item 1: configurable at_risk floor (default: 0.35) */
+  atRiskFloor?: number
 ): GateResult {
   const confidenceBand = resolveConfidenceBand(compositeConfidence);
   const originalState = state;
@@ -139,7 +143,9 @@ export function applyClassificationConfidenceGate(
   }
 
   // Gate 1: "safe" requires moderate or higher confidence
-  if (state === "safe" && compositeConfidence < MINIMUM_SAFE_CLASSIFICATION_CONFIDENCE) {
+  // WS1.2 Item 1: use configurable threshold; fall back to module constant
+  const safeThreshold = minimumSafeConfidence ?? MINIMUM_SAFE_CLASSIFICATION_CONFIDENCE;
+  if (state === "safe" && compositeConfidence < safeThreshold) {
     return {
       state: "at_risk",
       wasDowngraded: true,
@@ -150,7 +156,9 @@ export function applyClassificationConfidenceGate(
   }
 
   // Gate 2: "at_risk" with insufficient confidence → insufficient_evidence
-  if (state === "at_risk" && compositeConfidence < 0.35) {
+  // WS1.2 Item 1: use configurable floor; fall back to 0.35
+  const atRiskThreshold = atRiskFloor ?? 0.35;
+  if (state === "at_risk" && compositeConfidence < atRiskThreshold) {
     return {
       state: "insufficient_evidence",
       wasDowngraded: true,

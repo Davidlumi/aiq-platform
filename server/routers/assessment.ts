@@ -1273,6 +1273,13 @@ export const assessmentRouter = router({
         // WS1.2: configurable failure-mode thresholds
         blockingFailureMinItems: activeScoringCfg.blockingFailureMinItems,
         downgradeFailureMinItems: activeScoringCfg.downgradeFailureMinItems,
+        // WS1.2 Item 1: configurable scoring constants (previously hard-coded)
+        baseFailureThresholdMagnitude: activeScoringCfg.baseFailureThresholdMagnitude,
+        catastrophicMarginMultiplier: activeScoringCfg.catastrophicMarginMultiplier,
+        atRiskConfidenceFloor: activeScoringCfg.atRiskConfidenceFloor,
+        provisionalConfidenceThreshold: activeScoringCfg.provisionalConfidenceThreshold,
+        confidenceFloor: activeScoringCfg.confidenceFloor,
+        minimumSafeClassificationConfidence: activeScoringCfg.minimumSafeClassificationConfidence,
       }, orgThresholdOverrides as any, reasoningCompleteness);
 
       // R9: Generate LLM-powered personalised development narrative

@@ -8,6 +8,11 @@
  *
  * v2.2 adds contributionCap, contributionMultiplier (sum+clip formula params)
  * and blockingFailureMinItems, downgradeFailureMinItems (failure-mode thresholds).
+ *
+ * WS1.2 Item 1 adds six previously hard-coded constants:
+ *   baseFailureThresholdMagnitude, catastrophicMarginMultiplier (detectFailureModes)
+ *   atRiskConfidenceFloor, provisionalConfidenceThreshold, confidenceFloor,
+ *   minimumSafeClassificationConfidence (classifyReadiness + applyClassificationConfidenceGate)
  */
 
 import { getDb } from "../db";
@@ -24,6 +29,13 @@ export interface ActiveScoringConfig {
   // WS1.2: failure-mode evidence thresholds
   blockingFailureMinItems: number;
   downgradeFailureMinItems: number;
+  // WS1.2 Item 1: configurable scoring constants (defaults reproduce hard-coded behaviour)
+  baseFailureThresholdMagnitude: number;
+  catastrophicMarginMultiplier: number;
+  atRiskConfidenceFloor: number;
+  provisionalConfidenceThreshold: number;
+  confidenceFloor: number;
+  minimumSafeClassificationConfidence: number;
   calibrationSource: string;
 }
 
@@ -36,6 +48,13 @@ const DEFAULT_CONFIG: ActiveScoringConfig = {
   contributionMultiplier: undefined,
   blockingFailureMinItems: 2,
   downgradeFailureMinItems: 1,
+  // WS1.2 Item 1: defaults match the former compile-time constants exactly
+  baseFailureThresholdMagnitude: 1.5,
+  catastrophicMarginMultiplier: 1.5,
+  atRiskConfidenceFloor: 0.35,
+  provisionalConfidenceThreshold: 0.40,
+  confidenceFloor: 0.50,
+  minimumSafeClassificationConfidence: 0.55,
   calibrationSource: "synthetic_default",
 };
 
@@ -78,6 +97,19 @@ export async function getActiveScoringConfig(): Promise<ActiveScoringConfig> {
         contributionMultiplier: mult,
         blockingFailureMinItems: row.blockingFailureMinItems ?? 2,
         downgradeFailureMinItems: row.downgradeFailureMinItems ?? 1,
+        // WS1.2 Item 1: load configurable constants from DB; fall back to defaults if null
+        baseFailureThresholdMagnitude: row.baseFailureThresholdMagnitude !== null && row.baseFailureThresholdMagnitude !== undefined
+          ? parseFloat(row.baseFailureThresholdMagnitude as unknown as string) : 1.5,
+        catastrophicMarginMultiplier: row.catastrophicMarginMultiplier !== null && row.catastrophicMarginMultiplier !== undefined
+          ? parseFloat(row.catastrophicMarginMultiplier as unknown as string) : 1.5,
+        atRiskConfidenceFloor: row.atRiskConfidenceFloor !== null && row.atRiskConfidenceFloor !== undefined
+          ? parseFloat(row.atRiskConfidenceFloor as unknown as string) : 0.35,
+        provisionalConfidenceThreshold: row.provisionalConfidenceThreshold !== null && row.provisionalConfidenceThreshold !== undefined
+          ? parseFloat(row.provisionalConfidenceThreshold as unknown as string) : 0.40,
+        confidenceFloor: row.confidenceFloor !== null && row.confidenceFloor !== undefined
+          ? parseFloat(row.confidenceFloor as unknown as string) : 0.50,
+        minimumSafeClassificationConfidence: row.minimumSafeClassificationConfidence !== null && row.minimumSafeClassificationConfidence !== undefined
+          ? parseFloat(row.minimumSafeClassificationConfidence as unknown as string) : 0.55,
         calibrationSource: row.calibrationSource,
       };
     }

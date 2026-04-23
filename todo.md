@@ -906,3 +906,13 @@
 - [x] TS5: Updated Section 4.2 of docs/aiq-assessment-architecture-v2.2.md — corrected anchor table + thin-signal verification subsection
 - [x] TS6: Regenerated architecture PDF
 - [x] TS7: Checkpoint saved and delivered
+
+### v2.2 Final Two Items (Apr 23 2026)
+
+- [ ] Item 1.1: Migration 0019 — add six columns to scoring_config (base_failure_threshold_magnitude, catastrophic_margin_multiplier, at_risk_confidence_floor, provisional_confidence_threshold, confidence_floor, minimum_safe_classification_confidence)
+- [ ] Item 1.2: Wire all six new fields through ActiveScoringConfig in scoringConfig.ts
+- [ ] Item 1.3: Pass base_failure_threshold_magnitude + catastrophic_margin_multiplier through detectFailureModes opts; retain constants as fallback defaults
+- [ ] Item 1.4: Pass at_risk_confidence_floor + three confidence thresholds through applyClassificationConfidenceGate + classifyReadiness opts; retain constants as fallback defaults
+- [ ] Item 1.5: Add scoring-config-overrides.test.ts with one test per configurable threshold (6 tests)
+- [ ] Item 2 Option A: Update isProvisional code comments in scoringEngine.ts; align router assessment.ts line 1905 to use PROVISIONAL_CONFIDENCE_THRESHOLD constant
+- [ ] Item 1.6: Update architecture doc Section 4.2 (all nine scoring_config columns) and add Section 23 changelog entry

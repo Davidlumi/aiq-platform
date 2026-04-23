@@ -236,6 +236,14 @@ The minimum evidence thresholds for blocking and downgrading classifications are
 |---|---|---|
 | `blockingFailureMinItems` | 2 | Minimum number of **answer-level** blocking failure mode triggers required to produce a `block` classification impact |
 | `downgradeFailureMinItems` | 1 | Minimum number of **answer-level** failure mode triggers (any type) required to produce a `downgrade` |
+| `baseFailureThresholdMagnitude` | 1.50 | Per-answer weighted delta magnitude at which a failure mode triggers (e.g. `blind_acceptance_risk < -1.50`) |
+| `catastrophicMarginMultiplier` | 1.50 | Multiplier applied to `baseFailureThresholdMagnitude` to determine the catastrophic single-item threshold (default: 1.50 × 1.50 = 2.25) |
+| `atRiskConfidenceFloor` | 0.35 | Below this composite confidence, an `at_risk` classification is downgraded to `insufficient_evidence` |
+| `provisionalConfidenceThreshold` | 0.40 | Below this composite confidence, `unknown_insufficient_evidence` is returned regardless of score |
+| `confidenceFloor` | 0.50 | Below this composite confidence (but above `provisionalConfidenceThreshold`), `isProvisional = true` is set on the result |
+| `minimumSafeClassificationConfidence` | 0.55 | Below this composite confidence, a `safe` classification is downgraded to `at_risk` |
+
+**WS1.2 Item 1 (Apr 2026):** `baseFailureThresholdMagnitude`, `catastrophicMarginMultiplier`, `atRiskConfidenceFloor`, `provisionalConfidenceThreshold`, `confidenceFloor`, and `minimumSafeClassificationConfidence` were previously hard-coded compile-time constants. They are now stored in `scoring_config` (migration `0019`) and loaded via `getActiveScoringConfig()`. All defaults reproduce the former hard-coded behaviour exactly.
 
 The engine counts **per-answer occurrences** of failure mode triggers, not unique mode identifiers. Ten answers all triggering `blind_ai_acceptance` produce a `blockCount` of 10, which exceeds the default threshold of 2 and results in a `block`. This is the correct behaviour: the two-item threshold exists to prevent a *single bad answer* from blocking an otherwise strong session, not to require failures across multiple categories. A participant who catastrophically fails one governance mode on ten consecutive items should be blocked.
 
@@ -862,5 +870,24 @@ The circuit breaker was formalised: 3 consecutive failures within 60 seconds ope
 **Change:** Full three-source audit completed. All 22 signals confirmed in agreement across: (1) `SIGNAL_TO_CAPABILITY` in `scoringEngine.ts`, (2) `INSERT IGNORE` rows in `drizzle/0009_signal_key_constraints.sql`, and (3) Section 3.1 of this document. Audit report written to `docs/signal-mapping-audit-v2.2.md`. No code changes required.
 
 ---
+### WS1.2 Item 1 — Six Hard-Coded Scoring Constants Made Configurable
 
+**Problem:** The E3 hybrid delta threshold (`1.5`), catastrophic margin multiplier (`1.5`), confidence floor (`0.50`), provisional confidence threshold (`0.40`), at-risk confidence floor (`0.35`), and minimum-safe classification confidence (`0.55`) were compile-time constants in `scoringEngine.ts` and `classificationConfidenceGate.ts`. They could not be adjusted without a code change and redeploy.
+
+**Change:** All six constants are now columns in `scoring_config` (migration `0019_configurable_scoring_thresholds.sql`). `getActiveScoringConfig()` reads and caches them. They are threaded through the call chain: `assessment.ts` router → `SessionController.computeResults` → `detectFailureModes` (base threshold + catastrophic margin) → `classifyReadiness` (provisional threshold + confidence floor) → `applyClassificationConfidenceGate` (safe threshold + at-risk floor). All defaults reproduce the former hard-coded behaviour exactly — no behaviour change for existing sessions.
+
+**Migration:** `0019_configurable_scoring_thresholds.sql` — adds six `DECIMAL(5,3)` columns with `NOT NULL DEFAULT` values matching the former constants. The existing v2.2 row (version=2) is updated to carry these values explicitly.
+
+**Test coverage:** `server/scoring-config-overrides.test.ts` — 22 tests covering: `baseFailureThresholdMagnitude` (raised/lowered), `catastrophicMarginMultiplier` (lowered to trigger catastrophic path), `atRiskConfidenceFloor` (raised), `minimumSafeClassificationConfidence` (lowered/raised), `provisionalConfidenceThreshold` (raised), `confidenceFloor` (raised), and default-identity (explicit defaults produce identical results to no opts).
+
+---
+### WS1.2 Item 2 — `isProvisional` Semantics Clarified (Option A)
+
+**Problem:** The `isProvisional` flag had ambiguous semantics. The question was whether it should fire when a `safe` classification is downgraded to `at_risk` by the confidence gate (Option B), or only when composite confidence is in the provisional band `[0.40, 0.50)` (Option A).
+
+**Decision:** Option A. `isProvisional` has narrow, band-specific semantics: it fires only when `compositeConfidence ∈ [provisionalConfidenceThreshold, confidenceFloor)`. The gate-downgrade case (safe → at_risk at confidence < 0.55) is already surfaced via the caveat banner on the headline result card (`applyClassificationConfidenceGate` returns `wasDowngraded=true` and a `caveat` string). Adding `isProvisional=true` to the gate-downgrade case would create a second, different signal on the same amber banner, confusing participants.
+
+**Code change:** The `isProvisional` computation in `classifyReadiness` now uses the configurable `provThreshold` and `confFloor` variables (introduced by Item 1) instead of the module-level constants. The code comment is updated to document the narrow semantics explicitly.
+
+---
 *End of document.*

@@ -37,9 +37,15 @@ import {
 } from "./assessment/scoringEngine";
 import type { AnswerData } from "./assessment/scoringEngine";
 
+// V2.2 scoring config passed to computeCapabilityScores.
+// Active v2.2 parameters: intercept, contributionCap, contributionMultiplier.
+// `multiplier` is the v2.1 legacy parameter present only to satisfy the config type
+// signature. It is NOT read by the v2.2 sum+clip code path — the engine selects
+// v2.2 when contributionCap and contributionMultiplier are both defined
+// (scoringEngine.ts: `useV22Formula = contributionCap !== undefined && contributionMultiplier !== undefined`).
 const V22_CONFIG = {
   intercept: 50,
-  multiplier: 50,
+  multiplier: 50, // vestigial — ignored when contributionCap/contributionMultiplier are present
   contributionCap: 8.0,
   contributionMultiplier: 6.25,
 };
@@ -358,5 +364,26 @@ describe("WS1.1 Thin-Signal — calibration parity with multi-signal capabilitie
     const govCaps = computeCapabilityScores(govSignals, V22_CONFIG);
     // Both should produce score=75 — formula is signal-count-agnostic
     expect(wfCaps.workflow.score).toBe(govCaps.governance.score);
+  });
+});
+
+// ─── Technical Check 4: multiplier=999 empirical vestigial proof ─────────────
+// This test demonstrates empirically that the v2.2 sum+clip formula does NOT
+// read the `multiplier` field. Two configs are identical except multiplier differs
+// (50 vs 999). If multiplier were consumed, the scores would differ. They must
+// be identical — proving the field is vestigial in the v2.2 code path.
+describe("WS1.1 Technical Check 4 — multiplier=999 empirical vestigial proof", () => {
+  it("multiplier=999 produces identical score to multiplier=50 when contributionCap/contributionMultiplier are present", () => {
+    const CONFIG_NORMAL = { intercept: 50, multiplier: 50,  contributionCap: 8.0, contributionMultiplier: 6.25 };
+    const CONFIG_ABSURD = { intercept: 50, multiplier: 999, contributionCap: 8.0, contributionMultiplier: 6.25 };
+    const answers = Array.from({ length: 3 }, () =>
+      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+    );
+    const signals = computeSignalScores(answers);
+    const scoreNormal = computeCapabilityScores(signals, CONFIG_NORMAL).workflow.score;
+    const scoreAbsurd = computeCapabilityScores(signals, CONFIG_ABSURD).workflow.score;
+    // If multiplier were read, scoreAbsurd would be vastly different from scoreNormal.
+    // They must be equal — the v2.2 path ignores multiplier entirely.
+    expect(scoreAbsurd).toBe(scoreNormal);
   });
 });
