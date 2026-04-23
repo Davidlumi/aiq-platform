@@ -84,8 +84,11 @@ export default function LoginPage() {
   });
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: (data) => {
-      utils.auth.me.invalidate();
+    onSuccess: async (data) => {
+      // Fetch the full auth.me profile (which includes onboardingCompleted, status, etc.)
+      // and wait for it to resolve before navigating so ProtectedRoute sees the user
+      // immediately and doesn't redirect back to /login.
+      await utils.auth.me.fetch();
       // Super admins go directly to back office
       if (data.roles?.includes("super_admin")) {
         navigate("/backoffice");

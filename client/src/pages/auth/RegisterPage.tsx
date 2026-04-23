@@ -43,8 +43,8 @@ export default function RegisterPage() {
   });
 
   const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: () => {
-      utils.auth.me.invalidate();
+    onSuccess: async () => {
+      await utils.auth.me.fetch();
       navigate("/dashboard");
     },
     onError: err => {
