@@ -169,10 +169,33 @@ These defaults were calibrated against four synthetic anchor cases:
 
 | Anchor | Description | Expected Score |
 |---|---|---|
-| A | All strong answers on governance items | ≥ 75 |
-| B | All failure answers on governance items | ≤ 25 |
-| C | Mixed strong/failure answers | 50 ± 15 |
+| A | 5 strong answers (delta=0.8, Medium, diff=2) | 75 |
+| B | 5 critical_failure answers (delta=0.8, Critical, diff=3) | 0 |
+| C | 3 strong + 4 failure answers (mixed) | 49 (35–65 band) |
 | D | Monotonicity: N+1 strong answers ≥ N strong answers | score(N+1) ≥ score(N) |
+
+**Thin-Signal Capability Verification (Apr 23 2026)**
+
+The original anchor cases (A–D) were written exclusively against `governance_quality`, a capability with six contributing signals. A subsequent audit confirmed that the formula is signal-count-agnostic — it sums weighted deltas regardless of how many signals contribute to a capability — and therefore generalises correctly to single-signal capabilities without modification.
+
+The two thin-signal capabilities were verified against all four anchor conditions:
+
+| Capability | Signals | Anchor A | Anchor B | Anchor C | Monotonicity |
+|---|---|---|---|---|---|
+| `workflow` | 1 (`workflow_application_quality`) | 75 | 0 | 49 | ✓ |
+| `data_interpretation` | 1 (`data_interpretation_quality`) | 75 | 0 | 49 | ✓ |
+| `governance` (reference) | 6 | 75 | 0 | 49 | ✓ |
+
+All three capabilities produce identical scores for equivalent inputs, confirming calibration parity. Additional thin-signal-specific cases were verified:
+
+| Case | Input | Score | Notes |
+|---|---|---|---|
+| Single strong answer | delta=0.8, Medium, diff=2 | 55 | Above intercept — correct |
+| Single critical_failure (small delta) | delta=0.8, Critical, diff=3 | 36 | Does NOT floor to 0 — clip does not fire |
+| Single critical_failure (large delta) | delta=5.0, Critical, diff=3 | 0 | Clip fires at −8.0 — intentional |
+| 1 strong + 1 failure | delta=0.8, Medium, diff=2 each | 51 | Near intercept — correct |
+
+Cross-capability isolation was also verified: workflow answers do not affect `data_interpretation` scores and vice versa. All 19 thin-signal tests are in `server/scoring.thin-signal.test.ts`.
 
 ### 4.3 Backward Compatibility
 

@@ -888,3 +888,21 @@
 ### Final
 - [x] F1: 266/266 tests passing, 0 TypeScript errors
 - [x] F2: Checkpoint saved and delivered
+
+### Thin-Signal Calibration Audit (Apr 23 2026)
+- [x] TS1: Audited scoring.v2-2.test.ts — confirmed anchor tests only covered governance_quality (6-signal capability)
+- [x] TS2: Computed exact expected scores for thin-signal anchor cases via Node.js calculation
+- [x] TS3: Wrote server/scoring.thin-signal.test.ts — 19 tests covering Workflow and Data Interpretation anchors A–D, single-answer behaviour, cross-capability isolation, and calibration parity
+- [x] TS4: All 285/285 tests passing, 0 TypeScript errors
+- [x] TS5: Updated Section 4.2 of docs/aiq-assessment-architecture-v2.2.md — corrected anchor table + thin-signal verification subsection
+- [x] TS6: Regenerated architecture PDF
+- [x] TS7: Checkpoint saved and delivered
+
+### Thin-Signal Calibration Audit (Apr 23 2026)
+- [x] TS1: Audited scoring.v2-2.test.ts — confirmed anchor tests only covered governance_quality (6-signal capability)
+- [x] TS2: Computed exact expected scores for thin-signal anchor cases via Node.js calculation
+- [x] TS3: Wrote server/scoring.thin-signal.test.ts — 19 tests covering Workflow and Data Interpretation anchors A-D, single-answer behaviour, cross-capability isolation, and calibration parity
+- [x] TS4: All 285/285 tests passing, 0 TypeScript errors
+- [x] TS5: Updated Section 4.2 of docs/aiq-assessment-architecture-v2.2.md — corrected anchor table + thin-signal verification subsection
+- [x] TS6: Regenerated architecture PDF
+- [x] TS7: Checkpoint saved and delivered
