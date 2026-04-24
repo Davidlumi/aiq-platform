@@ -372,22 +372,40 @@ function PercentileBandBadge({
 
 // ─── Capability Bar ───────────────────────────────────────────────────────────
 
+/**
+ * CR-2: Compute confidence interval half-width based on signal count.
+ * Fewer signals → wider interval. Uses a heuristic based on the
+ * standard error of a proportion, scaled to the 0–100 score range.
+ * At 3 signals: ±18 points. At 8 signals: ±11 points. At 15+: ±8 points.
+ */
+function computeConfidenceHalfWidth(signalCount: number): number {
+  if (signalCount <= 0) return 25; // no evidence — maximum uncertainty
+  // Heuristic: base SE ≈ 50/sqrt(n), capped at [6, 25]
+  const raw = 50 / Math.sqrt(signalCount);
+  return Math.round(Math.max(6, Math.min(25, raw)));
+}
+
 function CapabilityBar({
   displayName,
   score,
   colour,
+  signalCount,
   percentileBandLabel,
   normGroupLabel,
 }: {
   displayName: string;
   score: number;
   colour: string;
+  signalCount?: number;
   /** S5: Use band label instead of precise percentile */
   percentileBandLabel?: string;
   normGroupLabel?: string;
 }) {
   const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
   const bandColor = score >= 75 ? "#228833" : score >= 55 ? "#EE8866" : "#EE6677";
+  const hw = computeConfidenceHalfWidth(signalCount ?? 0);
+  const lo = Math.max(0, score - hw);
+  const hi = Math.min(100, score + hw);
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
@@ -403,11 +421,34 @@ function CapabilityBar({
           <span className="text-sm font-bold w-8 text-right" style={{ color: colour }}>{score}</span>
         </div>
       </div>
-      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+      {/* Score bar with confidence interval overlay */}
+      <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
+        {/* Confidence interval range — translucent band */}
         <div
-          className="h-full rounded-full transition-all duration-700"
+          className="absolute top-0 h-full rounded-full opacity-20 transition-all duration-700"
+          style={{
+            left: `${lo}%`,
+            width: `${hi - lo}%`,
+            backgroundColor: colour,
+          }}
+        />
+        {/* Point estimate bar */}
+        <div
+          className="absolute top-0 h-full rounded-full transition-all duration-700"
           style={{ width: `${score}%`, backgroundColor: colour }}
         />
+      </div>
+      {/* Confidence interval label */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground">
+          Range: {lo}–{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
+        </span>
+        {hw >= 15 && (
+          <span className="text-[10px] text-amber-500 flex items-center gap-0.5">
+            <AlertTriangle className="w-2.5 h-2.5" />
+            Low evidence
+          </span>
+        )}
       </div>
     </div>
   );
@@ -592,6 +633,7 @@ export default function AssessmentResultsPage() {
       score: typeof val === "object" ? val.score : (val as number),
       displayName: typeof val === "object" ? val.displayName : key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
       colour: typeof val === "object" ? val.colour : "#4477AA",
+      signalCount: typeof val === "object" ? (val.signalCount ?? 0) : 0,
     }))
     .sort((a, b) => b.score - a.score);
 
@@ -783,6 +825,7 @@ export default function AssessmentResultsPage() {
                     displayName={cap.displayName}
                     score={cap.score}
                     colour={cap.colour}
+                    signalCount={cap.signalCount}
                     percentileBandLabel={percentileRanks[cap.key]?.percentileBandLabel}
                     normGroupLabel={percentileRanks[cap.key]?.normGroupLabel}
                   />
@@ -948,6 +991,18 @@ export default function AssessmentResultsPage() {
                   <p className="text-2xl font-bold font-sora" style={{ color: stateConfig.barColor }}>
                     {overallScore}
                   </p>
+                  {/* CR-2: Overall confidence interval */}
+                  {(() => {
+                    const totalSignals = sortedCapabilities.reduce((sum, c) => sum + c.signalCount, 0);
+                    const oHw = computeConfidenceHalfWidth(totalSignals);
+                    const oLo = Math.max(0, overallScore - oHw);
+                    const oHi = Math.min(100, overallScore + oHw);
+                    return (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Range: {oLo}\u2013{oHi}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Model Version</p>
@@ -958,6 +1013,17 @@ export default function AssessmentResultsPage() {
               </div>
             </CardContent>
           </Card>
+          {/* CR-3: Methodology transparency badge */}
+          <a
+            href="/methodology"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#0F6E56]/20 bg-[#0F6E56]/5 hover:bg-[#0F6E56]/10 transition-colors cursor-pointer no-underline"
+          >
+            <Shield className="w-3.5 h-3.5 text-[#0F6E56]" />
+            <span className="text-xs text-[#0F6E56] font-medium">SJT-based adaptive assessment</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">View methodology</span>
+          </a>
 
           {/* WS4.2: Why this classification? expandable panel */}
           <Card className="border-border">

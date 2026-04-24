@@ -1148,3 +1148,12 @@
 - [x] Improvement 10 — Peer benchmarking signals: peer_benchmark_snapshots table; getPeerBenchmarks procedure; Benchmarks tab in LearningPlanPage with cohort P25/P75 bands, percentile rank cards, and role-cohort comparison
 - [x] Browser verified: LLM personalisation panel renders in module player with role-specific intro, contextual examples, and failure mode callout
 - [x] 355/355 tests passing, 0 TypeScript errors
+
+## Credibility Review — Priority Improvements (Apr 24 2026)
+- [x] CR-1: Assessment Methodology disclosure page at /methodology — transparent explanation of SJT approach, capability domains, quality gates, standards alignment, and current limitations with academic references
+- [x] CR-2: Confidence intervals on capability scores in AssessmentResultsPage — show score ranges based on signal count (e.g. "Range: 54–78") with low-evidence warnings
+- [x] CR-3: Methodology transparency badge on AssessmentResultsPage — "SJT-based adaptive assessment" badge linking to /methodology page
+- [x] CR-4: Include signalCount per capability in scoreBreakdown for confidence interval computation on frontend
+- [x] CR-5: Added methodology link to marketing page footer
+- [x] CR-6: Overall score confidence interval displayed in Score Summary card
+- [ ] Norm data collection mechanism — track real assessment completions to replace synthetic norms over time; add norm_data_collection table and collection logic (deferred to next sprint)

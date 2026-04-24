@@ -1419,13 +1419,16 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       }
 
       const capabilityScoresFlat: Record<string, number> = {};
+      const capabilitySignalCounts: Record<string, number> = {};
       for (const [key, val] of Object.entries(results.capabilityScores)) {
         capabilityScoresFlat[key] = val.score;
+        capabilitySignalCounts[key] = val.signalCount;
       }
 
       const scoreBreakdown = {
         overallScore: results.overallScore,
         capabilityScores: capabilityScoresFlat,
+        capabilitySignalCounts,
         signalScores: results.signalScores,
         readiness: results.readiness,
         // A4: Governance action and governing constraint (previously computed but not persisted)
@@ -1729,12 +1732,14 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       } catch {}
 
       const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, number>;
-      const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string }> = {};
+      const rawSignalCounts = (breakdown.capabilitySignalCounts ?? {}) as Record<string, number>;
+      const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string; signalCount: number }> = {};
       for (const [key, val] of Object.entries(rawCapScores)) {
         enrichedCapScores[key] = {
           score: val as number,
           displayName: CAPABILITY_DISPLAY[key] ?? key,
           colour: CAPABILITY_COLOURS[key] ?? "#4477AA",
+          signalCount: (rawSignalCounts[key] as number) ?? 0,
         };
       }
 

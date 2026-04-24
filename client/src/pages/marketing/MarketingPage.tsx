@@ -964,6 +964,9 @@ function Footer() {
           <Link href="/beta">
             <span className="text-slate-500 hover:text-slate-300 text-sm transition-colors cursor-pointer">Apply for beta</span>
           </Link>
+          <Link href="/methodology">
+            <span className="text-slate-500 hover:text-slate-300 text-sm transition-colors cursor-pointer">Methodology</span>
+          </Link>
         </div>
       </div>
     </footer>

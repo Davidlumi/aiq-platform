@@ -48,6 +48,7 @@ import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
 import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
+import MethodologyPage from "./pages/methodology/MethodologyPage";
 
 function ProtectedRoute({
   component: Component,
@@ -160,6 +161,7 @@ function Router() {
       {/* Marketing pages — public */}
       <Route path="/about" component={MarketingPage} />
       <Route path="/beta" component={BetaApplicationPage} />
+      <Route path="/methodology" component={MethodologyPage} />
       {/* 404 */}
       <Route component={NotFound} />
     </Switch>
