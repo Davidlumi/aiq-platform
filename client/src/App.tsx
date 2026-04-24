@@ -30,6 +30,7 @@ import AssessmentResultsPage from "./pages/assessment/AssessmentResultsPage";
 import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
 import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
+import TeamDashboardPage from "./pages/learning/TeamDashboardPage";
 import SimulationListPage from "./pages/simulation/SimulationListPage";
 import SimulationSessionPage from "./pages/simulation/SimulationSessionPage";
 import ReportsPage from "./pages/reports/ReportsPage";
@@ -113,6 +114,9 @@ function Router() {
       </Route>
       <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />
+      </Route>
+      <Route path="/learning/team">
+        <ProtectedRoute component={TeamDashboardPage} />
       </Route>
       <Route path="/simulations">
         <ProtectedRoute component={SimulationListPage} />

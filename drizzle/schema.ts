@@ -1222,3 +1222,66 @@ export type GapAnalysis = typeof gapAnalyses.$inferSelect;
 export type AdaptiveLearningPlan = typeof adaptiveLearningPlans.$inferSelect;
 export type AdaptivePlanItem = typeof adaptivePlanItems.$inferSelect;
 export type SpacedRepetitionQueue = typeof spacedRepetitionQueue.$inferSelect;
+
+// ─── Module Personalisation Cache ─────────────────────────────────────────────
+export const modulePersonalisationCache = mysqlTable("module_personalisation_cache", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  roleArchetype: varchar("role_archetype", { length: 100 }),
+  seniorityLevel: varchar("seniority_level", { length: 100 }),
+  personalisedIntro: text("personalised_intro"),
+  contextualExamples: json("contextual_examples"),
+  failureModeCallouts: json("failure_mode_callouts"),
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  uniqueUserModule: unique("uq_user_module").on(t.userId, t.moduleId),
+  userIdx: index("idx_mpc_user").on(t.userId),
+}));
+
+// ─── Formative Quiz Results ────────────────────────────────────────────────────
+export const formativeQuizResults = mysqlTable("formative_quiz_results", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  planItemId: varchar("plan_item_id", { length: 36 }),
+  score: int("score").notNull(),
+  totalQuestions: int("total_questions").notNull(),
+  answersJson: json("answers_json").notNull(),
+  passed: int("passed").default(0),
+  attemptedAt: bigint("attempted_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userModuleIdx: index("idx_fqr_user_module").on(t.userId, t.moduleId),
+  userIdx: index("idx_fqr_user").on(t.userId),
+}));
+
+// ─── Learning Streaks ──────────────────────────────────────────────────────────
+export const learningStreaks = mysqlTable("learning_streaks", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  currentStreak: int("current_streak").default(0),
+  longestStreak: int("longest_streak").default(0),
+  lastActivityDate: varchar("last_activity_date", { length: 10 }),
+  totalModulesCompleted: int("total_modules_completed").default(0),
+  totalMinsLearned: int("total_mins_learned").default(0),
+  milestonesJson: json("milestones_json"),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userIdx: index("idx_ls_user").on(t.userId),
+}));
+
+// ─── Manager Team Members ──────────────────────────────────────────────────────
+export const managerTeamMembers = mysqlTable("manager_team_members", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  managerId: varchar("manager_id", { length: 36 }).notNull(),
+  memberId: varchar("member_id", { length: 36 }).notNull(),
+  addedAt: bigint("added_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  uniqueManagerMember: unique("uq_manager_member").on(t.managerId, t.memberId),
+  managerIdx: index("idx_mtm_manager").on(t.managerId),
+}));
+
+export type ModulePersonalisationCache = typeof modulePersonalisationCache.$inferSelect;
+export type FormativeQuizResult = typeof formativeQuizResults.$inferSelect;
+export type LearningStreak = typeof learningStreaks.$inferSelect;
+export type ManagerTeamMember = typeof managerTeamMembers.$inferSelect;

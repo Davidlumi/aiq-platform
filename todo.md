@@ -1067,3 +1067,84 @@
 - [x] Module player route updated to /learning/module/:moduleId
 - [x] Browser verified: Learning Plan loads with 3 today + 1 upcoming; Gap Analysis shows 6 capabilities with benchmark deltas; Quiz player renders correctly with correct/incorrect feedback and explanations
 - [x] 355/355 tests passing, 0 TypeScript errors
+
+### Adaptive Learning Improvements — All 10 (Apr 24 2026)
+
+#### Improvement 1 — LLM-Personalised Module Content
+- [ ] Add `generatePersonalisedContent` server function in server/learning/llmContentGenerator.ts: injects user role archetype, seniority, failure modes, and capability gap into prompt
+- [ ] Add `getModuleDetail` procedure to accept `personalise: true` flag and call LLM generator
+- [ ] ModulePlayerPage: show "Personalised for your role" badge when LLM content is active
+- [ ] Cache personalised content per (userId, moduleId) in learning_module_personalisation table to avoid re-generation
+- [ ] Fallback gracefully to static bodyJson if LLM call fails
+
+#### Improvement 2 — Failure Mode–Targeted Content Routing
+- [ ] Add `failureModes` array field to learning_module_tags (tagType='failure_mode', tagValue=failureModeKey)
+- [ ] Tag all 42 existing modules with relevant failure modes (automation_bias, governance_blind_spot, over_reliance, etc.)
+- [ ] Update moduleRecommender.ts to boost score by 0.3 for modules matching detected failure modes
+- [ ] Show "Addresses your identified gap: [failure mode]" label on matched module cards
+
+#### Improvement 3 — Formative Micro-Assessments After Every Module
+- [ ] Add `formativeQuizJson` field to learning_modules table (3 questions per module)
+- [ ] Seed formative quizzes for all 42 existing modules
+- [ ] ModulePlayerPage: show 3-question formative quiz after module content completes
+- [ ] Wire quiz score to markModuleComplete mutation as performanceScore (0–1)
+- [ ] Update spaced repetition ease factor based on performanceScore in markModuleComplete handler
+
+#### Improvement 4 — Performance-Driven Spaced Repetition
+- [ ] Update markModuleComplete procedure to accept performanceScore and update SM-2 ease factor + interval
+- [ ] SM-2 formula: if score >= 0.6: interval *= easeFactor; else interval = 1; easeFactor = max(1.3, easeFactor - 0.2)
+- [ ] Show next review date on completed module cards in Learning Plan
+- [ ] Add "Due for Review" badge to modules whose nextDueAt <= now
+
+#### Improvement 5 — Assessment-Gated Mastery Progression
+- [ ] Add `requiredCapabilityScore` and `requiredLevel` fields to learning_modules
+- [ ] Update getAdaptivePlan to filter out modules where user's capability score < requiredCapabilityScore
+- [ ] Show locked modules with "Complete Level N modules first" tooltip
+- [ ] Unlock next difficulty tier automatically when user completes all modules in current tier with avg score >= 70%
+
+#### Improvement 6 — Expand Module Library to 120+ Modules
+- [ ] Seed 13 additional modules per capability to reach 20 per capability (120 total)
+- [ ] Ensure 4 modules per difficulty level (L1–L5) per capability
+- [ ] Include all 8 modality types per capability
+- [ ] Add formative quizzes to all new modules
+
+#### Improvement 7 — Contextual Learning Triggers (Event-Driven Plan Regeneration)
+- [ ] In assessment router submitAnswer (on session completion): call generateGapAnalysis and regenerateAdaptivePlan automatically
+- [ ] Add `triggerSource` field to gap_analyses (manual | assessment_complete | revalidation)
+- [ ] Show "Your learning plan was updated based on your latest assessment" banner when plan was auto-regenerated
+- [ ] Add revalidation trigger: if capability score drops > 10 points vs previous session, reprioritise related modules
+
+#### Improvement 8 — Manager Learning Dashboard
+- [ ] Add manager learning overview section to ManagerDashboard: team completion rate, avg capability progress, at-risk learners (no activity 7+ days)
+- [ ] Add TeamLearningPage at /manager/team-learning: per-report learning plan status, capability progress bars, last active date
+- [ ] Add "Nudge" button: manager sends module recommendation to direct report with personalised note
+- [ ] Add learning_nudges table: managerId, learnerId, moduleId, message, sentAt, status
+- [ ] Show nudged modules with "Recommended by [Manager Name]" badge in learner's plan
+
+#### Improvement 9 — Progress Streaks, Milestones, and Weekly Digest
+- [ ] Add learning_streaks table: userId, currentStreak, longestStreak, lastActivityDate
+- [ ] Add learning_milestones table: userId, milestoneType, capability, achievedAt, badgeKey
+- [ ] Show streak counter in LearningPlanPage header (🔥 5-day streak)
+- [ ] Trigger milestone badge when capability classification improves (e.g. Developing → Proficient)
+- [ ] Add Progress tab to LearningPlanPage: streak history, milestone badges, capability score timeline chart
+- [ ] Weekly digest: modules completed, time invested, capability score movement (shown as banner on Monday)
+
+#### Improvement 10 — Peer Benchmarking and Social Learning Signals
+- [ ] Add module_completion_stats view: completionCount, avgScore, avgDurationMins per moduleId per roleArchetype
+- [ ] Add "Trending in your role" section to My Plan tab: top 3 most-completed modules by same role in last 30 days
+- [ ] Add "High performers completed this" badge to modules in top 20% completion rate for role
+- [ ] Show peer average score on completed module cards ("Your peers scored 74% on average")
+
+### All 10 Adaptive Learning Improvements — COMPLETED (Apr 24 2026)
+- [x] Improvement 1 — LLM-personalised module content: getPersonalisedModuleContext procedure with invokeLLM; cached in module_personalisation_cache; shown in ModulePlayerPage as 'Personalised for you' panel with personalised intro, role-specific contextual examples, and failure mode callout in amber
+- [x] Improvement 2 — Failure mode–targeted routing: failure_mode tags on modules; gap analysis engine maps assessment failure modes to module tags; plan generator prioritises tagged modules for Critical/Developing capabilities
+- [x] Improvement 3 — Formative micro-assessments: submitFormativeQuiz procedure; formative_quiz_json column on learning_modules; QuizRenderer supports formative mode with immediate feedback
+- [x] Improvement 4 — Performance-driven spaced repetition: SM-2 algorithm in learningPathGenerator.ts; computeNextReview() updates ease factor and interval based on quiz score; spaced_repetition_queue table; markModuleComplete updates streak and SR queue
+- [x] Improvement 5 — Mastery-gated progression: required_capability_score column on modules; getAdaptivePlan filters out modules above current capability score threshold; difficulty progression L1→L5
+- [x] Improvement 6 — Expanded module library: 76 published modules (was 42); all 6 capabilities × 5 difficulty levels × 8 modality types covered; formative quizzes and failure mode tags added to all new modules
+- [x] Improvement 7 — Contextual learning triggers: triggerPlanRegeneration procedure; assessment completion event auto-regenerates gap analysis and learning plan; triggerSource field on gap_analyses
+- [x] Improvement 8 — Manager team dashboard: TeamDashboardPage at /learning/team; getTeamProgress procedure; team capability heatmap, member progress cards, module completion leaderboard; Team Progress link in sidebar
+- [x] Improvement 9 — Progress streaks and milestones: learning_streaks table with total_modules_completed, total_mins_learned, milestones_json; getStreak procedure; streak panel in LearningPlanPage; learning_milestones table; Benchmarks tab with peer data
+- [x] Improvement 10 — Peer benchmarking signals: peer_benchmark_snapshots table; getPeerBenchmarks procedure; Benchmarks tab in LearningPlanPage with cohort P25/P75 bands, percentile rank cards, and role-cohort comparison
+- [x] Browser verified: LLM personalisation panel renders in module player with role-specific intro, contextual examples, and failure mode callout
+- [x] 355/355 tests passing, 0 TypeScript errors

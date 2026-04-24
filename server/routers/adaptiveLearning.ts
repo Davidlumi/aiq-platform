@@ -29,6 +29,14 @@ import { eq, and, desc, lte, asc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { computeGapAnalysis, type CapabilityKey } from "../learning/gapAnalysisEngine";
 import { generateAdaptivePlan, computeNextReview, type ModuleCandidate } from "../learning/learningPathGenerator";
+import {
+  modulePersonalisationCache,
+  formativeQuizResults,
+  learningStreaks,
+  managerTeamMembers,
+  users,
+} from "../../drizzle/schema";
+import { invokeLLM } from "../_core/llm";
 
 // ─── Helper: resolve seniority tier from session metadata ────────────────────
 function resolveSeniorityTier(sessionMetaJson: unknown): string {
@@ -415,10 +423,63 @@ export const adaptiveLearningRouter = router({
         });
       }
 
+      // Update learning streak
+      const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const modRow = await db.select({ durationMins: learningModules.durationMins })
+        .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+      const durationMins = modRow[0]?.durationMins ?? 0;
+
+      const streakRow = await db.select().from(learningStreaks)
+        .where(eq(learningStreaks.userId, ctx.user.id)).limit(1);
+
+      if (streakRow[0]) {
+        const lastDate = streakRow[0].lastActivityDate;
+        const yesterday = new Date(now - 86400000).toISOString().slice(0, 10);
+        const newStreak = lastDate === todayStr
+          ? (streakRow[0].currentStreak ?? 0)
+          : lastDate === yesterday
+            ? (streakRow[0].currentStreak ?? 0) + 1
+            : 1; // streak broken — reset to 1
+        const newLongest = Math.max(streakRow[0].longestStreak ?? 0, newStreak);
+        const newTotal = (streakRow[0].totalModulesCompleted ?? 0) + 1;
+        const newMins = (streakRow[0].totalMinsLearned ?? 0) + (input.timeSpentMins || durationMins);
+
+        // Check for new milestones
+        const MILESTONES = [1, 5, 10, 25, 50, 100];
+        const existingMilestones = (streakRow[0].milestonesJson as string[] | null) ?? [];
+        const newMilestones = MILESTONES
+          .filter(m => newTotal >= m && !existingMilestones.includes(`modules_${m}`))
+          .map(m => `modules_${m}`);
+        const allMilestones = [...existingMilestones, ...newMilestones];
+
+        await db.update(learningStreaks)
+          .set({
+            currentStreak: newStreak,
+            longestStreak: newLongest,
+            lastActivityDate: todayStr,
+            totalModulesCompleted: newTotal,
+            totalMinsLearned: newMins,
+            milestonesJson: allMilestones as any,
+            updatedAt: now,
+          })
+          .where(eq(learningStreaks.userId, ctx.user.id));
+      } else {
+        await db.insert(learningStreaks).values({
+          id: nanoid(),
+          userId: ctx.user.id,
+          currentStreak: 1,
+          longestStreak: 1,
+          lastActivityDate: todayStr,
+          totalModulesCompleted: 1,
+          totalMinsLearned: input.timeSpentMins || durationMins,
+          milestonesJson: ["modules_1"] as any,
+          updatedAt: now,
+        });
+      }
+
       return { success: true };
     }),
-
-  // ─── Get due reviews ───────────────────────────────────────────────────────
+  // ─── Get due reviews ────────────────────────────────────────────────────────
   getDueReviews: protectedProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();
@@ -505,6 +566,434 @@ export const adaptiveLearningRouter = router({
         total: filtered.length,
         page: input.page,
         pageSize: input.pageSize,
+      };
+    }),
+
+  // ─── Improvement 1: LLM-personalised module content ───────────────────────
+  getPersonalisedModuleContext: protectedProcedure
+    .input(z.object({ moduleId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Check cache first
+      const cached = await db.select().from(modulePersonalisationCache)
+        .where(and(
+          eq(modulePersonalisationCache.userId, ctx.user.id),
+          eq(modulePersonalisationCache.moduleId, input.moduleId),
+        )).limit(1);
+      if (cached[0]) return cached[0];
+
+      // Get module details
+      const mod = await db.select().from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+      if (!mod[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Get user's latest gap analysis for context
+      const gap = await db.select().from(gapAnalyses)
+        .where(eq(gapAnalyses.userId, ctx.user.id))
+        .orderBy(desc(gapAnalyses.generatedAt)).limit(1);
+
+      // Get user's session metadata for role context
+      const sess = await db.select({ sessionMetadataJson: assessmentSessions.sessionMetadataJson })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, ctx.user.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt)).limit(1);
+
+      const sessionMeta = sess[0]?.sessionMetadataJson as Record<string, unknown> | null ?? {};
+      const roleArchetype = String(sessionMeta?.roleArchetype ?? sessionMeta?.roleTitle ?? "HR Professional");
+      const seniorityLevel = String(sessionMeta?.seniorityLevel ?? "Mid-level");
+
+      const capabilityGaps = gap[0]?.capabilityGapsJson
+        ? (typeof gap[0].capabilityGapsJson === "string" ? JSON.parse(gap[0].capabilityGapsJson as string) : gap[0].capabilityGapsJson) as Record<string, { score: number; severity: string }>
+        : {};
+
+      const capabilityGap = capabilityGaps[mod[0].capability];
+      const gapContext = capabilityGap
+        ? `Current score: ${capabilityGap.score}/100 (${capabilityGap.severity} gap)`
+        : "No specific gap data available";
+
+      // Generate personalised content via LLM
+      const prompt = `You are an expert HR learning designer. Generate personalised learning context for an HR professional.
+
+Learner profile:
+- Role: ${roleArchetype}
+- Seniority: ${seniorityLevel}
+- Capability being studied: ${mod[0].capability}
+- ${gapContext}
+
+Module: "${mod[0].title}" (${mod[0].modality}, Level ${mod[0].difficulty})
+
+Generate a JSON response with:
+1. personalisedIntro: A 2-3 sentence personalised introduction explaining WHY this module matters specifically for their role and gap (mention their role explicitly)
+2. contextualExamples: Array of 2 role-specific examples showing how this capability applies in their day-to-day work
+3. failureModeCallouts: Array of 1-2 specific failure modes this module will help them avoid, framed as "Without this skill, you might..." statements
+
+Be specific, practical, and directly relevant to ${roleArchetype} at ${seniorityLevel} level.`;
+
+      let personalisedIntro = "";
+      let contextualExamples: string[] = [];
+      let failureModeCallouts: string[] = [];
+
+      try {
+        const llmResponse = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are an expert HR learning designer. Always respond with valid JSON." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "personalised_context",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  personalisedIntro: { type: "string" },
+                  contextualExamples: { type: "array", items: { type: "string" } },
+                  failureModeCallouts: { type: "array", items: { type: "string" } },
+                },
+                required: ["personalisedIntro", "contextualExamples", "failureModeCallouts"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const parsed = JSON.parse(llmResponse.choices[0].message.content as string);
+        personalisedIntro = parsed.personalisedIntro ?? "";
+        contextualExamples = parsed.contextualExamples ?? [];
+        failureModeCallouts = parsed.failureModeCallouts ?? [];
+      } catch {
+        personalisedIntro = `As a ${roleArchetype}, mastering ${mod[0].capability.replace(/_/g, " ")} is essential for effective AI-augmented HR practice.`;
+        contextualExamples = [];
+        failureModeCallouts = [];
+      }
+
+      // Cache the result
+      const cacheId = nanoid();
+      await db.insert(modulePersonalisationCache).values({
+        id: cacheId,
+        userId: ctx.user.id,
+        moduleId: input.moduleId,
+        roleArchetype,
+        seniorityLevel,
+        personalisedIntro,
+        contextualExamples: contextualExamples as any,
+        failureModeCallouts: failureModeCallouts as any,
+        generatedAt: Date.now(),
+      });
+
+      const row = await db.select().from(modulePersonalisationCache).where(eq(modulePersonalisationCache.id, cacheId)).limit(1);
+      return row[0];
+    }),
+
+  // ─── Improvement 3: Submit formative quiz ─────────────────────────────────
+  submitFormativeQuiz: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      planItemId: z.string().optional(),
+      answers: z.array(z.object({
+        questionIndex: z.number(),
+        selectedAnswer: z.string(),
+        isCorrect: z.boolean(),
+        timeTakenSecs: z.number().optional(),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const correct = input.answers.filter(a => a.isCorrect).length;
+      const total = input.answers.length;
+      const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const passed = score >= 70 ? 1 : 0;
+
+      const id = nanoid();
+      await db.insert(formativeQuizResults).values({
+        id,
+        userId: ctx.user.id,
+        moduleId: input.moduleId,
+        planItemId: input.planItemId ?? null,
+        score,
+        totalQuestions: total,
+        answersJson: input.answers as any,
+        passed,
+        attemptedAt: Date.now(),
+      });
+
+      // If passed, update spaced repetition with higher ease factor
+      if (passed) {
+        const existing = await db.select().from(spacedRepetitionQueue)
+          .where(and(eq(spacedRepetitionQueue.userId, ctx.user.id), eq(spacedRepetitionQueue.moduleId, input.moduleId)))
+          .limit(1);
+        if (existing[0]) {
+          const newEase = Math.min(3.5, parseFloat(String(existing[0].easeFactor)) + 0.15);
+          await db.update(spacedRepetitionQueue)
+            .set({ easeFactor: newEase.toFixed(3) as any, updatedAt: Date.now() })
+            .where(eq(spacedRepetitionQueue.id, existing[0].id));
+        }
+      }
+
+      return { id, score, passed: passed === 1, correct, total };
+    }),
+
+  // ─── Improvement 4: Performance-driven spaced repetition update ───────────
+  updateSpacedRepetition: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      quality: z.number().min(0).max(5), // SM-2 quality: 0=blackout, 5=perfect
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const existing = await db.select().from(spacedRepetitionQueue)
+        .where(and(eq(spacedRepetitionQueue.userId, ctx.user.id), eq(spacedRepetitionQueue.moduleId, input.moduleId)))
+        .limit(1);
+
+      if (!existing[0]) return { updated: false };
+
+      const next = computeNextReview(
+        input.quality * 20, // convert 0-5 quality to 0-100 score
+        parseFloat(String(existing[0].intervalDays)),
+        parseFloat(String(existing[0].easeFactor)),
+        existing[0].repetitions,
+      );
+
+      await db.update(spacedRepetitionQueue)
+        .set({
+          intervalDays: next.intervalDays.toFixed(2) as any,
+          easeFactor: next.easeFactor.toFixed(3) as any,
+          repetitions: next.repetitions,
+          nextDueAt: next.nextDueAt,
+          lastScore: input.quality.toFixed(2) as any,
+          updatedAt: Date.now(),
+        })
+        .where(eq(spacedRepetitionQueue.id, existing[0].id));
+
+      return { updated: true, nextDueAt: next.nextDueAt, intervalDays: next.intervalDays };
+    }),
+
+  // ─── Improvement 5: Contextual trigger — regenerate plan after new assessment
+  triggerPlanRegeneration: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Supersede existing active plans
+      await db.update(adaptiveLearningPlans)
+        .set({ state: "superseded" })
+        .where(and(
+          eq(adaptiveLearningPlans.userId, ctx.user.id),
+          eq(adaptiveLearningPlans.state, "active"),
+        ));
+
+      // Clear personalisation cache so new role context is used
+      // (just mark as stale by deleting — will be regenerated on next module open)
+      // Note: we don't delete here to avoid breaking in-flight requests
+
+      return { triggered: true, message: "Plan regeneration queued. Refresh your learning plan to see updated recommendations." };
+    }),
+
+  // ─── Improvement 8: Manager team dashboard ────────────────────────────────
+  getTeamLearningProgress: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Get team members
+      const members = await db.select().from(managerTeamMembers)
+        .where(eq(managerTeamMembers.managerId, ctx.user.id));
+
+      if (members.length === 0) return { members: [], totalMembers: 0 };
+
+      const memberIds = members.map(m => m.memberId);
+
+      // Get progress for each member
+      const memberProgress = await Promise.all(memberIds.map(async (memberId) => {
+        const userRow = await db.select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+          .from(users).where(eq(users.id, memberId)).limit(1);
+
+        const plan = await db.select().from(adaptiveLearningPlans)
+          .where(and(eq(adaptiveLearningPlans.userId, memberId), eq(adaptiveLearningPlans.state, "active")))
+          .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+
+        const streak = await db.select().from(learningStreaks)
+          .where(eq(learningStreaks.userId, memberId)).limit(1);
+
+        const gap = await db.select().from(gapAnalyses)
+          .where(eq(gapAnalyses.userId, memberId))
+          .orderBy(desc(gapAnalyses.generatedAt)).limit(1);
+
+        return {
+          userId: memberId,
+          name: userRow[0] ? `${userRow[0].firstName} ${userRow[0].lastName}`.trim() : "Unknown",
+          email: userRow[0]?.email ?? "",
+          plan: plan[0] ? {
+            totalModules: plan[0].totalModules,
+            completedModules: plan[0].completedModules,
+            progressPct: plan[0].totalModules > 0
+              ? Math.round((plan[0].completedModules / plan[0].totalModules) * 100)
+              : 0,
+          } : null,
+          streak: streak[0] ? {
+            currentStreak: streak[0].currentStreak,
+            totalModulesCompleted: streak[0].totalModulesCompleted,
+            totalMinsLearned: streak[0].totalMinsLearned,
+          } : null,
+          readinessBand: gap[0]?.readinessBand ?? null,
+          overallScore: gap[0]?.overallReadinessScore ? parseFloat(String(gap[0].overallReadinessScore)) : null,
+        };
+      }));
+
+      return { members: memberProgress, totalMembers: members.length };
+    }),
+
+  addTeamMember: protectedProcedure
+    .input(z.object({ memberEmail: z.string().email() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const member = await db.select().from(users).where(eq(users.email, input.memberEmail)).limit(1);
+      if (!member[0]) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      if (member[0].id === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot add yourself" });
+
+      const existing = await db.select().from(managerTeamMembers)
+        .where(and(eq(managerTeamMembers.managerId, ctx.user.id), eq(managerTeamMembers.memberId, member[0].id)))
+        .limit(1);
+      if (existing[0]) throw new TRPCError({ code: "CONFLICT", message: "Already a team member" });
+
+      const id = nanoid();
+      await db.insert(managerTeamMembers).values({
+        id,
+        managerId: ctx.user.id,
+        memberId: member[0].id,
+        addedAt: Date.now(),
+      });
+
+      return { id, memberName: `${member[0].firstName} ${member[0].lastName}`.trim(), memberEmail: member[0].email };
+    }),
+
+  // ─── Improvement 9: Learning streaks and milestones ───────────────────────
+  getLearningStreak: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const streak = await db.select().from(learningStreaks)
+        .where(eq(learningStreaks.userId, ctx.user.id)).limit(1);
+
+      if (!streak[0]) {
+        return {
+          currentStreak: 0,
+          longestStreak: 0,
+          totalModulesCompleted: 0,
+          totalMinsLearned: 0,
+          milestones: [],
+          nextMilestone: { label: "Complete your first module", target: 1, current: 0 },
+        };
+      }
+
+      const s = streak[0];
+      const milestones = (s.milestonesJson as string[] | null) ?? [];
+      const completed = s.totalModulesCompleted ?? 0;
+
+      const MILESTONE_THRESHOLDS = [
+        { target: 1, label: "First Step" },
+        { target: 5, label: "Getting Started" },
+        { target: 10, label: "Building Momentum" },
+        { target: 25, label: "Quarter Century" },
+        { target: 50, label: "Halfway Hero" },
+        { target: 100, label: "Century Learner" },
+      ];
+
+      const nextMilestone = MILESTONE_THRESHOLDS.find(m => completed < m.target)
+        ?? { target: completed, label: "Master Learner" };
+
+      return {
+        currentStreak: s.currentStreak ?? 0,
+        longestStreak: s.longestStreak ?? 0,
+        totalModulesCompleted: completed,
+        totalMinsLearned: s.totalMinsLearned ?? 0,
+        milestones,
+        nextMilestone: { ...nextMilestone, current: completed },
+      };
+    }),
+
+  // ─── Improvement 10: Peer benchmarking signals ────────────────────────────
+  getPeerBenchmarks: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Get user's gap analysis
+      const myGap = await db.select().from(gapAnalyses)
+        .where(eq(gapAnalyses.userId, ctx.user.id))
+        .orderBy(desc(gapAnalyses.generatedAt)).limit(1);
+
+      // Get user's streak
+      const myStreak = await db.select().from(learningStreaks)
+        .where(eq(learningStreaks.userId, ctx.user.id)).limit(1);
+
+      // Get platform-wide stats (anonymised)
+      const allStreaks = await db.select({
+        totalModulesCompleted: learningStreaks.totalModulesCompleted,
+        totalMinsLearned: learningStreaks.totalMinsLearned,
+      }).from(learningStreaks);
+
+      const allGaps = await db.select({
+        overallReadinessScore: gapAnalyses.overallReadinessScore,
+        readinessBand: gapAnalyses.readinessBand,
+      }).from(gapAnalyses);
+
+      const avgModulesCompleted = allStreaks.length > 0
+        ? Math.round(allStreaks.reduce((sum, s) => sum + (s.totalModulesCompleted ?? 0), 0) / allStreaks.length)
+        : 0;
+
+      const avgMinsLearned = allStreaks.length > 0
+        ? Math.round(allStreaks.reduce((sum, s) => sum + (s.totalMinsLearned ?? 0), 0) / allStreaks.length)
+        : 0;
+
+      const avgReadinessScore = allGaps.length > 0
+        ? Math.round(allGaps.reduce((sum, g) => sum + parseFloat(String(g.overallReadinessScore ?? 50)), 0) / allGaps.length)
+        : 50;
+
+      const bandCounts = allGaps.reduce((acc, g) => {
+        const band = g.readinessBand ?? "developing";
+        acc[band] = (acc[band] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const myModulesCompleted = myStreak[0]?.totalModulesCompleted ?? 0;
+      const myScore = myGap[0]?.overallReadinessScore ? parseFloat(String(myGap[0].overallReadinessScore)) : 0;
+
+      const modulesPercentile = allStreaks.length > 1
+        ? Math.round((allStreaks.filter(s => (s.totalModulesCompleted ?? 0) < myModulesCompleted).length / (allStreaks.length - 1)) * 100)
+        : 0;
+
+      const scorePercentile = allGaps.length > 1
+        ? Math.round((allGaps.filter(g => parseFloat(String(g.overallReadinessScore ?? 0)) < myScore).length / (allGaps.length - 1)) * 100)
+        : 0;
+
+      return {
+        myStats: {
+          modulesCompleted: myModulesCompleted,
+          minsLearned: myStreak[0]?.totalMinsLearned ?? 0,
+          readinessScore: myScore,
+          readinessBand: myGap[0]?.readinessBand ?? null,
+        },
+        platformAverages: {
+          avgModulesCompleted,
+          avgMinsLearned,
+          avgReadinessScore,
+          totalLearners: allStreaks.length,
+          bandDistribution: bandCounts,
+        },
+        percentiles: {
+          modulesCompleted: modulesPercentile,
+          readinessScore: scorePercentile,
+        },
       };
     }),
 });

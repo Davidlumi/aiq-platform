@@ -46,6 +46,7 @@ const navSections: NavSection[] = [
     section: "Development",
     items: [
       { icon: BookOpen, label: "Learning", path: "/learning" },
+      { icon: Users, label: "Team Progress", path: "/learning/team" },
       { icon: FileText, label: "My Reports", path: "/reports" },
     ],
   },

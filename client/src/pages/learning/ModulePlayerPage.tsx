@@ -23,7 +23,7 @@ import {
   ArrowLeft, BookOpen, Zap, FileText, HelpCircle, Layers,
   Video, MessageSquare, Users, Clock, CheckCircle2, ChevronRight,
   ChevronLeft, Target, Brain, Lightbulb, BarChart3, Star,
-  AlertCircle, ThumbsUp, RefreshCw, Send,
+  AlertCircle, ThumbsUp, RefreshCw, Send, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -810,7 +810,11 @@ export default function ModulePlayerPage() {
     { moduleId: params.moduleId ?? "" },
     { enabled: !!params.moduleId, retry: 1 }
   );
-
+  // LLM-personalised context (cached per user+module)
+  const { data: personalised, isLoading: personalisedLoading } = trpc.adaptiveLearning.getPersonalisedModuleContext.useQuery(
+    { moduleId: params.moduleId ?? "" },
+    { enabled: !!params.moduleId && !!mod, retry: 1, staleTime: 1000 * 60 * 60 }
+  );
   const markComplete = trpc.adaptiveLearning.markModuleComplete.useMutation({
     onSuccess: () => {
       toast.success("Module completed! Spaced repetition scheduled.");
@@ -896,6 +900,44 @@ export default function ModulePlayerPage() {
             {mod.subtitle && <p className="text-sm text-muted-foreground">{mod.subtitle}</p>}
           </div>
 
+          {/* LLM Personalised Context Panel */}
+          {(personalisedLoading || personalised) && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">Personalised for you</span>
+                {personalisedLoading && <span className="text-xs text-muted-foreground animate-pulse ml-1">Generating…</span>}
+              </div>
+              {personalised ? (
+                <>
+                  {personalised.personalisedIntro && (
+                    <p className="text-sm text-foreground/90 leading-relaxed">{personalised.personalisedIntro}</p>
+                  )}
+                  {Array.isArray(personalised.contextualExamples) && (personalised.contextualExamples as string[]).length > 0 && (
+                    <div className="space-y-1">
+                      {(personalised.contextualExamples as string[]).slice(0, 2).map((ex, i) => (
+                        <p key={i} className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-3 italic">{ex}</p>
+                      ))}
+                    </div>
+                  )}
+                  {Array.isArray(personalised.failureModeCallouts) && (personalised.failureModeCallouts as string[]).length > 0 && (
+                    <div className="p-2.5 rounded-lg bg-amber-950/20 border border-amber-700/30 mt-1">
+                      {(personalised.failureModeCallouts as string[]).slice(0, 1).map((fm, i) => (
+                        <p key={i} className="text-xs text-amber-400">
+                          <span className="font-semibold">Watch out: </span>{fm}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="h-3 rounded bg-primary/10 animate-pulse w-3/4" />
+                  <div className="h-3 rounded bg-primary/10 animate-pulse w-1/2" />
+                </div>
+              )}
+            </div>
+          )}
           {/* Module content */}
           <div className="p-5 rounded-2xl border border-border bg-card">
             {mod.modality === "tutorial"   && <TutorialRenderer  body={body} onComplete={handleComplete} />}

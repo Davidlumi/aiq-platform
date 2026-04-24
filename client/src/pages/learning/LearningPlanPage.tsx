@@ -19,7 +19,8 @@ import {
   MessageSquare, Users, Target, Brain, Lightbulb, BarChart3,
   Clock, ChevronRight, TrendingUp, TrendingDown, Minus,
   CheckCircle2, AlertTriangle, Award, RefreshCw, Flame,
-  ArrowRight, Play, RotateCcw, Lock,
+  ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles,
+  BarChart2, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -317,7 +318,7 @@ function ProgressTab({ capProgress }: { capProgress: any }) {
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress" | "peers">("plan");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch adaptive plan (auto-generates if none exists)
@@ -340,6 +341,10 @@ export default function LearningPlanPage() {
 
   // Fetch due reviews
   const { data: dueReviews } = trpc.adaptiveLearning.getDueReviews.useQuery(undefined, { retry: 1 });
+  // Fetch streak & milestones
+  const { data: streakData } = trpc.adaptiveLearning.getLearningStreak.useQuery(undefined, { retry: 1 });
+  // Fetch peer benchmarks
+  const { data: peerData } = trpc.adaptiveLearning.getPeerBenchmarks.useQuery(undefined, { retry: 1 });
 
   // Refresh plan (force regenerate)
   const handleRefreshPlan = async () => {
@@ -393,7 +398,9 @@ export default function LearningPlanPage() {
     { id: "plan" as const,     label: "My Plan",      count: todayItems.length + reviewItems.length },
     { id: "gaps" as const,     label: "Gap Analysis", count: criticalGapCount },
     { id: "progress" as const, label: "Progress",     count: completedItems.length },
+    { id: "peers" as const,    label: "Benchmarks",   count: 0 },
   ];
+  type TabId = "plan" | "gaps" | "progress" | "peers";
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
@@ -553,7 +560,125 @@ export default function LearningPlanPage() {
         </div>
       )}
 
-      {/* ── Gap Analysis Tab ──────────────────────────────────────────────── */}
+       {/* ── Peer Benchmarks Tab ─────────────────────────────────────── */}
+      {activeTab === "peers" && (
+        <div className="space-y-5">
+          {/* My stats vs platform */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart2 className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold">Your Standing</h2>
+            </div>
+            {!peerData ? (
+              <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  { label: "Modules Completed", mine: peerData.myStats.modulesCompleted, avg: peerData.platformAverages.avgModulesCompleted, pct: peerData.percentiles.modulesCompleted, icon: BookOpen, color: "#6366f1" },
+                  { label: "Mins Learned", mine: peerData.myStats.minsLearned, avg: peerData.platformAverages.avgMinsLearned, pct: null, icon: Clock, color: "#10b981" },
+                  { label: "Readiness Score", mine: Math.round(peerData.myStats.readinessScore), avg: peerData.platformAverages.avgReadinessScore, pct: peerData.percentiles.readinessScore, icon: Target, color: "#f59e0b" },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-xl border border-border bg-muted/20 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                    <p className="text-2xl font-bold">{stat.mine}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Platform avg: {stat.avg}</p>
+                    {stat.pct !== null && (
+                      <div className="mt-2">
+                        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                          <span>Percentile</span><span>{stat.pct}th</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${stat.pct}%`, background: stat.color }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Readiness band distribution */}
+          {peerData && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <UserCheck className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold">Platform Readiness Distribution</h2>
+                <Badge variant="outline" className="text-[10px]">{peerData.platformAverages.totalLearners} learners</Badge>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(peerData.platformAverages.bandDistribution).map(([band, count]) => {
+                  const total = peerData.platformAverages.totalLearners;
+                  const pct = total > 0 ? Math.round(((count as number) / total) * 100) : 0;
+                  const colors: Record<string, string> = { critical: "#ef4444", developing: "#f59e0b", proficient: "#10b981", advanced: "#6366f1" };
+                  const isMe = peerData.myStats.readinessBand === band;
+                  return (
+                    <div key={band} className={cn("flex items-center gap-3 p-2 rounded-lg", isMe && "bg-primary/5 border border-primary/20")}>
+                      <div className="w-20 text-xs capitalize font-medium" style={{ color: colors[band] ?? "#888" }}>{band}</div>
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[band] ?? "#888" }} />
+                      </div>
+                      <div className="w-12 text-right text-xs text-muted-foreground">{pct}%</div>
+                      {isMe && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-0 px-1.5">You</Badge>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {/* Streak in benchmarks context */}
+          {streakData && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Flame className="h-5 w-5 text-orange-400" />
+                <h2 className="font-semibold">Your Learning Streak</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Current Streak", value: `${streakData.currentStreak}d`, icon: Flame, color: "#f97316" },
+                  { label: "Longest Streak", value: `${streakData.longestStreak}d`, icon: Trophy, color: "#f59e0b" },
+                  { label: "Modules Done", value: streakData.totalModulesCompleted, icon: CheckCircle2, color: "#10b981" },
+                  { label: "Mins Learned", value: streakData.totalMinsLearned, icon: Clock, color: "#6366f1" },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+                    <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
+                    <p className="text-xl font-bold">{s.value}</p>
+                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Next milestone */}
+              {streakData.nextMilestone && (
+                <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-amber-400" />
+                      <span className="text-sm font-medium">Next milestone: {streakData.nextMilestone.label}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{streakData.nextMilestone.current}/{streakData.nextMilestone.target} modules</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${Math.min(100, (streakData.nextMilestone.current / streakData.nextMilestone.target) * 100)}%` }} />
+                  </div>
+                </div>
+              )}
+              {/* Earned milestones */}
+              {streakData.milestones.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {streakData.milestones.map((m: string) => (
+                    <Badge key={m} variant="outline" className="text-[10px] bg-amber-900/20 text-amber-400 border-amber-700/30">
+                      <Trophy className="h-2.5 w-2.5 mr-1" />{m.replace("modules_", "") + " modules"}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {/* ── Gap Analysis Tab ──────────────────────────────────────────── */}
       {activeTab === "gaps" && (
         gapLoading
           ? <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}</div>
