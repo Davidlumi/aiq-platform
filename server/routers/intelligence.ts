@@ -130,6 +130,14 @@ export const intelligenceRouter = router({
       hasRedundancyPolicy: z.boolean().optional(),
       hasWhistleblowingPolicy: z.boolean().optional(),
       hasEdiPolicy: z.boolean().optional(),
+      // Phase 2 additions
+      aiToolsInUse: z.array(z.string()).optional(),
+      ukRegulatoryFrameworks: z.array(z.string()).optional(),
+      aiPolicyStatus: z.enum(["none", "draft", "approved", "embedded"]).optional(),
+      quarterlyReviewEnabled: z.boolean().optional(),
+      revalidationCycleMonths: z.number().int().min(1).max(60).optional(),
+      smallHRFunctionMode: z.boolean().optional(),
+      companyAiContextNarrative: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await upsertOrgContext({ tenantId: ctx.user.tenantId, ...input });

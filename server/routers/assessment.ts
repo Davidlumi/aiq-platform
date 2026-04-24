@@ -123,6 +123,8 @@ type NextItem = {
   aiOutput?: string;
   /** Present for data_interpretation */
   dataContext?: string;
+  /** Immersive artefact type for rich rendering */
+  artefactType?: string;
   capability: string;
   capabilityKey: string;
   workflow: string;
@@ -257,9 +259,10 @@ async function persistAndBuildNextItem(
     phase,
   };
 
-  // Store aiOutput and dataContext in metadata for retrieval
+  // Store aiOutput, dataContext, and artefactType in metadata for retrieval
   if (generated.aiOutput) generatedItemMetadata["ai_output"] = generated.aiOutput;
   if (generated.dataContext) generatedItemMetadata["data_context"] = generated.dataContext;
+  if (generated.artefactType && generated.artefactType !== "none") generatedItemMetadata["artefact_type"] = generated.artefactType;
 
   await db.insert(assessmentItems).values({
     id: generatedItemId,
@@ -299,6 +302,7 @@ async function persistAndBuildNextItem(
     question: generated.question,
     aiOutput: generated.aiOutput,
     dataContext: generated.dataContext,
+    artefactType: generated.artefactType,
     capability: CAPABILITY_DISPLAY[generated.capabilityKey] ?? generated.capabilityKey,
     capabilityKey: generated.capabilityKey,
     workflow: generated.workflow,
@@ -701,6 +705,40 @@ export const assessmentRouter = router({
       const activeScoringCfg = cfg; // D1: alias for consistency with getNextItem
         sessionScoringConfigVersion = cfg?.version ?? null;
       } catch {}
+
+      // NW-1: Generate persistent narrative context for the session
+      // This is a short paragraph that frames the entire assessment as a realistic workplace scenario.
+      let narrativeContext: string | null = null;
+      try {
+        const startUserRow = await db
+          .select({ sector: users.sector, seniorityLevel: users.seniorityLevel, jobFunction: users.jobFunction, firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, ctx.user.id))
+          .limit(1);
+        const startUser = startUserRow[0];
+        const roleArchetype = resolveRoleArchetype(input.roleHint ?? startUser?.jobFunction ?? null);
+        const sector = startUser?.sector ?? "professional services";
+        const seniority = startUser?.seniorityLevel ?? "mid";
+        const narrativeResponse = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a scenario designer for enterprise HR assessments. Generate a single short paragraph (2-3 sentences) that establishes a persistent fictional workplace context for an assessment session. The context should feel like a real UK organisation. Name a fictional company (not a real company). The person taking the assessment is a ${roleArchetype.displayName} at a ${sector} organisation. Seniority: ${seniority}. Return ONLY the paragraph text — no labels, no JSON, no markdown.`,
+            },
+            {
+              role: "user",
+              content: `Generate the narrative context paragraph for this assessment session.`,
+            },
+          ],
+        });
+        const narrativeText = narrativeResponse.choices?.[0]?.message?.content;
+        if (typeof narrativeText === "string" && narrativeText.trim().length > 20) {
+          narrativeContext = narrativeText.trim();
+        }
+      } catch (err) {
+        console.warn("[assessment.startSession] Narrative context generation failed (non-fatal):", err);
+      }
+
       const sessionId = nanoid();
       await db.insert(assessmentSessions).values({
         id: sessionId,
@@ -729,6 +767,8 @@ export const assessmentRouter = router({
           pendingNextItem: null,
           // WS5.2: Session metadata
           pinnedModelVersion: "adaptive-v2",
+          // NW-1: Persistent narrative context for the session
+          narrativeContext,
         },
         // WS5.2: Top-level session metadata columns
         deviceType: input.deviceType ?? null,
@@ -922,6 +962,8 @@ export const assessmentRouter = router({
         (answeredCount >= activeScoringCfg.evidenceTargetItems && !nextItem) ||
         (state.evidenceSufficient && answeredCount >= MINIMUM_EVIDENCE.totalItems);
 
+      const narrativeContext = (meta.narrativeContext as string) ?? null;
+
       return {
         session: session[0],
         answers: rawAnswers,
@@ -930,6 +972,7 @@ export const assessmentRouter = router({
         nextItem,
         isComplete,
         phase,
+        narrativeContext,
         sessionState: {
           canComplete: state.canComplete,
           completionBlockers: state.completionBlockers,
@@ -1777,6 +1820,76 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           };
         })
       );
+      // ── Scenario callbacks: top 5 most signal-rich answers ───────────────────
+      const allAnswers = await db
+        .select()
+        .from(assessmentAnswers)
+        .where(eq(assessmentAnswers.sessionId, input.sessionId))
+        .orderBy(assessmentAnswers.submittedAt);
+
+      const OUTCOME_REVEAL: Record<string, string> = {
+        strong: "This choice demonstrates strong capability — you correctly prioritised validation and critical evaluation before acting.",
+        acceptable: "This choice shows reasonable judgement, though a stronger approach would have included more rigorous verification.",
+        weak: "This choice reveals a gap — acting on AI output without sufficient validation is a common but high-risk pattern.",
+        poor: "This choice indicates a significant capability gap. Accepting AI outputs uncritically in high-stakes HR decisions creates serious risk.",
+      };
+
+      const signalRichAnswers = allAnswers
+        .map(a => {
+          let deltas: Record<string, number> = {};
+          try { deltas = typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson as string) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch {}
+          return { answer: a, deltas, totalSignal: Object.values(deltas).reduce((s, v) => s + Math.abs(v as number), 0) };
+        })
+        .sort((a, b) => b.totalSignal - a.totalSignal)
+        .slice(0, 5);
+
+      const scenarioCallbacks: Array<{
+        itemId: string; scenarioText: string; chosenLabel: string; chosenText: string;
+        outcomeClass: string | null; revealText: string; capabilityKey: string;
+        signalDeltas: Record<string, number>;
+      }> = [];
+
+      for (const { answer, deltas } of signalRichAnswers) {
+        const item = await db.select().from(assessmentItems).where(eq(assessmentItems.id, answer.itemId)).limit(1);
+        if (!item[0]) continue;
+        const meta = (typeof item[0].metadataJson === "string" ? JSON.parse(item[0].metadataJson as string) : (item[0].metadataJson ?? {})) as Record<string, unknown>;
+        const scenarioText = ((meta.scenario as string) ?? item[0].prompt.split("\n\n")[0] ?? "").slice(0, 220);
+        const capabilityKey = (meta.capability_key as string) ?? "";
+        const selectedVal = typeof answer.selectedValueJson === "string" ? answer.selectedValueJson : String(answer.selectedValueJson ?? "");
+        const chosenOption = await db.select().from(assessmentItemOptions)
+          .where(and(eq(assessmentItemOptions.itemId, answer.itemId), eq(assessmentItemOptions.value, selectedVal))).limit(1);
+        const chosenLabel = chosenOption[0]?.value ?? selectedVal;
+        const chosenText = (chosenOption[0]?.label ?? "").slice(0, 130);
+        const outcomeClass = answer.outcomeClass ?? "weak";
+        scenarioCallbacks.push({ itemId: answer.itemId, scenarioText, chosenLabel, chosenText, outcomeClass, revealText: OUTCOME_REVEAL[outcomeClass] ?? OUTCOME_REVEAL.weak, capabilityKey, signalDeltas: deltas });
+      }
+
+      // ── Confidence calibration ─────────────────────────────────────────────
+      const calibrationPoints = allAnswers
+        .filter(a => a.confidenceScore !== null && a.outcomeClass !== null)
+        .map(a => ({ confidence: parseFloat(String(a.confidenceScore ?? 0.5)), outcomeClass: a.outcomeClass ?? "weak" }));
+      const overconfidentCount = calibrationPoints.filter(p => p.confidence > 0.65 && (p.outcomeClass === "weak" || p.outcomeClass === "poor")).length;
+      const underconfidentCount = calibrationPoints.filter(p => p.confidence < 0.4 && (p.outcomeClass === "strong" || p.outcomeClass === "acceptable")).length;
+      const wellCalibratedCount = Math.max(0, calibrationPoints.length - overconfidentCount - underconfidentCount);
+      const avgConfidence = calibrationPoints.length > 0 ? calibrationPoints.reduce((s, p) => s + p.confidence, 0) / calibrationPoints.length : 0.5;
+      const strongAnswers = calibrationPoints.filter(p => p.outcomeClass === "strong" || p.outcomeClass === "acceptable");
+      const weakAnswers = calibrationPoints.filter(p => p.outcomeClass === "weak" || p.outcomeClass === "poor");
+      const avgConfidenceOnStrong = strongAnswers.length > 0 ? strongAnswers.reduce((s, p) => s + p.confidence, 0) / strongAnswers.length : 0;
+      const avgConfidenceOnWeak = weakAnswers.length > 0 ? weakAnswers.reduce((s, p) => s + p.confidence, 0) / weakAnswers.length : 0;
+      const confidenceCalibration = {
+        overconfidentCount, underconfidentCount, wellCalibratedCount,
+        totalAnswers: calibrationPoints.length,
+        avgConfidence: Math.round(avgConfidence * 100),
+        avgConfidenceOnStrong: Math.round(avgConfidenceOnStrong * 100),
+        avgConfidenceOnWeak: Math.round(avgConfidenceOnWeak * 100),
+        calibrationIndex: strongAnswers.length > 0 && weakAnswers.length > 0 ? Math.round((avgConfidenceOnStrong - avgConfidenceOnWeak) * 100) : null,
+        summary: overconfidentCount > wellCalibratedCount
+          ? "You tended to be overconfident — you expressed high certainty on answers that revealed capability gaps."
+          : underconfidentCount > wellCalibratedCount
+          ? "You tended to be underconfident — you expressed doubt on answers that were actually strong."
+          : "Your confidence was well-calibrated — your certainty levels broadly matched the quality of your answers.",
+      };
+
       return {
         session: session[0],
         score: {
@@ -1788,6 +1901,8 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           },
         },
         longitudinalData: longitudinalData.filter(Boolean),
+        scenarioCallbacks,
+        confidenceCalibration,
       };
     }),
   // ── Get user's assessment history ──────────────────────────────────────────

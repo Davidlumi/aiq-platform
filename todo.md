@@ -1230,3 +1230,54 @@
 - [x] P1-38: Create Phase 1 Evolution Pause Document — comprehensive status document capturing all completed work, architecture decisions, and remaining roadmap
 - [x] P1-39: Update Pause Document v2.0 with gap analysis against all 4 source documents (Methodology v10.7, Reporting v2.3, Adaptive Learning v1.0, Handoff Briefing)
 - [x] P1-40: Fix remaining v9.2 capability key references in dashboard router, LearnerDashboard, AssessmentPage, ContentLibraryPage, auth router, assessment router, capabilityReport AIL engine
+
+## Phase 2 — Assessment Experience (Methodology §18)
+- [x] P2-AE-1: Apply pending SQL seeds (0022_learning_modules_seed.sql, 0022_scenario_content_seed.sql) to database
+- [ ] P2-AE-2: Three-level confidence staking UI — replace continuous slider with Guessing/Fairly sure/Certain three-button mechanic with distinct visual treatment and scoring weight
+- [ ] P2-AE-3: Post-completion reveal sequence — staged reveal (overall → domains → signals → recommendations) with narrative pacing and animation
+- [ ] P2-AE-4: Scenario callbacks on participant dashboard — "In scenario X, you chose Y — here's what that reveals" reflection cards
+- [ ] P2-AE-5: Confidence-calibration reflection panel — where confidence matched/mismatched performance across scenarios
+
+## Phase 2 — Manager Dashboard (R&A §3)
+- [ ] P2-MD-1: Manager delegation tiers — full autonomy / supervised / restricted / blocked per team member based on readiness state
+- [ ] P2-MD-2: Manager suggested conversations — LLM-generated coaching prompts from assessment data per team member
+- [ ] P2-MD-3: Misuse friction indicators — where team members may be misusing AI tools (blind acceptance, over-reliance patterns)
+- [ ] P2-MD-4: Individual development trajectory — multi-assessment trend chart per team member
+
+## Phase 2 — HR/CPO Dashboard (R&A §4-5, §13)
+- [ ] P2-HR-1: Organisational capability heatmap — department/function drill-down with colour-coded capability scores
+- [ ] P2-HR-2: Foundation Gap organisational view — which teams/departments have foundation gap classifications
+- [ ] P2-HR-3: Structured risk register — access controls, escalation workflows, risk-register-specific audit trail
+- [ ] P2-HR-4: Regulatory Readiness view — compliance posture panel against UK AI regulations (EU AI Act, ICO guidance, Equality Act)
+
+## Phase 2 — Configuration & Compliance (R&A §11-14)
+- [ ] P2-CC-1: Configuration onboarding flow — 30-45 min structured capture with 6 blocks (AI tools inventory, governance maturity, regulatory context, workforce composition, risk appetite, success metrics)
+- [ ] P2-CC-2: Company AI Context capture — structured admin block with AI tools inventory, deployment maturity assessment, governance framework status
+- [ ] P2-CC-3: Quarterly re-verification flow — scheduled re-assessment prompting with email/notification triggers
+- [ ] P2-CC-4: UK Regulatory Context capture — regulatory context fields, readiness scoring, compliance gap analysis
+- [ ] P2-CC-5: Small HR Function Mode — simplified mode for organisations with <50 employees (reduced assessment length, simplified reporting)
+
+## Phase 2 — Reporting (R&A §6, §16; Methodology §16.4-16.5)
+- [ ] P2-RP-1: Dual-audience technical narrative — detailed technical report with signal-level breakdown
+- [ ] P2-RP-2: Dual-audience executive narrative — plain-English executive summary report
+- [ ] P2-RP-3: Capability Requirement Translation Engine — map org AI tools to required capability domains
+- [ ] P2-RP-4: Multi-assessment trajectory visualisation — improving/stable/declining trend charts
+
+## Phase 3 — Learning Layer (AL §2-5)
+- [ ] P3-LL-1: Full 4-stage Learning Prescription Engine — immediate intervention → targeted development → consolidation → mastery pathway logic
+- [ ] P3-LL-2: Learning Pathway UI integrated into participant dashboard as primary panel
+- [ ] P3-LL-3: Module engagement telemetry — time-on-task, interaction depth, completion quality tracking
+- [ ] P3-LL-4: Transfer finding framework — reassessment mode measuring whether learning translated to behaviour change
+- [ ] P3-LL-5: No-transfer reporting — identify modules that failed to produce behavioural transfer
+- [ ] P3-LL-6: Learning-aware reassessment mode — reassessment that accounts for completed learning modules
+
+## Phase 1 Remaining
+- [x] P1-REM-1: Immersive scenario artefact rendering — email mockup, Slack thread, HRIS screen, policy document visual formats in assessment session (ArtefactBlock component wired into AssessmentSessionPage)
+- [x] P1-REM-2: Narrative wrapper — fictional week at a mid-sized organisation connecting assessment scenarios (NarrativeWrapper component, LLM-generated session context stored in sessionMetadataJson.narrativeContext)
+- [x] P1-REM-3: Human review queue UI — reviewer interface for processing quality gate flagged items (LlmReviewQueueTab + SessionFlagsTab in BackOfficePage, fully wired to tRPC)
+
+## Technical Debt
+- [ ] TD-1: Rate limiting on auth endpoints (login, register, password reset)
+- [ ] TD-2: Email notifications for password reset (SMTP integration)
+- [ ] TD-3: Feature flag back-office UI — configurable feature flags via admin panel
+- [ ] TD-4: Multi-tenancy enforcement audit — verify all tRPC procedures enforce tenant isolation

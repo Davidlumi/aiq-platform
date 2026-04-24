@@ -192,6 +192,8 @@ export interface GenerationVariables {
 export interface GeneratedItem {
   title: string;
   scenario: string;
+  /** Immersive artefact type for rich scenario rendering */
+  artefactType?: "none" | "email_thread" | "cv_extract" | "policy_doc" | "meeting_notes" | "chat_log" | "data_table";
   constraint: string;
   question: string;
   /** For scenario_critique / error_detection / prompt_diagnosis */
@@ -597,6 +599,7 @@ Return ONLY valid JSON.`;
   const schemaProperties: Record<string, unknown> = {
     title: { type: "string" },
     scenario: { type: "string" },
+    artefactType: { type: "string", enum: ["none", "email_thread", "cv_extract", "policy_doc", "meeting_notes", "chat_log", "data_table"] },
     constraint: { type: "string" },
     question: { type: "string" },
     options: {
@@ -616,7 +619,7 @@ Return ONLY valid JSON.`;
       },
     },
   };
-  const schemaRequired = ["title", "scenario", "constraint", "question", "options"];
+  const schemaRequired = ["title", "scenario", "artefactType", "constraint", "question", "options"];
 
   if (needsAiOutput) {
     schemaProperties["ai_output"] = { type: "string" };
@@ -716,6 +719,7 @@ Return ONLY valid JSON.`;
     return {
       title: parsed.title ?? "Assessment Item",
       scenario: parsed.scenario ?? "",
+      artefactType: parsed.artefactType ?? "none",
       constraint: parsed.constraint ?? "",
       question: parsed.question ?? "What is the most appropriate action?",
       aiOutput: parsed.ai_output ?? undefined,

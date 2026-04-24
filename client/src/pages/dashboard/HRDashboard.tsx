@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import {
   Users, CheckCircle, AlertTriangle, XCircle, BarChart3,
   ShieldCheck, ShieldAlert, Calendar, FileText, Activity,
-  TrendingUp, RefreshCw,
+  TrendingUp, RefreshCw, Layers, BookOpen, Globe, Zap, Info,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -186,6 +186,243 @@ export default function HRDashboard() {
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">No assessment data yet</div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Org Capability Heatmap */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <Layers className="w-4 h-4 text-[#AA3377]" />Capability Heatmap
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Average score per capability domain. Red = critical gap (&lt;40), amber = developing (40–74), green = strong (≥75).</p>
+        </CardHeader>
+        <CardContent>
+          {caps.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">No assessment data yet</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {caps.map(c => {
+                const score = c.avgScore ?? 0;
+                const color = score >= 75 ? "#228833" : score >= 40 ? "#EE8866" : "#CC3311";
+                const bg = score >= 75 ? "#22883312" : score >= 40 ? "#EE886612" : "#CC331112";
+                const border = score >= 75 ? "#22883340" : score >= 40 ? "#EE886640" : "#CC331140";
+                return (
+                  <div key={c.capability} className="rounded-xl border p-4 text-center" style={{ borderColor: border, backgroundColor: bg }}>
+                    <div className="text-3xl font-bold font-sora mb-1" style={{ color }}>{score}</div>
+                    <div className="text-xs font-medium text-foreground leading-tight">{CAP_LABELS[c.capability] ?? c.capability}</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">{c.assessedCount} assessed</div>
+                    <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${color}20` }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Foundation Gap View + Risk Register */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <BookOpen className="w-4 h-4 text-[#D97706]" />Foundation Gap View
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Employees who have not yet established foundational AI capability (AI Interaction + Output Evaluation)</p>
+          </CardHeader>
+          <CardContent>
+            {caps.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">No data</div>
+            ) : (() => {
+              const foundationCaps = caps.filter(c => c.capability === "ai_interaction" || c.capability === "ai_output_evaluation");
+              const foundationGapCount = foundationCaps.filter(c => (c.avgScore ?? 0) < 55).length;
+              const totalAssessed = caps[0]?.assessedCount ?? 0;
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold font-sora" style={{ color: foundationGapCount > 0 ? "#D97706" : "#228833" }}>
+                        {foundationGapCount}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Foundation domains below threshold</div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        The two foundation domains (AI Interaction and Output Evaluation) must reach ≥55 before adaptive capability can be reliably assessed. 
+                        Employees below this threshold are classified as Foundation Gap regardless of other scores.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {foundationCaps.map(c => {
+                      const score = c.avgScore ?? 0;
+                      const isGap = score < 55;
+                      const color = isGap ? "#D97706" : "#228833";
+                      return (
+                        <div key={c.capability} className="flex items-center gap-3">
+                          <div className="w-32 text-xs font-medium text-foreground">{CAP_LABELS[c.capability]}</div>
+                          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
+                          </div>
+                          <div className="text-xs font-bold w-8 text-right" style={{ color }}>{score}</div>
+                          {isGap && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#D97706]/10 text-[#D97706] font-semibold">GAP</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <ShieldAlert className="w-4 h-4 text-[#EE6677]" />Risk Register
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Organisational AI risk indicators requiring governance attention</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[
+                {
+                  label: "High-risk employees",
+                  value: data?.riskDistribution?.high ?? 0,
+                  threshold: 0,
+                  desc: "Employees with high risk band — require immediate manager review",
+                  color: "#EE6677",
+                },
+                {
+                  label: "Compliance breaches",
+                  value: data?.complianceDistribution?.breach ?? 0,
+                  threshold: 0,
+                  desc: "Active policy compliance breaches in the last 30 days",
+                  color: "#CC3311",
+                },
+                {
+                  label: "Overdue revalidations",
+                  value: data?.revalidationStats?.overdue ?? 0,
+                  threshold: 0,
+                  desc: "Employees whose assessment validity has expired",
+                  color: "#D97706",
+                },
+                {
+                  label: "At-risk employees",
+                  value: data?.readinessDistribution?.at_risk ?? 0,
+                  threshold: Math.round((data?.totalUsers ?? 0) * 0.3),
+                  desc: "Employees classified at-risk (flag if &gt;30% of workforce)",
+                  color: "#EE8866",
+                },
+                {
+                  label: "Unassessed employees",
+                  value: data?.readinessDistribution?.unknown ?? 0,
+                  threshold: Math.round((data?.totalUsers ?? 0) * 0.2),
+                  desc: "Employees with no assessment data (flag if &gt;20% of workforce)",
+                  color: "#9CA3AF",
+                },
+              ].map(item => {
+                const isFlag = item.value > item.threshold;
+                const color = isFlag ? item.color : "#228833";
+                return (
+                  <div key={item.label} className="flex items-start gap-3 p-2.5 rounded-lg border" style={{ borderColor: `${color}25`, backgroundColor: `${color}08` }}>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${color}20` }}>
+                      {isFlag ? <AlertTriangle className="w-3 h-3" style={{ color }} /> : <CheckCircle className="w-3 h-3" style={{ color }} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                        <span className="text-sm font-bold" style={{ color }}>{item.value}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Regulatory Readiness Panel */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <Globe className="w-4 h-4 text-[#0D9488]" />Regulatory Readiness
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">UK AI regulatory context indicators — based on assessed capability profile</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              {
+                label: "EU AI Act Awareness",
+                desc: "Ethics & Trust domain score indicates workforce awareness of AI regulatory obligations",
+                score: caps.find(c => c.capability === "ai_ethics_trust")?.avgScore ?? null,
+                threshold: 60,
+                icon: ShieldCheck,
+              },
+              {
+                label: "Algorithmic Accountability",
+                desc: "Output Evaluation domain score indicates ability to audit and challenge AI outputs",
+                score: caps.find(c => c.capability === "ai_output_evaluation")?.avgScore ?? null,
+                threshold: 60,
+                icon: Zap,
+              },
+              {
+                label: "Change Governance",
+                desc: "Change Leadership domain score indicates capacity to manage AI-driven organisational change",
+                score: caps.find(c => c.capability === "ai_change_leadership")?.avgScore ?? null,
+                threshold: 55,
+                icon: TrendingUp,
+              },
+              {
+                label: "Workforce Disclosure Readiness",
+                desc: "Workforce AI Readiness score indicates capacity to disclose AI use to employees and regulators",
+                score: caps.find(c => c.capability === "workforce_ai_readiness")?.avgScore ?? null,
+                threshold: 55,
+                icon: FileText,
+              },
+            ].map(item => {
+              const Icon = item.icon;
+              const score = item.score;
+              const status = score === null ? "unknown" : score >= item.threshold ? "ready" : score >= item.threshold - 15 ? "partial" : "gap";
+              const statusConfig = {
+                ready:   { color: "#228833", bg: "#22883312", border: "#22883340", label: "Ready" },
+                partial: { color: "#EE8866", bg: "#EE886612", border: "#EE886640", label: "Partial" },
+                gap:     { color: "#EE6677", bg: "#EE667712", border: "#EE667740", label: "Gap" },
+                unknown: { color: "#9CA3AF", bg: "#9CA3AF12", border: "#9CA3AF40", label: "No Data" },
+              }[status];
+              return (
+                <div key={item.label} className="rounded-xl border p-4" style={{ borderColor: statusConfig.border, backgroundColor: statusConfig.bg }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="w-4 h-4" style={{ color: statusConfig.color }} />
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ color: statusConfig.color, backgroundColor: `${statusConfig.color}15` }}>{statusConfig.label}</span>
+                  </div>
+                  <p className="text-xs font-semibold text-foreground mb-1">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">{item.desc}</p>
+                  {score !== null && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: statusConfig.color }} />
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: statusConfig.color }}>{score}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex items-start gap-2 mt-4 p-3 rounded-lg bg-muted/30 border border-border">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <span className="font-medium text-foreground">Regulatory context note:</span> These indicators are derived from AiQ capability scores and are intended as internal readiness signals only. 
+              They do not constitute legal compliance assessments. UK AI regulatory requirements include the ICO AI and Data Protection guidance, 
+              the proposed AI Liability Directive, and sector-specific obligations (FCA, NHS, etc.). Consult your legal team for formal compliance assessment.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

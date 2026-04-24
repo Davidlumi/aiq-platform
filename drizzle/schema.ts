@@ -173,6 +173,12 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   localeCode: varchar("locale_code", { length: 10 }).default("en-GB"),
   deviceType: varchar("device_type", { length: 20 }),
   scoringConfigVersionAtStart: int("scoring_config_version_at_start"),
+  // Learning-aware reassessment mode per Adaptive Learning §6
+  learningAwareMode: boolean("learning_aware_mode").notNull().default(false),
+  // JSON array of { moduleId, signals: string[], completedAt: number } for recently completed modules
+  learningContextJson: json("learning_context_json").$default(() => ([])),
+  // Transfer finding result per §6.3: clean_transfer | broad_development | no_transfer | attention_warranted
+  transferFindingJson: json("transfer_finding_json"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   userStateIdx: index("idx_assessment_sessions_user_state").on(t.tenantId, t.userId, t.startedAt),
@@ -820,6 +826,14 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   hasRedundancyPolicy: boolean("has_redundancy_policy").default(false),
   hasWhistleblowingPolicy: boolean("has_whistleblowing_policy").default(false),
   hasEdiPolicy: boolean("has_edi_policy").default(false),
+  // Phase 2 additions
+  aiToolsInUseJson: text("ai_tools_in_use_json"),                                          // specific AI tools deployed
+  ukRegulatoryFrameworksJson: text("uk_regulatory_frameworks_json"),                       // ICO, FCA, NHS, etc.
+  aiPolicyStatus: mysqlEnum("ai_policy_status", ["none", "draft", "approved", "embedded"]).default("none"),
+  quarterlyReviewEnabled: boolean("quarterly_review_enabled").default(false),
+  revalidationCycleMonths: int("revalidation_cycle_months").default(12),
+  smallHRFunctionMode: boolean("small_hr_function_mode").default(false),                   // <50 employees, simplified scoring
+  companyAiContextNarrative: text("company_ai_context_narrative"),                        // free-text AI context for scenario personalisation
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1188,11 +1202,19 @@ export const adaptivePlanItems = mysqlTable("adaptive_plan_items", {
   required: boolean("required").notNull().default(true),
   unlockAfterModuleId: varchar("unlock_after_module_id", { length: 36 }),
   status: mysqlEnum("status", ["locked", "available", "in_progress", "completed", "skipped"]).notNull().default("available"),
+  // Spec §5.1 completion states — only completed_with_engagement advances the pathway
+  completionState: mysqlEnum("completion_state", ["not_started", "opened", "partial", "completed", "completed_with_engagement"]).notNull().default("not_started"),
+  // No-transfer tracking per §5.4
+  noTransferCount: int("no_transfer_count").notNull().default(0),
+  alternativeModalityPrescribed: boolean("alternative_modality_prescribed").notNull().default(false),
+  honestDisclosureSent: boolean("honest_disclosure_sent").notNull().default(false),
   reasonJson: json("reason_json").$default(() => ({})),
-  // { capability, gapSeverity, modalityReason, roleRelevance }
+  // { capability, gapSeverity, modalityReason, roleRelevance, prescriptionStage: 1|2|3|4 }
   assignedAt: bigint("assigned_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
   startedAt: bigint("started_at", { mode: "number" }),
   completedAt: bigint("completed_at", { mode: "number" }),
+  timeSpentSeconds: int("time_spent_seconds").notNull().default(0),
+  reflectionTextCaptured: boolean("reflection_text_captured").notNull().default(false),
   scoreJson: json("score_json").$default(() => ({})),
   // quiz/scenario scores, reflection quality, time spent
 }, (t) => ({

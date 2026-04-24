@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import {
   Users, AlertTriangle, CheckCircle, XCircle, HelpCircle,
   Calendar, TrendingDown, Search, ChevronRight, RefreshCw,
-  BarChart3, ShieldAlert, Award,
+  BarChart3, ShieldAlert, Award, MessageSquare, TrendingUp,
+  Layers, Zap, Info, ArrowUpRight, ArrowDownRight, Minus,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -291,6 +292,173 @@ export default function ManagerDashboard() {
                 })}
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delegation Tiers */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <Layers className="w-4 h-4 text-[#4477AA]" />Delegation Tiers
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Recommended AI task delegation level based on assessed capability and risk profile</p>
+        </CardHeader>
+        <CardContent>
+          {team.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
+          ) : (
+            <div className="space-y-2">
+              {(() => {
+                const TIERS = [
+                  { key: "autonomous",  label: "Tier 1 — Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#228833", bg: "#22883310", border: "#22883330", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
+                  { key: "supervised",  label: "Tier 2 — Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
+                  { key: "restricted",  label: "Tier 3 — Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
+                  { key: "paused",      label: "Tier 4 — Paused",        desc: "AI use should be paused pending capability development",     color: "#EE6677", bg: "#EE667710", border: "#EE667730", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
+                  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data — tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
+                ];
+                return TIERS.map(tier => {
+                  const members = team.filter(tier.test);
+                  if (members.length === 0) return null;
+                  return (
+                    <div key={tier.key} className="rounded-lg border p-3" style={{ borderColor: tier.border, backgroundColor: tier.bg }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ color: tier.color, backgroundColor: tier.bg, border: `1px solid ${tier.border}` }}>{tier.label}</span>
+                          <span className="text-xs text-muted-foreground">{tier.desc}</span>
+                        </div>
+                        <span className="text-xs font-bold" style={{ color: tier.color }}>{members.length}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {members.slice(0, 8).map(m => (
+                          <span key={m.id} className="text-xs px-2 py-0.5 rounded-full bg-background border border-border text-foreground">
+                            {m.firstName} {m.lastName}
+                          </span>
+                        ))}
+                        {members.length > 8 && <span className="text-xs text-muted-foreground">+{members.length - 8} more</span>}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Suggested Conversations + Misuse Friction Indicators */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <MessageSquare className="w-4 h-4 text-[#0D9488]" />Suggested Conversations
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Team members who would benefit from a 1:1 capability conversation</p>
+          </CardHeader>
+          <CardContent>
+            {team.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
+            ) : (() => {
+              const suggestions = team
+                .filter(m => m.latestReadiness && m.latestReadiness !== "safe")
+                .map(m => {
+                  const reason = m.latestReadiness === "unsafe" && m.risk?.band === "high"
+                    ? "High risk + unsafe classification — discuss AI task restrictions"
+                    : m.latestReadiness === "unsafe"
+                    ? "Unsafe classification — review AI task scope and support plan"
+                    : m.credibility?.band === "low"
+                    ? "Low credibility score — explore confidence calibration gaps"
+                    : m.revalidationDue && Math.ceil((new Date(m.revalidationDue).getTime() - Date.now()) / 86400000) <= 7
+                    ? "Revalidation overdue — discuss reassessment readiness"
+                    : "At-risk classification — explore development priorities";
+                  const priority = m.latestReadiness === "unsafe" && m.risk?.band === "high" ? 0
+                    : m.latestReadiness === "unsafe" ? 1
+                    : m.credibility?.band === "low" ? 2 : 3;
+                  return { ...m, reason, priority };
+                })
+                .sort((a, b) => a.priority - b.priority)
+                .slice(0, 5);
+              if (suggestions.length === 0) return (
+                <div className="text-center py-6">
+                  <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No urgent conversations needed</p>
+                </div>
+              );
+              return (
+                <div className="space-y-2">
+                  {suggestions.map(m => (
+                    <div key={m.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30 border border-border">
+                      <MessageSquare className="w-3.5 h-3.5 text-[#0D9488] mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{m.reason}</p>
+                      </div>
+                      <ReadinessBadge readiness={m.latestReadiness} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <Zap className="w-4 h-4 text-[#EE8866]" />Misuse Friction Indicators
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Patterns that may indicate AI misuse risk or over-reliance</p>
+          </CardHeader>
+          <CardContent>
+            {team.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
+            ) : (() => {
+              const indicators = [
+                {
+                  label: "High risk + safe classification",
+                  desc: "High risk score despite safe readiness — may indicate gaming or inconsistent behaviour",
+                  members: team.filter(m => m.risk?.band === "high" && m.latestReadiness === "safe"),
+                  color: "#EE8866",
+                },
+                {
+                  label: "Low credibility + safe classification",
+                  desc: "Low credibility band suggests inconsistent or low-confidence responses despite safe classification",
+                  members: team.filter(m => m.credibility?.band === "low" && m.latestReadiness === "safe"),
+                  color: "#EE6677",
+                },
+                {
+                  label: "Overdue revalidation",
+                  desc: "Assessment is overdue — capability profile may no longer reflect current practice",
+                  members: team.filter(m => m.revalidationDue && new Date(m.revalidationDue) < new Date()),
+                  color: "#D97706",
+                },
+              ].filter(i => i.members.length > 0);
+              if (indicators.length === 0) return (
+                <div className="text-center py-6">
+                  <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No friction indicators detected</p>
+                </div>
+              );
+              return (
+                <div className="space-y-3">
+                  {indicators.map(ind => (
+                    <div key={ind.label} className="rounded-lg border p-3" style={{ borderColor: `${ind.color}30`, backgroundColor: `${ind.color}08` }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: ind.color }} />
+                        <span className="text-xs font-semibold" style={{ color: ind.color }}>{ind.label} ({ind.members.length})</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{ind.desc}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {ind.members.slice(0, 5).map(m => (
+                          <span key={m.id} className="text-xs px-1.5 py-0.5 rounded bg-background border border-border text-foreground">{m.firstName} {m.lastName[0]}.</span>
+                        ))}
+                        {ind.members.length > 5 && <span className="text-xs text-muted-foreground">+{ind.members.length - 5}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>

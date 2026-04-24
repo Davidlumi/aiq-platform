@@ -683,13 +683,13 @@ export default function AssessmentResultsPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Results</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          AIQ V9.2 Standard Assessment · Completed {completedAt}
+          AiQ V10 Adaptive Assessment · Completed {completedAt}
         </p>
       </div>
 
       {/* ── Three-Layer Tabs ── */}
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
           <TabsTrigger value="summary" className="gap-1.5 text-xs">
             <Target className="w-3.5 h-3.5" />
             Summary
@@ -705,6 +705,14 @@ export default function AssessmentResultsPage() {
           <TabsTrigger value="benchmarks" className="gap-1.5 text-xs">
             <BarChart2 className="w-3.5 h-3.5" />
             Benchmarks
+          </TabsTrigger>
+          <TabsTrigger value="scenarios" className="gap-1.5 text-xs">
+            <FileText className="w-3.5 h-3.5" />
+            Scenarios
+          </TabsTrigger>
+          <TabsTrigger value="calibration" className="gap-1.5 text-xs">
+            <Zap className="w-3.5 h-3.5" />
+            Calibration
           </TabsTrigger>
         </TabsList>
 
@@ -1588,6 +1596,204 @@ export default function AssessmentResultsPage() {
               )}
             </>
           )}
+        </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 5: SCENARIO CALLBACKS
+            Shows the top 5 most signal-rich answers with scenario text, chosen
+            option, outcome class, and what the choice reveals about capability.
+        ══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="scenarios" className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground font-sora">Key Scenario Moments</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              The five scenarios that contributed most to your capability profile. Each choice reveals something specific about how you approach AI-assisted HR decisions.
+            </p>
+          </div>
+          {((data as any).scenarioCallbacks ?? []).length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="p-8 text-center">
+                <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Scenario callback data is not available for this session.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {((data as any).scenarioCallbacks as Array<{
+                itemId: string; scenarioText: string; chosenLabel: string; chosenText: string;
+                outcomeClass: string | null; revealText: string; capabilityKey: string;
+                signalDeltas: Record<string, number>;
+              }>).map((cb, idx) => {
+                const OUTCOME_COLORS: Record<string, { bg: string; border: string; badge: string; text: string; label: string }> = {
+                  strong:     { bg: "bg-[#228833]/8",  border: "border-[#228833]/30", badge: "bg-[#228833]/15 text-[#228833]",  text: "text-[#228833]",  label: "Strong" },
+                  acceptable: { bg: "bg-[#44bb99]/8",  border: "border-[#44bb99]/30", badge: "bg-[#44bb99]/15 text-[#44bb99]",  text: "text-[#44bb99]",  label: "Acceptable" },
+                  weak:       { bg: "bg-[#EE8866]/8",  border: "border-[#EE8866]/30", badge: "bg-[#EE8866]/15 text-[#EE8866]",  text: "text-[#EE8866]",  label: "Needs Work" },
+                  poor:       { bg: "bg-[#CC3311]/8",  border: "border-[#CC3311]/30", badge: "bg-[#CC3311]/15 text-[#CC3311]",  text: "text-[#CC3311]",  label: "Critical Gap" },
+                };
+                const oc = cb.outcomeClass ?? "weak";
+                const colors = OUTCOME_COLORS[oc] ?? OUTCOME_COLORS.weak;
+                const topSignals = Object.entries(cb.signalDeltas).sort(([,a],[,b]) => Math.abs(b)-Math.abs(a)).slice(0,3);
+                return (
+                  <Card key={cb.itemId} className={cn("border-2", colors.border, colors.bg)}>
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-muted-foreground w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">{idx + 1}</span>
+                          <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", colors.badge)}>{colors.label}</span>
+                          {cb.capabilityKey && (
+                            <span className="text-xs text-muted-foreground">· {cb.capabilityKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</span>
+                          )}
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground shrink-0">Option {cb.chosenLabel}</span>
+                      </div>
+                      <blockquote className="text-sm text-foreground leading-relaxed border-l-2 border-border pl-3 italic">
+                        &ldquo;{cb.scenarioText}&rdquo;
+                      </blockquote>
+                      {cb.chosenText && (
+                        <div className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">You chose:</span> {cb.chosenText}
+                        </div>
+                      )}
+                      <div className={cn("flex items-start gap-2 rounded-lg p-3", colors.bg, "border", colors.border)}>
+                        <Sparkles className={cn("w-3.5 h-3.5 shrink-0 mt-0.5", colors.text)} />
+                        <p className={cn("text-xs leading-relaxed", colors.text)}>{cb.revealText}</p>
+                      </div>
+                      {topSignals.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {topSignals.map(([sig, delta]) => (
+                            <span key={sig} className={cn(
+                              "text-[10px] font-medium px-2 py-0.5 rounded-full border",
+                              (delta as number) >= 0 ? "bg-[#228833]/10 text-[#228833] border-[#228833]/20" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
+                            )}>
+                              {sig.replace(/_/g, " ")} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 6: CONFIDENCE CALIBRATION
+            Shows how well the participant’s self-assessed confidence matched
+            the actual quality of their answers.
+        ══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="calibration" className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground font-sora">Confidence Calibration</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              How well did your confidence match the quality of your answers? Strong calibration is itself a capability signal.
+            </p>
+          </div>
+          {!(data as any).confidenceCalibration ? (
+            <Card className="border-border">
+              <CardContent className="p-8 text-center">
+                <Zap className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Calibration data is not available for this session.</p>
+              </CardContent>
+            </Card>
+          ) : (() => {
+            const cal = (data as any).confidenceCalibration as {
+              overconfidentCount: number; underconfidentCount: number; wellCalibratedCount: number;
+              totalAnswers: number; avgConfidence: number; avgConfidenceOnStrong: number;
+              avgConfidenceOnWeak: number; calibrationIndex: number | null; summary: string;
+            };
+            const calibrationScore = cal.totalAnswers > 0
+              ? Math.round((cal.wellCalibratedCount / cal.totalAnswers) * 100)
+              : 0;
+            const calColor = calibrationScore >= 70 ? "#228833" : calibrationScore >= 45 ? "#EE8866" : "#CC3311";
+            return (
+              <div className="space-y-4">
+                {/* Summary banner */}
+                <Card className="border-2" style={{ borderColor: `${calColor}40`, backgroundColor: `${calColor}08` }}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-5">
+                      <ScoreRing score={calibrationScore} color={calColor} size={90} />
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Calibration Score</p>
+                        <p className="text-sm text-foreground leading-relaxed">{cal.summary}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                {/* Three-bucket breakdown */}
+                <div className="grid grid-cols-3 gap-3">
+                  <Card className="border-[#228833]/30 bg-[#228833]/5">
+                    <CardContent className="p-4 text-center">
+                      <ThumbsUp className="w-5 h-5 text-[#228833] mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-[#228833]">{cal.wellCalibratedCount}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">Well calibrated</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-[#EE8866]/30 bg-[#EE8866]/5">
+                    <CardContent className="p-4 text-center">
+                      <ThumbsDown className="w-5 h-5 text-[#EE8866] mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-[#EE8866]">{cal.overconfidentCount}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">Overconfident</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-[#CC3311]/30 bg-[#CC3311]/5">
+                    <CardContent className="p-4 text-center">
+                      <Minus className="w-5 h-5 text-[#CC3311] mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-[#CC3311]">{cal.underconfidentCount}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">Underconfident</div>
+                    </CardContent>
+                  </Card>
+                </div>
+                {/* Confidence vs outcome comparison */}
+                <Card className="border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Average Confidence by Answer Quality</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">On strong/acceptable answers</span>
+                        <span className="font-semibold text-foreground">{cal.avgConfidenceOnStrong}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-[#228833] transition-all" style={{ width: `${cal.avgConfidenceOnStrong}%` }} />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">On weak/poor answers</span>
+                        <span className="font-semibold text-foreground">{cal.avgConfidenceOnWeak}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-[#CC3311] transition-all" style={{ width: `${cal.avgConfidenceOnWeak}%` }} />
+                      </div>
+                    </div>
+                    {cal.calibrationIndex !== null && (
+                      <div className="flex items-center gap-2 pt-2 border-t border-border">
+                        <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">Calibration index: {cal.calibrationIndex > 0 ? "+" : ""}{cal.calibrationIndex}</span>
+                          {" "}(positive = confidence correctly tracks answer quality; negative = overconfident on gaps)
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                {/* Interpretation guide */}
+                <Card className="border-border bg-muted/30">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-semibold text-foreground mb-2">What does calibration mean?</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Confidence calibration measures whether your certainty levels matched the actual quality of your decisions. 
+                      A well-calibrated professional is certain when they are right and uncertain when they are wrong — this is a 
+                      distinct metacognitive skill that predicts real-world AI decision quality.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </TabsContent>
       </Tabs>
     </div>

@@ -58,6 +58,7 @@ import {
   Search,
   Sparkles,
   Loader2,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -221,6 +222,154 @@ function DataContextBlock({ content }: { content: string }) {
           {content}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── Artefact Block (Immersive Scenario Rendering) ─────────────────────────────
+
+type ArtefactType = "email_thread" | "cv_extract" | "policy_doc" | "meeting_notes" | "chat_log" | "data_table" | "none";
+
+function ArtefactBlock({ content, artefactType }: { content: string; artefactType: ArtefactType }) {
+  const configs: Record<ArtefactType, { label: string; sublabel: string; borderColor: string; bgColor: string; labelColor: string; headerBg: string }> = {
+    email_thread: {
+      label: "Email Thread",
+      sublabel: "Review the conversation",
+      borderColor: "border-blue-500/30",
+      bgColor: "bg-blue-500/4",
+      labelColor: "text-blue-400",
+      headerBg: "bg-blue-500/10",
+    },
+    cv_extract: {
+      label: "CV Extract",
+      sublabel: "Review the candidate profile",
+      borderColor: "border-emerald-500/30",
+      bgColor: "bg-emerald-500/4",
+      labelColor: "text-emerald-400",
+      headerBg: "bg-emerald-500/10",
+    },
+    policy_doc: {
+      label: "Policy Document",
+      sublabel: "Review the policy extract",
+      borderColor: "border-amber-500/30",
+      bgColor: "bg-amber-500/4",
+      labelColor: "text-amber-400",
+      headerBg: "bg-amber-500/10",
+    },
+    meeting_notes: {
+      label: "Meeting Notes",
+      sublabel: "Review the discussion record",
+      borderColor: "border-purple-500/30",
+      bgColor: "bg-purple-500/4",
+      labelColor: "text-purple-400",
+      headerBg: "bg-purple-500/10",
+    },
+    chat_log: {
+      label: "Chat Log",
+      sublabel: "Review the conversation",
+      borderColor: "border-cyan-500/30",
+      bgColor: "bg-cyan-500/4",
+      labelColor: "text-cyan-400",
+      headerBg: "bg-cyan-500/10",
+    },
+    data_table: {
+      label: "Data Extract",
+      sublabel: "Review the data",
+      borderColor: "border-rose-500/30",
+      bgColor: "bg-rose-500/4",
+      labelColor: "text-rose-400",
+      headerBg: "bg-rose-500/10",
+    },
+    none: {
+      label: "Context",
+      sublabel: "Review the information",
+      borderColor: "border-border",
+      bgColor: "bg-muted/20",
+      labelColor: "text-muted-foreground",
+      headerBg: "bg-muted/30",
+    },
+  };
+  const cfg = configs[artefactType] ?? configs.none;
+  // Parse email thread format: lines starting with "From:", "To:", "Subject:", "---" separator
+  const isEmailThread = artefactType === "email_thread";
+  const isChatLog = artefactType === "chat_log";
+  return (
+    <div className={cn("rounded-xl border-2 overflow-hidden", cfg.borderColor, cfg.bgColor)}>
+      <div className={cn("flex items-center gap-2 px-4 py-2.5", cfg.headerBg)}>
+        <FileText className={cn("w-4 h-4", cfg.labelColor)} />
+        <div>
+          <p className={cn("text-xs font-bold uppercase tracking-wider", cfg.labelColor)}>{cfg.label}</p>
+          <p className="text-xs text-muted-foreground">{cfg.sublabel}</p>
+        </div>
+      </div>
+      <div className="p-4">
+        {isEmailThread ? (
+          <div className="space-y-3">
+            {content.split(/\n---+\n/).map((block, idx) => (
+              <div key={idx} className="bg-background/60 rounded-lg border border-border/50 p-3">
+                {block.split("\n").map((line, li) => {
+                  const isHeader = /^(From|To|Cc|Subject|Date|Sent):/.test(line);
+                  return (
+                    <p key={li} className={cn("text-xs leading-relaxed", isHeader ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                      {line || "\u00a0"}
+                    </p>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        ) : isChatLog ? (
+          <div className="space-y-2">
+            {content.split("\n").map((line, li) => {
+              const match = line.match(/^\[(.+?)\]\s+(.+?):\s+(.*)$/);
+              if (match) {
+                const [, time, sender, msg] = match;
+                const isSystem = sender.toLowerCase().includes("system") || sender.toLowerCase().includes("ai");
+                return (
+                  <div key={li} className={cn("flex gap-2 text-xs", isSystem ? "opacity-70" : "")}>
+                    <span className="text-muted-foreground shrink-0 w-14">{time}</span>
+                    <span className={cn("font-semibold shrink-0", isSystem ? "text-cyan-400" : "text-foreground")}>{sender}:</span>
+                    <span className="text-foreground">{msg}</span>
+                  </div>
+                );
+              }
+              return <p key={li} className="text-xs text-muted-foreground">{line}</p>;
+            })}
+          </div>
+        ) : (
+          <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-mono text-xs">{content}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Narrative Wrapper (Persistent Session Context) ─────────────────────────────────
+
+function NarrativeWrapper({ context }: { context: string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded-xl border border-[#4477AA]/30 bg-[#4477AA]/5 overflow-hidden">
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-[#4477AA]/8 transition-colors text-left"
+      >
+        <Layers className="w-4 h-4 text-[#4477AA] shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#4477AA]">Your Scenario Context</p>
+          {!expanded && (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{context.slice(0, 80)}{context.length > 80 ? "…" : ""}</p>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground shrink-0">{expanded ? "▲ Hide" : "▼ Show"}</span>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-3 pt-1 border-t border-[#4477AA]/20">
+          <p className="text-sm text-foreground leading-relaxed">{context}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -904,6 +1053,8 @@ export default function AssessmentSessionPage() {
   const riskConfig = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Medium;
   const aiOutput = (nextItem as any).aiOutput as string | undefined;
   const dataContext = (nextItem as any).dataContext as string | undefined;
+  const artefactType = (nextItem as any).artefactType as ArtefactType | undefined;
+  const narrativeContext = (sessionData as any).narrativeContext as string | undefined;
 
   // Determine AI output mode for visual framing
   const aiOutputMode: "critique" | "improvement" | "error" =
@@ -964,6 +1115,9 @@ export default function AssessmentSessionPage() {
         </div>
         <Progress value={progress} className="h-1.5" />
       </div>
+
+      {/* NW-1: Persistent narrative context wrapper */}
+      {narrativeContext && <NarrativeWrapper context={narrativeContext} />}
 
       {/* Question card */}
       <Card className="border-border shadow-sm">
@@ -1048,8 +1202,13 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Constraint — only for non-AI-output types */}
-          {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (
+          {/* Artefact Block — immersive rendering for email threads, CVs, policy docs, etc. */}
+          {artefactType && artefactType !== "none" && (nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (
+            <ArtefactBlock content={(nextItem as any).constraint} artefactType={artefactType} />
+          )}
+
+          {/* Constraint — only for non-AI-output types and no artefact */}
+          {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
             <div className="bg-[#EE8866]/6 rounded-xl p-3 border border-[#EE8866]/20">
               <p className="text-xs font-semibold text-[#EE8866] uppercase tracking-wider mb-1">
                 Constraint

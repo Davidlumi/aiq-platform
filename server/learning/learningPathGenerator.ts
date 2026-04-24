@@ -1,47 +1,35 @@
 /**
  * Adaptive Learning Path Generator — AiQ Platform
  *
- * Generates a bespoke, sequenced learning plan from a gap analysis result
- * using the 70/20/10 model and spaced repetition principles.
+ * Implements the 4-Stage Learning Prescription Engine per Adaptive Learning v1.0 §2.2:
+ *   Stage 1 — Block Resolution: blocking failure modes addressed first
+ *   Stage 2 — Foundation Before Strategy: foundation domains first; Foundation Gap state stops here
+ *   Stage 3 — Regulatory and Operational Urgency: UK regulatory requirements before strategic
+ *   Stage 4 — Strategic Development: remaining gaps by gap magnitude × role weight × strategic importance
  *
- * 70/20/10 Model Implementation:
- *   70% — Experiential: scenarios, practicals, case studies (phase: practice)
- *   20% — Social/Reflective: coaching, reflections, peer scenarios (phase: development)
- *   10% — Formal: tutorials, videos, quizzes (phase: foundation)
- *
- * Sequencing Rules:
- *   1. Foundation modules first (tutorials/videos) — build conceptual knowledge
- *   2. Development modules next (reflections/coaching) — connect to experience
- *   3. Practice modules last (scenarios/practicals/case studies) — apply & consolidate
- *   4. Validation quiz at the end of each capability cluster
- *
- * Difficulty Progression:
- *   - Critical gaps: start at difficulty 1-2, progress to 3-4
- *   - Developing gaps: start at difficulty 2-3, progress to 4
- *   - Proficient: start at difficulty 3, add stretch modules at 4-5
- *   - Advanced: optional challenge modules at difficulty 4-5
- *
- * Spaced Repetition (SM-2 algorithm):
- *   - After completing a module, schedule a review based on score
- *   - Score >= 80%: interval × 2.5 (ease factor increase)
- *   - Score 60-79%: interval × 1.5 (ease factor unchanged)
- *   - Score < 60%: reset to 1 day (ease factor decrease)
+ * Transfer Evidence (§5.1): completionState: not_started | opened | partial | completed | completed_with_engagement
+ * No-Transfer Findings (§5.4): noTransferCount tracked per plan item; after 2 → honest_disclosure
+ * Learning-Aware Reassessment (§6): buildLearningAwareContext() for next assessment session
  */
 
 import type { CapabilityGap, GapAnalysisResult, CapabilityKey } from "./gapAnalysisEngine";
 
 export type Modality = "tutorial" | "practical" | "case_study" | "quiz" | "scenario" | "video" | "reflection" | "coaching";
 export type Phase = "foundation" | "development" | "practice" | "validation";
+export type PrescriptionStage = 1 | 2 | 3 | 4;
 
 export interface ModuleCandidate {
   id: string;
   key: string;
   title: string;
   capability: string;
+  signalKeys?: string;
   modality: Modality;
   difficulty: number;
   durationMins: number;
   levelLabel: string;
+  isBlockResolution?: boolean;
+  regulatoryTags?: string;
 }
 
 export interface PlanItem {
@@ -56,22 +44,30 @@ export interface PlanItem {
     modalityReason: string;
     roleRelevance: string;
     difficultyRationale: string;
+    prescriptionStage: PrescriptionStage;
+    signalConnection?: string;
+    regulatoryDriver?: string;
   };
 }
 
-// ─── Modality → Phase mapping ─────────────────────────────────────────────────
+export interface LearningAwareContext {
+  moduleId: string;
+  title: string;
+  signals: string[];
+  completedAt: number;
+}
+
+export type TransferFinding = "clean_transfer" | "broad_development" | "no_transfer" | "attention_warranted";
+
+const FOUNDATION_DOMAINS: CapabilityKey[] = ["ai_interaction", "ai_output_evaluation"];
+const BLOCKING_FAILURE_MODES = ["blind_acceptance", "hallucination_acceptance", "critical_failure"];
+
 const MODALITY_PHASE: Record<Modality, Phase> = {
-  tutorial:   "foundation",
-  video:      "foundation",
-  quiz:       "validation",
-  reflection: "development",
-  coaching:   "development",
-  practical:  "practice",
-  case_study: "practice",
-  scenario:   "practice",
+  tutorial: "foundation", video: "foundation", quiz: "validation",
+  reflection: "development", coaching: "development",
+  practical: "practice", case_study: "practice", scenario: "practice",
 };
 
-// ─── Modality reasons ─────────────────────────────────────────────────────────
 const MODALITY_REASONS: Record<Modality, string> = {
   tutorial:   "Builds foundational conceptual knowledge before practical application",
   video:      "Provides visual demonstration of key concepts and real-world examples",
@@ -83,18 +79,48 @@ const MODALITY_REASONS: Record<Modality, string> = {
   scenario:   "Practises situational judgement in high-stakes HR decision contexts",
 };
 
-// ─── Difficulty selection by severity ────────────────────────────────────────
 function getDifficultyRange(severity: string): [number, number] {
   switch (severity) {
-    case "critical":    return [1, 3];
-    case "developing":  return [2, 4];
-    case "proficient":  return [3, 4];
-    case "advanced":    return [4, 5];
-    default:            return [1, 3];
+    case "critical":   return [1, 3];
+    case "developing": return [2, 4];
+    case "proficient": return [3, 4];
+    case "advanced":   return [4, 5];
+    default:           return [1, 3];
   }
 }
 
-// ─── Core Generator ───────────────────────────────────────────────────────────
+function addModules(
+  planItems: PlanItem[],
+  usedModuleIds: Set<string>,
+  modules: ModuleCandidate[],
+  gap: CapabilityGap,
+  stage: PrescriptionStage,
+  required: boolean,
+  extra: Partial<PlanItem["reasonJson"]> = {}
+): void {
+  for (const mod of modules) {
+    if (usedModuleIds.has(mod.id)) continue;
+    const signals = mod.signalKeys ? mod.signalKeys.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+    planItems.push({
+      moduleId: mod.id,
+      orderIndex: planItems.length + 1,
+      phase: MODALITY_PHASE[mod.modality as Modality] ?? "foundation",
+      required,
+      unlockAfterModuleId: null,
+      reasonJson: {
+        capability: gap.label,
+        gapSeverity: gap.severity,
+        modalityReason: MODALITY_REASONS[mod.modality as Modality],
+        roleRelevance: `Addresses ${gap.severity} gap in ${gap.label} (score: ${gap.score} vs benchmark: ${gap.benchmark})`,
+        difficultyRationale: `Difficulty ${mod.difficulty} appropriate for ${gap.severity} gap`,
+        prescriptionStage: stage,
+        signalConnection: signals.length ? `Targets signal(s): ${signals.join(", ")}` : undefined,
+        ...extra,
+      },
+    });
+    usedModuleIds.add(mod.id);
+  }
+}
 
 export function generateAdaptivePlan(
   gapAnalysis: GapAnalysisResult,
@@ -103,138 +129,113 @@ export function generateAdaptivePlan(
     maxModules?: number;
     includeOptional?: boolean;
     roleKey?: string;
+    blockingFailureModes?: string[];
+    foundationGapState?: boolean;
+    ukRegulatoryFrameworks?: string[];
+    timeBudgetMinutes?: number;
   } = {}
 ): PlanItem[] {
-  const { maxModules = 30, includeOptional = true } = options;
+  const {
+    maxModules = 30,
+    includeOptional = true,
+    blockingFailureModes = [],
+    foundationGapState = false,
+    ukRegulatoryFrameworks = [],
+    timeBudgetMinutes,
+  } = options;
+
   const planItems: PlanItem[] = [];
   const usedModuleIds = new Set<string>();
+  const prioritisedCaps = gapAnalysis.priorityOrder as CapabilityKey[];
 
-  // Process capabilities in priority order (most critical first)
-  const prioritisedCaps = gapAnalysis.priorityOrder;
-
-  // Phase 1: Foundation — 1-2 tutorial/video per critical/developing capability
-  for (const cap of prioritisedCaps) {
-    const gap = gapAnalysis.capabilityGaps[cap as CapabilityKey];
-    if (!["critical", "developing"].includes(gap.severity)) continue;
-
-    const [minDiff] = getDifficultyRange(gap.severity);
-    const foundationModules = availableModules.filter(m =>
-      m.capability === cap &&
-      ["tutorial", "video"].includes(m.modality) &&
-      m.difficulty <= minDiff + 1 &&
-      !usedModuleIds.has(m.id)
-    ).slice(0, 2);
-
-    for (const mod of foundationModules) {
-      planItems.push({
-        moduleId: mod.id,
-        orderIndex: planItems.length + 1,
-        phase: "foundation",
-        required: gap.severity === "critical",
-        unlockAfterModuleId: null,
-        reasonJson: {
-          capability: gap.label,
-          gapSeverity: gap.severity,
-          modalityReason: MODALITY_REASONS[mod.modality as Modality],
-          roleRelevance: `Addresses ${gap.severity} gap in ${gap.label} (score: ${gap.score} vs benchmark: ${gap.benchmark})`,
-          difficultyRationale: `Starting at difficulty ${mod.difficulty} appropriate for ${gap.severity} gap`,
-        },
+  // Stage 1: Block Resolution
+  const hasBlockingFailure = blockingFailureModes.some(m => BLOCKING_FAILURE_MODES.includes(m));
+  if (hasBlockingFailure) {
+    for (const cap of FOUNDATION_DOMAINS) {
+      const gap = gapAnalysis.capabilityGaps[cap];
+      if (!gap) continue;
+      const mods = availableModules.filter(m =>
+        m.capability === cap && (m.isBlockResolution === true || m.key?.includes("block_resolution"))
+      ).slice(0, 2);
+      addModules(planItems, usedModuleIds, mods, gap, 1, true, {
+        roleRelevance: "Block-resolution module — must be completed before any other development",
       });
-      usedModuleIds.add(mod.id);
     }
   }
 
-  // Phase 2: Development — 1 reflection/coaching per capability with gaps
-  for (const cap of prioritisedCaps) {
-    const gap = gapAnalysis.capabilityGaps[cap as CapabilityKey];
-    if (!["critical", "developing", "proficient"].includes(gap.severity)) continue;
+  // Stage 2: Foundation Before Strategy
+  for (const cap of FOUNDATION_DOMAINS) {
+    const gap = gapAnalysis.capabilityGaps[cap];
+    if (!gap || !["critical", "developing"].includes(gap.severity)) continue;
+    const [minDiff, maxDiff] = getDifficultyRange(gap.severity);
+    const practiceCount = gap.severity === "critical" ? 3 : 2;
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["tutorial","video"].includes(m.modality) && m.difficulty <= minDiff + 1 && !usedModuleIds.has(m.id)).slice(0, 2),
+      gap, 2, true);
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["reflection","coaching"].includes(m.modality) && !usedModuleIds.has(m.id)).slice(0, 1),
+      gap, 2, gap.severity === "critical");
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["practical","case_study","scenario"].includes(m.modality) && m.difficulty >= minDiff && m.difficulty <= maxDiff && !usedModuleIds.has(m.id)).slice(0, practiceCount),
+      gap, 2, gap.severity === "critical");
+  }
 
-    const devModules = availableModules.filter(m =>
-      m.capability === cap &&
-      ["reflection", "coaching"].includes(m.modality) &&
-      !usedModuleIds.has(m.id)
-    ).slice(0, 1);
+  if (foundationGapState) {
+    applyUnlockDependencies(planItems, availableModules);
+    const finalItems = planItems.slice(0, maxModules);
+    finalItems.forEach((item, i) => { item.orderIndex = i + 1; });
+    return applyTimeBudget(finalItems, availableModules, timeBudgetMinutes);
+  }
 
-    for (const mod of devModules) {
-      planItems.push({
-        moduleId: mod.id,
-        orderIndex: planItems.length + 1,
-        phase: "development",
-        required: gap.severity === "critical",
-        unlockAfterModuleId: null,
-        reasonJson: {
-          capability: gap.label,
-          gapSeverity: gap.severity,
-          modalityReason: MODALITY_REASONS[mod.modality as Modality],
-          roleRelevance: `Connects learning to your HR practice context`,
-          difficultyRationale: `Reflective practice to consolidate foundational knowledge`,
-        },
+  // Stage 3: Regulatory and Operational Urgency
+  if (ukRegulatoryFrameworks.length > 0) {
+    const strategicCaps = prioritisedCaps.filter(c => !FOUNDATION_DOMAINS.includes(c));
+    for (const cap of strategicCaps) {
+      const gap = gapAnalysis.capabilityGaps[cap];
+      if (!gap || !["critical", "developing"].includes(gap.severity)) continue;
+      const [minDiff, maxDiff] = getDifficultyRange(gap.severity);
+      const regMods = availableModules.filter(m =>
+        m.capability === cap &&
+        m.regulatoryTags && ukRegulatoryFrameworks.some(f => m.regulatoryTags!.includes(f)) &&
+        m.difficulty >= minDiff && m.difficulty <= maxDiff && !usedModuleIds.has(m.id)
+      ).slice(0, 2);
+      addModules(planItems, usedModuleIds, regMods, gap, 3, true, {
+        regulatoryDriver: `Required by: ${ukRegulatoryFrameworks.join(", ")}`,
+        roleRelevance: "Regulatory readiness requirement — operationally urgent",
       });
-      usedModuleIds.add(mod.id);
     }
   }
 
-  // Phase 3: Practice — 2-3 practical/case_study/scenario per critical/developing cap
-  for (const cap of prioritisedCaps) {
-    const gap = gapAnalysis.capabilityGaps[cap as CapabilityKey];
+  // Stage 4: Strategic Development
+  const remainingCaps = prioritisedCaps.filter(c => !FOUNDATION_DOMAINS.includes(c));
+  for (const cap of remainingCaps) {
+    const gap = gapAnalysis.capabilityGaps[cap];
+    if (!gap) continue;
     const [minDiff, maxDiff] = getDifficultyRange(gap.severity);
     const practiceCount = gap.severity === "critical" ? 3 : gap.severity === "developing" ? 2 : 1;
-
-    const practiceModules = availableModules.filter(m =>
-      m.capability === cap &&
-      ["practical", "case_study", "scenario"].includes(m.modality) &&
-      m.difficulty >= minDiff && m.difficulty <= maxDiff &&
-      !usedModuleIds.has(m.id)
-    ).slice(0, practiceCount);
-
-    for (const mod of practiceModules) {
-      planItems.push({
-        moduleId: mod.id,
-        orderIndex: planItems.length + 1,
-        phase: "practice",
-        required: gap.severity === "critical",
-        unlockAfterModuleId: null,
-        reasonJson: {
-          capability: gap.label,
-          gapSeverity: gap.severity,
-          modalityReason: MODALITY_REASONS[mod.modality as Modality],
-          roleRelevance: `Builds applied capability through realistic HR scenarios`,
-          difficultyRationale: `Difficulty ${mod.difficulty} matches your current capability level`,
-        },
-      });
-      usedModuleIds.add(mod.id);
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["tutorial","video"].includes(m.modality) && m.difficulty <= minDiff + 1 && !usedModuleIds.has(m.id)).slice(0, 1),
+      gap, 4, gap.severity === "critical");
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["reflection","coaching"].includes(m.modality) && !usedModuleIds.has(m.id)).slice(0, 1),
+      gap, 4, gap.severity === "critical");
+    addModules(planItems, usedModuleIds,
+      availableModules.filter(m => m.capability === cap && ["practical","case_study","scenario"].includes(m.modality) && m.difficulty >= minDiff && m.difficulty <= maxDiff && !usedModuleIds.has(m.id)).slice(0, practiceCount),
+      gap, 4, gap.severity === "critical");
+    if (includeOptional) {
+      addModules(planItems, usedModuleIds,
+        availableModules.filter(m => m.capability === cap && m.modality === "quiz" && !usedModuleIds.has(m.id)).slice(0, 1),
+        gap, 4, false);
     }
   }
 
-  // Phase 4: Validation — 1 quiz per capability cluster
-  for (const cap of prioritisedCaps.slice(0, 4)) {
-    const gap = gapAnalysis.capabilityGaps[cap as CapabilityKey];
-    const quizModules = availableModules.filter(m =>
-      m.capability === cap &&
-      m.modality === "quiz" &&
-      !usedModuleIds.has(m.id)
-    ).slice(0, 1);
+  applyUnlockDependencies(planItems, availableModules);
+  const finalItems = planItems.slice(0, maxModules);
+  finalItems.forEach((item, i) => { item.orderIndex = i + 1; });
+  return applyTimeBudget(finalItems, availableModules, timeBudgetMinutes);
+}
 
-    for (const mod of quizModules) {
-      planItems.push({
-        moduleId: mod.id,
-        orderIndex: planItems.length + 1,
-        phase: "validation",
-        required: false,
-        unlockAfterModuleId: null,
-        reasonJson: {
-          capability: gap.label,
-          gapSeverity: gap.severity,
-          modalityReason: MODALITY_REASONS.quiz,
-          roleRelevance: `Validates learning progress and identifies remaining gaps`,
-          difficultyRationale: `Knowledge check appropriate after completing practice modules`,
-        },
-      });
-      usedModuleIds.add(mod.id);
-    }
-  }
-
-  // Add unlock dependencies: practice modules unlock after foundation
+function applyUnlockDependencies(planItems: PlanItem[], availableModules: ModuleCandidate[]): void {
   const foundationByCapability = new Map<string, string>();
   for (const item of planItems) {
     if (item.phase === "foundation") {
@@ -242,7 +243,6 @@ export function generateAdaptivePlan(
       if (mod) foundationByCapability.set(mod.capability, item.moduleId);
     }
   }
-
   for (const item of planItems) {
     if (item.phase === "practice") {
       const mod = availableModules.find(m => m.id === item.moduleId);
@@ -251,15 +251,73 @@ export function generateAdaptivePlan(
       }
     }
   }
-
-  // Re-index and cap
-  const finalItems = planItems.slice(0, maxModules);
-  finalItems.forEach((item, i) => { item.orderIndex = i + 1; });
-
-  return finalItems;
 }
 
-// ─── SM-2 Spaced Repetition ───────────────────────────────────────────────────
+function applyTimeBudget(planItems: PlanItem[], availableModules: ModuleCandidate[], timeBudgetMinutes?: number): PlanItem[] {
+  if (!timeBudgetMinutes) return planItems;
+  let totalMins = 0;
+  return planItems.map(item => {
+    const mod = availableModules.find(m => m.id === item.moduleId);
+    const duration = mod?.durationMins ?? 20;
+    if (item.required || totalMins + duration <= timeBudgetMinutes) {
+      totalMins += duration;
+      return item;
+    }
+    return { ...item, required: false };
+  });
+}
+
+export function buildLearningAwareContext(
+  completedPlanItems: Array<{ moduleId: string; completedAt: number | null; completionState: string }>,
+  availableModules: ModuleCandidate[]
+): LearningAwareContext[] {
+  return completedPlanItems
+    .filter(item => item.completionState === "completed_with_engagement" && item.completedAt)
+    .map(item => {
+      const mod = availableModules.find(m => m.id === item.moduleId);
+      const signals = mod?.signalKeys ? mod.signalKeys.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+      return { moduleId: item.moduleId, title: mod?.title ?? item.moduleId, signals, completedAt: item.completedAt! };
+    });
+}
+
+export function classifyTransferFinding(
+  targetedSignals: string[],
+  priorSignalScores: Record<string, number>,
+  postSignalScores: Record<string, number>
+): TransferFinding {
+  if (targetedSignals.length === 0) return "no_transfer";
+  const IMPROVEMENT_THRESHOLD = 0.05;
+  const DECLINE_THRESHOLD = -0.05;
+  const targetedImproved = targetedSignals.filter(s => (postSignalScores[s] ?? 0) - (priorSignalScores[s] ?? 0) >= IMPROVEMENT_THRESHOLD);
+  const nonTargetedSignals = Object.keys(postSignalScores).filter(s => !targetedSignals.includes(s));
+  const nonTargetedImproved = nonTargetedSignals.filter(s => (postSignalScores[s] ?? 0) - (priorSignalScores[s] ?? 0) >= IMPROVEMENT_THRESHOLD);
+  const nonTargetedDeclined = nonTargetedSignals.filter(s => (postSignalScores[s] ?? 0) - (priorSignalScores[s] ?? 0) <= DECLINE_THRESHOLD);
+  const targetedImprovedRatio = targetedImproved.length / targetedSignals.length;
+  const nonTargetedDeclinedRatio = nonTargetedSignals.length > 0 ? nonTargetedDeclined.length / nonTargetedSignals.length : 0;
+  if (targetedImprovedRatio >= 0.5 && nonTargetedDeclinedRatio < 0.3) {
+    return nonTargetedImproved.length > nonTargetedSignals.length * 0.3 ? "broad_development" : "clean_transfer";
+  }
+  if (targetedImprovedRatio < 0.3 && nonTargetedDeclinedRatio >= 0.3) return "attention_warranted";
+  return "no_transfer";
+}
+
+export function getNoTransferResponse(
+  noTransferCount: number,
+  currentModality: Modality
+): { action: "alternative_modality" | "add_scaffolding" | "honest_disclosure"; alternativeModality?: Modality; message: string } {
+  const MODALITY_ALTERNATIVES: Partial<Record<Modality, Modality>> = {
+    scenario: "coaching", coaching: "scenario", tutorial: "reflection",
+    reflection: "tutorial", practical: "case_study", case_study: "practical", video: "coaching",
+  };
+  if (noTransferCount === 0) {
+    const alt = MODALITY_ALTERNATIVES[currentModality] ?? "coaching";
+    return { action: "alternative_modality", alternativeModality: alt, message: `We have prescribed an alternative learning approach (${alt}) to address this capability signal differently.` };
+  }
+  if (noTransferCount === 1) {
+    return { action: "add_scaffolding", message: "We have added foundational scaffolding modules to support this capability area before retrying." };
+  }
+  return { action: "honest_disclosure", message: "After two learning approaches, this capability has not yet developed through the available modules. Coaching, mentoring, or external development may be more effective for your context." };
+}
 
 export interface SpacedRepetitionUpdate {
   nextDueAt: number;
@@ -269,41 +327,19 @@ export interface SpacedRepetitionUpdate {
 }
 
 export function computeNextReview(
-  score: number, // 0-100
+  score: number,
   currentIntervalDays: number,
   currentEaseFactor: number,
   currentRepetitions: number
 ): SpacedRepetitionUpdate {
-  // Normalise score to SM-2 quality (0-5)
   const quality = Math.round((score / 100) * 5);
-
   let newEaseFactor = currentEaseFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
   newEaseFactor = Math.max(1.3, Math.min(2.5, newEaseFactor));
-
   let newIntervalDays: number;
   let newRepetitions: number;
-
-  if (quality < 3) {
-    // Failed — reset
-    newIntervalDays = 1;
-    newRepetitions = 0;
-  } else if (currentRepetitions === 0) {
-    newIntervalDays = 1;
-    newRepetitions = 1;
-  } else if (currentRepetitions === 1) {
-    newIntervalDays = 6;
-    newRepetitions = 2;
-  } else {
-    newIntervalDays = Math.round(currentIntervalDays * newEaseFactor);
-    newRepetitions = currentRepetitions + 1;
-  }
-
-  const nextDueAt = Date.now() + newIntervalDays * 24 * 60 * 60 * 1000;
-
-  return {
-    nextDueAt,
-    intervalDays: newIntervalDays,
-    easeFactor: newEaseFactor,
-    repetitions: newRepetitions,
-  };
+  if (quality < 3) { newIntervalDays = 1; newRepetitions = 0; }
+  else if (currentRepetitions === 0) { newIntervalDays = 1; newRepetitions = 1; }
+  else if (currentRepetitions === 1) { newIntervalDays = 6; newRepetitions = 2; }
+  else { newIntervalDays = Math.round(currentIntervalDays * newEaseFactor); newRepetitions = currentRepetitions + 1; }
+  return { nextDueAt: Date.now() + newIntervalDays * 24 * 60 * 60 * 1000, intervalDays: newIntervalDays, easeFactor: newEaseFactor, repetitions: newRepetitions };
 }

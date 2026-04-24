@@ -766,7 +766,16 @@ function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: nu
 
 // ─── Completion Screen ────────────────────────────────────────────────────────
 
-function CompletionScreen({ score, title, onContinue }: { score: number; title: string; onContinue: () => void }) {
+function CompletionScreen({
+  score, title, onContinue, onReportNoTransfer, noTransferResult,
+}: {
+  score: number;
+  title: string;
+  onContinue: () => void;
+  onReportNoTransfer?: (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => void;
+  noTransferResult?: { alternativeTitle: string | null; alternativeModality: string | null; message: string } | null;
+}) {
+  const [showNoTransferPrompt, setShowNoTransferPrompt] = useState(false);
   return (
     <div className="text-center py-8 space-y-4">
       <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
@@ -785,6 +794,50 @@ function CompletionScreen({ score, title, onContinue }: { score: number; title: 
          score >= 60 ? "Good effort! Review scheduled in 3 days." :
          "Keep practising — review scheduled for tomorrow."}
       </p>
+
+      {/* No-transfer disclosure */}
+      {noTransferResult ? (
+        <div className="rounded-xl border border-amber-700/30 bg-amber-950/20 p-4 text-left space-y-2">
+          <p className="text-sm font-medium text-amber-300">Transfer finding recorded</p>
+          <p className="text-xs text-muted-foreground">{noTransferResult.message}</p>
+          {noTransferResult.alternativeTitle && (
+            <p className="text-xs text-amber-200/70">
+              Alternative suggested: <span className="font-medium">{noTransferResult.alternativeTitle}</span>
+              {noTransferResult.alternativeModality && ` (${noTransferResult.alternativeModality})`}
+            </p>
+          )}
+        </div>
+      ) : !showNoTransferPrompt ? (
+        <button
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+          onClick={() => setShowNoTransferPrompt(true)}
+        >
+          Didn’t feel like this translated to practice?
+        </button>
+      ) : (
+        <div className="rounded-xl border border-border bg-muted/30 p-4 text-left space-y-3">
+          <p className="text-sm font-medium">What happened?</p>
+          <p className="text-xs text-muted-foreground">This helps us find a better approach for you.</p>
+          <div className="grid grid-cols-1 gap-2">
+            {([
+              ["no_engagement", "I didn’t really engage with it"],
+              ["partial_engagement", "I started but didn’t finish properly"],
+              ["completed_no_change", "I completed it but nothing changed for me"],
+              ["regression", "I feel less confident than before"],
+            ] as const).map(([reason, label]) => (
+              <button
+                key={reason}
+                className="text-left text-xs px-3 py-2 rounded-lg border border-border hover:border-amber-500/50 hover:bg-amber-950/20 transition-colors"
+                onClick={() => { onReportNoTransfer?.(reason); setShowNoTransferPrompt(false); }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button className="text-xs text-muted-foreground" onClick={() => setShowNoTransferPrompt(false)}>Cancel</button>
+        </div>
+      )}
+
       <Button className="gap-2" onClick={onContinue}>
         <ArrowLeft className="h-4 w-4" />Back to Learning Plan
       </Button>
@@ -815,6 +868,8 @@ export default function ModulePlayerPage() {
     { moduleId: params.moduleId ?? "" },
     { enabled: !!params.moduleId && !!mod, retry: 1, staleTime: 1000 * 60 * 60 }
   );
+  const [noTransferResult, setNoTransferResult] = useState<{ alternativeTitle: string | null; alternativeModality: string | null; message: string } | null>(null);
+
   const markComplete = trpc.adaptiveLearning.markModuleComplete.useMutation({
     onSuccess: () => {
       toast.success("Module completed! Spaced repetition scheduled.");
@@ -822,6 +877,14 @@ export default function ModulePlayerPage() {
     onError: err => {
       toast.error(err.message);
     },
+  });
+
+  const recordNoTransfer = trpc.adaptiveLearning.recordNoTransfer.useMutation({
+    onSuccess: (data) => {
+      setNoTransferResult(data);
+      toast(data.message, { icon: "⚠️" });
+    },
+    onError: err => toast.error(err.message),
   });
 
   const handleComplete = (score: number) => {
@@ -832,6 +895,17 @@ export default function ModulePlayerPage() {
       planItemId,
       score,
       timeSpentMins: 0,
+    });
+  };
+
+  const handleNoTransfer = (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => {
+    if (!planItemId || !mod) return;
+    recordNoTransfer.mutate({
+      planItemId,
+      moduleId: params.moduleId ?? "",
+      capability: mod.capability,
+      noTransferReason: reason,
+      attemptCount: 1,
     });
   };
 
@@ -952,7 +1026,13 @@ export default function ModulePlayerPage() {
         </>
       ) : (
         <div className="p-5 rounded-2xl border border-border bg-card">
-          <CompletionScreen score={finalScore} title={mod.title} onContinue={handleBack} />
+          <CompletionScreen
+            score={finalScore}
+            title={mod.title}
+            onContinue={handleBack}
+            onReportNoTransfer={planItemId ? handleNoTransfer : undefined}
+            noTransferResult={noTransferResult}
+          />
         </div>
       )}
     </div>

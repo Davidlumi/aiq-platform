@@ -119,6 +119,48 @@ function CapabilityRadar({ scores }: { scores: Record<string, number> }) {
   );
 }
 
+function TransferFindingsPanel() {
+  const { data } = trpc.adaptiveLearning.getTransferFindings.useQuery(undefined, { retry: 1, staleTime: 60_000 });
+  if (!data || !data.findings || data.findings.length === 0) return null;
+  const summary = data.summary;
+  return (
+    <div>
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Transfer Findings</h2>
+      <div className="rounded-xl border border-amber-700/30 bg-amber-950/10 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <p className="text-sm font-medium text-amber-300">
+            {data.findings.length} module{data.findings.length !== 1 ? "s" : ""} flagged for no transfer
+          </p>
+          {summary && (
+            <span className="ml-auto text-xs text-muted-foreground">{summary.transferRate}% transfer rate</span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          These modules were completed but you indicated the learning didn’t translate into practice.
+          Alternative approaches have been suggested in your learning plan.
+        </p>
+        <div className="space-y-2">
+          {data.findings.slice(0, 3).map((item: { planItemId: string; moduleId: string; moduleTitle: string; capability: string; modality: string; reason: string; noTransferCount: number }) => (
+            <div key={item.planItemId} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                <span className="text-xs text-foreground">{item.moduleTitle}</span>
+              </div>
+              <span className="text-xs text-muted-foreground capitalize">{String(item.reason ?? "").replace(/_/g, " ")}</span>
+            </div>
+          ))}
+        </div>
+        <Link href="/learning">
+          <Button size="sm" variant="outline" className="w-full text-xs gap-1.5 mt-1">
+            <BookOpen className="w-3 h-3" />Review Learning Plan
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function LearnerDashboard() {
   const { user } = useAuth();
   const { data, isLoading } = trpc.dashboard.learner.useQuery();
@@ -349,6 +391,8 @@ export default function LearnerDashboard() {
           )}
         </div>
       )}
+
+      <TransferFindingsPanel />
 
       <div>
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h2>

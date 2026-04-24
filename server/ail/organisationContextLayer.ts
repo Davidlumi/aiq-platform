@@ -43,6 +43,14 @@ export interface OrgContextInput {
   hasRedundancyPolicy?: boolean;
   hasWhistleblowingPolicy?: boolean;
   hasEdiPolicy?: boolean;
+  // Phase 2 additions
+  aiToolsInUse?: string[];
+  ukRegulatoryFrameworks?: string[];
+  aiPolicyStatus?: "none" | "draft" | "approved" | "embedded";
+  quarterlyReviewEnabled?: boolean;
+  revalidationCycleMonths?: number;
+  smallHRFunctionMode?: boolean;
+  companyAiContextNarrative?: string;
 }
 
 export interface SimulationContextInjection {
@@ -170,6 +178,14 @@ export async function upsertOrgContext(input: OrgContextInput): Promise<void> {
     hasRedundancyPolicy: input.hasRedundancyPolicy ?? false,
     hasWhistleblowingPolicy: input.hasWhistleblowingPolicy ?? false,
     hasEdiPolicy: input.hasEdiPolicy ?? false,
+    // Phase 2 fields
+    aiToolsInUseJson: JSON.stringify(input.aiToolsInUse ?? []),
+    ukRegulatoryFrameworksJson: JSON.stringify(input.ukRegulatoryFrameworks ?? []),
+    aiPolicyStatus: (input.aiPolicyStatus as any) ?? "none",
+    quarterlyReviewEnabled: input.quarterlyReviewEnabled ?? false,
+    revalidationCycleMonths: input.revalidationCycleMonths ?? 12,
+    smallHRFunctionMode: input.smallHRFunctionMode ?? false,
+    companyAiContextNarrative: input.companyAiContextNarrative ?? null,
     updatedAt: new Date(),
   };
 

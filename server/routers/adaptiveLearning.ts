@@ -35,6 +35,8 @@ import {
   learningStreaks,
   managerTeamMembers,
   users,
+  userStates,
+  ailOrgContext,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
@@ -224,10 +226,13 @@ export const adaptiveLearningRouter = router({
         key: m.key,
         title: m.title,
         capability: m.capability,
+        signalKeys: (m as any).signalKeysJson ? (() => { try { return JSON.parse((m as any).signalKeysJson as string).join(","); } catch { return undefined; } })() : undefined,
         modality: m.modality as any,
         difficulty: m.difficulty,
         durationMins: m.durationMins,
         levelLabel: m.levelLabel,
+        isBlockResolution: (m as any).isBlockResolution ?? false,
+        regulatoryTags: (m as any).regulatoryTags ?? undefined,
       }));
 
       // Parse gap analysis
@@ -251,8 +256,46 @@ export const adaptiveLearningRouter = router({
         recommendedFocusAreas: [] as string[],
       };
 
-      // Generate plan items
-      const planItems = generateAdaptivePlan(gapAnalysisResult, moduleCandidates, { maxModules: 30 });
+      // Fetch org context for regulatory frameworks
+      const orgCtxRows = await db.select().from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .orderBy(desc(ailOrgContext.updatedAt))
+        .limit(1);
+      const orgCtx = orgCtxRows[0];
+      const ukRegulatoryFrameworks: string[] = orgCtx?.ukRegulatoryFrameworksJson
+        ? (() => { try { return JSON.parse(orgCtx.ukRegulatoryFrameworksJson as string); } catch { return []; } })()
+        : [];
+      // Fetch user state for foundation gap detection
+      const userStateRows = await db.select().from(userStates)
+        .where(eq(userStates.userId, ctx.user.id))
+        .orderBy(desc(userStates.effectiveFrom))
+        .limit(1);
+      const userState = userStateRows[0];
+      const foundationGapState = userState?.primaryState === "foundation_gap";
+      // Fetch blocking failure modes from latest session scores (stored in scoreBreakdownJson.failureModes)
+      let blockingFailureModes: string[] = [];
+      if (sessionId) {
+        const scoreRows = await db.select().from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, sessionId)).limit(1);
+        if (scoreRows[0]?.scoreBreakdownJson) {
+          try {
+            const breakdown = typeof scoreRows[0].scoreBreakdownJson === "string"
+              ? JSON.parse(scoreRows[0].scoreBreakdownJson as string)
+              : (scoreRows[0].scoreBreakdownJson as Record<string, unknown>);
+            const fmRaw = (breakdown as any)?.failureModes;
+            blockingFailureModes = (Array.isArray(fmRaw) ? fmRaw : [])
+              .filter((fm: any) => fm.classificationImpact === "blocking")
+              .map((fm: any) => fm.mode as string);
+          } catch { /* ignore parse errors */ }
+        }
+      }
+      // Generate plan items with 4-stage prescription engine
+      const planItems = generateAdaptivePlan(gapAnalysisResult, moduleCandidates, {
+        maxModules: 30,
+        blockingFailureModes,
+        foundationGapState,
+        ukRegulatoryFrameworks,
+      });
 
       // Supersede existing active plans
       await db.update(adaptiveLearningPlans)
@@ -918,6 +961,195 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         totalMinsLearned: s.totalMinsLearned ?? 0,
         milestones,
         nextMilestone: { ...nextMilestone, current: completed },
+      };
+    }),
+
+  // ─── Phase 3: Record no-transfer finding ──────────────────────────────────
+  recordNoTransfer: protectedProcedure
+    .input(z.object({
+      planItemId: z.string(),
+      moduleId: z.string(),
+      capability: z.string(),
+      noTransferReason: z.enum(["no_engagement", "partial_engagement", "completed_no_change", "regression"]),
+      attemptCount: z.number().int().min(1).default(1),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const now = Date.now();
+
+      // Update plan item with no-transfer state
+      await db.update(adaptivePlanItems)
+        .set({
+          completionState: "no_transfer" as any,
+          noTransferCount: 1,
+          scoreJson: JSON.stringify({ noTransfer: true, reason: input.noTransferReason, attemptCount: input.attemptCount }) as any,
+        })
+        .where(eq(adaptivePlanItems.id, input.planItemId));
+
+      // Find an alternative modality module for the same capability
+      const currentMod = await db.select({ modality: learningModules.modality, difficulty: learningModules.difficulty })
+        .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+
+      const MODALITY_ALTERNATIVES: Record<string, string[]> = {
+        tutorial: ["video", "case_study"],
+        video: ["tutorial", "practical"],
+        case_study: ["scenario", "coaching"],
+        practical: ["reflection", "case_study"],
+        scenario: ["practical", "coaching"],
+        quiz: ["tutorial", "practical"],
+        reflection: ["coaching", "scenario"],
+        coaching: ["scenario", "reflection"],
+      };
+
+      const currentModality = currentMod[0]?.modality ?? "tutorial";
+      const alternatives = MODALITY_ALTERNATIVES[currentModality] ?? ["video", "coaching"];
+
+      // Find alternative module
+      const allMods = await db.select().from(learningModules)
+        .where(and(
+          eq(learningModules.status, "published"),
+          eq(learningModules.capability, input.capability),
+        ));
+
+      const altMod = allMods.find(m =>
+        alternatives.includes(m.modality) &&
+        m.id !== input.moduleId &&
+        Math.abs((m.difficulty ?? 1) - (currentMod[0]?.difficulty ?? 1)) <= 1
+      );
+
+      return {
+        recorded: true,
+        alternativeModuleId: altMod?.id ?? null,
+        alternativeModality: altMod?.modality ?? null,
+        alternativeTitle: altMod?.title ?? null,
+        message: altMod
+          ? `We've found an alternative ${altMod.modality} module that may work better for you.`
+          : "We've noted this. A learning coach can help identify the right approach.",
+      };
+    }),
+
+  // ─── Phase 3: Get learning-aware reassessment context ────────────────────────
+  getLearningAwareContext: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Get recently completed modules (last 30 days)
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const recentItems = await db.select({
+        moduleId: adaptivePlanItems.moduleId,
+        completedAt: adaptivePlanItems.completedAt,
+        completionState: adaptivePlanItems.completionState,
+        scoreJson: adaptivePlanItems.scoreJson,
+      })
+        .from(adaptivePlanItems)
+        .where(and(
+          eq(adaptivePlanItems.status, "completed"),
+        ))
+        .orderBy(desc(adaptivePlanItems.completedAt))
+        .limit(20);
+
+      // Filter to user's plan items
+      const activePlan = await db.select({ id: adaptiveLearningPlans.id })
+        .from(adaptiveLearningPlans)
+        .where(and(
+          eq(adaptiveLearningPlans.userId, ctx.user.id),
+          eq(adaptiveLearningPlans.state, "active"),
+        ))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      if (!activePlan[0]) return { recentlyLearnedSignals: [], learningAwareMode: false, noTransferModules: [] };
+
+      const planItems = await db.select()
+        .from(adaptivePlanItems)
+        .where(and(
+          eq(adaptivePlanItems.planId, activePlan[0].id),
+          eq(adaptivePlanItems.status, "completed"),
+        ));
+
+      const recentlyLearnedModuleIds = planItems
+        .filter(i => i.completedAt && i.completedAt > thirtyDaysAgo)
+        .map(i => i.moduleId);
+
+      const noTransferItems = planItems.filter(i => (i as any).completionState === "no_transfer");
+
+      // Get signal keys for recently learned modules
+      const recentModules = recentlyLearnedModuleIds.length > 0
+        ? await Promise.all(recentlyLearnedModuleIds.map(id =>
+            db.select({ id: learningModules.id, capability: learningModules.capability, signalKeysJson: (learningModules as any).signalKeysJson })
+              .from(learningModules).where(eq(learningModules.id, id)).limit(1).then(r => r[0])
+          ))
+        : [];
+
+      const recentlyLearnedSignals = recentModules
+        .filter(Boolean)
+        .flatMap(m => {
+          try { return m?.signalKeysJson ? JSON.parse(m.signalKeysJson as string) : []; }
+          catch { return []; }
+        });
+
+      return {
+        learningAwareMode: recentlyLearnedModuleIds.length > 0,
+        recentlyLearnedSignals: Array.from(new Set(recentlyLearnedSignals)) as string[],
+        noTransferModules: noTransferItems.map(i => ({
+          planItemId: i.id,
+          moduleId: i.moduleId,
+          reason: (i as any).noTransferReason ?? "unknown",
+        })),
+      };
+    }),
+
+  // ─── Phase 3: Get transfer findings for a plan ───────────────────────────────
+  getTransferFindings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const plan = await db.select().from(adaptiveLearningPlans)
+        .where(and(
+          eq(adaptiveLearningPlans.userId, ctx.user.id),
+          eq(adaptiveLearningPlans.state, "active"),
+        ))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      if (!plan[0]) return { findings: [], summary: null };
+
+      const items = await db.select().from(adaptivePlanItems)
+        .where(eq(adaptivePlanItems.planId, plan[0].id));
+
+      const noTransferItems = items.filter(i => (i as any).completionState === "no_transfer");
+      const withEngagementItems = items.filter(i => (i as any).completionState === "completed_with_engagement");
+      const completedItems = items.filter(i => i.status === "completed" && (i as any).completionState !== "no_transfer");
+
+      const findings = await Promise.all(noTransferItems.map(async item => {
+        const mod = await db.select({ title: learningModules.title, capability: learningModules.capability, modality: learningModules.modality })
+          .from(learningModules).where(eq(learningModules.id, item.moduleId)).limit(1);
+        return {
+          planItemId: item.id,
+          moduleId: item.moduleId,
+          moduleTitle: mod[0]?.title ?? "Unknown module",
+          capability: mod[0]?.capability ?? "unknown",
+          modality: mod[0]?.modality ?? "unknown",
+          reason: (item as any).noTransferReason ?? "unknown",
+          noTransferCount: (item as any).noTransferCount ?? 1,
+        };
+      }));
+
+      return {
+        findings,
+        summary: {
+          totalModules: items.length,
+          completedModules: completedItems.length,
+          noTransferModules: noTransferItems.length,
+          withEngagementModules: withEngagementItems.length,
+          transferRate: items.length > 0
+            ? Math.round(((completedItems.length + withEngagementItems.length) / items.length) * 100)
+            : 0,
+        },
       };
     }),
 
