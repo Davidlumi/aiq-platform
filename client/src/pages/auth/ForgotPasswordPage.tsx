@@ -1,6 +1,6 @@
 /**
  * ForgotPasswordPage — AiQ Design System v2.2 auth surface
- * Centered card layout on neutral-25 canvas (simpler than login — no brand panel needed).
+ * Centered card layout on #F7F8FA canvas (simpler than login — no brand panel needed).
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -22,7 +22,7 @@ type FormData = z.infer<typeof schema>;
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="var(--navy-800)" />
+      <circle cx="100" cy="100" r="90" fill="var(--#10B981)" />
       <text x="100" y="122" fontFamily="Inter, system-ui, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
         A<tspan fill="var(--navy-300)">i</tspan>Q
       </text>
@@ -53,13 +53,13 @@ export default function ForgotPasswordPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}
+      style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <AiQLogoMark size={36} />
-        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--neutral-900)" }}>
-          Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--#0F172A)" }}>
+          Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
         </span>
       </div>
 
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
         className="w-full max-w-[420px] rounded-lg border p-8"
         style={{
           background: "var(--neutral-0)",
-          borderColor: "var(--neutral-200)",
+          borderColor: "var(--#E2E8F0)",
           boxShadow: "var(--elevation-sm)",
         }}
       >
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
             <div className="flex justify-center">
               <CheckCircle2 className="w-10 h-10" style={{ color: "var(--green-700)" }} />
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 500, color: "var(--neutral-900)" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: 500, color: "var(--#0F172A)" }}>
               Check your inbox
             </h1>
             <p style={{ fontSize: "14px", color: "var(--neutral-600)", lineHeight: 1.6 }}>
@@ -87,12 +87,12 @@ export default function ForgotPasswordPage() {
             {devToken && (
               <div
                 className="p-3 rounded text-left"
-                style={{ background: "var(--neutral-50)", border: "1px solid var(--neutral-200)" }}
+                style={{ background: "var(--#F8FAFC)", border: "1px solid var(--#E2E8F0)" }}
               >
                 <p className="text-xs font-medium mb-1" style={{ color: "var(--neutral-600)" }}>
                   Dev mode — reset token:
                 </p>
-                <code className="text-xs break-all" style={{ color: "var(--neutral-900)", fontFamily: "var(--font-mono)" }}>
+                <code className="text-xs break-all" style={{ color: "var(--#0F172A)", fontFamily: "var(--font-mono)" }}>
                   {devToken}
                 </code>
                 <Link href={`/reset-password?token=${devToken}`}>
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <>
             <div className="mb-6">
-              <h1 style={{ fontSize: "22px", fontWeight: 500, color: "var(--neutral-900)", marginBottom: "6px" }}>
+              <h1 style={{ fontSize: "22px", fontWeight: 500, color: "var(--#0F172A)", marginBottom: "6px" }}>
                 Reset your password
               </h1>
               <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
 
             <div className="mt-5 text-center">
               <Link href="/login">
-                <span className="text-sm cursor-pointer" style={{ color: "var(--navy-800)" }}>
+                <span className="text-sm cursor-pointer" style={{ color: "var(--#10B981)" }}>
                   Back to sign in
                 </span>
               </Link>

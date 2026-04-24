@@ -301,7 +301,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
         <div className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <DialogTitle className="text-lg font-bold text-foreground font-sora">
+              <DialogTitle className="text-lg font-bold text-foreground">
                 Before You Begin
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-0.5">

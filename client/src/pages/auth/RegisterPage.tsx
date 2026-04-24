@@ -1,6 +1,6 @@
 /**
  * RegisterPage — AiQ Design System v2.2 auth surface
- * Two-column: navy-800 brand panel (left, hidden on mobile) + form (right)
+ * Two-column: #10B981 brand panel (left, hidden on mobile) + form (right)
  * Mirrors the LoginPage visual treatment for consistency.
  */
 import { useState } from "react";
@@ -34,7 +34,7 @@ type FormData = z.infer<typeof schema>;
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="var(--navy-800)" />
+      <circle cx="100" cy="100" r="90" fill="var(--#10B981)" />
       <text x="100" y="122" fontFamily="Inter, system-ui, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
         A<tspan fill="var(--navy-300)">i</tspan>Q
       </text>
@@ -80,11 +80,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}>
+    <div className="min-h-screen flex" style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}>
       {/* ── Left brand panel ── */}
       <div
         className="hidden lg:flex flex-col justify-between w-[400px] shrink-0 p-10"
-        style={{ background: "var(--navy-800)" }}
+        style={{ background: "var(--#10B981)" }}
       >
         <div className="flex items-center gap-3">
           <AiQLogoMark size={40} />
@@ -133,14 +133,14 @@ export default function RegisterPage() {
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
           <AiQLogoMark size={36} />
-          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--neutral-900)" }}>
-            Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--#0F172A)" }}>
+            Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
           </span>
         </div>
 
         <div className="w-full max-w-[440px]">
           <div className="mb-8">
-            <h1 style={{ fontSize: "24px", fontWeight: 500, color: "var(--neutral-900)", marginBottom: "6px" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: 500, color: "var(--#0F172A)", marginBottom: "6px" }}>
               Create your account
             </h1>
             <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>
@@ -196,7 +196,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--neutral-500)" }}
+                  style={{ color: "var(--#F8FAFC0)" }}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -229,7 +229,7 @@ export default function RegisterPage() {
           <p className="mt-6 text-center text-sm" style={{ color: "var(--neutral-600)" }}>
             Already have an account?{" "}
             <Link href="/login">
-              <span className="font-medium cursor-pointer" style={{ color: "var(--navy-800)" }}>
+              <span className="font-medium cursor-pointer" style={{ color: "var(--#10B981)" }}>
                 Sign in
               </span>
             </Link>

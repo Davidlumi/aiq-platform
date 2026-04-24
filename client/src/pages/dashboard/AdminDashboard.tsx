@@ -31,7 +31,7 @@ function KpiCard({ label, value, icon: Icon, color, sub }: {
           </div>
           <span className="text-xs text-muted-foreground">{label}</span>
         </div>
-        <p className="text-3xl font-bold text-foreground font-sora">{value}</p>
+        <p className="text-3xl font-bold text-foreground">{value}</p>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </CardContent>
     </Card>
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
     <div className="p-6 space-y-6 max-w-7xl">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">Platform Administration</h1>
+          <h1 className="text-2xl font-bold text-foreground">Platform Administration</h1>
           <p className="text-muted-foreground mt-1 text-sm">System health, user management, and scoring configuration</p>
         </div>
         <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Sliders className="w-4 h-4 text-[#4477AA]" />Active Scoring Configuration
             </CardTitle>
           </CardHeader>
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
 
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Activity className="w-4 h-4 text-[#4477AA]" />Recent System Activity
             </CardTitle>
           </CardHeader>
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
       {/* Platform health summary */}
       <Card className="border-border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+          <CardTitle className="text-sm flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#228833]" />Platform Health Summary
           </CardTitle>
         </CardHeader>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
                     : <AlertTriangle className="w-3.5 h-3.5 text-[#EE8866]" />}
                   <span className="text-xs font-semibold text-foreground">{item.label}</span>
                 </div>
-                <span className={cn("text-sm font-bold font-sora", item.ok ? "text-[#228833]" : "text-[#EE8866]")}>
+                <span className={cn("text-sm font-bold", item.ok ? "text-[#228833]" : "text-[#EE8866]")}>
                   {item.status}
                 </span>
               </div>

@@ -126,7 +126,7 @@ function DistributionRing({ distribution }: { distribution: { safe: number; atRi
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-foreground font-sora">{total}</span>
+          <span className="text-2xl font-bold text-foreground">{total}</span>
           <span className="text-xs text-muted-foreground">total</span>
         </div>
       </div>
@@ -168,7 +168,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-background z-10">
           <div>
-            <h2 className="text-base font-bold text-foreground font-sora">{member.firstName} {member.lastName}</h2>
+            <h2 className="text-base font-bold text-foreground">{member.firstName} {member.lastName}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{member.roleFamily ?? member.jobFunction ?? member.email}</p>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
@@ -403,7 +403,7 @@ export default function ManagerDashboard() {
       <div className="p-6 space-y-6 max-w-7xl">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground font-sora">Team Readiness</h1>
+            <h1 className="text-2xl font-bold text-foreground">Team Readiness</h1>
             <p className="text-muted-foreground mt-1 text-sm">AI capability intelligence across your team</p>
           </div>
           <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
@@ -429,7 +429,7 @@ export default function ManagerDashboard() {
                     </div>
                     <span className="text-xs text-muted-foreground">{kpi.label}</span>
                   </div>
-                  <p className="text-3xl font-bold text-foreground font-sora">{kpi.value}</p>
+                  <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
                 </CardContent>
               </Card>
             );
@@ -440,7 +440,7 @@ export default function ManagerDashboard() {
         <div className="grid lg:grid-cols-2 gap-4">
           <Card className="border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <CardTitle className="text-sm flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#4477AA]" />Readiness Distribution
               </CardTitle>
             </CardHeader>
@@ -455,7 +455,7 @@ export default function ManagerDashboard() {
 
           <Card className="border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <CardTitle className="text-sm flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-[#EE6677]" />Capability Gaps (Team Average)
               </CardTitle>
             </CardHeader>
@@ -487,7 +487,7 @@ export default function ManagerDashboard() {
         <div className="grid lg:grid-cols-2 gap-4">
           <Card className="border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <CardTitle className="text-sm flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-[#EE8866]" />Conversations Due
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">Members with overdue revalidation or high risk band — a conversation is recommended</p>
@@ -502,7 +502,7 @@ export default function ManagerDashboard() {
                 <div className="space-y-2">
                   {conversationDueMembers.slice(0, 5).map(m => (
                     <button key={m.id} onClick={() => setSelectedMember(m)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#EE8866]/5 border border-[#EE8866]/15 hover:bg-[#EE8866]/10 transition-colors text-left">
+                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#F59E0B]/5 border border-[#F59E0B]/15 hover:bg-[#F59E0B]/10 transition-colors text-left">
                       <div>
                         <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
                         <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
@@ -523,7 +523,7 @@ export default function ManagerDashboard() {
 
           <Card className="border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <CardTitle className="text-sm flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-[#EE8866]" />Revalidation Due (14 days)
               </CardTitle>
             </CardHeader>
@@ -539,7 +539,7 @@ export default function ManagerDashboard() {
                     const days = Math.ceil((new Date(m.revalidationDue!).getTime() - Date.now()) / 86400000);
                     return (
                       <button key={m.id} onClick={() => setSelectedMember(m)}
-                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#EE8866]/5 border border-[#EE8866]/15 hover:bg-[#EE8866]/10 transition-colors text-left">
+                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#F59E0B]/5 border border-[#F59E0B]/15 hover:bg-[#F59E0B]/10 transition-colors text-left">
                         <div>
                           <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
                           <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
@@ -560,7 +560,7 @@ export default function ManagerDashboard() {
         {/* Delegation Tiers — aggregated, no ranked list */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#4477AA]" />Delegation Tiers
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -605,7 +605,7 @@ export default function ManagerDashboard() {
         {/* Misuse Friction Indicators */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Zap className="w-4 h-4 text-[#EE8866]" />Misuse Friction Indicators
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Patterns that may indicate AI misuse risk or over-reliance</p>
@@ -671,7 +671,7 @@ export default function ManagerDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                <CardTitle className="text-sm flex items-center gap-2">
                   <Users className="w-4 h-4 text-[#4477AA]" />Team Members ({filtered.length})
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">Click any row to open the individual detail panel</p>
@@ -771,7 +771,7 @@ function LearningOverviewSection() {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+          <CardTitle className="text-sm flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-blue-500" />
             Team Learning Overview
           </CardTitle>

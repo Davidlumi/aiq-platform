@@ -148,7 +148,7 @@ export default function OnboardingWizard() {
           <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center">
             <Brain className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-foreground font-sora">AiQ</span>
+          <span className="text-lg font-bold text-foreground">AiQ</span>
         </div>
         <Progress value={progress} className="h-1.5 mb-6" />
         <p className="text-xs text-muted-foreground">Step {step} of {totalSteps}</p>
@@ -229,7 +229,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           <Shield className="w-8 h-8 text-[#10B981]" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Welcome to AiQ
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
@@ -278,7 +278,7 @@ function SelectionStep({
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-foreground font-sora mb-1">{title}</h2>
+        <h2 className="text-xl font-bold text-foreground mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
       <div className="space-y-2">
@@ -320,7 +320,7 @@ function JobFunctionStep({
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-foreground font-sora mb-1">
+        <h2 className="text-xl font-bold text-foreground mb-1">
           What is your primary HR function?
         </h2>
         <p className="text-sm text-muted-foreground">

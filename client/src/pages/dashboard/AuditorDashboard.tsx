@@ -69,7 +69,7 @@ export default function AuditorDashboard() {
     <div className="p-6 space-y-6 max-w-7xl">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">Audit Intelligence</h1>
+          <h1 className="text-2xl font-bold text-foreground">Audit Intelligence</h1>
           <p className="text-muted-foreground mt-1 text-sm">Evidence surface, policy incidents, and audit trail</p>
         </div>
         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function AuditorDashboard() {
                   </div>
                   <span className="text-xs text-muted-foreground">{kpi.label}</span>
                 </div>
-                <p className="text-3xl font-bold text-foreground font-sora">{kpi.value.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
               </CardContent>
             </Card>
           );
@@ -110,7 +110,7 @@ export default function AuditorDashboard() {
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#EE6677]" />Incidents by Type
             </CardTitle>
           </CardHeader>
@@ -140,7 +140,7 @@ export default function AuditorDashboard() {
 
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#4477AA]" />Evidence Summary
             </CardTitle>
           </CardHeader>
@@ -154,7 +154,7 @@ export default function AuditorDashboard() {
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className="text-sm font-bold font-sora" style={{ color: item.color }}>{item.value.toLocaleString()}</span>
+                  <span className="text-sm font-bold" style={{ color: item.color }}>{item.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -166,7 +166,7 @@ export default function AuditorDashboard() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-[#EE6677]" />Policy Incidents ({filteredIncidents.length})
             </CardTitle>
             <div className="relative w-56">
@@ -215,7 +215,7 @@ export default function AuditorDashboard() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <CardTitle className="text-sm flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#4477AA]" />Audit Log ({filteredLogs.length})
             </CardTitle>
             <div className="relative w-56">

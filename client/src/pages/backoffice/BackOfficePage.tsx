@@ -394,7 +394,7 @@ function DashboardTab() {
                   <s.icon className="w-4.5 h-4.5" style={{ color: s.color }} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground font-sora">{s.value}</p>
+              <p className="text-2xl font-bold text-foreground">{s.value}</p>
               <p className="text-xs font-medium text-foreground mt-0.5">{s.label}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
             </CardContent>
@@ -457,7 +457,7 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-sora">Create Organisation</DialogTitle>
+          <DialogTitle className="">Create Organisation</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -514,7 +514,7 @@ function EditOrgDialog({ org, onClose, onSaved }: { org: any; onClose: () => voi
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-sora">Edit Organisation</DialogTitle>
+          <DialogTitle className="">Edit Organisation</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -661,7 +661,7 @@ function OrgsTab() {
         <AlertDialog open onOpenChange={(open) => { if (!open) setDeleteOrgTarget(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-sora flex items-center gap-2 text-destructive">
+              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
                 <Trash2 className="w-4 h-4" />
                 Delete Organisation
               </AlertDialogTitle>
@@ -716,7 +716,7 @@ function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; o
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-sora">Create User</DialogTitle>
+          <DialogTitle className="">Create User</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -810,7 +810,7 @@ function ResetPasswordDialog({ user, onClose }: { user: any; onClose: () => void
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-sora">Reset Password</DialogTitle>
+          <DialogTitle className="">Reset Password</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <p className="text-sm text-muted-foreground">Setting new password for <strong>{user.email}</strong></p>
@@ -881,7 +881,7 @@ function EditUserDialog({ user, onClose, onSaved, orgs }: { user: any; onClose: 
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-sora">Edit User</DialogTitle>
+          <DialogTitle className="">Edit User</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 font-mono">{user.email}</div>
@@ -1089,7 +1089,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
         <AlertDialog open onOpenChange={(open) => { if (!open) setDeleteUserTarget(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-sora flex items-center gap-2 text-destructive">
+              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
                 <Trash2 className="w-4 h-4" />
                 Delete User
               </AlertDialogTitle>
@@ -1195,7 +1195,7 @@ function ReasoningTab() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-base font-semibold text-foreground font-sora">Reasoning Review</h2>
+          <h2 className="text-base font-semibold text-foreground">Reasoning Review</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             {total} answer{total !== 1 ? "s" : ""} with captured reasoning text
           </p>
@@ -1765,7 +1765,7 @@ export default function BackOfficePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
-        <h2 className="text-xl font-bold text-foreground font-sora">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
         <p className="text-muted-foreground text-sm">This area requires super admin privileges.</p>
         <Button onClick={() => navigate("/dashboard")} variant="outline">Back to Dashboard</Button>
       </div>
@@ -1792,7 +1792,7 @@ export default function BackOfficePage() {
           <ShieldCheck className="w-5 h-5 text-[#10B981]" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-foreground font-sora">Back Office</h1>
+          <h1 className="text-xl font-bold text-foreground">Back Office</h1>
           <p className="text-xs text-muted-foreground">Platform administration — super admin only</p>
         </div>
       </div>

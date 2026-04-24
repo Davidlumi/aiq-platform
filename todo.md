@@ -1308,8 +1308,8 @@
 - [x] DS-11: Update results page to v2.2 dual-audience token usage — navy-600 radar/line chart, Inter font, navy-700 links
 
 ## Acme Ltd Demo Org (50 HR Employees)
-- [ ] ACME-1: Design org structure — 50 HR employees, major HR roles, reporting lines, score distribution plan
-- [ ] ACME-2: Seed tenant (company code: acme), 50 users (password: manutd99), org hierarchy, personas
-- [ ] ACME-3: Seed completed assessment sessions with realistic score distributions for all 50 users
-- [ ] ACME-4: Verify CPO/CHRO view, Manager view, and Individual view all show correct Acme Ltd data
-- [ ] ACME-5: Verify admin board shows Acme Ltd with all users listed
+- [x] ACME-1: Design org structure — 50 HR employees, major HR roles, reporting lines, score distribution plan
+- [x] ACME-2: Seed tenant (company code: acme), 50 users (password: manutd99), org hierarchy, personas
+- [x] ACME-3: Seed completed assessment sessions with realistic score distributions for all 50 users
+- [x] ACME-4: Verified — CPO/HR Leader dashboard: 50 users, 14 safe/29 at-risk/7 unsafe, 6 capability breakdowns; Manager: full team list with state; Individual: score, readiness, capability scores all correct
+- [x] ACME-5: Verified — admin board queries by tenant_id, Acme Ltd (tenant-acme-ltd) has 50 users visible

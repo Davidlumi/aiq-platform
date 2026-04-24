@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>;
  * On dark (hero) surfaces, arc and 'i' use Sage (#5ee8b0)
  */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "var(--navy-300)" : "var(--navy-800)";
+  const accent = variant === "hero" ? "var(--navy-300)" : "var(--#10B981)";
   return (
     <svg
       width={size}
@@ -34,7 +34,7 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
       xmlns="http://www.w3.org/2000/svg"
       aria-label="HR AiQ logo"
     >
-      <circle cx="100" cy="100" r="100" fill="var(--navy-800)" />
+      <circle cx="100" cy="100" r="100" fill="var(--#10B981)" />
       <text x="42" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">A</text>
       <text x="105" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill={accent} letterSpacing="-2">i</text>
       <text x="122" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">Q</text>
@@ -116,12 +116,12 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex"
-      style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}
+      style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}
     >
       {/* ── Left brand panel (Midnight) ── */}
       <div
         className="hidden lg:flex flex-col justify-between w-[440px] shrink-0 p-10"
-        style={{ background: "var(--navy-800)" }}
+        style={{ background: "var(--#10B981)" }}
       >
         {/* Logo + wordmark */}
         <div className="flex items-center gap-3">
@@ -250,7 +250,7 @@ export default function LoginPage() {
                 fontWeight: 400,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: "var(--neutral-500)",
+                color: "var(--#F8FAFC0)",
                 lineHeight: 1,
                 marginBottom: "3px",
               }}
@@ -262,11 +262,11 @@ export default function LoginPage() {
                 fontFamily: "'Sora', sans-serif",
                 fontSize: "20px",
                 fontWeight: 700,
-              color: "var(--neutral-900)",
+              color: "var(--#0F172A)",
               lineHeight: 1,
             }}
           >
-              Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+              Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
             </span>
           </div>
         </div>
@@ -278,7 +278,7 @@ export default function LoginPage() {
                 fontFamily: "'Sora', sans-serif",
                 fontSize: "24px",
                 fontWeight: 600,
-              color: "var(--neutral-900)",
+              color: "var(--#0F172A)",
               marginBottom: "6px",
               }}
             >

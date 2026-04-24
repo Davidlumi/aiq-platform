@@ -170,7 +170,7 @@ export default function MethodologyPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-[#0F6E56]" />
-            <span className="text-sm font-semibold text-foreground font-sora">Assessment Methodology</span>
+            <span className="text-sm font-semibold text-foreground">Assessment Methodology</span>
           </div>
         </div>
       </header>
@@ -182,7 +182,7 @@ export default function MethodologyPage() {
             <Shield className="w-3.5 h-3.5" />
             Methodology Disclosure
           </div>
-          <h1 className="text-3xl font-bold text-foreground font-sora leading-tight">
+          <h1 className="text-3xl font-bold text-foreground leading-tight">
             How AiQ Measures AI Capability
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed max-w-3xl">
@@ -202,7 +202,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <Brain className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">What We Measure</h2>
+            <h2 className="text-xl font-bold text-foreground">What We Measure</h2>
           </div>
 
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
@@ -220,7 +220,7 @@ export default function MethodologyPage() {
             </p>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-8">Six Capability Domains</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-8">Six Capability Domains</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             The assessment operationalises AI capability across six domains, each targeting a distinct
             facet of practical AI capability in the modern workplace.
@@ -261,7 +261,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <Target className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">How We Measure It</h2>
+            <h2 className="text-xl font-bold text-foreground">How We Measure It</h2>
           </div>
 
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
@@ -279,7 +279,7 @@ export default function MethodologyPage() {
             </p>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Adaptive Personalisation</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-6">Adaptive Personalisation</h3>
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
             <p>
               What distinguishes AiQ from a standard SJT is the dynamic generation of assessment items.
@@ -294,7 +294,7 @@ export default function MethodologyPage() {
             </p>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Three-Phase Adaptive Structure</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-6">Three-Phase Adaptive Structure</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
               { phase: "Baseline", range: "0–30%", desc: "Broad calibration across all six capability domains", colour: "#4477AA" },
@@ -306,14 +306,14 @@ export default function MethodologyPage() {
                   <div className="text-xs font-bold uppercase tracking-wider" style={{ color: p.colour }}>
                     {p.phase}
                   </div>
-                  <div className="text-lg font-bold text-foreground font-sora">{p.range}</div>
+                  <div className="text-lg font-bold text-foreground">{p.range}</div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Fifteen Interaction Types</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-6">Fifteen Interaction Types</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             The assessment uses at least 5 of 15 available question formats to ensure measurement
             diversity and reduce method bias. These include prompt refinement, chatbot dialogue, agent oversight,
@@ -329,7 +329,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">Quality Assurance</h2>
+            <h2 className="text-xl font-bold text-foreground">Quality Assurance</h2>
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -356,7 +356,7 @@ export default function MethodologyPage() {
             })}
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Anti-Gaming Protection</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-6">Anti-Gaming Protection</h3>
           <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
             <p>
               The assessment includes dedicated integrity mechanisms. <strong className="text-foreground">Anti-gaming
@@ -372,7 +372,7 @@ export default function MethodologyPage() {
             </p>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Evidence Sufficiency Gates</h3>
+          <h3 className="text-lg font-semibold text-foreground mt-6">Evidence Sufficiency Gates</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             The system will not classify an individual unless minimum evidence thresholds are met:
             at least 20 items answered, at least 3 signals per capability domain, at least 5 distinct
@@ -388,7 +388,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <BarChart2 className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">Scoring & Classification</h2>
+            <h2 className="text-xl font-bold text-foreground">Scoring & Classification</h2>
           </div>
 
           <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
@@ -442,7 +442,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <FileText className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">Standards Alignment</h2>
+            <h2 className="text-xl font-bold text-foreground">Standards Alignment</h2>
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -493,7 +493,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4 text-amber-600" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">Limitations & Transparency</h2>
+            <h2 className="text-xl font-bold text-foreground">Limitations & Transparency</h2>
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -559,7 +559,7 @@ export default function MethodologyPage() {
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-[#0F6E56]" />
             </div>
-            <h2 className="text-xl font-bold text-foreground font-sora">References</h2>
+            <h2 className="text-xl font-bold text-foreground">References</h2>
           </div>
 
           <div className="space-y-2">

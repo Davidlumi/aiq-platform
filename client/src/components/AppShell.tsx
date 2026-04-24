@@ -1,8 +1,9 @@
 /**
- * AppShell — AiQ Design System v2.2
- * Sidebar spec: 240px expanded, 56px collapsed, sunken background (neutral-50),
- * 3px left active border in navy-800, section labels in type-micro, Inter font.
- * Top bar: raised surface (neutral-0), 56px height, 1px border-subtle bottom.
+ * AppShell — AiQ Platform Navigation Shell
+ * Original brand: #10B981 green accent, #1E293B dark slate sidebar,
+ * #F7F8FA canvas background, system font stack.
+ * Sidebar: 240px expanded, 56px collapsed.
+ * Simulations removed per proposition realignment brief.
  */
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -20,7 +21,6 @@ import {
   ClipboardList,
   BookOpen,
   Library,
-  Play,
   BarChart3,
   Shield,
   FileText,
@@ -52,7 +52,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Assessment",      path: "/assessment",  icon: ClipboardList,   section: "learn" },
   { label: "Learning plan",   path: "/learning",    icon: BookOpen,        section: "learn" },
   { label: "Content library", path: "/library",     icon: Library,         section: "learn" },
-  { label: "Simulations",     path: "/simulations", icon: Play,            section: "learn" },
   {
     label: "Reports",
     path: "/reports",
@@ -120,12 +119,12 @@ const NAV_ITEMS: NavItem[] = [
 
 const SECTION_LABELS: Record<string, string> = {
   core:   "",
-  learn:  "Learning",
+  learn:  "Develop",
   govern: "Governance",
   admin:  "Administration",
 };
 
-/** AiQ logo mark — navy-800 circle, white A+Q, navy-400 i dot, navy-400 arc */
+/** AiQ logo mark — dark slate circle, white A+Q, green i dot */
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg
@@ -137,22 +136,22 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
       aria-label="AiQ logo"
       role="img"
     >
-      <circle cx="100" cy="100" r="90" fill="#1F3A5F" />
+      <circle cx="100" cy="100" r="90" fill="#1E293B" />
       <text
         x="100"
         y="122"
-        fontFamily="Inter, system-ui, sans-serif"
+        fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="72"
         fontWeight="700"
         fill="white"
         textAnchor="middle"
         letterSpacing="-3"
       >
-        A<tspan fill="#7894B8">i</tspan>Q
+        A<tspan fill="#10B981">i</tspan>Q
       </text>
       <path
         d="M 58 140 Q 100 158 142 140"
-        stroke="#7894B8"
+        stroke="#10B981"
         strokeWidth="6"
         strokeLinecap="round"
         fill="none"
@@ -165,11 +164,11 @@ function AiQWordmark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) return null;
   return (
     <div className="flex flex-col leading-none select-none">
-      <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--neutral-500)", lineHeight: 1, marginBottom: "2px" }}>
+      <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#94A3B8", lineHeight: 1, marginBottom: "2px" }}>
         HR
       </span>
-      <span style={{ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "var(--neutral-900)" }}>
-        Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+      <span style={{ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "#F8FAFC" }}>
+        Ai<span style={{ color: "#10B981" }}>Q</span>
       </span>
     </div>
   );
@@ -223,17 +222,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div
       className="flex flex-col h-full"
       style={{
-        background: "var(--neutral-50)",
-        borderRight: "1px solid var(--neutral-200)",
+        background: "#1E293B",
+        borderRight: "1px solid #334155",
       }}
     >
-      {/* Logo header — 64px height */}
+      {/* Logo header */}
       <div
         className={cn(
           "flex items-center h-16 px-4 shrink-0",
           collapsed ? "justify-center" : "justify-between"
         )}
-        style={{ borderBottom: "1px solid var(--neutral-200)" }}
+        style={{ borderBottom: "1px solid #334155" }}
       >
         <div className="flex items-center gap-2.5">
           <AiQLogoMark size={collapsed ? 28 : 32} />
@@ -243,9 +242,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setCollapsed(true)}
             className="p-1.5 rounded transition-colors hidden lg:flex"
-            style={{ color: "var(--neutral-400)" }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "var(--neutral-600)")}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "var(--neutral-400)")}
+            style={{ color: "#64748B" }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "#94A3B8")}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "#64748B")}
             aria-label="Collapse sidebar"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -255,11 +254,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Expand button when collapsed */}
       {collapsed && (
-        <div className="flex justify-center py-2" style={{ borderBottom: "1px solid var(--neutral-200)" }}>
+        <div className="flex justify-center py-2" style={{ borderBottom: "1px solid #334155" }}>
           <button
             onClick={() => setCollapsed(false)}
             className="p-1.5 rounded transition-colors"
-            style={{ color: "var(--neutral-400)" }}
+            style={{ color: "#64748B" }}
             aria-label="Expand sidebar"
           >
             <ChevronRight className="w-4 h-4" />
@@ -268,13 +267,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2" aria-label="Main navigation">
+      <nav className="flex-1 overflow-y-auto py-3" aria-label="Main navigation">
         {sections.map((section) => (
           <div key={section.key} className="mb-1">
-            {/* Section label — type-micro per §4.2 */}
             {section.label && !collapsed && (
               <div
-                className="nav-section-label"
+                className="px-4 py-1.5 text-[10px] font-semibold tracking-widest uppercase"
+                style={{ color: "#475569" }}
                 aria-hidden="true"
               >
                 {section.label}
@@ -290,25 +289,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       <span
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 py-2.5 rounded-r text-sm transition-all cursor-pointer select-none",
-                          collapsed ? "justify-center px-2" : "",
-                          active ? "nav-item-active" : "nav-item-inactive"
+                          "flex items-center gap-3 py-2.5 rounded text-sm transition-all cursor-pointer select-none",
+                          collapsed ? "justify-center px-2" : "px-3",
                         )}
-                        style={
-                          !collapsed
-                            ? {
-                                fontSize: "14px",
-                                fontWeight: active ? 500 : 400,
-                              }
-                            : { fontSize: "14px" }
-                        }
+                        style={{
+                          background: active ? "rgba(16,185,129,0.12)" : "transparent",
+                          color: active ? "#10B981" : "#94A3B8",
+                          fontWeight: active ? 500 : 400,
+                          borderLeft: active && !collapsed ? "3px solid #10B981" : "3px solid transparent",
+                          borderRadius: "6px",
+                        }}
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
+                        onMouseEnter={e => {
+                          if (!active) {
+                            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+                            (e.currentTarget as HTMLElement).style.color = "#CBD5E1";
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!active) {
+                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                            (e.currentTarget as HTMLElement).style.color = "#94A3B8";
+                          }
+                        }}
                       >
-                        <span
-                          className="shrink-0 w-[18px] h-[18px] flex items-center justify-center"
-                          style={{ color: active ? "var(--navy-800)" : "var(--neutral-400)" }}
-                        >
+                        <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
                           <Icon className="w-[18px] h-[18px]" />
                         </span>
                         {!collapsed && <span>{item.label}</span>}
@@ -323,7 +329,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* User profile footer */}
-      <div className="shrink-0 p-2" style={{ borderTop: "1px solid var(--neutral-200)" }}>
+      <div className="shrink-0 p-2" style={{ borderTop: "1px solid #334155" }}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -331,30 +337,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 "w-full flex items-center gap-3 p-2 rounded transition-colors",
                 collapsed && "justify-center"
               )}
-              style={{ color: "var(--neutral-600)" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "var(--neutral-100)")}
+              style={{ color: "#94A3B8" }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)")}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               aria-label="Account menu"
             >
-              {/* Avatar */}
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                style={{ background: "var(--navy-100)", color: "var(--navy-800)" }}
+                style={{ background: "rgba(16,185,129,0.2)", color: "#10B981" }}
               >
                 {initials}
               </div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
-                  <p
-                    className="text-sm font-medium truncate"
-                    style={{ color: "var(--neutral-900)", fontSize: "13px" }}
-                  >
+                  <p className="text-sm font-medium truncate" style={{ color: "#F1F5F9", fontSize: "13px" }}>
                     {displayName}
                   </p>
-                  <p
-                    className="text-xs truncate"
-                    style={{ color: "var(--neutral-500)", fontSize: "12px" }}
-                  >
+                  <p className="text-xs truncate" style={{ color: "#64748B", fontSize: "12px" }}>
                     {roleLabel}
                   </p>
                 </div>
@@ -366,7 +365,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
-                <p className="text-xs font-medium" style={{ color: "var(--navy-700)" }}>{roleLabel}</p>
+                <p className="text-xs font-medium" style={{ color: "#10B981" }}>{roleLabel}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -393,7 +392,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="flex h-screen overflow-hidden"
-      style={{ background: "var(--neutral-25)" }}
+      style={{ background: "#F7F8FA" }}
     >
       {/* Desktop sidebar — 240px expanded, 56px collapsed */}
       <aside
@@ -401,7 +400,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           "hidden lg:flex flex-col transition-all shrink-0",
           collapsed ? "w-14" : "w-60"
         )}
-        style={{ transitionDuration: "var(--duration-standard)", transitionTimingFunction: "var(--ease-out)" }}
+        style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
         aria-label="Sidebar"
       >
         <SidebarInner />
@@ -410,8 +409,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden backdrop-enter"
-          style={{ background: "rgba(15,33,55,0.5)" }}
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ background: "rgba(15,23,42,0.6)" }}
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
@@ -423,7 +422,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           "fixed top-0 left-0 h-full w-60 z-50 transition-transform lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ transitionDuration: "var(--duration-standard)", transitionTimingFunction: "var(--ease-out)" }}
+        style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
         aria-label="Sidebar"
       >
         <SidebarInner />
@@ -431,20 +430,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar — 56px height, raised surface */}
+        {/* Top bar */}
         <header
           className="flex items-center px-4 lg:px-6 gap-3 shrink-0"
           style={{
             height: "56px",
-            background: "var(--neutral-0)",
-            borderBottom: "1px solid var(--neutral-200)",
+            background: "#FFFFFF",
+            borderBottom: "1px solid #E2E8F0",
           }}
         >
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden p-2 rounded transition-colors"
-            style={{ color: "var(--neutral-500)" }}
+            style={{ color: "#64748B" }}
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -453,8 +452,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2">
             <AiQLogoMark size={26} />
-            <span style={{ fontWeight: 600, fontSize: "15px", color: "var(--neutral-900)" }}>
-              Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+            <span style={{ fontWeight: 600, fontSize: "15px", color: "#1E293B" }}>
+              Ai<span style={{ color: "#10B981" }}>Q</span>
             </span>
           </div>
 
@@ -464,8 +463,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-1">
             <button
               className="p-2 rounded transition-colors"
-              style={{ color: "var(--neutral-500)" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "var(--neutral-100)")}
+              style={{ color: "#64748B" }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#F1F5F9")}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               aria-label="Notifications"
             >
@@ -476,21 +475,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <button
                   className="flex items-center gap-2 px-2 py-1.5 rounded transition-colors"
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "var(--neutral-100)")}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#F1F5F9")}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
                   aria-label="Account menu"
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                    style={{ background: "var(--navy-100)", color: "var(--navy-800)" }}
+                    style={{ background: "rgba(16,185,129,0.15)", color: "#10B981" }}
                   >
                     {initials}
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium leading-none" style={{ color: "var(--neutral-900)", fontSize: "13px" }}>
+                    <p className="text-sm font-medium leading-none" style={{ color: "#1E293B", fontSize: "13px" }}>
                       {displayName}
                     </p>
-                    <p className="text-xs leading-none mt-0.5" style={{ color: "var(--neutral-500)", fontSize: "12px" }}>
+                    <p className="text-xs leading-none mt-0.5" style={{ color: "#64748B", fontSize: "12px" }}>
                       {roleLabel}
                     </p>
                   </div>
@@ -501,6 +500,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{displayName}</p>
                     <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
+                    <p className="text-xs font-medium" style={{ color: "#10B981" }}>{roleLabel}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -524,7 +524,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main id="main-content" className="flex-1 overflow-y-auto" tabIndex={-1}>
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

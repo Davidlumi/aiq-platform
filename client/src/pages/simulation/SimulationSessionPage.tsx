@@ -87,7 +87,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
     <div className="p-6 space-y-6 max-w-2xl mx-auto">
       <div className="text-center py-8 space-y-3">
         {isPassed ? <CheckCircle2 className="w-16 h-16 mx-auto text-[#228833]" /> : <XCircle className="w-16 h-16 mx-auto text-[#EE6677]" />}
-        <h1 className="text-2xl font-bold text-foreground font-sora">{isPassed ? "Simulation Passed" : "Simulation Failed"}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{isPassed ? "Simulation Passed" : "Simulation Failed"}</h1>
         <p className="text-muted-foreground">
           {isPassed ? "You demonstrated appropriate reasoning and policy compliance throughout this scenario."
             : "Review the learning materials and try again to improve your decision-making."}
@@ -109,7 +109,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
       </Card>
       {choices.length > 0 && (
         <Card className="border-border">
-          <CardHeader className="pb-3"><CardTitle className="text-sm font-sora">Decision History</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Decision History</CardTitle></CardHeader>
           <CardContent className="pt-0 space-y-2">
             {choices.map((e: any, i: number) => {
               let meta: any = {};
@@ -203,7 +203,7 @@ export default function SimulationSessionPage() {
       <div className="p-6 space-y-6 max-w-3xl">
         <div className="text-center py-8 space-y-3">
           <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto" />
-          <h2 className="text-xl font-bold font-sora">All scenarios complete</h2>
+          <h2 className="text-xl font-bold">All scenarios complete</h2>
           <p className="text-muted-foreground text-sm">Submit your simulation to receive your score.</p>
           <Button onClick={() => completeMutation.mutate({ sessionId: sessionId! })} disabled={completeMutation.isPending}
             className="mt-4 bg-[#10B981] hover:bg-[#10B981]/90 text-white">
@@ -251,7 +251,7 @@ export default function SimulationSessionPage() {
             <div className="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold">
               {events.filter((e: any) => e.eventType === "choice_made").length + 1}
             </div>
-            <CardTitle className="text-sm font-sora text-muted-foreground">Scenario</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Scenario</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">

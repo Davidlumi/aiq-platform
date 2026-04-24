@@ -1,6 +1,6 @@
 /**
  * ResetPasswordPage — AiQ Design System v2.2 auth surface
- * Centered card on neutral-25 canvas. Mirrors ForgotPasswordPage treatment.
+ * Centered card on #F7F8FA canvas. Mirrors ForgotPasswordPage treatment.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -29,7 +29,7 @@ type FormData = z.infer<typeof schema>;
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="var(--navy-800)" />
+      <circle cx="100" cy="100" r="90" fill="var(--#10B981)" />
       <text x="100" y="122" fontFamily="Inter, system-ui, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
         A<tspan fill="var(--navy-300)">i</tspan>Q
       </text>
@@ -61,13 +61,13 @@ export default function ResetPasswordPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}
+      style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <AiQLogoMark size={36} />
-        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--neutral-900)" }}>
-          Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--#0F172A)" }}>
+          Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
         </span>
       </div>
 
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
         className="w-full max-w-[420px] rounded-lg border p-8"
         style={{
           background: "var(--neutral-0)",
-          borderColor: "var(--neutral-200)",
+          borderColor: "var(--#E2E8F0)",
           boxShadow: "var(--elevation-sm)",
         }}
       >
@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
             <div className="flex justify-center">
               <CheckCircle2 className="w-10 h-10" style={{ color: "var(--green-700)" }} />
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 500, color: "var(--neutral-900)" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: 500, color: "var(--#0F172A)" }}>
               Password updated
             </h1>
             <p style={{ fontSize: "14px", color: "var(--neutral-600)", lineHeight: 1.6 }}>
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
         ) : (
           <>
             <div className="mb-6">
-              <h1 style={{ fontSize: "22px", fontWeight: 500, color: "var(--neutral-900)", marginBottom: "6px" }}>
+              <h1 style={{ fontSize: "22px", fontWeight: 500, color: "var(--#0F172A)", marginBottom: "6px" }}>
                 Set new password
               </h1>
               <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
 
             <div className="mt-5 text-center">
               <Link href="/login">
-                <span className="text-sm cursor-pointer" style={{ color: "var(--navy-800)" }}>
+                <span className="text-sm cursor-pointer" style={{ color: "var(--#10B981)" }}>
                   Back to sign in
                 </span>
               </Link>

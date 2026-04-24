@@ -72,9 +72,9 @@ import type { CapabilityKey, InteractionType } from "@/lib/domains";
 const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS;
 
 const RISK_CONFIG = {
-  High:   { color: "text-[#EE6677] bg-[#EE6677]/8 border-[#EE6677]/30", icon: AlertTriangle },
-  Medium: { color: "text-[#EE8866] bg-[#EE8866]/8 border-[#EE8866]/30", icon: AlertTriangle },
-  Low:    { color: "text-[#228833] bg-[#228833]/8 border-[#228833]/30", icon: Target },
+  High:   { color: "text-[#DC2626] bg-[#DC2626]/8 border-[#DC2626]/30", icon: AlertTriangle },
+  Medium: { color: "text-[#F59E0B] bg-[#F59E0B]/8 border-[#F59E0B]/30", icon: AlertTriangle },
+  Low:    { color: "text-[#10B981] bg-[#10B981]/8 border-[#10B981]/30", icon: Target },
 } as const;
 
 // ─── Interaction type config ──────────────────────────────────────────────────
@@ -106,7 +106,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
         questionLabel: meta.questionLabel,
         hasAiOutput: ["error_detection", "scenario_critique", "confidence_calibration", "prompt_diagnosis"].includes(key),
         hasDataContext: false,
-        accent: key.includes("error") ? "#EE6677" : key.includes("ethic") ? "#AA3377" : key.includes("risk") ? "#EE6677" : key.includes("change") || key.includes("resistance") ? "#66CCEE" : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? "#228833" : "#4477AA",
+        accent: key.includes("error") ? "#DC2626" : key.includes("ethic") ? "#8B5CF6" : key.includes("risk") ? "#DC2626" : key.includes("change") || key.includes("resistance") ? "#66CCEE" : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? "#10B981" : "#3B82F6",
         icon: key.includes("error") ? AlertCircle : key.includes("risk") ? AlertTriangle : key.includes("ethic") || key.includes("pressure") ? Shield : key.includes("critique") || key.includes("diagnosis") ? Search : key.includes("prompt") ? Sparkles : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? Layers : key.includes("leader") || key.includes("advisory") ? Briefcase : key.includes("resist") || key.includes("concern") || key.includes("stakeholder") ? Scale : Target,
       },
     ])
@@ -118,7 +118,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
     questionLabel: "What is the next step in this workflow?",
     hasAiOutput: false,
     hasDataContext: false,
-    accent: "#4477AA",
+    accent: "#3B82F6",
     icon: Layers,
   },
   contradiction_probe: {
@@ -127,7 +127,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
     questionLabel: "Which answer is most consistent with your earlier response?",
     hasAiOutput: false,
     hasDataContext: false,
-    accent: "#AA3377",
+    accent: "#8B5CF6",
     icon: Scale,
   },
 };
@@ -147,7 +147,7 @@ function getInteractionConfig(interactionType: string): InteractionConfig {
     questionLabel: "What is the most appropriate action?",
     hasAiOutput: false,
     hasDataContext: false,
-    accent: "#4477AA",
+    accent: "#3B82F6",
     icon: Scale,
   };
 }
@@ -159,10 +159,10 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
     critique: {
       label: "AI-Generated Output",
       sublabel: "Evaluate this output",
-      borderColor: "border-[#AA3377]/30",
-      bgColor: "bg-[#AA3377]/4",
-      labelColor: "text-[#AA3377]",
-      iconColor: "text-[#AA3377]",
+      borderColor: "border-[#8B5CF6]/30",
+      bgColor: "bg-[#8B5CF6]/4",
+      labelColor: "text-[#8B5CF6]",
+      iconColor: "text-[#8B5CF6]",
     },
     improvement: {
       label: "AI-Generated Output",
@@ -175,10 +175,10 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
     error: {
       label: "AI-Generated Output",
       sublabel: "Find the error",
-      borderColor: "border-[#EE6677]/30",
-      bgColor: "bg-[#EE6677]/4",
-      labelColor: "text-[#EE6677]",
-      iconColor: "text-[#EE6677]",
+      borderColor: "border-[#DC2626]/30",
+      bgColor: "bg-[#DC2626]/4",
+      labelColor: "text-[#DC2626]",
+      iconColor: "text-[#DC2626]",
     },
   };
   const cfg = configs[mode];
@@ -383,14 +383,14 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
 function NarrativeWrapper({ context }: { context: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="rounded-xl border border-[#4477AA]/30 bg-[#4477AA]/5 overflow-hidden">
+    <div className="rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/5 overflow-hidden">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-[#4477AA]/8 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-[#3B82F6]/8 transition-colors text-left"
       >
-        <Layers className="w-4 h-4 text-[#4477AA] shrink-0" />
+        <Layers className="w-4 h-4 text-[#3B82F6] shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#4477AA]">Your Scenario Context</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#3B82F6]">Your Scenario Context</p>
           {!expanded && (
             <p className="text-xs text-muted-foreground truncate mt-0.5">{context.slice(0, 80)}{context.length > 80 ? "…" : ""}</p>
           )}
@@ -398,7 +398,7 @@ function NarrativeWrapper({ context }: { context: string }) {
         <span className="text-xs text-muted-foreground shrink-0">{expanded ? "▲ Hide" : "▼ Show"}</span>
       </button>
       {expanded && (
-        <div className="px-4 pb-3 pt-1 border-t border-[#4477AA]/20">
+        <div className="px-4 pb-3 pt-1 border-t border-[#3B82F6]/20">
           <p className="text-sm text-foreground leading-relaxed">{context}</p>
         </div>
       )}
@@ -442,8 +442,8 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
         <CardContent className="p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: "var(--navy-50)", border: "1px solid var(--navy-100)" }}>
-              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--navy-700)" }} />
+              style={{ background: "#F0FDF4", border: "1px solid #ECFDF5" }}>
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#059669" }} />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
@@ -464,7 +464,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
                 {i < activeStep ? (
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--green-700)" }} />
                 ) : i === activeStep ? (
-                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "var(--navy-700)" }} />
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "#059669" }} />
                 ) : (
                   <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
                 )}
@@ -522,14 +522,14 @@ function CompletionScreen({
         <div className={cn("rounded-2xl border-2 p-5", stateConfig.bg)}>
           <p className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1")}>Your Readiness</p>
           <div className="flex items-baseline gap-3">
-            <p className={cn("text-2xl font-bold font-sora", stateConfig.color)}>{stateConfig.label}</p>
+            <p className={cn("text-2xl font-bold ", stateConfig.color)}>{stateConfig.label}</p>
             <p className={cn("text-4xl font-bold", stateConfig.color)}>{Math.round(result.overallScore)}</p>
           </div>
           {stateConfig.description && (
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stateConfig.description}</p>
           )}
           {caveat && (
-            <div className="flex items-start gap-1.5 mt-3 text-xs text-[#EE8866]">
+            <div className="flex items-start gap-1.5 mt-3 text-xs text-[#F59E0B]">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>{caveat}</span>
             </div>
@@ -558,10 +558,10 @@ function CompletionScreen({
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${score}%`, backgroundColor: CAPABILITY_COLOURS[key] ?? "#4477AA" }}
+                  style={{ width: `${score}%`, backgroundColor: CAPABILITY_COLOURS[key] ?? "#3B82F6" }}
                 />
               </div>
-              <span className="text-xs font-bold w-8 text-right" style={{ color: CAPABILITY_COLOURS[key] ?? "#4477AA" }}>
+              <span className="text-xs font-bold w-8 text-right" style={{ color: CAPABILITY_COLOURS[key] ?? "#3B82F6" }}>
                 {score as number}
               </span>
             </div>
@@ -886,7 +886,7 @@ export default function AssessmentSessionPage() {
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-              style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
+              style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -899,9 +899,9 @@ export default function AssessmentSessionPage() {
             {/* Pulsing analysis indicator */}
             <div className="flex items-center gap-3 px-3 py-3 rounded-lg border border-border bg-muted/20">
               <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-20" style={{ background: "var(--navy-700)" }} />
-                <span className="relative inline-flex h-5 w-5 rounded-full items-center justify-center" style={{ background: "var(--navy-100)" }}>
-                  <Bot className="w-3 h-3" style={{ color: "var(--navy-700)" }} />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-20" style={{ background: "#059669" }} />
+                <span className="relative inline-flex h-5 w-5 rounded-full items-center justify-center" style={{ background: "#ECFDF5" }}>
+                  <Bot className="w-3 h-3" style={{ color: "#059669" }} />
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -937,10 +937,10 @@ export default function AssessmentSessionPage() {
     // Stagger delays for section cascade animation
     const stagger = (i: number) => ({ style: { animationDelay: `${i * 80}ms` } });
     const outcomeColors: Record<string, string> = {
-      strong: "#228833",
+      strong: "#10B981",
       acceptable: "#CCBB44",
-      weak: "#EE8866",
-      failure: "#EE6677",
+      weak: "#F59E0B",
+      failure: "#DC2626",
       critical_failure: "#AA0000",
     };
     const outcomeLabels: Record<string, string> = {
@@ -950,7 +950,7 @@ export default function AssessmentSessionPage() {
       failure: "Incorrect response",
       critical_failure: "Critical failure",
     };
-    const outcomeColor = outcomeColors[rationaleData.outcomeClass ?? ""] ?? "#4477AA";
+    const outcomeColor = outcomeColors[rationaleData.outcomeClass ?? ""] ?? "#3B82F6";
     const outcomeLabel = outcomeLabels[rationaleData.outcomeClass ?? ""] ?? "Response recorded";
     return (
       <div className="p-6 space-y-5 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -962,7 +962,7 @@ export default function AssessmentSessionPage() {
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-              style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
+              style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -1084,7 +1084,7 @@ export default function AssessmentSessionPage() {
   const interactionType = (nextItem as any).interactionType ?? "prompt_refinement";
   const iConfig = getInteractionConfig(interactionType);
   const formatElapsed = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
-  const capabilityColor = CAPABILITY_COLOURS[(nextItem as any).capabilityKey] ?? "#4477AA";
+  const capabilityColor = CAPABILITY_COLOURS[(nextItem as any).capabilityKey] ?? "#3B82F6";
   const riskLevel = (nextItem as any).riskLevel as keyof typeof RISK_CONFIG;
   const riskConfig = RISK_CONFIG[riskLevel] ?? RISK_CONFIG.Medium;
   const aiOutput = (nextItem as any).aiOutput as string | undefined;
@@ -1114,7 +1114,7 @@ export default function AssessmentSessionPage() {
           <button
             onClick={() => setShowLeaveDialog(true)}
             className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-            style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
+            style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Save &amp; Exit
@@ -1246,8 +1246,8 @@ export default function AssessmentSessionPage() {
 
           {/* Constraint — only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
-            <div className="bg-[#EE8866]/6 rounded-xl p-3 border border-[#EE8866]/20">
-              <p className="text-xs font-semibold text-[#EE8866] uppercase tracking-wider mb-1">
+            <div className="bg-[#F59E0B]/6 rounded-xl p-3 border border-[#F59E0B]/20">
+              <p className="text-xs font-semibold text-[#F59E0B] uppercase tracking-wider mb-1">
                 Constraint
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1256,8 +1256,8 @@ export default function AssessmentSessionPage() {
 
           {/* Risk framing for pressure_test */}
           {interactionType === "pressure_test" && (nextItem as any).constraint && (
-            <div className="bg-[#EE6677]/6 rounded-xl p-3 border border-[#EE6677]/20">
-              <p className="text-xs font-semibold text-[#EE6677] uppercase tracking-wider mb-1">
+            <div className="bg-[#DC2626]/6 rounded-xl p-3 border border-[#DC2626]/20">
+              <p className="text-xs font-semibold text-[#DC2626] uppercase tracking-wider mb-1">
                 Risk Factor
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1266,8 +1266,8 @@ export default function AssessmentSessionPage() {
 
           {/* Governance framing */}
           {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
-            <div className="bg-[#228833]/6 rounded-xl p-3 border border-[#228833]/20">
-              <p className="text-xs font-semibold text-[#228833] uppercase tracking-wider mb-1">
+            <div className="bg-[#10B981]/6 rounded-xl p-3 border border-[#10B981]/20">
+              <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1">
                 Policy Context
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1327,7 +1327,7 @@ export default function AssessmentSessionPage() {
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value
-                      ? "border-[var(--navy-800)] bg-[var(--navy-50)] ring-1 ring-[var(--navy-800)]/20"
+                      ? "border-[#10B981] bg-[#F0FDF4] ring-1 ring-[#10B981]/20"
                       : "border-border hover:border-[var(--navy-400)] hover:bg-muted/30"
                   )}
                 >
@@ -1335,7 +1335,7 @@ export default function AssessmentSessionPage() {
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-[var(--navy-800)] bg-[var(--navy-800)] text-white"
+                        ? "border-[#10B981] bg-[#10B981] text-white"
                         : "border-border text-muted-foreground"
                     )}
                   >
@@ -1390,8 +1390,8 @@ export default function AssessmentSessionPage() {
               {(["guessing", "fairly_sure", "certain"] as ConfidenceStake[]).map((stake) => {
                 const isSelected = confidenceStake === stake;
                 const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
-                  guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#EE6677" },
-                  fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#EE8866" },
+                  guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#DC2626" },
+                  fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#F59E0B" },
                   certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--green-700)" },
                 };
                 const { label, desc, weight, color } = labels[stake];

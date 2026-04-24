@@ -168,7 +168,7 @@ export default function AssessmentPage() {
       {/* ── Page Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">AI Capability Assessment</h1>
+          <h1 className="text-2xl font-bold text-foreground">AI Capability Assessment</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             AIQ V9.2 Standard Assessment · 50 interactions · 6 capability domains · ~35 minutes
           </p>
@@ -301,7 +301,7 @@ export default function AssessmentPage() {
               { label: "Model Version", value: "V9.2" },
             ].map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-lg font-bold text-[#10B981] font-sora">{stat.value}</p>
+                <p className="text-lg font-bold text-[#10B981]">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
@@ -387,7 +387,7 @@ export default function AssessmentPage() {
                       <div className="flex items-center gap-3 shrink-0">
                         {session.state === "completed" && overallScore !== undefined && (
                           <div className="text-right">
-                            <p className={cn("text-lg font-bold font-sora", stateConfig.color)}>
+                            <p className={cn("text-lg font-bold", stateConfig.color)}>
                               {Math.round(overallScore)}
                             </p>
                             <p className={cn("text-xs font-medium", stateConfig.color)}>

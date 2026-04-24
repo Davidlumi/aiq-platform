@@ -30,12 +30,12 @@ import { cn } from "@/lib/utils";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const CAP_COLORS: Record<string, string> = {
-  ai_interaction:         "#4477AA",
-  ai_output_evaluation:   "#228833",
-  ai_workflow_design:     "#0D9488",
-  workforce_ai_readiness: "#059669",
-  ai_ethics_trust:        "#AA3377",
-  ai_change_leadership:   "#D97706",
+  ai_interaction:         "#3B82F6",
+  ai_output_evaluation:   "#10B981",
+  ai_workflow_design:     "#06B6D4",
+  workforce_ai_readiness: "#F59E0B",
+  ai_ethics_trust:        "#8B5CF6",
+  ai_change_leadership:   "#EC4899",
 };
 const CAP_LABELS: Record<string, string> = {
   ai_interaction:         "AI Interaction",
@@ -46,20 +46,20 @@ const CAP_LABELS: Record<string, string> = {
   ai_change_leadership:   "Change Leadership",
 };
 const SEVERITY_COLORS = {
-  critical: "#EE6677",
-  moderate: "#EE8866",
-  minor:    "#D97706",
-  none:     "#228833",
+  critical: "#DC2626",
+  moderate: "#F59E0B",
+  minor:    "#F59E0B",
+  none:     "#10B981",
 };
 
 // ─── Score → heatmap colour ───────────────────────────────────────────────────
 function scoreToHeatClass(score: number | null): string {
   if (score === null) return "bg-muted/40 text-muted-foreground";
-  if (score >= 75) return "bg-[#228833]/15 text-[#228833]";
-  if (score >= 65) return "bg-[#0D9488]/15 text-[#0D9488]";
-  if (score >= 55) return "bg-[#D97706]/15 text-[#D97706]";
-  if (score >= 45) return "bg-[#EE8866]/15 text-[#EE8866]";
-  return "bg-[#EE6677]/15 text-[#EE6677]";
+  if (score >= 75) return "bg-[#10B981]/15 text-[#10B981]";
+  if (score >= 65) return "bg-[#06B6D4]/15 text-[#06B6D4]";
+  if (score >= 55) return "bg-[#F59E0B]/15 text-[#F59E0B]";
+  if (score >= 45) return "bg-[#F59E0B]/15 text-[#F59E0B]";
+  return "bg-[#DC2626]/15 text-[#DC2626]";
 }
 
 // ─── KPI card ─────────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ function KpiCard({
           </div>
           <span className="text-xs text-muted-foreground font-medium">{label}</span>
         </div>
-        <p className="text-3xl font-bold text-foreground font-sora">{value}</p>
+        <p className="text-3xl font-bold text-foreground">{value}</p>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </CardContent>
     </Card>
@@ -85,7 +85,7 @@ function KpiCard({
 }
 
 // ─── Section header ───────────────────────────────────────────────────────────
-function SectionHeader({ icon: Icon, title, subtitle, color = "#4477AA" }: {
+function SectionHeader({ icon: Icon, title, subtitle, color = "#10B981" }: {
   icon: any; title: string; subtitle?: string; color?: string;
 }) {
   return (
@@ -94,7 +94,7 @@ function SectionHeader({ icon: Icon, title, subtitle, color = "#4477AA" }: {
         <Icon className="w-4 h-4" style={{ color }} />
       </div>
       <div>
-        <h2 className="text-sm font-semibold text-foreground font-sora">{title}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
     </div>
@@ -190,16 +190,16 @@ export default function HRDashboard() {
 
   // Compliance + risk pie data
   const compliancePie = [
-    { name: "Compliant", value: comp?.compliant ?? 0, color: "#228833" },
-    { name: "At Risk",   value: comp?.atRisk ?? 0,    color: "#EE8866" },
-    { name: "Breach",    value: comp?.breach ?? 0,    color: "#EE6677" },
+    { name: "Compliant", value: comp?.compliant ?? 0, color: "#10B981" },
+    { name: "At Risk",   value: comp?.atRisk ?? 0,    color: "#F59E0B" },
+    { name: "Breach",    value: comp?.breach ?? 0,    color: "#DC2626" },
     { name: "No Data",   value: comp?.noData ?? 0,    color: "#9CA3AF" },
   ].filter(d => d.value > 0);
 
   const riskPie = [
-    { name: "Low",    value: risk?.low ?? 0,    color: "#228833" },
-    { name: "Medium", value: risk?.medium ?? 0, color: "#EE8866" },
-    { name: "High",   value: risk?.high ?? 0,   color: "#EE6677" },
+    { name: "Low",    value: risk?.low ?? 0,    color: "#10B981" },
+    { name: "Medium", value: risk?.medium ?? 0, color: "#F59E0B" },
+    { name: "High",   value: risk?.high ?? 0,   color: "#DC2626" },
   ].filter(d => d.value > 0);
 
   // Bar chart data
@@ -216,11 +216,11 @@ export default function HRDashboard() {
       {/* ── Page header ── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">CPO Intelligence</h1>
+          <h1 className="text-2xl font-bold text-foreground ">CPO Intelligence</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Organisation-wide AI capability overview
             {mismatchData?.aiAmbitionLabel && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-[#4477AA]/10 text-[#4477AA]">
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6]/10 text-[#3B82F6]">
                 AI Ambition: {mismatchData.aiAmbitionLabel}
               </span>
             )}
@@ -242,28 +242,28 @@ export default function HRDashboard() {
           label="Total Assessed"
           value={total}
           icon={Users}
-          color="#4477AA"
+          color="#3B82F6"
           sub={`${data?.assessmentsLast30Days ?? 0} in last 30 days`}
         />
         <KpiCard
           label="Safe Readiness"
           value={`${safePercent}%`}
           icon={CheckCircle}
-          color="#228833"
+          color="#10B981"
           sub={`${rd?.safe ?? 0} of ${total} participants`}
         />
         <KpiCard
           label="Compliance Rate"
           value={`${compliancePercent}%`}
           icon={ShieldCheck}
-          color="#0D9488"
+          color="#06B6D4"
           sub={`${comp?.breach ?? 0} breach${(comp?.breach ?? 0) !== 1 ? "es" : ""}`}
         />
         <KpiCard
           label="Revalidation Due"
           value={reval?.dueSoon ?? 0}
           icon={Calendar}
-          color={(reval?.overdue ?? 0) > 0 ? "#EE6677" : "#D97706"}
+          color={(reval?.overdue ?? 0) > 0 ? "#DC2626" : "#F59E0B"}
           sub={`${reval?.overdue ?? 0} overdue`}
         />
       </div>
@@ -275,15 +275,15 @@ export default function HRDashboard() {
             icon={BarChart3}
             title="Capability Intelligence"
             subtitle="Average scores across 6 AI capability domains"
-            color="#4477AA"
+            color="#3B82F6"
           />
           <div className="flex rounded-lg border border-border overflow-hidden text-xs">
             <button
-              className={cn("px-3 py-1.5 transition-colors", activeCapTab === "heatmap" ? "bg-[#4477AA] text-white" : "text-muted-foreground hover:bg-muted/50")}
+              className={cn("px-3 py-1.5 transition-colors", activeCapTab === "heatmap" ? "bg-[#3B82F6] text-white" : "text-muted-foreground hover:bg-muted/50")}
               onClick={() => setActiveCapTab("heatmap")}
             >Heatmap</button>
             <button
-              className={cn("px-3 py-1.5 transition-colors", activeCapTab === "bar" ? "bg-[#4477AA] text-white" : "text-muted-foreground hover:bg-muted/50")}
+              className={cn("px-3 py-1.5 transition-colors", activeCapTab === "bar" ? "bg-[#3B82F6] text-white" : "text-muted-foreground hover:bg-muted/50")}
               onClick={() => setActiveCapTab("bar")}
             >Bar Chart</button>
           </div>
@@ -293,7 +293,7 @@ export default function HRDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {caps.map(c => {
               const score = c.avgScore;
-              const color = CAP_COLORS[c.capability] ?? "#4477AA";
+              const color = CAP_COLORS[c.capability] ?? "#3B82F6";
               const heatClass = scoreToHeatClass(score);
               return (
                 <Card key={c.capability} className="border-border overflow-hidden">
@@ -303,7 +303,7 @@ export default function HRDashboard() {
                       <span className="text-xs font-semibold text-foreground">{CAP_LABELS[c.capability]}</span>
                     </div>
                     <div className={cn("rounded-lg p-3 text-center", heatClass)}>
-                      <p className="text-3xl font-bold font-sora">
+                      <p className="text-3xl font-bold ">
                         {score !== null ? score : "—"}
                       </p>
                       <p className="text-[10px] mt-0.5 opacity-80">avg score</p>
@@ -330,11 +330,11 @@ export default function HRDashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                   <Tooltip content={<ChartTooltip />} />
-                  <ReferenceLine y={70} stroke="#228833" strokeDasharray="4 2" strokeWidth={1.5}
-                    label={{ value: "Safe", fontSize: 9, fill: "#228833", position: "right" }} />
+                  <ReferenceLine y={70} stroke="#10B981" strokeDasharray="4 2" strokeWidth={1.5}
+                    label={{ value: "Safe", fontSize: 9, fill: "#10B981", position: "right" }} />
                   <Bar dataKey="avg" radius={[4, 4, 0, 0]} name="Avg Score">
                     {barData.map((entry) => (
-                      <Cell key={entry.capability} fill={CAP_COLORS[entry.capability] ?? "#4477AA"} />
+                      <Cell key={entry.capability} fill={CAP_COLORS[entry.capability] ?? "#3B82F6"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -351,18 +351,18 @@ export default function HRDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
-                <TrendingUp className="w-4 h-4 text-[#4477AA]" />
+              <CardTitle className="text-sm flex items-center gap-2 ">
+                <TrendingUp className="w-4 h-4 text-[#3B82F6]" />
                 Readiness Trajectory
               </CardTitle>
               {projectedMonths !== null && projectedMonths !== undefined && (
                 <Badge variant="outline" className={cn(
                   "text-xs",
                   projectedMonths === 0
-                    ? "border-[#228833] text-[#228833]"
+                    ? "border-[#10B981] text-[#10B981]"
                     : projectedMonths <= 3
-                    ? "border-[#D97706] text-[#D97706]"
-                    : "border-[#EE6677] text-[#EE6677]"
+                    ? "border-[#F59E0B] text-[#F59E0B]"
+                    : "border-[#DC2626] text-[#DC2626]"
                 )}>
                   {projectedMonths === 0 ? "Safe now" : `~${projectedMonths}mo to safe`}
                 </Badge>
@@ -380,7 +380,7 @@ export default function HRDashboard() {
               <>
                 {currentAvg !== null && currentAvg !== undefined && (
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl font-bold font-sora text-foreground">{Math.round(currentAvg)}</span>
+                    <span className="text-2xl font-bold  text-foreground">{Math.round(currentAvg)}</span>
                     <span className="text-xs text-muted-foreground">current org average</span>
                   </div>
                 )}
@@ -390,9 +390,9 @@ export default function HRDashboard() {
                     <XAxis dataKey="month" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
                     <Tooltip content={<ChartTooltip />} />
-                    <ReferenceLine y={70} stroke="#228833" strokeDasharray="4 2" strokeWidth={1.5} />
-                    <Line type="monotone" dataKey="avgScore" stroke="#4477AA" strokeWidth={2}
-                      dot={{ r: 3, fill: "#4477AA" }} name="Org Avg" />
+                    <ReferenceLine y={70} stroke="#10B981" strokeDasharray="4 2" strokeWidth={1.5} />
+                    <Line type="monotone" dataKey="avgScore" stroke="#3B82F6" strokeWidth={2}
+                      dot={{ r: 3, fill: "#3B82F6" }} name="Org Avg" />
                   </LineChart>
                 </ResponsiveContainer>
                 <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
@@ -408,8 +408,8 @@ export default function HRDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2 font-sora">
-                <Target className="w-4 h-4 text-[#AA3377]" />
+              <CardTitle className="text-sm flex items-center gap-2 ">
+                <Target className="w-4 h-4 text-[#8B5CF6]" />
                 Strategic Mismatch
               </CardTitle>
               {mismatchData && (
@@ -422,7 +422,7 @@ export default function HRDashboard() {
           <CardContent>
             {mismatches.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-center">
-                <CheckCircle className="w-8 h-8 text-[#228833] mb-2" />
+                <CheckCircle className="w-8 h-8 text-[#10B981] mb-2" />
                 <p className="text-sm text-muted-foreground">No strategic mismatches</p>
                 <p className="text-xs text-muted-foreground mt-1">All domains meet the current AI ambition threshold</p>
               </div>
@@ -471,14 +471,14 @@ export default function HRDashboard() {
           icon={Globe}
           title="Regulatory Zone"
           subtitle="Compliance distribution and risk profile across the workforce"
-          color="#0D9488"
+          color="#06B6D4"
         />
         <div className="grid lg:grid-cols-3 gap-4">
 
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0D9488]" />Compliance Distribution
+                <ShieldCheck className="w-3.5 h-3.5 text-[#06B6D4]" />Compliance Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -501,7 +501,7 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5 text-[#EE8866]" />Risk Distribution
+                <ShieldAlert className="w-3.5 h-3.5 text-[#F59E0B]" />Risk Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -524,21 +524,21 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#D97706]" />Revalidation Status
+                <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />Revalidation Status
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-2">
               {[
-                { label: "Overdue",            value: reval?.overdue ?? 0,  color: "#EE6677" },
-                { label: "Due within 14 days", value: reval?.dueSoon ?? 0,  color: "#EE8866" },
-                { label: "Scheduled total",    value: reval?.total ?? 0,    color: "#4477AA" },
+                { label: "Overdue",            value: reval?.overdue ?? 0,  color: "#DC2626" },
+                { label: "Due within 14 days", value: reval?.dueSoon ?? 0,  color: "#F59E0B" },
+                { label: "Scheduled total",    value: reval?.total ?? 0,    color: "#3B82F6" },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-xs text-muted-foreground">{item.label}</span>
                   </div>
-                  <span className="text-sm font-bold font-sora" style={{ color: item.value > 0 ? item.color : "hsl(var(--muted-foreground))" }}>
+                  <span className="text-sm font-bold " style={{ color: item.value > 0 ? item.color : "hsl(var(--muted-foreground))" }}>
                     {item.value}
                   </span>
                 </div>
@@ -553,20 +553,20 @@ export default function HRDashboard() {
 
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <AlertTriangle className="w-4 h-4 text-[#EE6677]" />Recent Policy Incidents
+            <CardTitle className="text-sm flex items-center gap-2 ">
+              <AlertTriangle className="w-4 h-4 text-[#DC2626]" />Recent Policy Incidents
             </CardTitle>
           </CardHeader>
           <CardContent>
             {incidents.length === 0 ? (
               <div className="text-center py-6">
-                <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                <CheckCircle className="w-8 h-8 text-[#10B981] mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">No policy incidents</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {incidents.map(inc => (
-                  <div key={inc.id} className="flex items-start justify-between p-2.5 rounded-lg bg-[#EE6677]/5 border border-[#EE6677]/15">
+                  <div key={inc.id} className="flex items-start justify-between p-2.5 rounded-lg bg-[#DC2626]/5 border border-[#DC2626]/15">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-foreground truncate">
                         {inc.policyRuleId ?? "Policy Evaluation"}
@@ -575,7 +575,7 @@ export default function HRDashboard() {
                         {new Date(inc.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })}
                       </p>
                     </div>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#EE6677]/10 text-[#EE6677] font-semibold ml-2 flex-shrink-0 capitalize">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#DC2626]/10 text-[#DC2626] font-semibold ml-2 flex-shrink-0 capitalize">
                       {inc.result?.replace(/_/g, " ")}
                     </span>
                   </div>
@@ -587,8 +587,8 @@ export default function HRDashboard() {
 
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <FileText className="w-4 h-4 text-[#4477AA]" />Configuration Audit Log
+            <CardTitle className="text-sm flex items-center gap-2 ">
+              <FileText className="w-4 h-4 text-[#3B82F6]" />Configuration Audit Log
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -604,7 +604,7 @@ export default function HRDashboard() {
                   return (
                     <div key={log.id} className={cn(
                       "flex items-start justify-between p-2.5 rounded-lg border",
-                      isConfig ? "border-[#D97706]/20 bg-[#D97706]/5" : "border-border/50"
+                      isConfig ? "border-[#F59E0B]/20 bg-[#F59E0B]/5" : "border-border/50"
                     )}>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-foreground truncate capitalize">

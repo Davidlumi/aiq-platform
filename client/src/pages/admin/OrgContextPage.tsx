@@ -264,7 +264,7 @@ export default function OrgContextPage() {
     <div className="p-6 space-y-6 max-w-3xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground font-sora">Organisation Context</h1>
+        <h1 className="text-2xl font-bold text-foreground">Organisation Context</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Configure your organisation profile to personalise all simulations and assessments for your sector, risk appetite, and regulatory environment.
         </p>

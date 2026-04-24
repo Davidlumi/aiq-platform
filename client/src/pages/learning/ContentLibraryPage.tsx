@@ -210,7 +210,7 @@ export default function ContentLibraryPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">Content Library</h1>
+          <h1 className="text-2xl font-bold text-foreground">Content Library</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {items.length} modules available
             {completedCount > 0 && ` · ${completedCount} completed`}
