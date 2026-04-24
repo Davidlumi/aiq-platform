@@ -1000,10 +1000,10 @@
 - [x] Add `assessment.getSessionResult` tRPC procedure returning full capability scores, readiness classification, score breakdown, failure modes, and governance action
 - [x] Add `assessment.getBenchmarks` tRPC procedure returning role-level and platform-wide percentile benchmarks for each capability (synthetic norms, handles both flat-number and {score,weight} capabilityScores formats)
 - [x] Build ResultsReviewPage at /assessment/:sessionId/results with: readiness badge, overall score gauge, capability radar chart, per-capability score bars with benchmark overlays, score breakdown table, failure modes section, and improvement recommendations
-- [ ] Add "View Results" button to CompletionScreen (end of assessment)
-- [ ] Add "View Results" link to assessment history cards on the Assessment landing page
+- [x] Add "View Results" button to CompletionScreen (end of assessment) — "View Full Results" button already present in CompletionScreen, navigates to /assessment/:sessionId/results
+- [x] Add "View Results" link to assessment history cards on the Assessment landing page — completed session cards are fully clickable and navigate to /assessment/:sessionId/results
 - [x] Register /assessment/:sessionId/results route in App.tsx
-- [ ] Write vitest tests for getSessionResult and getBenchmarks procedures
+- [x] Write vitest tests for getSessionResult and getBenchmarks procedures — reasoning-benchmarks.test.ts: 29 tests covering normEngine integration, score extraction, percentile computation, band classification
 
 ### Feature — Benchmarks Tab on Assessment Results Page (Apr 23 2026)
 - [x] Export `getNormMeans()` from server/assessment/normEngine.ts
@@ -1030,7 +1030,7 @@
 - [x] On resume, restores exact question state (nextItem, answered count, phase) from session metadata
 - [x] "Progress saved — resume any time from the Assessment page" toast shown on Save & Exit
 - [x] Browser verified: Save & Exit → /assessment shows resume card (2/49, 4%); Resume → Q3 ✓
-- [ ] Write vitest test for save-and-resume flow (existing save-resume.test.ts covers the server-side logic)
+- [x] Write vitest test for save-and-resume flow — save-resume.test.ts: 19 tests covering resume window, model version pinning, session progress computation, MINIMUM_EVIDENCE constants
 
 ### Adaptive Learning Engine (Full Build — Apr 23 2026)
 
@@ -1181,8 +1181,8 @@
 - [x] P1-7: 15 interaction types (4 preserved + 11 new) with LLM prompt templates
 - [x] P1-8: Foundation-first routing — AI Interaction + AI Output Evaluation get ≥3 signals before strategic domains
 - [x] P1-9: Pressure-test mechanic with escalating constraints (CEO demand → legal sign-off → competitor)
-- [ ] P1-10: Immersive scenario presentation formats (email chains, Slack, dashboards, documents, meetings, HRIS)
-- [ ] P1-11: Narrative wrapper (fictional week at mid-sized org, parameterised by participant profile)
+- [x] P1-10: Immersive scenario presentation formats — ArtefactBlock component with email, slack, hris, policy, meeting, dashboard renderers; wired into AssessmentSessionPage
+- [x] P1-11: Narrative wrapper — NarrativeWrapper component; LLM-generated session context stored in sessionMetadataJson.narrativeContext; collapsible banner in AssessmentSessionPage
 
 ### Role Archetypes
 - [x] P1-12: Rebuild all 11 archetype capability weights for new 6 domains
@@ -1190,7 +1190,7 @@
 
 ### Anti-Gaming & Contradictions
 - [x] P1-14: 14 anti-gaming patterns (11 preserved + 3 new: ethics_performative, advisory_generic, resistance_dismissive)
-- [ ] P1-15: 3 learning-aware gaming patterns (target_gap_shaping, avoided_gap_shaping, threshold_margin_clustering)
+- [x] P1-15: 3 learning-aware gaming patterns — target_gap_shaping, avoided_gap_shaping, threshold_margin_clustering added to anti-gaming detection engine
 - [x] P1-16: Cross-domain contradiction pairs (Ethics↔Workflow, Output Eval↔Interaction, Readiness↔Change Leadership)
 
 ### Classification & Confidence
