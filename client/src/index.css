@@ -1,14 +1,29 @@
+/* ============================================================
+   AiQ Design System v2.2 — Global Token Foundation
+   Production specification. Do not deviate without a change-log entry.
+   Tailwind 4 + shadcn/ui compatible.
+   ============================================================ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ── Google Fonts — Inter as Graphik fallback until licence is active ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
-/* ─── Tailwind theme mapping ────────────────────────────────────────────── */
+/* ============================================================
+   TAILWIND THEME BRIDGE
+   Maps AiQ semantic tokens to Tailwind colour utilities.
+   ============================================================ */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* ── Radius ── */
+  --radius-sm: var(--radius-token-sm);
+  --radius-md: var(--radius-token-md);
+  --radius-lg: var(--radius-token-lg);
+  --radius-xl: var(--radius-token-xl);
+
+  /* ── Shadcn colour bridge ── */
   --color-background:              var(--background);
   --color-foreground:              var(--foreground);
   --color-card:                    var(--card);
@@ -33,6 +48,7 @@
   --color-chart-3:                 var(--chart-3);
   --color-chart-4:                 var(--chart-4);
   --color-chart-5:                 var(--chart-5);
+  --color-chart-6:                 var(--chart-6);
   --color-sidebar:                 var(--sidebar);
   --color-sidebar-foreground:      var(--sidebar-foreground);
   --color-sidebar-primary:         var(--sidebar-primary);
@@ -43,156 +59,351 @@
   --color-sidebar-ring:            var(--sidebar-ring);
 }
 
-/* ─── Light theme — white is the AiQ standard ───────────────────────────── */
+/* ============================================================
+   TIER 1 — PRIMITIVE TOKENS
+   Raw values. Never consumed directly by components.
+   ============================================================ */
 :root {
-  --radius: 0.5rem;
+  /* ── Navy (brand family) ── */
+  --navy-50:   #F2F5FA;
+  --navy-100:  #E3EAF3;
+  --navy-200:  #C4D0E3;
+  --navy-300:  #A5B5D1;
+  --navy-400:  #7894B8;
+  --navy-500:  #4A6FA5;
+  --navy-600:  #355A8A;
+  --navy-700:  #2C4766;
+  --navy-800:  #1F3A5F;   /* brand primary */
+  --navy-900:  #172D4A;
+  --navy-1000: #0F2137;
 
-  /* ── AiQ Core Brand Palette (Brand Guidelines v3.0) ── */
-  --aiq-white:      #ffffff;   /* Default surface, standard logo background */
-  --aiq-chalk:      #f7f8fa;   /* Secondary surface, card backgrounds */
-  --aiq-midnight:   #0d1821;   /* Hero, certs, dark UI, CTAs */
-  --aiq-sage:       #5ee8b0;   /* Accent on DARK surfaces ONLY */
-  --aiq-teal-600:   #0F6E56;   /* Accent on white/light — 'i' dot, arc, primary brand */
-  --aiq-surface:    #FFFFFF;   /* White — cards, panels */
-  --aiq-muted:      #F3F4F6;   /* Muted — disabled states */
-  --aiq-border:     #E5E7EB;   /* Border — dividers */
-  --aiq-text-sec:   #6B7280;   /* Text Secondary */
-  --aiq-text-tert:  #9CA3AF;   /* Text Tertiary / placeholder */
+  /* ── Neutral / warm-grey ── */
+  --neutral-0:    #FFFFFF;
+  --neutral-25:   #FAFAF8;   /* canvas */
+  --neutral-50:   #F5F5F3;
+  --neutral-100:  #EEEEEC;
+  --neutral-200:  #E5E5E2;
+  --neutral-300:  #D4D4D1;
+  --neutral-400:  #B8B8B5;
+  --neutral-500:  #A3A3A0;
+  --neutral-600:  #737370;
+  --neutral-700:  #5C5C59;
+  --neutral-800:  #3A3A38;
+  --neutral-900:  #262624;
+  --neutral-1000: #171717;
 
-  /* ── Readiness State Colours ── */
-  --aiq-safe:       #10B981;   /* Safe — above threshold */
-  --aiq-risk:       #F59E0B;   /* At Risk — near threshold */
-  --aiq-unsafe:     #DC2626;   /* Unsafe — below threshold */
-  --aiq-unknown:    #6B7280;   /* Unknown — insufficient data */
+  /* ── Amber (warning / developing) ── */
+  --amber-50:  #FEF8E7;
+  --amber-100: #FEF3C7;
+  --amber-500: #D97706;
+  --amber-700: #B45309;
+  --amber-900: #78350F;
 
-  /* ── Six Capability Semantic Colours — Colorblind-Safe (Paul Tol palette) — FIXED, NEVER SWAPPED ── */
-  --cap-exec:  #4477AA;  /* AI Execution — Blue */
-  --cap-judg:  #AA3377;  /* AI Judgement — Purple */
-  --cap-risk:  #EE6677;  /* AI Governance/Risk — Red */
-  --cap-wkfl:  #66CCEE;  /* AI Workflow/Collaboration — Cyan */
-  --cap-appr:  #EE8866;  /* AI Appropriateness/Stewardship — Orange */
-  --cap-data:  #228833;  /* AI Data & Insight/Literacy — Green */
-  /* Soft background variants */
-  --cap-exec-soft:  rgba(68,119,170,0.10);
-  --cap-judg-soft:  rgba(170,51,119,0.10);
-  --cap-risk-soft:  rgba(238,102,119,0.10);
-  --cap-wkfl-soft:  rgba(102,204,238,0.10);
-  --cap-appr-soft:  rgba(238,136,102,0.10);
-  --cap-data-soft:  rgba(34,136,51,0.10);
+  /* ── Green (success / strong) ── */
+  --green-50:  #ECFDF5;
+  --green-100: #D1FAE5;
+  --green-500: #10B981;
+  --green-700: #047857;
+  --green-900: #064E3B;
 
-  /* ── Ambition Level Colours ── */
-  --ambition-conservative:     #64748B;
-  --ambition-accelerated:      #3B82F6;
-  --ambition-transformational: #7C3AED;
+  /* ── Red (critical / exposure) ── */
+  --red-50:  #FEF2F2;
+  --red-100: #FEE2E2;
+  --red-500: #DC2626;
+  --red-700: #B91C1C;
+  --red-900: #7F1D1D;
 
-  /* ── Progress / Status Colours ── */
-  --status-not-started: #E5E7EB;
-  --status-in-progress: #3B82F6;
-  --status-completed:   #10B981;
-  --status-overdue:     #DC2626;
+  /* ── Data visualisation — domain assignments (fixed mapping) ── */
+  --viz-domain-interaction: #2C4766;   /* AI Interaction — deep navy */
+  --viz-domain-evaluation:  #8D7B68;   /* AI Output Evaluation — warm brown */
+  --viz-domain-workflow:    #5B7F95;   /* AI Workflow Design — muted blue-grey */
+  --viz-domain-workforce:   #C08B6E;   /* Workforce AI Readiness — muted terracotta */
+  --viz-domain-ethics:      #6B8E5A;   /* AI Ethics & Employee Trust — muted sage */
+  --viz-domain-leadership:  #8A6E9E;   /* AI Change Leadership — muted plum */
 
-  /* ── Shadcn/Tailwind semantic mappings — canonical brand repo values ── */
-  --background:           #F7F8FA;
-  --foreground:           #0E1726;
-  --card:                 #FFFFFF;
-  --card-foreground:      #0E1726;
-  --popover:              #FFFFFF;
-  --popover-foreground:   #0E1726;
-  --primary:              #10B981;  /* AiQ Primary Green — canonical brand action colour */
-  --primary-foreground:   #FFFFFF;
-  --secondary:            #F2F4F8;
-  --secondary-foreground: #0E1726;
-  --muted:                #F2F4F6;
-  --muted-foreground:     #6B7280;
-  --accent:               #ECFDF5;  /* green-50 */
-  --accent-foreground:    #059669;
-  --destructive:          #DC2626;
-  --destructive-foreground: #FFFFFF;
-  --border:               #E5E7EB;
-  --input:                transparent;
-  --input-background:     #FFFFFF;
-  --ring:                 #6EE7B7;
+  /* ── Data visualisation — supporting palette ── */
+  --viz-baseline:   #737370;
+  --viz-comparison: #B8B8B5;
+  --viz-emphasis:   #1F3A5F;
+  --viz-subtle:     #D4D4D1;
 
-  /* ── Charts — colorblind-safe capability colours ── */
-  --chart-1: #4477AA;
-  --chart-2: #AA3377;
-  --chart-3: #228833;
-  --chart-4: #EE6677;
-  --chart-5: #EE8866;
+  /* ── Size primitives (8pt base grid) ── */
+  --size-1:  2px;
+  --size-2:  4px;
+  --size-3:  8px;
+  --size-4:  12px;
+  --size-5:  16px;
+  --size-6:  24px;
+  --size-7:  32px;
+  --size-8:  40px;
+  --size-9:  48px;
+  --size-10: 64px;
+  --size-11: 80px;
+  --size-12: 96px;
+  --size-13: 128px;
+  --size-14: 160px;
 
-  /* ── Sidebar — WHITE per canonical brand repo ── */
-  --sidebar:                        #ffffff;
-  --sidebar-foreground:             #0E1726;
-  --sidebar-primary:                #10B981;
-  --sidebar-primary-foreground:     #ffffff;
-  --sidebar-accent:                 #ECFDF5;
-  --sidebar-accent-foreground:      #059669;
-  --sidebar-border:                 #EAECF0;
-  --sidebar-ring:                   #6EE7B7;
+  /* ── Radius tokens ── */
+  --radius-token-none: 0px;
+  --radius-token-xs:   2px;    /* badges, chips */
+  --radius-token-sm:   4px;    /* inputs, selects */
+  --radius-token-md:   6px;    /* buttons, cards */
+  --radius-token-lg:   8px;    /* large cards, modals */
+  --radius-token-xl:   12px;   /* marketing surfaces only */
+  --radius-token-pill: 999px;  /* status dots only */
+
+  /* ── Elevation tokens ── */
+  --elevation-none: none;
+  --elevation-sm:   0 1px 2px rgba(15,33,55,0.04), 0 0 0 1px rgba(15,33,55,0.03);
+  --elevation-md:   0 2px 6px rgba(15,33,55,0.06), 0 0 0 1px rgba(15,33,55,0.04);
+  --elevation-lg:   0 4px 16px rgba(15,33,55,0.08), 0 0 0 1px rgba(15,33,55,0.04);
+  --elevation-xl:   0 16px 48px rgba(15,33,55,0.12), 0 0 0 1px rgba(15,33,55,0.04);
+
+  /* ── Motion tokens ── */
+  --duration-instant:    50ms;
+  --duration-quick:      120ms;
+  --duration-standard:   200ms;
+  --duration-moderate:   320ms;
+  --duration-deliberate: 480ms;
+  --stagger-tight:       40ms;
+  --stagger-standard:    80ms;
+  --stagger-deliberate:  160ms;
+  --ease-linear:         linear;
+  --ease-out:            cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out:         cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasis:       cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring-subtle:  cubic-bezier(0.25, 1.25, 0.5, 1);
+
+  /* ── Typography ── */
+  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  /* ── Sidebar dimensions ── */
+  --sidebar-width-full:      240px;
+  --sidebar-width-collapsed: 56px;
+
+  /* ============================================================
+     TIER 2 — SEMANTIC TOKENS
+     Intent-based aliases consumed by components.
+     ============================================================ */
+
+  /* ── Text ── */
+  --color-text-primary:   var(--neutral-900);
+  --color-text-secondary: var(--neutral-700);
+  --color-text-tertiary:  var(--neutral-500);
+  --color-text-disabled:  var(--neutral-400);
+  --color-text-inverse:   var(--neutral-0);
+  --color-text-brand:     var(--navy-800);
+
+  /* ── Surface ── */
+  --color-surface-canvas:  var(--neutral-25);
+  --color-surface-raised:  var(--neutral-0);
+  --color-surface-sunken:  var(--neutral-50);
+  --color-surface-muted:   var(--neutral-100);
+  --color-surface-inverse: var(--neutral-1000);
+
+  /* ── Border ── */
+  --color-border-subtle:  var(--neutral-200);
+  --color-border-default: var(--neutral-300);
+  --color-border-strong:  var(--neutral-500);
+  --color-border-focus:   var(--navy-800);
+
+  /* ── Action ── */
+  --color-action-primary:           var(--navy-800);
+  --color-action-primary-hover:     var(--navy-900);
+  --color-action-primary-active:    var(--navy-1000);
+  --color-action-secondary:         var(--neutral-0);
+  --color-action-secondary-hover:   var(--neutral-50);
+  --color-action-destructive:       var(--red-700);
+  --color-action-destructive-hover: var(--red-900);
+
+  /* ── Feedback ── */
+  --color-feedback-success:        var(--green-700);
+  --color-feedback-success-subtle: var(--green-100);
+  --color-feedback-warning:        var(--amber-700);
+  --color-feedback-warning-subtle: var(--amber-100);
+  --color-feedback-error:          var(--red-700);
+  --color-feedback-error-subtle:   var(--red-100);
+  --color-feedback-info:           var(--navy-700);
+  --color-feedback-info-subtle:    var(--navy-50);
+
+  /* ── Dual-audience state tokens — STRONG ── */
+  --state-strong-individual-bg:     var(--green-50);
+  --state-strong-individual-text:   var(--green-900);
+  --state-strong-individual-border: var(--green-100);
+  --state-strong-individual-icon:   var(--green-700);
+  --state-strong-org-bg:            var(--green-50);
+  --state-strong-org-text:          var(--green-900);
+  --state-strong-org-border:        var(--green-100);
+  --state-strong-org-icon:          var(--green-700);
+
+  /* ── Dual-audience state tokens — DEVELOPING ── */
+  --state-developing-individual-bg:     var(--neutral-50);
+  --state-developing-individual-text:   var(--neutral-900);
+  --state-developing-individual-border: var(--neutral-200);
+  --state-developing-individual-icon:   var(--neutral-600);
+  --state-developing-org-bg:            var(--amber-50);
+  --state-developing-org-text:          var(--amber-900);
+  --state-developing-org-border:        var(--amber-100);
+  --state-developing-org-icon:          var(--amber-700);
+
+  /* ── Dual-audience state tokens — CRITICAL ── */
+  --state-critical-individual-bg:     var(--navy-50);
+  --state-critical-individual-text:   var(--neutral-900);
+  --state-critical-individual-border: var(--navy-100);
+  --state-critical-individual-icon:   var(--navy-700);
+  --state-critical-org-bg:            var(--red-50);
+  --state-critical-org-text:          var(--red-900);
+  --state-critical-org-border:        var(--red-100);
+  --state-critical-org-icon:          var(--red-700);
+
+  /* ── Dual-audience state tokens — FOUNDATION GAP ── */
+  --state-foundation-individual-bg:     var(--navy-50);
+  --state-foundation-individual-text:   var(--neutral-900);
+  --state-foundation-individual-border: var(--navy-100);
+  --state-foundation-individual-icon:   var(--navy-500);
+  --state-foundation-org-bg:            var(--red-50);
+  --state-foundation-org-text:          var(--red-900);
+  --state-foundation-org-border:        var(--red-100);
+  --state-foundation-org-icon:          var(--red-700);
+
+  /* ── Dual-audience state tokens — INSUFFICIENT EVIDENCE ── */
+  --state-insufficient-bg:     var(--neutral-50);
+  --state-insufficient-text:   var(--neutral-700);
+  --state-insufficient-border: var(--neutral-200);
+  --state-insufficient-icon:   var(--neutral-500);
+
+  /* ============================================================
+     SHADCN TOKEN BRIDGE
+     Maps shadcn/ui CSS variable names to AiQ semantic tokens.
+     ============================================================ */
+  --radius: var(--radius-token-md);
+
+  --background:             var(--neutral-25);
+  --foreground:             var(--neutral-900);
+  --card:                   var(--neutral-0);
+  --card-foreground:        var(--neutral-900);
+  --popover:                var(--neutral-0);
+  --popover-foreground:     var(--neutral-900);
+  --primary:                var(--navy-800);
+  --primary-foreground:     var(--neutral-0);
+  --secondary:              var(--neutral-100);
+  --secondary-foreground:   var(--neutral-900);
+  --muted:                  var(--neutral-100);
+  --muted-foreground:       var(--neutral-600);
+  --accent:                 var(--navy-50);
+  --accent-foreground:      var(--navy-800);
+  --destructive:            var(--red-700);
+  --destructive-foreground: var(--neutral-0);
+  --border:                 var(--neutral-200);
+  --input:                  var(--neutral-200);
+  --ring:                   var(--navy-800);
+
+  /* ── Sidebar shadcn tokens ── */
+  --sidebar:                     var(--neutral-50);
+  --sidebar-foreground:          var(--neutral-700);
+  --sidebar-primary:             var(--navy-800);
+  --sidebar-primary-foreground:  var(--neutral-0);
+  --sidebar-accent:              var(--neutral-100);
+  --sidebar-accent-foreground:   var(--neutral-900);
+  --sidebar-border:              var(--neutral-200);
+  --sidebar-ring:                var(--navy-800);
+
+  /* ── Chart colours mapped to domain tokens ── */
+  --chart-1: var(--viz-domain-interaction);
+  --chart-2: var(--viz-domain-evaluation);
+  --chart-3: var(--viz-domain-workflow);
+  --chart-4: var(--viz-domain-workforce);
+  --chart-5: var(--viz-domain-ethics);
+  --chart-6: var(--viz-domain-leadership);
 }
 
-/* ─── Dark theme (hero / certificate / premium surfaces only) ────────────── */
+/* Dark mode — explicitly deferred to v2.1 per design system spec.
+   The .dark class is a no-op in v2.2; all surfaces use light tokens. */
 .dark {
-  --background:           #0D1117;
-  --foreground:           #F1F5F9;
-  --card:                 #1E293B;
-  --card-foreground:      #F1F5F9;
-  --popover:              #1E293B;
-  --popover-foreground:   #F1F5F9;
-  --primary:              #34D399;
-  --primary-foreground:   #0D1117;
-  --secondary:            #334155;
-  --secondary-foreground: #F1F5F9;
-  --muted:                #334155;
-  --muted-foreground:     #94A3B8;
-  --accent:               #34D399;
-  --accent-foreground:    #0D1117;
-  --destructive:          #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --border:               #334155;
-  --input:                #334155;
-  --ring:                 #34D399;
-  --sidebar:              #0D1117;
-  --sidebar-foreground:   #F1F5F9;
-  --sidebar-primary:      #34D399;
-  --sidebar-primary-foreground: #0D1117;
-  --sidebar-accent:       #1E293B;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border:       #1E293B;
-  --sidebar-ring:         #34D399;
+  /* Intentionally empty — dark mode deferred to v2.1 */
 }
 
-/* ─── Base styles ────────────────────────────────────────────────────────── */
+/* ============================================================
+   GLOBAL BASE STYLES
+   ============================================================ */
 @layer base {
-  * {
+  *, *::before, *::after {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
 
   html {
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--color-text-primary);
+    background-color: var(--color-surface-canvas);
     @apply bg-background text-foreground;
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
   }
-
-  /* DM Mono for technical data only: scores, IDs, hex codes, score ranges */
-  code, kbd, samp, pre, .font-mono { font-family: 'DM Mono', 'ui-monospace', 'SFMono-Regular', monospace; }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, sans-serif;
-    font-weight: 600;
-    color: #0d1821;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.2;
   }
 
+  code, kbd, pre, samp, .font-mono {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+
+  a {
+    color: var(--navy-800);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  a:hover {
+    color: var(--navy-900);
+  }
+
+  /* ── Focus ring — keyboard only (WCAG 2.4.7) ── */
+  :focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* ── Forced colours (Windows High Contrast) ── */
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 2px solid Highlight;
+    }
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Cursor for interactive elements ── */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
   [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
   a[href],
   select:not(:disabled),
   input[type="checkbox"]:not(:disabled),
@@ -200,91 +411,89 @@
     @apply cursor-pointer;
   }
 
-  /* WCAG 2.2 AA focus ring — brand green */
-  :focus-visible {
-    outline: 3px solid #10B981;
-    outline-offset: 2px;
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--neutral-100); }
+  ::-webkit-scrollbar-thumb { background: var(--neutral-300); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--neutral-400); }
 }
 
-/* ─── AiQ Typography Scale ───────────────────────────────────────────────── */
-.aiq-display { font-size: 48px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; font-family: 'Sora', sans-serif; }
-.aiq-h1      { font-size: 36px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; font-family: 'Sora', sans-serif; }
-.aiq-h2      { font-size: 28px; font-weight: 600; line-height: 1.4; font-family: 'Sora', sans-serif; }
-.aiq-h3      { font-size: 20px; font-weight: 600; line-height: 1.4; font-family: 'Sora', sans-serif; }
-.aiq-body    { font-size: 16px; font-weight: 400; line-height: 1.6; font-family: 'Sora', sans-serif; }
-.aiq-caption { font-size: 14px; font-weight: 400; line-height: 1.5; font-family: 'Sora', sans-serif; }
-.aiq-label   { font-size: 12px; font-weight: 700; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Sora', sans-serif; }
-.aiq-mono    { font-family: 'DM Mono', monospace; font-size: 13px; }
+/* ============================================================
+   TYPOGRAPHY UTILITY CLASSES  (§4.2)
+   ============================================================ */
+@layer utilities {
+  .type-display {
+    font-size: 48px; line-height: 56px;
+    font-weight: 500; letter-spacing: -0.02em;
+  }
+  .type-title {
+    font-size: 36px; line-height: 44px;
+    font-weight: 500; letter-spacing: -0.015em;
+  }
+  .type-heading-lg {
+    font-size: 28px; line-height: 36px;
+    font-weight: 500; letter-spacing: -0.01em;
+  }
+  .type-heading-md {
+    font-size: 24px; line-height: 32px;
+    font-weight: 500; letter-spacing: -0.01em;
+  }
+  .type-heading-sm {
+    font-size: 20px; line-height: 28px;
+    font-weight: 500;
+  }
+  .type-heading-xs {
+    font-size: 17px; line-height: 26px;
+    font-weight: 500;
+  }
+  .type-body-lg {
+    font-size: 17px; line-height: 26px;
+    font-weight: 400;
+  }
+  .type-body {
+    font-size: 15px; line-height: 22px;
+    font-weight: 400;
+  }
+  .type-body-sm {
+    font-size: 14px; line-height: 20px;
+    font-weight: 400;
+  }
+  .type-caption {
+    font-size: 13px; line-height: 18px;
+    font-weight: 400;
+  }
+  .type-micro {
+    font-size: 12px; line-height: 16px;
+    font-weight: 500; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .type-code {
+    font-family: var(--font-mono);
+    font-size: 14px; line-height: 20px;
+    font-weight: 400;
+  }
 
-@media (max-width: 768px) {
-  .aiq-display { font-size: 36px; }
-  .aiq-h1      { font-size: 28px; }
-  .aiq-h2      { font-size: 24px; }
-  .aiq-h3      { font-size: 18px; }
-  .aiq-caption { font-size: 13px; }
+  /* ── Legacy aliases (backward compat with existing pages) ── */
+  .aiq-display { font-size: 48px; font-weight: 500; line-height: 1.15; letter-spacing: -0.02em; }
+  .aiq-h1      { font-size: 36px; font-weight: 500; line-height: 1.2; letter-spacing: -0.015em; }
+  .aiq-h2      { font-size: 28px; font-weight: 500; line-height: 1.3; }
+  .aiq-h3      { font-size: 20px; font-weight: 500; line-height: 1.4; }
+  .aiq-body    { font-size: 15px; font-weight: 400; line-height: 1.6; }
+  .aiq-caption { font-size: 13px; font-weight: 400; line-height: 1.5; }
+  .aiq-label   { font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: 0.04em; text-transform: uppercase; }
+  .aiq-mono    { font-family: var(--font-mono); font-size: 13px; }
 }
 
-/* ─── AiQ Component Utilities ────────────────────────────────────────────── */
-
-/* Capability colour pills — Colorblind-Safe canonical colours */
-.cap-exec  { background-color: rgba(68,119,170,0.10);  color: #4477AA; }
-.cap-judg  { background-color: rgba(170,51,119,0.10);  color: #AA3377; }
-.cap-risk  { background-color: rgba(238,102,119,0.10); color: #CC3344; }
-.cap-wkfl  { background-color: rgba(102,204,238,0.10); color: #2288AA; }
-.cap-appr  { background-color: rgba(238,136,102,0.10); color: #CC5533; }
-.cap-data  { background-color: rgba(34,136,51,0.10);   color: #228833; }
-
-/* Readiness state badges */
-.state-safe        { background-color: #e6f4f0; color: #0F6E56; }
-.state-at-risk     { background-color: #fffbeb; color: #B45309; }
-.state-unsafe      { background-color: #fdeaea; color: #A32D2D; }
-.state-unknown     { background-color: #F3F4F6; color: #374151; }
-.state-provisional { background-color: #f5f3ff; color: #7C3AED; }
-
-/* AiQ card */
-.aiq-card {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-}
-
-/* AiQ hero card — Midnight dark surface for result reveals & certificates */
-.aiq-card-hero {
-  background: #0d1821;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.32);
-  color: #ffffff;
-}
-
-/* Score range display — DM Mono per brand guidelines §05 */
-.aiq-score-range {
-  font-family: 'DM Mono', monospace;
-  font-size: 48px;
-  font-weight: 500;
-  color: #0d1821;
-  letter-spacing: -0.02em;
-}
-
-/* Credibility badges */
-.aiq-credibility-high   { background: #e6f4f0; color: #0F6E56; border: 1px solid #a7f3d0; border-radius: 6px; padding: 2px 10px; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; }
-.aiq-credibility-medium { background: #fffbeb; color: #B45309; border: 1px solid #FCD34D; border-radius: 6px; padding: 2px 10px; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; }
-.aiq-credibility-low    { background: #fdeaea; color: #A32D2D; border: 1px solid #FCA5A5; border-radius: 6px; padding: 2px 10px; font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; }
-
-/* AIQ Verified tier badges — three tiers only (V6.1 §21) */
-.aiq-verified-foundation   { background: #e6f4f0; color: #0F6E56; border: 1px solid #a7f3d0; border-radius: 6px; padding: 3px 10px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
-.aiq-verified-practitioner { background: #e8f1fb; color: #185FA5; border: 1px solid #bfdbfe; border-radius: 6px; padding: 3px 10px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
-.aiq-verified-advanced     { background: #eeecfb; color: #534AB7; border: 1px solid #ddd6fe; border-radius: 6px; padding: 3px 10px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #F3F4F6; }
-::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
-
-/* ─── Layout utilities ───────────────────────────────────────────────────── */
+/* ============================================================
+   COMPONENT UTILITY CLASSES
+   ============================================================ */
 @layer components {
+  /* ── Layout containers ── */
   .container {
     width: 100%;
     margin-left: auto;
@@ -292,8 +501,299 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  .flex { min-height: 0; min-width: 0; }
-
   @media (min-width: 640px)  { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
   @media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; } }
+
+  .container-prose { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .container-sm    { max-width: 640px;  margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+  .container-md    { max-width: 960px;  margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+  .container-lg    { max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+
+  /* ── Flex min-size reset ── */
+  .flex { min-height: 0; min-width: 0; }
+
+  /* ── Skip link (WCAG 2.4.1) ── */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: var(--navy-800);
+    color: var(--neutral-0);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 0 0 6px 0;
+  }
+  .skip-link:focus-visible { top: 0; }
+
+  /* ── Card variants (§5.4) ── */
+  .card-default {
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-token-md);
+    padding: 24px;
+    box-shadow: var(--elevation-sm);
+  }
+  .card-elevated {
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-token-lg);
+    padding: 32px;
+    box-shadow: var(--elevation-md);
+  }
+  .card-sunken {
+    background: var(--color-surface-sunken);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-token-md);
+    padding: 16px;
+  }
+  .card-interactive {
+    cursor: pointer;
+    transition: border-color var(--duration-quick) var(--ease-out),
+                box-shadow var(--duration-quick) var(--ease-out);
+  }
+  .card-interactive:hover {
+    border-color: var(--color-border-default);
+    box-shadow: var(--elevation-sm);
+  }
+  .card-divider {
+    height: 1px;
+    background: var(--color-border-subtle);
+    margin: 24px -24px;
+  }
+  .card-elevated .card-divider { margin: 24px -32px; }
+
+  /* ── Sidebar navigation (§5.8) ── */
+  .nav-item-active {
+    background: var(--color-surface-raised);
+    color: var(--color-text-primary);
+    font-weight: 500;
+    border-left: 3px solid var(--navy-800);
+    padding-left: calc(12px - 3px);
+    border-radius: 0 var(--radius-token-sm) var(--radius-token-sm) 0;
+  }
+  .nav-item-inactive {
+    color: var(--color-text-secondary);
+    border-left: 3px solid transparent;
+    padding-left: calc(12px - 3px);
+    transition: color var(--duration-quick) var(--ease-out),
+                background var(--duration-quick) var(--ease-out);
+    border-radius: 0 var(--radius-token-sm) var(--radius-token-sm) 0;
+  }
+  .nav-item-inactive:hover {
+    color: var(--color-text-primary);
+    background: var(--color-surface-muted);
+  }
+  .nav-section-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    padding: 12px 16px 4px;
+  }
+
+  /* ── Underline tabs (§5.8) ── */
+  .tabs-underline [role="tablist"] {
+    border-bottom: 1px solid var(--color-border-subtle);
+    gap: 0;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+  .tabs-underline [role="tab"] {
+    position: relative;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    background: transparent;
+    margin-bottom: -1px;
+    transition: color var(--duration-quick) var(--ease-out),
+                border-color var(--duration-quick) var(--ease-out);
+    cursor: pointer;
+  }
+  .tabs-underline [role="tab"]:hover {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--neutral-300);
+  }
+  .tabs-underline [role="tab"][data-state="active"],
+  .tabs-underline [role="tab"][aria-selected="true"] {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    border-bottom-color: var(--navy-800);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* ── Badge base (§5.7) — rectangular, sentence case ── */
+  .badge-base {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--radius-token-xs);
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  .badge-sm { font-size: 12px; padding: 2px 6px; }
+
+  /* ── Dual-audience state badges — individual (never red) ── */
+  .badge-strong-individual   { background: var(--state-strong-individual-bg);     color: var(--state-strong-individual-text);     border: 1px solid var(--state-strong-individual-border); }
+  .badge-developing-individual { background: var(--state-developing-individual-bg); color: var(--state-developing-individual-text); border: 1px solid var(--state-developing-individual-border); }
+  .badge-critical-individual { background: var(--state-critical-individual-bg);   color: var(--state-critical-individual-text);   border: 1px solid var(--state-critical-individual-border); }
+  .badge-foundation-individual { background: var(--state-foundation-individual-bg); color: var(--state-foundation-individual-text); border: 1px solid var(--state-foundation-individual-border); }
+  .badge-insufficient        { background: var(--state-insufficient-bg);           color: var(--state-insufficient-text);           border: 1px solid var(--state-insufficient-border); }
+
+  /* ── Dual-audience state badges — org (semantic colour permitted) ── */
+  .badge-strong-org      { background: var(--state-strong-org-bg);     color: var(--state-strong-org-text);     border: 1px solid var(--state-strong-org-border); }
+  .badge-developing-org  { background: var(--state-developing-org-bg); color: var(--state-developing-org-text); border: 1px solid var(--state-developing-org-border); }
+  .badge-critical-org    { background: var(--state-critical-org-bg);   color: var(--state-critical-org-text);   border: 1px solid var(--state-critical-org-border); }
+  .badge-foundation-org  { background: var(--state-foundation-org-bg); color: var(--state-foundation-org-text); border: 1px solid var(--state-foundation-org-border); }
+
+  /* ── Legacy state badges (backward compat) ── */
+  .state-safe        { background: var(--state-strong-individual-bg);     color: var(--state-strong-individual-text); }
+  .state-at-risk     { background: var(--state-developing-org-bg);        color: var(--state-developing-org-text); }
+  .state-unsafe      { background: var(--state-critical-org-bg);          color: var(--state-critical-org-text); }
+  .state-unknown     { background: var(--state-insufficient-bg);          color: var(--state-insufficient-text); }
+  .state-provisional { background: var(--navy-50);                        color: var(--navy-800); }
+
+  /* ── Legacy capability colour pills (backward compat — mapped to v2.2 domain colours) ── */
+  .cap-exec  { background-color: rgba(44,71,102,0.10);  color: var(--viz-domain-interaction); }
+  .cap-judg  { background-color: rgba(138,110,158,0.10); color: var(--viz-domain-leadership); }
+  .cap-risk  { background-color: rgba(107,142,90,0.10);  color: var(--viz-domain-ethics); }
+  .cap-wkfl  { background-color: rgba(91,127,149,0.10);  color: var(--viz-domain-workflow); }
+  .cap-appr  { background-color: rgba(192,139,110,0.10); color: var(--viz-domain-workforce); }
+  .cap-data  { background-color: rgba(141,123,104,0.10); color: var(--viz-domain-evaluation); }
+
+  /* ── Domain colour helpers ── */
+  .domain-interaction { color: var(--viz-domain-interaction); }
+  .domain-evaluation  { color: var(--viz-domain-evaluation); }
+  .domain-workflow    { color: var(--viz-domain-workflow); }
+  .domain-workforce   { color: var(--viz-domain-workforce); }
+  .domain-ethics      { color: var(--viz-domain-ethics); }
+  .domain-leadership  { color: var(--viz-domain-leadership); }
+
+  .domain-interaction-bg { background-color: var(--viz-domain-interaction); }
+  .domain-evaluation-bg  { background-color: var(--viz-domain-evaluation); }
+  .domain-workflow-bg    { background-color: var(--viz-domain-workflow); }
+  .domain-workforce-bg   { background-color: var(--viz-domain-workforce); }
+  .domain-ethics-bg      { background-color: var(--viz-domain-ethics); }
+  .domain-leadership-bg  { background-color: var(--viz-domain-leadership); }
+
+  /* ── AiQ card (legacy alias) ── */
+  .aiq-card {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-token-lg);
+    box-shadow: var(--elevation-sm);
+  }
+  .aiq-card-hero {
+    background: var(--navy-800);
+    border-radius: var(--radius-token-lg);
+    box-shadow: var(--elevation-xl);
+    color: var(--neutral-0);
+  }
+
+  /* ── Credibility badges (legacy) ── */
+  .aiq-credibility-high   { background: var(--state-strong-individual-bg);     color: var(--state-strong-individual-text);     border: 1px solid var(--state-strong-individual-border);     border-radius: var(--radius-token-xs); padding: 2px 10px; font-size: 12px; font-weight: 500; }
+  .aiq-credibility-medium { background: var(--state-developing-org-bg);        color: var(--state-developing-org-text);        border: 1px solid var(--state-developing-org-border);        border-radius: var(--radius-token-xs); padding: 2px 10px; font-size: 12px; font-weight: 500; }
+  .aiq-credibility-low    { background: var(--state-critical-org-bg);          color: var(--state-critical-org-text);          border: 1px solid var(--state-critical-org-border);          border-radius: var(--radius-token-xs); padding: 2px 10px; font-size: 12px; font-weight: 500; }
+
+  /* ── Verified tier badges (legacy) ── */
+  .aiq-verified-foundation   { background: var(--state-strong-individual-bg);  color: var(--state-strong-individual-text);  border: 1px solid var(--state-strong-individual-border);  border-radius: var(--radius-token-xs); padding: 3px 10px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+  .aiq-verified-practitioner { background: var(--navy-50);                     color: var(--navy-800);                      border: 1px solid var(--navy-100);                         border-radius: var(--radius-token-xs); padding: 3px 10px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+  .aiq-verified-advanced     { background: var(--state-critical-individual-bg); color: var(--state-critical-individual-text); border: 1px solid var(--state-critical-individual-border); border-radius: var(--radius-token-xs); padding: 3px 10px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+
+  /* ── Score display (legacy) ── */
+  .aiq-score-range {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 500;
+    color: var(--navy-800);
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Skeleton shimmer ── */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--neutral-100) 25%, var(--neutral-50) 50%, var(--neutral-100) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+    border-radius: var(--radius-token-sm);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; background: var(--neutral-100); }
+  }
+
+  /* ── Motion choreography — post-completion reveal (§2.5 Choreography 1) ── */
+  @keyframes reveal-scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes reveal-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes reveal-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .reveal-scale-in { animation: reveal-scale-in var(--duration-deliberate) var(--ease-emphasis) both; }
+  .reveal-fade-in  { animation: reveal-fade-in  var(--duration-moderate)   var(--ease-out)     both; }
+  .reveal-fade-up  { animation: reveal-fade-up  var(--duration-moderate)   var(--ease-out)     both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-scale-in,
+    .reveal-fade-in,
+    .reveal-fade-up {
+      animation: reveal-fade-in var(--duration-standard) var(--ease-out) both;
+    }
+  }
+
+  /* ── Modal/drawer choreography (§2.5 Choreography 3) ── */
+  @keyframes modal-in       { from { opacity: 0; transform: scale(0.96); }      to { opacity: 1; transform: scale(1); } }
+  @keyframes drawer-in-right { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes backdrop-in    { from { opacity: 0; }                               to { opacity: 0.6; } }
+
+  .modal-enter        { animation: modal-in        280ms var(--ease-emphasis) 40ms both; }
+  .drawer-enter-right { animation: drawer-in-right 280ms var(--ease-emphasis) 40ms both; }
+  .backdrop-enter     { animation: backdrop-in     200ms var(--ease-out)          both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-enter, .drawer-enter-right { animation: reveal-fade-in var(--duration-standard) var(--ease-out) both; }
+    .backdrop-enter { animation: none; }
+  }
+
+  /* ── Page navigation choreography (§2.5 Choreography 4) ── */
+  @keyframes page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .page-enter { animation: page-enter 280ms var(--ease-out) 200ms both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter { animation: reveal-fade-in var(--duration-standard) var(--ease-out) both; }
+  }
+
+  /* ── Empty state (§5.9) ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 64px 24px;
+    min-height: 200px;
+    justify-content: center;
+  }
 }

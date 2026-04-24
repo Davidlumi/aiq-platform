@@ -1292,3 +1292,17 @@
 - [x] Part 2 Manager Dashboard: Individual detail panel (This week / Delegation guidance / Development trajectory), active module display, conversation-due indicator, anti-comparison guards (no raw score column, no ranked lists)
 - [x] Manager procedure extended: per-member capability shape, active module, conversation-due indicator
 - [x] Learner procedure extended: scenario callbacks from last session, LLM narrative from last assessment
+
+## Design System v2.2 Implementation (Apr 24 2026)
+
+- [x] DS-1: Rewrite index.css with v2.2 token architecture — navy/warm-grey palette, Graphik font stack, dual-audience state tokens, spacing/radius/elevation/motion tokens
+- [x] DS-2: Update AppShell.tsx to v2.2 sidebar spec — 240px width, 56px collapsed, 3px left active border, section labels, sunken sidebar background
+- [ ] DS-3: Update DashboardLayout.tsx to match v2.2 sidebar spec (deferred — not used in active routing)
+- [x] DS-4: Update button.tsx — 44px min target, aria-disabled pattern, loading state, icon spacing, sentence case
+- [x] DS-5: Update badge.tsx — dual-audience state tokens, rectangular radius-xs, individual/org variants
+- [x] DS-6: Update card.tsx — elevated/default/sunken variants, CardDivider, v2.2 padding tokens
+- [x] DS-7: Update tabs.tsx — underline tabs, 2px navy-800 bottom border active state
+- [x] DS-8: Update input.tsx — 44px height, navy-800 focus ring, v2.2 surface tokens, IME logic preserved
+- [x] DS-9: Update all 4 auth pages to v2.2 — removed gradients, navy-800 brand panel, neutral-25 canvas
+- [ ] DS-10: Update assessment session to v2.2 surface spec — single column, generous rhythm, phase indicator (next sprint)
+- [ ] DS-11: Update results page to v2.2 dual-audience token usage — individual state tokens only (next sprint)

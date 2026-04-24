@@ -1,32 +1,82 @@
+/**
+ * Button — AiQ Design System v2.2 §5.5
+ *
+ * Hierarchy:
+ *   default     = primary action (navy-800 fill) — one per view
+ *   secondary   = secondary action (outlined, transparent bg)
+ *   outline     = alias for secondary (backward compat)
+ *   ghost       = tertiary / toolbar (no border, hover fill)
+ *   destructive = irreversible actions (red-700)
+ *   link        = inline text actions
+ *
+ * Accessibility:
+ *   - Minimum 44×44px touch target (WCAG 2.5.8)
+ *   - Use aria-disabled + loading prop for in-progress states
+ *   - Sentence case enforced by convention — no text-transform
+ */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  [
+    "inline-flex items-center justify-center gap-2",
+    "whitespace-nowrap shrink-0",
+    "font-medium text-sm leading-none",
+    "rounded-md border border-transparent",
+    "transition-colors",
+    "select-none",
+    "outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy-800)] focus-visible:ring-offset-2",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "[&[aria-disabled=true]]:pointer-events-none [&[aria-disabled=true]]:opacity-50",
+    "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-transparent shadow-xs hover:bg-accent dark:bg-transparent dark:border-input dark:hover:bg-input/50",
+        /** Primary — navy-800 fill. One per view. */
+        default:
+          "bg-[var(--navy-800)] text-white border-[var(--navy-800)] hover:bg-[var(--navy-900)] active:bg-[var(--navy-1000)]",
+
+        /** Secondary — outlined, transparent bg */
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-transparent text-[var(--neutral-900)] border-[var(--neutral-300)] hover:bg-[var(--neutral-50)] hover:border-[var(--neutral-400)] active:bg-[var(--neutral-100)]",
+
+        /** Outline — alias for secondary (backward compat) */
+        outline:
+          "bg-transparent text-[var(--neutral-900)] border-[var(--neutral-300)] hover:bg-[var(--neutral-50)] hover:border-[var(--neutral-400)] active:bg-[var(--neutral-100)]",
+
+        /** Ghost — no border, hover fill only */
         ghost:
-          "hover:bg-accent dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent text-[var(--neutral-700)] border-transparent hover:bg-[var(--neutral-100)] hover:text-[var(--neutral-900)] active:bg-[var(--neutral-200)]",
+
+        /** Destructive — irreversible actions */
+        destructive:
+          "bg-[var(--red-700)] text-white border-[var(--red-700)] hover:bg-[var(--red-900)] active:bg-[var(--red-900)]",
+
+        /** Link — inline text action */
+        link:
+          "bg-transparent text-[var(--navy-800)] border-transparent underline underline-offset-2 hover:text-[var(--navy-900)] p-0 h-auto min-h-0",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        /** Default — 44px height (WCAG 2.5.8 minimum target) */
+        default: "h-11 px-4 py-2.5 min-w-[44px] has-[>svg]:px-3",
+
+        /** Small — 36px, adequate for dense toolbars */
+        sm: "h-9 px-3 py-2 text-xs min-w-[36px] gap-1.5 has-[>svg]:px-2.5",
+
+        /** Large — 48px */
+        lg: "h-12 px-6 py-3 text-base min-w-[48px] has-[>svg]:px-4",
+
+        /** Icon — square 44×44 */
+        icon: "size-11",
+
+        /** Icon small — square 36×36 */
+        "icon-sm": "size-9",
+
+        /** Icon large — square 48×48 */
+        "icon-lg": "size-12",
       },
     },
     defaultVariants: {
@@ -36,25 +86,52 @@ const buttonVariants = cva(
   }
 );
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
-  const Comp = asChild ? Slot : "button";
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  /** Show loading spinner — uses aria-disabled so screen readers still reach the button */
+  loading?: boolean;
 }
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    { className, variant, size, asChild = false, loading = false, disabled, children, ...props },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : "button";
+    const isDisabled = disabled || loading;
+
+    return (
+      <Comp
+        data-slot="button"
+        ref={ref}
+        className={cn(buttonVariants({ variant, size }), className)}
+        disabled={asChild ? undefined : isDisabled}
+        aria-disabled={isDisabled || undefined}
+        {...props}
+      >
+        {loading ? (
+          <>
+            <svg
+              className="animate-spin size-4 shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span>{children}</span>
+          </>
+        ) : (
+          children
+        )}
+      </Comp>
+    );
+  }
+);
+Button.displayName = "Button";
 
 export { Button, buttonVariants };

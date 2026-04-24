@@ -1,3 +1,8 @@
+/**
+ * RegisterPage — AiQ Design System v2.2 auth surface
+ * Two-column: navy-800 brand panel (left, hidden on mobile) + form (right)
+ * Mirrors the LoginPage visual treatment for consistency.
+ */
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -7,9 +12,8 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Zap, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 const schema = z
   .object({
@@ -26,6 +30,18 @@ const schema = z
   });
 
 type FormData = z.infer<typeof schema>;
+
+function AiQLogoMark({ size = 36 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
+      <circle cx="100" cy="100" r="90" fill="var(--navy-800)" />
+      <text x="100" y="122" fontFamily="Inter, system-ui, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
+        A<tspan fill="var(--navy-300)">i</tspan>Q
+      </text>
+      <path d="M 58 140 Q 100 158 142 140" stroke="var(--navy-300)" strokeWidth="6" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
 
 export default function RegisterPage() {
   const [, navigate] = useLocation();
@@ -64,142 +80,161 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--sidebar)] via-primary to-[var(--sidebar)] flex items-center justify-center p-4">
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-            backgroundSize: "32px 32px",
-          }}
-        />
-      </div>
-
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shadow-lg">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-left">
-              <h1 className="text-3xl font-bold text-white">AiQ</h1>
-              <p className="text-white/60 text-sm">Capability Intelligence Platform</p>
-            </div>
+    <div className="min-h-screen flex" style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}>
+      {/* ── Left brand panel ── */}
+      <div
+        className="hidden lg:flex flex-col justify-between w-[400px] shrink-0 p-10"
+        style={{ background: "var(--navy-800)" }}
+      >
+        <div className="flex items-center gap-3">
+          <AiQLogoMark size={40} />
+          <div className="flex flex-col leading-none">
+            <span style={{ fontSize: "10px", fontWeight: 400, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", lineHeight: 1, marginBottom: "3px" }}>HR</span>
+            <span style={{ fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "var(--neutral-0)" }}>
+              Ai<span style={{ color: "var(--navy-300)" }}>Q</span>
+            </span>
           </div>
         </div>
 
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Create your account</CardTitle>
-            <CardDescription>
+        <div>
+          <h2 style={{ fontSize: "26px", fontWeight: 500, color: "var(--neutral-0)", lineHeight: 1.3, marginBottom: "12px" }}>
+            Join the HR capability standard
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", lineHeight: 1.7 }}>
+            Create your account to access adaptive assessments, verified capability profiles, and AI-powered learning plans tailored to your role.
+          </p>
+
+          <div className="mt-10 space-y-4">
+            {[
+              { label: "Scenario-based assessment", desc: "Realistic work situations under time pressure" },
+              { label: "Verified capability profile", desc: "Credibility-weighted scores across 6 domains" },
+              { label: "Personalised learning plan", desc: "Modality-matched content for your gaps" },
+            ].map(f => (
+              <div key={f.label} className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(255,255,255,0.1)" }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: "var(--navy-300)" }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--neutral-0)", marginBottom: "2px" }}>{f.label}</p>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+          &copy; {new Date().getFullYear()} AiQ. Enterprise Capability Intelligence Platform.
+        </p>
+      </div>
+
+      {/* ── Right form panel ── */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-3 mb-8">
+          <AiQLogoMark size={36} />
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--neutral-900)" }}>
+            Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
+          </span>
+        </div>
+
+        <div className="w-full max-w-[440px]">
+          <div className="mb-8">
+            <h1 style={{ fontSize: "24px", fontWeight: 500, color: "var(--neutral-900)", marginBottom: "6px" }}>
+              Create your account
+            </h1>
+            <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>
               Register with your organisation code to get started
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {serverError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{serverError}</AlertDescription>
-                </Alert>
-              )}
+            </p>
+          </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="tenantSlug">Organisation Code</Label>
-                <Input id="tenantSlug" placeholder="e.g. acme-corp" {...register("tenantSlug")} />
-                {errors.tenantSlug && (
-                  <p className="text-xs text-destructive">{errors.tenantSlug.message}</p>
-                )}
-              </div>
+          {serverError && (
+            <Alert variant="destructive" className="mb-5">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" placeholder="Jane" {...register("firstName")} />
-                  {errors.firstName && (
-                    <p className="text-xs text-destructive">{errors.firstName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" placeholder="Smith" {...register("lastName")} />
-                  {errors.lastName && (
-                    <p className="text-xs text-destructive">{errors.lastName.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="you@company.com" {...register("email")} />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Min. 8 characters"
-                    {...register("password")}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-xs text-destructive">{errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Re-enter password"
-                  {...register("confirmPassword")}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-accent hover:bg-accent/90 text-white"
-                disabled={registerMutation.isPending}
-              >
-                {registerMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account…
-                  </>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/login">
-                  <span className="text-accent hover:underline cursor-pointer font-medium">
-                    Sign in
-                  </span>
-                </Link>
-              </p>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="tenantSlug">Organisation code</Label>
+              <Input id="tenantSlug" placeholder="e.g. acme-corp" autoComplete="organization" {...register("tenantSlug")} />
+              {errors.tenantSlug && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.tenantSlug.message}</p>}
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First name</Label>
+                <Input id="firstName" placeholder="Jane" autoComplete="given-name" {...register("firstName")} />
+                {errors.firstName && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.firstName.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input id="lastName" placeholder="Smith" autoComplete="family-name" {...register("lastName")} />
+                {errors.lastName && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.lastName.message}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Work email</Label>
+              <Input id="email" type="email" placeholder="you@company.com" autoComplete="email" {...register("email")} />
+              {errors.email && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.email.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  className="pr-10"
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--neutral-500)" }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.password.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Re-enter password"
+                autoComplete="new-password"
+                {...register("confirmPassword")}
+              />
+              {errors.confirmPassword && <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.confirmPassword.message}</p>}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full mt-2"
+              loading={registerMutation.isPending}
+            >
+              Create account
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-sm" style={{ color: "var(--neutral-600)" }}>
+            Already have an account?{" "}
+            <Link href="/login">
+              <span className="font-medium cursor-pointer" style={{ color: "var(--navy-800)" }}>
+                Sign in
+              </span>
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

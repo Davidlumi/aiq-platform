@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>;
  * On dark (hero) surfaces, arc and 'i' use Sage (#5ee8b0)
  */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "#5ee8b0" : "#0F6E56";
+  const accent = variant === "hero" ? "var(--navy-300)" : "var(--navy-800)";
   return (
     <svg
       width={size}
@@ -34,7 +34,7 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
       xmlns="http://www.w3.org/2000/svg"
       aria-label="HR AiQ logo"
     >
-      <circle cx="100" cy="100" r="100" fill="#0d1821" />
+      <circle cx="100" cy="100" r="100" fill="var(--navy-800)" />
       <text x="42" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">A</text>
       <text x="105" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill={accent} letterSpacing="-2">i</text>
       <text x="122" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">Q</text>
@@ -116,12 +116,12 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex"
-      style={{ background: "#F7F8FA", fontFamily: "'Sora', system-ui, sans-serif" }}
+      style={{ background: "var(--neutral-25)", fontFamily: "var(--font-sans)" }}
     >
       {/* ── Left brand panel (Midnight) ── */}
       <div
         className="hidden lg:flex flex-col justify-between w-[440px] shrink-0 p-10"
-        style={{ background: "#0d1821" }}
+        style={{ background: "var(--navy-800)" }}
       >
         {/* Logo + wordmark */}
         <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function LoginPage() {
                 fontWeight: 400,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: "rgba(255,255,255,0.4)",
+                color: "rgba(255,255,255,0.45)",
                 lineHeight: 1,
                 marginBottom: "3px",
               }}
@@ -148,10 +148,10 @@ export default function LoginPage() {
                 fontWeight: 700,
                 letterSpacing: "-0.01em",
                 lineHeight: 1,
-                color: "#ffffff",
-              }}
-            >
-              Ai<span style={{ color: "#5ee8b0" }}>Q</span>
+                   color: "var(--neutral-0)",
+            }}
+          >
+              Ai<span style={{ color: "var(--navy-300)" }}>Q</span>
             </span>
           </div>
         </div>
@@ -163,14 +163,14 @@ export default function LoginPage() {
               fontFamily: "'Sora', sans-serif",
               fontSize: "28px",
               fontWeight: 600,
-              color: "#ffffff",
+              color: "var(--neutral-0)",
               lineHeight: 1.3,
               marginBottom: "16px",
             }}
           >
             The AI capability standard<br />for HR professionals
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", lineHeight: 1.7 }}>
             HR AiQ doesn't ask you to define hallucination. It puts you in realistic
             work situations — under time pressure, with incomplete information — and
             reads how you actually behave.
@@ -181,9 +181,9 @@ export default function LoginPage() {
               <div key={f.label} className="flex items-start gap-3">
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: "rgba(94,232,176,0.15)" }}
+                  style={{ background: "rgba(255,255,255,0.1)" }}
                 >
-                  <div className="w-2 h-2 rounded-full" style={{ background: "#5ee8b0" }} />
+                  <div className="w-2 h-2 rounded-full" style={{ background: "var(--navy-300)" }} />
                 </div>
                 <div>
                   <p
@@ -191,13 +191,13 @@ export default function LoginPage() {
                       fontFamily: "'Sora', sans-serif",
                       fontSize: "13px",
                       fontWeight: 600,
-                      color: "#ffffff",
+                      color: "var(--neutral-0)",
                       marginBottom: "2px",
                     }}
                   >
                     {f.label}
                   </p>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
                     {f.desc}
                   </p>
                 </div>
@@ -218,13 +218,13 @@ export default function LoginPage() {
                     fontFamily: "'DM Mono', monospace",
                     fontSize: "22px",
                     fontWeight: 500,
-                    color: "#5ee8b0",
+                    color: "var(--navy-300)",
                     lineHeight: 1,
                   }}
                 >
                   {s.value}
                 </p>
-                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>
                   {s.label}
                 </p>
               </div>
@@ -232,7 +232,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
           &copy; {new Date().getFullYear()} HR AiQ. Enterprise Capability Intelligence Platform.
         </p>
       </div>
@@ -250,7 +250,7 @@ export default function LoginPage() {
                 fontWeight: 400,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: "#9CA3AF",
+                color: "var(--neutral-500)",
                 lineHeight: 1,
                 marginBottom: "3px",
               }}
@@ -262,11 +262,11 @@ export default function LoginPage() {
                 fontFamily: "'Sora', sans-serif",
                 fontSize: "20px",
                 fontWeight: 700,
-                color: "#0d1821",
-                lineHeight: 1,
-              }}
-            >
-              Ai<span style={{ color: "#0F6E56" }}>Q</span>
+              color: "var(--neutral-900)",
+              lineHeight: 1,
+            }}
+          >
+              Ai<span style={{ color: "var(--navy-800)" }}>Q</span>
             </span>
           </div>
         </div>
@@ -278,13 +278,13 @@ export default function LoginPage() {
                 fontFamily: "'Sora', sans-serif",
                 fontSize: "24px",
                 fontWeight: 600,
-                color: "#0d1821",
-                marginBottom: "6px",
+              color: "var(--neutral-900)",
+              marginBottom: "6px",
               }}
             >
               Welcome back
             </h1>
-            <p style={{ fontSize: "14px", color: "#6B7280" }}>Sign in to your HR AiQ account</p>
+            <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>Sign in to your AiQ account</p>
           </div>
 
           {serverError && (
