@@ -1,8 +1,8 @@
 # AiQ Platform — Phase 1 Evolution Pause Document
 
-**Document status:** Released
+**Document status:** Released (v2.0 — with gap analysis)
 **Date:** 24 April 2026
-**Platform version:** 576efc3a
+**Platform version:** f8a3c5b9 (latest checkpoint)
 **Preceding version:** v2.2 Engine Remediation (checkpoint 059d15b8, 23 April 2026)
 **Author:** AiQ Engineering
 
@@ -27,9 +27,11 @@
 15. [Platform Architecture Summary](#15-platform-architecture-summary)
 16. [Completed Work Items](#16-completed-work-items)
 17. [Remaining Work Items](#17-remaining-work-items)
-18. [Known Gaps and Risks](#18-known-gaps-and-risks)
-19. [Decision Log](#19-decision-log)
-20. [Appendix A — File Inventory](#20-appendix-a--file-inventory)
+18. [Gap Analysis Against Source Documents](#18-gap-analysis-against-source-documents)
+19. [Summary Scorecard](#19-summary-scorecard)
+20. [Known Technical Gaps and Risks](#20-known-technical-gaps-and-risks)
+21. [Decision Log](#21-decision-log)
+22. [Appendix A — File Inventory](#22-appendix-a--file-inventory)
 
 ---
 
@@ -664,7 +666,109 @@ These items were identified in the v2.1 remediation cycle but deferred:
 
 ---
 
-## 18. Known Gaps and Risks
+## 18. Gap Analysis Against Source Documents
+
+This section provides an honest, item-by-item accounting of what is specified in the four source documents versus what is actually implemented. Items are rated as **Done**, **Partial** (some code exists but does not meet the specification), or **Not Done**.
+
+### 18.1 AiQ Methodology v10.7 — Assessment Experience (§18)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §18.1 | Immersive scenario presentation — email mockups, dashboard screenshots, meeting transcripts, policy documents rendered as visual artefacts | **Partial** | Assessment session renders text-based scenarios with multiple-choice options. No visual artefact rendering (email UI, Slack thread UI, HRIS screen mockups). |
+| §18.2 | Narrative wrapper — fictional week at a mid-sized organisation, connecting all scenarios into a coherent story parameterised by participant profile | **Not Done** | Scenarios are presented independently without a connecting narrative thread. |
+| §18.3 | Three-level confidence staking — tentative/confident/certain with distinct visual treatment and scoring weight | **Partial** | Confidence slider exists (0-1 continuous). The three-level staking mechanic with distinct UI treatment is partially implemented. |
+| §18.4 | Save and resume — participants can pause and return | **Done** | Feature flag `isSaveAndResumeEnabled` and session state persistence implemented. |
+| §18.5 | Post-completion reveal sequence — staged reveal (overall → domains → signals → recommendations) with narrative pacing | **Not Done** | Results page shows all scores simultaneously. No staged reveal or narrative pacing. |
+
+### 18.2 AiQ Methodology v10.7 — Scoring & Classification (§6, §14)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §6 | Sum-and-clip scoring formula with 28 signals across 6 domains | **Done** | `scoringEngine.ts` — fully implemented and tested. |
+| §14.1 | Five readiness states: safe, at_risk, unsafe, foundation_gap, unknown | **Done** | `classifyReadiness` in `scoringEngine.ts`. |
+| §14.2 | Confidence-gated classification with three thresholds | **Done** | `classificationConfidenceGate.ts`. |
+| §14.3 | Failure mode blocking/downgrade logic | **Done** | 4 blocking + 2 downgrade modes in `detectFailureModes`. |
+
+### 18.3 AiQ Reporting & Analytics v2.3 — Participant Dashboard (§2)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §2.1 | Capability snapshot — radar chart, readiness badge, domain scores | **Done** | LearnerDashboard shows radar chart, readiness badge, capability scores with v10 keys. |
+| §2.2 | Scenario callbacks — "In scenario X, you chose Y — here's what that reveals" reflection cards | **Not Done** | No scenario callback cards on participant dashboard. |
+| §2.3 | Three prioritised next steps with action buttons | **Partial** | Learning plan link exists. Missing specific three prioritised next steps. |
+| §2.4 | Confidence-calibration reflection — where confidence matched/mismatched performance | **Not Done** | No confidence calibration reflection panel. |
+
+### 18.4 AiQ Reporting & Analytics v2.3 — Manager Dashboard (§3)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §3.1.1 | Development view — individual development trajectory for each team member | **Partial** | Team member table with scores exists. No individual trajectory visualisation. |
+| §3.1.2 | Delegation tiers — full autonomy / supervised / restricted / blocked per team member | **Not Done** | No delegation tier recommendations. |
+| §3.1.3 | Suggested conversations — coaching prompts generated from assessment data | **Not Done** | No conversation starters or coaching prompts. |
+| §3.1.4 | Misuse friction indicators — where team members may be misusing AI tools | **Not Done** | No misuse friction indicators. |
+
+### 18.5 AiQ Reporting & Analytics v2.3 — HR/CPO Dashboard (§4)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §4.1.1 | Organisational capability heatmap with department/function drill-down | **Partial** | HR dashboard has capability bar charts. No full heatmap with drill-down. |
+| §4.1.2 | Risk register with access controls and escalation workflows | **Partial** | Risk scores and policy evaluations exist. No structured risk register with access controls. |
+| §4.3 | Risk register audit trail | **Partial** | Audit log table exists. No risk-register-specific audit trail. |
+| §5.3 | Foundation Gap organisational view — which teams have foundation gaps | **Not Done** | Foundation gap state exists in classification but no dedicated organisational view. |
+| §13.4 | Regulatory Readiness view — compliance posture against UK AI regulations | **Not Done** | No regulatory readiness panel. |
+
+### 18.6 AiQ Reporting & Analytics v2.3 — Configuration & Compliance (§11-14)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §11.2 | Company AI Context capture — AI tools inventory, deployment maturity, governance framework status | **Partial** | `OrgContextPage` admin page exists with basic fields. Missing structured onboarding block. |
+| §11.3 | Capability Requirement Translation Engine — map org AI tools to required capabilities | **Not Done** | No translation engine. |
+| §12.2 | Configuration onboarding flow — 30-45 min structured capture with 6 blocks | **Partial** | Basic 4-step personal onboarding wizard exists. Not the full org-level structured capture. |
+| §12.3 | Quarterly re-verification flow — scheduled re-assessment prompting | **Not Done** | No re-verification scheduling. |
+| §13 | UK Regulatory Context capture and translation | **Not Done** | No regulatory context capture. |
+| §14 | Small HR Function Mode — simplified mode for organisations with <50 employees | **Not Done** | No simplified mode. |
+
+### 18.7 AiQ Reporting & Analytics v2.3 — Reporting (§6, §16)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §6 | Trajectory reporting — improving/stable/declining across multiple assessments | **Partial** | Trend field exists in types. No multi-assessment trajectory visualisation. |
+| §16.4 | Dual-audience technical narrative | **Partial** | Results page has softened language (S6 labels). No full technical narrative. |
+| §16.5 | Dual-audience executive narrative | **Not Done** | No executive-audience report generation. |
+
+### 18.8 AiQ Adaptive Learning v1.0 (§2-5)
+
+| Ref | Specification | Status | Detail |
+|-----|--------------|--------|--------|
+| §2.2 | Learning Prescription Engine — 4-stage logic (immediate intervention → targeted development → consolidation → mastery pathway) | **Partial** | Gap analysis engine and learning path generator exist. Not the full 4-stage prescription logic. |
+| §3 | Module architecture — 8 modalities across 5 difficulty levels | **Done** | 72 modules seeded across 8 modalities and 5 difficulty levels. |
+| §3.4 | Module engagement telemetry — time-on-task, interaction depth, completion quality | **Partial** | Basic progress tracking exists. No detailed engagement telemetry. |
+| §4 | Transfer finding framework — measuring whether learning translated to behaviour change | **Not Done** | No transfer finding assessment. |
+| §4.1 | Learning Pathway UI on participant dashboard | **Partial** | LearningPlanPage exists as separate page. Not integrated into participant dashboard as primary panel. |
+| §4.3 | No-transfer reporting — modules that failed to produce behavioural transfer | **Not Done** | No no-transfer reporting. |
+| §5 | Learning-aware reassessment mode — reassessment that accounts for completed learning | **Not Done** | No learning-aware reassessment. |
+
+---
+
+## 19. Summary Scorecard
+
+| Phase | Scope | Done | Partial | Not Done | Completion |
+|-------|-------|------|---------|----------|------------|
+| Phase 1 — Foundations | 16 items | 15 | 1 | 0 | **94%** |
+| Phase 2 — Assessment Experience (§18) | 5 items | 1 | 2 | 2 | **30%** |
+| Phase 2 — Participant Dashboard (§2) | 4 items | 1 | 1 | 2 | **25%** |
+| Phase 2 — Manager Dashboard (§3) | 4 items | 0 | 1 | 3 | **6%** |
+| Phase 2 — HR/CPO Dashboard (§4-5) | 5 items | 0 | 3 | 2 | **15%** |
+| Phase 2 — Config & Compliance (§11-14) | 6 items | 0 | 2 | 4 | **8%** |
+| Phase 2 — Reporting (§6, §16) | 3 items | 0 | 2 | 1 | **17%** |
+| Phase 3 — Learning Layer (AL §2-5) | 7 items | 1 | 3 | 3 | **21%** |
+| **Overall** | **50 items** | **18** | **15** | **17** | **~51%** |
+
+The platform has a solid Phase 1 foundation with comprehensive test coverage (391/391 passing). The primary gap is in Phase 2 user-facing features — particularly the assessment experience refinements (narrative wrapper, reveal sequence), manager/HR dashboard depth (delegation tiers, suggested conversations, heatmap), and reporting sophistication (dual-audience narrative, regulatory readiness, capability-to-requirement fit) specified in the source documents.
+
+---
+
+## 20. Known Technical Gaps and Risks
 
 ### Technical Gaps
 
@@ -676,6 +780,10 @@ These items were identified in the v2.1 remediation cycle but deferred:
 
 4. **Content volume.** While 53+ scenarios and 72 learning modules provide a solid foundation, production deployment to large organisations will require content expansion to prevent item repetition across multiple assessment sessions.
 
+5. **Human review queue has no UI.** The quality gate flags items for human review but no reviewer interface exists to process the queue.
+
+6. **Report router is basic.** Only 4 report types exist. No dual-audience narrative, no regulatory readiness, no capability-to-requirement fit.
+
 ### Architectural Risks
 
 1. **v9.2 → v10 data compatibility.** Any existing v9.2 assessment data (sessions, scores, answers) uses old capability keys. A data migration strategy is needed if historical data must be preserved.
@@ -684,9 +792,13 @@ These items were identified in the v2.1 remediation cycle but deferred:
 
 3. **Multi-tenancy enforcement.** While all tables have `tenant_id` columns, not all tRPC procedures enforce tenant isolation at the procedure level. A systematic audit is needed.
 
+4. **No rate limiting on auth endpoints.** Login, register, and password reset have no rate limiting.
+
+5. **No email notifications.** Password reset returns token in response rather than sending email.
+
 ---
 
-## 19. Decision Log
+## 21. Decision Log
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
@@ -701,7 +813,7 @@ These items were identified in the v2.1 remediation cycle but deferred:
 
 ---
 
-## 20. Appendix A — File Inventory
+## 22. Appendix A — File Inventory
 
 ### Assessment Engine (12 files)
 

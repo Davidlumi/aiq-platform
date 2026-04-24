@@ -155,8 +155,8 @@ async function enrichAnswers(
   return Promise.all(
     answers.map(async (a) => {
       let riskLevel = "Medium";
-      let capabilityKey = "execution";
-      let interactionType = "situational_judgement";
+      let capabilityKey = "ai_interaction";
+      let interactionType = "prompt_diagnosis";
       let itemDifficulty = 2;
       let optionPosition: number | null = null;
 
@@ -184,8 +184,8 @@ async function enrichAnswers(
             ? JSON.parse(item[0].metadataJson as string)
             : (item[0]?.metadataJson ?? {})) as Record<string, unknown>;
           riskLevel = (meta.risk_level as string) ?? "Medium";
-          capabilityKey = (meta.capability_key as string) ?? "execution";
-          interactionType = (meta.interaction_type as string) ?? "situational_judgement";
+          capabilityKey = (meta.capability_key as string) ?? "ai_interaction";
+          interactionType = (meta.interaction_type as string) ?? "prompt_diagnosis";
           itemDifficulty = item[0]?.difficulty ?? 2;
         } catch {}
       }
@@ -494,10 +494,10 @@ async function getEmergencyFallbackItem(
     aiOutput: (meta.ai_output as string) ?? undefined,
     dataContext: (meta.data_context as string) ?? undefined,
     capability: (meta.capability as string) ?? "",
-    capabilityKey: (meta.capability_key as string) ?? "execution",
+    capabilityKey: (meta.capability_key as string) ?? "ai_interaction",
     workflow: (meta.workflow as string) ?? "",
     riskLevel: (meta.risk_level as string) ?? "Medium",
-    interactionType: (meta.interaction_type as string) ?? "situational_judgement",
+    interactionType: (meta.interaction_type as string) ?? "prompt_diagnosis",
     interactionId: (meta.interaction_id as string) ?? "",
     primarySignal: (meta.primary_signal as string) ?? "",
     displayOrder: (meta.display_order as number) ?? answeredCount + 1,

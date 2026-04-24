@@ -46,8 +46,8 @@ const CAPABILITY_DOMAINS = [
   { key: "ai_output_evaluation",label: "AI Output Evaluation",   icon: Brain,     colour: "#228833", description: "Critical assessment of AI outputs before acting" },
   { key: "ai_ethics_trust",     label: "AI Ethics & Trust",       icon: Shield,    colour: "#AA3377", description: "Ethical reasoning and employee trust in AI" },
   { key: "ai_change_leadership",label: "AI Change Leadership",    icon: Gavel,     colour: "#D97706", description: "Leading AI transformation and handling resistance" },
-  { key: "workflow",            label: "AI Workflow Application", icon: Workflow,  colour: "#66CCEE", description: "Integrating AI into professional workflows" },
-  { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#228833", description: "Interpreting and challenging AI-generated data" },
+  { key: "ai_workflow_design",   label: "AI Workflow Design",      icon: Workflow,  colour: "#66CCEE", description: "Designing AI-augmented workflows with human oversight" },
+  { key: "workforce_ai_readiness",label: "Workforce AI Readiness",  icon: Database,  colour: "#CCBB44", description: "Diagnosing team capability gaps and designing interventions" },
 ];
 
 // ─── Readiness State Config ───────────────────────────────────────────────────

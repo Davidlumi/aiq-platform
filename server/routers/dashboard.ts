@@ -27,15 +27,14 @@ import {
 } from "../../drizzle/schema";
 import { eq, and, desc, isNull, sql, gte } from "drizzle-orm";
 
-// ─── Capability keys ──────────────────────────────────────────────────────────
+// ─── Capability keys (v10 taxonomy) ──────────────────────────────────────────
 const CAPABILITY_KEYS = [
-  "execution",
-  "prioritisation",
-  "validation",
-  "judgement",
-  "governance",
-  "appropriateness",
-  "data_interpretation",
+  "ai_interaction",
+  "ai_output_evaluation",
+  "ai_workflow_design",
+  "workforce_ai_readiness",
+  "ai_ethics_trust",
+  "ai_change_leadership",
 ] as const;
 type CapKey = typeof CAPABILITY_KEYS[number];
 

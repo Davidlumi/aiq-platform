@@ -22,13 +22,12 @@ import {
 } from "recharts";
 
 const CAP_META: Record<string, { label: string; color: string; shortLabel: string }> = {
-  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", shortLabel: "INTR" },
-  prioritisation:      { label: "Prioritisation",      color: "#AA3377", shortLabel: "PRIO" },
-  validation:          { label: "Validation",          color: "#228833", shortLabel: "VALD" },
-  ai_output_evaluation:{ label: "Output Evaluation",   color: "#228833", shortLabel: "EVAL" },
-  ai_ethics_trust:     { label: "Ethics & Trust",      color: "#AA3377", shortLabel: "ETHI" },
-  ai_change_leadership:{ label: "Change Leadership",   color: "#D97706", shortLabel: "CHNG" },
-  data_interpretation: { label: "Data Interpretation", color: "#BBBBBB", shortLabel: "DATA" },
+  ai_interaction:         { label: "AI Interaction",         color: "#4477AA", shortLabel: "INTR" },
+  ai_output_evaluation:   { label: "AI Output Evaluation",   color: "#228833", shortLabel: "EVAL" },
+  ai_workflow_design:     { label: "AI Workflow Design",     color: "#66CCEE", shortLabel: "WKFL" },
+  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#CCBB44", shortLabel: "WKFR" },
+  ai_ethics_trust:        { label: "AI Ethics & Trust",      color: "#AA3377", shortLabel: "ETHI" },
+  ai_change_leadership:   { label: "AI Change Leadership",   color: "#D97706", shortLabel: "CHNG" },
 };
 
 const READINESS_META: Record<string, { label: string; color: string; bg: string; icon: any }> = {

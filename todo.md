@@ -1228,3 +1228,5 @@
 
 ### Pause Document
 - [x] P1-38: Create Phase 1 Evolution Pause Document — comprehensive status document capturing all completed work, architecture decisions, and remaining roadmap
+- [x] P1-39: Update Pause Document v2.0 with gap analysis against all 4 source documents (Methodology v10.7, Reporting v2.3, Adaptive Learning v1.0, Handoff Briefing)
+- [x] P1-40: Fix remaining v9.2 capability key references in dashboard router, LearnerDashboard, AssessmentPage, ContentLibraryPage, auth router, assessment router, capabilityReport AIL engine

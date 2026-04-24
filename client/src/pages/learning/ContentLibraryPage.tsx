@@ -154,12 +154,11 @@ function ContentCard({ item }: { item: any }) {
 const CAPABILITY_OPTIONS = [
   { value: "all", label: "All capabilities" },
   { value: "ai_interaction", label: "AI Interaction" },
-  { value: "prioritisation", label: "Prioritisation" },
-  { value: "validation", label: "Validation" },
-  { value: "ai_output_evaluation", label: "Output Evaluation" },
-  { value: "ai_ethics_trust", label: "Ethics & Trust" },
-  { value: "ai_change_leadership", label: "Change Leadership" },
-  { value: "data_interpretation", label: "Data Interpretation" },
+  { value: "ai_output_evaluation", label: "AI Output Evaluation" },
+  { value: "ai_workflow_design", label: "AI Workflow Design" },
+  { value: "workforce_ai_readiness", label: "Workforce AI Readiness" },
+  { value: "ai_ethics_trust", label: "AI Ethics & Trust" },
+  { value: "ai_change_leadership", label: "AI Change Leadership" },
 ];
 
 const TYPE_OPTIONS = [

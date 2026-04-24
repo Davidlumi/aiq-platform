@@ -84,37 +84,49 @@ export interface CapabilityReport {
 // ─── Signal → Capability Domain Mapping ──────────────────────────────────────
 
 const SIGNAL_TO_CAPABILITY: Record<string, { domain: string; label: string; isPositive: boolean }> = {
-  // Governance
-  governance_quality: { domain: "governance", label: "AI Governance", isPositive: true },
-  governance_knowledge: { domain: "governance", label: "AI Governance", isPositive: true },
-  governance_bypass_risk: { domain: "governance", label: "AI Governance", isPositive: false },
-  appropriateness_boundary: { domain: "governance", label: "AI Governance", isPositive: true },
-  // Validation
-  validation_accuracy: { domain: "validation", label: "AI Validation", isPositive: true },
-  blind_acceptance_risk: { domain: "validation", label: "AI Validation", isPositive: false },
-  hallucination_acceptance: { domain: "validation", label: "AI Validation", isPositive: false },
-  critical_thinking: { domain: "validation", label: "AI Validation", isPositive: true },
-  // Data Interpretation
-  data_interpretation_quality: { domain: "data_interpretation", label: "Data Interpretation", isPositive: true },
-  risk_identification: { domain: "data_interpretation", label: "Data Interpretation", isPositive: true },
-  calibration_quality: { domain: "data_interpretation", label: "Data Interpretation", isPositive: true },
-  // Communication
-  communication_quality: { domain: "communication", label: "Communication", isPositive: true },
-  stakeholder_management: { domain: "communication", label: "Communication", isPositive: true },
-  executive_communication: { domain: "communication", label: "Communication", isPositive: true },
-  jargon_overuse: { domain: "communication", label: "Communication", isPositive: false },
-  // Risk
-  risk_dismissal: { domain: "risk_judgement", label: "Risk Judgement", isPositive: false },
-  over_caution_risk: { domain: "risk_judgement", label: "Risk Judgement", isPositive: false },
-  proxy_discrimination_risk: { domain: "risk_judgement", label: "Risk Judgement", isPositive: false },
+  // AI Interaction
+  prompt_construction_quality:    { domain: "ai_interaction", label: "AI Interaction", isPositive: true },
+  prompt_iteration_quality:       { domain: "ai_interaction", label: "AI Interaction", isPositive: true },
+  output_direction_skill:         { domain: "ai_interaction", label: "AI Interaction", isPositive: true },
+  tool_fluency_index:             { domain: "ai_interaction", label: "AI Interaction", isPositive: true },
+  // AI Output Evaluation
+  output_evaluation_quality:      { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: true },
+  error_detection_accuracy:       { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: true },
+  fitness_for_purpose_judgement:   { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: true },
+  blind_acceptance_risk:           { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: false },
+  hallucination_acceptance_risk:   { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: false },
+  bias_detection_skill:            { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: true },
+  data_interpretation_quality:     { domain: "ai_output_evaluation", label: "AI Output Evaluation", isPositive: true },
+  // AI Workflow Design
+  workflow_redesign_quality:       { domain: "ai_workflow_design", label: "AI Workflow Design", isPositive: true },
+  handoff_design_quality:          { domain: "ai_workflow_design", label: "AI Workflow Design", isPositive: true },
+  human_oversight_preservation:    { domain: "ai_workflow_design", label: "AI Workflow Design", isPositive: true },
+  automation_expansion_risk:       { domain: "ai_workflow_design", label: "AI Workflow Design", isPositive: false },
+  // Workforce AI Readiness
+  capability_diagnosis_accuracy:   { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: true },
+  intervention_design_quality:     { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: true },
+  leader_advisory_quality:         { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: true },
+  generic_prescription_risk:       { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: false },
+  // AI Ethics & Employee Trust
+  ethics_under_pressure:           { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
+  stakeholder_impact_awareness:    { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
+  employee_transparency_advocacy:  { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
+  pressure_drift_risk:             { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: false },
+  legal_vs_fair_distinction:       { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
+  // AI Change Leadership
+  resistance_response_quality:     { domain: "ai_change_leadership", label: "AI Change Leadership", isPositive: true },
+  legitimate_concern_recognition:  { domain: "ai_change_leadership", label: "AI Change Leadership", isPositive: true },
+  change_pace_calibration:         { domain: "ai_change_leadership", label: "AI Change Leadership", isPositive: true },
+  dismissive_of_concern_risk:      { domain: "ai_change_leadership", label: "AI Change Leadership", isPositive: false },
 };
 
 const DOMAIN_LABELS: Record<string, string> = {
-  governance: "AI Governance",
-  validation: "AI Validation",
-  data_interpretation: "Data Interpretation",
-  communication: "Communication & Influence",
-  risk_judgement: "Risk Judgement",
+  ai_interaction: "AI Interaction",
+  ai_output_evaluation: "AI Output Evaluation",
+  ai_workflow_design: "AI Workflow Design",
+  workforce_ai_readiness: "Workforce AI Readiness",
+  ai_ethics_trust: "AI Ethics & Employee Trust",
+  ai_change_leadership: "AI Change Leadership",
 };
 
 // ─── Core Functions ───────────────────────────────────────────────────────────

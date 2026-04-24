@@ -78,8 +78,8 @@ export const authRouter = router({
         aiUsageLevel: aiLevelMap[input.aiUsageLevel] ?? "occasionally",
         primaryDomain: input.jobFunction,
         governanceFamiliarity: "moderate",
-        selfAssessedStrength: "judgement",
-        selfAssessedWeakness: "data_interpretation",
+        selfAssessedStrength: "ai_output_evaluation",
+        selfAssessedWeakness: "ai_change_leadership",
       }).catch(() => {});
       return { success: true };
     }),
