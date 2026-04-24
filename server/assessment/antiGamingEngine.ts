@@ -254,8 +254,12 @@ export function analyseGamingPatterns(
   }
 
   // ── Pattern 6: Inconsistent responses ────────────────────────────────────
+  // NOTE: The outcome score range is [0, 1] with values {0, 0.1, 0.3, 0.6, 1.0}.
+  // Maximum possible standard deviation is 0.5 (half strong, half critical_failure).
+  // Threshold must be < 0.5 to be reachable. 0.38 fires when >30% of answers
+  // alternate between strong (1.0) and weak/failure (0.1–0.3).
   const outcomeVariance = computeOutcomeVariance(answers);
-  if (outcomeVariance > 0.7) {
+  if (outcomeVariance > 0.38) {
     patterns.push("inconsistent_responses");
   }
 

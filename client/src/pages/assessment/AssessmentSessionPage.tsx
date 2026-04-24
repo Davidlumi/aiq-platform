@@ -512,13 +512,13 @@ function CompletionScreen({
         </div>
         <h1 className="text-xl font-bold text-foreground font-sora">Assessment Complete</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">
-          Your capability profile has been updated.
+          Your capability profile has been updated. View your full results below.
         </p>
       </div>
 
       {result && (
         <div className={cn("rounded-2xl border-2 p-5", stateConfig.bg)}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Readiness Classification</p>
+          <p className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1")}>Your Readiness</p>
           <div className="flex items-baseline gap-3">
             <p className={cn("text-2xl font-bold font-sora", stateConfig.color)}>{stateConfig.label}</p>
             <p className={cn("text-4xl font-bold", stateConfig.color)}>{Math.round(result.overallScore)}</p>
@@ -579,7 +579,7 @@ function CompletionScreen({
             Learning Plan
           </Button>
           <Button onClick={() => onNavigate("/dashboard")} variant="outline" className="text-sm">
-            Dashboard
+            My Dashboard
           </Button>
         </div>
       </div>

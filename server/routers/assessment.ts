@@ -474,6 +474,12 @@ function buildAdaptiveContext(
     recentWorkflows: (sessionMetaForTracking?.recentWorkflows as string[]) ?? [],
     consecutiveStrongAnswers: (sessionMetaForTracking?.consecutiveStrongAnswers as number) ?? 0,
     recentCapabilities: (sessionMetaForTracking?.recentCapabilities as CapabilityKey[]) ?? [],
+    // PT-FIX: Pressure-test escalation state — read from session metadata
+    pressureTestState: {
+      pressureItemCount: (sessionMetaForTracking?.ethicsPressureCount as number) ?? 0,
+      escalationLevel: (sessionMetaForTracking?.ethicsEscalationLevel as number) ?? 0,
+      priorPressureDeltas: (sessionMetaForTracking?.priorPressureDeltas as Record<string, number>[]) ?? [],
+    },
   };
 
   const generationVars = selectNextGenerationVariables(ctx);
@@ -859,6 +865,10 @@ export const assessmentRouter = router({
           recentCapabilities: [] as string[],
           recentWorkflows: [] as string[],
           pendingNextItem: null,
+          // PT-FIX: Pressure-test escalation state — tracks how many ethical_pressure_test items
+          // have been served and what escalation level to apply next
+          ethicsPressureCount: 0,
+          ethicsEscalationLevel: 0,
           // WS5.2: Session metadata
           pinnedModelVersion: "adaptive-v2",
           // NW-1: Persistent narrative context for the session
@@ -1278,6 +1288,20 @@ export const assessmentRouter = router({
             const newRecentCaps = [...prevRecentCaps.slice(-4), generationVars.targetCapability];
             const prevRecentWorkflows = (sessionMeta.recentWorkflows as string[]) ?? [];
             const newRecentWorkflows = [...prevRecentWorkflows.slice(-4), generationVars.workflowContext];
+            // PT-FIX: Update pressure-test escalation state when an ethical_pressure_test item was just served
+            const prevPressureCount = (sessionMeta.ethicsPressureCount as number) ?? 0;
+            const prevEscalationLevel = (sessionMeta.ethicsEscalationLevel as number) ?? 0;
+            const prevPriorPressureDeltas = (sessionMeta.priorPressureDeltas as Record<string, number>[]) ?? [];
+            const wasEthicsItem = generationVars.interactionType === "ethical_pressure_test";
+            const newPressureCount = wasEthicsItem ? prevPressureCount + 1 : prevPressureCount;
+            // Escalate after first ethics item: 0→1, after second: 0→2, after third: 0→3, cap at 3
+            const newEscalationLevel = wasEthicsItem ? Math.min(prevPressureCount + 1, 3) : prevEscalationLevel;
+            const lastSignalDeltas = wasEthicsItem && lastAnswer
+              ? (() => { try { return typeof lastAnswer.signalDeltasJson === "string" ? JSON.parse(lastAnswer.signalDeltasJson as string) : (lastAnswer.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; } })()
+              : null;
+            const newPriorPressureDeltas = lastSignalDeltas
+              ? [...prevPriorPressureDeltas, lastSignalDeltas]
+              : prevPriorPressureDeltas;
             // A3: Update org-level workflow anchor usage for cross-participant overlap guard
             try {
               const existingAnchor = await db
@@ -1317,6 +1341,10 @@ export const assessmentRouter = router({
                   consecutiveStrongAnswers: newConsecutive,
                   recentCapabilities: newRecentCaps,
                   recentWorkflows: newRecentWorkflows,
+                  // PT-FIX: Persist pressure-test escalation state
+                  ethicsPressureCount: newPressureCount,
+                  ethicsEscalationLevel: newEscalationLevel,
+                  priorPressureDeltas: newPriorPressureDeltas,
                 },
               })
               .where(eq(assessmentSessions.id, input.sessionId));
