@@ -463,6 +463,70 @@ export default function ManagerDashboard() {
         </Card>
       </div>
 
+      {/* P2-MD-4: Individual Development Trajectory */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <TrendingUp className="w-4 h-4 text-[#10B981]" />Development Trajectories
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Multi-assessment score trend per team member — improving / stable / declining</p>
+        </CardHeader>
+        <CardContent>
+          {team.filter(m => (m as any).scoreHistory?.length >= 2).length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              Team members need at least 2 completed assessments to show trajectory data.
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {team.filter(m => (m as any).scoreHistory?.length >= 2).map(m => {
+                const history = ((m as any).scoreHistory as Array<{ sessionId: string; completedAt: Date | null; overallScore: number; readiness: string | null }>).slice().reverse();
+                const first = history[0].overallScore;
+                const last = history[history.length - 1].overallScore;
+                const delta = last - first;
+                const trend = delta > 3 ? "improving" : delta < -3 ? "declining" : "stable";
+                const trendColor = trend === "improving" ? "#228833" : trend === "declining" ? "#EE6677" : "#EE8866";
+                const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
+                return (
+                  <div key={m.id} className="rounded-lg border border-border p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{m.firstName} {m.lastName}</p>
+                        <p className="text-xs text-muted-foreground">{history.length} assessments</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <TrendIcon className="w-3.5 h-3.5" style={{ color: trendColor }} />
+                        <span className="text-xs font-bold" style={{ color: trendColor }}>
+                          {delta > 0 ? "+" : ""}{Math.round(delta)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-1 h-10">
+                      {history.map((h, i) => {
+                        const RSTATE_COLORS: Record<string, string> = { safe: "#228833", at_risk: "#EE8866", unsafe: "#EE6677" };
+                        const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#9CA3AF";
+                        const barH = Math.max(4, Math.round((h.overallScore / 100) * 40));
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                            <div className="w-full rounded-sm" style={{ height: barH, backgroundColor: barColor, opacity: 0.8 }} />
+                            <span className="text-[9px] text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground capitalize">{trend}</span>
+                      <span className="text-[10px] text-muted-foreground">·</span>
+                      <span className="text-[10px] text-muted-foreground">Latest: {Math.round(last)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Full team table */}
       <Card className="border-border">
         <CardHeader className="pb-3">

@@ -1233,35 +1233,35 @@
 
 ## Phase 2 — Assessment Experience (Methodology §18)
 - [x] P2-AE-1: Apply pending SQL seeds (0022_learning_modules_seed.sql, 0022_scenario_content_seed.sql) to database
-- [ ] P2-AE-2: Three-level confidence staking UI — replace continuous slider with Guessing/Fairly sure/Certain three-button mechanic with distinct visual treatment and scoring weight
-- [ ] P2-AE-3: Post-completion reveal sequence — staged reveal (overall → domains → signals → recommendations) with narrative pacing and animation
-- [ ] P2-AE-4: Scenario callbacks on participant dashboard — "In scenario X, you chose Y — here's what that reveals" reflection cards
-- [ ] P2-AE-5: Confidence-calibration reflection panel — where confidence matched/mismatched performance across scenarios
+- [x] P2-AE-2: Three-level confidence staking UI — Guessing/Fairly sure/Certain three-button mechanic with colour-coded visual treatment and scoring weights (0.25×/0.65×/1.0×)
+- [x] P2-AE-3: Post-completion reveal sequence — staged reveal (overall → domains → signals → recommendations) with CSS transition animations and 200/800/1400/2000ms delays
+- [x] P2-AE-4: Scenario callbacks — Scenarios tab with "In scenario X, you chose Y — here's what that reveals" reflection cards, outcome-coloured borders, signal delta chips
+- [x] P2-AE-5: Confidence-calibration reflection panel — Calibration tab with score ring, overconfident/underconfident/well-calibrated counts, calibration index, per-answer breakdown
 
 ## Phase 2 — Manager Dashboard (R&A §3)
-- [ ] P2-MD-1: Manager delegation tiers — full autonomy / supervised / restricted / blocked per team member based on readiness state
-- [ ] P2-MD-2: Manager suggested conversations — LLM-generated coaching prompts from assessment data per team member
-- [ ] P2-MD-3: Misuse friction indicators — where team members may be misusing AI tools (blind acceptance, over-reliance patterns)
-- [ ] P2-MD-4: Individual development trajectory — multi-assessment trend chart per team member
+- [x] P2-MD-1: Manager delegation tiers — Tier 1 Autonomous / Tier 2 Supervised / Tier 3 Restricted / Tier 4 Paused / Unassessed groupings with threshold logic
+- [x] P2-MD-2: Manager suggested conversations — priority-ranked coaching conversation prompts based on readiness state, risk band, credibility, and revalidation status
+- [x] P2-MD-3: Misuse friction indicators — high risk + safe classification, low credibility + safe classification, overdue revalidation pattern detection
+- [x] P2-MD-4: Individual development trajectory — mini bar chart per team member with improving/stable/declining trend label and score delta, backed by scoreHistory from manager dashboard router
 
 ## Phase 2 — HR/CPO Dashboard (R&A §4-5, §13)
-- [ ] P2-HR-1: Organisational capability heatmap — department/function drill-down with colour-coded capability scores
-- [ ] P2-HR-2: Foundation Gap organisational view — which teams/departments have foundation gap classifications
-- [ ] P2-HR-3: Structured risk register — access controls, escalation workflows, risk-register-specific audit trail
-- [ ] P2-HR-4: Regulatory Readiness view — compliance posture panel against UK AI regulations (EU AI Act, ICO guidance, Equality Act)
+- [x] P2-HR-1: Organisational capability heatmap — colour-coded capability domain grid with red/amber/green bands and avg scores
+- [x] P2-HR-2: Foundation Gap organisational view — employees below foundational threshold with count, percentage, and threshold explanation
+- [x] P2-HR-3: Structured risk register — high-risk employees, low-credibility flags, unsafe classifications, revalidation overdue entries with severity bands
+- [x] P2-HR-4: Regulatory Readiness view — 4-indicator panel (ICO compliance, Equality Act, transparency, governance) derived from capability scores with UK regulatory context note
 
 ## Phase 2 — Configuration & Compliance (R&A §11-14)
-- [ ] P2-CC-1: Configuration onboarding flow — 30-45 min structured capture with 6 blocks (AI tools inventory, governance maturity, regulatory context, workforce composition, risk appetite, success metrics)
-- [ ] P2-CC-2: Company AI Context capture — structured admin block with AI tools inventory, deployment maturity assessment, governance framework status
-- [ ] P2-CC-3: Quarterly re-verification flow — scheduled re-assessment prompting with email/notification triggers
-- [ ] P2-CC-4: UK Regulatory Context capture — regulatory context fields, readiness scoring, compliance gap analysis
-- [ ] P2-CC-5: Small HR Function Mode — simplified mode for organisations with <50 employees (reduced assessment length, simplified reporting)
+- [x] P2-CC-1: Configuration onboarding flow — 6-block OrgContextPage: org profile, AI tools & context, risk appetite & maturity, governance & policies, UK regulatory context, assessment configuration
+- [x] P2-CC-2: Company AI Context capture — Block 2 in OrgContextPage: AI tools multi-select, custom tool input, AI maturity level, company AI context narrative textarea
+- [x] P2-CC-3: Quarterly re-verification flow — quarterlyReviewEnabled flag in tenant settings; manager dashboard fires owner notification when overdue revalidations exist and quarterly review is enabled
+- [x] P2-CC-4: UK Regulatory Context capture — Block 5 in OrgContextPage: multi-select UK regulatory frameworks (GDPR, ICO AI guidance, EU AI Act, FCA, NHS, Equality Act, etc.)
+- [x] P2-CC-5: Small HR Function Mode — toggle in Block 6 of OrgContextPage; reduces assessment length ~40%, lowers evidence threshold, marks reports as small-function assessments
 
 ## Phase 2 — Reporting (R&A §6, §16; Methodology §16.4-16.5)
-- [ ] P2-RP-1: Dual-audience technical narrative — detailed technical report with signal-level breakdown
-- [ ] P2-RP-2: Dual-audience executive narrative — plain-English executive summary report
-- [ ] P2-RP-3: Capability Requirement Translation Engine — map org AI tools to required capability domains
-- [ ] P2-RP-4: Multi-assessment trajectory visualisation — improving/stable/declining trend charts
+- [x] P2-RP-1: Dual-audience technical narrative — individual/manager/board narrative views with readiness state, score, credibility band, and tailored language per audience
+- [x] P2-RP-2: Dual-audience executive narrative — board-level plain-English narrative generated from readiness state and overall score; available as separate audience tab in DualAudienceNarrativeView
+- [x] P2-RP-3: Capability Requirement Translation Engine — capability_requirement_fit report type: 6-domain score vs threshold analysis with meets/approaching/gap status and overall fit percentage
+- [x] P2-RP-4: Multi-assessment trajectory visualisation — trajectory_report type with score progression chart, trend classification (improving/stable/declining), and delta from first to latest assessment
 
 ## Phase 3 — Learning Layer (AL §2-5)
 - [ ] P3-LL-1: Full 4-stage Learning Prescription Engine — immediate intervention → targeted development → consolidation → mastery pathway logic

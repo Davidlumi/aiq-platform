@@ -12,7 +12,7 @@
  *         line added at y=75 (safe threshold).
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -549,6 +549,9 @@ export default function AssessmentResultsPage() {
   const [, navigate] = useLocation();
   const [showExplanation, setShowExplanation] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  // P2-AE-3: Staged reveal — sections animate in sequentially after data loads
+  const [revealStage, setRevealStage] = useState(0); // 0=hidden, 1=readiness, 2=domains, 3=signals, 4=full
+  const [hasRevealed, setHasRevealed] = useState(false);
 
   const { data, isLoading, error } = trpc.assessment.results.useQuery(
     { sessionId: sessionId! },
@@ -583,6 +586,17 @@ export default function AssessmentResultsPage() {
       toast.error("Could not submit flag - please try again later.");
     },
   });
+
+  // P2-AE-3: Trigger staged reveal when data loads (only once per page visit)
+  useEffect(() => {
+    if (data?.score && !hasRevealed) {
+      setHasRevealed(true);
+      const delays = [200, 800, 1400, 2000];
+      delays.forEach((delay, i) => {
+        setTimeout(() => setRevealStage(i + 1), delay);
+      });
+    }
+  }, [data?.score, hasRevealed]);
 
   if (isLoading) {
     return (
@@ -725,6 +739,10 @@ export default function AssessmentResultsPage() {
         <TabsContent value="summary" className="space-y-6">
 
           {/* Readiness State Banner */}
+          <div
+            className="transition-all duration-700 ease-out"
+            style={{ opacity: revealStage >= 1 ? 1 : 0, transform: revealStage >= 1 ? "translateY(0)" : "translateY(16px)" }}
+          >
           <Card className={cn("border-2", stateConfig.bg)}>
             <CardContent className="p-6">
               <div className="flex items-center gap-6">
@@ -792,6 +810,7 @@ export default function AssessmentResultsPage() {
               </div>
             </CardContent>
           </Card>
+          </div>{/* end reveal stage 1 */}
 
           {/* P3: Classification confidence gate caveat */}
           {classificationConfidence?.caveat && (
@@ -827,7 +846,11 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Capability Breakdown */}
+          {/* Capability Breakdown — reveal stage 2 */}
+          <div
+            className="transition-all duration-700 ease-out"
+            style={{ opacity: revealStage >= 2 ? 1 : 0, transform: revealStage >= 2 ? "translateY(0)" : "translateY(16px)" }}
+          >
           {sortedCapabilities.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
@@ -883,7 +906,13 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Signal Profile */}
+          </div>{/* end reveal stage 2 */}
+
+          {/* Signal Profile — reveal stage 3 */}
+          <div
+            className="transition-all duration-700 ease-out"
+            style={{ opacity: revealStage >= 3 ? 1 : 0, transform: revealStage >= 3 ? "translateY(0)" : "translateY(16px)" }}
+          >
           {sortedSignals.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
@@ -1132,7 +1161,13 @@ export default function AssessmentResultsPage() {
             </Button>
           </div>
 
-          {/* Actions */}
+          </div>{/* end reveal stage 3 */}
+
+          {/* Actions — reveal stage 4 */}
+          <div
+            className="transition-all duration-700 ease-out"
+            style={{ opacity: revealStage >= 4 ? 1 : 0, transform: revealStage >= 4 ? "translateY(0)" : "translateY(16px)" }}
+          >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={() => navigate("/learning")}
@@ -1165,6 +1200,7 @@ export default function AssessmentResultsPage() {
             decision-making patterns in the assessed interactions and are not a measure of general intelligence
             or professional competence. This report is for development purposes only.
           </p>
+          </div>{/* end reveal stage 4 */}
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════════

@@ -600,9 +600,9 @@ export default function AssessmentSessionPage() {
   );
 
   const [selectedValue, setSelectedValue] = useState<string>("");
-  // v10: Three-level confidence staking (tentative/confident/certain)
-  type ConfidenceStake = "tentative" | "confident" | "certain";
-  const STAKE_VALUES: Record<ConfidenceStake, number> = { tentative: 0.33, confident: 0.66, certain: 1.0 };
+  // v10: Three-level confidence staking (guessing/fairly_sure/certain)
+  type ConfidenceStake = "guessing" | "fairly_sure" | "certain";
+  const STAKE_VALUES: Record<ConfidenceStake, number> = { guessing: 0.25, fairly_sure: 0.65, certain: 1.0 };
   const [confidenceStake, setConfidenceStake] = useState<ConfidenceStake | null>(null);
   const confidence = confidenceStake ? STAKE_VALUES[confidenceStake] * 100 : 50;
   // C2.1: Optional reasoning capture
@@ -1342,27 +1342,29 @@ export default function AssessmentSessionPage() {
               How confident are you in this answer?
             </Label>
             <div className="grid grid-cols-3 gap-2">
-              {(["tentative", "confident", "certain"] as ConfidenceStake[]).map((stake) => {
+              {(["guessing", "fairly_sure", "certain"] as ConfidenceStake[]).map((stake) => {
                 const isSelected = confidenceStake === stake;
-                const labels: Record<ConfidenceStake, { label: string; desc: string; icon: string }> = {
-                  tentative: { label: "Tentative", desc: "I'm not sure about this", icon: "\u{1F914}" },
-                  confident: { label: "Confident", desc: "I believe this is right", icon: "\u{1F44D}" },
-                  certain:   { label: "Certain", desc: "I'm sure this is correct", icon: "\u{2705}" },
+                const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
+                  guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#EE6677" },
+                  fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#EE8866" },
+                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "#10B981" },
                 };
-                const { label, desc } = labels[stake];
+                const { label, desc, weight, color } = labels[stake];
                 return (
                   <button
                     key={stake}
                     type="button"
                     onClick={() => setConfidenceStake(stake)}
+                    style={isSelected ? { borderColor: color, backgroundColor: `${color}18`, color } : {}}
                     className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-center transition-all ${
                       isSelected
-                        ? "border-[#10B981] bg-[#10B981]/10 text-[#10B981]"
-                        : "border-border hover:border-[#10B981]/40 text-muted-foreground hover:text-foreground"
+                        ? ""
+                        : "border-border hover:border-muted-foreground/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <span className="text-sm font-semibold">{label}</span>
-                    <span className="text-xs opacity-70">{desc}</span>
+                    <span className="text-sm font-bold">{label}</span>
+                    <span className="text-xs opacity-70 leading-tight">{desc}</span>
+                    <span className="text-[10px] font-mono mt-0.5 opacity-50">score {weight}</span>
                   </button>
                 );
               })}

@@ -11,6 +11,7 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb, getUserRoleKeys } from "../db";
+import { notifyOwner } from "../_core/notification";
 import {
   users,
   userStates,
@@ -24,6 +25,7 @@ import {
   revalidationSchedules,
   auditLogs,
   scoringConfig,
+  tenantSettings,
 } from "../../drizzle/schema";
 import { eq, and, desc, isNull, sql, gte } from "drizzle-orm";
 
@@ -223,25 +225,29 @@ export const dashboardRouter = router({
           .where(eq(riskScores.userId, u.id))
           .orderBy(desc(riskScores.generatedAt))
           .limit(1);
-        const latestSession = await db
+        const recentSessions = await db
           .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
           .from(assessmentSessions)
           .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
           .orderBy(desc(assessmentSessions.completedAt))
-          .limit(1);
+          .limit(5);
         let latestScore: number | null = null;
         let latestReadiness: string | null = null;
-        if (latestSession[0]) {
+        const scoreHistory: Array<{ sessionId: string; completedAt: Date | null; overallScore: number; readiness: string | null }> = [];
+        for (const sess of recentSessions) {
           const score = await db
             .select()
             .from(assessmentScores)
-            .where(eq(assessmentScores.sessionId, latestSession[0].id))
+            .where(eq(assessmentScores.sessionId, sess.id))
             .limit(1);
           if (score[0]) {
-            latestScore = parseFloat(score[0].overallScore as unknown as string);
-            latestReadiness = extractReadiness(score[0].scoreBreakdownJson);
+            const s = parseFloat(score[0].overallScore as unknown as string);
+            const r = extractReadiness(score[0].scoreBreakdownJson);
+            scoreHistory.push({ sessionId: sess.id, completedAt: sess.completedAt, overallScore: s, readiness: r });
+            if (scoreHistory.length === 1) { latestScore = s; latestReadiness = r; }
           }
         }
+        const latestSession = recentSessions[0] ? [recentSessions[0]] : [];
         const reval = await db
           .select()
           .from(revalidationSchedules)
@@ -255,6 +261,7 @@ export const dashboardRouter = router({
           risk: risk[0] ?? null,
           latestScore,
           latestReadiness,
+          scoreHistory,
           revalidationDue: reval[0]?.dueAt ?? null,
           lastAssessedAt: latestSession[0]?.completedAt ?? null,
         };
@@ -311,6 +318,25 @@ export const dashboardRouter = router({
         ? Math.round(capabilityAverages[key].total / capabilityAverages[key].count)
         : null,
     })).sort((a, b) => (a.avgScore ?? 100) - (b.avgScore ?? 100));
+
+    // P2-CC-3: Quarterly re-verification notification trigger
+    // If quarterly review is enabled and there are overdue revalidations, notify the owner
+    try {
+      const settings = await db
+        .select()
+        .from(tenantSettings)
+        .where(eq(tenantSettings.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const quarterlyEnabled = (settings[0] as any)?.quarterlyReviewEnabled ?? false;
+      const overdueCount = teamData.filter(u => u.revalidationDue && new Date(u.revalidationDue) < new Date()).length;
+      if (quarterlyEnabled && overdueCount > 0) {
+        // Fire-and-forget notification — don't block the response
+        notifyOwner({
+          title: `Revalidation Alert — ${overdueCount} team member${overdueCount !== 1 ? "s" : ""} overdue`,
+          content: `${overdueCount} team member${overdueCount !== 1 ? "s" : ""} in your organisation ${overdueCount !== 1 ? "have" : "has"} overdue capability revalidations. Quarterly re-verification is enabled. Please review the Manager Dashboard and prompt the relevant employees to complete their reassessment.`,
+        }).catch(() => {/* ignore notification failures */});
+      }
+    } catch { /* ignore settings fetch errors */ }
 
     return { team: teamData, distribution, capabilityGaps };
   }),
