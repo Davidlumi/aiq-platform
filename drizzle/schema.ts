@@ -22,6 +22,11 @@ export const tenants = mysqlTable("tenants", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   primaryDomain: varchar("primary_domain", { length: 255 }),
   status: mysqlEnum("status", ["active", "trial", "suspended", "archived"]).notNull().default("trial"),
+  // B4: Subscription tier — controls which features are available
+  // foundation: core assessment + individual results
+  // readiness: + team dashboards, manager nudges, gap analysis, learning plans
+  // enterprise: + org-level analytics, regulatory mapping, API access, custom branding
+  plan: mysqlEnum("plan", ["foundation", "readiness", "enterprise"]).notNull().default("foundation"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -1335,7 +1340,7 @@ export const learningNudges = mysqlTable("learning_nudges", {
   moduleId: varchar("module_id", { length: 100 }).notNull(),
   message: text("message"),
   sentAt: bigint("sent_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
-  status: mysqlEnum("status", ["sent", "viewed", "completed"]).notNull().default("sent"),
+  status: mysqlEnum("status", ["sent", "viewed", "completed", "declined"]).notNull().default("sent"),
 }, (t) => ({
   learnerIdx: index("idx_nudges_learner").on(t.learnerId),
   managerIdx: index("idx_nudges_manager").on(t.managerId),
@@ -1396,3 +1401,18 @@ export type LearningMilestone = typeof learningMilestones.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type OrganisationProfile = typeof organisationProfiles.$inferSelect;
 export type CanonicalSignal = typeof canonicalSignals.$inferSelect;
+
+// ─── A3: Org Workflow Anchor Usage (cross-participant overlap guard) ───────────
+// Tracks which workflow contexts have been recently used by participants in a
+// tenant cohort, enabling the adaptive engine to rotate anchors across users.
+export const orgWorkflowAnchorUsage = mysqlTable("org_workflow_anchor_usage", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  roleArchetypeId: varchar("role_archetype_id", { length: 36 }).notNull(),
+  workflowContext: varchar("workflow_context", { length: 100 }).notNull(),
+  usageCount: int("usage_count").notNull().default(1),
+  lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantRoleIdx: index("idx_org_workflow_anchor_tenant_role").on(t.tenantId, t.roleArchetypeId),
+}));
+export type OrgWorkflowAnchorUsage = typeof orgWorkflowAnchorUsage.$inferSelect;

@@ -17,11 +17,11 @@ import { cn } from "@/lib/utils";
 import {
   Users, CheckCircle, AlertTriangle, XCircle, BarChart3,
   ShieldCheck, ShieldAlert, Calendar, FileText, Activity,
-  TrendingUp, RefreshCw, Layers, BookOpen, Globe, Zap, Info,
+  TrendingUp, RefreshCw, Layers, BookOpen, Globe, Zap, Info, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, PieChart, Pie, Legend,
+  ResponsiveContainer, Cell, PieChart, Pie, Legend, LineChart, Line, ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 
@@ -56,6 +56,8 @@ function KpiCard({ label, value, icon: Icon, color, sub }: {
 
 export default function HRDashboard() {
   const { data, isLoading } = trpc.dashboard.hr.useQuery();
+  const { data: trajectoryData } = trpc.dashboard.orgTrajectory.useQuery();
+  const { data: mismatchData } = trpc.dashboard.orgStrategicMismatch.useQuery();
 
   if (isLoading) {
     return (
@@ -425,6 +427,118 @@ export default function HRDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* A6: Readiness Trajectory + Strategic Mismatch */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Readiness Trajectory */}
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <TrendingUp className="w-4 h-4 text-[#4477AA]" />Readiness Trajectory
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Organisation-wide average readiness score over the last 6 months</p>
+          </CardHeader>
+          <CardContent>
+            {!trajectoryData || trajectoryData.dataPointCount === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">Insufficient historical data — trajectory builds as assessments accumulate</div>
+            ) : (() => {
+              const pts = trajectoryData.dataPoints.map(p => ({ ...p, label: p.month }));
+              const first = pts[0]?.avgScore ?? 50;
+              const last = pts[pts.length - 1]?.avgScore ?? 50;
+              const delta = last - first;
+              const trending = delta > 2 ? "up" : delta < -2 ? "down" : "flat";
+              const projMonths = trajectoryData.projectedMonthsToSafe;
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold font-sora" style={{ color: last >= 70 ? "#228833" : last >= 50 ? "#EE8866" : "#EE6677" }}>{Math.round(last)}</div>
+                      <div className="text-xs text-muted-foreground">Current avg</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {trending === "up" ? <ArrowUpRight className="w-4 h-4 text-[#228833]" /> : trending === "down" ? <ArrowDownRight className="w-4 h-4 text-[#EE6677]" /> : null}
+                      <span className="text-xs font-semibold" style={{ color: trending === "up" ? "#228833" : trending === "down" ? "#EE6677" : "#9CA3AF" }}>
+                        {delta > 0 ? "+" : ""}{Math.round(delta)} pts over {pts.length} periods
+                      </span>
+                    </div>
+                    {projMonths !== null && projMonths > 0 && (
+                      <div className="ml-auto text-right">
+                        <div className="text-xs font-semibold text-foreground">~{projMonths}mo</div>
+                        <div className="text-[10px] text-muted-foreground">Projected to ≥70</div>
+                      </div>
+                    )}
+                    {projMonths === 0 && (
+                      <div className="ml-auto text-right">
+                        <div className="text-xs font-semibold text-[#228833]">Already ≥70</div>
+                      </div>
+                    )}
+                  </div>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <LineChart data={pts} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
+                        formatter={(v: number) => [`${Math.round(v)}`, "Avg Score"]} />
+                      <ReferenceLine y={trajectoryData.safeThreshold} stroke="#22883360" strokeDasharray="4 2" label={{ value: "Target", position: "insideTopRight", fontSize: 9, fill: "#228833" }} />
+                      <Line type="monotone" dataKey="avgScore" stroke="#4477AA" strokeWidth={2} dot={{ r: 3, fill: "#4477AA" }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        {/* Strategic Mismatch */}
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <AlertTriangle className="w-4 h-4 text-[#D97706]" />Strategic Mismatch
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Capability domains where assessed scores diverge significantly from strategic importance weights</p>
+          </CardHeader>
+          <CardContent>
+            {!mismatchData || mismatchData.mismatchCount === 0 ? (
+              <div className="text-center py-6">
+                <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No significant strategic mismatches detected</p>
+                {mismatchData && <p className="text-xs text-muted-foreground mt-1">AI Ambition: {mismatchData.aiAmbitionLabel}</p>}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-muted-foreground">AI Ambition Level:</span>
+                  <span className="text-xs font-semibold text-foreground">{mismatchData.aiAmbitionLabel} (L{mismatchData.aiAmbitionLevel})</span>
+                  <span className="ml-auto text-xs font-bold px-1.5 py-0.5 rounded" style={{ color: mismatchData.criticalMismatches > 0 ? "#EE6677" : "#D97706", backgroundColor: mismatchData.criticalMismatches > 0 ? "#EE667715" : "#D9770615" }}>
+                    {mismatchData.mismatchCount} mismatch{mismatchData.mismatchCount !== 1 ? "es" : ""}
+                  </span>
+                </div>
+                {mismatchData.domains.filter(d => d.severity !== "none").map(m => {
+                  const color = m.severity === "critical" ? "#EE6677" : m.severity === "moderate" ? "#D97706" : "#EE8866";
+                  return (
+                    <div key={m.key} className="p-3 rounded-lg border" style={{ borderColor: `${color}30`, backgroundColor: `${color}08` }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-semibold text-foreground">{m.label}</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded capitalize" style={{ color, backgroundColor: `${color}15` }}>{m.severity}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                        <span>Assessed: <strong className="text-foreground">{m.avgScore !== null ? Math.round(m.avgScore) : "N/A"}</strong></span>
+                        <span>Required: <strong className="text-foreground">{m.requiredScore}</strong></span>
+                        {m.gap !== null && m.gap > 0 && <span>Gap: <strong style={{ color }}>-{Math.round(m.gap)} pts</strong></span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-muted/30 border border-border">
+                  <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Strategic weights are derived from role archetype importance profiles. Mismatches ≥15 pts indicate domains where the workforce is under-performing relative to their strategic importance.</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Incidents + Audit log */}
       <div className="grid lg:grid-cols-2 gap-4">

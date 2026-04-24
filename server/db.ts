@@ -78,6 +78,19 @@ export async function getTenantById(id: string) {
   return result[0];
 }
 
+// B4: Subscription tier helper — returns the plan for a tenant
+export type TenantPlan = "foundation" | "readiness" | "enterprise";
+const PLAN_RANK: Record<TenantPlan, number> = { foundation: 0, readiness: 1, enterprise: 2 };
+export async function getTenantPlan(tenantId: string): Promise<TenantPlan> {
+  const db = await getDb();
+  if (!db) return "foundation";
+  const result = await db.select({ plan: tenants.plan }).from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+  return (result[0]?.plan as TenantPlan) ?? "foundation";
+}
+export function planAtLeast(actual: TenantPlan, required: TenantPlan): boolean {
+  return PLAN_RANK[actual] >= PLAN_RANK[required];
+}
+
 // ─── Compatibility stubs (sdk.ts references these) ───────────────────────────
 // The SDK is not used for auth in AiQ (we use email/password), but we keep
 // these stubs to avoid TypeScript errors in the core framework files.

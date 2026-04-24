@@ -41,6 +41,7 @@ import {
   userStates,
   users,
   organisationCapabilityThresholds,
+  orgWorkflowAnchorUsage,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -1277,6 +1278,35 @@ export const assessmentRouter = router({
             const newRecentCaps = [...prevRecentCaps.slice(-4), generationVars.targetCapability];
             const prevRecentWorkflows = (sessionMeta.recentWorkflows as string[]) ?? [];
             const newRecentWorkflows = [...prevRecentWorkflows.slice(-4), generationVars.workflowContext];
+            // A3: Update org-level workflow anchor usage for cross-participant overlap guard
+            try {
+              const existingAnchor = await db
+                .select({ id: orgWorkflowAnchorUsage.id, usageCount: orgWorkflowAnchorUsage.usageCount })
+                .from(orgWorkflowAnchorUsage)
+                .where(
+                  and(
+                    eq(orgWorkflowAnchorUsage.tenantId, ctx.user.tenantId),
+                    eq(orgWorkflowAnchorUsage.roleArchetypeId, generationVars.roleArchetype.id),
+                    eq(orgWorkflowAnchorUsage.workflowContext, generationVars.workflowContext)
+                  )
+                )
+                .limit(1);
+              if (existingAnchor[0]) {
+                await db
+                  .update(orgWorkflowAnchorUsage)
+                  .set({ usageCount: existingAnchor[0].usageCount + 1, lastUsedAt: new Date() })
+                  .where(eq(orgWorkflowAnchorUsage.id, existingAnchor[0].id));
+              } else {
+                await db.insert(orgWorkflowAnchorUsage).values({
+                  id: nanoid(),
+                  tenantId: ctx.user.tenantId,
+                  roleArchetypeId: generationVars.roleArchetype.id,
+                  workflowContext: generationVars.workflowContext,
+                  usageCount: 1,
+                  lastUsedAt: new Date(),
+                });
+              }
+            } catch { /* non-fatal */ }
             // Store the pre-generated item and updated tracking state in session metadata
             await db
               .update(assessmentSessions)

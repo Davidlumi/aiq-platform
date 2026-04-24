@@ -29,6 +29,7 @@ import { eq, and, desc, lte, asc, gte, inArray, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { computeGapAnalysis, type CapabilityKey } from "../learning/gapAnalysisEngine";
 import { generateAdaptivePlan, computeNextReview, type ModuleCandidate } from "../learning/learningPathGenerator";
+import { getUserRoleKeys } from "../db";
 import {
   modulePersonalisationCache,
   formativeQuizResults,
@@ -39,6 +40,7 @@ import {
   users,
   userStates,
   ailOrgContext,
+  auditLogs,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
@@ -1251,6 +1253,9 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
     }),
 
   // ─── Improvement 9: Manager nudges ─────────────────────────────────────────
+  // B2 governance: max 5 active nudges per learner per manager per rolling 7 days
+  // Decline mechanism: declineNudge procedure below
+  // Audit visibility: getTeamNudgeAudit procedure below (HR/CPO accessible)
   sendNudge: protectedProcedure
     .input(z.object({
       learnerId: z.string(),
@@ -1265,18 +1270,45 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         .where(and(eq(managerTeamMembers.managerId, ctx.user.id), eq(managerTeamMembers.memberId, input.learnerId)))
         .limit(1);
       if (member.length === 0) throw new TRPCError({ code: "FORBIDDEN", message: "Learner is not on your team" });
+      // B2: Rate limit — max 5 nudges per learner per manager per rolling 7 days
+      const MAX_NUDGES_PER_WEEK = 5;
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const recentNudges = await db.select({ id: learningNudges.id })
+        .from(learningNudges)
+        .where(and(
+          eq(learningNudges.managerId, ctx.user.id),
+          eq(learningNudges.learnerId, input.learnerId),
+          gte(learningNudges.sentAt, oneWeekAgo),
+        ));
+      if (recentNudges.length >= MAX_NUDGES_PER_WEEK) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Nudge limit reached: maximum ${MAX_NUDGES_PER_WEEK} nudges per learner per week to prevent coercive environments`,
+        });
+      }
       // Verify module exists
       const mod = await db.select({ id: learningModules.id, title: learningModules.title })
         .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
       if (mod.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      const nudgeId = nanoid();
       await db.insert(learningNudges).values({
-        id: nanoid(),
+        id: nudgeId,
         managerId: ctx.user.id,
         learnerId: input.learnerId,
         moduleId: input.moduleId,
         message: input.message ?? null,
         sentAt: Date.now(),
         status: "sent",
+      });
+      // B2: Audit log — nudge send is always recorded
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "learning.nudge.sent",
+        targetType: "learning_nudge",
+        targetId: nudgeId,
+        metadataJson: JSON.stringify({ learnerId: input.learnerId, moduleId: input.moduleId, moduleTitle: mod[0].title }),
       });
       return { sent: true, moduleTitle: mod[0].title };
     }),
@@ -1307,6 +1339,88 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
           .where(inArray(learningNudges.id, unviewedIds));
       }
       return nudges;
+    }),
+
+  // A5/B2: Nudge decline — learner can decline a nudge, recorded for manager audit visibility
+  declineNudge: protectedProcedure
+    .input(z.object({ nudgeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Verify the nudge belongs to this learner
+      const nudge = await db.select({ id: learningNudges.id, status: learningNudges.status, managerId: learningNudges.managerId, moduleId: learningNudges.moduleId })
+        .from(learningNudges)
+        .where(and(eq(learningNudges.id, input.nudgeId), eq(learningNudges.learnerId, ctx.user.id)))
+        .limit(1);
+      if (!nudge[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Nudge not found" });
+      if (nudge[0].status === "completed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot decline a completed nudge" });
+      }
+      await db.update(learningNudges)
+        .set({ status: "declined" })
+        .where(eq(learningNudges.id, input.nudgeId));
+      // B2: Audit log — decline is recorded for manager and HR visibility
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "learning.nudge.declined",
+        targetType: "learning_nudge",
+        targetId: input.nudgeId,
+        metadataJson: JSON.stringify({ managerId: nudge[0].managerId, moduleId: nudge[0].moduleId }),
+      });
+      return { success: true };
+    }),
+
+  // B2: getTeamNudgeAudit — HR/CPO visibility into all nudge activity across the org
+  getTeamNudgeAudit: protectedProcedure
+    .input(z.object({
+      managerId: z.string().optional(), // filter by specific manager
+      learnerId: z.string().optional(), // filter by specific learner
+      limit: z.number().min(1).max(100).default(50),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Only HR leaders, tenant admins, and managers (for their own team) can view
+      const roleKeys = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      const isHROrAdmin = roleKeys.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r));
+      const isManager = roleKeys.includes("manager");
+      if (!isHROrAdmin && !isManager) throw new TRPCError({ code: "FORBIDDEN" });
+      // Managers can only see their own nudges
+      const effectiveManagerId = isHROrAdmin ? (input.managerId ?? undefined) : ctx.user.id;
+      const conditions = [
+        eq(learningNudges.managerId, effectiveManagerId ?? ctx.user.id),
+      ];
+      if (input.learnerId) conditions.push(eq(learningNudges.learnerId, input.learnerId));
+      const nudges = await db.select({
+        id: learningNudges.id,
+        managerId: learningNudges.managerId,
+        learnerId: learningNudges.learnerId,
+        moduleId: learningNudges.moduleId,
+        message: learningNudges.message,
+        sentAt: learningNudges.sentAt,
+        status: learningNudges.status,
+        moduleTitle: learningModules.title,
+        moduleCapability: learningModules.capability,
+      })
+        .from(learningNudges)
+        .leftJoin(learningModules, eq(learningNudges.moduleId, learningModules.id))
+        .where(effectiveManagerId ? and(...conditions) : (input.learnerId ? eq(learningNudges.learnerId, input.learnerId) : sql`1=1`))
+        .orderBy(desc(learningNudges.sentAt))
+        .limit(input.limit);
+      // Enrich with manager and learner names
+      const allUserIds = Array.from(new Set([...nudges.map(n => n.managerId), ...nudges.map(n => n.learnerId)].filter(Boolean)));
+      const userRows = allUserIds.length > 0
+        ? await db.select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+            .from(users).where(inArray(users.id, allUserIds))
+        : [];
+      const userMap = Object.fromEntries(userRows.map(u => [u.id, `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()]));
+      return nudges.map(n => ({
+        ...n,
+        managerName: userMap[n.managerId] ?? n.managerId,
+        learnerName: userMap[n.learnerId] ?? n.learnerId,
+      }));
     }),
 
   getMilestones: protectedProcedure

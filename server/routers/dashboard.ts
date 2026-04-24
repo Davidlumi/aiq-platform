@@ -10,7 +10,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
-import { getDb, getUserRoleKeys } from "../db";
+import { getDb, getUserRoleKeys, getTenantPlan, planAtLeast } from "../db";
 import { notifyOwner } from "../_core/notification";
 import {
   users,
@@ -184,11 +184,15 @@ export const dashboardRouter = router({
     };
   }),
 
-  // ─── Manager Dashboard ──────────────────────────────────────────────────────
+  // ─── Manager Dashboard (B4: requires Readiness plan or above) ──────────────────────────────────────────
   manager: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const tenantPlan = await getTenantPlan(ctx.user.tenantId);
+    if (!planAtLeast(tenantPlan, "readiness")) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Team dashboards require the Readiness plan or above" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -480,11 +484,167 @@ export const dashboardRouter = router({
     };
   }),
 
-  // ─── Auditor Dashboard ──────────────────────────────────────────────────────
+  // ─── A1: Org Readiness Trajectory (CPO view) ───────────────────────────────
+  // Monthly average overall score for the last 12 months + linear projection to
+  // the 70-point "safe" threshold.
+  orgTrajectory: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const twelveMonthsAgo = new Date(Date.now() - 365 * 86400000);
+    const sessions = await db
+      .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+      .from(assessmentSessions)
+      .where(and(
+        eq(assessmentSessions.tenantId, ctx.user.tenantId),
+        eq(assessmentSessions.state, "completed"),
+        gte(assessmentSessions.completedAt, twelveMonthsAgo),
+      ))
+      .orderBy(assessmentSessions.completedAt);
+    const monthBuckets: Record<string, { total: number; count: number }> = {};
+    for (const sess of sessions) {
+      if (!sess.completedAt) continue;
+      const score = await db
+        .select({ overallScore: assessmentScores.overallScore })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, sess.id))
+        .limit(1);
+      if (!score[0]) continue;
+      const d = new Date(sess.completedAt);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthBuckets[monthKey]) monthBuckets[monthKey] = { total: 0, count: 0 };
+      monthBuckets[monthKey].total += parseFloat(String(score[0].overallScore));
+      monthBuckets[monthKey].count += 1;
+    }
+    const dataPoints = Object.entries(monthBuckets)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, { total, count }]) => ({
+        month,
+        avgScore: Math.round(total / count),
+        assessmentCount: count,
+      }));
+    const SAFE_THRESHOLD = 70;
+    let projectedMonthsToSafe: number | null = null;
+    if (dataPoints.length >= 2) {
+      const recent = dataPoints.slice(-3);
+      const n = recent.length;
+      const avgSlope = n >= 2
+        ? (recent[n - 1].avgScore - recent[0].avgScore) / Math.max(n - 1, 1)
+        : 0;
+      const latestScore = recent[n - 1].avgScore;
+      if (avgSlope > 0 && latestScore < SAFE_THRESHOLD) {
+        projectedMonthsToSafe = Math.ceil((SAFE_THRESHOLD - latestScore) / avgSlope);
+      } else if (latestScore >= SAFE_THRESHOLD) {
+        projectedMonthsToSafe = 0;
+      }
+    }
+    return {
+      dataPoints,
+      safeThreshold: SAFE_THRESHOLD,
+      projectedMonthsToSafe,
+      currentAvgScore: dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].avgScore : null,
+      dataPointCount: dataPoints.length,
+    };
+  }),
+
+  // ─── A2: Strategic Mismatch (CPO view) ───────────────────────────────────────
+  // Compares org capability averages against AI ambition level (1-5) from
+  // tenant_settings to surface domains where workforce is below strategy.
+  orgStrategicMismatch: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const settings = await db
+      .select()
+      .from(tenantSettings)
+      .where(eq(tenantSettings.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const aiAmbitionLevel: number = Math.min(5, Math.max(1, (settings[0] as any)?.aiAmbitionLevel ?? 3));
+    // Required score per domain per ambition level [L1..L5]
+    const AMBITION_THRESHOLDS: Record<string, number[]> = {
+      ai_interaction:         [40, 50, 60, 68, 75],
+      ai_output_evaluation:   [45, 55, 63, 70, 78],
+      ai_workflow_design:     [35, 45, 55, 65, 72],
+      workforce_ai_readiness: [35, 45, 55, 65, 72],
+      ai_ethics_trust:        [50, 58, 65, 72, 78],
+      ai_change_leadership:   [40, 50, 58, 65, 72],
+    };
+    const CAP_LABELS: Record<string, string> = {
+      ai_interaction: "AI Interaction",
+      ai_output_evaluation: "Output Evaluation",
+      ai_workflow_design: "Workflow Design",
+      workforce_ai_readiness: "Workforce Readiness",
+      ai_ethics_trust: "Ethics & Trust",
+      ai_change_leadership: "Change Leadership",
+    };
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+    const capTotals: Record<string, { total: number; count: number }> = {};
+    for (const key of CAPABILITY_KEYS) capTotals[key] = { total: 0, count: 0 };
+    for (const u of allUsers) {
+      const latestSession = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(1);
+      if (!latestSession[0]) continue;
+      const score = await db
+        .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, latestSession[0].id))
+        .limit(1);
+      if (!score[0]) continue;
+      const caps = extractCapabilityScores(score[0].scoreBreakdownJson);
+      if (!caps) continue;
+      for (const key of CAPABILITY_KEYS) {
+        capTotals[key].total += caps[key];
+        capTotals[key].count += 1;
+      }
+    }
+    const domains = CAPABILITY_KEYS.map(key => {
+      const avg = capTotals[key].count > 0
+        ? Math.round(capTotals[key].total / capTotals[key].count)
+        : null;
+      const required = AMBITION_THRESHOLDS[key]?.[aiAmbitionLevel - 1] ?? 55;
+      const gap = avg !== null ? required - avg : null;
+      const severity: "none" | "minor" | "moderate" | "critical" =
+        gap === null ? "none"
+        : gap <= 0 ? "none"
+        : gap <= 8 ? "minor"
+        : gap <= 18 ? "moderate"
+        : "critical";
+      return { key, label: CAP_LABELS[key] ?? key, avgScore: avg, requiredScore: required, gap, severity };
+    });
+    const mismatches = domains.filter(d => d.severity !== "none");
+    const AMBITION_LABELS = ["Exploratory", "Developing", "Scaling", "Advanced", "AI-Native"];
+    return {
+      aiAmbitionLevel,
+      aiAmbitionLabel: AMBITION_LABELS[aiAmbitionLevel - 1] ?? "Scaling",
+      domains,
+      mismatchCount: mismatches.length,
+      criticalMismatches: mismatches.filter(d => d.severity === "critical").length,
+      assessedUserCount: allUsers.length,
+    };
+  }),
+
+  // ─── Auditor Dashboard (B4: requires Enterprise plan) ──────────────────────────────────────────
   auditor: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "auditor"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const tenantPlan = await getTenantPlan(ctx.user.tenantId);
+    if (!planAtLeast(tenantPlan, "enterprise")) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Audit log access requires the Enterprise plan" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
