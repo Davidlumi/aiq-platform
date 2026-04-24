@@ -248,3 +248,91 @@ describe("WS4.2 buildFactors", () => {
     expect(failureFactor?.direction).toBe("negative");
   });
 });
+
+// ─── W3: Item-level citations logic ──────────────────────────────────────────
+/**
+ * Pure logic for building item citations from answer contribution breakdown.
+ * Mirrors the logic in getClassificationExplanation W1 implementation.
+ */
+type ItemCitation = {
+  itemId: string;
+  questionSummary: string;
+  signalKey: string;
+  delta: number;
+  capabilityKey: string | null;
+  outcomeClass: string | null;
+};
+
+function buildItemCitations(
+  answers: Array<{
+    itemId: string;
+    outcomeClass: string | null;
+    contributionBreakdownJson: Record<string, unknown> | null;
+    questionSummary: string;
+  }>
+): ItemCitation[] {
+  const citations: ItemCitation[] = [];
+  for (const ans of answers) {
+    const cb = ans.contributionBreakdownJson ?? {};
+    const deltas = (cb.signalDeltas ?? {}) as Record<string, number>;
+    const capKey = (cb.capabilityKey as string | null) ?? null;
+    const topSignal = Object.entries(deltas).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+    if (!topSignal) continue;
+    const [signalKey, delta] = topSignal;
+    citations.push({ itemId: ans.itemId, questionSummary: ans.questionSummary, signalKey, delta, capabilityKey: capKey, outcomeClass: ans.outcomeClass ?? null });
+  }
+  return citations;
+}
+
+describe("W3 — Item-level citation logic", () => {
+  it("returns empty array when no answers have contribution breakdowns", () => {
+    const citations = buildItemCitations([
+      { itemId: "item-1", outcomeClass: "strong", contributionBreakdownJson: null, questionSummary: "Q1" },
+    ]);
+    expect(citations).toHaveLength(0);
+  });
+  it("extracts top signal delta from contribution breakdown", () => {
+    const citations = buildItemCitations([{
+      itemId: "item-1",
+      outcomeClass: "strong",
+      contributionBreakdownJson: { signalDeltas: { ethics_under_pressure: 1.2, output_evaluation_quality: 0.5 }, capabilityKey: "ai_ethics_trust" },
+      questionSummary: "What is the most significant problem?",
+    }]);
+    expect(citations).toHaveLength(1);
+    expect(citations[0].signalKey).toBe("ethics_under_pressure");
+    expect(citations[0].delta).toBe(1.2);
+    expect(citations[0].capabilityKey).toBe("ai_ethics_trust");
+    expect(citations[0].outcomeClass).toBe("strong");
+  });
+  it("picks the signal with the largest absolute delta (not just largest positive)", () => {
+    const citations = buildItemCitations([{
+      itemId: "item-2",
+      outcomeClass: "failure",
+      contributionBreakdownJson: { signalDeltas: { blind_acceptance_risk: 2.0, output_evaluation_quality: 0.3 }, capabilityKey: "ai_output_evaluation" },
+      questionSummary: "What would you do?",
+    }]);
+    expect(citations[0].signalKey).toBe("blind_acceptance_risk");
+    expect(citations[0].delta).toBe(2.0);
+  });
+  it("skips answers with empty signal deltas", () => {
+    const citations = buildItemCitations([
+      { itemId: "item-1", outcomeClass: "strong", contributionBreakdownJson: { signalDeltas: {} }, questionSummary: "Q1" },
+      { itemId: "item-2", outcomeClass: "failure", contributionBreakdownJson: { signalDeltas: { ethics_under_pressure: 1.5 } }, questionSummary: "Q2" },
+    ]);
+    expect(citations).toHaveLength(1);
+    expect(citations[0].itemId).toBe("item-2");
+  });
+  it("cites specific items, not just capability aggregates", () => {
+    const citations = buildItemCitations([
+      { itemId: "cs-abc123", outcomeClass: "strong", contributionBreakdownJson: { signalDeltas: { ethics_under_pressure: 1.2 }, capabilityKey: "ai_ethics_trust" }, questionSummary: "How do you handle AI governance?" },
+      { itemId: "cs-def456", outcomeClass: "failure", contributionBreakdownJson: { signalDeltas: { blind_acceptance_risk: 2.0 }, capabilityKey: "ai_output_evaluation" }, questionSummary: "What is the most significant problem?" },
+    ]);
+    expect(citations).toHaveLength(2);
+    // Each citation references a specific item, not a capability aggregate
+    expect(citations[0].itemId).toBe("cs-abc123");
+    expect(citations[1].itemId).toBe("cs-def456");
+    // Each citation has a specific signal key, not just a capability name
+    expect(citations[0].signalKey).toBe("ethics_under_pressure");
+    expect(citations[1].signalKey).toBe("blind_acceptance_risk");
+  });
+});

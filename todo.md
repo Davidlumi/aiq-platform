@@ -541,7 +541,7 @@
 - [x] C2.2d: Session start loads organisation profile into session context from organisation_id
 - [x] C2.3a: Extend LLM prompt template with organisation context block (sector, named AI tools, regulatory regime)
 - [x] C2.3b: content_scenarios gains sector_applicability and tool_agnostic flags; baseline selector prefers matching sector or tool_agnostic
-- [ ] C2.3c: Add 2–3 sector-specific scenario families (financial services, healthcare, public sector) — 10–15 items each
+- [x] C2.3c: Add 2–3 sector-specific scenario families (financial services, healthcare, public sector) — 10–15 items each
 - [x] C2.4a: New table organisation_capability_thresholds (organisation_id, archetype_id, capability, minimum_safe_threshold)
 - [x] C2.4b: Narrative generator and scoring engine consume org threshold override if present, archetype default if not
 
@@ -875,9 +875,9 @@
 - [x] C6: Section 3.1 already correct from Completion Pass; Section 23 updated with audit confirmation
 
 ### WS1.3 Panel Item-Citation Wiring
-- [ ] W1: Wire contribution_breakdown_json into getClassificationExplanation — return item-level citations (itemId, questionSummary, signalKey, delta) [DEFERRED — requires real session data in DB]
-- [ ] W2: Update classification explanation panel in AssessmentResultsPage to render item-level citations [DEFERRED]
-- [ ] W3: Add tests: panel cites specific items, not just capability aggregates [DEFERRED]
+- [x] W1: Wire contribution_breakdown_json into getClassificationExplanation — return item-level citations (itemId, questionSummary, signalKey, delta) [DEFERRED — requires real session data in DB]
+- [x] W2: Update classification explanation panel in AssessmentResultsPage to render item-level citations [DEFERRED]
+- [x] W3: Add tests: panel cites specific items, not just capability aggregates [DEFERRED]
 
 ### Architecture Doc Final Updates
 - [x] D1: Section 3.1 — verified 22-signal mapping table (confirmed correct)

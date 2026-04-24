@@ -1144,6 +1144,29 @@ export default function AssessmentResultsPage() {
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
                       </div>
                     )}
+                    {((explanationData as any).itemCitations ?? []).length > 0 && (
+                      <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                        <p className="text-xs font-semibold text-foreground mb-2">Evidence trail — key items that influenced this classification</p>
+                        <div className="space-y-1.5">
+                          {((explanationData as any).itemCitations as Array<{itemId: string; questionSummary: string; signalKey: string; delta: number; capabilityKey: string | null; outcomeClass: string | null}>)
+                            .slice(0, 5)
+                            .map((c, i) => (
+                              <div key={i} className="flex items-start gap-2 text-xs">
+                                <span className={`shrink-0 mt-0.5 font-mono text-[10px] px-1 rounded ${
+                                  c.outcomeClass === "strong" ? "bg-[#228833]/10 text-[#228833]" :
+                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#EE6677]/10 text-[#EE6677]" :
+                                  "bg-muted text-muted-foreground"
+                                }`}>{c.outcomeClass ?? "?"}</span>
+                                <div className="min-w-0">
+                                  <p className="text-muted-foreground truncate">{c.questionSummary}</p>
+                                  <p className="text-[10px] text-muted-foreground/70">{c.signalKey.replace(/_/g, " ")} · Δ{c.delta > 0 ? "+" : ""}{c.delta.toFixed(2)}{c.capabilityKey ? ` · ${c.capabilityKey.replace(/_/g, " ")}` : ""}</p>
+                                </div>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    )}
                     <p className="text-[10px] text-muted-foreground">
                       Scoring model: {(explanationData as any).scoringConfigVersion} · Confidence: {(explanationData as any).confidenceBand}
                     </p>

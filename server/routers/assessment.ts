@@ -2225,6 +2225,46 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         });
       }
 
+      // W1: Item-level citations — fetch answers with contributionBreakdownJson for this session
+      type ItemCitation = { itemId: string; questionSummary: string; signalKey: string; delta: number; capabilityKey: string | null; outcomeClass: string | null };
+      const itemCitations: ItemCitation[] = [];
+      try {
+        const answers = await db
+          .select({
+            itemId: assessmentAnswers.itemId,
+            outcomeClass: assessmentAnswers.outcomeClass,
+            contributionBreakdownJson: assessmentAnswers.contributionBreakdownJson,
+          })
+          .from(assessmentAnswers)
+          .where(eq(assessmentAnswers.sessionId, input.sessionId))
+          .limit(50);
+        // For each answer, extract the top signal delta and look up question summary
+        for (const ans of answers) {
+          const cb = (typeof ans.contributionBreakdownJson === "string"
+            ? JSON.parse(ans.contributionBreakdownJson as string)
+            : (ans.contributionBreakdownJson ?? {})) as Record<string, unknown>;
+          const deltas = (cb.signalDeltas ?? {}) as Record<string, number>;
+          const capKey = (cb.capabilityKey as string | null) ?? null;
+          // Pick the signal with the largest absolute delta
+          const topSignal = Object.entries(deltas).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+          if (!topSignal) continue;
+          const [signalKey, delta] = topSignal;
+          // Fetch question summary from the item
+          let questionSummary = ans.itemId;
+          if (ans.itemId.startsWith("cs-")) {
+            const csId = ans.itemId.slice(3);
+            const cs = await db.select({ question: contentScenarios.question })
+              .from(contentScenarios).where(eq(contentScenarios.id, csId)).limit(1);
+            if (cs[0]) questionSummary = cs[0].question.slice(0, 120);
+          } else {
+            const item = await db.select({ prompt: assessmentItems.prompt })
+              .from(assessmentItems).where(eq(assessmentItems.id, ans.itemId)).limit(1);
+            if (item[0]) questionSummary = item[0].prompt.slice(0, 120);
+          }
+          itemCitations.push({ itemId: ans.itemId, questionSummary, signalKey, delta, capabilityKey: capKey, outcomeClass: ans.outcomeClass ?? null });
+        }
+      } catch { /* non-fatal — item citations are best-effort */ }
+
       return {
         state,
         label: readiness.label ?? state,
@@ -2236,6 +2276,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         factors,
         scoringConfigVersion,
         confidenceBand: confScore >= 0.75 ? "high" : confScore >= 0.5 ? "medium" : "low",
+        itemCitations,
       };
     }),
 
