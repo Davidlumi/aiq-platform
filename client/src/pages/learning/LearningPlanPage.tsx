@@ -20,7 +20,7 @@ import {
   Clock, ChevronRight, TrendingUp, TrendingDown, Minus,
   CheckCircle2, AlertTriangle, Award, RefreshCw, Flame,
   ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles,
-  BarChart2, UserCheck,
+  BarChart2, UserCheck, XCircle, Info, ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,14 @@ const MODALITY_META: Record<string, { label: string; color: string; icon: React.
   coaching:   { label: "Coaching",   color: "#84cc16", icon: Users },
 };
 
+// ─── Prescription Stage Meta ─────────────────────────────────────────────────
+const PRESCRIPTION_STAGE_META: Record<number, { label: string; color: string; desc: string }> = {
+  1: { label: "Stage 1 — Block Resolution",   color: "#EF4444", desc: "Addresses critical blocking failure modes first" },
+  2: { label: "Stage 2 — Foundation",          color: "#F59E0B", desc: "Builds foundational capability before strategy" },
+  3: { label: "Stage 3 — Regulatory",          color: "#6366F1", desc: "UK regulatory and operational compliance" },
+  4: { label: "Stage 4 — Strategic",           color: "#10B981", desc: "Strategic development and advanced capability" },
+};
+
 const PRIORITY_COLOURS = {
   critical:   { bg: "bg-red-950/20",    border: "border-red-700/40",    text: "text-red-400",    badge: "bg-red-900/30 text-red-400" },
   developing: { bg: "bg-amber-950/20",  border: "border-amber-700/40",  text: "text-amber-400",  badge: "bg-amber-900/30 text-amber-400" },
@@ -60,7 +68,7 @@ function ModuleCard({
   onStart,
   isReview = false,
 }: {
-  item: { id: string; moduleId: string; status: string; phase: string; module: any; spacedRepetition: any };
+  item: { id: string; moduleId: string; status: string; phase: string; module: any; spacedRepetition: any; reasonJson?: any; completionState?: string };
   onStart: (moduleId: string, planItemId: string) => void;
   isReview?: boolean;
 }) {
@@ -73,13 +81,20 @@ function ModuleCard({
   const ModalIcon = modal.icon;
   const isLocked = item.status === "locked";
   const isCompleted = item.status === "completed";
-
+  const isNoTransfer = (item as any).completionState === "no_transfer";
+  const reasonJson = (() => {
+    try { return typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {}); }
+    catch { return {}; }
+  })() as any;
+  const prescriptionStage: number | undefined = reasonJson?.prescriptionStage;
+  const stageMeta = prescriptionStage ? PRESCRIPTION_STAGE_META[prescriptionStage] : undefined;
   return (
     <div className={cn(
       "rounded-xl border p-4 transition-all group bg-card",
       isLocked ? "opacity-50 cursor-not-allowed" : "hover:border-primary/40 cursor-pointer",
       isReview && "border-amber-700/30 bg-amber-950/10",
-      isCompleted && "border-emerald-700/30 bg-emerald-950/10",
+      isCompleted && !isNoTransfer && "border-emerald-700/30 bg-emerald-950/10",
+      isNoTransfer && "border-red-700/30 bg-red-950/10",
     )}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}15` }}>
@@ -102,6 +117,16 @@ function ModuleCard({
             )}
             <Badge variant="outline" className="text-[10px] text-muted-foreground">L{mod.difficulty}</Badge>
             <Badge variant="outline" className="text-[10px] text-muted-foreground capitalize">{item.phase}</Badge>
+            {stageMeta && (
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5" style={{ background: `${stageMeta.color}15`, color: stageMeta.color }}>
+                S{prescriptionStage}
+              </Badge>
+            )}
+            {isNoTransfer && (
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-red-900/30 text-red-400">
+                <XCircle className="h-2.5 w-2.5 mr-1" />No transfer
+              </Badge>
+            )}
           </div>
           <p className={cn("font-semibold text-sm leading-tight mb-0.5", !isLocked && "group-hover:text-primary transition-colors")}>{mod.title}</p>
           {mod.subtitle && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{mod.subtitle}</p>}
@@ -345,6 +370,10 @@ export default function LearningPlanPage() {
   const { data: streakData } = trpc.adaptiveLearning.getLearningStreak.useQuery(undefined, { retry: 1 });
   // Fetch peer benchmarks
   const { data: peerData } = trpc.adaptiveLearning.getPeerBenchmarks.useQuery(undefined, { retry: 1 });
+  // P3-LL-4/5: Transfer findings
+  const { data: transferFindings } = trpc.adaptiveLearning.getTransferFindings.useQuery(undefined, { retry: 1 });
+  // P3-LL-6: Learning-aware reassessment context
+  const { data: learningAwareCtx } = trpc.adaptiveLearning.getLearningAwareContext.useQuery(undefined, { retry: 1 });
 
   // Refresh plan (force regenerate)
   const handleRefreshPlan = async () => {
@@ -465,6 +494,60 @@ export default function LearningPlanPage() {
 
           {planData && (
             <>
+              {/* P3-LL-6: Learning-Aware Reassessment Banner */}
+              {learningAwareCtx?.learningAwareMode && (
+                <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#10B981]/15 flex items-center justify-center flex-shrink-0">
+                    <Brain className="h-4 w-4 text-[#10B981]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#10B981] mb-0.5">Learning-Aware Reassessment Available</p>
+                    <p className="text-xs text-muted-foreground">
+                      You've completed {learningAwareCtx.recentlyLearnedSignals.length} learning module{learningAwareCtx.recentlyLearnedSignals.length !== 1 ? "s" : ""} since your last assessment.
+                      Your next assessment will be calibrated to test whether this learning has translated to behaviour change.
+                    </p>
+                    {learningAwareCtx.noTransferModules.length > 0 && (
+                      <p className="text-xs text-amber-400 mt-1">
+                        {learningAwareCtx.noTransferModules.length} module{learningAwareCtx.noTransferModules.length !== 1 ? "s" : ""} previously showed no transfer — these will be prioritised in your reassessment.
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setLocation("/assessment")}
+                    className="text-xs font-semibold text-[#10B981] hover:underline flex-shrink-0"
+                  >
+                    Take reassessment
+                  </button>
+                </div>
+              )}
+
+              {/* P3-LL-5: No-Transfer Findings Panel */}
+              {transferFindings?.summary && (transferFindings.summary.noTransferModules ?? 0) > 0 && (
+                <div className="rounded-xl border border-red-700/30 bg-red-950/10 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldAlert className="h-4 w-4 text-red-400" />
+                    <h3 className="text-sm font-semibold text-red-400">No-Transfer Findings</h3>
+                    <Badge variant="outline" className="text-[10px] bg-red-900/20 text-red-400 border-0">{transferFindings.summary.noTransferModules} module{transferFindings.summary.noTransferModules !== 1 ? "s" : ""}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    These modules were completed but did not produce measurable behaviour change in your subsequent assessment.
+                    Transfer rate: <span className="font-semibold text-foreground">{transferFindings.summary.transferRate}%</span>.
+                    Consider revisiting these modules with a different approach.
+                  </p>
+                  <div className="space-y-2">
+                    {(transferFindings.findings ?? []).map((f: any) => (
+                      <div key={f.moduleId} className="flex items-start gap-2 text-xs">
+                        <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-medium text-foreground">{f.moduleTitle}</span>
+                          <span className="text-muted-foreground ml-1">— {f.reason?.replace(/_/g, " ")}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Plan summary strip */}
               <div className="grid grid-cols-4 gap-2">
                 {[

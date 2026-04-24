@@ -387,13 +387,31 @@ export const adaptiveLearningRouter = router({
 
       const now = Date.now();
 
+      // P3-LL-3: Derive completionState from engagement depth (time-on-task vs expected duration)
+      const modRow = await db.select({ durationMins: learningModules.durationMins })
+        .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+      const expectedMins = modRow[0]?.durationMins ?? 10;
+      const timeRatio = input.timeSpentMins > 0 ? input.timeSpentMins / expectedMins : 0;
+      const hasReflection = !!(input.reflectionText && input.reflectionText.trim().length > 20);
+      let completionState: "completed" | "completed_with_engagement" | "partial" | "opened";
+      if (timeRatio >= 0.8 && (hasReflection || input.score >= 70)) {
+        completionState = "completed_with_engagement"; // deep engagement: time + reflection/score
+      } else if (timeRatio >= 0.5) {
+        completionState = "completed"; // adequate engagement
+      } else if (timeRatio >= 0.2) {
+        completionState = "partial"; // opened and partially engaged
+      } else {
+        completionState = "opened"; // barely engaged
+      }
+
       // Update plan item
       if (input.planItemId) {
         await db.update(adaptivePlanItems)
           .set({
             status: "completed",
             completedAt: now,
-            scoreJson: JSON.stringify({ score: input.score, timeSpentMins: input.timeSpentMins, reflectionText: input.reflectionText }) as any,
+            completionState: completionState as any,
+            scoreJson: JSON.stringify({ score: input.score, timeSpentMins: input.timeSpentMins, reflectionText: input.reflectionText, completionState, timeRatio: Math.round(timeRatio * 100) }) as any,
           })
           .where(eq(adaptivePlanItems.id, input.planItemId));
 
@@ -468,9 +486,9 @@ export const adaptiveLearningRouter = router({
 
       // Update learning streak
       const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      const modRow = await db.select({ durationMins: learningModules.durationMins })
+      const streakModRow = await db.select({ durationMins: learningModules.durationMins })
         .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
-      const durationMins = modRow[0]?.durationMins ?? 0;
+      const durationMins = streakModRow[0]?.durationMins ?? 0;
 
       const streakRow = await db.select().from(learningStreaks)
         .where(eq(learningStreaks.userId, ctx.user.id)).limit(1);

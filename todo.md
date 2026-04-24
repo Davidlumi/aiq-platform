@@ -1264,12 +1264,12 @@
 - [x] P2-RP-4: Multi-assessment trajectory visualisation — trajectory_report type with score progression chart, trend classification (improving/stable/declining), and delta from first to latest assessment
 
 ## Phase 3 — Learning Layer (AL §2-5)
-- [ ] P3-LL-1: Full 4-stage Learning Prescription Engine — immediate intervention → targeted development → consolidation → mastery pathway logic
-- [ ] P3-LL-2: Learning Pathway UI integrated into participant dashboard as primary panel
-- [ ] P3-LL-3: Module engagement telemetry — time-on-task, interaction depth, completion quality tracking
-- [ ] P3-LL-4: Transfer finding framework — reassessment mode measuring whether learning translated to behaviour change
-- [ ] P3-LL-5: No-transfer reporting — identify modules that failed to produce behavioural transfer
-- [ ] P3-LL-6: Learning-aware reassessment mode — reassessment that accounts for completed learning modules
+- [x] P3-LL-1: Full 4-stage Learning Prescription Engine — Stage 1 Block Resolution, Stage 2 Foundation Before Strategy, Stage 3 Regulatory Urgency, Stage 4 Strategic Development (generateAdaptivePlan in learningPathGenerator.ts, fully wired into getAdaptivePlan)
+- [x] P3-LL-2: Learning Pathway UI — ModuleCard shows prescription stage badge (S1-S4) with colour coding, no-transfer badge; Learning-Aware Mode banner and Transfer Findings panel in LearningPlanPage
+- [x] P3-LL-3: Module engagement telemetry — completionState derived from time-on-task ratio (0.8+ with reflection/score = completed_with_engagement, 0.5+ = completed, 0.2+ = partial, <0.2 = opened) in markModuleComplete
+- [x] P3-LL-4: Transfer finding framework — getTransferFindings procedure returns findings[], summary (transferRate, noTransferModules, withEngagementModules) from active plan
+- [x] P3-LL-5: No-transfer reporting — No-Transfer Findings panel in LearningPlanPage with module list, reason codes, and transfer rate; recordNoTransfer mutation with reason enum
+- [x] P3-LL-6: Learning-aware reassessment mode — startSession fetches active plan, extracts recently completed module signal keys, stores learningAwareContext in sessionMetadataJson; getLearningAwareContext procedure for UI; Learning-Aware Reassessment banner in LearningPlanPage
 
 ## Phase 1 Remaining
 - [x] P1-REM-1: Immersive scenario artefact rendering — email mockup, Slack thread, HRIS screen, policy document visual formats in assessment session (ArtefactBlock component wired into AssessmentSessionPage)

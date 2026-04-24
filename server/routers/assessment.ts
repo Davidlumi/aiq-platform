@@ -20,6 +20,8 @@ import { and, desc, eq, isNull, notLike, like } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
+  adaptiveLearningPlans,
+  adaptivePlanItems,
   ailOrgContext,
   assessmentAnswers,
   assessmentBlueprints,
@@ -32,6 +34,7 @@ import {
   contentScenarios,
   credibilityScores,
   decisionLogs,
+  learningModules,
   revalidationSchedules,
   riskScores,
   tenantSettings,
@@ -739,6 +742,55 @@ export const assessmentRouter = router({
         console.warn("[assessment.startSession] Narrative context generation failed (non-fatal):", err);
       }
 
+      // P3-LL-6: Fetch learning-aware context — recently completed modules since last assessment
+      let learningAwareContext: { recentlyLearnedSignals: string[]; noTransferModules: string[]; learningAwareMode: boolean } = {
+        recentlyLearnedSignals: [],
+        noTransferModules: [],
+        learningAwareMode: false,
+      };
+      try {
+        const activePlan = await db.select({ id: adaptiveLearningPlans.id })
+          .from(adaptiveLearningPlans)
+          .where(and(eq(adaptiveLearningPlans.userId, ctx.user.id), eq(adaptiveLearningPlans.state, "active")))
+          .orderBy(desc(adaptiveLearningPlans.generatedAt))
+          .limit(1);
+        if (activePlan[0]) {
+          const recentItems = await db.select({
+            moduleId: adaptivePlanItems.moduleId,
+            completionState: adaptivePlanItems.completionState,
+            completedAt: adaptivePlanItems.completedAt,
+          })
+            .from(adaptivePlanItems)
+            .where(and(
+              eq(adaptivePlanItems.planId, activePlan[0].id),
+              eq(adaptivePlanItems.status, "completed"),
+            ));
+          // Get signal keys for recently completed modules
+          const recentlyLearnedSignals: string[] = [];
+          const noTransferModules: string[] = [];
+          for (const item of recentItems) {
+            const mod = await db.select({ signalKeysJson: (learningModules as any).signalKeysJson, title: learningModules.title })
+              .from(learningModules).where(eq(learningModules.id, item.moduleId)).limit(1);
+            if (mod[0]) {
+              try {
+                const signals = JSON.parse((mod[0] as any).signalKeysJson ?? "[]") as string[];
+                recentlyLearnedSignals.push(...signals);
+              } catch {}
+              if ((item as any).completionState === "no_transfer") {
+                noTransferModules.push(mod[0].title);
+              }
+            }
+          }
+          learningAwareContext = {
+            recentlyLearnedSignals: Array.from(new Set(recentlyLearnedSignals)),
+            noTransferModules,
+            learningAwareMode: recentlyLearnedSignals.length > 0,
+          };
+        }
+      } catch (err) {
+        console.warn("[assessment.startSession] Learning-aware context fetch failed (non-fatal):", err);
+      }
+
       const sessionId = nanoid();
       await db.insert(assessmentSessions).values({
         id: sessionId,
@@ -769,6 +821,8 @@ export const assessmentRouter = router({
           pinnedModelVersion: "adaptive-v2",
           // NW-1: Persistent narrative context for the session
           narrativeContext,
+          // P3-LL-6: Learning-aware context — recently learned signals for calibrated reassessment
+          learningAwareContext,
         },
         // WS5.2: Top-level session metadata columns
         deviceType: input.deviceType ?? null,
