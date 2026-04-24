@@ -40,6 +40,7 @@ import {
   tenantSettings,
   userStates,
   users,
+  organisationCapabilityThresholds,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -50,6 +51,9 @@ import {
   classifyReadiness,
   computeConfidenceProfile,
   detectFailureModes,
+  OUTCOME_SCORE_MODIFIER,
+  DIFFICULTY_WEIGHTS,
+  RISK_MULTIPLIERS,
 } from "../assessment/scoringEngine";
 import {
   SessionController,
@@ -78,7 +82,6 @@ import {
   isSaveAndResumeEnabled,
   getPersonaLabel,
 } from "../assessment/featureFlags";
-import { organisationCapabilityThresholds } from "../../drizzle/schema";
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
@@ -88,6 +91,8 @@ import { randomUUID } from "crypto";
 import type { CapabilityKey } from "../assessment/roleArchetypes";
 // I2: AIL bridge — wire assessment completion into the AIL pipeline
 import { processAssessmentThroughAIL } from "../ail/userIntelligenceProfile";
+// Auto-regeneration: trigger gap analysis + learning plan after assessment
+import { autoRegenerateAfterAssessment } from "../learning/autoRegenerate";
 // I10: Persona classification — use persona profile to influence assessment difficulty
 import { getPersonaProfile, getPersonaAdaptedParameters } from "../ail/personaClassificationEngine";
 
@@ -236,6 +241,32 @@ async function enrichAnswers(
   );
 }
 
+// ─── Helper: Apply weighted signal deltas (C1.6) ────────────────────────────────
+/**
+ * Apply outcome class modifier, difficulty weight, and risk multiplier to raw signal deltas.
+ * Raw deltas in the DB are unsigned magnitudes. The sign and scaling come from:
+ *   1. outcomeClass modifier (OUTCOME_SCORE_MODIFIER) — carries the sign
+ *   2. difficulty weight (DIFFICULTY_WEIGHTS) — L1=1.0x, L2=1.3x, L3=1.6x
+ *   3. risk multiplier (RISK_MULTIPLIERS) — Low/Medium/High/Critical × positive/negative
+ */
+function applyWeightedDeltas(
+  rawDeltas: Record<string, number>,
+  outcomeClass: string | null,
+  difficulty: number,
+  riskLevel: string
+): Record<string, number> {
+  const modifier = OUTCOME_SCORE_MODIFIER[outcomeClass as keyof typeof OUTCOME_SCORE_MODIFIER] ?? 1.0;
+  const diffWeight = DIFFICULTY_WEIGHTS[difficulty] ?? 1.0;
+  const riskMultipliers = RISK_MULTIPLIERS[riskLevel] ?? RISK_MULTIPLIERS["Medium"];
+  const result: Record<string, number> = {};
+  for (const [key, magnitude] of Object.entries(rawDeltas)) {
+    const sign = modifier >= 0 ? 1 : -1;
+    const riskMult = sign > 0 ? riskMultipliers.positive : riskMultipliers.negative;
+    result[key] = sign * Math.abs(magnitude) * diffWeight * riskMult * Math.abs(modifier);
+  }
+  return result;
+}
+
 // ─── Helper: Build NextItem from GeneratedItem + persist to DB ────────────────
 
 async function persistAndBuildNextItem(
@@ -355,7 +386,10 @@ function buildAdaptiveContext(
   const signalScores = computeSignalScores(
     answers.map(a => ({
       signalDeltas: (() => {
-        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+        try {
+          const raw = typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {};
+          return applyWeightedDeltas(raw, a.outcomeClass, a.difficulty ?? 2, a.riskLevel ?? "Medium");
+        } catch { return {}; }
       })(),
     }))
   );
@@ -1773,14 +1807,15 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       }
       // I2: Wire assessment completion into the AIL pipeline (non-fatal, fire-and-forget)
       try {
-        // Build signal deltas from all answers for the AIL signal ledger
+        // Build signal deltas from all answers for the AIL signal ledger (C1.6: apply weights)
         const ailSignalDeltas: Record<string, number> = {};
         for (const ans of answers) {
           try {
-            const deltas = typeof ans.signalDeltasJson === "string"
+            const raw = typeof ans.signalDeltasJson === "string"
               ? JSON.parse(ans.signalDeltasJson as string) as Record<string, number>
               : (ans.signalDeltasJson as Record<string, number>) ?? {};
-            for (const [k, v] of Object.entries(deltas)) {
+            const weighted = applyWeightedDeltas(raw, ans.outcomeClass, ans.difficulty ?? 2, ans.riskLevel ?? "Medium");
+            for (const [k, v] of Object.entries(weighted)) {
               ailSignalDeltas[k] = (ailSignalDeltas[k] ?? 0) + v;
             }
           } catch {}
@@ -1797,6 +1832,12 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       } catch (ailErr) {
         console.warn("[assessment] I2: AIL bridge call failed (non-fatal):", ailErr);
       }
+      // Auto-regenerate gap analysis + learning plan in the background (non-blocking)
+      void autoRegenerateAfterAssessment({
+        userId: ctx.user.id,
+        tenantId: ctx.user.tenantId,
+        sessionId: input.sessionId,
+      }).catch(err => console.warn("[assessment] Auto-regeneration failed (non-fatal):", err));
       return {
         overallScore: results.overallScore,
         credibilityScore,

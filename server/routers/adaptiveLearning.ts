@@ -25,7 +25,7 @@ import {
   assessmentScores,
   assessmentSessions,
 } from "../../drizzle/schema";
-import { eq, and, desc, lte, asc } from "drizzle-orm";
+import { eq, and, desc, lte, asc, gte, inArray, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { computeGapAnalysis, type CapabilityKey } from "../learning/gapAnalysisEngine";
 import { generateAdaptivePlan, computeNextReview, type ModuleCandidate } from "../learning/learningPathGenerator";
@@ -34,6 +34,8 @@ import {
   formativeQuizResults,
   learningStreaks,
   managerTeamMembers,
+  learningNudges,
+  learningMilestones,
   users,
   userStates,
   ailOrgContext,
@@ -578,14 +580,15 @@ export const adaptiveLearningRouter = router({
         .where(eq(adaptivePlanItems.planId, plan[0].id));
 
       const moduleIds = items.map(i => i.moduleId);
-      const modules = moduleIds.length > 0
-        ? await Promise.all(moduleIds.map(id => db.select().from(learningModules).where(eq(learningModules.id, id)).limit(1).then(r => r[0])))
+      const modulesRaw = moduleIds.length > 0
+        ? await db.select().from(learningModules).where(inArray(learningModules.id, moduleIds))
         : [];
+      const moduleMap = new Map(modulesRaw.map(m => [m.id, m]));
 
       // Group by capability
       const capProgress: Record<string, { total: number; completed: number; inProgress: number }> = {};
       for (let i = 0; i < items.length; i++) {
-        const mod = modules[i];
+        const mod = moduleMap.get(items[i].moduleId);
         if (!mod) continue;
         const cap = mod.capability;
         if (!capProgress[cap]) capProgress[cap] = { total: 0, completed: 0, inProgress: 0 };
@@ -1246,9 +1249,162 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         },
       };
     }),
-});
 
-// ─── Helper: enrich plan with items and modules ───────────────────────────────
+  // ─── Improvement 9: Manager nudges ─────────────────────────────────────────
+  sendNudge: protectedProcedure
+    .input(z.object({
+      learnerId: z.string(),
+      moduleId: z.string(),
+      message: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Verify learner is on manager's team
+      const member = await db.select().from(managerTeamMembers)
+        .where(and(eq(managerTeamMembers.managerId, ctx.user.id), eq(managerTeamMembers.memberId, input.learnerId)))
+        .limit(1);
+      if (member.length === 0) throw new TRPCError({ code: "FORBIDDEN", message: "Learner is not on your team" });
+      // Verify module exists
+      const mod = await db.select({ id: learningModules.id, title: learningModules.title })
+        .from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+      if (mod.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      await db.insert(learningNudges).values({
+        id: nanoid(),
+        managerId: ctx.user.id,
+        learnerId: input.learnerId,
+        moduleId: input.moduleId,
+        message: input.message ?? null,
+        sentAt: Date.now(),
+        status: "sent",
+      });
+      return { sent: true, moduleTitle: mod[0].title };
+    }),
+
+  getMyNudges: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const nudges = await db.select({
+        id: learningNudges.id,
+        moduleId: learningNudges.moduleId,
+        message: learningNudges.message,
+        sentAt: learningNudges.sentAt,
+        status: learningNudges.status,
+        managerId: learningNudges.managerId,
+        moduleTitle: learningModules.title,
+        moduleCapability: learningModules.capability,
+      })
+        .from(learningNudges)
+        .leftJoin(learningModules, eq(learningNudges.moduleId, learningModules.id))
+        .where(eq(learningNudges.learnerId, ctx.user.id))
+        .orderBy(desc(learningNudges.sentAt))
+        .limit(20);
+      // Mark unviewed nudges as viewed
+      const unviewedIds = nudges.filter(n => n.status === "sent").map(n => n.id);
+      if (unviewedIds.length > 0) {
+        await db.update(learningNudges).set({ status: "viewed" })
+          .where(inArray(learningNudges.id, unviewedIds));
+      }
+      return nudges;
+    }),
+
+  getMilestones: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const milestones = await db.select().from(learningMilestones)
+        .where(eq(learningMilestones.userId, ctx.user.id))
+        .orderBy(desc(learningMilestones.achievedAt))
+        .limit(50);
+      return milestones;
+    }),
+
+  // ─── Improvement 10: Weekly digest ──────────────────────────────────────────
+  getWeeklyDigest: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      // Modules completed this week (use updatedAt as proxy for last completion)
+      const recentCompletions = await db.select({
+        moduleId: spacedRepetitionQueue.moduleId,
+        completedAt: spacedRepetitionQueue.updatedAt,
+        title: learningModules.title,
+        capability: learningModules.capability,
+        durationMins: learningModules.durationMins,
+      })
+        .from(spacedRepetitionQueue)
+        .leftJoin(learningModules, eq(spacedRepetitionQueue.moduleId, learningModules.id))
+        .where(and(
+          eq(spacedRepetitionQueue.userId, ctx.user.id),
+          gte(spacedRepetitionQueue.updatedAt, oneWeekAgo),
+        ))
+        .orderBy(desc(spacedRepetitionQueue.updatedAt))
+        .limit(10);
+      // Due reviews this week
+      const dueReviews = await db.select({
+        moduleId: spacedRepetitionQueue.moduleId,
+        dueAt: spacedRepetitionQueue.nextDueAt,
+        title: learningModules.title,
+        capability: learningModules.capability,
+      })
+        .from(spacedRepetitionQueue)
+        .leftJoin(learningModules, eq(spacedRepetitionQueue.moduleId, learningModules.id))
+        .where(and(
+          eq(spacedRepetitionQueue.userId, ctx.user.id),
+          lte(spacedRepetitionQueue.nextDueAt, Date.now() + 7 * 24 * 60 * 60 * 1000),
+          gte(spacedRepetitionQueue.nextDueAt, Date.now()),
+        ))
+        .orderBy(asc(spacedRepetitionQueue.nextDueAt))
+        .limit(5);
+      // Streak
+      const streak = await db.select().from(learningStreaks)
+        .where(eq(learningStreaks.userId, ctx.user.id)).limit(1);
+      // Gap analysis for priority capability
+      const gap = await db.select().from(gapAnalyses)
+        .where(eq(gapAnalyses.userId, ctx.user.id))
+        .orderBy(desc(gapAnalyses.generatedAt)).limit(1);
+      const gapData = gap[0]?.capabilityGapsJson as any;
+      const capKeys = gapData ? Object.keys(gapData) : [];
+      const topGap = capKeys.length > 0 ? { capability: capKeys[0], gap: gapData[capKeys[0]]?.gap ?? 0 } : null;
+      return {
+        weekCompletions: recentCompletions.length,
+        totalMinsThisWeek: recentCompletions.reduce((s, c) => s + (c.durationMins ?? 0), 0),
+        completedModules: recentCompletions,
+        dueReviews,
+        currentStreak: streak[0]?.currentStreak ?? 0,
+        topPriorityCapability: topGap ? { capability: topGap.capability, gap: topGap.gap } : null,
+      };
+    }),
+
+  // ─── Trending modules (most completed in last 30 days across platform) ───────
+  getTrendingModules: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      // Count completions per module in last 30 days
+      const trending = await db.select({
+        moduleId: spacedRepetitionQueue.moduleId,
+        completionCount: sql<number>`count(*)`,
+        title: learningModules.title,
+        capability: learningModules.capability,
+        durationMins: learningModules.durationMins,
+        difficulty: learningModules.difficulty,
+        levelLabel: learningModules.levelLabel,
+      })
+        .from(spacedRepetitionQueue)
+        .leftJoin(learningModules, eq(spacedRepetitionQueue.moduleId, learningModules.id))
+        .where(gte(spacedRepetitionQueue.updatedAt, thirtyDaysAgo.getTime()))
+        .groupBy(spacedRepetitionQueue.moduleId, learningModules.title, learningModules.capability, learningModules.durationMins, learningModules.difficulty, learningModules.levelLabel)
+        .orderBy(desc(sql<number>`count(*)`))
+        .limit(10);
+      return trending;
+    }),
+
+});
+// ─── Helper: enrich plan with items and modules ────────────────────────────────
 async function enrichPlan(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
   plan: typeof adaptiveLearningPlans.$inferSelect,
@@ -1258,17 +1414,29 @@ async function enrichPlan(
     .where(eq(adaptivePlanItems.planId, plan.id))
     .orderBy(asc(adaptivePlanItems.orderIndex));
 
-  const itemsWithModules = await Promise.all(items.map(async item => {
-    const mod = await db.select().from(learningModules).where(eq(learningModules.id, item.moduleId)).limit(1);
-    const srq = await db.select().from(spacedRepetitionQueue)
-      .where(and(eq(spacedRepetitionQueue.userId, userId), eq(spacedRepetitionQueue.moduleId, item.moduleId)))
-      .limit(1);
-    return {
-      ...item,
-      module: mod[0] ?? null,
-      spacedRepetition: srq[0] ?? null,
-    };
+  // Batch-fetch modules and spaced repetition rows to avoid N+1 queries
+  const moduleIds = items.map(i => i.moduleId);
+  const [allMods, allSrq] = moduleIds.length > 0
+    ? await Promise.all([
+        db.select().from(learningModules).where(inArray(learningModules.id, moduleIds)),
+        db.select().from(spacedRepetitionQueue)
+          .where(and(eq(spacedRepetitionQueue.userId, userId), inArray(spacedRepetitionQueue.moduleId, moduleIds))),
+      ])
+    : [[], []];
+
+  const modMap = Object.fromEntries(allMods.map(m => [m.id, m]));
+  const srqMap = Object.fromEntries(allSrq.map(s => [s.moduleId, s]));
+
+  const itemsWithModules = items.map(item => ({
+    ...item,
+    module: modMap[item.moduleId] ?? null,
+    spacedRepetition: srqMap[item.moduleId] ?? null,
   }));
 
-  return { ...plan, items: itemsWithModules };
+  return {
+    ...plan,
+    items: itemsWithModules,
+    // Expose auto-regeneration timestamp for the "plan updated" banner
+    autoRegeneratedAt: (plan as any).autoRegeneratedAt ?? null,
+  };
 }

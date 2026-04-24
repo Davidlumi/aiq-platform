@@ -31,6 +31,7 @@ import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
 import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
 import TeamDashboardPage from "./pages/learning/TeamDashboardPage";
+import TeamLearningPage from "./pages/learning/TeamLearningPage";
 import SimulationListPage from "./pages/simulation/SimulationListPage";
 import SimulationSessionPage from "./pages/simulation/SimulationSessionPage";
 import ReportsPage from "./pages/reports/ReportsPage";
@@ -44,6 +45,7 @@ import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
 import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
 import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
+import OrganisationsPage from "./pages/admin/OrganisationsPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
@@ -119,6 +121,9 @@ function Router() {
       <Route path="/learning/team">
         <ProtectedRoute component={TeamDashboardPage} />
       </Route>
+      <Route path="/manager/team-learning">
+        <ProtectedRoute component={TeamLearningPage} />
+      </Route>
       <Route path="/simulations">
         <ProtectedRoute component={SimulationListPage} />
       </Route>
@@ -145,6 +150,9 @@ function Router() {
       </Route>
       <Route path="/admin/org-context">
         <ProtectedRoute component={OrgContextPage} />
+      </Route>
+      <Route path="/admin/organisations">
+        <ProtectedRoute component={OrganisationsPage} />
       </Route>
       <Route path="/admin/content">
         <ProtectedRoute component={ContentCMSPage} />

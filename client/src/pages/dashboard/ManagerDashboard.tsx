@@ -22,7 +22,9 @@ import {
   Calendar, TrendingDown, Search, ChevronRight, RefreshCw,
   BarChart3, ShieldAlert, Award, MessageSquare, TrendingUp,
   Layers, Zap, Info, ArrowUpRight, ArrowDownRight, Minus,
+  BookOpen, Flame,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell,
@@ -613,6 +615,77 @@ export default function ManagerDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Learning Overview */}
+      <LearningOverviewSection />
     </div>
+  );
+}
+
+function LearningOverviewSection() {
+  const { data, isLoading } = trpc.adaptiveLearning.getTeamLearningProgress.useQuery();
+  const members = data?.members ?? [];
+  const avgCompletion = members.length > 0
+    ? Math.round(members.reduce((s, m) => s + (m.plan?.progressPct ?? 0), 0) / members.length)
+    : 0;
+  const activeStreaks = members.filter(m => (m.streak?.currentStreak ?? 0) > 0).length;
+  const noActivity = members.filter(m => !m.streak?.totalModulesCompleted || m.streak.currentStreak === 0).length;
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2 font-sora">
+            <BookOpen className="h-4 w-4 text-blue-500" />
+            Team Learning Overview
+          </CardTitle>
+          <Link href="/manager/team-learning">
+            <Button variant="ghost" size="sm" className="text-xs h-7">
+              View all <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">AI capability module completion and learning streaks across your team</p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+        ) : members.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground text-sm">No team members yet</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{avgCompletion}%</div>
+                <div className="text-xs text-muted-foreground">Avg completion</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold text-orange-600">{activeStreaks}</div>
+                <div className="text-xs text-muted-foreground">Active streaks</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold text-amber-600">{noActivity}</div>
+                <div className="text-xs text-muted-foreground">No activity</div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {members.slice(0, 5).map(m => (
+                <div key={m.userId} className="flex items-center gap-3">
+                  <div className="text-xs text-muted-foreground w-28 truncate">{m.name}</div>
+                  <Progress value={m.plan?.progressPct ?? 0} className="flex-1 h-1.5" />
+                  <div className="text-xs tabular-nums w-8 text-right">{m.plan?.progressPct ?? 0}%</div>
+                  {(m.streak?.currentStreak ?? 0) > 0 && (
+                    <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                  )}
+                </div>
+              ))}
+              {members.length > 5 && (
+                <div className="text-xs text-muted-foreground text-center pt-1">+{members.length - 5} more</div>
+              )}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

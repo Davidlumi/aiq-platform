@@ -774,6 +774,14 @@ export default function AssessmentResultsPage() {
                     <span className="text-xs text-muted-foreground">
                       Model: V9.2 · {totalAnswers} questions
                     </span>
+                    {/* S3.3: Governing constraint in header when classification is not safe */}
+                    {governingConstraint && (governingConstraint as any).droveClassification && primaryState !== "safe" && (
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <Flag className="w-3 h-3 flex-shrink-0" />
+                        Governing constraint: <span className="capitalize">{String((governingConstraint as any).capability).replace(/_/g, " ")}</span>
+                        &nbsp;(gap {Math.round(Number((governingConstraint as any).gap))} pts)
+                      </span>
+                    )}
                     {/* P15: ExplanationDrawer - score transparency */}
                     <ExplanationDrawer
                       trigger={

@@ -19,7 +19,7 @@ import {
   MessageSquare, Users, Target, Brain, Lightbulb, BarChart3,
   Clock, ChevronRight, TrendingUp, TrendingDown, Minus,
   CheckCircle2, AlertTriangle, Award, RefreshCw, Flame,
-  ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles,
+  ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles, Bell,
   BarChart2, UserCheck, XCircle, Info, ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -343,7 +343,7 @@ function ProgressTab({ capProgress }: { capProgress: any }) {
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress" | "peers">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress" | "peers" | "digest">("plan");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch adaptive plan (auto-generates if none exists)
@@ -374,6 +374,10 @@ export default function LearningPlanPage() {
   const { data: transferFindings } = trpc.adaptiveLearning.getTransferFindings.useQuery(undefined, { retry: 1 });
   // P3-LL-6: Learning-aware reassessment context
   const { data: learningAwareCtx } = trpc.adaptiveLearning.getLearningAwareContext.useQuery(undefined, { retry: 1 });
+  // Weekly digest, nudges & trending
+  const { data: weeklyDigest } = trpc.adaptiveLearning.getWeeklyDigest.useQuery(undefined, { retry: 1 });
+  const { data: myNudges } = trpc.adaptiveLearning.getMyNudges.useQuery(undefined, { retry: 1 });
+  const { data: trendingModules } = trpc.adaptiveLearning.getTrendingModules.useQuery(undefined, { retry: 1 });
 
   // Refresh plan (force regenerate)
   const handleRefreshPlan = async () => {
@@ -428,8 +432,9 @@ export default function LearningPlanPage() {
     { id: "gaps" as const,     label: "Gap Analysis", count: criticalGapCount },
     { id: "progress" as const, label: "Progress",     count: completedItems.length },
     { id: "peers" as const,    label: "Benchmarks",   count: 0 },
+    { id: "digest" as const,   label: "Digest",       count: (myNudges as any[] ?? []).filter((n: any) => n.status === "sent").length },
   ];
-  type TabId = "plan" | "gaps" | "progress" | "peers";
+  type TabId = "plan" | "gaps" | "progress" | "peers" | "digest";
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
@@ -494,6 +499,22 @@ export default function LearningPlanPage() {
 
           {planData && (
             <>
+              {/* Auto-regeneration "plan updated" banner */}
+              {(planData as any).autoRegeneratedAt && (
+                <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-blue-400 mb-0.5">Your learning plan has been updated</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your plan was automatically refreshed after your latest assessment to reflect your current capability gaps.
+                      Updated {new Date((planData as any).autoRegeneratedAt).toLocaleDateString()}.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* P3-LL-6: Learning-Aware Reassessment Banner */}
               {learningAwareCtx?.learningAwareMode && (
                 <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 p-4 flex items-start gap-3">
@@ -773,6 +794,98 @@ export default function LearningPlanPage() {
         progressLoading
           ? <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
           : <ProgressTab capProgress={capProgress} />
+      )}
+      {/* ── Digest Tab ──────────────────────────────────────────────────── */}
+      {activeTab === "digest" && (
+        <div className="space-y-5">
+          {/* Nudges from manager */}
+          {myNudges && (myNudges as any[]).length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Bell className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold">Module Recommendations</h2>
+                <Badge variant="outline" className="text-[10px]">{(myNudges as any[]).length}</Badge>
+              </div>
+              <div className="space-y-3">
+                {(myNudges as any[]).map((nudge: any) => (
+                  <div key={nudge.id} className={cn("rounded-lg border p-3", nudge.status === "sent" ? "border-primary/30 bg-primary/5" : "border-border")}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium">{nudge.moduleTitle ?? "Module"}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{nudge.moduleCapability?.replace(/_/g, " ")}</p>
+                      </div>
+                      {nudge.status === "sent" && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-0">New</Badge>}
+                    </div>
+                    {nudge.message && <p className="text-xs text-muted-foreground mt-2 italic">"{nudge.message}"</p>}
+                    <p className="text-[10px] text-muted-foreground mt-1">{new Date(nudge.sentAt).toLocaleDateString("en-GB")}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Weekly digest */}
+          {weeklyDigest && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold">This Week</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: "Modules Done", value: (weeklyDigest as any).weekCompletions, icon: CheckCircle2, color: "#10b981" },
+                  { label: "Minutes Learned", value: (weeklyDigest as any).totalMinsThisWeek, icon: Clock, color: "#6366f1" },
+                  { label: "Current Streak", value: `${(weeklyDigest as any).currentStreak}d`, icon: Flame, color: "#f97316" },
+                  { label: "Reviews Due", value: ((weeklyDigest as any).dueReviews ?? []).length, icon: RotateCcw, color: "#f59e0b" },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+                    <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
+                    <p className="text-xl font-bold">{s.value}</p>
+                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              {(weeklyDigest as any).topPriorityCapability && (
+                <div className="rounded-lg bg-muted/30 border border-border p-3">
+                  <p className="text-xs text-muted-foreground mb-0.5">Priority focus area</p>
+                  <p className="text-sm font-medium capitalize">{(weeklyDigest as any).topPriorityCapability.capability.replace(/_/g, " ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Trending modules */}
+          {trendingModules && (trendingModules as any[]).length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold">Trending on Platform</h2>
+                <span className="text-xs text-muted-foreground">Last 30 days</span>
+              </div>
+              <div className="space-y-2">
+                {(trendingModules as any[]).slice(0, 5).map((mod: any, i: number) => (
+                  <div key={mod.moduleId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                    <span className="w-5 text-center text-xs font-bold text-muted-foreground">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{mod.title}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{mod.capability?.replace(/_/g, " ")}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                      <Users className="h-3 w-3" />
+                      <span>{mod.completionCount}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Empty state */}
+          {(!myNudges || (myNudges as any[]).length === 0) && (!weeklyDigest || (weeklyDigest as any).weekCompletions === 0) && (
+            <div className="text-center py-12 rounded-xl border border-dashed border-border">
+              <BarChart3 className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
+              <p className="font-semibold mb-1">No digest data yet</p>
+              <p className="text-sm text-muted-foreground">Complete some modules to see your weekly progress here.</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

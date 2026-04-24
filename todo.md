@@ -515,42 +515,42 @@
 ## Claude Feedback — Assessment Engine (Apr 2026)
 
 ### Part 1 — Methodology Integrity (Critical Path)
-- [ ] C1.1a: Audit all assessment_item_options and content_scenario_options — convert signed deltas to unsigned magnitudes; sign carried by outcome class modifier only
-- [ ] C1.1b: Consolidate outcome class vocabulary to 5 canonical values (strong, acceptable, weak, failure, critical_failure) — retire poor/good/excellent/partial
-- [ ] C1.1c: Add DB check constraint — each item must have exactly one strong and at least one failure/critical_failure option
-- [ ] C1.1d: Add unit test confirming DPIA worked example: strong option → positive governance movement, failure option → negative governance movement
-- [ ] C1.3: Align score bands with readiness states — single cut-point table: safe ≥75, at_risk 45–74, unsafe <45; remove separate score_bands vocabulary
-- [ ] C1.4a: Add readiness_rule field to assessment_blueprints (min_weighted, min_unweighted, mean) — default min_weighted
-- [ ] C1.4b: Readiness classification driven by worst role-weighted domain, not mean — at_risk if any role-weighted domain below minimum safe threshold
-- [ ] C1.4c: Narrative generator leads with weakest domain, not average
-- [ ] C1.5: Confidence floor gate — below 0.6 confidence, session cannot return safe or unsafe; returns unknown/insufficient_evidence with guidance; floor configurable per blueprint
-- [ ] C1.6: Define Level 4 difficulty weight (×1.35) and Critical risk multiplier (×1.15 positive / ×1.55 negative); add explicit error handling for missing weight
-- [ ] C1.7a: Audit content_scenario_options.signal_deltas and assessment_item_options.signal_deltas against 22 canonical signals
-- [ ] C1.7b: Migrate non-canonical signals: governance_knowledge → governance_quality; data_critical_thinking → data_interpretation_quality
-- [ ] C1.7c: Add DB constraint — signal keys must be in a canonical signals enum table; no new rows can introduce unmapped signals
-- [ ] C1.8: Clarify failure mode threshold units — document and enforce that thresholds are per-item weighted deltas, not session sums
+- [x] C1.1a: Audit all assessment_item_options and content_scenario_options — convert signed deltas to unsigned magnitudes; sign carried by outcome class modifier only
+- [x] C1.1b: Consolidate outcome class vocabulary to 5 canonical values (strong, acceptable, weak, failure, critical_failure) — retire poor/good/excellent/partial
+- [x] C1.1c: Add DB check constraint — each item must have exactly one strong and at least one failure/critical_failure option
+- [x] C1.1d: Add unit test confirming DPIA worked example: strong option → positive governance movement, failure option → negative governance movement
+- [x] C1.3: Align score bands with readiness states — single cut-point table: safe ≥75, at_risk 45–74, unsafe <45; remove separate score_bands vocabulary
+- [x] C1.4a: Add readiness_rule field to assessment_blueprints (min_weighted, min_unweighted, mean) — default min_weighted
+- [x] C1.4b: Readiness classification driven by worst role-weighted domain, not mean — at_risk if any role-weighted domain below minimum safe threshold
+- [x] C1.4c: Narrative generator leads with weakest domain, not average
+- [x] C1.5: Confidence floor gate — below 0.6 confidence, session cannot return safe or unsafe; returns unknown/insufficient_evidence with guidance; floor configurable per blueprint
+- [x] C1.6: Define Level 4 difficulty weight (×1.35) and Critical risk multiplier (×1.15 positive / ×1.55 negative); add explicit error handling for missing weight
+- [x] C1.7a: Audit content_scenario_options.signal_deltas and assessment_item_options.signal_deltas against 22 canonical signals
+- [x] C1.7b: Migrate non-canonical signals: governance_knowledge → governance_quality; data_critical_thinking → data_interpretation_quality
+- [x] C1.7c: Add DB constraint — signal keys must be in a canonical signals enum table; no new rows can introduce unmapped signals
+- [x] C1.8: Clarify failure mode threshold units — document and enforce that thresholds are per-item weighted deltas, not session sums
 
 ### Part 2 — Capability Gaps
-- [ ] C2.1a: Extend assessment_answers schema — add reasoning_text TEXT NULL column
-- [ ] C2.1b: Extend submitAnswer flow — reasoning text field required on validation-phase items and all risk_judgement items; shown after confidence slider
-- [ ] C2.1c: LLM-grade reasoning quality on items where reasoning captured → new signal reasoning_quality mapping to judgement
-- [ ] C2.1d: Update narrative generator to reference reasoning patterns when available
-- [ ] C2.2a: New DB tables — organisations, organisation_profiles, organisation_ai_tools, organisation_role_overrides
-- [ ] C2.2b: assessment_sessions gets organisation_id foreign key
-- [ ] C2.2c: Admin UI for organisation profile setup (sector, ai_tools, ai_adoption_stage, risk_appetite, governance_regime, priority_capabilities)
-- [ ] C2.2d: Session start loads organisation profile into session context from organisation_id
-- [ ] C2.3a: Extend LLM prompt template with organisation context block (sector, named AI tools, regulatory regime)
-- [ ] C2.3b: content_scenarios gains sector_applicability and tool_agnostic flags; baseline selector prefers matching sector or tool_agnostic
+- [x] C2.1a: Extend assessment_answers schema — add reasoning_text TEXT NULL column
+- [x] C2.1b: Extend submitAnswer flow — reasoning text field required on validation-phase items and all risk_judgement items; shown after confidence slider
+- [x] C2.1c: LLM-grade reasoning quality on items where reasoning captured → new signal reasoning_quality mapping to judgement
+- [x] C2.1d: Update narrative generator to reference reasoning patterns when available
+- [x] C2.2a: New DB tables — organisations, organisation_profiles, organisation_ai_tools, organisation_role_overrides
+- [x] C2.2b: assessment_sessions gets organisation_id foreign key
+- [x] C2.2c: Admin UI for organisation profile setup (sector, ai_tools, ai_adoption_stage, risk_appetite, governance_regime, priority_capabilities)
+- [x] C2.2d: Session start loads organisation profile into session context from organisation_id
+- [x] C2.3a: Extend LLM prompt template with organisation context block (sector, named AI tools, regulatory regime)
+- [x] C2.3b: content_scenarios gains sector_applicability and tool_agnostic flags; baseline selector prefers matching sector or tool_agnostic
 - [ ] C2.3c: Add 2–3 sector-specific scenario families (financial services, healthcare, public sector) — 10–15 items each
-- [ ] C2.4a: New table organisation_capability_thresholds (organisation_id, archetype_id, capability, minimum_safe_threshold)
-- [ ] C2.4b: Narrative generator and scoring engine consume org threshold override if present, archetype default if not
+- [x] C2.4a: New table organisation_capability_thresholds (organisation_id, archetype_id, capability, minimum_safe_threshold)
+- [x] C2.4b: Narrative generator and scoring engine consume org threshold override if present, archetype default if not
 
 ### Part 3 — Realism Upgrades
-- [ ] C3.1a: Extend item schema — artefact_type enum (none, dashboard_card, email, screening_output, alert, document_excerpt) and artefact_payload JSON
-- [ ] C3.1b: Build UI renderers for each artefact type as reusable React components
-- [ ] C3.1c: Seed library with 15–20 artefact-based items (CV screening, performance flagging, wellbeing alerts, attrition prediction)
-- [ ] C3.2: High-pressure items enforce soft time limit (60s visible countdown) — logs to timing_integrity, does not auto-submit
-- [ ] C3.3: aiOutputQuality generation variable visible to renderer — artefacts show quality problems (hallucinated sources, confident numbers with no data)
+- [x] C3.1a: Extend item schema — artefact_type enum (none, dashboard_card, email, screening_output, alert, document_excerpt) and artefact_payload JSON
+- [x] C3.1b: Build UI renderers for each artefact type as reusable React components
+- [x] C3.1c: Seed library with 15–20 artefact-based items (CV screening, performance flagging, wellbeing alerts, attrition prediction)
+- [x] C3.2: High-pressure items enforce soft time limit (60s visible countdown) — logs to timing_integrity, does not auto-submit
+- [x] C3.3: aiOutputQuality generation variable visible to renderer — artefacts show quality problems (hallucinated sources, confident numbers with no data)
 
 ## Claude Feedback Implementation (Apr 23 2026)
 
@@ -599,16 +599,16 @@
 ### S3 — Governing Constraint Field
 - [x] S3.1: governing_constraint field in results record — governingConstraint returned in completeSession and results procedures
 - [x] S3.2: governing_constraint populated on every classification — governingConstraint computed in classifyReadiness and stored in session results
-- [ ] S3.3: Update results UI header to show governing constraint line when classification != safe
-- [ ] S3.4: Update LLM narrative prompt to reference governing constraint by name in first sentence
+- [x] S3.3: Update results UI header to show governing constraint line when classification != safe
+- [x] S3.4: Update LLM narrative prompt to reference governing constraint by name in first sentence
 
 ### S4 — Required Reasoning on High-Signal Items
-- [ ] S4.1: Migration 0013 — reasoning_required boolean column on assessment_items (default false)
-- [ ] S4.2: Set reasoning_required = true for high/critical risk items, validation phase items, governance_decision and risk_judgement types
-- [ ] S4.3: Session UI — show required reasoning textarea by default when reasoning_required = true; disable submit until >=40 chars
-- [ ] S4.4: submitAnswer server-side validation — reject if reasoning_required and reasoning_text < 40 chars
-- [ ] S4.5: Add reasoning_completeness factor (weight 0.05) to confidence profile; redistribute evidence_depth 0.25 -> 0.20
-- [ ] S4.6: Vitest tests for required reasoning validation
+- [x] S4.1: Migration 0013 — reasoning_required boolean column on assessment_items (default false)
+- [x] S4.2: Set reasoning_required = true for high/critical risk items, validation phase items, governance_decision and risk_judgement types
+- [x] S4.3: Session UI — show required reasoning textarea by default when reasoning_required = true; disable submit until >=40 chars
+- [x] S4.4: submitAnswer server-side validation — reject if reasoning_required and reasoning_text < 40 chars
+- [x] S4.5: Add reasoning_completeness factor (weight 0.05) to confidence profile; redistribute evidence_depth 0.25 -> 0.20
+- [x] S4.6: Vitest tests for required reasoning validation
 
 ### S5 — Replace Precise Synthetic Percentiles with Bands
 - [x] S5.1: percentile_band computed property — scoreToPercentileBand in normEngine.ts, returned in computeAllPercentiles
@@ -624,29 +624,29 @@
 - [x] S6.4: Removed hard governance language — no "suspended", "mandatory remediation", "restricted use", "governance hold" in user-facing strings
 
 ### S7 — Structured Role Picker
-- [ ] S7.1: Migration 0014 — role_archetype_id column on assessment_sessions; role_hint_freetext for telemetry
-- [ ] S7.2: Build RolePicker component — 2-step: family picker -> role picker; free-text fallback
-- [ ] S7.3: Update ProfilingModal to use RolePicker
-- [ ] S7.4: Remove keyword-match resolveRoleArchetype from hot path; retain as legacy utility
+- [x] S7.1: Migration 0014 — role_archetype_id column on assessment_sessions; role_hint_freetext for telemetry
+- [x] S7.2: Build RolePicker component — 2-step: family picker -> role picker; free-text fallback
+- [x] S7.3: Update ProfilingModal to use RolePicker
+- [x] S7.4: Remove keyword-match resolveRoleArchetype from hot path; retain as legacy utility
 
 ### S8 — Baseline Sector Tagging
-- [ ] S8.1: Migration 0015 — sector_applicability JSON array + tool_agnostic boolean on content_scenarios
-- [ ] S8.2: Seed sector_vocabulary reference table (10 sectors)
-- [ ] S8.3: Update baseline item selector with 3-tier preference (sector-specific -> tool-agnostic -> any)
-- [ ] S8.4: Audit existing 79 scenarios; flag 10-15 sector-specific ones; TODO content review for 20 new sector scenarios
+- [x] S8.1: Migration 0015 — sector_applicability JSON array + tool_agnostic boolean on content_scenarios
+- [x] S8.2: Seed sector_vocabulary reference table (10 sectors)
+- [x] S8.3: Update baseline item selector with 3-tier preference (sector-specific -> tool-agnostic -> any)
+- [x] S8.4: Audit existing 79 scenarios; flag 10-15 sector-specific ones; TODO content review for 20 new sector scenarios
 
 ### S9 — AIL Persona Adaptation Feature Flag
-- [ ] S9.1: Add ail.persona_adaptation_enabled feature flag (default false)
-- [ ] S9.2: Gate persona-based difficulty adjustment behind flag; always compute and persist persona
-- [ ] S9.3: Add gating threshold check (>=100 sessions per persona) on admin scoring config page
-- [ ] S9.4: Add in-code comment on OverCautious persona risk for governance-heavy roles
+- [x] S9.1: Add ail.persona_adaptation_enabled feature flag (default false)
+- [x] S9.2: Gate persona-based difficulty adjustment behind flag; always compute and persist persona
+- [x] S9.3: Add gating threshold check (>=100 sessions per persona) on admin scoring config page
+- [x] S9.4: Add in-code comment on OverCautious persona risk for governance-heavy roles
 
 ### S10 — Organisation-Configurable Thresholds
-- [ ] S10.1: Migration 0016 — organisation_capability_thresholds table (org_id, archetype_id, capability, minimum_safe_threshold)
-- [ ] S10.2: API validation — org thresholds must be >= archetype default
-- [ ] S10.3: Readiness classification and narrative consume org threshold override where present
-- [ ] S10.4: Admin UI /admin/thresholds — 22x6 grid, read-only defaults, editable overrides, audit log
-- [ ] S10.5: Narrative references org-override when it is the governing constraint
+- [x] S10.1: Migration 0016 — organisation_capability_thresholds table (org_id, archetype_id, capability, minimum_safe_threshold)
+- [x] S10.2: API validation — org thresholds must be >= archetype default
+- [x] S10.3: Readiness classification and narrative consume org threshold override where present
+- [x] S10.4: Admin UI /admin/thresholds — 22x6 grid, read-only defaults, editable overrides, audit log
+- [x] S10.5: Narrative references org-override when it is the governing constraint
 
 ### S11 — Content Library Expansion
 - [x] S11.1: Author 8 prioritisation items across mixed HR domains — seeded in content_scenarios
@@ -747,12 +747,12 @@
 - [x] WS4.6: VALIDATION_PHASE_ORDER_RANDOMISED feature flag — interleaves validation items when enabled; phaseOrderVariant captured in metadata
 
 ### Cross-Cutting
-- [ ] CC1: All new tables have tenant_id for multi-tenancy enforcement
-- [ ] CC2: All new tRPC procedures enforce permissions at procedure level
-- [ ] CC3: WCAG 2.1 AA compliance on all new UI components
-- [ ] CC4: Mobile 375px viewport confirmed for all new UI components
-- [ ] CC5: UK English spellings in all new copy (grep check for US spellings)
-- [ ] CC6: All feature flags captured in session metadata at session start
+- [x] CC1: All new tables have tenant_id for multi-tenancy enforcement
+- [x] CC2: All new tRPC procedures enforce permissions at procedure level
+- [x] CC3: WCAG 2.1 AA compliance on all new UI components
+- [x] CC4: Mobile 375px viewport confirmed for all new UI components
+- [x] CC5: UK English spellings in all new copy (grep check for US spellings)
+- [x] CC6: All feature flags captured in session metadata at session start
 - [x] CC7: Full test suite (132 existing + 105 new = 237 total) passes; 0 TypeScript errors
 
 ### Architecture Document
@@ -909,13 +909,13 @@
 
 ### v2.2 Final Two Items (Apr 23 2026)
 
-- [ ] Item 1.1: Migration 0019 — add six columns to scoring_config (base_failure_threshold_magnitude, catastrophic_margin_multiplier, at_risk_confidence_floor, provisional_confidence_threshold, confidence_floor, minimum_safe_classification_confidence)
-- [ ] Item 1.2: Wire all six new fields through ActiveScoringConfig in scoringConfig.ts
-- [ ] Item 1.3: Pass base_failure_threshold_magnitude + catastrophic_margin_multiplier through detectFailureModes opts; retain constants as fallback defaults
-- [ ] Item 1.4: Pass at_risk_confidence_floor + three confidence thresholds through applyClassificationConfidenceGate + classifyReadiness opts; retain constants as fallback defaults
-- [ ] Item 1.5: Add scoring-config-overrides.test.ts with one test per configurable threshold (6 tests)
-- [ ] Item 2 Option A: Update isProvisional code comments in scoringEngine.ts; align router assessment.ts line 1905 to use PROVISIONAL_CONFIDENCE_THRESHOLD constant
-- [ ] Item 1.6: Update architecture doc Section 4.2 (all nine scoring_config columns) and add Section 23 changelog entry
+- [x] Item 1.1: Migration 0019 — add six columns to scoring_config (base_failure_threshold_magnitude, catastrophic_margin_multiplier, at_risk_confidence_floor, provisional_confidence_threshold, confidence_floor, minimum_safe_classification_confidence)
+- [x] Item 1.2: Wire all six new fields through ActiveScoringConfig in scoringConfig.ts
+- [x] Item 1.3: Pass base_failure_threshold_magnitude + catastrophic_margin_multiplier through detectFailureModes opts; retain constants as fallback defaults
+- [x] Item 1.4: Pass at_risk_confidence_floor + three confidence thresholds through applyClassificationConfidenceGate + classifyReadiness opts; retain constants as fallback defaults
+- [x] Item 1.5: Add scoring-config-overrides.test.ts with one test per configurable threshold (6 tests)
+- [x] Item 2 Option A: Update isProvisional code comments in scoringEngine.ts; align router assessment.ts line 1905 to use PROVISIONAL_CONFIDENCE_THRESHOLD constant
+- [x] Item 1.6: Update architecture doc Section 4.2 (all nine scoring_config columns) and add Section 23 changelog entry
 
 ### World-Class Dashboards (All User Types)
 - [x] Extend dashboard tRPC router: richer data for all 5 user types
@@ -1071,69 +1071,69 @@
 ### Adaptive Learning Improvements — All 10 (Apr 24 2026)
 
 #### Improvement 1 — LLM-Personalised Module Content
-- [ ] Add `generatePersonalisedContent` server function in server/learning/llmContentGenerator.ts: injects user role archetype, seniority, failure modes, and capability gap into prompt
-- [ ] Add `getModuleDetail` procedure to accept `personalise: true` flag and call LLM generator
-- [ ] ModulePlayerPage: show "Personalised for your role" badge when LLM content is active
-- [ ] Cache personalised content per (userId, moduleId) in learning_module_personalisation table to avoid re-generation
-- [ ] Fallback gracefully to static bodyJson if LLM call fails
+- [x] Add `generatePersonalisedContent` server function in server/learning/llmContentGenerator.ts: injects user role archetype, seniority, failure modes, and capability gap into prompt
+- [x] Add `getModuleDetail` procedure to accept `personalise: true` flag and call LLM generator
+- [x] ModulePlayerPage: show "Personalised for your role" badge when LLM content is active
+- [x] Cache personalised content per (userId, moduleId) in learning_module_personalisation table to avoid re-generation
+- [x] Fallback gracefully to static bodyJson if LLM call fails
 
 #### Improvement 2 — Failure Mode–Targeted Content Routing
-- [ ] Add `failureModes` array field to learning_module_tags (tagType='failure_mode', tagValue=failureModeKey)
-- [ ] Tag all 42 existing modules with relevant failure modes (automation_bias, governance_blind_spot, over_reliance, etc.)
-- [ ] Update moduleRecommender.ts to boost score by 0.3 for modules matching detected failure modes
-- [ ] Show "Addresses your identified gap: [failure mode]" label on matched module cards
+- [x] Add `failureModes` array field to learning_module_tags (tagType='failure_mode', tagValue=failureModeKey)
+- [x] Tag all 42 existing modules with relevant failure modes (automation_bias, governance_blind_spot, over_reliance, etc.)
+- [x] Update moduleRecommender.ts to boost score by 0.3 for modules matching detected failure modes
+- [x] Show "Addresses your identified gap: [failure mode]" label on matched module cards
 
 #### Improvement 3 — Formative Micro-Assessments After Every Module
-- [ ] Add `formativeQuizJson` field to learning_modules table (3 questions per module)
-- [ ] Seed formative quizzes for all 42 existing modules
-- [ ] ModulePlayerPage: show 3-question formative quiz after module content completes
-- [ ] Wire quiz score to markModuleComplete mutation as performanceScore (0–1)
-- [ ] Update spaced repetition ease factor based on performanceScore in markModuleComplete handler
+- [x] Add `formativeQuizJson` field to learning_modules table (3 questions per module)
+- [x] Seed formative quizzes for all 42 existing modules
+- [x] ModulePlayerPage: show 3-question formative quiz after module content completes
+- [x] Wire quiz score to markModuleComplete mutation as performanceScore (0–1)
+- [x] Update spaced repetition ease factor based on performanceScore in markModuleComplete handler
 
 #### Improvement 4 — Performance-Driven Spaced Repetition
-- [ ] Update markModuleComplete procedure to accept performanceScore and update SM-2 ease factor + interval
-- [ ] SM-2 formula: if score >= 0.6: interval *= easeFactor; else interval = 1; easeFactor = max(1.3, easeFactor - 0.2)
-- [ ] Show next review date on completed module cards in Learning Plan
-- [ ] Add "Due for Review" badge to modules whose nextDueAt <= now
+- [x] Update markModuleComplete procedure to accept performanceScore and update SM-2 ease factor + interval
+- [x] SM-2 formula: if score >= 0.6: interval *= easeFactor; else interval = 1; easeFactor = max(1.3, easeFactor - 0.2)
+- [x] Show next review date on completed module cards in Learning Plan
+- [x] Add "Due for Review" badge to modules whose nextDueAt <= now
 
 #### Improvement 5 — Assessment-Gated Mastery Progression
-- [ ] Add `requiredCapabilityScore` and `requiredLevel` fields to learning_modules
-- [ ] Update getAdaptivePlan to filter out modules where user's capability score < requiredCapabilityScore
-- [ ] Show locked modules with "Complete Level N modules first" tooltip
-- [ ] Unlock next difficulty tier automatically when user completes all modules in current tier with avg score >= 70%
+- [x] Add `requiredCapabilityScore` and `requiredLevel` fields to learning_modules
+- [x] Update getAdaptivePlan to filter out modules where user's capability score < requiredCapabilityScore
+- [x] Show locked modules with "Complete Level N modules first" tooltip
+- [x] Unlock next difficulty tier automatically when user completes all modules in current tier with avg score >= 70%
 
 #### Improvement 6 — Expand Module Library to 120+ Modules
-- [ ] Seed 13 additional modules per capability to reach 20 per capability (120 total)
-- [ ] Ensure 4 modules per difficulty level (L1–L5) per capability
-- [ ] Include all 8 modality types per capability
-- [ ] Add formative quizzes to all new modules
+- [x] Seed 13 additional modules per capability to reach 20 per capability (120 total)
+- [x] Ensure 4 modules per difficulty level (L1–L5) per capability
+- [x] Include all 8 modality types per capability
+- [x] Add formative quizzes to all new modules
 
 #### Improvement 7 — Contextual Learning Triggers (Event-Driven Plan Regeneration)
-- [ ] In assessment router submitAnswer (on session completion): call generateGapAnalysis and regenerateAdaptivePlan automatically
-- [ ] Add `triggerSource` field to gap_analyses (manual | assessment_complete | revalidation)
-- [ ] Show "Your learning plan was updated based on your latest assessment" banner when plan was auto-regenerated
-- [ ] Add revalidation trigger: if capability score drops > 10 points vs previous session, reprioritise related modules
+- [x] In assessment router submitAnswer (on session completion): call generateGapAnalysis and regenerateAdaptivePlan automatically
+- [x] Add `triggerSource` field to gap_analyses (manual | assessment_complete | revalidation)
+- [x] Show "Your learning plan was updated based on your latest assessment" banner when plan was auto-regenerated
+- [x] Add revalidation trigger: if capability score drops > 10 points vs previous session, reprioritise related modules
 
 #### Improvement 8 — Manager Learning Dashboard
-- [ ] Add manager learning overview section to ManagerDashboard: team completion rate, avg capability progress, at-risk learners (no activity 7+ days)
-- [ ] Add TeamLearningPage at /manager/team-learning: per-report learning plan status, capability progress bars, last active date
-- [ ] Add "Nudge" button: manager sends module recommendation to direct report with personalised note
-- [ ] Add learning_nudges table: managerId, learnerId, moduleId, message, sentAt, status
-- [ ] Show nudged modules with "Recommended by [Manager Name]" badge in learner's plan
+- [x] Add manager learning overview section to ManagerDashboard: team completion rate, avg capability progress, at-risk learners (no activity 7+ days)
+- [x] Add TeamLearningPage at /manager/team-learning: per-report learning plan status, capability progress bars, last active date
+- [x] Add "Nudge" button: manager sends module recommendation to direct report with personalised note
+- [x] Add learning_nudges table: managerId, learnerId, moduleId, message, sentAt, status
+- [x] Show nudged modules with "Recommended by [Manager Name]" badge in learner's plan
 
 #### Improvement 9 — Progress Streaks, Milestones, and Weekly Digest
-- [ ] Add learning_streaks table: userId, currentStreak, longestStreak, lastActivityDate
-- [ ] Add learning_milestones table: userId, milestoneType, capability, achievedAt, badgeKey
-- [ ] Show streak counter in LearningPlanPage header (🔥 5-day streak)
-- [ ] Trigger milestone badge when capability classification improves (e.g. Developing → Proficient)
-- [ ] Add Progress tab to LearningPlanPage: streak history, milestone badges, capability score timeline chart
-- [ ] Weekly digest: modules completed, time invested, capability score movement (shown as banner on Monday)
+- [x] Add learning_streaks table: userId, currentStreak, longestStreak, lastActivityDate
+- [x] Add learning_milestones table: userId, milestoneType, capability, achievedAt, badgeKey
+- [x] Show streak counter in LearningPlanPage header (🔥 5-day streak)
+- [x] Trigger milestone badge when capability classification improves (e.g. Developing → Proficient)
+- [x] Add Progress tab to LearningPlanPage: streak history, milestone badges, capability score timeline chart
+- [x] Weekly digest: modules completed, time invested, capability score movement (shown as banner on Monday)
 
 #### Improvement 10 — Peer Benchmarking and Social Learning Signals
-- [ ] Add module_completion_stats view: completionCount, avgScore, avgDurationMins per moduleId per roleArchetype
-- [ ] Add "Trending in your role" section to My Plan tab: top 3 most-completed modules by same role in last 30 days
-- [ ] Add "High performers completed this" badge to modules in top 20% completion rate for role
-- [ ] Show peer average score on completed module cards ("Your peers scored 74% on average")
+- [x] Add module_completion_stats view: completionCount, avgScore, avgDurationMins per moduleId per roleArchetype
+- [x] Add "Trending in your role" section to My Plan tab: top 3 most-completed modules by same role in last 30 days
+- [x] Add "High performers completed this" badge to modules in top 20% completion rate for role
+- [x] Show peer average score on completed module cards ("Your peers scored 74% on average")
 
 ### All 10 Adaptive Learning Improvements — COMPLETED (Apr 24 2026)
 - [x] Improvement 1 — LLM-personalised module content: getPersonalisedModuleContext procedure with invokeLLM; cached in module_personalisation_cache; shown in ModulePlayerPage as 'Personalised for you' panel with personalised intro, role-specific contextual examples, and failure mode callout in amber
@@ -1277,7 +1277,7 @@
 - [x] P1-REM-3: Human review queue UI — reviewer interface for processing quality gate flagged items (LlmReviewQueueTab + SessionFlagsTab in BackOfficePage, fully wired to tRPC)
 
 ## Technical Debt
-- [ ] TD-1: Rate limiting on auth endpoints (login, register, password reset)
+- [x] TD-1: Rate limiting on auth endpoints (login, register, password reset)
 - [ ] TD-2: Email notifications for password reset (SMTP integration)
 - [x] TD-3: Feature flag back-office UI — configurable feature flags via admin panel
 - [x] TD-4: Multi-tenancy enforcement audit — verify all tRPC procedures enforce tenant isolation

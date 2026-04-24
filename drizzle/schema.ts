@@ -141,6 +141,11 @@ export const assessmentItems = mysqlTable("assessment_items", {
   status: mysqlEnum("status", ["draft", "published", "archived"]).notNull().default("draft"),
   // S4: required reasoning flag for high-signal items
   reasoningRequired: boolean("reasoning_required").notNull().default(false),
+  // C3.1a: artefact-based items
+  artefactType: mysqlEnum("artefact_type", ["none", "dashboard_card", "email", "screening_output", "alert", "document_excerpt"]).default("none"),
+  artefactPayload: json("artefact_payload"),
+  aiOutputQuality: mysqlEnum("ai_output_quality", ["normal", "poor", "hallucinated", "overconfident"]).default("normal"),
+  timeLimitSecs: int("time_limit_secs"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -173,6 +178,11 @@ export const assessmentSessions = mysqlTable("assessment_sessions", {
   localeCode: varchar("locale_code", { length: 10 }).default("en-GB"),
   deviceType: varchar("device_type", { length: 20 }),
   scoringConfigVersionAtStart: int("scoring_config_version_at_start"),
+  // S7.1: Role archetype for role-weighted scoring
+  roleArchetypeId: varchar("role_archetype_id", { length: 36 }),
+  roleHintFreetext: varchar("role_hint_freetext", { length: 200 }),
+  // C2.2b: Organisation context
+  organisationId: varchar("organisation_id", { length: 36 }),
   // Learning-aware reassessment mode per Adaptive Learning §6
   learningAwareMode: boolean("learning_aware_mode").notNull().default(false),
   // JSON array of { moduleId, signals: string[], completedAt: number } for recently completed modules
@@ -218,6 +228,10 @@ export const assessmentScores = mysqlTable("assessment_scores", {
   modelVersion: varchar("model_version", { length: 20 }).notNull().default("v1"),
   // S1: versioned scoring transform reference
   scoringConfigVersion: int("scoring_config_version").notNull().default(1),
+  // C1.4a: readiness classification rule
+  readinessRule: mysqlEnum("readiness_rule", ["min_weighted", "min_unweighted", "mean"]).default("min_weighted"),
+  // C1.5: confidence floor gate
+  confidenceFloor: decimal("confidence_floor", { precision: 4, scale: 3 }).default("0.600"),
 });
 
 // ─── Credibility, Risk, State ─────────────────────────────────────────────────
@@ -1140,6 +1154,12 @@ export const learningModules = mysqlTable("learning_modules", {
   // bodyJson shape: { overview, objectives[], sections[{title, content, examples[], tips[]}], reflectionPrompts[], citations[], keyTakeaways[] }
   metadataJson: json("metadata_json").$default(() => ({})),
   // metadataJson: { roleRelevance: string[], prerequisites: string[], tags: string[], researchBasis: string }
+  /** Formative quiz: 3 questions shown after module completes */
+  formativeQuizJson: json("formative_quiz_json").$type<Array<{ question: string; options: Array<{ label: string; value: string; correct: boolean }>; explanation: string }>>(),
+  /** Minimum capability score (0-100) required to unlock this module */
+  requiredCapabilityScore: int("required_capability_score"),
+  /** Minimum difficulty level (1-5) of completed modules required to unlock */
+  requiredLevel: int("required_level"),
   createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
   updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
 }, (t) => ({
@@ -1168,6 +1188,8 @@ export const gapAnalyses = mysqlTable("gap_analyses", {
   // shape: string[] ordered by priority (most critical first)
   overallReadinessScore: decimal("overall_readiness_score", { precision: 5, scale: 2 }).notNull().default("0"),
   readinessBand: varchar("readiness_band", { length: 50 }).notNull().default("developing"),
+  /** What triggered this gap analysis */
+  triggerSource: mysqlEnum("trigger_source", ["manual", "assessment_complete", "revalidation"]).notNull().default("manual"),
   generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
 }, (t) => ({
   userSessionIdx: index("idx_ga_user_session").on(t.userId, t.sessionId),
@@ -1188,6 +1210,8 @@ export const adaptiveLearningPlans = mysqlTable("adaptive_learning_plans", {
   summaryJson: json("summary_json").$default(() => ({})),
   generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
   completedAt: bigint("completed_at", { mode: "number" }),
+  /** Timestamp of last auto-regeneration (from assessment complete) */
+  autoRegeneratedAt: bigint("auto_regenerated_at", { mode: "number" }),
 }, (t) => ({
   userStateIdx: index("idx_alp_user_state").on(t.userId, t.state),
 }));
@@ -1303,7 +1327,72 @@ export const managerTeamMembers = mysqlTable("manager_team_members", {
   managerIdx: index("idx_mtm_manager").on(t.managerId),
 }));
 
+// ─── Learning Nudges (manager → learner module recommendations) ──────────────
+export const learningNudges = mysqlTable("learning_nudges", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  managerId: varchar("manager_id", { length: 36 }).notNull(),
+  learnerId: varchar("learner_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 100 }).notNull(),
+  message: text("message"),
+  sentAt: bigint("sent_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  status: mysqlEnum("status", ["sent", "viewed", "completed"]).notNull().default("sent"),
+}, (t) => ({
+  learnerIdx: index("idx_nudges_learner").on(t.learnerId),
+  managerIdx: index("idx_nudges_manager").on(t.managerId),
+}));
+
+// ─── Learning Milestones (capability improvement badges) ─────────────────────
+export const learningMilestones = mysqlTable("learning_milestones", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  milestoneType: varchar("milestone_type", { length: 50 }).notNull(),
+  capability: varchar("capability", { length: 100 }),
+  badgeKey: varchar("badge_key", { length: 100 }),
+  achievedAt: bigint("achieved_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  metadataJson: json("metadata_json"),
+}, (t) => ({
+  userIdx: index("idx_milestones_user").on(t.userId),
+}));
+
+// ─── Organisations ──────────────────────────────────────────────────────────
+export const organisations = mysqlTable("organisations", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_org_tenant").on(t.tenantId),
+}));
+
+export const organisationProfiles = mysqlTable("organisation_profiles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  organisationId: varchar("organisation_id", { length: 36 }).notNull(),
+  sector: varchar("sector", { length: 100 }),
+  aiAdoptionStage: mysqlEnum("ai_adoption_stage", ["exploring", "piloting", "scaling", "embedded"]).default("exploring"),
+  riskAppetite: mysqlEnum("risk_appetite", ["conservative", "moderate", "progressive"]).default("moderate"),
+  governanceRegime: varchar("governance_regime", { length: 100 }),
+  priorityCapabilities: json("priority_capabilities").$type<string[]>(),
+  aiToolsJson: json("ai_tools_json").$type<string[]>(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+
+// ─── Canonical Signals ────────────────────────────────────────────────────────
+export const canonicalSignals = mysqlTable("canonical_signals", {
+  signalKey: varchar("signal_key", { length: 100 }).primaryKey(),
+  domain: varchar("domain", { length: 100 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type ModulePersonalisationCache = typeof modulePersonalisationCache.$inferSelect;
 export type FormativeQuizResult = typeof formativeQuizResults.$inferSelect;
 export type LearningStreak = typeof learningStreaks.$inferSelect;
 export type ManagerTeamMember = typeof managerTeamMembers.$inferSelect;
+export type LearningNudge = typeof learningNudges.$inferSelect;
+export type LearningMilestone = typeof learningMilestones.$inferSelect;
+export type Organisation = typeof organisations.$inferSelect;
+export type OrganisationProfile = typeof organisationProfiles.$inferSelect;
+export type CanonicalSignal = typeof canonicalSignals.$inferSelect;

@@ -1,6 +1,7 @@
 /**
  * Team Learning Dashboard — Manager view
  * Shows team members' readiness scores, learning progress, streaks, and capability gaps.
+ * Includes nudge functionality for managers to recommend modules to team members.
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -10,8 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Users, UserPlus, Target, BookOpen, Clock, Flame,
-  TrendingUp, TrendingDown, Minus, ChevronRight, Award,
-  BarChart3, AlertTriangle, CheckCircle2, Brain,
+  BarChart3, Bell, X, Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,88 @@ const BAND_COLOURS: Record<string, { text: string; bg: string; border: string }>
   advanced:   { text: "text-blue-400",   bg: "bg-blue-950/20",   border: "border-blue-700/40" },
 };
 
-function MemberCard({ member }: { member: any }) {
+function NudgeDialog({
+  member,
+  onClose,
+}: {
+  member: any;
+  onClose: () => void;
+}) {
+  const [selectedModuleId, setSelectedModuleId] = useState("");
+  const [message, setMessage] = useState("");
+  const { data: modulesData } = trpc.adaptiveLearning.listModules.useQuery({ pageSize: 30 }, { retry: 1 });
+  const sendNudge = trpc.adaptiveLearning.sendNudge.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Nudge sent! Recommended "${result.moduleTitle}" to ${member.name}`);
+      onClose();
+    },
+    onError: (err) => {
+      toast.error(err.message ?? "Failed to send nudge");
+    },
+  });
+
+  const modules = (modulesData as any)?.modules ?? modulesData ?? [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-lg">Nudge {member.name}</h3>
+            <p className="text-xs text-muted-foreground">Recommend a learning module</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Select Module</label>
+            <select
+              value={selectedModuleId}
+              onChange={e => setSelectedModuleId(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="">Choose a module…</option>
+              {modules.map((mod: any) => (
+                <option key={mod.id} value={mod.id}>
+                  {mod.title} ({mod.capability?.replace(/_/g, " ")})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              Personal message <span className="text-muted-foreground/60">(optional)</span>
+            </label>
+            <textarea
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="e.g. This module would help with the upcoming AI rollout…"
+              rows={3}
+              maxLength={500}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+            />
+            <p className="text-[10px] text-muted-foreground text-right mt-0.5">{message.length}/500</p>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button
+              className="flex-1 gap-1.5"
+              disabled={!selectedModuleId || sendNudge.isPending}
+              onClick={() => sendNudge.mutate({ learnerId: member.userId, moduleId: selectedModuleId, message: message.trim() || undefined })}
+            >
+              <Send className="h-4 w-4" />
+              {sendNudge.isPending ? "Sending…" : "Send Nudge"}
+            </Button>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemberCard({ member, onNudge }: { member: any; onNudge: (member: any) => void }) {
   const band = member.readinessBand ?? "developing";
   const colours = BAND_COLOURS[band] ?? BAND_COLOURS.developing;
   const progress = member.plan?.progressPct ?? 0;
@@ -34,11 +115,20 @@ function MemberCard({ member }: { member: any }) {
           <p className="font-semibold text-sm">{member.name}</p>
           <p className="text-xs text-muted-foreground">{member.email}</p>
         </div>
-        {member.readinessBand && (
-          <Badge variant="outline" className={cn("text-[10px] border-0 capitalize", colours.bg, colours.text)}>
-            {member.readinessBand}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {member.readinessBand && (
+            <Badge variant="outline" className={cn("text-[10px] border-0 capitalize", colours.bg, colours.text)}>
+              {member.readinessBand}
+            </Badge>
+          )}
+          <button
+            onClick={() => onNudge(member)}
+            title="Recommend a module"
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Readiness score */}
@@ -97,6 +187,7 @@ function MemberCard({ member }: { member: any }) {
 export default function TeamDashboardPage() {
   const [addEmail, setAddEmail] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [nudgeMember, setNudgeMember] = useState<any>(null);
 
   const { data, isLoading, refetch } = trpc.adaptiveLearning.getTeamLearningProgress.useQuery(undefined, { retry: 1 });
 
@@ -133,6 +224,11 @@ export default function TeamDashboardPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+      {/* Nudge dialog */}
+      {nudgeMember && (
+        <NudgeDialog member={nudgeMember} onClose={() => setNudgeMember(null)} />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -201,7 +297,7 @@ export default function TeamDashboardPage() {
                 <div key={band} className="flex items-center gap-3">
                   <div className={cn("w-20 text-xs capitalize font-medium", colours.text)}>{band}</div>
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className={cn("h-full rounded-full", colours.bg.replace("/20", ""))} style={{ width: `${pct}%`, background: band === "critical" ? "#ef4444" : band === "developing" ? "#f59e0b" : band === "proficient" ? "#10b981" : "#6366f1" }} />
+                    <div className={cn("h-full rounded-full")} style={{ width: `${pct}%`, background: band === "critical" ? "#ef4444" : band === "developing" ? "#f59e0b" : band === "proficient" ? "#10b981" : "#6366f1" }} />
                   </div>
                   <div className="w-16 text-right text-xs text-muted-foreground">{count} ({pct}%)</div>
                 </div>
@@ -233,10 +329,11 @@ export default function TeamDashboardPage() {
           <h2 className="font-semibold mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             Team Members ({members.length})
+            <span className="text-xs text-muted-foreground font-normal ml-1">— click <Bell className="h-3 w-3 inline" /> to recommend a module</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {members.map((member: any) => (
-              <MemberCard key={member.userId} member={member} />
+              <MemberCard key={member.userId} member={member} onNudge={setNudgeMember} />
             ))}
           </div>
         </div>

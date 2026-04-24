@@ -697,3 +697,36 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
     expect(sessionAnswers.length).toBe(20);
   }, 30000);
 });
+
+// ─── C1.1d: DPIA Worked Example ───────────────────────────────────────────────
+describe("C1.1d — DPIA Worked Example: outcome class sign direction", () => {
+  it("strong governance option produces positive ai_ethics_trust movement (score > intercept)", () => {
+    // Simulate a DPIA scenario: HR professional correctly identifies privacy risk
+    // Strong option → positive ethics_under_pressure signal → ai_ethics_trust score above 50 (intercept)
+    const strongDpiaAnswers = [{ signalDeltas: { ethics_under_pressure: 1.2, stakeholder_impact_awareness: 0.8 } }];
+    const signals = computeSignalScores(strongDpiaAnswers);
+    const caps = computeCapabilityScores(signals);
+    expect(signals.ethics_under_pressure.sum).toBeGreaterThan(0);
+    expect(signals.stakeholder_impact_awareness.sum).toBeGreaterThan(0);
+    // Score should be above the 50-point intercept when positive signals are present
+    expect(caps.ai_ethics_trust.score).toBeGreaterThan(50);
+  });
+  it("failure governance option produces negative ai_ethics_trust movement (score < intercept)", () => {
+    // Simulate a DPIA scenario: HR professional dismisses privacy concern (failure)
+    // Failure option → negative pressure_drift_risk signal → ai_ethics_trust score below 50 (intercept)
+    const failureDpiaAnswers = [{ signalDeltas: { pressure_drift_risk: -1.5, legal_vs_fair_distinction: -0.9 } }];
+    const signals = computeSignalScores(failureDpiaAnswers);
+    const caps = computeCapabilityScores(signals);
+    expect(signals.pressure_drift_risk.sum).toBeLessThan(0);
+    expect(signals.legal_vs_fair_distinction.sum).toBeLessThan(0);
+    // Score should be below the 50-point intercept when negative signals are present
+    expect(caps.ai_ethics_trust.score).toBeLessThan(50);
+  });
+  it("critical_failure governance option produces larger negative signal movement than failure", () => {
+    const failureAnswers = [{ signalDeltas: { ethics_under_pressure: -0.7 } }];
+    const criticalAnswers = [{ signalDeltas: { ethics_under_pressure: -1.5 } }];
+    const failureSignals = computeSignalScores(failureAnswers);
+    const criticalSignals = computeSignalScores(criticalAnswers);
+    expect(criticalSignals.ethics_under_pressure.sum).toBeLessThan(failureSignals.ethics_under_pressure.sum);
+  });
+});
