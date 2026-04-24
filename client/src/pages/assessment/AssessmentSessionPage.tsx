@@ -3,10 +3,10 @@
  *
  * Renders each of the 8 interaction types with a distinct visual treatment:
  *
- * 1. situational_judgement  — scenario + constraint + MCQ
+ * 1. prompt_refinement     — refine a weak prompt into an effective one
  * 2. prioritisation         — scenario + constraint + ranked MCQ (coloured priority badge)
- * 3. risk_judgement         — scenario + red risk framing + MCQ
- * 4. governance_decision    — scenario + policy framing + MCQ
+ * 3. agent_oversight       — evaluate and correct an AI agent's actions
+ * 4. ethical_dilemma       — navigate ethical tensions in AI deployment
  * 5. scenario_critique      — scenario + AI OUTPUT block (evaluate this) + MCQ
  * 6. output_improvement     — scenario + AI OUTPUT block (improve this) + MCQ
  * 7. error_detection        — scenario + AI OUTPUT block (find the error) + MCQ
@@ -36,7 +36,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
@@ -65,16 +64,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 // ─── Capability colours ───────────────────────────────────────────────────────
 
-const CAPABILITY_COLOURS: Record<string, string> = {
-  execution:           "#4477AA",
-  judgement:           "#AA3377",
-  governance:          "#228833",
-  appropriateness:     "#EE6677",
-  validation:          "#EE8866",
-  prioritisation:      "#66CCEE",
-  data_interpretation: "#228833",
-  workflow_application:"#4477AA",
-};
+// v10 domain colours — imported from shared constants
+import { DOMAIN_COLOURS, DOMAIN_LABELS, INTERACTION_TYPE_META, INTERACTION_TYPE_DESCRIPTIONS, READINESS_STATES } from "@/lib/domains";
+import type { CapabilityKey, InteractionType } from "@/lib/domains";
+
+const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS;
 
 const RISK_CONFIG = {
   High:   { color: "text-[#EE6677] bg-[#EE6677]/8 border-[#EE6677]/30", icon: AlertTriangle },
@@ -84,18 +78,7 @@ const RISK_CONFIG = {
 
 // ─── Interaction type config ──────────────────────────────────────────────────
 
-type InteractionTypeKey =
-  | "situational_judgement"
-  | "prioritisation"
-  | "risk_judgement"
-  | "governance_decision"
-  | "scenario_critique"
-  | "output_improvement"
-  | "error_detection"
-  | "data_interpretation"
-  | "multi_step_workflow"
-  | "contradiction_probe"
-  | "confidence_calibration";
+type InteractionTypeKey = InteractionType | "contradiction_probe" | "multi_step_workflow";
 
 interface InteractionConfig {
   label: string;
@@ -110,79 +93,24 @@ interface InteractionConfig {
   icon: React.ElementType;
 }
 
+// v10 interaction type configs — built from shared constants + legacy types
 const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
-  situational_judgement: {
-    label: "Situational Judgement",
-    instruction: "Select the response that best demonstrates sound professional judgement.",
-    questionLabel: "What do you do?",
-    hasAiOutput: false,
-    hasDataContext: false,
-    accent: "#4477AA",
-    icon: Scale,
-  },
-  prioritisation: {
-    label: "Prioritisation",
-    instruction: "Select the action that should be prioritised first given the constraints.",
-    questionLabel: "What do you prioritise?",
-    hasAiOutput: false,
-    hasDataContext: false,
-    accent: "#66CCEE",
-    icon: Layers,
-  },
-  risk_judgement: {
-    label: "Risk Judgement",
-    instruction: "Assess the level of risk and select the most appropriate response.",
-    questionLabel: "What is the most appropriate response to this risk?",
-    hasAiOutput: false,
-    hasDataContext: false,
-    accent: "#EE6677",
-    icon: AlertTriangle,
-  },
-  governance_decision: {
-    label: "Governance Decision",
-    instruction: "Select the response that best aligns with AI governance and compliance requirements.",
-    questionLabel: "What is the correct governance action?",
-    hasAiOutput: false,
-    hasDataContext: false,
-    accent: "#228833",
-    icon: Shield,
-  },
-  scenario_critique: {
-    label: "AI Output Critique",
-    instruction: "Evaluate the AI-generated output below. Select the most significant problem with it.",
-    questionLabel: "What is the most significant problem with this AI output?",
-    hasAiOutput: true,
-    hasDataContext: false,
-    accent: "#AA3377",
-    icon: Search,
-  },
-  output_improvement: {
-    label: "Output Improvement",
-    instruction: "Review the AI-generated output below. Select the best way to improve it.",
-    questionLabel: "How should this output be improved?",
-    hasAiOutput: true,
-    hasDataContext: false,
-    accent: "#CCBB44",
-    icon: Sparkles,
-  },
-  error_detection: {
-    label: "Error Detection",
-    instruction: "Examine the AI output below carefully. Identify the most significant error or risk.",
-    questionLabel: "What is the most significant error in this AI output?",
-    hasAiOutput: true,
-    hasDataContext: false,
-    accent: "#EE6677",
-    icon: AlertCircle,
-  },
-  data_interpretation: {
-    label: "Data Interpretation",
-    instruction: "Interpret the data or AI-generated insight below. Select the most accurate conclusion.",
-    questionLabel: "What does this data tell you?",
-    hasAiOutput: false,
-    hasDataContext: true,
-    accent: "#66CCEE",
-    icon: BarChart3,
-  },
+  // v10 interaction types from shared constants
+  ...Object.fromEntries(
+    Object.entries(INTERACTION_TYPE_META).map(([key, meta]) => [
+      key,
+      {
+        label: meta.label,
+        instruction: meta.instruction,
+        questionLabel: meta.questionLabel,
+        hasAiOutput: ["error_detection", "scenario_critique", "confidence_calibration", "prompt_diagnosis"].includes(key),
+        hasDataContext: false,
+        accent: key.includes("error") ? "#EE6677" : key.includes("ethic") ? "#AA3377" : key.includes("risk") ? "#EE6677" : key.includes("change") || key.includes("resistance") ? "#66CCEE" : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? "#228833" : "#4477AA",
+        icon: key.includes("error") ? AlertCircle : key.includes("risk") ? AlertTriangle : key.includes("ethic") || key.includes("pressure") ? Shield : key.includes("critique") || key.includes("diagnosis") ? Search : key.includes("prompt") ? Sparkles : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? Layers : key.includes("leader") || key.includes("advisory") ? Briefcase : key.includes("resist") || key.includes("concern") || key.includes("stakeholder") ? Scale : Target,
+      },
+    ])
+  ),
+  // Legacy types preserved for backward compatibility
   multi_step_workflow: {
     label: "Workflow Sequencing",
     instruction: "Consider the full sequence of steps and select the most appropriate next action.",
@@ -201,30 +129,14 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
     accent: "#AA3377",
     icon: Scale,
   },
-  confidence_calibration: {
-    label: "Confidence Calibration",
-    instruction: "Reflect on your certainty and select the response that best reflects your actual confidence level.",
-    questionLabel: "How certain are you about this?",
-    hasAiOutput: false,
-    hasDataContext: false,
-    accent: "#4477AA",
-    icon: Target,
-  },
 };
 
-// P6: Interaction type purpose explanations — shown as a contextual banner above each question
+// v10 interaction type purpose explanations — built from shared constants
 const INTERACTION_PURPOSE: Record<string, string> = {
-  situational_judgement:  "Tests your ability to apply professional judgement in realistic AI-assisted HR scenarios.",
-  prioritisation:         "Assesses how you balance competing priorities when AI tools surface multiple options.",
-  risk_judgement:         "Measures your ability to identify and respond proportionately to AI-related risks.",
-  governance_decision:    "Evaluates your knowledge of AI governance requirements and compliance obligations.",
-  scenario_critique:      "Tests your ability to critically evaluate AI-generated outputs before acting on them.",
-  output_improvement:     "Assesses your skill in identifying and correcting weaknesses in AI-generated content.",
-  error_detection:        "Measures your ability to spot factual errors, hallucinations, or logical flaws in AI outputs.",
-  data_interpretation:    "Tests how accurately you interpret and contextualise AI-generated data and analytics.",
+  ...INTERACTION_TYPE_DESCRIPTIONS,
+  // Legacy types
   multi_step_workflow:    "Evaluates your ability to sequence AI-assisted HR workflows correctly and safely.",
   contradiction_probe:    "Checks the consistency of your responses across related scenarios.",
-  confidence_calibration: "Measures how accurately your self-assessed confidence aligns with your response quality.",
 };
 
 function getInteractionConfig(interactionType: string): InteractionConfig {
@@ -400,12 +312,10 @@ function CompletionScreen({
   onNavigate: (path: string) => void;
 }) {
   const primaryState = result?.primaryState ?? "unknown";
+  // v10 five-state readiness classification
   const STATE_CONFIGS: Record<string, { label: string; color: string; bg: string; description: string }> = {
-    safe:     { label: "Safe to Deploy", color: "text-[#228833]", bg: "bg-[#228833]/8 border-[#228833]/30", description: "Your responses demonstrate the judgement and governance awareness needed for safe AI use in your role." },
-    at_risk:  { label: "At Risk",        color: "text-[#EE8866]", bg: "bg-[#EE8866]/8 border-[#EE8866]/30", description: "Some capability gaps were identified. Your learning plan will target these areas specifically." },
-    unsafe:   { label: "Unsafe",         color: "text-[#EE6677]", bg: "bg-[#EE6677]/8 border-[#EE6677]/30", description: "Significant risks were detected. Completing your learning plan before using AI tools is strongly recommended." },
-    unknown:  { label: "Insufficient Data", color: "text-muted-foreground", bg: "bg-muted/20 border-border", description: "More responses are needed to produce a reliable classification. Consider completing a full session." },
-    insufficient_evidence: { label: "Insufficient Evidence", color: "text-muted-foreground", bg: "bg-muted/20 border-border", description: "The assessment did not collect enough evidence to classify your readiness reliably. A full session is recommended." },
+    ...READINESS_STATES,
+    insufficient_evidence: READINESS_STATES.unknown,
   };
   const stateConfig = STATE_CONFIGS[primaryState] ?? { label: "Assessed", color: "text-foreground", bg: "bg-muted/20 border-border", description: "" };
   const capabilityScores = result?.capabilityScores ?? {};
@@ -541,7 +451,11 @@ export default function AssessmentSessionPage() {
   );
 
   const [selectedValue, setSelectedValue] = useState<string>("");
-  const [confidence, setConfidence] = useState<number>(50);
+  // v10: Three-level confidence staking (tentative/confident/certain)
+  type ConfidenceStake = "tentative" | "confident" | "certain";
+  const STAKE_VALUES: Record<ConfidenceStake, number> = { tentative: 0.33, confident: 0.66, certain: 1.0 };
+  const [confidenceStake, setConfidenceStake] = useState<ConfidenceStake | null>(null);
+  const confidence = confidenceStake ? STAKE_VALUES[confidenceStake] * 100 : 50;
   // C2.1: Optional reasoning capture
   const [reasoningText, setReasoningText] = useState<string>("");
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
@@ -578,7 +492,7 @@ export default function AssessmentSessionPage() {
         refetch();
       } else {
         setSelectedValue("");
-        setConfidence(50);
+        setConfidenceStake(null);
         setReasoningText(""); // C2.1: reset reasoning
         setItemStartTime(Date.now());
         setFirstInteractionTime(null);
@@ -958,7 +872,7 @@ export default function AssessmentSessionPage() {
                     setRationaleData(null);
                     setRationaleLoading(false);
                     setSelectedValue("");
-                    setConfidence(50);
+                    setConfidenceStake(null);
                     setReasoningText(""); // C2.1: reset reasoning
                     setItemStartTime(Date.now());
                     setFirstInteractionTime(null); // Fix: reset so next question doesn't inherit stale timestamp
@@ -982,7 +896,7 @@ export default function AssessmentSessionPage() {
     return <GeneratingState answeredCount={answeredCount} totalItems={totalItems} />;
   }
 
-  const interactionType = (nextItem as any).interactionType ?? "situational_judgement";
+  const interactionType = (nextItem as any).interactionType ?? "prompt_refinement";
   const iConfig = getInteractionConfig(interactionType);
   const formatElapsed = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
   const capabilityColor = CAPABILITY_COLOURS[(nextItem as any).capabilityKey] ?? "#4477AA";
@@ -1144,8 +1058,8 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Risk framing for risk_judgement */}
-          {interactionType === "risk_judgement" && (nextItem as any).constraint && (
+          {/* Risk framing for pressure_test */}
+          {interactionType === "pressure_test" && (nextItem as any).constraint && (
             <div className="bg-[#EE6677]/6 rounded-xl p-3 border border-[#EE6677]/20">
               <p className="text-xs font-semibold text-[#EE6677] uppercase tracking-wider mb-1">
                 Risk Factor
@@ -1155,7 +1069,7 @@ export default function AssessmentSessionPage() {
           )}
 
           {/* Governance framing */}
-          {interactionType === "governance_decision" && (nextItem as any).constraint && (
+          {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
             <div className="bg-[#228833]/6 rounded-xl p-3 border border-[#228833]/20">
               <p className="text-xs font-semibold text-[#228833] uppercase tracking-wider mb-1">
                 Policy Context
@@ -1239,7 +1153,7 @@ export default function AssessmentSessionPage() {
           )}
 
           {/* C2.1: Optional reasoning capture — shown for all output-facing types */}
-          {["situational_judgement", "risk_judgement", "governance_decision", "scenario_critique", "error_detection", "output_improvement"].includes(interactionType) && (
+          {["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -1263,25 +1177,36 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Confidence slider */}
+          {/* v10: Three-level confidence staking */}
           <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                How confident are you in this answer?
-              </Label>
-              <span className="text-sm font-bold text-[#10B981]">{confidence}%</span>
-            </div>
-            <Slider
-              value={[confidence]}
-              onValueChange={([v]) => setConfidence(v)}
-              min={0}
-              max={100}
-              step={5}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Not confident</span>
-              <span>Very confident</span>
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              How confident are you in this answer?
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["tentative", "confident", "certain"] as ConfidenceStake[]).map((stake) => {
+                const isSelected = confidenceStake === stake;
+                const labels: Record<ConfidenceStake, { label: string; desc: string; icon: string }> = {
+                  tentative: { label: "Tentative", desc: "I'm not sure about this", icon: "\u{1F914}" },
+                  confident: { label: "Confident", desc: "I believe this is right", icon: "\u{1F44D}" },
+                  certain:   { label: "Certain", desc: "I'm sure this is correct", icon: "\u{2705}" },
+                };
+                const { label, desc } = labels[stake];
+                return (
+                  <button
+                    key={stake}
+                    type="button"
+                    onClick={() => setConfidenceStake(stake)}
+                    className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-center transition-all ${
+                      isSelected
+                        ? "border-[#10B981] bg-[#10B981]/10 text-[#10B981]"
+                        : "border-border hover:border-[#10B981]/40 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">{label}</span>
+                    <span className="text-xs opacity-70">{desc}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

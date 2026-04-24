@@ -91,21 +91,21 @@ import { getPersonaProfile, getPersonaAdaptedParameters } from "../ail/personaCl
 // ─── Capability Display + Colour Maps ────────────────────────────────────────
 
 const CAPABILITY_DISPLAY: Record<string, string> = {
-  execution:           "AI Execution",
-  judgement:           "AI Judgement",
-  governance:          "AI Risk & Governance",
-  appropriateness:     "AI Appropriateness",
-  workflow:            "AI Workflow Application",
-  data_interpretation: "AI Data & Insight",
+  ai_interaction:         "AI Interaction",
+  ai_output_evaluation:   "AI Output Evaluation",
+  ai_workflow_design:     "AI Workflow Design",
+  workforce_ai_readiness: "Workforce AI Readiness",
+  ai_ethics_trust:        "AI Ethics & Employee Trust",
+  ai_change_leadership:   "AI Change Leadership",
 };
 
 const CAPABILITY_COLOURS: Record<string, string> = {
-  execution:           "#4477AA",
-  judgement:           "#AA3377",
-  governance:          "#228833",
-  appropriateness:     "#EE6677",
-  workflow:            "#CCBB44",
-  data_interpretation: "#66CCEE",
+  ai_interaction:         "#3B82F6",
+  ai_output_evaluation:   "#8B5CF6",
+  ai_workflow_design:     "#10B981",
+  workforce_ai_readiness: "#F59E0B",
+  ai_ethics_trust:        "#EF4444",
+  ai_change_leadership:   "#06B6D4",
 };
 
 // ─── NextItem type ────────────────────────────────────────────────────────────
@@ -343,12 +343,9 @@ function buildAdaptiveContext(
 ): { ctx: AdaptiveSelectionContext; generationVars: ReturnType<typeof selectNextGenerationVariables> } {
   const signalScores = computeSignalScores(
     answers.map(a => ({
-      signalDeltasJson: a.signalDeltasJson,
-      outcomeClass: a.outcomeClass,
-      riskLevel: a.riskLevel,
-      difficulty: a.difficulty,
-      confidenceScore: a.confidenceScore,
-      timeToAnswerMs: a.timeToAnswerMs,
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+      })(),
     }))
   );
   const capabilityScores = computeCapabilityScores(signalScores);
@@ -2172,17 +2169,20 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         return val.score ?? 0;
       };
 
-      const ALL_CAPS = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"] as const;
+      const ALL_CAPS = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"] as const;
 
-      const capabilities = ALL_CAPS.map(cap => ({
-        key: cap,
-        displayName: CAPABILITY_DISPLAY[cap] ?? cap,
-        colour: CAPABILITY_COLOURS[cap] ?? "#888888",
-        userScore: Math.round(extractScore(capabilityScoresRaw[cap])),
-        roleMean: normMeans[cap].roleMean,
-        platformMean: normMeans[cap].platformMean,
-        stdDev: normMeans[cap].stdDev,
-      }));
+      const capabilities = ALL_CAPS.map(cap => {
+        const normData = normMeans[cap as keyof typeof normMeans];
+        return {
+          key: cap,
+          displayName: CAPABILITY_DISPLAY[cap] ?? cap,
+          colour: CAPABILITY_COLOURS[cap] ?? "#888888",
+          userScore: Math.round(extractScore(capabilityScoresRaw[cap])),
+          roleMean: normData?.roleMean ?? 50,
+          platformMean: normData?.platformMean ?? 50,
+          stdDev: normData?.stdDev ?? 12,
+        };
+      });
 
       const roleArchetype = resolveRoleArchetype(roleHint);
       return {

@@ -26,15 +26,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 const CAP_COLORS: Record<string, string> = {
-  execution: "#4477AA", prioritisation: "#AA3377", validation: "#228833",
-  judgement: "#EE6677", governance: "#EE8866", appropriateness: "#66CCEE",
-  data_interpretation: "#BBBBBB",
+  ai_interaction: "#4477AA", ai_output_evaluation: "#228833", ai_workflow_design: "#0D9488",
+  workforce_ai_readiness: "#059669", ai_ethics_trust: "#AA3377", ai_change_leadership: "#D97706",
 };
 
 const CAP_LABELS: Record<string, string> = {
-  execution: "Execution", prioritisation: "Prioritisation", validation: "Validation",
-  judgement: "Judgement", governance: "Governance", appropriateness: "Appropriateness",
-  data_interpretation: "Data Interp.",
+  ai_interaction: "AI Interaction", ai_output_evaluation: "Output Evaluation", ai_workflow_design: "Workflow Design",
+  workforce_ai_readiness: "Workforce Readiness", ai_ethics_trust: "Ethics & Trust", ai_change_leadership: "Change Leadership",
 };
 
 function KpiCard({ label, value, icon: Icon, color, sub }: {

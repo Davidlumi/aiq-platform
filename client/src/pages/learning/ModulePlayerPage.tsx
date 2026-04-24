@@ -30,10 +30,10 @@ import { cn } from "@/lib/utils";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  execution:           { label: "AI Execution",        color: "#6366f1", icon: Zap },
-  judgement:           { label: "AI Judgement",         color: "#f59e0b", icon: Brain },
-  governance:          { label: "AI Governance",        color: "#10b981", icon: Target },
-  appropriateness:     { label: "Appropriateness",      color: "#ec4899", icon: Lightbulb },
+  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", icon: Zap },
+  ai_output_evaluation:{ label: "AI Output Evaluation", color: "#228833", icon: Brain },
+  ai_ethics_trust:     { label: "AI Ethics & Trust",    color: "#AA3377", icon: Target },
+  ai_change_leadership:{ label: "AI Change Leadership", color: "#D97706", icon: Lightbulb },
   workflow:            { label: "Workflow Integration", color: "#3b82f6", icon: Layers },
   data_interpretation: { label: "Data Interpretation",  color: "#8b5cf6", icon: BarChart3 },
 };

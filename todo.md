@@ -1157,3 +1157,69 @@
 - [x] CR-5: Added methodology link to marketing page footer
 - [x] CR-6: Overall score confidence interval displayed in Score Summary card
 - [ ] Norm data collection mechanism — track real assessment completions to replace synthetic norms over time; add norm_data_collection table and collection logic (deferred to next sprint)
+
+## Assessment Redesign — Practical AI Skills (Apr 24 2026)
+- [ ] AR-1: Audit current assessment items and identify what's testing theory vs practical skills
+- [ ] AR-2: Design new capability framework: chatbot competence, working with agents, workflow AI analysis, AI vision/possibilities, challenging AI implementation
+- [ ] AR-3: Write new scenario-based assessment items that test practical AI skills in HR context
+- [ ] AR-4: Update capability domains in the scoring engine and results display
+- [ ] AR-5: Seed the new assessment items into the database
+- [ ] AR-6: Update the assessment blueprint and item selection logic
+- [ ] AR-7: Test the full assessment flow with new items
+
+## v10 Phase 1 — Major Rework (Evolution of v9.2)
+
+### Scoring Engine
+- [x] P1-1: New 6-domain taxonomy (AI Interaction, AI Output Evaluation, AI Workflow Design, Workforce AI Readiness, AI Ethics & Employee Trust, AI Change Leadership)
+- [x] P1-2: New 26-signal system with signal-to-domain mapping
+- [x] P1-3: Foundation vs Strategic domain classification (foundation-first gating)
+- [x] P1-4: Updated failure modes — blocking: blind_acceptance, hallucination_acceptance, critical_failure, pressure_drift; downgrade: over_reliance, dismissive_of_concern, generic_prescription
+- [x] P1-5: Sum-and-clip scoring formula with v10 parameters (intercept 50, outcome modifiers, difficulty weights, risk multipliers)
+- [x] P1-6: Domain-weighted confidence calibration (Output Eval 1.5x, Ethics 1.3x, etc.)
+
+### Adaptive Engine
+- [x] P1-7: 15 interaction types (4 preserved + 11 new) with LLM prompt templates
+- [x] P1-8: Foundation-first routing — AI Interaction + AI Output Evaluation get ≥3 signals before strategic domains
+- [x] P1-9: Pressure-test mechanic with escalating constraints (CEO demand → legal sign-off → competitor)
+- [ ] P1-10: Immersive scenario presentation formats (email chains, Slack, dashboards, documents, meetings, HRIS)
+- [ ] P1-11: Narrative wrapper (fictional week at mid-sized org, parameterised by participant profile)
+
+### Role Archetypes
+- [x] P1-12: Rebuild all 11 archetype capability weights for new 6 domains
+- [x] P1-13: Update minimum safe thresholds per archetype for new domains
+
+### Anti-Gaming & Contradictions
+- [x] P1-14: 14 anti-gaming patterns (11 preserved + 3 new: ethics_performative, advisory_generic, resistance_dismissive)
+- [ ] P1-15: 3 learning-aware gaming patterns (target_gap_shaping, avoided_gap_shaping, threshold_margin_clustering)
+- [x] P1-16: Cross-domain contradiction pairs (Ethics↔Workflow, Output Eval↔Interaction, Readiness↔Change Leadership)
+
+### Classification & Confidence
+- [x] P1-17: Five-state readiness classification (Safe/AI-Ready, At Risk/Developing, Unsafe/Not Yet Ready, Foundation Gap, Unknown/Insufficient Data)
+- [x] P1-18: Three-level confidence staking (tentative/confident/certain) replacing 4-point slider
+- [x] P1-19: Configuration versioning — already implemented (sessions + scores stamped with scoringConfigVersion)
+
+### Database Schema
+- [x] P1-20: Update assessment tables for v10 signal/domain changes (JSON columns already compatible — no migration needed)
+- [x] P1-21: Configuration versioning already exists (scoring_config table with version field, sessions + scores stamped)
+
+### Session Controller & Router
+- [x] P1-22: Update session controller for foundation-first flow and pressure-test integration
+- [x] P1-23: Update assessment router procedures for v10 data structures
+
+### Content Generation
+- [x] P1-24: Generate scenario content for all 15 interaction types across 6 domains (40 scenarios, 160 options seeded)
+- [ ] P1-25: Generate module content for learning prescription
+
+### Frontend
+- [x] P1-26: Update results page for new 6 domains, confidence intervals, translation layer
+- [x] P1-27: Update dashboard for new domain names and scoring (HR, Manager, Learner dashboards + MarketingPage + MethodologyPage all updated)
+- [x] P1-28: Three-level confidence staking UI in assessment flow
+
+### Testing
+- [x] P1-29: Deterministic scoring tests — synthetic participants with known profiles
+- [x] P1-30: Foundation gate behaviour tests
+- [x] P1-31: Anti-gaming detection tests
+- [x] P1-32: Pressure-test mechanic tests
+- [x] P1-33: Quality gate validation tests
+- [x] P1-34: Migrate all 8 legacy test files from v9.2 to v10 (domain names, signal keys, interaction types, API signatures)
+- [x] P1-35: Full test suite green — 391/391 tests passing across 19 test files

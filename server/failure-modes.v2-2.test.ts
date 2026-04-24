@@ -1,8 +1,17 @@
 /**
- * AiQ v2.2 — WS1.2: Failure Mode Detection Tests
+ * AiQ v2.2 — WS1.2: Failure Mode Detection Tests (v10 migration)
  *
  * Tests configurable blocking/downgrade thresholds introduced in v2.2.
  * Default thresholds: blockingMin=2, downgradeMin=1
+ *
+ * v10 migration notes:
+ *   - blind_ai_acceptance → blind_acceptance
+ *   - critical_failure_response → critical_failure
+ *   - governance_bypass → (removed, replaced by pressure_drift)
+ *   - poor_validation → (removed)
+ *   - GOVERNANCE_BYPASS event code → no longer recognised; use PRESSURE_DRIFT
+ *   - detectFailureModes now returns pressureDriftDetected/pressureDriftMagnitude
+ *   - over_reliance detection now uses blind_acceptance_risk < -1.0
  *
  * E3 Hybrid Resolution (Addition A — Claude feedback round 3):
  * E3 (Adaptivity Review, Apr 22 2026) introduced unique-mode counting to prevent
@@ -12,15 +21,6 @@
  *   BLOCK requires:
  *     (a) blockCount >= blockingMin (item-counting gate), AND
  *     (b) distinctBlockingModeCount >= 2  OR  hasCatastrophicItem (delta >= 2.25)
- *
- * This prevents mild-repeated-pattern inflation (E3's concern) while still
- * blocking multi-domain failures and catastrophic single-category failures.
- *
- * Also validates:
- * - Two-item evidence requirement for blocking classification
- * - Per-answer item counting (not unique-mode counting)
- * - Governance flag detection
- * - Event code triggers
  */
 import { describe, it, expect } from "vitest";
 import { detectFailureModes } from "./assessment/scoringEngine";
@@ -42,7 +42,7 @@ function makeAnswer(overrides: {
 describe("WS1.2 detectFailureModes — default thresholds", () => {
   it("returns no impact when no failure modes detected", () => {
     const answers = [
-      makeAnswer({ outcomeClass: "strong", signalDeltas: { governance_quality: 0.8 } }),
+      makeAnswer({ outcomeClass: "strong", signalDeltas: { ethics_under_pressure: 0.8 } }),
       makeAnswer({ outcomeClass: "acceptable" }),
     ];
     const result = detectFailureModes(answers);
@@ -84,7 +84,7 @@ describe("WS1.2 detectFailureModes — default thresholds", () => {
     );
     const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("downgrade");
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+    expect(result.modes).toContain("blind_acceptance");
   });
 
   it("E3 margin clause: 5 answers same mode with catastrophic delta → block", () => {
@@ -95,7 +95,7 @@ describe("WS1.2 detectFailureModes — default thresholds", () => {
     );
     const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("block");
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+    expect(result.modes).toContain("blind_acceptance");
   });
 });
 
@@ -148,50 +148,59 @@ describe("WS1.2 detectFailureModes — configurable thresholds", () => {
     ];
     const result = detectFailureModes(answers, { blockingFailureMinItems: 3, downgradeFailureMinItems: 2 });
     // blockCount=1 < blockingMin=3 → not block
-    // allModeCount=1 < downgradeMin=2 → not downgrade
+    // downgrade modes: over_reliance fires (blind_acceptance_risk < -1.0), count=1 < downgradeMin=2 → not downgrade
     expect(result.classificationImpact).toBe("none");
   });
 });
 
 // ─── Event code triggers ──────────────────────────────────────────────────────
 describe("WS1.2 detectFailureModes — event code triggers", () => {
-  it("BLIND_ACCEPT event code triggers blind_ai_acceptance failure mode", () => {
+  it("BLIND_ACCEPT event code triggers blind_acceptance failure mode", () => {
     const answers = [makeAnswer({ eventCodes: ["BLIND_ACCEPT"] })];
     const result = detectFailureModes(answers);
-    expect(result.modes).toContain("blind_ai_acceptance");
+    expect(result.modes).toContain("blind_acceptance");
     expect(result.governanceFlag).toBe(true);
   });
 
-  it("GOVERNANCE_BYPASS event code triggers governance_bypass failure mode", () => {
-    const answers = [makeAnswer({ eventCodes: ["GOVERNANCE_BYPASS"] })];
+  it("PRESSURE_DRIFT event code triggers pressure_drift failure mode", () => {
+    const answers = [makeAnswer({ eventCodes: ["PRESSURE_DRIFT"] })];
     const result = detectFailureModes(answers);
-    expect(result.modes).toContain("governance_bypass");
+    expect(result.modes).toContain("pressure_drift");
     expect(result.governanceFlag).toBe(true);
+    expect(result.pressureDriftDetected).toBe(true);
   });
 
-  it("critical_failure outcomeClass triggers critical_failure_response mode", () => {
+  it("critical_failure outcomeClass triggers critical_failure mode", () => {
     const answers = [makeAnswer({ outcomeClass: "critical_failure" })];
     const result = detectFailureModes(answers);
-    expect(result.modes).toContain("critical_failure_response");
+    expect(result.modes).toContain("critical_failure");
     expect(result.governanceFlag).toBe(true);
   });
 });
 
 // ─── Non-blocking failure modes ──────────────────────────────────────────────
 describe("WS1.2 detectFailureModes — non-blocking failure modes", () => {
-  it("poor_validation does not set governanceFlag", () => {
-    const answers = [makeAnswer({ signalDeltas: { validation_accuracy: -2.5 } })];
-    const result = detectFailureModes(answers);
-    expect(result.modes).toContain("poor_validation");
-    expect(result.governanceFlag).toBe(false);
-  });
-
-  it("over_reliance alone produces downgrade (non-blocking, allModeCount=1 >= downgradeMin=1)", () => {
-    const answers = [makeAnswer({ signalDeltas: { over_reliance_risk: -1.5 } })];
+  it("over_reliance alone produces downgrade (non-blocking, downgradeCount=1 >= downgradeMin=1)", () => {
+    // over_reliance triggers when blind_acceptance_risk < -1.0
+    const answers = [makeAnswer({ signalDeltas: { blind_acceptance_risk: -1.5 } })];
     const result = detectFailureModes(answers);
     expect(result.modes).toContain("over_reliance");
     // over_reliance is non-blocking (does not increment blockCount)
-    // but allModeCount=1 >= downgradeMin=1 → downgrade
+    // but downgradeCount=1 >= downgradeMin=1 → downgrade
+    expect(result.classificationImpact).toBe("downgrade");
+  });
+
+  it("dismissive_of_concern produces downgrade", () => {
+    const answers = [makeAnswer({ signalDeltas: { dismissive_of_concern_risk: -1.5 } })];
+    const result = detectFailureModes(answers);
+    expect(result.modes).toContain("dismissive_of_concern");
+    expect(result.classificationImpact).toBe("downgrade");
+  });
+
+  it("generic_prescription produces downgrade", () => {
+    const answers = [makeAnswer({ signalDeltas: { generic_prescription_risk: -1.5 } })];
+    const result = detectFailureModes(answers);
+    expect(result.modes).toContain("generic_prescription");
     expect(result.classificationImpact).toBe("downgrade");
   });
 });
@@ -199,21 +208,16 @@ describe("WS1.2 detectFailureModes — non-blocking failure modes", () => {
 // ─── E3 Hybrid Resolution tests (Addition A) ─────────────────────────────────
 describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)", () => {
   it("2 answers same mild mode → downgrade (E3 concern: mild repeated single pattern does NOT block)", () => {
-    // blockCount=2 >= blockingMin=2 (item gate passes)
-    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
-    // → quality gate fails → downgrade, not block
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
     ];
     const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("downgrade");
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+    expect(result.modes).toContain("blind_acceptance");
   });
 
   it("2 answers different blocking modes → block (multi-domain failure, quality gate passes)", () => {
-    // blockCount=2 >= blockingMin=2 (item gate passes)
-    // distinctBlockingModeCount=2 >= 2 → quality gate passes → block
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } }),
       makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
@@ -224,8 +228,6 @@ describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)"
   });
 
   it("2 answers same mode with catastrophic delta (>=2.25) → block (margin clause)", () => {
-    // blockCount=2 >= blockingMin=2 (item gate passes)
-    // delta=3.0 >= 2.25 (1.5 * 1.5) → hasCatastrophicItem=true → quality gate passes → block
     const answers = [
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } }),
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } }),
@@ -235,26 +237,21 @@ describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)"
   });
 
   it("10 answers same mild mode → downgrade (E3 concern: inflation prevention)", () => {
-    // blockCount=10 >= blockingMin=2 (item gate passes)
-    // distinctBlockingModeCount=1 < 2, hasCatastrophicItem=false (2.0 < 2.25)
-    // → quality gate fails → downgrade (E3's concern validated)
     const answers = Array.from({ length: 10 }, () =>
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
     );
     const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("downgrade");
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+    expect(result.modes).toContain("blind_acceptance");
   });
 
   it("regression: 10 items triggering one mode with catastrophic delta → block", () => {
-    // blockCount=10 >= blockingMin=2 (item gate passes)
-    // delta=3.0 >= 2.25 → hasCatastrophicItem=true → quality gate passes → block
     const answers = Array.from({ length: 10 }, () =>
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -3.0 } })
     );
     const result = detectFailureModes(answers);
     expect(result.classificationImpact).toBe("block");
-    expect(result.modes).toEqual(["blind_ai_acceptance"]);
+    expect(result.modes).toContain("blind_acceptance");
   });
 
   it("custom blockingFailureMinItems=5: 4 triggers → downgrade (item gate fails)", () => {
@@ -262,7 +259,6 @@ describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)"
       makeAnswer({ signalDeltas: { blind_acceptance_risk: -2.0 } })
     );
     const result = detectFailureModes(answers, { blockingFailureMinItems: 5 });
-    // blockCount=4 < blockingMin=5 → item gate fails → not block
     expect(result.classificationImpact).toBe("downgrade");
   });
 
@@ -275,8 +271,6 @@ describe("WS1.2 detectFailureModes — E3 hybrid (item-counting + quality gate)"
       makeAnswer({ signalDeltas: { hallucination_acceptance_risk: -2.0 } }),
     ];
     const result = detectFailureModes(answers, { blockingFailureMinItems: 5 });
-    // blockCount=5 >= blockingMin=5 (item gate passes)
-    // distinctBlockingModeCount=2 >= 2 → quality gate passes → block
     expect(result.classificationImpact).toBe("block");
   });
 });

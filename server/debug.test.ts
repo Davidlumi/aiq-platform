@@ -1,56 +1,65 @@
 /**
- * Session Controller — Targeted Sanity Tests
+ * Session Controller — Targeted Sanity Tests (v10 migration)
  *
  * Covers:
- * - Basic evidence sufficiency with canonical signal keys
- * - Role-aware evidence thresholds (D2): HRBP requires more governance signals
+ * - Basic evidence sufficiency with canonical v10 signal keys
+ * - Role-aware evidence thresholds (D2): HRBP requires more ai_ethics_trust signals
  * - Seniority-inconsistency detection (B5)
- * - Low-confidence safe-classification block (F4a)
+ *
+ * v10 migration notes:
+ *   - execution → ai_interaction (signals: prompt_construction_quality, prompt_iteration_quality)
+ *   - judgement → ai_output_evaluation (signals: output_evaluation_quality, error_detection_accuracy)
+ *   - governance → ai_ethics_trust (signals: ethics_under_pressure, stakeholder_impact_awareness)
+ *   - appropriateness → ai_workflow_design (signals: workflow_redesign_quality, automation_expansion_risk)
+ *   - workflow → workforce_ai_readiness (signals: capability_diagnosis_accuracy)
+ *   - data_interpretation → ai_change_leadership (signals: resistance_response_quality)
+ *   - Interaction types updated to v10 equivalents
  */
 import { describe, it, expect } from "vitest";
 import { SessionController, MINIMUM_EVIDENCE } from "./assessment/sessionController";
 import type { AnswerData } from "./assessment/sessionController";
 
-// ─── Canonical signal keys (from SIGNAL_TO_CAPABILITY in scoringEngine.ts) ───
-const CANONICAL_STRONG_GOVERNANCE = {
-  governance_quality: 0.9,
-  validation_accuracy: 0.7,
+// ─── Canonical v10 signal keys per domain ────────────────────────────────────
+const CANONICAL_STRONG_AI_INTERACTION = {
+  prompt_construction_quality: 0.8,
+  prompt_iteration_quality: 0.5,
 };
-const CANONICAL_STRONG_JUDGEMENT = {
-  judgement_quality: 0.8,
-  discrimination_quality: 0.6,
+const CANONICAL_STRONG_AI_OUTPUT_EVALUATION = {
+  output_evaluation_quality: 0.8,
+  error_detection_accuracy: 0.6,
 };
-const CANONICAL_STRONG_EXECUTION = {
-  execution_quality: 0.8,
-  timing_integrity: 0.5,
+const CANONICAL_STRONG_AI_ETHICS_TRUST = {
+  ethics_under_pressure: 0.9,
+  stakeholder_impact_awareness: 0.7,
 };
-const CANONICAL_STRONG_APPROPRIATENESS = {
-  appropriateness_boundary: 0.7,
+const CANONICAL_STRONG_AI_WORKFLOW_DESIGN = {
+  workflow_redesign_quality: 0.7,
   automation_expansion_risk: 0.4,
 };
-const CANONICAL_STRONG_WORKFLOW = {
-  workflow_application_quality: 0.8,
+const CANONICAL_STRONG_WORKFORCE_AI_READINESS = {
+  capability_diagnosis_accuracy: 0.8,
 };
-const CANONICAL_STRONG_DATA = {
-  data_interpretation_quality: 0.8,
+const CANONICAL_STRONG_AI_CHANGE_LEADERSHIP = {
+  resistance_response_quality: 0.8,
 };
 
 function makeAnswers(count: number, overrides: Partial<AnswerData> = {}): AnswerData[] {
   const interactionTypes = [
-    "situational_judgement", "prioritisation", "risk_judgement",
-    "governance_decision", "scenario_critique", "error_detection",
-    "output_improvement", "data_interpretation",
+    "prompt_diagnosis", "prompt_construction", "risk_judgement",
+    "ethical_pressure_test", "scenario_critique", "error_detection",
+    "process_redesign", "capability_diagnosis",
   ];
   const capabilityKeys = [
-    "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
+    "ai_interaction", "ai_output_evaluation", "ai_ethics_trust",
+    "ai_workflow_design", "workforce_ai_readiness", "ai_change_leadership",
   ];
   const signalSets = [
-    CANONICAL_STRONG_EXECUTION,
-    CANONICAL_STRONG_JUDGEMENT,
-    CANONICAL_STRONG_GOVERNANCE,
-    CANONICAL_STRONG_APPROPRIATENESS,
-    CANONICAL_STRONG_WORKFLOW,
-    CANONICAL_STRONG_DATA,
+    CANONICAL_STRONG_AI_INTERACTION,
+    CANONICAL_STRONG_AI_OUTPUT_EVALUATION,
+    CANONICAL_STRONG_AI_ETHICS_TRUST,
+    CANONICAL_STRONG_AI_WORKFLOW_DESIGN,
+    CANONICAL_STRONG_WORKFORCE_AI_READINESS,
+    CANONICAL_STRONG_AI_CHANGE_LEADERSHIP,
   ];
   return Array.from({ length: count }, (_, i) => ({
     itemId: `item-${i}`,
@@ -93,41 +102,40 @@ describe("SessionController.computeState — Basic Evidence Sufficiency", () => 
 });
 
 describe("SessionController.computeState — Role-Aware Evidence Thresholds (D2/F6c)", () => {
-  it("HRBP requires more governance signal keys than generic before evidenceSufficient", () => {
+  it("HRBP requires more ai_ethics_trust signal keys than generic before evidenceSufficient", () => {
     // Signal counting semantics: capabilitySignalCounts accumulates the NUMBER OF SIGNAL KEYS
     // across all answers for a capability, not the number of answers.
     // Global minimum: 3 signal keys per capability.
-    // HRBP governance threshold: 65 → ceil(65/20) = 4 signal keys required.
+    // HRBP ai_ethics_trust threshold: 65 → ceil(65/20) = 4 signal keys required.
     //
-    // To test the difference: build answers where governance has exactly 3 signal keys total
-    // (1 answer with 3 single-key signal deltas) — generic passes, HRBP blocks.
+    // To test the difference: build answers where ai_ethics_trust has exactly 3 signal keys total
+    // (3 answers with 1 key each) — generic passes, HRBP blocks.
     const answers = makeAnswers(20);
-    // Replace all governance answers with single-signal answers so total governance signal keys = 3
-    // (one answer with 3 separate single-key deltas, or 3 answers with 1 key each)
-    let govReplaced = 0;
+    // Replace all ai_ethics_trust answers with single-signal answers so total signal keys = 3
+    let ethicsReplaced = 0;
     for (let i = 0; i < answers.length; i++) {
-      if (answers[i].capabilityKey === "governance") {
-        if (govReplaced < 3) {
+      if (answers[i].capabilityKey === "ai_ethics_trust") {
+        if (ethicsReplaced < 3) {
           // Each answer contributes exactly 1 signal key
-          answers[i] = { ...answers[i], capabilityKey: "governance", signalDeltasJson: { governance_quality: 0.8 }, riskLevel: "High" };
-          govReplaced++;
+          answers[i] = { ...answers[i], capabilityKey: "ai_ethics_trust", signalDeltasJson: { ethics_under_pressure: 0.8 }, riskLevel: "High" };
+          ethicsReplaced++;
         } else {
-          // Redirect extra governance answers to execution
-          answers[i] = { ...answers[i], capabilityKey: "execution", signalDeltasJson: CANONICAL_STRONG_EXECUTION };
+          // Redirect extra ai_ethics_trust answers to ai_interaction
+          answers[i] = { ...answers[i], capabilityKey: "ai_interaction", signalDeltasJson: CANONICAL_STRONG_AI_INTERACTION };
         }
       }
     }
-    // Ensure we have exactly 3 governance answers (1 key each = 3 total signal keys)
-    if (govReplaced < 3) {
-      for (let i = 0; i < answers.length && govReplaced < 3; i++) {
-        if (answers[i].capabilityKey !== "governance") {
-          answers[i] = { ...answers[i], capabilityKey: "governance", signalDeltasJson: { governance_quality: 0.8 }, riskLevel: "High" };
-          govReplaced++;
+    // Ensure we have exactly 3 ai_ethics_trust answers (1 key each = 3 total signal keys)
+    if (ethicsReplaced < 3) {
+      for (let i = 0; i < answers.length && ethicsReplaced < 3; i++) {
+        if (answers[i].capabilityKey !== "ai_ethics_trust") {
+          answers[i] = { ...answers[i], capabilityKey: "ai_ethics_trust", signalDeltasJson: { ethics_under_pressure: 0.8 }, riskLevel: "High" };
+          ethicsReplaced++;
         }
       }
     }
 
-    // Without role hint (generic): 3 signal keys meets global minimum of 3 → governance is covered
+    // Without role hint (generic): 3 signal keys meets global minimum of 3 → ai_ethics_trust is covered
     const stateGeneric = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems);
     // With HRBP role hint: threshold is ceil(65/20)=4 signal keys, so 3 is insufficient
     const stateHRBP = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems, "hrbp");
@@ -136,26 +144,28 @@ describe("SessionController.computeState — Role-Aware Evidence Thresholds (D2/
     console.log("[HRBP threshold test] hrbp evidenceSufficient:", stateHRBP.evidenceSufficient);
     console.log("[HRBP threshold test] hrbp blockers:", stateHRBP.completionBlockers);
 
-    // HRBP must block when governance has only 3 signal keys (below HRBP's required 4)
+    // HRBP must block when ai_ethics_trust has only 3 signal keys (below HRBP's required 4)
     expect(stateHRBP.evidenceSufficient).toBe(false);
   });
 
-  it("HRBP with sufficient governance signals passes evidence check", () => {
-    // Build 20 answers with 4 governance signals (meets HRBP threshold)
+  it("HRBP with sufficient ai_ethics_trust signals passes evidence check", () => {
+    // Build 20 answers with 4 ai_ethics_trust signals (meets HRBP threshold)
     const answers = makeAnswers(20);
-    // Ensure 4 governance answers with canonical signals
+    // Ensure 4 ai_ethics_trust answers with canonical signals
     for (let i = 0; i < 4; i++) {
       answers[i] = {
         ...answers[i],
-        capabilityKey: "governance",
-        signalDeltasJson: { governance_quality: 0.9, validation_accuracy: 0.7, governance_bypass_risk: 0.5 },
+        capabilityKey: "ai_ethics_trust",
+        signalDeltasJson: { ethics_under_pressure: 0.9, stakeholder_impact_awareness: 0.7, pressure_drift_risk: 0.5 },
         riskLevel: "High",
       };
     }
     const state = SessionController.computeState("s1", "u1", "bp1", answers, MINIMUM_EVIDENCE.targetItems, "hrbp");
-    // Should not block on governance specifically (may still block on other criteria)
-    const governanceBlocker = state.completionBlockers.find(b => b.toLowerCase().includes("governance"));
-    expect(governanceBlocker).toBeUndefined();
+    // Should not block on ai_ethics_trust specifically (may still block on other criteria)
+    const ethicsBlocker = state.completionBlockers.find(b =>
+      b.toLowerCase().includes("ethics") || b.toLowerCase().includes("trust")
+    );
+    expect(ethicsBlocker).toBeUndefined();
   });
 });
 
@@ -169,7 +179,7 @@ describe("SessionController.computeState — Seniority-Inconsistency Detection (
       answers[i] = {
         ...answers[i],
         outcomeClass: "failure",
-        signalDeltasJson: { blind_acceptance_risk: -2.0, validation_accuracy: -1.5 },
+        signalDeltasJson: { blind_acceptance_risk: -2.0, pressure_drift_risk: -1.5 },
       };
     }
     // Use a senior role hint — "er_specialist" maps to a senior archetype

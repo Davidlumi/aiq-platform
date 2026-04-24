@@ -39,12 +39,12 @@ const MODALITY_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 const CAPABILITY_COLORS: Record<string, string> = {
-  execution:          "#4477AA",
+  ai_interaction:      "#4477AA",
   prioritisation:     "#AA3377",
   validation:         "#228833",
-  judgement:          "#EE6677",
-  governance:         "#EE8866",
-  appropriateness:    "#66CCEE",
+  ai_output_evaluation:"#228833",
+  ai_ethics_trust:     "#AA3377",
+  ai_change_leadership:"#D97706",
   data_interpretation:"#BBBBBB",
 };
 
@@ -153,12 +153,12 @@ function ContentCard({ item }: { item: any }) {
 
 const CAPABILITY_OPTIONS = [
   { value: "all", label: "All capabilities" },
-  { value: "execution", label: "Execution" },
+  { value: "ai_interaction", label: "AI Interaction" },
   { value: "prioritisation", label: "Prioritisation" },
   { value: "validation", label: "Validation" },
-  { value: "judgement", label: "Judgement" },
-  { value: "governance", label: "Governance" },
-  { value: "appropriateness", label: "Appropriateness" },
+  { value: "ai_output_evaluation", label: "Output Evaluation" },
+  { value: "ai_ethics_trust", label: "Ethics & Trust" },
+  { value: "ai_change_leadership", label: "Change Leadership" },
   { value: "data_interpretation", label: "Data Interpretation" },
 ];
 

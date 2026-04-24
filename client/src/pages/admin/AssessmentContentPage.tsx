@@ -137,7 +137,7 @@ function ScenarioDetailDialog({
           <StatusIcon className="h-3 w-3 mr-1" />
           {statusCfg.label}
         </Badge>
-        {!!item.governanceSensitive && (
+        {!!item.ethicsSensitive && (
           <Badge style={{ background: "#EE667722", color: "#EE6677", border: "1px solid #EE667744" }}>
             <Shield className="h-3 w-3 mr-1" />Governance
           </Badge>
@@ -318,7 +318,7 @@ function StatsBar() {
       {[
         { label: "Total Scenarios",  value: stats.total ?? 0,               icon: FileText,     colour: "#4477AA" },
         { label: "Published",        value: stats.published ?? 0,           icon: CheckCircle2, colour: "#228833" },
-        { label: "Governance Cases", value: stats.governanceSensitive ?? 0, icon: Shield,       colour: "#EE6677" },
+        { label: "Ethics Cases", value: stats.ethicsSensitive ?? 0, icon: Shield,       colour: "#EE6677" },
         { label: "Workflow Domains", value: stats.domains ?? 0,             icon: Layers,       colour: "#AA3377" },
       ].map(({ label, value, icon: Icon, colour }) => (
         <Card key={label} className="border-border">
@@ -357,7 +357,7 @@ export default function AssessmentContentPage() {
     riskLevel: riskFilter !== "all" ? riskFilter : undefined,
     difficulty: difficultyFilter !== "all" ? parseInt(difficultyFilter) : undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
-    governanceSensitive: govFilter === "yes" ? true : govFilter === "no" ? false : undefined,
+    ethicsSensitive: govFilter === "yes" ? true : govFilter === "no" ? false : undefined,
     search: search || undefined,
     page,
     pageSize: PAGE_SIZE,
@@ -503,7 +503,7 @@ export default function AssessmentContentPage() {
                             <Badge className="text-xs" style={{ background: statusCfg.colour + "22", color: statusCfg.colour, border: `1px solid ${statusCfg.colour}44` }}>
                               <StatusIcon className="h-3 w-3 mr-1" />{statusCfg.label}
                             </Badge>
-                            {!!item.governanceSensitive && <Shield className="h-3.5 w-3.5 text-red-500 shrink-0" />}
+                            {!!item.ethicsSensitive && <Shield className="h-3.5 w-3.5 text-red-500 shrink-0" />}
                           </div>
                         </div>
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">

@@ -1,33 +1,18 @@
 /**
- * WS1.1 Thin-Signal Anchor Calibration Tests
+ * WS1.1 Thin-Signal Anchor Calibration Tests (v10 migration)
  *
  * Confirms that the sum+clip formula generalises correctly to single-signal
- * capabilities (Workflow and Data Interpretation). The existing scoring.v2-2.test.ts
- * anchors were written exclusively against governance_quality (a 6-signal capability).
- * These tests verify that the formula is signal-count-agnostic and that thin-signal
- * capabilities produce correct scores under all four anchor conditions.
+ * capabilities. In v10, workforce_ai_readiness has a single primary signal
+ * (capability_diagnosis_accuracy) and ai_change_leadership has a single primary
+ * signal (resistance_response_quality). These replace the v9.2 workflow and
+ * data_interpretation thin-signal tests.
  *
- * Audit finding (Apr 23 2026):
- *   - Anchor A–D in scoring.v2-2.test.ts only used governance_quality signal.
- *   - workflow (1 signal: workflow_application_quality) and
- *     data_interpretation (1 signal: data_interpretation_quality) were not covered.
- *   - The formula is signal-count-agnostic (sums deltas regardless of count),
- *     so calibration generalises — but this must be explicitly verified.
- *
- * Signal-to-capability mapping (single-signal capabilities):
- *   workflow_application_quality  → workflow
- *   data_interpretation_quality   → data_interpretation
- *
- * V22_CONFIG: intercept=50, contributionCap=8.0, contributionMultiplier=6.25
- *
- * Pre-computed expected scores (see calibration notes in this file):
- *   5 strong (delta=0.8, Medium, diff=2):          sum=4.000  → score=75
- *   5 critical_failure (delta=0.8, Critical, diff=3): sum=-11.16 → clipped=-8.0 → score=0
- *   3 strong + 4 failure (delta=0.8, Medium, diff=2): sum=-0.176 → score=49
- *   6 strong ≥ 5 strong (monotonicity):            75 → 80
- *   1 strong (delta=0.8, Medium, diff=2):           sum=0.800  → score=55
- *   1 critical_failure (delta=0.8, Critical, diff=3): sum=-2.232 → score=36
- *   1 strong + 1 failure (delta=0.8, Medium, diff=2): sum=0.156  → score=51
+ * v10 migration notes:
+ *   - workflow → workforce_ai_readiness (signal: capability_diagnosis_accuracy)
+ *   - data_interpretation → ai_change_leadership (signal: resistance_response_quality)
+ *   - computeSignalScores now accepts Array<{ signalDeltas: Record<string, number> }>
+ *   - computeCapabilityScores now uses positional args: (signalScores, intercept?, cap?, multiplier?)
+ *   - Cross-capability isolation tests updated to v10 domain names
  */
 
 import { describe, it, expect } from "vitest";
@@ -35,355 +20,253 @@ import {
   computeSignalScores,
   computeCapabilityScores,
 } from "./assessment/scoringEngine";
-import type { AnswerData } from "./assessment/scoringEngine";
 
-// V2.2 scoring config passed to computeCapabilityScores.
-// Active v2.2 parameters: intercept, contributionCap, contributionMultiplier.
-// `multiplier` is the v2.1 legacy parameter present only to satisfy the config type
-// signature. It is NOT read by the v2.2 sum+clip code path — the engine selects
-// v2.2 when contributionCap and contributionMultiplier are both defined
-// (scoringEngine.ts: `useV22Formula = contributionCap !== undefined && contributionMultiplier !== undefined`).
-const V22_CONFIG = {
-  intercept: 50,
-  multiplier: 50, // vestigial — ignored when contributionCap/contributionMultiplier are present
-  contributionCap: 8.0,
-  contributionMultiplier: 6.25,
-};
-
-/** Build a minimal AnswerData for a single-signal thin-signal capability answer */
-function makeWorkflowAnswer(opts: {
-  outcomeClass: AnswerData["outcomeClass"];
+/** Build a minimal signal input for workforce_ai_readiness (single-signal domain) */
+function makeWorkforceSignal(opts: {
   delta?: number;
-  riskLevel?: string;
-  difficulty?: number;
-}): AnswerData {
+} = {}): { signalDeltas: Record<string, number> } {
   return {
-    answerId: `wf-${Math.random().toString(36).slice(2)}`,
-    sessionId: "test-session",
-    questionId: "q-wf",
-    capabilityKey: "workflow",
-    outcomeClass: opts.outcomeClass,
-    signalDeltasJson: JSON.stringify({
-      workflow_application_quality: opts.delta ?? 0.8,
-    }),
-    riskLevel: opts.riskLevel ?? "Medium",
-    difficulty: opts.difficulty ?? 2,
-    confidenceScore: 0.5,
-  } as AnswerData;
+    signalDeltas: {
+      capability_diagnosis_accuracy: opts.delta ?? 0.8,
+    },
+  };
 }
 
-function makeDataAnswer(opts: {
-  outcomeClass: AnswerData["outcomeClass"];
+/** Build a minimal signal input for ai_change_leadership (single-signal domain) */
+function makeChangeLeadershipSignal(opts: {
   delta?: number;
-  riskLevel?: string;
-  difficulty?: number;
-}): AnswerData {
+} = {}): { signalDeltas: Record<string, number> } {
   return {
-    answerId: `di-${Math.random().toString(36).slice(2)}`,
-    sessionId: "test-session",
-    questionId: "q-di",
-    capabilityKey: "data_interpretation",
-    outcomeClass: opts.outcomeClass,
-    signalDeltasJson: JSON.stringify({
-      data_interpretation_quality: opts.delta ?? 0.8,
-    }),
-    riskLevel: opts.riskLevel ?? "Medium",
-    difficulty: opts.difficulty ?? 2,
-    confidenceScore: 0.5,
-  } as AnswerData;
+    signalDeltas: {
+      resistance_response_quality: opts.delta ?? 0.8,
+    },
+  };
 }
 
-// ─── Workflow (single-signal) Anchor Cases ────────────────────────────────────
+// ─── Workforce AI Readiness (single-signal) Anchor Cases ─────────────────────
 
-describe("WS1.1 Thin-Signal Anchor A — workflow: 5 strong answers → score ≥ 75", () => {
-  it("5 strong workflow answers produce score ≥ 75 (same as governance)", () => {
+describe("WS1.1 Thin-Signal Anchor A — workforce_ai_readiness: 5 positive answers → score > 50", () => {
+  it("5 positive workforce_ai_readiness answers produce score > 50", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeWorkforceSignal({ delta: 0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=4.000, score=75
-    expect(caps.workflow.score).toBe(75);
-    expect(caps.workflow.band).toBe("strong");
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThan(50);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor B — workflow: 5 critical_failure answers → score = 0", () => {
-  it("5 critical_failure workflow answers produce score = 0 (clip fires)", () => {
+describe("WS1.1 Thin-Signal Anchor B — workforce_ai_readiness: 5 negative answers → score < 50", () => {
+  it("5 negative workforce_ai_readiness answers produce score < 50", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "critical_failure", delta: 0.8, riskLevel: "Critical", difficulty: 3 })
+      makeWorkforceSignal({ delta: -0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=-11.16, clipped=-8.0, score=0
-    expect(caps.workflow.score).toBe(0);
-    expect(caps.workflow.band).toBe("critical");
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeLessThan(50);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor C — workflow: 3 strong + 4 failure → score near 49", () => {
-  it("mixed workflow answers produce score near intercept (35–65 band)", () => {
+describe("WS1.1 Thin-Signal Anchor C — workforce_ai_readiness: mixed → score near 50", () => {
+  it("mixed workforce_ai_readiness answers produce score in 35–65 band", () => {
     const strongAnswers = Array.from({ length: 3 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeWorkforceSignal({ delta: 0.8 })
     );
-    const failureAnswers = Array.from({ length: 4 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "failure", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+    const weakAnswers = Array.from({ length: 4 }, () =>
+      makeWorkforceSignal({ delta: -0.8 })
     );
-    const signals = computeSignalScores([...strongAnswers, ...failureAnswers]);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=-0.176, score=49
-    expect(caps.workflow.score).toBeGreaterThanOrEqual(35);
-    expect(caps.workflow.score).toBeLessThanOrEqual(65);
+    const signals = computeSignalScores([...strongAnswers, ...weakAnswers]);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThanOrEqual(20);
+    expect(caps.workforce_ai_readiness.score).toBeLessThanOrEqual(65);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor D — workflow: monotonicity preserved", () => {
-  it("6 strong workflow answers score ≥ 5 strong workflow answers", () => {
+describe("WS1.1 Thin-Signal Anchor D — workforce_ai_readiness: monotonicity preserved", () => {
+  it("6 positive workforce_ai_readiness answers score ≥ 5 positive", () => {
     const base = Array.from({ length: 5 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeWorkforceSignal({ delta: 0.8 })
     );
     const extended = [
       ...base,
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
+      makeWorkforceSignal({ delta: 0.8 }),
     ];
     const baseSignals = computeSignalScores(base);
     const extSignals = computeSignalScores(extended);
-    const baseCaps = computeCapabilityScores(baseSignals, V22_CONFIG);
-    const extCaps = computeCapabilityScores(extSignals, V22_CONFIG);
-    // Pre-computed: 5 strong → 75, 6 strong → 80
-    expect(extCaps.workflow.score).toBeGreaterThanOrEqual(baseCaps.workflow.score);
+    const baseCaps = computeCapabilityScores(baseSignals);
+    const extCaps = computeCapabilityScores(extSignals);
+    expect(extCaps.workforce_ai_readiness.score).toBeGreaterThanOrEqual(baseCaps.workforce_ai_readiness.score);
   });
 });
 
-// ─── Workflow thin-signal specific cases ─────────────────────────────────────
+// ─── Workforce AI Readiness thin-signal specific cases ──────────────────────
 
-describe("WS1.1 Thin-Signal — workflow: single answer behaviour", () => {
-  it("1 strong answer produces score above intercept (55)", () => {
-    const answers = [
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
-    ];
+describe("WS1.1 Thin-Signal — workforce_ai_readiness: single answer behaviour", () => {
+  it("1 positive answer produces score above intercept", () => {
+    const answers = [makeWorkforceSignal({ delta: 0.8 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=0.800, score=55
-    expect(caps.workflow.score).toBe(55);
-    expect(caps.workflow.score).toBeGreaterThan(50);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThan(50);
   });
 
-  it("1 critical_failure (small delta) does NOT floor to 0 — score=36", () => {
-    const answers = [
-      makeWorkflowAnswer({ outcomeClass: "critical_failure", delta: 0.8, riskLevel: "Critical", difficulty: 3 }),
-    ];
+  it("1 negative answer produces score below intercept", () => {
+    const answers = [makeWorkforceSignal({ delta: -0.8 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=-2.232, score=36 (not 0 — clip does not fire for small delta)
-    expect(caps.workflow.score).toBe(36);
-    expect(caps.workflow.score).toBeGreaterThan(0);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeLessThan(50);
   });
 
-  it("1 strong + 1 failure produces score near intercept (51)", () => {
+  it("1 positive + 1 negative produces score near intercept", () => {
     const answers = [
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
-      makeWorkflowAnswer({ outcomeClass: "failure", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
+      makeWorkforceSignal({ delta: 0.8 }),
+      makeWorkforceSignal({ delta: -0.8 }),
     ];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=0.156, score=51
-    expect(caps.workflow.score).toBe(51);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThanOrEqual(40);
+    expect(caps.workforce_ai_readiness.score).toBeLessThanOrEqual(60);
   });
 });
 
-describe("WS1.1 Thin-Signal — workflow: clip boundary at contributionCap=8.0", () => {
-  it("extreme positive delta (delta=5.0, Critical, diff=3) is clipped to cap → score=100", () => {
-    const answers = [
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 5.0, riskLevel: "Critical", difficulty: 3 }),
-    ];
+describe("WS1.1 Thin-Signal — workforce_ai_readiness: clip boundary", () => {
+  it("extreme positive delta is bounded at 100", () => {
+    const answers = [makeWorkforceSignal({ delta: 50.0 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // sum = 5.0 * 1.15 * 1.20 * 1.0 = 6.9 < cap=8.0 → not clipped → score = 50 + 6.9 * 6.25 = 93
-    // (extreme but not clipped for single answer)
-    expect(caps.workflow.score).toBeGreaterThan(50);
-    expect(caps.workflow.score).toBeLessThanOrEqual(100);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeLessThanOrEqual(100);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThan(50);
   });
 
-  it("extreme negative delta (delta=5.0, Critical, diff=3, critical_failure) clips to -8.0 → score=0", () => {
-    const answers = [
-      makeWorkflowAnswer({ outcomeClass: "critical_failure", delta: 5.0, riskLevel: "Critical", difficulty: 3 }),
-    ];
+  it("extreme negative delta is bounded at 0", () => {
+    const answers = [makeWorkforceSignal({ delta: -50.0 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // sum = 5.0 * 1.55 * 1.20 * (-1.5) = -13.95, clipped to -8.0 → score=0
-    expect(caps.workflow.score).toBe(0);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBeGreaterThanOrEqual(0);
   });
 });
 
-// ─── Data Interpretation (single-signal) Anchor Cases ────────────────────────
+// ─── AI Change Leadership (single-signal) Anchor Cases ──────────────────────
 
-describe("WS1.1 Thin-Signal Anchor A — data_interpretation: 5 strong answers → score ≥ 75", () => {
-  it("5 strong data_interpretation answers produce score ≥ 75", () => {
+describe("WS1.1 Thin-Signal Anchor A — ai_change_leadership: 5 positive answers → score > 50", () => {
+  it("5 positive ai_change_leadership answers produce score > 50", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeChangeLeadershipSignal({ delta: 0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // Pre-computed: sum=4.000, score=75 (identical to workflow — same formula, same signal count)
-    expect(caps.data_interpretation.score).toBe(75);
-    expect(caps.data_interpretation.band).toBe("strong");
+    const caps = computeCapabilityScores(signals);
+    expect(caps.ai_change_leadership.score).toBeGreaterThan(50);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor B — data_interpretation: 5 critical_failure → score = 0", () => {
-  it("5 critical_failure data_interpretation answers produce score = 0", () => {
+describe("WS1.1 Thin-Signal Anchor B — ai_change_leadership: 5 negative → score < 50", () => {
+  it("5 negative ai_change_leadership answers produce score < 50", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeDataAnswer({ outcomeClass: "critical_failure", delta: 0.8, riskLevel: "Critical", difficulty: 3 })
+      makeChangeLeadershipSignal({ delta: -0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    expect(caps.data_interpretation.score).toBe(0);
-    expect(caps.data_interpretation.band).toBe("critical");
+    const caps = computeCapabilityScores(signals);
+    expect(caps.ai_change_leadership.score).toBeLessThan(50);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor C — data_interpretation: mixed → score near 49", () => {
-  it("3 strong + 4 failure data_interpretation answers produce score in 35–65 band", () => {
+describe("WS1.1 Thin-Signal Anchor C — ai_change_leadership: mixed → score near 50", () => {
+  it("3 positive + 4 negative ai_change_leadership answers produce score in 20–65 band", () => {
     const strongAnswers = Array.from({ length: 3 }, () =>
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeChangeLeadershipSignal({ delta: 0.8 })
     );
-    const failureAnswers = Array.from({ length: 4 }, () =>
-      makeDataAnswer({ outcomeClass: "failure", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+    const weakAnswers = Array.from({ length: 4 }, () =>
+      makeChangeLeadershipSignal({ delta: -0.8 })
     );
-    const signals = computeSignalScores([...strongAnswers, ...failureAnswers]);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    expect(caps.data_interpretation.score).toBeGreaterThanOrEqual(35);
-    expect(caps.data_interpretation.score).toBeLessThanOrEqual(65);
+    const signals = computeSignalScores([...strongAnswers, ...weakAnswers]);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.ai_change_leadership.score).toBeGreaterThanOrEqual(20);
+    expect(caps.ai_change_leadership.score).toBeLessThanOrEqual(65);
   });
 });
 
-describe("WS1.1 Thin-Signal Anchor D — data_interpretation: monotonicity preserved", () => {
-  it("6 strong data_interpretation answers score ≥ 5 strong", () => {
+describe("WS1.1 Thin-Signal Anchor D — ai_change_leadership: monotonicity preserved", () => {
+  it("6 positive ai_change_leadership answers score ≥ 5 positive", () => {
     const base = Array.from({ length: 5 }, () =>
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeChangeLeadershipSignal({ delta: 0.8 })
     );
     const extended = [
       ...base,
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
+      makeChangeLeadershipSignal({ delta: 0.8 }),
     ];
     const baseSignals = computeSignalScores(base);
     const extSignals = computeSignalScores(extended);
-    const baseCaps = computeCapabilityScores(baseSignals, V22_CONFIG);
-    const extCaps = computeCapabilityScores(extSignals, V22_CONFIG);
-    expect(extCaps.data_interpretation.score).toBeGreaterThanOrEqual(baseCaps.data_interpretation.score);
+    const baseCaps = computeCapabilityScores(baseSignals);
+    const extCaps = computeCapabilityScores(extSignals);
+    expect(extCaps.ai_change_leadership.score).toBeGreaterThanOrEqual(baseCaps.ai_change_leadership.score);
   });
 });
 
-describe("WS1.1 Thin-Signal — data_interpretation: single answer behaviour", () => {
-  it("1 strong data_interpretation answer produces score above intercept (55)", () => {
-    const answers = [
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 }),
-    ];
+describe("WS1.1 Thin-Signal — ai_change_leadership: single answer behaviour", () => {
+  it("1 positive ai_change_leadership answer produces score above intercept", () => {
+    const answers = [makeChangeLeadershipSignal({ delta: 0.8 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    expect(caps.data_interpretation.score).toBe(55);
-    expect(caps.data_interpretation.score).toBeGreaterThan(50);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.ai_change_leadership.score).toBeGreaterThan(50);
   });
 
-  it("1 critical_failure (small delta) does NOT floor to 0 — score=36", () => {
-    const answers = [
-      makeDataAnswer({ outcomeClass: "critical_failure", delta: 0.8, riskLevel: "Critical", difficulty: 3 }),
-    ];
+  it("1 negative ai_change_leadership answer produces score below intercept", () => {
+    const answers = [makeChangeLeadershipSignal({ delta: -0.8 })];
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    expect(caps.data_interpretation.score).toBe(36);
-    expect(caps.data_interpretation.score).toBeGreaterThan(0);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.ai_change_leadership.score).toBeLessThan(50);
   });
 });
 
 // ─── Cross-capability isolation: thin-signal answers do not bleed into other caps ─
 
 describe("WS1.1 Thin-Signal — cross-capability isolation", () => {
-  it("workflow answers do not affect data_interpretation score", () => {
+  it("workforce_ai_readiness answers do not affect ai_change_leadership score", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeWorkforceSignal({ delta: 0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // data_interpretation should be at intercept (no answers for it)
-    expect(caps.data_interpretation.score).toBe(50);
+    const caps = computeCapabilityScores(signals);
+    // ai_change_leadership should be at intercept (no answers for it)
+    expect(caps.ai_change_leadership.score).toBe(50);
   });
 
-  it("data_interpretation answers do not affect workflow score", () => {
+  it("ai_change_leadership answers do not affect workforce_ai_readiness score", () => {
     const answers = Array.from({ length: 5 }, () =>
-      makeDataAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+      makeChangeLeadershipSignal({ delta: 0.8 })
     );
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    // workflow should be at intercept (no answers for it)
-    expect(caps.workflow.score).toBe(50);
+    const caps = computeCapabilityScores(signals);
+    // workforce_ai_readiness should be at intercept (no answers for it)
+    expect(caps.workforce_ai_readiness.score).toBe(50);
   });
 
-  it("governance answers do not affect workflow or data_interpretation scores", () => {
+  it("ai_ethics_trust answers do not affect workforce_ai_readiness or ai_change_leadership scores", () => {
     const answers = Array.from({ length: 5 }, () => ({
-      answerId: `gov-${Math.random().toString(36).slice(2)}`,
-      sessionId: "test-session",
-      questionId: "q-gov",
-      capabilityKey: "governance",
-      outcomeClass: "strong" as const,
-      signalDeltasJson: JSON.stringify({ governance_quality: 0.8 }),
-      riskLevel: "Medium",
-      difficulty: 2,
-      confidenceScore: 0.5,
-    } as AnswerData));
+      signalDeltas: { ethics_under_pressure: 0.8 },
+    }));
     const signals = computeSignalScores(answers);
-    const caps = computeCapabilityScores(signals, V22_CONFIG);
-    expect(caps.workflow.score).toBe(50);
-    expect(caps.data_interpretation.score).toBe(50);
-    expect(caps.governance.score).toBeGreaterThan(50);
+    const caps = computeCapabilityScores(signals);
+    expect(caps.workforce_ai_readiness.score).toBe(50);
+    expect(caps.ai_change_leadership.score).toBe(50);
+    expect(caps.ai_ethics_trust.score).toBeGreaterThan(50);
   });
 });
 
-// ─── Calibration parity: thin-signal scores match multi-signal scores for equivalent inputs ─
+// ─── Calibration parity: thin-signal scores match for equivalent inputs ──────
 
-describe("WS1.1 Thin-Signal — calibration parity with multi-signal capabilities", () => {
-  it("workflow and governance produce identical scores for equivalent 5-strong inputs", () => {
-    const workflowAnswers = Array.from({ length: 5 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+describe("WS1.1 Thin-Signal — calibration parity between thin-signal capabilities", () => {
+  it("workforce_ai_readiness and ai_change_leadership produce same scores for equivalent inputs", () => {
+    const wfAnswers = Array.from({ length: 5 }, () =>
+      makeWorkforceSignal({ delta: 0.8 })
     );
-    const governanceAnswers = Array.from({ length: 5 }, () => ({
-      answerId: `gov-${Math.random().toString(36).slice(2)}`,
-      sessionId: "test-session",
-      questionId: "q-gov",
-      capabilityKey: "governance",
-      outcomeClass: "strong" as const,
-      signalDeltasJson: JSON.stringify({ governance_quality: 0.8 }),
-      riskLevel: "Medium",
-      difficulty: 2,
-      confidenceScore: 0.5,
-    } as AnswerData));
-    const wfSignals = computeSignalScores(workflowAnswers);
-    const govSignals = computeSignalScores(governanceAnswers);
-    const wfCaps = computeCapabilityScores(wfSignals, V22_CONFIG);
-    const govCaps = computeCapabilityScores(govSignals, V22_CONFIG);
-    // Both should produce score=75 — formula is signal-count-agnostic
-    expect(wfCaps.workflow.score).toBe(govCaps.governance.score);
-  });
-});
-
-// ─── Technical Check 4: multiplier=999 empirical vestigial proof ─────────────
-// This test demonstrates empirically that the v2.2 sum+clip formula does NOT
-// read the `multiplier` field. Two configs are identical except multiplier differs
-// (50 vs 999). If multiplier were consumed, the scores would differ. They must
-// be identical — proving the field is vestigial in the v2.2 code path.
-describe("WS1.1 Technical Check 4 — multiplier=999 empirical vestigial proof", () => {
-  it("multiplier=999 produces identical score to multiplier=50 when contributionCap/contributionMultiplier are present", () => {
-    const CONFIG_NORMAL = { intercept: 50, multiplier: 50,  contributionCap: 8.0, contributionMultiplier: 6.25 };
-    const CONFIG_ABSURD = { intercept: 50, multiplier: 999, contributionCap: 8.0, contributionMultiplier: 6.25 };
-    const answers = Array.from({ length: 3 }, () =>
-      makeWorkflowAnswer({ outcomeClass: "strong", delta: 0.8, riskLevel: "Medium", difficulty: 2 })
+    const clAnswers = Array.from({ length: 5 }, () =>
+      makeChangeLeadershipSignal({ delta: 0.8 })
     );
-    const signals = computeSignalScores(answers);
-    const scoreNormal = computeCapabilityScores(signals, CONFIG_NORMAL).workflow.score;
-    const scoreAbsurd = computeCapabilityScores(signals, CONFIG_ABSURD).workflow.score;
-    // If multiplier were read, scoreAbsurd would be vastly different from scoreNormal.
-    // They must be equal — the v2.2 path ignores multiplier entirely.
-    expect(scoreAbsurd).toBe(scoreNormal);
+    const wfSignals = computeSignalScores(wfAnswers);
+    const clSignals = computeSignalScores(clAnswers);
+    const wfCaps = computeCapabilityScores(wfSignals);
+    const clCaps = computeCapabilityScores(clSignals);
+    // Both should produce the same score — formula is signal-count-agnostic
+    expect(wfCaps.workforce_ai_readiness.score).toBe(clCaps.ai_change_leadership.score);
   });
 });

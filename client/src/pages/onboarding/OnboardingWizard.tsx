@@ -240,7 +240,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <div className="grid grid-cols-3 gap-3 text-left">
           {[
             { icon: Brain, label: "Adaptive", desc: "Adjusts to your level" },
-            { icon: Shield, label: "Behavioural", desc: "Tests real judgement" },
+            { icon: Shield, label: "Behavioural", desc: "Tests real AI capability" },
             { icon: BarChart3, label: "Actionable", desc: "Drives development" },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="rounded-xl bg-muted/40 p-3">

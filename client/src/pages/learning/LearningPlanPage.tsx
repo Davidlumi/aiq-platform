@@ -27,10 +27,10 @@ import { cn } from "@/lib/utils";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType; description: string }> = {
-  execution:           { label: "AI Execution",        color: "#6366f1", icon: Zap,       description: "Ability to prompt, iterate, and get reliable outputs from AI tools" },
-  judgement:           { label: "AI Judgement",         color: "#f59e0b", icon: Brain,     description: "Critical evaluation of AI outputs for accuracy and bias" },
-  governance:          { label: "AI Governance",        color: "#10b981", icon: Target,    description: "Policy, compliance, and risk management for AI use" },
-  appropriateness:     { label: "Appropriateness",      color: "#ec4899", icon: Lightbulb, description: "Knowing when to use AI and when human judgement is required" },
+  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", icon: Zap,       description: "Practical competence with AI tools — prompting, iterating, and tool selection" },
+  ai_output_evaluation:{ label: "AI Output Evaluation", color: "#228833", icon: Brain,     description: "Critical assessment of AI outputs — detecting errors, hallucinations, and fitness for purpose" },
+  ai_ethics_trust:     { label: "AI Ethics & Trust",    color: "#AA3377", icon: Target,    description: "Ethical reasoning, employee trust, and principled AI decision-making" },
+  ai_change_leadership:{ label: "AI Change Leadership", color: "#D97706", icon: Lightbulb, description: "Leading AI transformation, handling resistance, and calibrating pace of change" },
   workflow:            { label: "Workflow Integration", color: "#3b82f6", icon: Layers,    description: "Embedding AI tools into HR processes and team workflows" },
   data_interpretation: { label: "Data Interpretation",  color: "#8b5cf6", icon: BarChart3, description: "Reading and acting on AI-generated analytics and reports" },
 };

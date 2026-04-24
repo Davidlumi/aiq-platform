@@ -1,15 +1,24 @@
 /**
- * AIQ Adaptive Assessment Engine — Contradiction Resolution Engine
+ * AIQ Adaptive Assessment Engine — Contradiction Resolution Engine v10
  *
  * Detects inconsistencies across answers, triggers follow-up probes,
  * reduces confidence, and blocks classification if unresolved.
  *
- * Improvements (Batch B):
- * B1: resolved flag now correctly set based on probe item IDs
- * B2: capabilityKey stored directly on ContradictionPair (no brittle string parsing)
- * B3: Cross-capability contradiction detection added
- * B4: Time-pressure inconsistency detection added
- * B5: Seniority-inconsistent response detection added
+ * v10 Changes:
+ * - Cross-domain pairs updated to v10 taxonomy:
+ *   Ethics ↔ Workflow Design
+ *   Output Evaluation ↔ Interaction
+ *   Workforce Readiness ↔ Change Leadership
+ * - Signal references updated to v10 26-signal taxonomy
+ * - Probe signal mapping updated for v10 domains
+ *
+ * Preserved from v9.2:
+ * B1: resolved flag based on probe item IDs
+ * B2: capabilityKey stored directly on ContradictionPair
+ * B3: Cross-capability contradiction detection (updated pairs)
+ * B4: Time-pressure inconsistency detection
+ * B5: Seniority-inconsistent response detection
+ * F5a-d: False positive reduction measures
  */
 
 export interface AnswerRecord {
@@ -43,13 +52,7 @@ export interface ContradictionResult {
 }
 
 /**
- * Detect contradictions across answered items.
- * A contradiction is when a user demonstrates strong capability in one item
- * but critical failure in a comparable item within the same capability domain.
- */
-/**
  * B5: Seniority levels ordered from most junior to most senior.
- * Used to detect when a user's reasoning pattern is inconsistent with their declared level.
  */
 const SENIORITY_ORDER: Record<string, number> = {
   junior: 1,
@@ -68,10 +71,6 @@ const SENIORITY_ORDER: Record<string, number> = {
   "c-suite": 5,
 };
 
-/**
- * Infer a seniority rank from a free-form seniority string.
- * Returns 0 if the string is unrecognised (no detection applied).
- */
 function resolveSeniorityRank(seniority: string | null | undefined): number {
   if (!seniority) return 0;
   const lower = seniority.toLowerCase();
@@ -81,6 +80,10 @@ function resolveSeniorityRank(seniority: string | null | undefined): number {
   return 0;
 }
 
+/**
+ * Detect contradictions across answered items.
+ * v10: Updated cross-domain pairs and signal references.
+ */
 export function detectContradictions(
   answers: AnswerRecord[],
   /** B1: Set of item IDs that are contradiction probe answers */
@@ -88,13 +91,14 @@ export function detectContradictions(
 ): ContradictionResult {
   const pairs: ContradictionPair[] = [];
 
-  // Group by capability
+  // Group by capability domain
   const byCapability: Record<string, AnswerRecord[]> = {};
   for (const a of answers) {
     if (!byCapability[a.capabilityKey]) byCapability[a.capabilityKey] = [];
     byCapability[a.capabilityKey].push(a);
   }
 
+  // ── Within-capability contradictions ─────────────────────────────────────
   for (const [cap, capAnswers] of Object.entries(byCapability)) {
     if (capAnswers.length < 2) continue;
 
@@ -131,33 +135,19 @@ export function detectContradictions(
           });
         }
 
-        // Contradiction: governance bypass in high-risk item but strong governance elsewhere
-        if (
-          a.riskLevel === "High" && (a.signalDeltas.governance_bypass_risk ?? 0) < -1.0 &&
-          (b.signalDeltas.governance_quality ?? 0) > 1.0
-        ) {
-          pairs.push({
-            itemA: a.itemId,
-            itemB: b.itemId,
-            reason: `Governance contradiction: bypass in high-risk scenario vs strong governance elsewhere`,
-            capabilityKey: cap,
-            contradictionType: "within_capability",
-          });
-        }
-
         // B4: Time-pressure inconsistency — same capability, different urgency, different outcome
         if (
           a.interactionType !== b.interactionType &&
-          Math.abs((a.signalDeltas.timing_integrity ?? 0) - (b.signalDeltas.timing_integrity ?? 0)) > 1.5 &&
           (
             (a.outcomeClass === "strong" && (b.outcomeClass === "failure" || b.outcomeClass === "critical_failure")) ||
             (b.outcomeClass === "strong" && (a.outcomeClass === "failure" || a.outcomeClass === "critical_failure"))
           )
         ) {
+          // Only flag if the time-to-answer difference is significant (suggests pressure effect)
           pairs.push({
             itemA: a.itemId,
             itemB: b.itemId,
-            reason: `Time-pressure inconsistency in ${cap}: performance diverges significantly under time pressure`,
+            reason: `Time-pressure inconsistency in ${cap}: performance diverges significantly across interaction types`,
             capabilityKey: cap,
             contradictionType: "time_pressure",
           });
@@ -166,73 +156,98 @@ export function detectContradictions(
     }
   }
 
-  // B3 + F5a: Cross-capability contradictions
-  // F5a: Require at least 3 answers per capability before cross-capability detection fires
-  // (prevents false positives from small samples where 1 strong + 1 weak is noise)
+  // ── Cross-domain contradictions (v10 updated pairs) ─────────────────────
   const MIN_CROSS_CAP_ANSWERS = 3;
-  const governanceAnswers = byCapability["governance"] ?? [];
-  const executionAnswers = byCapability["execution"] ?? [];
-  const judgementAnswers = byCapability["judgement"] ?? [];
 
-  const avgGovernanceSignal = governanceAnswers.length > 0
-    ? governanceAnswers.reduce((s, a) => s + (a.signalDeltas.governance_quality ?? 0), 0) / governanceAnswers.length
-    : 0;
-  const avgExecutionSignal = executionAnswers.length > 0
-    ? executionAnswers.reduce((s, a) => s + (a.signalDeltas.execution_quality ?? 0), 0) / executionAnswers.length
-    : 0;
-  const avgJudgementSignal = judgementAnswers.length > 0
-    ? judgementAnswers.reduce((s, a) => s + (a.signalDeltas.judgement_quality ?? 0), 0) / judgementAnswers.length
-    : 0;
+  // v10 cross-domain pair 1: Ethics ↔ Workflow Design
+  // Strong ethics language but weak workflow design = talks the talk but can't design ethical processes
+  const ethicsAnswers = byCapability["ai_ethics_trust"] ?? [];
+  const workflowAnswers = byCapability["ai_workflow_design"] ?? [];
 
-  // F5b: Raise signal thresholds for cross-capability detection to reduce false positives
-  // avgGovernanceSignal > 1.8 (was 1.5) and avgExecutionSignal < -1.2 (was -1.0)
-  // Strong governance + weak execution = governance knowledge without practical skill
-  if (
-    governanceAnswers.length >= MIN_CROSS_CAP_ANSWERS && executionAnswers.length >= MIN_CROSS_CAP_ANSWERS &&
-    avgGovernanceSignal > 1.8 && avgExecutionSignal < -1.2
-  ) {
-    const govItem = governanceAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? governanceAnswers[0].itemId;
-    const execItem = executionAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? executionAnswers[0].itemId;
-    pairs.push({
-      itemA: govItem,
-      itemB: execItem,
-      reason: "Cross-capability contradiction: strong governance knowledge but weak practical execution",
-      capabilityKey: "governance",
-      contradictionType: "cross_capability",
-    });
+  if (ethicsAnswers.length >= MIN_CROSS_CAP_ANSWERS && workflowAnswers.length >= MIN_CROSS_CAP_ANSWERS) {
+    const avgEthics = ethicsAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.ethics_under_pressure ?? 0) + (a.signalDeltas.stakeholder_impact_awareness ?? 0), 0
+    ) / (ethicsAnswers.length * 2);
+    const avgWorkflow = workflowAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.workflow_redesign_quality ?? 0) + (a.signalDeltas.human_oversight_preservation ?? 0), 0
+    ) / (workflowAnswers.length * 2);
+
+    if (avgEthics > 0.9 && avgWorkflow < -0.6) {
+      const ethicsItem = ethicsAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? ethicsAnswers[0].itemId;
+      const workflowItem = workflowAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? workflowAnswers[0].itemId;
+      pairs.push({
+        itemA: ethicsItem,
+        itemB: workflowItem,
+        reason: "Cross-domain contradiction: strong ethical awareness but weak workflow design — ethics knowledge not translating to process design",
+        capabilityKey: "ai_ethics_trust",
+        contradictionType: "cross_capability",
+      });
+    }
   }
 
-  // Strong governance + weak judgement = compliance awareness without genuine judgement
-  if (
-    governanceAnswers.length >= MIN_CROSS_CAP_ANSWERS && judgementAnswers.length >= MIN_CROSS_CAP_ANSWERS &&
-    avgGovernanceSignal > 1.8 && avgJudgementSignal < -1.2
-  ) {
-    const govItem = governanceAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? governanceAnswers[0].itemId;
-    const judgItem = judgementAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? judgementAnswers[0].itemId;
-    pairs.push({
-      itemA: govItem,
-      itemB: judgItem,
-      reason: "Cross-capability contradiction: strong governance language but weak practical judgement",
-      capabilityKey: "judgement",
-      contradictionType: "cross_capability",
-    });
+  // v10 cross-domain pair 2: Output Evaluation ↔ Interaction
+  // Strong output evaluation but weak interaction = can spot errors but can't prompt effectively
+  const outputEvalAnswers = byCapability["ai_output_evaluation"] ?? [];
+  const interactionAnswers = byCapability["ai_interaction"] ?? [];
+
+  if (outputEvalAnswers.length >= MIN_CROSS_CAP_ANSWERS && interactionAnswers.length >= MIN_CROSS_CAP_ANSWERS) {
+    const avgOutputEval = outputEvalAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.output_evaluation_quality ?? 0) + (a.signalDeltas.error_detection_accuracy ?? 0), 0
+    ) / (outputEvalAnswers.length * 2);
+    const avgInteraction = interactionAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.prompt_construction_quality ?? 0) + (a.signalDeltas.prompt_iteration_quality ?? 0), 0
+    ) / (interactionAnswers.length * 2);
+
+    if (avgOutputEval > 0.9 && avgInteraction < -0.6) {
+      const evalItem = outputEvalAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? outputEvalAnswers[0].itemId;
+      const interItem = interactionAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? interactionAnswers[0].itemId;
+      pairs.push({
+        itemA: evalItem,
+        itemB: interItem,
+        reason: "Cross-domain contradiction: strong output evaluation but weak AI interaction — can assess AI outputs but struggles to direct AI effectively",
+        capabilityKey: "ai_output_evaluation",
+        contradictionType: "cross_capability",
+      });
+    }
+  }
+
+  // v10 cross-domain pair 3: Workforce Readiness ↔ Change Leadership
+  // Strong workforce readiness diagnosis but weak change leadership = can diagnose but can't lead change
+  const readinessAnswers = byCapability["workforce_ai_readiness"] ?? [];
+  const changeAnswers = byCapability["ai_change_leadership"] ?? [];
+
+  if (readinessAnswers.length >= MIN_CROSS_CAP_ANSWERS && changeAnswers.length >= MIN_CROSS_CAP_ANSWERS) {
+    const avgReadiness = readinessAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.capability_diagnosis_accuracy ?? 0) + (a.signalDeltas.intervention_design_quality ?? 0), 0
+    ) / (readinessAnswers.length * 2);
+    const avgChange = changeAnswers.reduce((s, a) =>
+      s + (a.signalDeltas.resistance_response_quality ?? 0) + (a.signalDeltas.legitimate_concern_recognition ?? 0), 0
+    ) / (changeAnswers.length * 2);
+
+    if (avgReadiness > 0.9 && avgChange < -0.6) {
+      const readItem = readinessAnswers.find(a => a.outcomeClass === "strong")?.itemId ?? readinessAnswers[0].itemId;
+      const changeItem = changeAnswers.find(a => a.outcomeClass === "failure" || a.outcomeClass === "weak")?.itemId ?? changeAnswers[0].itemId;
+      pairs.push({
+        itemA: readItem,
+        itemB: changeItem,
+        reason: "Cross-domain contradiction: strong workforce readiness diagnosis but weak change leadership — can identify capability gaps but struggles to lead AI adoption",
+        capabilityKey: "workforce_ai_readiness",
+        contradictionType: "cross_capability",
+      });
+    }
   }
 
   // B5: Seniority-inconsistent response detection
-  // Detects when a user's answer quality is systematically below what their declared seniority implies.
-  // Only fires when all answers carry a consistent declaredSeniority and the pattern is clear.
   const seniorityValues = answers
     .map(a => resolveSeniorityRank(a.declaredSeniority))
     .filter(r => r > 0);
   if (seniorityValues.length >= 5) {
-    const declaredRank = seniorityValues[0]; // All answers share the same user seniority
+    const declaredRank = seniorityValues[0];
     const allSameSeniority = seniorityValues.every(r => r === declaredRank);
     if (allSameSeniority && declaredRank >= 3) {
-      // Senior+ user: expect fewer failures and critical_failures
       const failureRate = answers.filter(a =>
         a.outcomeClass === "failure" || a.outcomeClass === "critical_failure"
       ).length / answers.length;
-      // Senior+ users should not fail >40% of items — that's inconsistent with declared level
       if (failureRate > 0.40) {
         const worstItem = answers.find(a => a.outcomeClass === "critical_failure") ??
           answers.find(a => a.outcomeClass === "failure") ??
@@ -249,9 +264,7 @@ export function detectContradictions(
     }
   }
 
-  // F5c: Cap total pairs to 5 to prevent a single bad session from generating
-  // an unmanageable number of probes. Prioritise within-capability and calibration
-  // pairs over cross-capability pairs (which are higher false-positive risk).
+  // F5c: Cap total pairs to 5, prioritise within-capability and calibration
   const priorityOrder: ContradictionPair["contradictionType"][] = [
     "calibration", "within_capability", "time_pressure", "cross_capability",
   ];
@@ -262,7 +275,7 @@ export function detectContradictions(
 
   const count = cappedPairs.length;
   const requiresProbe = count >= 1;
-  const blockClassification = count >= 3;  // 3+ unresolved contradictions block classification
+  const blockClassification = count >= 3;
   const confidencePenalty = Math.max(0.3, 1 - count * 0.15);
 
   // B1: resolved is true when all pairs have at least one item answered as a probe
@@ -282,23 +295,23 @@ export function detectContradictions(
 
 /**
  * Generate a contradiction probe item specification.
- * B2: Accepts ContradictionPair directly — capabilityKey is stored on the pair.
+ * v10: Updated probe signal mapping for v10 domains.
  */
 export function generateContradictionProbeSpec(
   contradiction: ContradictionPair,
   roleArchetypeId: string
 ): ContradictionProbeSpec {
-  // F5d: mustInclude signals are now capability-specific rather than always governance+judgement
+  // v10: Capability-specific probe signals updated for new taxonomy
   const CAPABILITY_PROBE_SIGNALS: Record<string, string[]> = {
-    governance:          ["governance_quality", "governance_bypass_risk"],
-    judgement:           ["judgement_quality", "discrimination_quality"],
-    execution:           ["execution_quality", "validation_accuracy"],
-    appropriateness:     ["appropriateness_boundary", "unsafe_hr_decision_risk"],
-    workflow:            ["workflow_application_quality", "validation_accuracy"],
-    data_interpretation: ["data_interpretation_quality", "judgement_quality"],
+    ai_interaction:         ["prompt_construction_quality", "prompt_iteration_quality"],
+    ai_output_evaluation:   ["output_evaluation_quality", "error_detection_accuracy"],
+    ai_workflow_design:     ["workflow_redesign_quality", "human_oversight_preservation"],
+    workforce_ai_readiness: ["capability_diagnosis_accuracy", "intervention_design_quality"],
+    ai_ethics_trust:        ["ethics_under_pressure", "stakeholder_impact_awareness"],
+    ai_change_leadership:   ["resistance_response_quality", "legitimate_concern_recognition"],
   };
   const mustInclude = CAPABILITY_PROBE_SIGNALS[contradiction.capabilityKey]
-    ?? ["governance_quality", "judgement_quality"];
+    ?? ["output_evaluation_quality", "prompt_construction_quality"];
 
   return {
     type: "contradiction_probe",

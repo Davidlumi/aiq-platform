@@ -1,8 +1,21 @@
 /**
- * Assessment Engine Stress Test
+ * Assessment Engine Stress Test (v10 migration)
  * Tests the full lifecycle: start → generate → submit × N → complete → score
  * Also tests: LLM generation, all interaction types, error handling,
  * role archetype resolution, scoring, contradiction detection, anti-gaming.
+ *
+ * v10 migration notes:
+ *   - 6 capability domains: ai_interaction, ai_output_evaluation, ai_workflow_design,
+ *     workforce_ai_readiness, ai_ethics_trust, ai_change_leadership
+ *   - Interaction types: prompt_diagnosis, prompt_construction, process_redesign,
+ *     handoff_decision, capability_diagnosis, intervention_design, leader_advisory,
+ *     ethical_pressure_test, stakeholder_impact, resistance_response, legitimate_concern,
+ *     contradiction_probe, scenario_critique, error_detection, risk_judgement, confidence_calibration
+ *   - TYPES_WITH_AI_OUTPUT: scenario_critique, error_detection, prompt_diagnosis
+ *   - TYPES_WITH_DATA: capability_diagnosis
+ *   - computeSignalScores accepts Array<{ signalDeltas: Record<string, number> }>
+ *   - computeCapabilityScores uses positional args
+ *   - Signal keys: prompt_construction_quality, output_evaluation_quality, ethics_under_pressure, etc.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -23,21 +36,22 @@ import { analyseGamingPatterns } from "./assessment/antiGamingEngine";
 import { resolveRoleArchetype, ROLE_ARCHETYPES } from "./assessment/roleArchetypes";
 
 // ─── Mock invokeLLM to avoid real API calls ────────────────────────────────────
-// Track call count to return varied interaction types
 let llmCallCount = 0;
 const INTERACTION_TYPE_ROTATION: string[] = [
-  "scenario_critique", "prioritisation", "risk_judgement", "governance_decision",
-  "situational_judgement", "error_detection", "output_improvement", "data_interpretation",
-  "scenario_critique", "prioritisation", "risk_judgement", "governance_decision",
-  "situational_judgement", "error_detection", "output_improvement", "data_interpretation",
-  "scenario_critique", "prioritisation", "risk_judgement", "governance_decision",
+  "scenario_critique", "prompt_construction", "risk_judgement", "ethical_pressure_test",
+  "prompt_diagnosis", "error_detection", "process_redesign", "capability_diagnosis",
+  "scenario_critique", "prompt_construction", "risk_judgement", "ethical_pressure_test",
+  "prompt_diagnosis", "error_detection", "process_redesign", "capability_diagnosis",
+  "scenario_critique", "prompt_construction", "risk_judgement", "ethical_pressure_test",
 ];
-// Rotate through all 6 capability domains so R1 per-capability coverage check passes
 const CAPABILITY_KEY_ROTATION: string[] = [
-  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
-  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
-  "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
-  "execution", "judgement",
+  "ai_interaction", "ai_output_evaluation", "ai_ethics_trust",
+  "ai_workflow_design", "workforce_ai_readiness", "ai_change_leadership",
+  "ai_interaction", "ai_output_evaluation", "ai_ethics_trust",
+  "ai_workflow_design", "workforce_ai_readiness", "ai_change_leadership",
+  "ai_interaction", "ai_output_evaluation", "ai_ethics_trust",
+  "ai_workflow_design", "workforce_ai_readiness", "ai_change_leadership",
+  "ai_interaction", "ai_output_evaluation",
 ];
 
 vi.mock("./_core/llm", () => ({
@@ -53,8 +67,8 @@ vi.mock("./_core/llm", () => ({
         message: {
           content: JSON.stringify({
             title: "AI Output Review: Recruitment Email Draft",
-            scenario: "Your AI tool has drafted a recruitment email for a senior HR Business Partner role. The email will be sent to 200 passive candidates sourced from LinkedIn.",
-            constraint: "You have 10 minutes before the email is scheduled to send. You can make one change.",
+            scenario: "Your AI tool has drafted a recruitment email for a senior HR Business Partner role.",
+            constraint: "You have 10 minutes before the email is scheduled to send.",
             question: "What is the most significant problem with this output?",
             capability_key: capabilityKey,
             workflow: "Recruitment & Selection",
@@ -62,13 +76,13 @@ vi.mock("./_core/llm", () => ({
             interaction_type: interactionType,
             difficulty: 3,
             options: [
-              { label: "A", text: "The email uses informal language inappropriate for senior candidates.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.3, judgement_quality: 0.2 }, eventCodes: ["QC-01"], rationale: "Acceptable but not the most critical issue." },
-              { label: "B", text: "The email contains no salary range, which is now legally required in some jurisdictions.", outcomeClass: "strong", signalDeltas: { governance_quality: 0.8, appropriateness_boundary: 0.5 }, eventCodes: ["GOV-01", "RISK-01"], rationale: "Correct — compliance gap is the most significant problem." },
-              { label: "C", text: "The email is too long and candidates won't read it.", outcomeClass: "weak", signalDeltas: { validation_accuracy: -0.2, cosmetic_focus_risk: -0.3 }, eventCodes: [], rationale: "Minor cosmetic issue, not the most significant problem." },
-              { label: "D", text: "Send the email immediately without any review — the AI tool is reliable.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, validation_accuracy: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Critical failure — blind acceptance without any validation." },
+              { label: "A", text: "The email uses informal language.", outcomeClass: "acceptable", signalDeltas: { output_evaluation_quality: 0.3, prompt_construction_quality: 0.2 }, eventCodes: ["QC-01"], rationale: "Acceptable but not critical." },
+              { label: "B", text: "The email contains no salary range.", outcomeClass: "strong", signalDeltas: { output_evaluation_quality: 0.8, prompt_construction_quality: 0.5, ethics_under_pressure: 0.3 }, eventCodes: ["GOV-01", "RISK-01"], rationale: "Correct — compliance gap." },
+              { label: "C", text: "The email is too long.", outcomeClass: "weak", signalDeltas: { output_evaluation_quality: -0.2, prompt_construction_quality: -0.1 }, eventCodes: [], rationale: "Minor cosmetic issue." },
+              { label: "D", text: "Send immediately without review.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, output_evaluation_quality: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Critical failure — blind acceptance." },
             ],
-            ...(needsAiOutput ? { ai_output: "Dear [Candidate Name],\n\nWe are excited to reach out about an exceptional opportunity for a Senior HR Business Partner at Acme Corp. This role offers a competitive package and the chance to shape our people strategy. The position reports directly to the CHRO and offers significant autonomy.\n\nPlease reply if you are interested in learning more.\n\nBest regards,\nTalent Acquisition Team" } : {}),
-            ...(needsDataContext ? { data_context: "Q3 attrition data shows 18% voluntary turnover in the Sales division, compared to a 12% company average. Exit survey data indicates 67% of leavers cited 'lack of career progression' as the primary reason. However, the Sales division also had the highest performance bonus payouts this quarter (avg £8,400 vs £5,200 company average)." } : {}),
+            ...(needsAiOutput ? { ai_output: "Dear [Candidate Name],\n\nWe are excited to reach out about an exceptional opportunity..." } : {}),
+            ...(needsDataContext ? { data_context: "Q3 attrition data shows 18% voluntary turnover in the Sales division." } : {}),
           }),
         },
       }],
@@ -79,9 +93,9 @@ vi.mock("./_core/llm", () => ({
 // ─── Helper: Build a mock AnswerData ──────────────────────────────────────────
 function mockAnswer(overrides: Partial<AnswerData> = {}): AnswerData {
   const interactionTypes: InteractionType[] = [
-    "situational_judgement", "prioritisation", "risk_judgement",
-    "governance_decision", "scenario_critique", "error_detection",
-    "output_improvement", "data_interpretation",
+    "prompt_diagnosis", "prompt_construction", "risk_judgement",
+    "ethical_pressure_test", "scenario_critique", "error_detection",
+    "process_redesign", "capability_diagnosis",
   ];
   const idx = Math.floor(Math.random() * interactionTypes.length);
   return {
@@ -91,11 +105,11 @@ function mockAnswer(overrides: Partial<AnswerData> = {}): AnswerData {
     confidenceScore: 0.7,
     timeToAnswerMs: 15000,
     outcomeClass: "strong",
-    signalDeltasJson: { governance_quality: 0.8, judgement_quality: 0.5 },
+    signalDeltasJson: { ethics_under_pressure: 0.8, output_evaluation_quality: 0.5 },
     eventCodesJson: [],
     riskLevel: "High",
     difficulty: 3,
-    capabilityKey: "judgement",
+    capabilityKey: "ai_output_evaluation",
     interactionType: interactionTypes[idx],
     optionPosition: 2,
     ...overrides,
@@ -105,12 +119,14 @@ function mockAnswer(overrides: Partial<AnswerData> = {}): AnswerData {
 // ─── Helper: Build a full set of N answers with varied types ─────────────────
 function buildAnswerSet(count: number, overrides: Partial<AnswerData> = {}): AnswerData[] {
   const interactionTypes: InteractionType[] = [
-    "situational_judgement", "prioritisation", "risk_judgement",
-    "governance_decision", "scenario_critique", "error_detection",
-    "output_improvement", "data_interpretation",
+    "prompt_diagnosis", "prompt_construction", "risk_judgement",
+    "ethical_pressure_test", "scenario_critique", "error_detection",
+    "process_redesign", "capability_diagnosis",
   ];
-  // Must match ALL_CAPABILITIES in sessionController.ts: execution, judgement, governance, appropriateness, workflow, data_interpretation
-  const capabilityKeys = ["execution", "judgement", "data_interpretation", "workflow", "appropriateness", "governance"];
+  const capabilityKeys = [
+    "ai_interaction", "ai_output_evaluation", "ai_change_leadership",
+    "workforce_ai_readiness", "ai_workflow_design", "ai_ethics_trust",
+  ];
   return Array.from({ length: count }, (_, i) => mockAnswer({
     itemId: `item-${i}`,
     interactionType: interactionTypes[i % interactionTypes.length],
@@ -124,10 +140,9 @@ function buildAnswerSet(count: number, overrides: Partial<AnswerData> = {}): Ans
 // ─── Helper: Build AdaptiveSelectionContext ───────────────────────────────────
 function buildCtx(answers: AnswerData[], overrides: Partial<AdaptiveSelectionContext> = {}): AdaptiveSelectionContext {
   const signalScores = computeSignalScores(answers.map(a => ({
-    signalDeltasJson: a.signalDeltasJson,
-    outcomeClass: a.outcomeClass,
-    riskLevel: a.riskLevel,
-    difficulty: a.difficulty,
+    signalDeltas: (() => {
+      try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+    })(),
   })));
   const capabilityScores = computeCapabilityScores(signalScores);
   const interactionTypesUsed: Record<string, number> = {};
@@ -152,7 +167,9 @@ function buildCtx(answers: AnswerData[], overrides: Partial<AdaptiveSelectionCon
       timeToAnswerMs: a.timeToAnswerMs,
       outcomeClass: a.outcomeClass,
       confidenceScore: a.confidenceScore,
-      signalDeltas: (typeof a.signalDeltasJson === "object" ? a.signalDeltasJson : {}) as Record<string, number>,
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "object" ? a.signalDeltasJson as Record<string, number> : {}; } catch { return {}; }
+      })(),
       interactionType: a.interactionType,
     }))),
     contradictionProbes: [],
@@ -171,7 +188,7 @@ function buildVars(overrides: Partial<GenerationVariables> = {}): GenerationVari
   const role = resolveRoleArchetype("hrbp");
   return {
     roleArchetype: role,
-    targetCapability: "judgement",
+    targetCapability: "ai_output_evaluation",
     interactionType: "scenario_critique",
     difficulty: 3,
     riskLevel: "High",
@@ -182,7 +199,7 @@ function buildVars(overrides: Partial<GenerationVariables> = {}): GenerationVari
     governanceSensitivity: "high",
     timePressure: true,
     businessConsequence: "high",
-    evidenceObjective: "Assess judgement via scenario_critique",
+    evidenceObjective: "Assess ai_output_evaluation via scenario_critique",
     contradictionIntent: false,
     phase: "adaptive",
     userSector: "Financial Services",
@@ -195,27 +212,23 @@ function buildVars(overrides: Partial<GenerationVariables> = {}): GenerationVari
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-// Reset LLM call counter before each test so rotation is deterministic
 beforeEach(() => { llmCallCount = 0; });
 
 describe("Assessment Engine — Phase Determination", () => {
   it("returns baseline for first 30% of items", () => {
     const target = MINIMUM_EVIDENCE.targetItems; // 49
-    // 30% of 49 = 14.7, so baseline is 0..14 (progress < 0.30)
     expect(determineSessionPhase(0, target)).toBe("baseline");
     expect(determineSessionPhase(14, target)).toBe("baseline"); // 14/49 = 0.2857 < 0.30
   });
 
   it("returns adaptive for middle 45%", () => {
-    const target = MINIMUM_EVIDENCE.targetItems; // 49
-    // Adaptive: 15..36 (0.30 <= progress < 0.75)
+    const target = MINIMUM_EVIDENCE.targetItems;
     expect(determineSessionPhase(15, target)).toBe("adaptive"); // 15/49 = 0.3061 >= 0.30
     expect(determineSessionPhase(36, target)).toBe("adaptive"); // 36/49 = 0.7347 < 0.75
   });
 
   it("returns validation for final 25%", () => {
-    const target = MINIMUM_EVIDENCE.targetItems; // 49
-    // Validation: 37..48 (progress >= 0.75)
+    const target = MINIMUM_EVIDENCE.targetItems;
     expect(determineSessionPhase(37, target)).toBe("validation"); // 37/49 = 0.7551 >= 0.75
     expect(determineSessionPhase(target - 1, target)).toBe("validation");
   });
@@ -283,40 +296,48 @@ describe("Assessment Engine — Generation Variables", () => {
   });
 
   it("targets weakest capability when prior scores exist (adaptive phase)", () => {
-    // Build a context in adaptive phase with no current evidence but prior scores
-    // This tests that findWeakestCapability falls back to priorCapabilityScores
-    const requiredTypes: InteractionType[] = ["scenario_critique", "risk_judgement", "prioritisation", "contradiction_probe"];
+    // Must include ALL required interaction types so Priority 5 doesn't fire before Priority 6
+    const requiredTypes: InteractionType[] = [
+      "scenario_critique", "risk_judgement", "prompt_diagnosis",
+      "ethical_pressure_test", "contradiction_probe",
+    ];
     const ctx: AdaptiveSelectionContext = {
-      answeredCount: 15, // adaptive phase (15/49 = 30.6%)
+      answeredCount: 15,
       totalTarget: MINIMUM_EVIDENCE.targetItems,
       capabilityScores: {
-        execution: { score: 0, signalCount: 0 },
-        judgement: { score: 0, signalCount: 0 },
-        governance: { score: 0, signalCount: 0 },
-        appropriateness: { score: 0, signalCount: 0 },
-        workflow: { score: 0, signalCount: 0 },
-        data_interpretation: { score: 0, signalCount: 0 },
+        ai_interaction: { score: 0, signalCount: 0 },
+        ai_output_evaluation: { score: 0, signalCount: 0 },
+        ai_ethics_trust: { score: 0, signalCount: 0 },
+        ai_workflow_design: { score: 0, signalCount: 0 },
+        workforce_ai_readiness: { score: 0, signalCount: 0 },
+        ai_change_leadership: { score: 0, signalCount: 0 },
       },
       interactionTypesUsed: Object.fromEntries(requiredTypes.map(t => [t, 1])) as Record<InteractionType, number>,
       riskExposure: { Low: 5, Medium: 5, High: 5 },
-      gamingAnalysis: { injectionRequired: false, recommendedInjections: [], flags: [], riskScore: 0 },
+      gamingAnalysis: { score: 1.0, patterns: [], scrutinyLevel: "normal", injectionRequired: false, recommendedInjections: [] },
       contradictionProbes: [],
       roleArchetype: resolveRoleArchetype("hrbp"),
       orgIntent: DEFAULT_ORG_INTENT,
       userSector: "Financial Services",
       userSeniority: "senior_practitioner",
       userAiUsageLevel: "intermediate",
-      priorCapabilityScores: { execution: 85, judgement: 30, workflow: 65, appropriateness: 75, governance: 80, data_interpretation: 70 },
+      priorCapabilityScores: {
+        ai_interaction: 85, ai_output_evaluation: 30, workforce_ai_readiness: 65,
+        ai_workflow_design: 75, ai_ethics_trust: 80, ai_change_leadership: 70,
+      },
     };
     const vars = selectNextGenerationVariables(ctx);
-    // With no current evidence, prior scores are used: judgement=30 is weakest
     expect(vars.phase).toBe("adaptive");
-    expect(vars.targetCapability).toBe("judgement");
+    // ai_output_evaluation=30 is weakest — with all required types covered, Priority 6 fires
+    expect(vars.targetCapability).toBe("ai_output_evaluation");
   });
 
   it("increases difficulty for returning users with high prior scores", () => {
     const ctx = buildCtx(buildAnswerSet(5), {
-      priorCapabilityScores: { execution: 90, judgement: 88, data_interpretation: 85, workflow: 82, appropriateness: 87, governance: 91 },
+      priorCapabilityScores: {
+        ai_interaction: 90, ai_output_evaluation: 88, ai_change_leadership: 85,
+        workforce_ai_readiness: 82, ai_workflow_design: 87, ai_ethics_trust: 91,
+      },
     });
     const vars = selectNextGenerationVariables(ctx);
     expect(vars.difficulty).toBeGreaterThanOrEqual(2);
@@ -344,21 +365,21 @@ describe("Assessment Engine — LLM Item Generation", () => {
   });
 
   it("generates a valid item for error_detection (with ai_output)", async () => {
-    const vars = buildVars({ interactionType: "error_detection", targetCapability: "governance" });
+    const vars = buildVars({ interactionType: "error_detection", targetCapability: "ai_ethics_trust" });
     const item = await generateAdaptiveItem(vars);
     expect(item.aiOutput).toBeTruthy();
   });
 
-  it("generates a valid item for output_improvement (with ai_output)", async () => {
-    const vars = buildVars({ interactionType: "output_improvement", targetCapability: "execution" });
+  it("generates a valid item for prompt_diagnosis (with ai_output)", async () => {
+    const vars = buildVars({ interactionType: "prompt_diagnosis", targetCapability: "ai_interaction" });
     const item = await generateAdaptiveItem(vars);
     expect(item.aiOutput).toBeTruthy();
   });
 
-  it("generates a valid item for data_interpretation (with data_context)", async () => {
+  it("generates a valid item for capability_diagnosis (with data_context)", async () => {
     const vars = buildVars({
-      interactionType: "data_interpretation",
-      targetCapability: "data_interpretation",
+      interactionType: "capability_diagnosis",
+      targetCapability: "workforce_ai_readiness",
       roleArchetype: resolveRoleArchetype("people_analytics"),
       workflowContext: "people_analytics",
     });
@@ -366,28 +387,28 @@ describe("Assessment Engine — LLM Item Generation", () => {
     expect(item.dataContext).toBeTruthy();
   });
 
-  it("generates a valid item for prioritisation (no ai_output needed)", async () => {
-    const vars = buildVars({ interactionType: "prioritisation", targetCapability: "execution" });
+  it("generates a valid item for prompt_construction (no ai_output needed)", async () => {
+    const vars = buildVars({ interactionType: "prompt_construction", targetCapability: "ai_interaction" });
     const item = await generateAdaptiveItem(vars);
     expect(item.aiOutput).toBeUndefined();
     expect(item.options).toHaveLength(4);
   });
 
   it("generates a valid item for risk_judgement", async () => {
-    const vars = buildVars({ interactionType: "risk_judgement", targetCapability: "governance", riskLevel: "High" });
+    const vars = buildVars({ interactionType: "risk_judgement", targetCapability: "ai_ethics_trust", riskLevel: "High" });
     const item = await generateAdaptiveItem(vars);
     expect(item.options).toHaveLength(4);
     expect(item.riskLevel).toBe("High");
   });
 
-  it("generates a valid item for governance_decision", async () => {
-    const vars = buildVars({ interactionType: "governance_decision", targetCapability: "governance" });
+  it("generates a valid item for ethical_pressure_test", async () => {
+    const vars = buildVars({ interactionType: "ethical_pressure_test", targetCapability: "ai_ethics_trust" });
     const item = await generateAdaptiveItem(vars);
     expect(item.options).toHaveLength(4);
   });
 
-  it("generates a valid item for situational_judgement", async () => {
-    const vars = buildVars({ interactionType: "situational_judgement", targetCapability: "execution" });
+  it("generates a valid item for prompt_diagnosis", async () => {
+    const vars = buildVars({ interactionType: "prompt_diagnosis", targetCapability: "ai_interaction" });
     const item = await generateAdaptiveItem(vars);
     expect(item.options).toHaveLength(4);
   });
@@ -396,7 +417,6 @@ describe("Assessment Engine — LLM Item Generation", () => {
     const vars = buildVars();
     const item = await generateAdaptiveItem(vars);
     expect(item.options).toHaveLength(4);
-    // C1.2: Only canonical outcome classes are valid
     const validOutcomes = ["strong", "acceptable", "weak", "failure", "critical_failure"];
     item.options.forEach(opt => {
       expect(validOutcomes).toContain(opt.outcomeClass);
@@ -422,7 +442,7 @@ describe("Assessment Engine — LLM Item Generation", () => {
   });
 
   it("does not include ai_output for non-critique types", async () => {
-    const vars = buildVars({ interactionType: "prioritisation" });
+    const vars = buildVars({ interactionType: "prompt_construction" });
     const item = await generateAdaptiveItem(vars);
     expect(item.aiOutput).toBeUndefined();
     expect(item.dataContext).toBeUndefined();
@@ -431,13 +451,13 @@ describe("Assessment Engine — LLM Item Generation", () => {
   it("TYPES_WITH_AI_OUTPUT contains the correct types", () => {
     expect(TYPES_WITH_AI_OUTPUT).toContain("scenario_critique");
     expect(TYPES_WITH_AI_OUTPUT).toContain("error_detection");
-    expect(TYPES_WITH_AI_OUTPUT).toContain("output_improvement");
-    expect(TYPES_WITH_AI_OUTPUT).not.toContain("prioritisation");
-    expect(TYPES_WITH_AI_OUTPUT).not.toContain("situational_judgement");
+    expect(TYPES_WITH_AI_OUTPUT).toContain("prompt_diagnosis");
+    expect(TYPES_WITH_AI_OUTPUT).not.toContain("prompt_construction");
+    expect(TYPES_WITH_AI_OUTPUT).not.toContain("ethical_pressure_test");
   });
 
-  it("TYPES_WITH_DATA contains data_interpretation", () => {
-    expect(TYPES_WITH_DATA).toContain("data_interpretation");
+  it("TYPES_WITH_DATA contains capability_diagnosis", () => {
+    expect(TYPES_WITH_DATA).toContain("capability_diagnosis");
     expect(TYPES_WITH_DATA).not.toContain("scenario_critique");
   });
 });
@@ -446,24 +466,22 @@ describe("Assessment Engine — Scoring Engine", () => {
   it("computes signal scores from a full answer set", () => {
     const answers = buildAnswerSet(20);
     const signalScores = computeSignalScores(answers.map(a => ({
-      signalDeltasJson: a.signalDeltasJson,
-      outcomeClass: a.outcomeClass,
-      riskLevel: a.riskLevel,
-      difficulty: a.difficulty,
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+      })(),
     })));
     expect(Object.keys(signalScores).length).toBeGreaterThan(0);
     Object.values(signalScores).forEach(score => {
-      expect(typeof score).toBe("number");
+      expect(typeof score.sum).toBe("number");
     });
   });
 
   it("computes capability scores from signal scores", () => {
     const answers = buildAnswerSet(20);
     const signalScores = computeSignalScores(answers.map(a => ({
-      signalDeltasJson: a.signalDeltasJson,
-      outcomeClass: a.outcomeClass,
-      riskLevel: a.riskLevel,
-      difficulty: a.difficulty,
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+      })(),
     })));
     const capabilityScores = computeCapabilityScores(signalScores);
     const keys = Object.keys(capabilityScores);
@@ -474,13 +492,19 @@ describe("Assessment Engine — Scoring Engine", () => {
     });
   });
 
-  it("penalises failure answers in scoring (C1.1: unsigned magnitudes, sign from outcome modifier)", () => {
-    // C1.2: Use canonical "failure" instead of non-canonical "harmful"
-    // C1.1: Deltas are unsigned magnitudes; sign comes from OUTCOME_SCORE_MODIFIER
-    const goodAnswers = buildAnswerSet(10, { outcomeClass: "strong", signalDeltasJson: { governance_quality: 0.8 } });
-    const badAnswers = buildAnswerSet(10, { outcomeClass: "failure", signalDeltasJson: { governance_quality: 0.8 } });
-    const goodSignals = computeSignalScores(goodAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
-    const badSignals = computeSignalScores(badAnswers.map(a => ({ signalDeltasJson: a.signalDeltasJson, outcomeClass: a.outcomeClass, riskLevel: a.riskLevel, difficulty: a.difficulty })));
+  it("penalises failure answers in scoring", () => {
+    const goodAnswers = buildAnswerSet(10, { outcomeClass: "strong", signalDeltasJson: { ethics_under_pressure: 0.8 } });
+    const badAnswers = buildAnswerSet(10, { outcomeClass: "failure", signalDeltasJson: { ethics_under_pressure: -0.8 } });
+    const goodSignals = computeSignalScores(goodAnswers.map(a => ({
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+      })(),
+    })));
+    const badSignals = computeSignalScores(badAnswers.map(a => ({
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+      })(),
+    })));
     const goodCap = computeCapabilityScores(goodSignals);
     const badCap = computeCapabilityScores(badSignals);
     const goodTotal = Object.values(goodCap).reduce((s, v) => s + v.score, 0);
@@ -495,31 +519,15 @@ describe("Assessment Engine — Scoring Engine", () => {
     expect(capabilityScores).toBeDefined();
   });
 
-  it("C1.1: DPIA worked example — strong option produces positive governance, failure option produces negative governance", () => {
-    // Scenario: DPIA review item
-    // Option B (strong): governance_quality magnitude 0.8, appropriateness_boundary magnitude 0.5
-    // Option D (failure): blind_acceptance_risk magnitude 2.0, validation_accuracy magnitude 1.5
-    // With C1.1 fix: both options store UNSIGNED magnitudes; sign comes from OUTCOME_SCORE_MODIFIER
-    const strongAnswer = [{
-      signalDeltasJson: { governance_quality: 0.8, appropriateness_boundary: 0.5 },
-      outcomeClass: "strong",
-      riskLevel: "High",
-      difficulty: 2,
-    }];
-    const failureAnswer = [{
-      signalDeltasJson: { blind_acceptance_risk: 2.0, validation_accuracy: 1.5 },
-      outcomeClass: "failure",
-      riskLevel: "High",
-      difficulty: 2,
-    }];
+  it("strong option produces positive signal, failure option produces negative signal", () => {
+    const strongAnswer = [{ signalDeltas: { ethics_under_pressure: 0.8, workflow_redesign_quality: 0.5 } }];
+    const failureAnswer = [{ signalDeltas: { blind_acceptance_risk: -2.0, output_evaluation_quality: -1.5 } }];
     const strongSignals = computeSignalScores(strongAnswer);
     const failureSignals = computeSignalScores(failureAnswer);
-    // Strong option: governance_quality should be POSITIVE
-    expect(strongSignals.governance_quality).toBeGreaterThan(0);
-    expect(strongSignals.appropriateness_boundary).toBeGreaterThan(0);
-    // Failure option: blind_acceptance_risk and validation_accuracy should be NEGATIVE
-    expect(failureSignals.blind_acceptance_risk).toBeLessThan(0);
-    expect(failureSignals.validation_accuracy).toBeLessThan(0);
+    expect(strongSignals.ethics_under_pressure.sum).toBeGreaterThan(0);
+    expect(strongSignals.workflow_redesign_quality.sum).toBeGreaterThan(0);
+    expect(failureSignals.blind_acceptance_risk.sum).toBeLessThan(0);
+    expect(failureSignals.output_evaluation_quality.sum).toBeLessThan(0);
   });
 });
 
@@ -556,7 +564,6 @@ describe("Assessment Engine — Session Controller", () => {
       optionPosition: 1,
     });
     const state = SessionController.computeState("s1", "u1", "bp1", rapidAnswers, MINIMUM_EVIDENCE.targetItems, "hr_generalist");
-    // Rapid answers should trigger gaming scrutiny
     expect(state.gamingScrutinyLevel).toBeDefined();
   });
 
@@ -566,7 +573,9 @@ describe("Assessment Engine — Session Controller", () => {
       itemId: a.itemId,
       capabilityKey: a.capabilityKey,
       outcomeClass: a.outcomeClass,
-      signalDeltas: (typeof a.signalDeltasJson === "object" ? a.signalDeltasJson : {}) as Record<string, number>,
+      signalDeltas: (() => {
+        try { return typeof a.signalDeltasJson === "object" ? a.signalDeltasJson as Record<string, number> : {}; } catch { return {}; }
+      })(),
       confidenceScore: a.confidenceScore,
       interactionType: a.interactionType,
       riskLevel: a.riskLevel,
@@ -579,7 +588,7 @@ describe("Assessment Engine — Session Controller", () => {
   it("handles a session with all weak answers (low score)", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems, {
       outcomeClass: "weak",
-      signalDeltasJson: { governance_quality: -0.3, judgement_quality: -0.2 },
+      signalDeltasJson: { ethics_under_pressure: -0.3, output_evaluation_quality: -0.2 },
     });
     const results = SessionController.computeResults(answers, "hrbp");
     expect(results.overallScore).toBeLessThan(60);
@@ -588,7 +597,7 @@ describe("Assessment Engine — Session Controller", () => {
   it("handles a session with all strong answers (high score)", () => {
     const answers = buildAnswerSet(MINIMUM_EVIDENCE.totalItems, {
       outcomeClass: "strong",
-      signalDeltasJson: { governance_quality: 0.9, judgement_quality: 0.8, execution_quality: 0.7 },
+      signalDeltasJson: { ethics_under_pressure: 0.9, output_evaluation_quality: 0.8, prompt_construction_quality: 0.7 },
     });
     const results = SessionController.computeResults(answers, "hrbp");
     expect(results.overallScore).toBeGreaterThan(50);
@@ -612,15 +621,16 @@ describe("Assessment Engine — MINIMUM_EVIDENCE Model", () => {
 describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
   it("simulates a complete session end-to-end with LLM generation", async () => {
     const sessionAnswers: AnswerData[] = [];
-    // Cycle through all 6 capability domains to satisfy R1 per-capability coverage check
-    const ALL_CAPS = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"] as const;
+    const ALL_CAPS = [
+      "ai_interaction", "ai_output_evaluation", "ai_ethics_trust",
+      "ai_workflow_design", "workforce_ai_readiness", "ai_change_leadership",
+    ] as const;
 
     for (let i = 0; i < MINIMUM_EVIDENCE.totalItems; i++) {
       const ctx = buildCtx(sessionAnswers, { answeredCount: i });
       const vars = selectNextGenerationVariables(ctx);
       const item = await generateAdaptiveItem(vars);
 
-      // Validate generated item
       expect(item.title).toBeTruthy();
       expect(item.options).toHaveLength(4);
       expect(item.interactionType).toBeTruthy();
@@ -631,14 +641,11 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
         expect(item.dataContext).toBeTruthy();
       }
 
-      // Simulate answering (always pick the "strong" option)
       const strongOption = item.options.find(o => o.outcomeClass === "strong") ?? item.options[0];
-      // Force risk distribution: every 3rd answer is High risk to ensure >= 25% high-risk
       const forcedRiskLevel: "Low" | "Medium" | "High" = i % 3 === 0 ? "High" : i % 3 === 1 ? "Medium" : "Low";
       sessionAnswers.push(mockAnswer({
         itemId: `gen-item-${i}`,
         interactionType: item.interactionType as InteractionType,
-        // Force capability rotation so R1 per-capability coverage check passes
         capabilityKey: ALL_CAPS[i % ALL_CAPS.length],
         riskLevel: forcedRiskLevel,
         difficulty: item.difficulty as 1 | 2 | 3,
@@ -648,31 +655,23 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
       }));
     }
 
-    // Verify session can complete
     const state = SessionController.computeState("s1", "u1", "bp1", sessionAnswers, MINIMUM_EVIDENCE.targetItems, "hrbp");
-    console.log("[DEBUG] evidenceSufficient:", state.evidenceSufficient);
-    console.log("[DEBUG] canComplete:", state.canComplete);
-    console.log("[DEBUG] completionBlockers:", state.completionBlockers);
-    console.log("[DEBUG] answeredCount:", sessionAnswers.length);
-    console.log("[DEBUG] distinctInteractionTypes:", new Set(sessionAnswers.map(a => a.interactionType)).size);
-    console.log("[DEBUG] highRiskCount:", sessionAnswers.filter(a => a.riskLevel === "High").length);
-    console.log("[DEBUG] interactionTypes used:", [...new Set(sessionAnswers.map(a => a.interactionType))]);
     expect(state.evidenceSufficient).toBe(true);
     expect(state.canComplete).toBe(true);
 
-    // Compute final results
     const results = SessionController.computeResults(sessionAnswers, "hrbp");
     expect(results.overallScore).toBeGreaterThanOrEqual(0);
     expect(results.overallScore).toBeLessThanOrEqual(100);
     expect(results.readiness).toBeDefined();
     expect(results.capabilityScores).toBeDefined();
     console.log(`\n✓ Full session complete: score=${results.overallScore.toFixed(1)}, readiness=${results.readiness}`);
-    console.log(`  Interaction types used: ${[...new Set(sessionAnswers.map(a => a.interactionType))].join(", ")}`);
   }, 30000);
 
   it("simulates a returning user session with prior scores (adaptive calibration)", async () => {
-    const priorScores = { execution: 72, judgement: 45, governance: 68, appropriateness: 80, workflow: 55, data_interpretation: 60 };
-    // Start with 15 answers to be in adaptive phase (30% of 49 = 14.7)
+    const priorScores = {
+      ai_interaction: 72, ai_output_evaluation: 45, ai_ethics_trust: 68,
+      ai_workflow_design: 80, workforce_ai_readiness: 55, ai_change_leadership: 60,
+    };
     const sessionAnswers: AnswerData[] = buildAnswerSet(15, { riskLevel: "High" });
 
     for (let i = 0; i < 5; i++) {
@@ -681,8 +680,6 @@ describe("Assessment Engine — Full Session Simulation (20 questions)", () => {
         priorCapabilityScores: priorScores,
       });
       const vars = selectNextGenerationVariables(ctx);
-      // In adaptive phase with prior scores, should target a weak capability
-      // (judgement=45 is weakest, but required interaction types may fire first)
       expect(vars.targetCapability).toBeDefined();
       expect(vars.phase).toBe("adaptive");
       const item = await generateAdaptiveItem(vars);

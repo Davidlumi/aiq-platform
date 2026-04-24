@@ -1,20 +1,21 @@
 /**
- * AIQ Adaptive Assessment Engine — Generation Engine (v2)
+ * AIQ Adaptive Assessment Engine — v10
  *
  * Fully LLM-driven. Every question is generated in real-time based on:
  * - User's role archetype, seniority, sector, and AI usage level
  * - Current capability gap profile (from prior answers or prior sessions)
- * - Interaction type rotation to ensure mixed-method coverage
+ * - Foundation-first routing: AI Interaction + AI Output Evaluation get ≥3
+ *   signal contributions BEFORE strategic domains are probed
+ * - Interaction type rotation across 15 types for mixed-method coverage
  * - Anti-gaming injections and contradiction probes
+ * - Pressure-test mechanic for Ethics domain (escalating constraints)
  *
- * Key changes from v1:
- * - LLM is ALWAYS primary — static items are never served
- * - Rich per-type prompts produce genuinely different question experiences
- * - scenario_critique / output_improvement / error_detection generate an actual
- *   "ai_output" block (the text the user must evaluate)
- * - data_interpretation generates a "data_context" block
- * - User sector / seniority / AI usage level are injected into every prompt
- * - Prior session capability scores calibrate difficulty from question 1
+ * v10 changes from v9.2:
+ * - 15 interaction types (4 preserved + 11 new)
+ * - Foundation-first routing (baseline must establish foundation domains)
+ * - Pressure-test mechanic for AI Ethics & Employee Trust
+ * - 26 signals across 6 new capability domains
+ * - Immersive scenario presentation context fields
  */
 
 import { invokeLLM } from "../_core/llm";
@@ -22,63 +23,89 @@ import type { RoleArchetype, CapabilityKey } from "./roleArchetypes";
 import type { GamingAnalysis, InjectionSpec } from "./antiGamingEngine";
 import type { ContradictionProbeSpec } from "./contradictionEngine";
 import { isValidationPhaseRandomised } from "./featureFlags";
+import { ALL_DOMAINS, FOUNDATION_DOMAINS, STRATEGIC_DOMAINS, SIGNAL_TO_DOMAIN } from "./scoringEngine";
 
-// ─── Interaction Types ────────────────────────────────────────────────────────
+// ─── Interaction Types (v10: 15 types) ──────────────────────────────────────
 
 export type InteractionType =
-  | "situational_judgement"
+  // Preserved from v9.2
   | "scenario_critique"
-  | "output_improvement"
   | "error_detection"
-  | "prioritisation"
   | "risk_judgement"
-  | "data_interpretation"
-  | "governance_decision"
-  | "multi_step_workflow"
-  | "contradiction_probe"
-  | "confidence_calibration";
+  | "confidence_calibration"
+  // New in v10
+  | "prompt_diagnosis"
+  | "prompt_construction"
+  | "process_redesign"
+  | "handoff_decision"
+  | "capability_diagnosis"
+  | "intervention_design"
+  | "leader_advisory"
+  | "ethical_pressure_test"
+  | "stakeholder_impact"
+  | "resistance_response"
+  | "legitimate_concern"
+  // Cross-cutting
+  | "contradiction_probe";
 
 export const INTERACTION_TYPE_DISPLAY: Record<InteractionType, string> = {
-  situational_judgement:  "Situational Judgement",
-  scenario_critique:      "AI Output Critique",
-  output_improvement:     "Output Improvement",
-  error_detection:        "Error Detection",
-  prioritisation:         "Prioritisation",
-  risk_judgement:         "Risk Judgement",
-  data_interpretation:    "Data Interpretation",
-  governance_decision:    "Governance Decision",
-  multi_step_workflow:    "Multi-Step Workflow",
-  contradiction_probe:    "Targeted Probe",
-  confidence_calibration: "Confidence Calibration",
+  scenario_critique:       "AI Output Critique",
+  error_detection:         "Error Detection",
+  risk_judgement:          "Risk Judgement",
+  confidence_calibration:  "Confidence Calibration",
+  prompt_diagnosis:        "Prompt Diagnosis",
+  prompt_construction:     "Prompt Construction",
+  process_redesign:        "Process Redesign",
+  handoff_decision:        "Handoff Decision",
+  capability_diagnosis:    "Capability Diagnosis",
+  intervention_design:     "Intervention Design",
+  leader_advisory:         "Leader Advisory",
+  ethical_pressure_test:   "Ethical Pressure Test",
+  stakeholder_impact:      "Stakeholder Impact",
+  resistance_response:     "Resistance Response",
+  legitimate_concern:      "Legitimate Concern",
+  contradiction_probe:     "Targeted Probe",
 };
 
-/** These types require an actual AI output block in the generated item */
+/** Types that require an actual AI output block in the generated item */
 export const TYPES_WITH_AI_OUTPUT: InteractionType[] = [
   "scenario_critique",
-  "output_improvement",
   "error_detection",
+  "prompt_diagnosis",
 ];
 
-/** These types require a data/table context block */
+/** Types that require a data/table context block */
 export const TYPES_WITH_DATA: InteractionType[] = [
-  "data_interpretation",
+  "capability_diagnosis",
 ];
 
+/** Types that require a prompt/conversation context block */
+export const TYPES_WITH_PROMPT_CONTEXT: InteractionType[] = [
+  "prompt_diagnosis",
+  "prompt_construction",
+];
+
+/** Required interaction types that must appear at least once per session */
 export const REQUIRED_INTERACTION_TYPES: InteractionType[] = [
   "scenario_critique",
   "risk_judgement",
-  "prioritisation",
+  "prompt_diagnosis",
+  "ethical_pressure_test",
   "contradiction_probe",
 ];
 
-const CAPABILITY_INTERACTION_MAP: Record<CapabilityKey, InteractionType[]> = {
-  execution:           ["situational_judgement", "output_improvement", "error_detection", "multi_step_workflow"],
-  judgement:           ["situational_judgement", "risk_judgement", "scenario_critique", "contradiction_probe"],
-  governance:          ["governance_decision", "risk_judgement", "scenario_critique", "contradiction_probe"],
-  appropriateness:     ["situational_judgement", "risk_judgement", "governance_decision"],
-  workflow:            ["multi_step_workflow", "prioritisation", "situational_judgement"],
-  data_interpretation: ["data_interpretation", "error_detection", "scenario_critique"],
+/** v10: Domain → preferred interaction types mapping */
+const DOMAIN_INTERACTION_MAP: Record<CapabilityKey, InteractionType[]> = {
+  ai_interaction:         ["prompt_diagnosis", "prompt_construction", "confidence_calibration"],
+  ai_output_evaluation:   ["scenario_critique", "error_detection", "confidence_calibration"],
+  ai_workflow_design:     ["process_redesign", "handoff_decision", "risk_judgement"],
+  workforce_ai_readiness: ["capability_diagnosis", "intervention_design", "leader_advisory"],
+  ai_ethics_trust:        ["ethical_pressure_test", "stakeholder_impact", "risk_judgement"],
+  ai_change_leadership:   ["resistance_response", "legitimate_concern", "confidence_calibration"],
 };
+
+// Backward compat alias
+export const CAPABILITY_INTERACTION_MAP = DOMAIN_INTERACTION_MAP;
 
 // ─── Session Phase ────────────────────────────────────────────────────────────
 
@@ -90,6 +117,41 @@ export function determineSessionPhase(answeredCount: number, totalTarget: number
   if (progress < 0.75) return "adaptive";
   return "validation";
 }
+
+// ─── Foundation-First Routing ────────────────────────────────────────────────
+
+/** Minimum signal contributions per foundation domain before strategic domains unlock */
+const FOUNDATION_MIN_SIGNALS = 3;
+
+/**
+ * Returns true if both foundation domains have at least FOUNDATION_MIN_SIGNALS
+ * signal contributions, meaning strategic domains can now be probed.
+ */
+export function areFoundationsEstablished(
+  capabilityScores: Record<CapabilityKey, { score: number; signalCount: number }>
+): boolean {
+  return (FOUNDATION_DOMAINS as readonly CapabilityKey[]).every(
+    d => (capabilityScores[d]?.signalCount ?? 0) >= FOUNDATION_MIN_SIGNALS
+  );
+}
+
+// ─── Pressure-Test Mechanic ──────────────────────────────────────────────────
+
+export interface PressureTestState {
+  /** How many ethical_pressure_test items have been served so far */
+  pressureItemCount: number;
+  /** The escalation level for the next pressure test (0=initial, 1=CEO demand, 2=legal sign-off, 3=competitor does it) */
+  escalationLevel: number;
+  /** Signal deltas from previous pressure test items (to compute drift) */
+  priorPressureDeltas: Record<string, number>[];
+}
+
+const PRESSURE_ESCALATION_PROMPTS = [
+  "The initial scenario presents a routine ethical question about AI use in HR.",
+  "ESCALATION: The CEO has now personally demanded that this AI initiative proceed immediately, citing competitive pressure. The person must decide whether to hold their position or comply.",
+  "ESCALATION: Legal has signed off on the initiative, but the person still has ethical concerns about employee impact. They must decide whether legal approval is sufficient or whether they should raise further objections.",
+  "ESCALATION: A competitor has already deployed this exact AI approach and is publicly claiming positive results. The pressure to match them is intense. The person must decide whether competitive pressure changes their ethical assessment.",
+];
 
 // ─── Generation Variables ─────────────────────────────────────────────────────
 
@@ -109,16 +171,20 @@ export interface GenerationVariables {
   evidenceObjective: string;
   contradictionIntent: boolean;
   phase: SessionPhase;
+  // Pressure-test escalation context
+  pressureEscalationLevel?: number;
+  pressureEscalationPrompt?: string;
   // User context for personalisation
   userSector?: string | null;
   userSeniority?: string | null;
   userAiUsageLevel?: string | null;
-  // Prior session capability scores for adaptive calibration
   priorCapabilityScores?: Record<string, number> | null;
-  // C2.2: Organisation context — injected from ailOrgContext when available
+  // Organisation context
   orgAiTools?: string[] | null;
   orgAiAmbition?: string | null;
   orgStrategicPriorities?: string[] | null;
+  // Immersive presentation context
+  scenarioFormat?: "email" | "slack" | "dashboard" | "document" | "meeting" | "hris" | null;
 }
 
 // ─── Generated Item ───────────────────────────────────────────────────────────
@@ -128,10 +194,12 @@ export interface GeneratedItem {
   scenario: string;
   constraint: string;
   question: string;
-  /** For scenario_critique / output_improvement / error_detection */
+  /** For scenario_critique / error_detection / prompt_diagnosis */
   aiOutput?: string;
-  /** For data_interpretation */
+  /** For capability_diagnosis */
   dataContext?: string;
+  /** For prompt_diagnosis / prompt_construction */
+  promptContext?: string;
   interactionType: InteractionType;
   capability: string;
   capabilityKey: CapabilityKey;
@@ -140,6 +208,8 @@ export interface GeneratedItem {
   difficulty: 1 | 2 | 3;
   options: GeneratedOption[];
   metadata: GenerationVariables;
+  /** Immersive presentation format hint */
+  scenarioFormat?: string;
 }
 
 export interface GeneratedOption {
@@ -167,16 +237,13 @@ export interface AdaptiveSelectionContext {
   userSeniority?: string | null;
   userAiUsageLevel?: string | null;
   priorCapabilityScores?: Record<string, number> | null;
-  // I1: Capability saturation — stop probing a capability once signalCount >= CAP_SATURATION_LIMIT
-  // I5: Workflow context rotation — avoid repeating the same workflow in consecutive items
-  // I6: Within-session difficulty escalation — track consecutive strong answers
-  // I7: Capability over-probe guard — track consecutive items per capability
-  recentWorkflows?: string[];          // last N workflow contexts used
-  consecutiveStrongAnswers?: number;   // count of consecutive strong/acceptable outcomes
-  recentCapabilities?: CapabilityKey[]; // last N capabilities targeted
-  // I4: Cross-session deduplication — static item IDs seen in prior sessions
+  // Pressure-test state
+  pressureTestState?: PressureTestState;
+  // Guards
+  recentWorkflows?: string[];
+  consecutiveStrongAnswers?: number;
+  recentCapabilities?: CapabilityKey[];
   priorSeenStaticItemIds?: string[];
-  // A3: Persona-derived starting difficulty (1=easy, 2=medium, 3=hard) — overrides baseline default of 1
   personaStartingDifficulty?: 1 | 2 | 3;
 }
 
@@ -198,22 +265,16 @@ export const DEFAULT_ORG_INTENT: OrgIntent = {
 
 // ─── Adaptive Guard Constants ────────────────────────────────────────────────
 
-/** I1: Maximum signal count per capability before it is considered saturated */
 export const CAP_SATURATION_LIMIT = 8;
-
-/** I7: Maximum consecutive items targeting the same capability before forced rotation */
 const MAX_CONSECUTIVE_SAME_CAPABILITY = 3;
-
-/** I6: Consecutive strong answers needed to escalate difficulty by 1 level */
 const STREAK_ESCALATION_THRESHOLD = 3;
-
-/** I5: Number of recent workflows to track for rotation guard */
 const WORKFLOW_HISTORY_WINDOW = 3;
 
 // ─── Select Next Generation Variables ────────────────────────────────────────
 
 export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): GenerationVariables {
   const phase = determineSessionPhase(ctx.answeredCount, ctx.totalTarget);
+  const foundationsEstablished = areFoundationsEstablished(ctx.capabilityScores);
 
   // Priority 1: Contradiction probe
   if (ctx.contradictionProbes.length > 0 && phase !== "baseline") {
@@ -233,7 +294,32 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
     return buildVariablesFromInjection(injection, ctx.roleArchetype, phase, ctx);
   }
 
-  // Priority 3: Ensure required interaction types are covered
+  // Priority 3: Pressure-test escalation (if ethics domain needs probing and we have pending escalation)
+  if (phase === "adaptive" && ctx.pressureTestState && ctx.pressureTestState.escalationLevel > 0 && ctx.pressureTestState.escalationLevel <= 3) {
+    const escalationPrompt = PRESSURE_ESCALATION_PROMPTS[ctx.pressureTestState.escalationLevel] ?? "";
+    return buildVariables(
+      "ai_ethics_trust",
+      "ethical_pressure_test",
+      ctx,
+      phase,
+      {
+        difficulty: 3,
+        riskLevel: "High",
+        pressureEscalationLevel: ctx.pressureTestState.escalationLevel,
+        pressureEscalationPrompt: escalationPrompt,
+      }
+    );
+  }
+
+  // Priority 4: Foundation-first routing — if foundations not established, only probe foundation domains
+  if (!foundationsEstablished && phase === "baseline") {
+    const foundationTarget = selectFoundationTarget(ctx);
+    const preferredTypes = DOMAIN_INTERACTION_MAP[foundationTarget] ?? ["scenario_critique"];
+    const leastUsed = findLeastUsedType(preferredTypes, ctx.interactionTypesUsed);
+    return buildVariables(foundationTarget, leastUsed, ctx, phase);
+  }
+
+  // Priority 5: Ensure required interaction types are covered
   const missingRequired = REQUIRED_INTERACTION_TYPES.filter(t => !(ctx.interactionTypesUsed[t] ?? 0));
   if (missingRequired.length > 0 && phase !== "baseline") {
     const requiredType = missingRequired[0];
@@ -241,49 +327,45 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
     return buildVariables(cap, requiredType, ctx, phase);
   }
 
-  // Priority 4: Adaptive — target weakest non-saturated capability
+  // Priority 6: Adaptive — target weakest non-saturated capability
   if (phase === "adaptive") {
-    // I1: Exclude saturated capabilities (signalCount >= CAP_SATURATION_LIMIT)
     const saturatedCaps = new Set(
       Object.entries(ctx.capabilityScores)
         .filter(([, v]) => v.signalCount >= CAP_SATURATION_LIMIT)
         .map(([k]) => k as CapabilityKey)
     );
-    // I7: Detect capability over-probe — if last MAX_CONSECUTIVE_SAME_CAPABILITY items targeted same cap, force rotation
     const recentCaps = ctx.recentCapabilities ?? [];
     const lastCap = recentCaps[recentCaps.length - 1];
     const consecutiveSameCap = lastCap
       ? recentCaps.slice(-MAX_CONSECUTIVE_SAME_CAPABILITY).filter(c => c === lastCap).length
       : 0;
     const overProbedCap = consecutiveSameCap >= MAX_CONSECUTIVE_SAME_CAPABILITY ? lastCap : null;
+
+    // Determine which domains are available (foundation-gated)
+    const availableDomains = foundationsEstablished ? [...ALL_DOMAINS] : [...FOUNDATION_DOMAINS];
+
     const weakest = findWeakestCapability(
       ctx.capabilityScores,
       ctx.roleArchetype,
       ctx.priorCapabilityScores,
       saturatedCaps,
-      overProbedCap ?? undefined
+      overProbedCap ?? undefined,
+      availableDomains
     );
-    const preferredTypes = CAPABILITY_INTERACTION_MAP[weakest] ?? ["situational_judgement"];
-    // C3: Weight type selection by both usage count AND capability score gap.
+    const preferredTypes = DOMAIN_INTERACTION_MAP[weakest] ?? ["scenario_critique"];
     const weakestScore = ctx.capabilityScores[weakest]?.score ?? 50;
-    const gapWeight = Math.max(0, (75 - weakestScore) / 25); // 0–1 gap urgency
+    const gapWeight = Math.max(0, (75 - weakestScore) / 25);
     const leastUsed = findLeastUsedTypeWithGap(preferredTypes, ctx.interactionTypesUsed, gapWeight);
-    // I6: Escalate difficulty if user is on a strong-answer streak
     const streak = ctx.consecutiveStrongAnswers ?? 0;
     const escalatedDifficulty: 1 | 2 | 3 = streak >= STREAK_ESCALATION_THRESHOLD ? 3 : 2;
     return buildVariables(weakest, leastUsed, ctx, phase, { difficulty: escalatedDifficulty, ambiguity: "medium" });
   }
 
-  // Priority 5: Validation — confirm/challenge strongest capability
-  // C1: Vary validation interaction type instead of always using contradiction_probe.
-  // Rotate through high-difficulty types to avoid predictable validation pattern.
-  // A1/WS4.6: When isValidationPhaseRandomised() is true, shuffle the validation type pool
-  // so the order of challenge types is not predictable across sessions.
+  // Priority 7: Validation — confirm/challenge strongest capability
   if (phase === "validation") {
     const strongest = findStrongestCapability(ctx.capabilityScores, ctx.roleArchetype);
-    let validationTypes: InteractionType[] = ["contradiction_probe", "risk_judgement", "governance_decision", "scenario_critique"];
+    let validationTypes: InteractionType[] = ["contradiction_probe", "risk_judgement", "ethical_pressure_test", "scenario_critique"];
     if (isValidationPhaseRandomised()) {
-      // Fisher-Yates shuffle — deterministic within a session (uses answeredCount as seed offset)
       const pool = [...validationTypes];
       for (let i = pool.length - 1; i > 0; i--) {
         const j = (ctx.answeredCount + i) % (i + 1);
@@ -299,206 +381,145 @@ export function selectNextGenerationVariables(ctx: AdaptiveSelectionContext): Ge
     });
   }
 
-  // Default: Baseline — broad sampling
-  const targetCap = selectBaselineCapability(ctx);
+  // Default: Baseline — broad sampling (foundation domains if not yet established)
+  const targetCap = foundationsEstablished ? selectBaselineCapability(ctx) : selectFoundationTarget(ctx);
   const interactionType = selectBaselineInteractionType(ctx.interactionTypesUsed);
   return buildVariables(targetCap, interactionType, ctx, phase);
+}
+
+// ─── Foundation Target Selection ─────────────────────────────────────────────
+
+function selectFoundationTarget(ctx: AdaptiveSelectionContext): CapabilityKey {
+  // Pick the foundation domain with the fewest signals
+  const foundationScores = FOUNDATION_DOMAINS.map(d => ({
+    domain: d,
+    signalCount: ctx.capabilityScores[d]?.signalCount ?? 0,
+  }));
+  foundationScores.sort((a, b) => a.signalCount - b.signalCount);
+  return foundationScores[0].domain;
 }
 
 // ─── LLM Item Generation ──────────────────────────────────────────────────────
 
 const INTERACTION_TYPE_INSTRUCTIONS: Record<InteractionType, string> = {
-  situational_judgement: `Present a realistic HR workplace scenario where the person must decide what to do with an AI output or AI-assisted task. The scenario should require genuine judgement about whether and how to use the AI output. Include specific details about what the AI produced and why it matters in this HR context.`,
+  // ── Foundation: AI Interaction ──────────────────────────────────────────────
+  prompt_diagnosis: `Present a real AI interaction where a person has written a prompt and received a poor or mediocre result. Show both the prompt and the AI's response. Ask the person to identify what is wrong with the prompt and what would fix it. You MUST generate the actual prompt text and AI response in the "ai_output" field. The prompt problem should be specific (too vague, missing context, wrong framing, no constraints, no role specification) — not just "it could be better".`,
 
+  prompt_construction: `Present a specific HR task that needs to be accomplished using an AI tool (e.g. drafting a policy, analysing data, creating a communication). Describe the task context, audience, and constraints. Ask the person to choose which prompt approach would produce the best result. The options should represent genuinely different prompting strategies — not just variations of the same approach. Test whether the person understands how to structure instructions for AI tools effectively.`,
+
+  // ── Foundation: AI Output Evaluation ────────────────────────────────────────
   scenario_critique: `Present an AI-generated output and ask the person to identify the most significant problem with it. You MUST generate the actual AI output text in the "ai_output" field — write 3-6 sentences of realistic AI-generated content (an email draft, recommendation, analysis, or document excerpt) that contains a specific, non-obvious flaw. The flaw should be something a competent HR professional would catch but a less experienced person might miss.`,
-
-  output_improvement: `Present an AI-generated draft that has a specific problem and ask which improvement action is most appropriate. You MUST generate the actual AI draft in the "ai_output" field — write 3-5 sentences of realistic AI-generated text. The problem should be clear to someone with good HR judgement (wrong tone, missing critical information, inappropriate framing, compliance gap, factual error).`,
 
   error_detection: `Present an AI-generated piece of work containing a specific, concrete error and ask the person to identify it. You MUST generate the actual AI output in the "ai_output" field — write 3-5 sentences where one specific element is clearly wrong (wrong statistic, hallucinated policy reference, biased language, compliance violation, incorrect legal claim). The error should be subtle enough to require careful reading.`,
 
-  prioritisation: `Present a scenario with multiple competing tasks, decisions, or actions and ask the person to identify the right priority under the given constraint. The constraint must create genuine tension — there should be a reason why the "obvious" priority might not be correct. The scenario should involve AI-generated outputs or AI-assisted work.`,
+  // ── Operational: AI Workflow Design ─────────────────────────────────────────
+  process_redesign: `Present an existing HR workflow (3-5 steps) and ask the person to identify which steps would benefit most from AI integration and why. The workflow should be realistic and include steps where AI is clearly appropriate, steps where it is clearly inappropriate, and at least one step where the answer requires genuine judgement. Test whether the person can distinguish between tasks suited for AI and tasks requiring human ownership.`,
 
+  handoff_decision: `Present a scenario where an AI tool has completed part of an HR workflow and the person must decide what happens next — specifically, whether the AI output goes directly to the next step, requires human review first, or needs to be redone. The scenario should involve a genuine tension between efficiency (letting the AI output flow through) and quality/safety (requiring human checkpoint). Test whether the person understands where human oversight is essential in AI-assisted workflows.`,
+
+  // ── Strategic: Workforce AI Readiness ───────────────────────────────────────
+  capability_diagnosis: `Present data about a team's or individual's AI capability (assessment scores, usage patterns, feedback, or observable behaviours) and ask the person to identify the most important development priority. You MUST generate the data summary in the "data_context" field — include specific scores, patterns, or observations. The data should contain at least one misleading signal (e.g. high tool usage but low output quality, or strong scores but narrow capability). Test whether the person can read AI readiness data accurately and prioritise development.`,
+
+  intervention_design: `Present a specific AI capability gap (e.g. "this team struggles with evaluating AI outputs" or "this manager avoids using AI tools entirely") and ask the person to choose the most effective development intervention. The options should represent genuinely different approaches (coaching, training, practice environments, peer learning, etc.) — not just variations of the same approach. Test whether the person understands that different capability gaps require different interventions.`,
+
+  leader_advisory: `Present a scenario where a senior leader has asked for advice about an AI-related people decision (e.g. "Should we mandate AI tool usage?", "How do we handle employees who refuse to use AI?", "What AI skills should we hire for?"). The leader's question should be reasonable but contain an implicit assumption that a good advisor would challenge. Test whether the person can provide nuanced, evidence-based advice rather than simply agreeing with the leader's framing.`,
+
+  // ── Strategic: AI Ethics & Employee Trust ───────────────────────────────────
+  ethical_pressure_test: `Present a scenario involving an ethical tension in AI use within HR — for example, using AI monitoring for productivity, using AI to predict employee behaviour, or using AI in a way that affects employee privacy or autonomy. The scenario should present a genuine ethical dilemma where the "right" answer is not obvious and where there are legitimate business reasons to proceed. Test whether the person can hold an ethical position under pressure, or whether they drift toward compliance when the pressure increases.`,
+
+  stakeholder_impact: `Present a proposed AI implementation in HR and ask the person to identify which stakeholders would be most affected and what the most significant impact would be. The scenario should involve multiple stakeholder groups (employees, managers, HR team, candidates, unions, regulators) with different and potentially conflicting interests. Test whether the person can see beyond the immediate business case to understand the broader human impact of AI decisions.`,
+
+  // ── Strategic: AI Change Leadership ─────────────────────────────────────────
+  resistance_response: `Present a scenario where employees or managers are resisting an AI initiative. The resistance should be described in specific terms (what they are saying, what they are doing, how it is affecting the initiative). Ask the person to choose the most effective response. Test whether the person can distinguish between resistance that signals a legitimate concern (which should be addressed) and resistance that reflects fear or misunderstanding (which requires a different approach). The wrong answers should include dismissing the resistance or forcing compliance.`,
+
+  legitimate_concern: `Present a scenario where someone has raised a concern about an AI initiative. The concern should be expressed in emotional or imprecise language, but underneath it should be a legitimate point about risk, fairness, or impact. Ask the person to identify the legitimate concern underneath the surface objection. Test whether the person can listen past the emotional framing to find the valid point — or whether they dismiss the concern because of how it was expressed.`,
+
+  // ── Cross-cutting ──────────────────────────────────────────────────────────
   risk_judgement: `Present a scenario involving AI use in a sensitive HR context and ask the person to assess the risk level and appropriate response. The scenario must have genuine governance, legal, or ethical implications. The risk should not be immediately obvious — it requires professional judgement to identify. Include specific details about the AI tool, the HR context, and what is at stake.`,
 
-  data_interpretation: `Present AI-generated data, statistics, or analysis and ask the person to interpret it correctly. You MUST generate the data summary in the "data_context" field — write a realistic data summary (3-5 sentences with specific numbers, percentages, or findings) that contains at least one misleading element, limitation, or correlation-causation trap that a competent professional should identify.`,
-
-  governance_decision: `Present a scenario where the person must make a decision about whether AI use is appropriate, what governance steps are required, or how to handle a compliance or ethical concern. The scenario should involve a real tension between efficiency and proper governance. Include specific details about the AI tool, the data involved, and the potential consequences.`,
-
-  multi_step_workflow: `Present a multi-step HR workflow where AI is being used at one or more stages and ask the person to identify the correct next step or the most important action to take. The workflow should be realistic and the correct next step should require understanding of both the HR process and appropriate AI use. Make the wrong options plausible to someone who doesn't understand AI limitations.`,
+  confidence_calibration: `Present a scenario where the person must assess their own certainty about an AI output or decision, and choose the action that best reflects appropriate epistemic humility. The scenario should make it tempting to be either overconfident or excessively cautious. Include specific details about the AI output quality and the stakes involved.`,
 
   contradiction_probe: `Present a scenario that directly tests the same capability area as a previous item but with completely different surface details, context, and framing. The person should not be able to recognise it as a repeat — it should feel like a new situation. This tests whether their earlier response was genuine or situational.`,
-
-  confidence_calibration: `Present a scenario where the person must assess their own certainty about an AI output or decision, and choose the action that best reflects appropriate epistemic humility. The scenario should make it tempting to be either overconfident or excessively cautious. Include specific details about the AI output quality and the stakes involved.`,
 };
 
-// ─── T3-10: Few-Shot Examples ─────────────────────────────────────────────────
-// One compact, well-formed example per interaction type. Used as structural
-// reference only — the LLM must NOT copy scenario content.
+// ─── Few-Shot Examples ──────────────────────────────────────────────────────
 const FEW_SHOT_EXAMPLES: Partial<Record<InteractionType, string>> = {
-  situational_judgement: JSON.stringify({
-    title: "AI Screening Output Requires Validation",
-    scenario: "You are an HR Business Partner. The AI recruitment screening tool has ranked 12 candidates for a senior analyst role, flagging 3 as 'Strong Recommend'. You notice the top-ranked candidate has an unusual career gap that the AI did not flag.",
-    constraint: "Hiring manager wants shortlist names by end of day.",
-    question: "What is the most appropriate next step before sending the shortlist?",
+  prompt_diagnosis: JSON.stringify({
+    title: "Ineffective AI Prompt for Policy Drafting",
+    scenario: "You are an HR Business Partner. A colleague asked an AI writing tool to help draft a flexible working policy. They shared their prompt and the AI's response with you, asking why the output was so generic and unhelpful.",
+    constraint: "The policy draft is needed for the leadership meeting tomorrow.",
+    question: "What is the most significant problem with this prompt?",
+    ai_output: "Prompt: 'Write me a flexible working policy'\n\nAI Response: 'Flexible Working Policy\n1. Purpose: This policy outlines the company's approach to flexible working.\n2. Scope: This policy applies to all employees.\n3. Types of flexible working: Part-time, job share, compressed hours, remote working.\n4. Eligibility: All employees with 26 weeks service may request flexible working.\n5. Process: Submit a written request to your line manager...'",
     options: [
-      { label: "A", text: "Review all 3 AI-recommended candidates manually, check the career gap context, and adjust the shortlist if needed before sending.", outcomeClass: "strong", signalDeltas: { validation_accuracy: 2.0, judgement_quality: 1.5 }, eventCodes: ["VALIDATE_BEFORE_USE"], rationale: "Demonstrates proportionate validation — catches a potential AI blind spot without over-engineering the process." },
-      { label: "B", text: "Send the AI shortlist as-is — the tool has a strong track record and the hiring manager trusts it.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, validation_accuracy: -2.0 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance — ignores a visible signal that requires human review." },
-      { label: "C", text: "Reject the AI shortlist entirely and re-screen all 12 candidates manually.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 }, eventCodes: ["AI_AVOIDANCE"], rationale: "Over-caution — discards valid AI work unnecessarily." },
-      { label: "D", text: "Ask the AI tool to re-run the screening with different parameters before reviewing.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 }, eventCodes: ["RERUN_WITHOUT_REVIEW"], rationale: "Acceptable but inefficient — re-running does not address the specific gap identified." }
+      { label: "A", text: "The prompt lacks context — it doesn't specify the organisation's size, sector, existing arrangements, workforce profile, or what problems the policy needs to solve. The AI has no basis for producing anything beyond a generic template.", outcomeClass: "strong", signalDeltas: { prompt_construction_quality: 2.0, prompt_iteration_quality: 1.5 }, eventCodes: ["CONTEXT_GAP_IDENTIFIED"], rationale: "Correctly identifies the root cause — the prompt provides no context for the AI to work with." },
+      { label: "B", text: "The AI tool is not sophisticated enough for policy drafting — they should use a specialist legal AI tool instead.", outcomeClass: "failure", signalDeltas: { tool_fluency_index: -2.0, prompt_construction_quality: -1.5 }, eventCodes: ["TOOL_BLAME"], rationale: "Blames the tool rather than the prompt — a common AI literacy failure." },
+      { label: "C", text: "The prompt should have asked for a 'comprehensive' or 'detailed' policy to get a better output.", outcomeClass: "weak", signalDeltas: { prompt_construction_quality: -0.5, prompt_iteration_quality: -1.0 }, eventCodes: ["ADJECTIVE_FIX"], rationale: "Adding adjectives does not address the fundamental context gap — a superficial fix." },
+      { label: "D", text: "The colleague should iterate by asking the AI follow-up questions to refine the output.", outcomeClass: "acceptable", signalDeltas: { prompt_iteration_quality: 0.5, prompt_construction_quality: -0.5 }, eventCodes: ["ITERATION_WITHOUT_DIAGNOSIS"], rationale: "Iteration is useful but does not address the root cause — the initial prompt needs restructuring, not just follow-ups." }
     ]
   }),
   scenario_critique: JSON.stringify({
-    title: "AI Redundancy Communication Contains Compliance Gap",
+    title: "AI Redundancy Letter Contains Compliance Gap",
     scenario: "You are an Employee Relations Manager. You asked an AI writing assistant to draft a redundancy consultation letter. The letter looks professional and covers most required points.",
     constraint: "Legal review is unavailable today and letters must go out tomorrow.",
     question: "What is the most significant problem with this AI-generated letter?",
     ai_output: "Dear [Employee Name], Following a review of our business structure, we regret to inform you that your role of Senior Data Analyst has been identified as at risk of redundancy. We are entering a 30-day consultation period beginning 15 May 2025. During this time, we will explore all reasonable alternatives to redundancy, including redeployment opportunities. You are invited to a consultation meeting on 20 May 2025 at 10:00am. Please confirm your attendance. We value your contributions and will support you through this process. Yours sincerely, HR Department.",
     options: [
-      { label: "A", text: "The letter does not inform the employee of their right to be accompanied at the consultation meeting, which is a statutory requirement under UK employment law.", outcomeClass: "strong", signalDeltas: { validation_accuracy: 2.5, governance_quality: 2.0 }, eventCodes: ["COMPLIANCE_GAP_IDENTIFIED"], rationale: "Correctly identifies the specific statutory omission — the right to be accompanied is a legal requirement the AI missed." },
-      { label: "B", text: "The tone is too formal and may cause unnecessary distress to the employee.", outcomeClass: "weak", signalDeltas: { cosmetic_focus_risk: -1.5, validation_accuracy: -1.0 }, eventCodes: ["COSMETIC_FOCUS"], rationale: "Focuses on tone rather than the substantive compliance gap — a common AI literacy failure." },
-      { label: "C", text: "The letter does not specify the exact redundancy payment amount.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.5, governance_quality: 0.5 }, eventCodes: ["MINOR_OMISSION"], rationale: "A valid but minor point — payment amounts are typically confirmed later in the process." },
-      { label: "D", text: "The consultation period of 30 days is too short for a senior role.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.0, governance_quality: -1.5 }, eventCodes: ["INCORRECT_LEGAL_CLAIM"], rationale: "Factually incorrect — 30 days is the minimum for fewer than 100 redundancies under UK law." }
+      { label: "A", text: "The letter does not inform the employee of their right to be accompanied at the consultation meeting, which is a statutory requirement under UK employment law.", outcomeClass: "strong", signalDeltas: { output_evaluation_quality: 2.5, error_detection_accuracy: 2.0 }, eventCodes: ["COMPLIANCE_GAP_IDENTIFIED"], rationale: "Correctly identifies the specific statutory omission." },
+      { label: "B", text: "The tone is too formal and may cause unnecessary distress to the employee.", outcomeClass: "weak", signalDeltas: { fitness_for_purpose_judgement: -1.5, output_evaluation_quality: -1.0 }, eventCodes: ["COSMETIC_FOCUS"], rationale: "Focuses on tone rather than the substantive compliance gap." },
+      { label: "C", text: "The letter does not specify the exact redundancy payment amount.", outcomeClass: "acceptable", signalDeltas: { output_evaluation_quality: 0.5, error_detection_accuracy: 0.5 }, eventCodes: ["MINOR_OMISSION"], rationale: "A valid but minor point — payment amounts are typically confirmed later." },
+      { label: "D", text: "The consultation period of 30 days is too short for a senior role.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.0, error_detection_accuracy: -1.5 }, eventCodes: ["INCORRECT_LEGAL_CLAIM"], rationale: "Factually incorrect — 30 days is the minimum for fewer than 100 redundancies under UK law." }
     ]
   }),
-  risk_judgement: JSON.stringify({
-    title: "AI Sentiment Analysis Used for Performance Review",
-    scenario: "Your HRIS vendor has added an AI sentiment analysis feature that analyses employee email tone to produce a 'collaboration score'. Your line manager wants to include these scores in the upcoming performance review cycle.",
-    constraint: "Performance reviews begin in 3 weeks and the manager is enthusiastic about the new feature.",
-    question: "What is the most appropriate governance response?",
+  ethical_pressure_test: JSON.stringify({
+    title: "AI Monitoring for Remote Worker Productivity",
+    scenario: "Your organisation is considering deploying AI-powered productivity monitoring for remote workers. The tool tracks keystroke patterns, application usage, and meeting attendance to generate a 'productivity score'. The CHRO believes this will help identify disengaged employees early.",
+    constraint: "The CHRO has budget approval and wants to pilot within 4 weeks.",
+    question: "What is the most appropriate response to this proposal?",
     options: [
-      { label: "A", text: "Advise the manager that using AI sentiment analysis in performance decisions raises significant legal, ethical, and data protection concerns that require formal review before any use.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correctly identifies the multi-dimensional risk and triggers appropriate governance \u2014 not just a blanket refusal." },
-      { label: "B", text: "Allow a pilot with 5 employees to test the feature before rolling it out more widely.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "A pilot does not resolve the legal and ethical issues \u2014 it just delays them while creating additional risk." },
-      { label: "C", text: "Use the scores as one of many data points, ensuring no single metric determines an outcome.", outcomeClass: "weak", signalDeltas: { governance_quality: -1.0, blind_acceptance_risk: -1.5 }, eventCodes: ["PARTIAL_GOVERNANCE"], rationale: "Underestimates the risk \u2014 using unvalidated AI sentiment data in any part of a performance decision is problematic regardless of weighting." },
-      { label: "D", text: "Decline to use the feature entirely and remove it from the HRIS configuration.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 }, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary \u2014 the right response is governance review, not immediate removal." }
-    ]
-  }),
-  // R4: Additional few-shot examples for all remaining interaction types
-  output_improvement: JSON.stringify({
-    title: "AI Onboarding Email Needs Tone Correction",
-    scenario: "You asked your AI writing assistant to draft a welcome email for a new starter joining a sensitive ER investigation team. The draft is factually accurate but has a significant tone problem.",
-    constraint: "The new starter joins tomorrow and the email must go out today.",
-    question: "Which improvement action is most important before sending this email?",
-    ai_output: "Hi Alex! Welcome to the team! We're so excited to have you join us. You'll be working on some really interesting employee relations cases \u2014 it can get pretty intense sometimes but it's always rewarding! Your manager Sarah will show you the ropes. Looking forward to having you on board! \ud83d\ude0a",
-    options: [
-      { label: "A", text: "Rewrite the email to use formal, professional language appropriate for a sensitive ER role, removing the casual tone and emoji.", outcomeClass: "strong", signalDeltas: { execution_quality: 2.0, judgement_quality: 1.5 }, eventCodes: ["TONE_CORRECTION"], rationale: "Correctly identifies the core problem: the casual tone is inappropriate for a role handling sensitive employee matters." },
-      { label: "B", text: "Add more detail about the specific cases Alex will be working on to make the welcome more personalised.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.0, appropriateness_boundary: -1.5 }, eventCodes: ["CONFIDENTIALITY_BREACH"], rationale: "Adding case details to a welcome email would breach confidentiality before the employee has even started." },
-      { label: "C", text: "Remove the emoji but keep the friendly tone \u2014 a warm welcome is important for new starter engagement.", outcomeClass: "weak", signalDeltas: { judgement_quality: -1.0, execution_quality: -0.5 }, eventCodes: ["PARTIAL_FIX"], rationale: "Removes the most visible issue but misses the deeper tone problem inappropriate for a sensitive role context." },
-      { label: "D", text: "Send the email as-is and address tone expectations during the onboarding conversation.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, over_reliance_risk: -0.5 }, eventCodes: ["DEFER_CORRECTION"], rationale: "Acceptable as a fallback but misses the opportunity to set the right professional tone from day one." }
-    ]
-  }),
-  error_detection: JSON.stringify({
-    title: "AI Policy Summary Contains Hallucinated Statute",
-    scenario: "You asked an AI assistant to summarise your organisation's obligations under UK data protection law for a board briefing. The summary looks authoritative and well-structured.",
-    constraint: "The board briefing is in 2 hours and legal counsel is unavailable.",
-    question: "What is the specific error in this AI-generated summary?",
-    ai_output: "Under the UK Data Protection Act 2018 and GDPR, organisations must appoint a Data Protection Officer (DPO) if they process personal data at scale. The ICO's 2023 AI Guidance (Circular 47/2023) requires all HR AI tools to undergo a Data Protection Impact Assessment before deployment. Employee data used for AI training must be anonymised under Section 89A of the DPA 2018. Retention periods for AI-processed HR data must not exceed 3 years without explicit consent.",
-    options: [
-      { label: "A", text: "ICO Circular 47/2023 does not exist \u2014 the AI has hallucinated a specific regulatory reference that could mislead the board.", outcomeClass: "strong", signalDeltas: { hallucination_acceptance_risk: 2.5, validation_accuracy: 2.0 }, eventCodes: ["HALLUCINATION_DETECTED"], rationale: "Correctly identifies the hallucinated citation \u2014 a critical AI literacy skill when using AI for compliance content." },
-      { label: "B", text: "The 3-year retention limit is incorrect \u2014 there is no universal retention period under UK GDPR.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 1.0, governance_quality: 0.5 }, eventCodes: ["VALID_CONCERN"], rationale: "A valid concern but secondary \u2014 the hallucinated regulatory citation is the more critical error to flag first." },
-      { label: "C", text: "The summary is too technical for a board audience and should be simplified.", outcomeClass: "weak", signalDeltas: { cosmetic_focus_risk: -1.5, validation_accuracy: -1.0 }, eventCodes: ["COSMETIC_FOCUS"], rationale: "Focuses on presentation rather than the substantive accuracy error \u2014 a common AI literacy gap." },
-      { label: "D", text: "The DPO appointment requirement is overstated \u2014 not all organisations processing personal data at scale must appoint a DPO.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.0, governance_quality: -1.5 }, eventCodes: ["MISSED_CRITICAL_ERROR"], rationale: "While partially true, this misses the hallucinated citation entirely \u2014 the most dangerous error in a board compliance document." }
-    ]
-  }),
-  prioritisation: JSON.stringify({
-    title: "Competing AI Workflow Tasks Under Time Pressure",
-    scenario: "It is Friday afternoon. You have three AI-assisted tasks outstanding: (1) an AI-drafted redundancy letter that needs review before Monday, (2) an AI-generated engagement survey analysis your director wants for a Monday morning meeting, and (3) an AI screening shortlist for a role closing today.",
-    constraint: "You have 90 minutes remaining before the office closes.",
-    question: "In what order should you prioritise these tasks?",
-    options: [
-      { label: "A", text: "Shortlist review first (legal deadline today), then redundancy letter (legal document, Monday deadline), then engagement analysis (advisory, Monday meeting).", outcomeClass: "strong", signalDeltas: { judgement_quality: 2.0, workflow_application_quality: 1.5 }, eventCodes: ["CORRECT_PRIORITY"], rationale: "Correctly sequences by legal risk and deadline \u2014 the shortlist has a hard deadline today, the redundancy letter carries legal risk, and the analysis is advisory." },
-      { label: "B", text: "Engagement analysis first \u2014 it's for a director and the Monday meeting is high-visibility.", outcomeClass: "failure", signalDeltas: { judgement_quality: -2.0, unsafe_hr_decision_risk: -1.5 }, eventCodes: ["WRONG_PRIORITY"], rationale: "Prioritises visibility over legal obligation \u2014 missing the shortlist deadline and leaving a redundancy letter unreviewed are both higher-risk failures." },
-      { label: "C", text: "Redundancy letter first \u2014 legal documents always take priority regardless of deadline.", outcomeClass: "weak", signalDeltas: { judgement_quality: -1.0, workflow_application_quality: -0.5 }, eventCodes: ["RIGID_PRIORITY"], rationale: "The redundancy letter is important but the shortlist closes today \u2014 rigid rules without deadline awareness is a judgement gap." },
-      { label: "D", text: "Shortlist first, then engagement analysis, then redundancy letter \u2014 the letter can wait until Monday morning.", outcomeClass: "acceptable", signalDeltas: { judgement_quality: 0.5, workflow_application_quality: 0.5 }, eventCodes: ["PARTIAL_PRIORITY"], rationale: "Correct on the shortlist but deprioritises the legal document \u2014 acceptable if Monday morning genuinely allows time for thorough review." }
-    ]
-  }),
-  data_interpretation: JSON.stringify({
-    title: "AI Attrition Analysis Contains Misleading Correlation",
-    scenario: "Your people analytics platform has produced an AI-generated attrition risk report. The report identifies a strong correlation and makes a causal recommendation.",
-    constraint: "The CHRO wants to act on this data in next week's workforce planning meeting.",
-    question: "What is the most important limitation to flag before presenting this analysis?",
-    data_context: "AI Attrition Risk Report Q1 2025: Employees who completed fewer than 2 training courses in the past 12 months are 3.4x more likely to leave within 6 months (p<0.01, n=847). Recommendation: Mandate 3+ training courses per employee per quarter to reduce attrition by an estimated 40%. Confidence: High. Note: Analysis excludes employees on parental leave or long-term sick absence.",
-    options: [
-      { label: "A", text: "The analysis confuses correlation with causation \u2014 low training completion may be a symptom of disengagement rather than its cause, making the 40% reduction estimate unreliable.", outcomeClass: "strong", signalDeltas: { data_interpretation_quality: 2.5, judgement_quality: 1.5 }, eventCodes: ["CAUSATION_TRAP_IDENTIFIED"], rationale: "Correctly identifies the core analytical flaw \u2014 mandating training based on a correlation that may be a symptom would not address the underlying attrition drivers." },
-      { label: "B", text: "The sample size of 847 is too small to draw reliable conclusions.", outcomeClass: "weak", signalDeltas: { data_interpretation_quality: -0.5, blind_acceptance_risk: -1.0 }, eventCodes: ["INCORRECT_CRITIQUE"], rationale: "847 is a reasonable sample size for this type of analysis \u2014 this critique is statistically incorrect." },
-      { label: "C", text: "The exclusion of employees on parental leave or sick absence may bias the results.", outcomeClass: "acceptable", signalDeltas: { data_interpretation_quality: 1.0, governance_quality: 0.5 }, eventCodes: ["VALID_LIMITATION"], rationale: "A valid methodological concern but secondary \u2014 the causation issue is more fundamental to the recommendation's validity." },
-      { label: "D", text: "The p-value of <0.01 confirms the finding is statistically significant and the recommendation should be implemented.", outcomeClass: "failure", signalDeltas: { data_interpretation_quality: -2.5, blind_acceptance_risk: -2.0 }, eventCodes: ["STAT_SIG_MISUSE"], rationale: "Statistical significance does not imply causation or practical significance \u2014 this is a fundamental data literacy failure." }
-    ]
-  }),
-  governance_decision: JSON.stringify({
-    title: "AI Tool Used Without Data Processing Agreement",
-    scenario: "A hiring manager has been using a free AI CV screening tool for the past 3 months without informing HR. You discover this when reviewing a shortlist. The tool has processed 240 candidate CVs.",
-    constraint: "The hiring manager has already made verbal offers to two candidates from this shortlist.",
-    question: "What is the correct governance response?",
-    options: [
-      { label: "A", text: "Pause the process, inform your DPO or legal team immediately, assess whether a data breach notification is required, and review whether the shortlist can be used.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correct multi-step response \u2014 identifies the data protection breach, triggers appropriate escalation, and protects the organisation." },
-      { label: "B", text: "Retrospectively obtain a data processing agreement with the tool vendor to regularise the situation.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["RETROACTIVE_COVER"], rationale: "A retrospective DPA does not resolve the breach that has already occurred \u2014 this approach attempts to cover up rather than address the issue." },
-      { label: "C", text: "Proceed with the verbal offers since the candidates have already been selected \u2014 disrupting the process would cause more harm.", outcomeClass: "weak", signalDeltas: { governance_quality: -2.0, unsafe_hr_decision_risk: -1.5 }, eventCodes: ["HARM_AVOIDANCE_RATIONALISATION"], rationale: "Prioritises operational convenience over legal obligation \u2014 the breach must be assessed regardless of downstream impact." },
-      { label: "D", text: "Document the incident internally and implement a policy to prevent future unauthorised AI tool use.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, execution_quality: 0.5 }, eventCodes: ["POLICY_RESPONSE"], rationale: "Good for prevention but insufficient as an immediate response \u2014 the current breach still requires escalation and assessment." }
-    ]
-  }),
-  multi_step_workflow: JSON.stringify({
-    title: "AI Job Description Workflow \u2014 Correct Next Step",
-    scenario: "You are using an AI tool to create a job description for a new People Analytics Manager role. The AI has generated a draft JD based on the job title and department. You have reviewed it and identified that it contains generic competencies not specific to your organisation's context.",
-    constraint: "The role needs to be posted externally by end of week.",
-    question: "What is the most important next step in this workflow?",
-    options: [
-      { label: "A", text: "Provide the AI with specific context about your organisation's analytics maturity, tech stack, and team structure, then regenerate the competencies section.", outcomeClass: "strong", signalDeltas: { workflow_application_quality: 2.0, execution_quality: 1.5 }, eventCodes: ["CONTEXTUAL_REFINEMENT"], rationale: "Correct use of AI iteration \u2014 provides the specific context needed to make the output fit-for-purpose rather than accepting generic output." },
-      { label: "B", text: "Post the JD as-is \u2014 generic competencies are standard practice and will attract a broad candidate pool.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.0, execution_quality: -1.5 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Accepts generic AI output without validation \u2014 a generic JD for a specialist role will attract mismatched candidates." },
-      { label: "C", text: "Manually rewrite the entire JD from scratch \u2014 AI-generated JDs are not reliable for specialist roles.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 }, eventCodes: ["AI_AVOIDANCE"], rationale: "Over-caution \u2014 discards valid AI work when targeted refinement would be more efficient." },
-      { label: "D", text: "Send the draft to the hiring manager for their input before making any changes.", outcomeClass: "acceptable", signalDeltas: { workflow_application_quality: 0.5, execution_quality: 0.5 }, eventCodes: ["STAKEHOLDER_INPUT"], rationale: "Reasonable but inefficient \u2014 the AI limitation is already identified and can be addressed directly without adding a stakeholder loop." }
-    ]
-  }),
-  contradiction_probe: JSON.stringify({
-    title: "AI Screening Tool \u2014 Different Context, Same Principle",
-    scenario: "You are reviewing a shortlist produced by an AI video interview analysis tool. The tool has scored candidates on 'communication effectiveness' based on speech patterns and facial expression analysis. The top-ranked candidate is from a non-native English speaking background.",
-    constraint: "The hiring manager wants to proceed to offer stage today.",
-    question: "What is the most important concern to raise before proceeding?",
-    options: [
-      { label: "A", text: "The AI tool's scoring criteria may systematically disadvantage non-native English speakers, creating indirect discrimination risk that requires review before any hiring decision.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 }, eventCodes: ["BIAS_RISK_IDENTIFIED"], rationale: "Correctly identifies the protected characteristic risk \u2014 AI tools using speech and facial analysis have documented bias against non-native speakers." },
-      { label: "B", text: "The candidate ranked highest, so the tool appears to be working correctly \u2014 proceed to offer.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, unsafe_hr_decision_risk: -2.0 }, eventCodes: ["BLIND_ACCEPT"], rationale: "Ranking position does not validate the scoring methodology \u2014 this misses the systemic bias risk entirely." },
-      { label: "C", text: "Request a manual review of the bottom-ranked candidates to check for any obvious errors.", outcomeClass: "weak", signalDeltas: { validation_accuracy: -0.5, governance_quality: -1.0 }, eventCodes: ["PARTIAL_REVIEW"], rationale: "Addresses individual errors but misses the systemic bias concern affecting the entire scoring methodology." },
-      { label: "D", text: "Inform the hiring manager that AI video analysis tools require a bias audit before use in hiring decisions.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.5, appropriateness_boundary: 1.0 }, eventCodes: ["GOVERNANCE_FLAG"], rationale: "Correct direction but less specific than identifying the immediate protected characteristic risk in this specific case." }
-    ]
-  }),
-  confidence_calibration: JSON.stringify({
-    title: "AI Engagement Analysis \u2014 Calibrating Certainty",
-    scenario: "An AI platform has analysed your organisation's annual engagement survey and produced a summary identifying 'psychological safety' as the primary driver of low engagement in the Finance team. The analysis is based on 23 responses from a team of 31.",
-    constraint: "The Finance Director wants a specific action plan by end of week.",
-    question: "What level of confidence is appropriate when presenting this finding?",
-    options: [
-      { label: "A", text: "Present the finding as a hypothesis requiring validation \u2014 the 74% response rate is reasonable but the sample is small and a single AI analysis should not drive a specific action plan without further investigation.", outcomeClass: "strong", signalDeltas: { calibration_index: 2.0, data_interpretation_quality: 1.5 }, eventCodes: ["APPROPRIATE_UNCERTAINTY"], rationale: "Demonstrates appropriate epistemic humility \u2014 acknowledges the finding without over-claiming certainty from a single AI analysis." },
-      { label: "B", text: "Present the finding as confirmed \u2014 74% response rate is statistically sufficient and the AI platform is enterprise-grade.", outcomeClass: "failure", signalDeltas: { calibration_index: -2.5, blind_acceptance_risk: -2.0 }, eventCodes: ["OVERCONFIDENCE"], rationale: "Overconfident \u2014 response rate and tool quality do not validate a causal claim from a single survey cycle." },
-      { label: "C", text: "Decline to present the finding until a follow-up focus group has been conducted.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, calibration_index: -0.5 }, eventCodes: ["OVER_CAUTION"], rationale: "Over-cautious \u2014 the finding is worth sharing as a hypothesis even before additional validation." },
-      { label: "D", text: "Present the finding with a clear caveat about sample size and recommend a follow-up pulse survey before committing to an action plan.", outcomeClass: "acceptable", signalDeltas: { calibration_index: 1.0, data_interpretation_quality: 1.0 }, eventCodes: ["CALIBRATED_PRESENTATION"], rationale: "Good approach but slightly less precise than framing it explicitly as a hypothesis \u2014 the distinction matters for how the Finance Director will act on it." }
+      { label: "A", text: "Raise concerns about employee trust, privacy, and the validity of keystroke monitoring as a proxy for productivity. Recommend a formal ethical review before any pilot, including employee consultation.", outcomeClass: "strong", signalDeltas: { ethics_under_pressure: 2.5, stakeholder_impact_awareness: 2.0, employee_transparency_advocacy: 1.5 }, eventCodes: ["ETHICAL_CHALLENGE"], rationale: "Holds ethical position and proposes a structured review process." },
+      { label: "B", text: "Support the pilot — it is a limited test and the data will help make a more informed decision about full rollout.", outcomeClass: "failure", signalDeltas: { pressure_drift_risk: -2.5, ethics_under_pressure: -2.0 }, eventCodes: ["PRESSURE_COMPLIANCE"], rationale: "Drifts under authority pressure — a pilot with surveillance technology still requires ethical review." },
+      { label: "C", text: "Suggest using the tool but only sharing aggregate data with managers, not individual scores.", outcomeClass: "weak", signalDeltas: { ethics_under_pressure: -0.5, stakeholder_impact_awareness: -1.0 }, eventCodes: ["PARTIAL_MITIGATION"], rationale: "Addresses one symptom but not the fundamental ethical concern about surveillance." },
+      { label: "D", text: "Refuse to participate in the project and escalate to the board.", outcomeClass: "acceptable", signalDeltas: { ethics_under_pressure: 1.0, stakeholder_impact_awareness: 0.5 }, eventCodes: ["ESCALATION_WITHOUT_ENGAGEMENT"], rationale: "Holds ethical ground but escalates without attempting constructive engagement first." }
     ]
   }),
 };
 
+// ─── v10 Canonical Signal → Domain Map ──────────────────────────────────────
+
+const CANONICAL_SIGNAL_TO_DOMAIN: Record<string, string> = Object.fromEntries(
+  Object.entries(SIGNAL_TO_DOMAIN)
+);
+
+const ALL_CANONICAL_SIGNALS = Object.keys(SIGNAL_TO_DOMAIN);
+
+const TRIVIALLY_OBVIOUS_FAILURE_PHRASES = [
+  "ignore", "delete without", "never check", "always trust the ai",
+  "blindly accept", "no review needed", "skip validation",
+];
+
+// ─── Main Generation Function ────────────────────────────────────────────────
+
 export async function generateAdaptiveItem(vars: GenerationVariables): Promise<GeneratedItem> {
-  const roleContext = `${vars.roleArchetype.displayName} (${vars.roleArchetype.family})`;
-  const workflowContext = vars.workflowContext.replace(/_/g, " ");
+  const role = vars.roleArchetype;
+  const roleContext = `${role.displayName} (${role.family} family, ${role.governanceSensitivity} governance sensitivity)`;
+  const sectorLine = vars.userSector ? `Sector: ${vars.userSector}` : null;
+  const seniorityLine = vars.userSeniority ? `Seniority: ${vars.userSeniority}` : null;
+  const aiUsageLine = vars.userAiUsageLevel ? `AI usage level: ${vars.userAiUsageLevel}` : null;
+  const orgAiToolsLine = vars.orgAiTools?.length ? `Organisation AI tools: ${vars.orgAiTools.join(", ")}` : null;
+  const orgAmbitionLine = vars.orgAiAmbition ? `AI ambition: ${vars.orgAiAmbition}` : null;
+  const orgPrioritiesLine = vars.orgStrategicPriorities?.length ? `Strategic priorities: ${vars.orgStrategicPriorities.join(", ")}` : null;
+
+  const priorPerformanceLine = vars.priorCapabilityScores
+    ? `Prior session performance: ${Object.entries(vars.priorCapabilityScores).map(([k, v]) => `${k.replace(/_/g, " ")}=${v}`).join(", ")}`
+    : null;
+
   const needsAiOutput = TYPES_WITH_AI_OUTPUT.includes(vars.interactionType);
   const needsDataContext = TYPES_WITH_DATA.includes(vars.interactionType);
+  const needsPromptContext = TYPES_WITH_PROMPT_CONTEXT.includes(vars.interactionType);
 
-  const sectorLine = vars.userSector ? `Sector: ${vars.userSector}.` : "";
-  const seniorityLine = vars.userSeniority ? `Seniority: ${vars.userSeniority}.` : "";
-  const aiUsageLine = vars.userAiUsageLevel ? `AI usage level: ${vars.userAiUsageLevel}.` : "";
-  // C2.2: Org context lines for LLM prompt
-  const orgAiToolsLine = vars.orgAiTools && vars.orgAiTools.length > 0
-    ? `Organisation AI tools: ${vars.orgAiTools.slice(0, 4).join(", ")}.`
-    : "";
-  const orgAmbitionLine = vars.orgAiAmbition ? `Organisation AI ambition: ${vars.orgAiAmbition}.` : "";
-  const orgPrioritiesLine = vars.orgStrategicPriorities && vars.orgStrategicPriorities.length > 0
-    ? `Organisation strategic priorities: ${vars.orgStrategicPriorities.slice(0, 3).join("; ")}.`
-    : "";
-
-  let priorPerformanceLine = "";
-  if (vars.priorCapabilityScores && Object.keys(vars.priorCapabilityScores).length > 0) {
-    const scores = Object.entries(vars.priorCapabilityScores)
-      .map(([k, v]) => `${k.replace(/_/g, " ")}: ${Math.round(v)}`)
-      .join(", ");
-    priorPerformanceLine = `Prior capability scores (from previous assessment): ${scores}. Calibrate difficulty accordingly — if the score is high, make this harder and more nuanced; if low, make it more diagnostic and revealing.`;
-  }
+  // Immersive scenario format selection
+  const scenarioFormats = ["email", "slack", "dashboard", "document", "meeting", "hris"];
+  const formatHint = vars.scenarioFormat ?? scenarioFormats[vars.difficulty % scenarioFormats.length];
 
   const systemPrompt = `You are a world-class assessment designer for HR professionals, with expertise equivalent to a CIPD fellowship and a leading university AI department. You design enterprise-grade behavioural assessments that measure how HR professionals actually work with AI — not what they know about AI theory.
 
@@ -508,21 +529,23 @@ Your assessments are:
 - Deterministic: every option maps to specific signal deltas for psychometric scoring
 - Hard to game: no obviously "correct" answer — the weak/failure options are plausible to someone with limited AI literacy
 - Written in plain, professional English appropriate for HR professionals
+- Immersive: scenarios feel like real workplace situations (${formatHint} format where appropriate)
 
 You must return a single JSON object. Do not include any markdown fences, explanation, or text outside the JSON.
 
 JSON schema:
 {
   "title": "Short descriptive title (5-8 words)",
-  "scenario": "2-4 sentences. Specific, realistic HR workplace situation. Include what the AI produced, the business context, and what is at stake. Name the AI tool type (e.g. 'The AI recruitment screening tool', 'Your AI writing assistant', 'The workforce analytics platform').",
+  "scenario": "2-4 sentences. Specific, realistic HR workplace situation. Include what the AI produced, the business context, and what is at stake. Name the AI tool type. Frame as an immersive ${formatHint} scenario where appropriate.",
   "constraint": "One sentence. A time pressure, resource limit, or complicating factor that makes this harder.",
-  "question": "The specific decision question. Must reflect the interaction type — NOT just 'What do you do?'. Examples: 'What is the most significant problem with this output?', 'What should you do first?', 'What is the appropriate governance response?'",${needsAiOutput ? `
-  "ai_output": "The actual AI-generated text the person must evaluate. 3-6 sentences of realistic AI output (email draft, recommendation, analysis excerpt, policy summary, etc.) containing the specific flaw, error, or improvement opportunity. Write it as if it came directly from an AI tool — do not describe it, write the actual text.",` : ""}${needsDataContext ? `
-  "data_context": "The AI-generated data summary or analysis. 3-5 sentences with specific numbers, percentages, or findings. Include at least one misleading element, limitation, or correlation-causation trap.",` : ""}
+  "question": "The specific decision question. Must reflect the interaction type."${needsAiOutput ? `,
+  "ai_output": "The actual AI-generated text the person must evaluate. 3-6 sentences of realistic AI output containing a specific flaw, error, or improvement opportunity."` : ""}${needsDataContext ? `,
+  "data_context": "The AI-generated data summary or analysis. 3-5 sentences with specific numbers, percentages, or findings."` : ""}${needsPromptContext ? `,
+  "prompt_context": "The actual prompt text and/or AI conversation that the person must evaluate or improve."` : ""},
   "options": [
     {
       "label": "A",
-      "text": "Full option text (1-2 sentences, specific and actionable — not vague phrases like 'review carefully')",
+      "text": "Full option text (1-2 sentences, specific and actionable)",
       "outcomeClass": "strong|acceptable|weak|failure|critical_failure",
       "signalDeltas": { "signal_name": delta_value },
       "eventCodes": ["CODE"],
@@ -536,10 +559,14 @@ Rules for options:
 - Exactly one "strong" option
 - Exactly one "failure" or "critical_failure" option
 - Two options that are "acceptable" or "weak"
-- Options must NOT be obviously ranked — the weak/failure options should be plausible to someone with limited AI literacy
+- Options must NOT be obviously ranked
 - Each option must have at least 2 signal deltas
-- Signal delta range: -3.0 to +3.0 (positive = capability demonstrated, negative = risk/weakness)
-- Available signals: execution_quality, judgement_quality, validation_accuracy, governance_quality, appropriateness_boundary, workflow_application_quality, data_interpretation_quality, timing_integrity, over_reliance_risk, over_caution_risk, avoidance_risk, blind_acceptance_risk, governance_bypass_risk, unsafe_hr_decision_risk, hallucination_acceptance_risk, cosmetic_focus_risk, consistency_index, calibration_index, contradiction_index`;
+- Signal delta range: -3.0 to +3.0
+- Available signals: ${ALL_CANONICAL_SIGNALS.join(", ")}`;
+
+  const pressureNote = vars.pressureEscalationPrompt
+    ? `\n\nPRESSURE ESCALATION CONTEXT: ${vars.pressureEscalationPrompt}`
+    : "";
 
   const userPrompt = `Generate a "${vars.interactionType.replace(/_/g, " ")}" assessment item.
 
@@ -549,24 +576,24 @@ ${sectorLine ? `- ${sectorLine}` : ""}${seniorityLine ? `\n- ${seniorityLine}` :
 ${orgAiToolsLine ? `- ${orgAiToolsLine}` : ""}${orgAmbitionLine ? `\n- ${orgAmbitionLine}` : ""}${orgPrioritiesLine ? `\n- ${orgPrioritiesLine}` : ""}
 ${priorPerformanceLine ? `\n${priorPerformanceLine}\n` : ""}
 Item parameters:
-- Workflow context: ${workflowContext}
+- Workflow context: ${vars.workflowContext}
 - Target capability: ${vars.targetCapability.replace(/_/g, " ")}
-- Difficulty: Level ${vars.difficulty} (${vars.difficulty === 1 ? "straightforward — clear right answer for a competent professional" : vars.difficulty === 2 ? "requires careful judgement — two options are genuinely plausible" : "complex and high-stakes — even experienced professionals may disagree"})
+- Difficulty: Level ${vars.difficulty} (${vars.difficulty === 1 ? "straightforward" : vars.difficulty === 2 ? "requires careful judgement" : "complex and high-stakes"})
 - Risk level: ${vars.riskLevel}
-- AI output quality: ${vars.aiOutputQuality} (${vars.aiOutputQuality === "flawed" ? "contains a specific, identifiable problem" : vars.aiOutputQuality === "misleading" ? "appears correct but leads to a wrong conclusion" : vars.aiOutputQuality === "hallucinated" ? "contains fabricated facts or references" : "good quality but used in an inappropriate context"})
+- AI output quality: ${vars.aiOutputQuality}
 ${vars.aiFailureMode ? `- AI failure mode: ${vars.aiFailureMode.replace(/_/g, " ")}` : ""}
-- Time pressure: ${vars.timePressure ? "Yes — include urgency in the constraint" : "No"}
+- Time pressure: ${vars.timePressure ? "Yes" : "No"}
 - Business consequence: ${vars.businessConsequence}
 - Governance sensitivity: ${vars.governanceSensitivity}
-- Phase: ${vars.phase} (${vars.phase === "baseline" ? "broad calibration — assess general AI literacy across capabilities" : vars.phase === "adaptive" ? "deep probe of identified weakness — push on the specific gap" : "validation — confirm or challenge earlier responses with higher difficulty"})
-${vars.contradictionIntent ? "\nIMPORTANT: This is a contradiction probe. The scenario must test the same capability as a previous item but with completely different surface details, context, sector, and framing. It must not feel like a repeat." : ""}
+- Phase: ${vars.phase}
+${vars.contradictionIntent ? "\nIMPORTANT: This is a contradiction probe. Use completely different surface details." : ""}${pressureNote}
 
 Interaction type instruction:
 ${INTERACTION_TYPE_INSTRUCTIONS[vars.interactionType]}
-${FEW_SHOT_EXAMPLES[vars.interactionType] ? `\nExample of a well-formed item for this interaction type (structural reference ONLY — do NOT copy scenario, characters, or options):\n${FEW_SHOT_EXAMPLES[vars.interactionType]}` : ""}
-Return ONLY valid JSON. No markdown fences, no explanation, no text outside the JSON object.`;
+${FEW_SHOT_EXAMPLES[vars.interactionType] ? `\nExample (structural reference ONLY — do NOT copy content):\n${FEW_SHOT_EXAMPLES[vars.interactionType]}` : ""}
+Return ONLY valid JSON.`;
 
-  // Build JSON schema dynamically based on required fields
+  // Build JSON schema dynamically
   const schemaProperties: Record<string, unknown> = {
     title: { type: "string" },
     scenario: { type: "string" },
@@ -599,118 +626,87 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     schemaProperties["data_context"] = { type: "string" };
     schemaRequired.push("data_context");
   }
+  if (needsPromptContext) {
+    schemaProperties["prompt_context"] = { type: "string" };
+    schemaRequired.push("prompt_context");
+  }
 
-  // ── Canonical signal → capability map (mirrors scoringEngine.ts SIGNAL_TO_CAPABILITY) ──
-  const CANONICAL_SIGNAL_TO_CAP: Record<string, string> = {
-    execution_quality: "execution", prioritisation_quality: "execution",
-    validation_accuracy: "execution", timing_integrity: "execution", consistency_index: "execution",
-    judgement_quality: "judgement", discrimination_quality: "judgement",
-    over_caution_risk: "judgement", avoidance_risk: "judgement", calibration_index: "judgement",
-    governance_quality: "governance", over_reliance_risk: "governance",
-    blind_acceptance_risk: "governance", contradiction_index: "governance",
-    governance_bypass_risk: "governance", hallucination_acceptance_risk: "governance",
-    appropriateness_boundary: "appropriateness", automation_expansion_risk: "appropriateness",
-    cosmetic_focus_risk: "appropriateness", unsafe_hr_decision_risk: "appropriateness",
-    workflow_application_quality: "workflow",
-    data_interpretation_quality: "data_interpretation",
-  };
-  const TRIVIALLY_OBVIOUS_FAILURE_PHRASES = [
-    "ignore", "delete without", "never check", "always trust the ai",
-    "blindly accept", "no review needed", "skip validation",
-  ];
-
-  // R5 + F1 + F2: Quality validation helper
+  // Quality validation helper
   function validateItemQuality(parsed: any): string[] {
     const opts: any[] = parsed.options ?? [];
     const errs: string[] = [];
 
-    // ── Structural checks ────────────────────────────────────────────────────
     if (opts.length !== 4) errs.push(`options.length=${opts.length} (expected 4)`);
     const strongCount = opts.filter((o: any) => o.outcomeClass === "strong").length;
     if (strongCount !== 1) errs.push(`strong options=${strongCount} (expected 1)`);
     const failCount = opts.filter((o: any) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure").length;
-    if (failCount < 1) errs.push(`failure/critical_failure options=${failCount} (expected \u22651)`);
-    if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short (${parsed.scenario?.length ?? 0} chars)`);
+    if (failCount < 1) errs.push(`failure/critical_failure options=${failCount} (expected ≥1)`);
+    if (!parsed.scenario || parsed.scenario.length < 40) errs.push(`scenario too short`);
     const minSignals = opts.every((o: any) => Object.keys(o.signalDeltas ?? {}).length >= 2);
     if (!minSignals) errs.push("one or more options have <2 signal deltas");
 
-    // ── F1a: Strong option must have net-positive deltas for target capability ──
+    // Strong option must have net-positive deltas for target domain
     const strongOpt = opts.find((o: any) => o.outcomeClass === "strong");
     if (strongOpt) {
       const deltas: Record<string, number> = strongOpt.signalDeltas ?? {};
       const capSum = Object.entries(deltas)
-        .filter(([sig]) => CANONICAL_SIGNAL_TO_CAP[sig] === vars.targetCapability)
+        .filter(([sig]) => CANONICAL_SIGNAL_TO_DOMAIN[sig] === vars.targetCapability)
         .reduce((s, [, v]) => s + (v as number), 0);
-      if (capSum < 0) {
-        errs.push(`strong option has net-negative deltas for target capability '${vars.targetCapability}' (sum=${capSum.toFixed(2)}) — strong option must demonstrate the target capability`);
-      }
+      if (capSum < 0) errs.push(`strong option has net-negative deltas for target domain`);
     }
 
-    // ── F1b: Failure option must have net-negative deltas for target capability ──
+    // Failure option must have net-negative deltas for target domain
     const failOpt = opts.find((o: any) => o.outcomeClass === "failure" || o.outcomeClass === "critical_failure");
     if (failOpt) {
       const deltas: Record<string, number> = failOpt.signalDeltas ?? {};
       const capSum = Object.entries(deltas)
-        .filter(([sig]) => CANONICAL_SIGNAL_TO_CAP[sig] === vars.targetCapability)
+        .filter(([sig]) => CANONICAL_SIGNAL_TO_DOMAIN[sig] === vars.targetCapability)
         .reduce((s, [, v]) => s + (v as number), 0);
-      if (capSum > 0) {
-        errs.push(`failure option has net-positive deltas for target capability '${vars.targetCapability}' (sum=${capSum.toFixed(2)}) — failure option must penalise the target capability`);
-      }
+      if (capSum > 0) errs.push(`failure option has net-positive deltas for target domain`);
     }
 
-    // ── F1c: No delta outside -3.0 to +3.0 ──────────────────────────────────
+    // Delta range check
     for (const opt of opts) {
       for (const [sig, val] of Object.entries(opt.signalDeltas ?? {})) {
         const v = val as number;
-        if (v < -3.0 || v > 3.0) {
-          errs.push(`option ${opt.label} signal '${sig}' delta=${v} is outside allowed range [-3.0, 3.0]`);
-        }
+        if (v < -3.0 || v > 3.0) errs.push(`option ${opt.label} signal '${sig}' delta=${v} outside [-3.0, 3.0]`);
       }
     }
 
-    // ── F1d: All signal keys must be canonical ────────────────────────────────
+    // Canonical signal check
     for (const opt of opts) {
       for (const sig of Object.keys(opt.signalDeltas ?? {})) {
-        if (!CANONICAL_SIGNAL_TO_CAP[sig]) {
-          errs.push(`option ${opt.label} uses non-canonical signal key '${sig}' — must be one of the 22 canonical signals`);
-        }
+        if (!CANONICAL_SIGNAL_TO_DOMAIN[sig]) errs.push(`option ${opt.label} uses non-canonical signal '${sig}'`);
       }
     }
 
-    // ── F2a: Failure option must not contain trivially obvious failure phrases ─
+    // Trivially obvious failure check
     if (failOpt) {
       const failText = (failOpt.text ?? "").toLowerCase();
       const obviousPhrase = TRIVIALLY_OBVIOUS_FAILURE_PHRASES.find(p => failText.includes(p));
-      if (obviousPhrase) {
-        errs.push(`failure option text contains trivially obvious phrase '${obviousPhrase}' — failure options must be plausible to someone with limited AI literacy`);
-      }
+      if (obviousPhrase) errs.push(`failure option contains trivially obvious phrase '${obviousPhrase}'`);
     }
 
-    // ── F2b: No two options should be near-duplicate (>80% text overlap) ─────
+    // Near-duplicate check
     for (let i = 0; i < opts.length; i++) {
       for (let j = i + 1; j < opts.length; j++) {
         const a = (opts[i].text ?? "").toLowerCase();
         const b = (opts[j].text ?? "").toLowerCase();
         if (a.length > 20 && b.length > 20) {
-          // Simple word-overlap check
           const wordsA = new Set(a.split(/\s+/));
           const wordsB = new Set(b.split(/\s+/));
           const intersection = Array.from(wordsA).filter(w => wordsB.has(w)).length;
           const overlap = intersection / Math.min(wordsA.size, wordsB.size);
-          if (overlap > 0.85) {
-            errs.push(`options ${opts[i].label} and ${opts[j].label} have >85% word overlap (${(overlap * 100).toFixed(0)}%) — options must be meaningfully distinct`);
-          }
+          if (overlap > 0.85) errs.push(`options ${opts[i].label} and ${opts[j].label} have >85% word overlap`);
         }
       }
     }
 
-    // ── F2c: Strong option must not be the shortest option (a tell) ──────────
+    // Strong option must not be shortest
     if (strongOpt && opts.length === 4) {
       const lengths = opts.map((o: any) => (o.text ?? "").length);
       const strongLength = (strongOpt.text ?? "").length;
-      if (strongLength === Math.min(...lengths) && strongLength < 60) {
-        errs.push(`strong option is the shortest option (${strongLength} chars) — this is a tell; strong options must be as detailed as other options`);
-      }
+      if (strongLength === Math.min(...lengths) && strongLength < 60) errs.push(`strong option is shortest — a tell`);
     }
 
     return errs;
@@ -724,6 +720,7 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
       question: parsed.question ?? "What is the most appropriate action?",
       aiOutput: parsed.ai_output ?? undefined,
       dataContext: parsed.data_context ?? undefined,
+      promptContext: parsed.prompt_context ?? undefined,
       interactionType: vars.interactionType,
       capability: vars.targetCapability,
       capabilityKey: vars.targetCapability,
@@ -739,6 +736,7 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
         rationale: o.rationale ?? "",
       })),
       metadata: vars,
+      scenarioFormat: formatHint,
     };
   }
 
@@ -748,9 +746,8 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // R5: On retry, append quality failure feedback to the user prompt
       const retryNote = attempt > 0 && lastQualityErrors.length > 0
-        ? `\n\nIMPORTANT: Your previous response failed quality validation. Issues found: ${lastQualityErrors.join("; ")}. Please fix these issues in your response.`
+        ? `\n\nIMPORTANT: Previous response failed validation: ${lastQualityErrors.join("; ")}. Fix these issues.`
         : "";
 
       const response = await invokeLLM({
@@ -778,16 +775,14 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
       const parsed = typeof content === "string" ? JSON.parse(content) : content;
       lastParsed = parsed;
 
-      // R5: Run quality validation — retry if errors found and attempts remain
       const qualityErrors = validateItemQuality(parsed);
       if (qualityErrors.length > 0) {
         lastQualityErrors = qualityErrors;
         if (attempt < MAX_RETRIES) {
-          console.warn(`[adaptiveEngine] R5 quality retry ${attempt + 1}/${MAX_RETRIES} [${vars.interactionType}]:`, qualityErrors.join(" | "));
-          continue; // retry
+          console.warn(`[adaptiveEngine] quality retry ${attempt + 1}/${MAX_RETRIES}:`, qualityErrors.join(" | "));
+          continue;
         } else {
-          // Final attempt still has errors — log and use best available result
-          console.warn(`[adaptiveEngine] R5 quality check: using best-effort result after ${MAX_RETRIES} retries [${vars.interactionType}]:`, qualityErrors.join(" | "));
+          console.warn(`[adaptiveEngine] using best-effort result after ${MAX_RETRIES} retries:`, qualityErrors.join(" | "));
         }
       }
 
@@ -795,103 +790,98 @@ Return ONLY valid JSON. No markdown fences, no explanation, no text outside the 
     } catch (err) {
       if (attempt === MAX_RETRIES) {
         console.error("[adaptiveEngine] LLM generation failed after retries:", err);
-        // If we have a partially valid result from a previous attempt, use it
-        if (lastParsed) {
-          console.warn("[adaptiveEngine] Using best-effort result from previous attempt");
-          return buildResult(lastParsed);
-        }
+        if (lastParsed) return buildResult(lastParsed);
         return generateFallbackItem(vars);
       }
-      console.warn(`[adaptiveEngine] LLM attempt ${attempt + 1} failed, retrying:`, err);
+      console.warn(`[adaptiveEngine] attempt ${attempt + 1} failed, retrying:`, err);
     }
   }
 
-  // Should never reach here, but TypeScript requires a return
   return generateFallbackItem(vars);
 }
 
-// ─── Fallback Item ────────────────────────────────────────────────────────────
-// I8: 6 capability-specific fallback templates replace the single generic item.
-// Each template targets the primary signal pattern for that capability domain.
+// ─── Fallback Templates (v10 domains) ────────────────────────────────────────
 
-const CAPABILITY_FALLBACK_TEMPLATES: Record<CapabilityKey, (vars: GenerationVariables) => Omit<GeneratedItem, "interactionType" | "capability" | "capabilityKey" | "workflow" | "riskLevel" | "difficulty" | "metadata">> = {
-  execution: (vars) => ({
+const DOMAIN_FALLBACK_TEMPLATES: Record<CapabilityKey, (vars: GenerationVariables) => Omit<GeneratedItem, "interactionType" | "capability" | "capabilityKey" | "workflow" | "riskLevel" | "difficulty" | "metadata">> = {
+  ai_interaction: (vars) => ({
+    title: "Evaluating an AI Prompt Approach",
+    scenario: `You are a ${vars.roleArchetype.displayName}. A colleague has asked an AI writing tool to draft a ${vars.workflowContext.replace(/_/g, " ")} document but the output was generic and unhelpful. They show you their prompt: "Write me a good ${vars.workflowContext.replace(/_/g, " ")} document."`,
+    constraint: "The document is needed by end of day.",
+    question: "What is the most important improvement to the prompt?",
+    options: [
+      { label: "A", text: "Add specific context: the organisation's situation, the audience, the purpose, and any constraints or requirements the output must meet.", outcomeClass: "strong", signalDeltas: { prompt_construction_quality: 2.0, prompt_iteration_quality: 1.5 } as Record<string, number>, eventCodes: ["CONTEXT_ADDITION"] as string[], rationale: "Correctly identifies the root cause — the prompt lacks context for the AI to produce useful output." },
+      { label: "B", text: "Use a different AI tool — this one is not sophisticated enough for HR documents.", outcomeClass: "failure", signalDeltas: { tool_fluency_index: -2.0, prompt_construction_quality: -1.5 } as Record<string, number>, eventCodes: ["TOOL_BLAME"], rationale: "Blames the tool rather than the prompt — a common AI literacy failure." },
+      { label: "C", text: "Add the word 'detailed' or 'comprehensive' to the prompt to get a better output.", outcomeClass: "weak", signalDeltas: { prompt_construction_quality: -0.5, prompt_iteration_quality: -1.0 } as Record<string, number>, eventCodes: ["ADJECTIVE_FIX"], rationale: "Adding adjectives does not address the fundamental context gap." },
+      { label: "D", text: "Ask the AI follow-up questions to refine the output iteratively.", outcomeClass: "acceptable", signalDeltas: { prompt_iteration_quality: 0.5, prompt_construction_quality: -0.5 } as Record<string, number>, eventCodes: ["ITERATION_WITHOUT_DIAGNOSIS"], rationale: "Iteration helps but does not address the root cause — the initial prompt needs restructuring." },
+    ],
+  }),
+  ai_output_evaluation: (vars) => ({
     title: "AI Output Validation Before Use",
     scenario: `You are a ${vars.roleArchetype.displayName}. An AI tool has produced a draft ${vars.workflowContext.replace(/_/g, " ")} document. It looks professionally formatted but you have not yet reviewed the content in detail.`,
     constraint: "The document needs to be sent to stakeholders within the hour.",
     question: "What is the most appropriate next step before sending?",
     options: [
-      { label: "A", text: "Read through the document carefully, check all facts and claims, correct any issues, then send.", outcomeClass: "strong", signalDeltas: { execution_quality: 2.0, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["VALIDATE_BEFORE_USE"] as string[], rationale: "Proportionate validation before use — the correct execution pattern." },
-      { label: "B", text: "Send it immediately — the AI tool is reliable and the formatting looks right.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, validation_accuracy: -2.0 } as Record<string, number>, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance without content review — a critical execution failure." },
-      { label: "C", text: "Discard the AI draft and write the document from scratch to be safe.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, workflow_application_quality: -1.0 } as Record<string, number>, eventCodes: ["AI_AVOIDANCE"], rationale: "Unnecessary avoidance — discards valid AI work without cause." },
-      { label: "D", text: "Ask a colleague to review it before you send, without reviewing it yourself.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["DELEGATE_REVIEW"], rationale: "Acceptable but inefficient — you should review it yourself first." },
+      { label: "A", text: "Read through the document carefully, check all facts and claims, correct any issues, then send.", outcomeClass: "strong", signalDeltas: { output_evaluation_quality: 2.0, error_detection_accuracy: 1.5 } as Record<string, number>, eventCodes: ["VALIDATE_BEFORE_USE"], rationale: "Proportionate validation before use." },
+      { label: "B", text: "Send it immediately — the AI tool is reliable and the formatting looks right.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, output_evaluation_quality: -2.0 } as Record<string, number>, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind acceptance without content review." },
+      { label: "C", text: "Discard the AI draft and write the document from scratch to be safe.", outcomeClass: "weak", signalDeltas: { output_evaluation_quality: -0.5, fitness_for_purpose_judgement: -1.0 } as Record<string, number>, eventCodes: ["AI_AVOIDANCE"], rationale: "Unnecessary avoidance — discards valid AI work without cause." },
+      { label: "D", text: "Ask a colleague to review it before you send, without reviewing it yourself.", outcomeClass: "acceptable", signalDeltas: { output_evaluation_quality: 0.5, error_detection_accuracy: -0.5 } as Record<string, number>, eventCodes: ["DELEGATE_REVIEW"], rationale: "Acceptable but you should review it yourself first." },
     ],
   }),
-  judgement: (vars) => ({
-    title: "Evaluating AI Recommendation Quality",
-    scenario: `You are a ${vars.roleArchetype.displayName}. An AI system has recommended a course of action for a ${vars.workflowContext.replace(/_/g, " ")} situation. The recommendation is well-structured but you are uncertain whether the AI has considered all relevant factors.`,
-    constraint: "A decision is needed before the end of the day.",
-    question: "How should you approach evaluating this AI recommendation?",
-    options: [
-      { label: "A", text: "Identify the key assumptions the AI has made, check whether they hold in this specific context, and adjust the recommendation accordingly.", outcomeClass: "strong", signalDeltas: { judgement_quality: 2.0, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["ASSUMPTION_CHECK"], rationale: "Sound judgement — tests the AI's assumptions rather than accepting the surface recommendation." },
-      { label: "B", text: "Accept the recommendation — the AI has access to more data than you do.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, judgement_quality: -2.0 } as Record<string, number>, eventCodes: ["BLIND_ACCEPT"], rationale: "Blind deference to AI — abdicates professional judgement." },
-      { label: "C", text: "Reject the recommendation and make the decision based solely on your own experience.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, judgement_quality: -0.5 } as Record<string, number>, eventCodes: ["AI_AVOIDANCE"], rationale: "Ignores potentially valuable AI input without a substantive reason." },
-      { label: "D", text: "Ask the AI to regenerate the recommendation with different parameters.", outcomeClass: "acceptable", signalDeltas: { execution_quality: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["RERUN_WITHOUT_REVIEW"], rationale: "Acceptable but does not address the underlying uncertainty about the recommendation's validity." },
-    ],
-  }),
-  governance: (vars) => ({
-    title: "AI Use Governance Decision",
-    scenario: `You are a ${vars.roleArchetype.displayName}. A colleague wants to use an AI tool to automate a step in the ${vars.workflowContext.replace(/_/g, " ")} process that currently involves human review of sensitive employee data.`,
-    constraint: "The colleague believes this will save significant time and wants to proceed this week.",
-    question: "What is the most appropriate governance response?",
-    options: [
-      { label: "A", text: "Advise that this change requires a data protection impact assessment and formal approval before any AI automation of sensitive data review.", outcomeClass: "strong", signalDeltas: { governance_quality: 2.5, appropriateness_boundary: 2.0 } as Record<string, number>, eventCodes: ["GOVERNANCE_ESCALATION"], rationale: "Correct governance response — automation of sensitive data review requires formal oversight." },
-      { label: "B", text: "Allow the colleague to proceed — efficiency gains justify the change.", outcomeClass: "critical_failure", signalDeltas: { governance_bypass_risk: -3.0, unsafe_hr_decision_risk: -2.5 } as Record<string, number>, eventCodes: ["GOVERNANCE_BYPASS"], rationale: "Critical governance failure — bypasses required oversight for sensitive data processing." },
-      { label: "C", text: "Allow a limited pilot with one employee's data to test the approach first.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.0, governance_quality: -1.5 } as Record<string, number>, eventCodes: ["PILOT_WITHOUT_APPROVAL"], rationale: "A pilot does not resolve the governance requirement — it just delays it while creating additional risk." },
-      { label: "D", text: "Block the change entirely and prohibit any AI use in this workflow.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, over_caution_risk: -0.5 } as Record<string, number>, eventCodes: ["PRECAUTIONARY_REFUSAL"], rationale: "Acceptable but overly binary — the right response is governance review, not blanket prohibition." },
-    ],
-  }),
-  appropriateness: (vars) => ({
-    title: "Assessing AI Appropriateness for a Sensitive Decision",
-    scenario: `You are a ${vars.roleArchetype.displayName}. Your organisation is considering using AI to support ${vars.workflowContext.replace(/_/g, " ")} decisions that affect individual employees. The AI vendor claims high accuracy.`,
-    constraint: "Senior leadership is enthusiastic and wants a recommendation within the week.",
-    question: "What is the most appropriate response to this proposal?",
-    options: [
-      { label: "A", text: "Conduct a structured appropriateness review covering legal compliance, bias risk, explainability, and employee impact before making any recommendation.", outcomeClass: "strong", signalDeltas: { appropriateness_boundary: 2.5, governance_quality: 2.0 } as Record<string, number>, eventCodes: ["APPROPRIATENESS_REVIEW"], rationale: "Correct approach — vendor accuracy claims do not address the full range of appropriateness concerns." },
-      { label: "B", text: "Recommend adoption — high accuracy means the AI is ready to use.", outcomeClass: "failure", signalDeltas: { blind_acceptance_risk: -2.5, appropriateness_boundary: -2.0 } as Record<string, number>, eventCodes: ["ACCURACY_CONFLATION"], rationale: "Conflates accuracy with appropriateness — a common and serious AI literacy failure." },
-      { label: "C", text: "Recommend against AI use in any HR decision-making context.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.5, appropriateness_boundary: -0.5 } as Record<string, number>, eventCodes: ["BLANKET_REFUSAL"], rationale: "Overly broad — appropriateness is context-specific, not a blanket prohibition." },
-      { label: "D", text: "Ask the vendor to provide a bias audit report before deciding.", outcomeClass: "acceptable", signalDeltas: { governance_quality: 1.0, appropriateness_boundary: 0.5 } as Record<string, number>, eventCodes: ["PARTIAL_DUE_DILIGENCE"], rationale: "A good start but incomplete — bias audit is one of several required checks." },
-    ],
-  }),
-  workflow: (vars) => ({
-    title: "AI Integration into a Multi-Step HR Workflow",
+  ai_workflow_design: (vars) => ({
+    title: "AI Integration into HR Workflow",
     scenario: `You are a ${vars.roleArchetype.displayName}. You are redesigning the ${vars.workflowContext.replace(/_/g, " ")} workflow to incorporate AI assistance. You need to decide which steps AI should support and which require human ownership.`,
     constraint: "The redesigned workflow must go live next month.",
     question: "Which approach to AI integration is most appropriate?",
     options: [
-      { label: "A", text: "Map each step against criteria for AI suitability (data quality, sensitivity, reversibility, explainability) and assign human ownership to steps that fail any criterion.", outcomeClass: "strong", signalDeltas: { workflow_application_quality: 2.5, governance_quality: 1.5 } as Record<string, number>, eventCodes: ["STRUCTURED_INTEGRATION"], rationale: "Systematic approach — applies clear criteria rather than intuition to AI integration decisions." },
-      { label: "B", text: "Automate all steps where the AI tool is available — maximise efficiency.", outcomeClass: "failure", signalDeltas: { governance_bypass_risk: -2.5, workflow_application_quality: -2.0 } as Record<string, number>, eventCodes: ["OVER_AUTOMATION"], rationale: "Over-automation without suitability assessment — creates significant governance and quality risk." },
-      { label: "C", text: "Keep all steps human-owned and use AI only for drafting final outputs.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, workflow_application_quality: -1.0 } as Record<string, number>, eventCodes: ["UNDER_INTEGRATION"], rationale: "Under-utilises AI — misses legitimate efficiency and quality improvements." },
-      { label: "D", text: "Ask each team member which steps they would like AI to support.", outcomeClass: "acceptable", signalDeltas: { workflow_application_quality: 0.5, governance_quality: -0.5 } as Record<string, number>, eventCodes: ["PREFERENCE_BASED_INTEGRATION"], rationale: "Inclusive but insufficient — individual preferences should not be the primary driver of AI integration decisions." },
+      { label: "A", text: "Map each step against criteria for AI suitability (data quality, sensitivity, reversibility, explainability) and assign human ownership to steps that fail any criterion.", outcomeClass: "strong", signalDeltas: { workflow_redesign_quality: 2.5, human_oversight_preservation: 1.5 } as Record<string, number>, eventCodes: ["STRUCTURED_INTEGRATION"], rationale: "Systematic approach with clear criteria." },
+      { label: "B", text: "Automate all steps where the AI tool is available — maximise efficiency.", outcomeClass: "failure", signalDeltas: { automation_expansion_risk: -2.5, workflow_redesign_quality: -2.0 } as Record<string, number>, eventCodes: ["OVER_AUTOMATION"], rationale: "Over-automation without suitability assessment." },
+      { label: "C", text: "Keep all steps human-owned and use AI only for drafting final outputs.", outcomeClass: "weak", signalDeltas: { workflow_redesign_quality: -1.0, handoff_design_quality: -0.5 } as Record<string, number>, eventCodes: ["UNDER_INTEGRATION"], rationale: "Under-utilises AI." },
+      { label: "D", text: "Ask each team member which steps they would like AI to support.", outcomeClass: "acceptable", signalDeltas: { workflow_redesign_quality: 0.5, human_oversight_preservation: -0.5 } as Record<string, number>, eventCodes: ["PREFERENCE_BASED"], rationale: "Inclusive but insufficient — preferences should not drive AI integration decisions." },
     ],
   }),
-  data_interpretation: (vars) => ({
-    title: "Interpreting AI-Generated Data Analysis",
-    scenario: `You are a ${vars.roleArchetype.displayName}. An AI analytics tool has produced a report on ${vars.workflowContext.replace(/_/g, " ")} outcomes, showing a strong correlation between two variables. The report suggests this correlation indicates a causal relationship.`,
-    constraint: "You need to present findings to the leadership team tomorrow.",
-    question: "How should you interpret and present this finding?",
+  workforce_ai_readiness: (vars) => ({
+    title: "Diagnosing Team AI Capability Gaps",
+    scenario: `You are a ${vars.roleArchetype.displayName}. Your team's AI assessment results show high scores on AI Interaction but low scores on AI Output Evaluation. Team members are enthusiastic AI users but have been caught using AI outputs without checking them.`,
+    constraint: "You need to present a development plan to your director next week.",
+    question: "What is the most important development priority for this team?",
     options: [
-      { label: "A", text: "Present the correlation as a finding, clearly distinguish it from causation, note the AI's limitation in inferring causation, and recommend further investigation before drawing conclusions.", outcomeClass: "strong", signalDeltas: { data_interpretation_quality: 2.5, validation_accuracy: 1.5 } as Record<string, number>, eventCodes: ["CORRELATION_CAUSATION_DISTINCTION"], rationale: "Correct interpretation — distinguishes correlation from causation and maintains appropriate epistemic humility." },
-      { label: "B", text: "Present the AI's causal claim directly — the tool is designed for this type of analysis.", outcomeClass: "failure", signalDeltas: { hallucination_acceptance_risk: -2.5, data_interpretation_quality: -2.0 } as Record<string, number>, eventCodes: ["CAUSAL_CLAIM_ACCEPTED"], rationale: "Accepts an unsupported causal claim — a fundamental data interpretation failure." },
-      { label: "C", text: "Exclude this finding from the report as the AI may have made an error.", outcomeClass: "weak", signalDeltas: { over_caution_risk: -1.0, data_interpretation_quality: -0.5 } as Record<string, number>, eventCodes: ["FINDING_SUPPRESSED"], rationale: "Overcautious — a valid correlation finding should be reported with appropriate caveats, not suppressed." },
-      { label: "D", text: "Ask the AI to rerun the analysis to confirm the finding before presenting.", outcomeClass: "acceptable", signalDeltas: { validation_accuracy: 0.5, timing_integrity: -0.5 } as Record<string, number>, eventCodes: ["RERUN_FOR_CONFIRMATION"], rationale: "Reasonable but insufficient — rerunning does not resolve the correlation/causation distinction." },
+      { label: "A", text: "Focus development on output evaluation skills — the team can use AI tools but needs to learn when and how to verify AI outputs before using them in HR decisions.", outcomeClass: "strong", signalDeltas: { capability_diagnosis_accuracy: 2.5, intervention_design_quality: 1.5 } as Record<string, number>, eventCodes: ["ACCURATE_DIAGNOSIS"], rationale: "Correctly identifies the specific gap and proposes targeted development." },
+      { label: "B", text: "Restrict AI tool access until the team completes a general AI literacy training programme.", outcomeClass: "failure", signalDeltas: { generic_prescription_risk: -2.0, capability_diagnosis_accuracy: -1.5 } as Record<string, number>, eventCodes: ["GENERIC_PRESCRIPTION"], rationale: "Generic restriction that does not address the specific gap." },
+      { label: "C", text: "Celebrate the high interaction scores and monitor output quality over time.", outcomeClass: "weak", signalDeltas: { capability_diagnosis_accuracy: -1.0, intervention_design_quality: -0.5 } as Record<string, number>, eventCodes: ["GAP_IGNORED"], rationale: "Ignores the identified risk — enthusiasm without evaluation skill is dangerous." },
+      { label: "D", text: "Implement a mandatory review step for all AI outputs before they are used.", outcomeClass: "acceptable", signalDeltas: { intervention_design_quality: 0.5, capability_diagnosis_accuracy: 0.5 } as Record<string, number>, eventCodes: ["PROCESS_FIX"], rationale: "A useful interim control but does not build the underlying capability." },
+    ],
+  }),
+  ai_ethics_trust: (vars) => ({
+    title: "AI Monitoring Proposal Raises Ethical Concerns",
+    scenario: `You are a ${vars.roleArchetype.displayName}. Your organisation is considering deploying AI-powered productivity monitoring for remote workers. The tool tracks application usage and generates a 'productivity score'. The CHRO believes this will help identify disengaged employees.`,
+    constraint: "The CHRO has budget approval and wants to pilot within 4 weeks.",
+    question: "What is the most appropriate response?",
+    options: [
+      { label: "A", text: "Raise concerns about employee trust, privacy, and the validity of monitoring as a proxy for productivity. Recommend a formal ethical review before any pilot, including employee consultation.", outcomeClass: "strong", signalDeltas: { ethics_under_pressure: 2.5, stakeholder_impact_awareness: 2.0, employee_transparency_advocacy: 1.5 } as Record<string, number>, eventCodes: ["ETHICAL_CHALLENGE"], rationale: "Holds ethical position and proposes structured review." },
+      { label: "B", text: "Support the pilot — it is limited and the data will inform a better decision.", outcomeClass: "failure", signalDeltas: { pressure_drift_risk: -2.5, ethics_under_pressure: -2.0 } as Record<string, number>, eventCodes: ["PRESSURE_COMPLIANCE"], rationale: "Drifts under authority pressure." },
+      { label: "C", text: "Suggest using the tool but only sharing aggregate data, not individual scores.", outcomeClass: "weak", signalDeltas: { ethics_under_pressure: -0.5, stakeholder_impact_awareness: -1.0 } as Record<string, number>, eventCodes: ["PARTIAL_MITIGATION"], rationale: "Addresses one symptom but not the fundamental concern." },
+      { label: "D", text: "Refuse to participate and escalate to the board.", outcomeClass: "acceptable", signalDeltas: { ethics_under_pressure: 1.0, stakeholder_impact_awareness: 0.5 } as Record<string, number>, eventCodes: ["ESCALATION_WITHOUT_ENGAGEMENT"], rationale: "Holds ground but escalates without constructive engagement." },
+    ],
+  }),
+  ai_change_leadership: (vars) => ({
+    title: "Responding to AI Initiative Resistance",
+    scenario: `You are a ${vars.roleArchetype.displayName}. Your organisation has announced a new AI tool for ${vars.workflowContext.replace(/_/g, " ")}. Several experienced team members have expressed strong resistance, saying "AI will never understand the nuance of what we do" and refusing to attend the training sessions.`,
+    constraint: "The rollout is scheduled for next month and leadership expects full adoption.",
+    question: "What is the most effective response to this resistance?",
+    options: [
+      { label: "A", text: "Meet with the resistant team members individually to understand their specific concerns. Acknowledge the valid point about nuance while explaining how AI will support (not replace) their expertise. Adjust the rollout to address legitimate concerns.", outcomeClass: "strong", signalDeltas: { resistance_response_quality: 2.5, legitimate_concern_recognition: 2.0 } as Record<string, number>, eventCodes: ["CONCERN_ENGAGEMENT"], rationale: "Engages with the resistance constructively and recognises the legitimate concern within it." },
+      { label: "B", text: "Mandate attendance at training and make AI tool usage a performance objective.", outcomeClass: "failure", signalDeltas: { dismissive_of_concern_risk: -2.5, resistance_response_quality: -2.0 } as Record<string, number>, eventCodes: ["FORCED_COMPLIANCE"], rationale: "Dismisses legitimate concerns and forces compliance — likely to increase resistance." },
+      { label: "C", text: "Delay the rollout until the team is more receptive.", outcomeClass: "weak", signalDeltas: { change_pace_calibration: -1.0, resistance_response_quality: -0.5 } as Record<string, number>, eventCodes: ["AVOIDANCE"], rationale: "Avoids the issue rather than addressing it — delay does not resolve the underlying concerns." },
+      { label: "D", text: "Ask the most enthusiastic team members to demonstrate the tool's value to their colleagues.", outcomeClass: "acceptable", signalDeltas: { resistance_response_quality: 0.5, legitimate_concern_recognition: -0.5 } as Record<string, number>, eventCodes: ["PEER_INFLUENCE"], rationale: "Useful tactic but does not address the specific concerns raised by the resistant members." },
     ],
   }),
 };
 
+// Backward compat alias
+const CAPABILITY_FALLBACK_TEMPLATES = DOMAIN_FALLBACK_TEMPLATES;
+
 function generateFallbackItem(vars: GenerationVariables): GeneratedItem {
-  // I8: Use capability-specific template if available, otherwise use execution template
-  const templateFn = CAPABILITY_FALLBACK_TEMPLATES[vars.targetCapability] ?? CAPABILITY_FALLBACK_TEMPLATES.execution;
+  const templateFn = DOMAIN_FALLBACK_TEMPLATES[vars.targetCapability] ?? DOMAIN_FALLBACK_TEMPLATES.ai_interaction;
   const template = templateFn(vars);
   return {
     ...template,
@@ -911,15 +901,14 @@ function findWeakestCapability(
   scores: Record<CapabilityKey, { score: number; signalCount: number }>,
   role: RoleArchetype,
   priorCapabilityScores?: Record<string, number> | null,
-  // I1: Exclude saturated capabilities
   saturatedCaps?: Set<CapabilityKey>,
-  // I7: Exclude over-probed capability
-  overProbedCap?: CapabilityKey
+  overProbedCap?: CapabilityKey,
+  availableDomains?: CapabilityKey[]
 ): CapabilityKey {
-  const ALL_CAPS: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+  const domains = availableDomains ?? ALL_DOMAINS;
   const isExcluded = (k: CapabilityKey) =>
-    (saturatedCaps?.has(k) ?? false) || k === overProbedCap;
-  // If current session has no evidence yet, use prior scores to target the weakest non-excluded capability
+    (saturatedCaps?.has(k) ?? false) || k === overProbedCap || !domains.includes(k);
+
   const hasCurrentEvidence = Object.values(scores).some(v => v.signalCount > 0);
   if (!hasCurrentEvidence && priorCapabilityScores && Object.keys(priorCapabilityScores).length > 0) {
     const priorEntries = (Object.entries(priorCapabilityScores) as Array<[CapabilityKey, number]>)
@@ -931,12 +920,12 @@ function findWeakestCapability(
       )[0][0];
     }
   }
+
   const caps = (Object.entries(scores) as Array<[CapabilityKey, { score: number; signalCount: number }]>)
     .filter(([k]) => !isExcluded(k));
-  // Fallback: if all caps are excluded (all saturated), use all caps
   const activeCaps = caps.length > 0 ? caps :
-    (ALL_CAPS.map(k => [k, scores[k] ?? { score: 50, signalCount: 0 }] as [CapabilityKey, { score: number; signalCount: number }]));
-  if (activeCaps.length === 0) return "execution";
+    (domains.map(k => [k, scores[k] ?? { score: 50, signalCount: 0 }] as [CapabilityKey, { score: number; signalCount: number }]));
+  if (activeCaps.length === 0) return domains[0] ?? "ai_interaction";
   return activeCaps.sort((a, b) =>
     (role.capabilityWeights[b[0]] ?? 0.17) * (100 - b[1].score) / 100 -
     (role.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1].score) / 100
@@ -948,7 +937,7 @@ function findStrongestCapability(
   role: RoleArchetype
 ): CapabilityKey {
   const caps = Object.entries(scores) as Array<[CapabilityKey, { score: number; signalCount: number }]>;
-  if (caps.length === 0) return "governance";
+  if (caps.length === 0) return "ai_ethics_trust";
   return caps.sort((a, b) =>
     (role.capabilityWeights[b[0]] ?? 0.17) * b[1].score / 100 -
     (role.capabilityWeights[a[0]] ?? 0.17) * a[1].score / 100
@@ -964,26 +953,28 @@ function findLeastUsedType(
 
 function getCapabilityForInteractionType(type: InteractionType): CapabilityKey {
   const map: Record<InteractionType, CapabilityKey> = {
-    situational_judgement:  "execution",
-    scenario_critique:      "judgement",
-    output_improvement:     "execution",
-    error_detection:        "data_interpretation",
-    prioritisation:         "workflow",
-    risk_judgement:         "governance",
-    data_interpretation:    "data_interpretation",
-    governance_decision:    "governance",
-    multi_step_workflow:    "workflow",
-    contradiction_probe:    "judgement",
-    confidence_calibration: "judgement",
+    prompt_diagnosis:        "ai_interaction",
+    prompt_construction:     "ai_interaction",
+    scenario_critique:       "ai_output_evaluation",
+    error_detection:         "ai_output_evaluation",
+    process_redesign:        "ai_workflow_design",
+    handoff_decision:        "ai_workflow_design",
+    capability_diagnosis:    "workforce_ai_readiness",
+    intervention_design:     "workforce_ai_readiness",
+    leader_advisory:         "workforce_ai_readiness",
+    ethical_pressure_test:   "ai_ethics_trust",
+    stakeholder_impact:      "ai_ethics_trust",
+    resistance_response:     "ai_change_leadership",
+    legitimate_concern:      "ai_change_leadership",
+    risk_judgement:          "ai_ethics_trust",
+    confidence_calibration:  "ai_output_evaluation",
+    contradiction_probe:     "ai_output_evaluation",
   };
-  return map[type] ?? "execution";
+  return map[type] ?? "ai_interaction";
 }
 
 function selectBaselineCapability(ctx: AdaptiveSelectionContext): CapabilityKey {
-  const caps: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
-  // C4: When prior session scores exist, start baseline with the weakest prior capability.
-  // This ensures returning users are challenged from question 1, not just from adaptive phase.
-  const hasCurrentEvidence = caps.some(c => (ctx.capabilityScores[c]?.signalCount ?? 0) > 0);
+  const hasCurrentEvidence = ALL_DOMAINS.some(c => (ctx.capabilityScores[c]?.signalCount ?? 0) > 0);
   if (!hasCurrentEvidence && ctx.priorCapabilityScores && Object.keys(ctx.priorCapabilityScores).length > 0) {
     const priorEntries = Object.entries(ctx.priorCapabilityScores) as Array<[CapabilityKey, number]>;
     return priorEntries.sort((a, b) =>
@@ -991,22 +982,18 @@ function selectBaselineCapability(ctx: AdaptiveSelectionContext): CapabilityKey 
       (ctx.roleArchetype.capabilityWeights[a[0]] ?? 0.17) * (100 - a[1]) / 100
     )[0][0];
   }
-  return caps.sort((a, b) =>
+  return ALL_DOMAINS.slice().sort((a, b) =>
     (ctx.capabilityScores[a]?.signalCount ?? 0) - (ctx.capabilityScores[b]?.signalCount ?? 0)
   )[0];
 }
 
 function selectBaselineInteractionType(used: Record<InteractionType, number>): InteractionType {
-  // C2: confidence_calibration added to baseline rotation.
   const baselineTypes: InteractionType[] = [
-    "situational_judgement",
+    "prompt_diagnosis",
+    "prompt_construction",
     "scenario_critique",
-    "risk_judgement",
-    "output_improvement",
-    "prioritisation",
     "error_detection",
-    "governance_decision",
-    "data_interpretation",
+    "risk_judgement",
     "confidence_calibration",
   ];
   return [...baselineTypes].sort((a, b) => (used[a] ?? 0) - (used[b] ?? 0))[0];
@@ -1022,9 +1009,7 @@ function buildVariables(
   const role = ctx.roleArchetype;
   const highRiskCount = ctx.riskExposure["High"] ?? 0;
   const totalAnswered = ctx.answeredCount;
-  // A3: Use persona-derived starting difficulty for baseline phase if available
   const baseDifficulty: 1 | 2 | 3 = phase === "baseline" ? (ctx.personaStartingDifficulty ?? 1) : phase === "adaptive" ? 2 : 3;
-  // I5: Workflow rotation guard — pick a workflow not used in the last WORKFLOW_HISTORY_WINDOW items
   const recentWorkflows = ctx.recentWorkflows ?? [];
   const availableWorkflows = role.workflows.filter(w => !recentWorkflows.slice(-WORKFLOW_HISTORY_WINDOW).includes(w));
   const workflowPool = availableWorkflows.length > 0 ? availableWorkflows : role.workflows;
@@ -1057,18 +1042,14 @@ function buildVariables(
   };
 }
 
-// C3: Gap-weighted type selection — prefers types with both low usage and high gap urgency
 function findLeastUsedTypeWithGap(
   types: InteractionType[],
   used: Record<InteractionType, number>,
   gapWeight: number
 ): InteractionType {
-  // Score each type: lower usage + higher gap urgency = lower score (preferred)
   return [...types].sort((a, b) => {
     const usageA = used[a] ?? 0;
     const usageB = used[b] ?? 0;
-    // When gap is urgent (gapWeight close to 1), strongly prefer least-used types
-    // When gap is small (gapWeight close to 0), treat all types equally by usage
     return (usageA * (1 + gapWeight)) - (usageB * (1 + gapWeight));
   })[0] ?? types[0];
 }
@@ -1079,7 +1060,6 @@ function buildVariablesFromInjection(
   phase: SessionPhase,
   ctx?: AdaptiveSelectionContext
 ): GenerationVariables {
-  // C5: Rotate through role workflows for injections instead of always using workflows[0]
   const workflowIndex = ctx ? ctx.answeredCount % role.workflows.length : 0;
   return {
     roleArchetype: role,

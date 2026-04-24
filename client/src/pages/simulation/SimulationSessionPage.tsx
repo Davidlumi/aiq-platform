@@ -89,7 +89,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
         {isPassed ? <CheckCircle2 className="w-16 h-16 mx-auto text-[#228833]" /> : <XCircle className="w-16 h-16 mx-auto text-[#EE6677]" />}
         <h1 className="text-2xl font-bold text-foreground font-sora">{isPassed ? "Simulation Passed" : "Simulation Failed"}</h1>
         <p className="text-muted-foreground">
-          {isPassed ? "You demonstrated appropriate judgement and policy compliance throughout this scenario."
+          {isPassed ? "You demonstrated appropriate reasoning and policy compliance throughout this scenario."
             : "Review the learning materials and try again to improve your decision-making."}
         </p>
       </div>

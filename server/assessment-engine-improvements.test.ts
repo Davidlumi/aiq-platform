@@ -1,5 +1,5 @@
 /**
- * Assessment Engine Improvements — Test Suite
+ * Assessment Engine Improvements — Test Suite (v10 migration)
  *
  * Covers all ten improvements implemented in the Apr 2026 engine audit:
  *   A1 — WS4.6 validation phase randomisation applied in adaptiveEngine
@@ -13,27 +13,57 @@
  *   C2 — failureModes and gamingAnalysis scrutinyLevel in R9 narrative prompt
  *   D1 — MINIMUM_EVIDENCE constants configurable via scoring_config
  *   E1 — gamingFamily field added to RoleArchetype for threshold lookup
+ *
+ * v10 migration notes:
+ *   - FailureModeResult no longer has hasBlockingFailure; uses classificationImpact + pressureDriftDetected
+ *   - classifyReadiness "safe" requires allDomainsAssessed (capabilityScores with >= 2 signals each)
+ *   - blind_ai_acceptance → blind_acceptance
+ *   - workflow → workforce_ai_readiness, data_interpretation → ai_change_leadership
+ *   - scenario → prompt_diagnosis (interaction type)
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ALL_DOMAINS, type CapabilityScore, type CapabilityKey } from "./assessment/scoringEngine";
+
+// ─── Helper: build full capabilityScores for "safe" classification ───────────
+function makeSafeCapabilityScores(overallScore: number = 80): Record<CapabilityKey, CapabilityScore> {
+  const result: Record<string, CapabilityScore> = {};
+  for (const domain of ALL_DOMAINS) {
+    result[domain] = {
+      score: overallScore,
+      band: overallScore >= 75 ? "strong" : "developing",
+      signalCount: 5,
+      signalSum: 3.0,
+      displayName: domain,
+    };
+  }
+  return result as Record<CapabilityKey, CapabilityScore>;
+}
+
+/** v10 FailureModeResult with no failures */
+const NO_FAILURES = {
+  detected: false, modes: [] as string[], governanceFlag: false,
+  classificationImpact: "none" as const,
+  pressureDriftDetected: false, pressureDriftMagnitude: 0,
+};
 
 // ─── A4: governanceAction surfaced in scoreBreakdown ─────────────────────────
 describe("A4 — governanceAction in scoreBreakdown", () => {
   it("classifyReadiness returns governanceAction on all paths", async () => {
     const { classifyReadiness } = await import("./assessment/scoringEngine");
     // evidenceSufficient=false path — returns unknown with governanceAction: null
-    const insufficient = classifyReadiness(65, "low", { modes: [], hasBlockingFailure: false }, false);
+    const insufficient = classifyReadiness(65, "low", NO_FAILURES, false);
     expect(insufficient).toHaveProperty("governanceAction");
     // evidenceSufficient=true, safe path — returns safe with governanceAction
-    const safe = classifyReadiness(65, "low", { modes: [], hasBlockingFailure: false }, true, undefined, undefined, 0.85);
+    const caps = makeSafeCapabilityScores(80);
+    const safe = classifyReadiness(80, "low", NO_FAILURES, true, caps, undefined, 0.85);
     expect(safe).toHaveProperty("governanceAction");
   });
 
   it("governanceAction is null for safe classification with high confidence", async () => {
     const { classifyReadiness } = await import("./assessment/scoringEngine");
-    // Correct signature: (overallScore, riskBand, failureModes, evidenceSufficient, ..., compositeConfidence)
-    // score=80 with low risk band and high confidence produces a safe state
-    const result = classifyReadiness(80, "low", { modes: [], hasBlockingFailure: false }, true, undefined, undefined, 0.85);
+    const caps = makeSafeCapabilityScores(80);
+    const result = classifyReadiness(80, "low", NO_FAILURES, true, caps, undefined, 0.85);
     expect(result.state).toBe("safe");
     // safe state returns null governanceAction (no governance action needed)
     expect(result.governanceAction).toBeNull();
@@ -42,7 +72,7 @@ describe("A4 — governanceAction in scoreBreakdown", () => {
   it("governanceAction is present for at_risk classification", async () => {
     const { classifyReadiness } = await import("./assessment/scoringEngine");
     // at_risk: low score, high risk band, sufficient evidence, moderate confidence
-    const result = classifyReadiness(35, "high", { modes: [], hasBlockingFailure: false }, true, undefined, undefined, 0.65);
+    const result = classifyReadiness(35, "high", NO_FAILURES, true, undefined, undefined, 0.65);
     // at_risk triggers a governance action
     expect(["mandatory_revalidation", "flag_for_review", "development_required", "supervised_use_recommended", null]).toContain(result.governanceAction);
     // governingConstraint is an object (or undefined)
@@ -51,16 +81,17 @@ describe("A4 — governanceAction in scoreBreakdown", () => {
 
   it("governanceAction is present on all readiness paths", async () => {
     const { classifyReadiness } = await import("./assessment/scoringEngine");
-    // Safe path: high score, low risk, sufficient evidence, high confidence
-    const safe = classifyReadiness(80, "low", { modes: [], hasBlockingFailure: false }, true, undefined, undefined, 0.85);
+    const caps = makeSafeCapabilityScores(80);
+    // Safe path: high score, low risk, sufficient evidence, high confidence, all domains assessed
+    const safe = classifyReadiness(80, "low", NO_FAILURES, true, caps, undefined, 0.85);
     expect(safe).toHaveProperty("governanceAction");
     expect("governanceAction" in safe).toBe(true);
     // at_risk path: low score, high risk, sufficient evidence, moderate confidence
-    const atRisk = classifyReadiness(35, "high", { modes: [], hasBlockingFailure: false }, true, undefined, undefined, 0.65);
+    const atRisk = classifyReadiness(35, "high", NO_FAILURES, true, undefined, undefined, 0.65);
     expect(atRisk).toHaveProperty("governanceAction");
     expect("governanceAction" in atRisk).toBe(true);
     // Insufficient evidence path
-    const insufficient = classifyReadiness(65, "low", { modes: [], hasBlockingFailure: false }, false);
+    const insufficient = classifyReadiness(65, "low", NO_FAILURES, false);
     expect(insufficient).toHaveProperty("governanceAction");
     expect("governanceAction" in insufficient).toBe(true);
   });
@@ -103,14 +134,14 @@ describe("A2 + E1 — Role-aware gaming thresholds", () => {
     // Specialist thresholds are stricter — same answers may produce different scrutiny
     const answers = Array(5).fill(null).map((_, i) => ({
       itemId: `item-${i}`,
-      capabilityKey: "workflow",
+      capabilityKey: "workforce_ai_readiness",
       selectedValue: "A",
       outcomeClass: "strong",
       confidenceScore: 0.9,
       timeToAnswerMs: 800,
       riskLevel: "Medium",
       signalDeltas: {},
-      interactionType: "scenario",
+      interactionType: "prompt_diagnosis",
     }));
     const resultDefault = analyseGamingPatterns(answers);
     const resultSpecialist = analyseGamingPatterns(answers, "specialist");
@@ -203,18 +234,14 @@ describe("B2 — deviceType, browserType, screenWidthPx in submitAnswer schema",
 describe("C1 — Prior capability score deltas in R9 narrative", () => {
   it("computeCapabilityScores returns per-capability scores", async () => {
     const { computeCapabilityScores } = await import("./assessment/scoringEngine");
-    const signalScores = {
-      workflow: { score: 65, signalCount: 3 },
-      data_interpretation: { score: 72, signalCount: 3 },
-    };
     // computeCapabilityScores takes signal scores and returns capability scores
     // The function exists and is callable
     expect(typeof computeCapabilityScores).toBe("function");
   });
 
   it("score delta is computable from prior and current scores", () => {
-    const prior = { workflow: 60, data_interpretation: 55 };
-    const current = { workflow: 72, data_interpretation: 68 };
+    const prior = { workforce_ai_readiness: 60, ai_change_leadership: 55 };
+    const current = { workforce_ai_readiness: 72, ai_change_leadership: 68 };
     const deltas = Object.entries(current).map(([key, score]) => ({
       capability: key,
       delta: score - (prior[key as keyof typeof prior] ?? 50),
@@ -242,10 +269,10 @@ describe("C2 — failureModes and gamingAnalysis in R9 narrative context", () =>
   });
 
   it("narrative context object can include both failureModes and scrutinyLevel", () => {
-    const failureModes = { modes: ["blind_ai_acceptance"], hasBlockingFailure: false };
+    const failureModes = { modes: ["blind_acceptance"], classificationImpact: "downgrade" };
     const scrutinyLevel = "high";
     const context = { failureModes: failureModes.modes, scrutinyLevel };
-    expect(context.failureModes).toContain("blind_ai_acceptance");
+    expect(context.failureModes).toContain("blind_acceptance");
     expect(context.scrutinyLevel).toBe("high");
   });
 });

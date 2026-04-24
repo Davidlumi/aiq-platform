@@ -1,39 +1,24 @@
 /**
- * AIQ Norm Group Percentile Engine
+ * AIQ Norm Group Percentile Engine — v10
  *
- * Addresses CPO credibility concern: "A score of 62 means nothing without knowing
- * what the distribution looks like across a relevant population."
- *
- * This engine provides percentile ranks so every capability score is contextualised
- * relative to a reference population. The reference distributions are synthetic
- * bootstraps derived from the scoring model's expected range — they represent a
- * reasonable prior until real completion data is available for recalibration.
+ * Provides percentile ranks for the v10 six-domain taxonomy so every capability
+ * score is contextualised relative to a reference population. The reference
+ * distributions are synthetic bootstraps derived from the scoring model's expected
+ * range — they represent a reasonable prior until real completion data is available.
  *
  * Architecture:
- * - Distributions are parameterised per role family × seniority tier × capability
+ * - Distributions are parameterised per role family × seniority tier × domain
  * - Each distribution is a normal approximation (mean, stdDev) from which percentile
- *   is computed analytically using the error function (no lookup tables needed)
- * - normGroupVersion is stamped on every result so future real-data recalibrations
- *   are traceable and results from different norm versions are not compared directly
- *
- * Recalibration path (when real data is available):
- * 1. Aggregate completed session scores per role family × seniority tier
- * 2. Compute empirical mean and stdDev per capability
- * 3. Replace the SYNTHETIC_NORMS entries below with empirical values
- * 4. Increment NORM_GROUP_VERSION
- * 5. Store normGroupVersion on assessmentScores rows going forward
+ *   is computed analytically using the error function
+ * - normGroupVersion is stamped on every result for traceability
  */
 
 import type { CapabilityKey } from "./roleArchetypes";
+import { ALL_DOMAINS } from "./scoringEngine";
 
 // ─── Norm Group Version ───────────────────────────────────────────────────────
 
-/**
- * Increment this when norm distributions are recalibrated with real data.
- * Stored on every assessmentScores row so results from different norm versions
- * are not directly compared.
- */
-export const NORM_GROUP_VERSION = "synthetic-v1";
+export const NORM_GROUP_VERSION = "synthetic-v2";
 
 // ─── Role Family × Seniority Tier ────────────────────────────────────────────
 
@@ -54,18 +39,17 @@ interface NormDistribution {
 }
 
 /**
- * Synthetic baseline distributions per role family × seniority tier × capability.
+ * Synthetic baseline distributions per role family × seniority tier × domain.
  *
- * Derivation rationale:
- * - The scoring model produces scores on a 0–100 scale centred at 50 (neutral).
- * - A competent professional with moderate AI literacy is expected to score ~62–68.
- * - Junior practitioners are expected to score ~52–58 (less experience with AI tools).
- * - Senior practitioners are expected to score ~68–75 (more exposure, better calibration).
- * - Governance and appropriateness have higher variance because they depend heavily
- *   on organisational context and training, not just individual ability.
- * - Data interpretation has lower mean for generalists (less frequent use of analytics).
+ * v10 derivation rationale:
+ * - Foundation domains (AI Interaction, AI Output Evaluation) have higher means
+ *   for operational roles and lower for leadership (who use AI less hands-on)
+ * - Strategic domains (Workforce Readiness, Ethics, Change Leadership) have higher
+ *   means for leadership and lower for junior/operational roles
+ * - AI Workflow Design sits in between — operational roles score higher
+ * - Ethics & Trust has higher variance because it depends on organisational culture
  * - These parameters will be replaced with empirical values once 200+ completions
- *   per role family × seniority tier are available.
+ *   per role family × seniority tier are available
  */
 const SYNTHETIC_NORMS: Record<
   RoleFamily,
@@ -73,155 +57,148 @@ const SYNTHETIC_NORMS: Record<
 > = {
   generalist: {
     junior: {
-      execution:          { mean: 54, stdDev: 11 },
-      judgement:          { mean: 52, stdDev: 12 },
-      governance:         { mean: 50, stdDev: 13 },
-      appropriateness:    { mean: 53, stdDev: 12 },
-      workflow:           { mean: 55, stdDev: 10 },
-      data_interpretation:{ mean: 49, stdDev: 12 },
+      ai_interaction:         { mean: 55, stdDev: 11 },
+      ai_output_evaluation:   { mean: 52, stdDev: 12 },
+      ai_workflow_design:     { mean: 50, stdDev: 12 },
+      workforce_ai_readiness: { mean: 45, stdDev: 13 },
+      ai_ethics_trust:        { mean: 48, stdDev: 13 },
+      ai_change_leadership:   { mean: 44, stdDev: 13 },
     },
     mid: {
-      execution:          { mean: 62, stdDev: 10 },
-      judgement:          { mean: 60, stdDev: 11 },
-      governance:         { mean: 58, stdDev: 12 },
-      appropriateness:    { mean: 61, stdDev: 11 },
-      workflow:           { mean: 63, stdDev: 10 },
-      data_interpretation:{ mean: 56, stdDev: 11 },
+      ai_interaction:         { mean: 63, stdDev: 10 },
+      ai_output_evaluation:   { mean: 60, stdDev: 11 },
+      ai_workflow_design:     { mean: 58, stdDev: 11 },
+      workforce_ai_readiness: { mean: 53, stdDev: 12 },
+      ai_ethics_trust:        { mean: 56, stdDev: 12 },
+      ai_change_leadership:   { mean: 52, stdDev: 12 },
     },
     senior: {
-      execution:          { mean: 70, stdDev: 9 },
-      judgement:          { mean: 68, stdDev: 10 },
-      governance:         { mean: 66, stdDev: 11 },
-      appropriateness:    { mean: 69, stdDev: 10 },
-      workflow:           { mean: 71, stdDev: 9 },
-      data_interpretation:{ mean: 64, stdDev: 10 },
+      ai_interaction:         { mean: 70, stdDev: 9 },
+      ai_output_evaluation:   { mean: 68, stdDev: 10 },
+      ai_workflow_design:     { mean: 66, stdDev: 10 },
+      workforce_ai_readiness: { mean: 62, stdDev: 11 },
+      ai_ethics_trust:        { mean: 65, stdDev: 11 },
+      ai_change_leadership:   { mean: 60, stdDev: 11 },
     },
   },
   specialist: {
     junior: {
-      execution:          { mean: 56, stdDev: 11 },
-      judgement:          { mean: 55, stdDev: 12 },
-      governance:         { mean: 58, stdDev: 12 },
-      appropriateness:    { mean: 57, stdDev: 11 },
-      workflow:           { mean: 54, stdDev: 11 },
-      data_interpretation:{ mean: 52, stdDev: 12 },
+      ai_interaction:         { mean: 57, stdDev: 11 },
+      ai_output_evaluation:   { mean: 55, stdDev: 12 },
+      ai_workflow_design:     { mean: 52, stdDev: 12 },
+      workforce_ai_readiness: { mean: 46, stdDev: 13 },
+      ai_ethics_trust:        { mean: 52, stdDev: 12 },
+      ai_change_leadership:   { mean: 44, stdDev: 13 },
     },
     mid: {
-      execution:          { mean: 63, stdDev: 10 },
-      judgement:          { mean: 62, stdDev: 11 },
-      governance:         { mean: 65, stdDev: 11 },
-      appropriateness:    { mean: 64, stdDev: 10 },
-      workflow:           { mean: 61, stdDev: 10 },
-      data_interpretation:{ mean: 58, stdDev: 11 },
+      ai_interaction:         { mean: 64, stdDev: 10 },
+      ai_output_evaluation:   { mean: 63, stdDev: 11 },
+      ai_workflow_design:     { mean: 60, stdDev: 11 },
+      workforce_ai_readiness: { mean: 54, stdDev: 12 },
+      ai_ethics_trust:        { mean: 60, stdDev: 11 },
+      ai_change_leadership:   { mean: 52, stdDev: 12 },
     },
     senior: {
-      execution:          { mean: 71, stdDev: 9 },
-      judgement:          { mean: 70, stdDev: 10 },
-      governance:         { mean: 73, stdDev: 10 },
-      appropriateness:    { mean: 72, stdDev: 9 },
-      workflow:           { mean: 68, stdDev: 9 },
-      data_interpretation:{ mean: 66, stdDev: 10 },
+      ai_interaction:         { mean: 72, stdDev: 9 },
+      ai_output_evaluation:   { mean: 71, stdDev: 10 },
+      ai_workflow_design:     { mean: 68, stdDev: 10 },
+      workforce_ai_readiness: { mean: 62, stdDev: 11 },
+      ai_ethics_trust:        { mean: 68, stdDev: 10 },
+      ai_change_leadership:   { mean: 60, stdDev: 11 },
     },
   },
   analytics: {
     junior: {
-      execution:          { mean: 55, stdDev: 11 },
-      judgement:          { mean: 54, stdDev: 12 },
-      governance:         { mean: 52, stdDev: 12 },
-      appropriateness:    { mean: 53, stdDev: 11 },
-      workflow:           { mean: 56, stdDev: 11 },
-      data_interpretation:{ mean: 61, stdDev: 11 },
+      ai_interaction:         { mean: 58, stdDev: 11 },
+      ai_output_evaluation:   { mean: 56, stdDev: 11 },
+      ai_workflow_design:     { mean: 54, stdDev: 12 },
+      workforce_ai_readiness: { mean: 46, stdDev: 13 },
+      ai_ethics_trust:        { mean: 50, stdDev: 12 },
+      ai_change_leadership:   { mean: 43, stdDev: 13 },
     },
     mid: {
-      execution:          { mean: 63, stdDev: 10 },
-      judgement:          { mean: 62, stdDev: 11 },
-      governance:         { mean: 60, stdDev: 11 },
-      appropriateness:    { mean: 61, stdDev: 10 },
-      workflow:           { mean: 64, stdDev: 10 },
-      data_interpretation:{ mean: 70, stdDev: 10 },
+      ai_interaction:         { mean: 66, stdDev: 10 },
+      ai_output_evaluation:   { mean: 65, stdDev: 10 },
+      ai_workflow_design:     { mean: 62, stdDev: 11 },
+      workforce_ai_readiness: { mean: 55, stdDev: 12 },
+      ai_ethics_trust:        { mean: 58, stdDev: 11 },
+      ai_change_leadership:   { mean: 52, stdDev: 12 },
     },
     senior: {
-      execution:          { mean: 71, stdDev: 9 },
-      judgement:          { mean: 70, stdDev: 10 },
-      governance:         { mean: 68, stdDev: 10 },
-      appropriateness:    { mean: 69, stdDev: 9 },
-      workflow:           { mean: 72, stdDev: 9 },
-      data_interpretation:{ mean: 78, stdDev: 9 },
+      ai_interaction:         { mean: 74, stdDev: 9 },
+      ai_output_evaluation:   { mean: 73, stdDev: 9 },
+      ai_workflow_design:     { mean: 70, stdDev: 10 },
+      workforce_ai_readiness: { mean: 63, stdDev: 11 },
+      ai_ethics_trust:        { mean: 66, stdDev: 10 },
+      ai_change_leadership:   { mean: 60, stdDev: 11 },
     },
   },
   leadership: {
     junior: {
-      execution:          { mean: 55, stdDev: 12 },
-      judgement:          { mean: 56, stdDev: 12 },
-      governance:         { mean: 57, stdDev: 13 },
-      appropriateness:    { mean: 56, stdDev: 12 },
-      workflow:           { mean: 54, stdDev: 11 },
-      data_interpretation:{ mean: 52, stdDev: 12 },
+      ai_interaction:         { mean: 52, stdDev: 12 },
+      ai_output_evaluation:   { mean: 53, stdDev: 12 },
+      ai_workflow_design:     { mean: 50, stdDev: 12 },
+      workforce_ai_readiness: { mean: 52, stdDev: 13 },
+      ai_ethics_trust:        { mean: 54, stdDev: 13 },
+      ai_change_leadership:   { mean: 52, stdDev: 13 },
     },
     mid: {
-      execution:          { mean: 64, stdDev: 10 },
-      judgement:          { mean: 65, stdDev: 11 },
-      governance:         { mean: 66, stdDev: 11 },
-      appropriateness:    { mean: 65, stdDev: 10 },
-      workflow:           { mean: 62, stdDev: 10 },
-      data_interpretation:{ mean: 60, stdDev: 11 },
+      ai_interaction:         { mean: 60, stdDev: 10 },
+      ai_output_evaluation:   { mean: 62, stdDev: 11 },
+      ai_workflow_design:     { mean: 58, stdDev: 11 },
+      workforce_ai_readiness: { mean: 62, stdDev: 11 },
+      ai_ethics_trust:        { mean: 64, stdDev: 11 },
+      ai_change_leadership:   { mean: 62, stdDev: 11 },
     },
     senior: {
-      execution:          { mean: 72, stdDev: 9 },
-      judgement:          { mean: 73, stdDev: 10 },
-      governance:         { mean: 74, stdDev: 10 },
-      appropriateness:    { mean: 73, stdDev: 9 },
-      workflow:           { mean: 70, stdDev: 9 },
-      data_interpretation:{ mean: 68, stdDev: 10 },
+      ai_interaction:         { mean: 68, stdDev: 9 },
+      ai_output_evaluation:   { mean: 70, stdDev: 10 },
+      ai_workflow_design:     { mean: 66, stdDev: 10 },
+      workforce_ai_readiness: { mean: 72, stdDev: 10 },
+      ai_ethics_trust:        { mean: 73, stdDev: 10 },
+      ai_change_leadership:   { mean: 72, stdDev: 10 },
     },
   },
   coordinator: {
     junior: {
-      execution:          { mean: 52, stdDev: 11 },
-      judgement:          { mean: 50, stdDev: 12 },
-      governance:         { mean: 49, stdDev: 12 },
-      appropriateness:    { mean: 51, stdDev: 11 },
-      workflow:           { mean: 53, stdDev: 11 },
-      data_interpretation:{ mean: 47, stdDev: 11 },
+      ai_interaction:         { mean: 53, stdDev: 11 },
+      ai_output_evaluation:   { mean: 50, stdDev: 12 },
+      ai_workflow_design:     { mean: 52, stdDev: 12 },
+      workforce_ai_readiness: { mean: 43, stdDev: 13 },
+      ai_ethics_trust:        { mean: 46, stdDev: 12 },
+      ai_change_leadership:   { mean: 42, stdDev: 13 },
     },
     mid: {
-      execution:          { mean: 59, stdDev: 10 },
-      judgement:          { mean: 57, stdDev: 11 },
-      governance:         { mean: 56, stdDev: 11 },
-      appropriateness:    { mean: 58, stdDev: 10 },
-      workflow:           { mean: 60, stdDev: 10 },
-      data_interpretation:{ mean: 53, stdDev: 11 },
+      ai_interaction:         { mean: 61, stdDev: 10 },
+      ai_output_evaluation:   { mean: 58, stdDev: 11 },
+      ai_workflow_design:     { mean: 60, stdDev: 11 },
+      workforce_ai_readiness: { mean: 50, stdDev: 12 },
+      ai_ethics_trust:        { mean: 53, stdDev: 11 },
+      ai_change_leadership:   { mean: 49, stdDev: 12 },
     },
     senior: {
-      execution:          { mean: 67, stdDev: 9 },
-      judgement:          { mean: 65, stdDev: 10 },
-      governance:         { mean: 63, stdDev: 10 },
-      appropriateness:    { mean: 66, stdDev: 9 },
-      workflow:           { mean: 68, stdDev: 9 },
-      data_interpretation:{ mean: 61, stdDev: 10 },
+      ai_interaction:         { mean: 69, stdDev: 9 },
+      ai_output_evaluation:   { mean: 66, stdDev: 10 },
+      ai_workflow_design:     { mean: 68, stdDev: 10 },
+      workforce_ai_readiness: { mean: 58, stdDev: 11 },
+      ai_ethics_trust:        { mean: 61, stdDev: 10 },
+      ai_change_leadership:   { mean: 57, stdDev: 11 },
     },
   },
 };
 
 // ─── Role Family Mapping ──────────────────────────────────────────────────────
 
-/**
- * Maps role archetype family strings to the norm engine's RoleFamily enum.
- * Role archetypes use strings like "generalist", "specialist", "analytics", etc.
- */
 export function resolveRoleFamily(roleFamily: string | null | undefined): RoleFamily {
   if (!roleFamily) return "generalist";
   const f = roleFamily.toLowerCase();
   if (f.includes("analytic") || f.includes("data")) return "analytics";
   if (f.includes("leader") || f.includes("director") || f.includes("head") || f.includes("vp") || f.includes("chief")) return "leadership";
   if (f.includes("specialist") || f.includes("er ") || f.includes("employee relation")) return "specialist";
-  if (f.includes("coordinator") || f.includes("admin") || f.includes("assistant")) return "coordinator";
+  if (f.includes("coordinator") || f.includes("admin") || f.includes("assistant") || f.includes("shared service")) return "coordinator";
   return "generalist";
 }
 
-/**
- * Maps seniority level strings to the norm engine's SeniorityTier enum.
- */
 export function resolveSeniorityTier(seniority: string | null | undefined): SeniorityTier {
   if (!seniority) return "mid";
   const s = seniority.toLowerCase();
@@ -232,10 +209,6 @@ export function resolveSeniorityTier(seniority: string | null | undefined): Seni
 
 // ─── Error Function (erf) for Normal CDF ─────────────────────────────────────
 
-/**
- * Approximation of the error function using Abramowitz & Stegun formula 7.1.26.
- * Maximum error: 1.5 × 10^-7. Sufficient for percentile display purposes.
- */
 function erf(x: number): number {
   const sign = x >= 0 ? 1 : -1;
   x = Math.abs(x);
@@ -244,10 +217,6 @@ function erf(x: number): number {
   return sign * y;
 }
 
-/**
- * Normal cumulative distribution function.
- * Returns P(X ≤ x) for X ~ N(mean, stdDev).
- */
 function normalCDF(x: number, mean: number, stdDev: number): number {
   if (stdDev <= 0) return x >= mean ? 1 : 0;
   return 0.5 * (1 + erf((x - mean) / (stdDev * Math.SQRT2)));
@@ -255,11 +224,6 @@ function normalCDF(x: number, mean: number, stdDev: number): number {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/**
- * S5: Coarse percentile band to replace precise synthetic percentile display.
- * Precise percentiles are retained internally but the UI should show bands only
- * until real-data recalibration is complete.
- */
 export type PercentileBand = "bottom_quartile" | "lower_mid" | "upper_mid" | "top_quartile";
 
 export const PERCENTILE_BAND_LABELS: Record<PercentileBand, string> = {
@@ -277,25 +241,15 @@ export function scoreToPercentileBand(percentile: number): PercentileBand {
 }
 
 export interface PercentileResult {
-  percentile: number;        // 1–99 integer percentile rank (internal use only)
-  /** S5: Coarse band — use this for display until empirical recalibration */
+  percentile: number;
   percentileBand: PercentileBand;
   percentileBandLabel: string;
-  label: string;             // Human-readable label, e.g. "54th percentile" (internal)
-  normGroupLabel: string;    // e.g. "mid-level HR Generalists"
-  normGroupVersion: string;  // e.g. "synthetic-v1"
-  isSynthetic: boolean;      // true until replaced with empirical data
+  label: string;
+  normGroupLabel: string;
+  normGroupVersion: string;
+  isSynthetic: boolean;
 }
 
-/**
- * Compute the percentile rank of a score within the reference distribution
- * for the given role family, seniority tier, and capability.
- *
- * @param score         0–100 capability score from computeCapabilityScores
- * @param capabilityKey One of the 6 canonical capability keys
- * @param roleFamily    Role family string (from roleArchetype.family or raw input)
- * @param seniority     Seniority level string (from roleArchetype.seniority or raw input)
- */
 export function computePercentile(
   score: number,
   capabilityKey: CapabilityKey,
@@ -307,8 +261,7 @@ export function computePercentile(
   const dist = SYNTHETIC_NORMS[family]?.[tier]?.[capabilityKey];
 
   if (!dist) {
-    // Fallback: use generalist mid-level distribution
-    const fallback = SYNTHETIC_NORMS.generalist.mid[capabilityKey];
+    const fallback = SYNTHETIC_NORMS.generalist.mid[capabilityKey] ?? { mean: 55, stdDev: 11 };
     const p = Math.round(normalCDF(score, fallback.mean, fallback.stdDev) * 100);
     const percentile = Math.max(1, Math.min(99, p));
     const band = scoreToPercentileBand(percentile);
@@ -339,45 +292,30 @@ export function computePercentile(
   };
 }
 
-/**
- * Compute percentile ranks for all 6 capabilities at once.
- */
 export function computeAllPercentiles(
   capabilityScores: Record<CapabilityKey, { score: number }>,
   roleFamily?: string | null,
   seniority?: string | null
 ): Record<CapabilityKey, PercentileResult> {
-  const ALL_CAPS: CapabilityKey[] = [
-    "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
-  ];
   return Object.fromEntries(
-    ALL_CAPS.map(cap => [
+    ALL_DOMAINS.map(cap => [
       cap,
       computePercentile(capabilityScores[cap]?.score ?? 50, cap, roleFamily, seniority),
     ])
   ) as Record<CapabilityKey, PercentileResult>;
 }
 
-/**
- * Return norm distribution means for a given role family × seniority tier.
- * Used by the getBenchmarks tRPC procedure to show role-level and platform
- * averages alongside the user's own scores in the results UI.
- */
 export function getNormMeans(
   roleFamily?: string | null,
   seniority?: string | null
 ): Record<CapabilityKey, { roleMean: number; platformMean: number; stdDev: number }> {
   const family = resolveRoleFamily(roleFamily);
   const tier = resolveSeniorityTier(seniority);
-  const ALL_CAPS: CapabilityKey[] = [
-    "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation",
-  ];
   const result = {} as Record<CapabilityKey, { roleMean: number; platformMean: number; stdDev: number }>;
-  for (const cap of ALL_CAPS) {
+  for (const cap of ALL_DOMAINS) {
     const roleDist = SYNTHETIC_NORMS[family]?.[tier]?.[cap] ?? SYNTHETIC_NORMS.generalist.mid[cap];
-    // Platform mean = average across all role families for this seniority tier
     const allFamilyMeans = (Object.values(SYNTHETIC_NORMS) as Record<SeniorityTier, Record<CapabilityKey, NormDistribution>>[]).map(
-      f => f[tier]?.[cap]?.mean ?? 60
+      f => f[tier]?.[cap]?.mean ?? 55
     );
     const platformMean = Math.round(allFamilyMeans.reduce((a, b) => a + b, 0) / allFamilyMeans.length);
     result[cap] = { roleMean: roleDist.mean, platformMean, stdDev: roleDist.stdDev };

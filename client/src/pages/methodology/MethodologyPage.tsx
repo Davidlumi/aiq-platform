@@ -40,52 +40,58 @@ const BRAND = {
 
 const CAPABILITY_DOMAINS = [
   {
-    key: "execution",
-    name: "AI Execution",
+    key: "ai_interaction",
+    name: "AI Interaction",
     colour: "#4477AA",
+    foundation: true,
     description:
-      "Measures the ability to use AI outputs correctly — validating, refining, and applying them in the context of real HR work. This includes reviewing AI-drafted documents for accuracy, adjusting AI recommendations to fit specific circumstances, and knowing when an AI output is ready to act on versus when it needs human refinement.",
-    example: "Reviewing an AI-drafted redundancy letter for legal accuracy and appropriate tone before sending.",
+      "Measures practical competence with AI tools — how effectively someone constructs prompts, iterates on outputs, provides context and constraints, and selects the right tool for each task. This is the foundational skill that underpins all other AI capability domains.",
+    example: "Refining a vague prompt like 'write me an email about restructuring' into a specific request with context, tone, audience, and format requirements that produces a usable first draft.",
   },
   {
-    key: "judgement",
-    name: "AI Judgement",
+    key: "ai_output_evaluation",
+    name: "AI Output Evaluation",
     colour: "#228833",
+    foundation: true,
     description:
-      "Measures the quality of decision-making when AI provides recommendations or analysis. This domain captures whether someone can critically evaluate AI suggestions rather than deferring to them, and whether they can identify when AI recommendations are incomplete, biased, or contextually inappropriate.",
-    example: "Questioning an AI talent analytics recommendation that suggests restructuring a team based on productivity metrics alone, without considering employee wellbeing or legal obligations.",
+      "Measures the ability to critically assess AI outputs before acting on them — detecting errors, hallucinations, and logical flaws; judging fitness for purpose; calibrating confidence accurately; and verifying claims against authoritative sources.",
+    example: "Spotting that an AI-drafted redundancy letter uses legally incorrect notice periods and cites a statutory instrument that doesn't exist, despite the output appearing professional and well-structured.",
   },
   {
-    key: "governance",
-    name: "AI Risk & Governance",
-    colour: "#EE6677",
+    key: "ai_workflow_design",
+    name: "AI Workflow Design",
+    colour: "#0D9488",
+    foundation: false,
     description:
-      "Measures understanding of when and how AI use requires oversight, escalation, or approval. This includes recognising data protection implications, identifying unapproved AI tool usage, understanding regulatory requirements (EU AI Act, GDPR), and knowing when to escalate AI-related decisions to senior leadership or legal.",
-    example: "Recognising that an employee using an unapproved AI tool to process candidate CVs constitutes a potential data breach requiring immediate escalation.",
+      "Measures competence in analysing existing processes to identify where AI adds value, designing human-AI handoff points with clear accountability, building oversight into AI-augmented workflows, and achieving efficiency gains without introducing risk.",
+    example: "Mapping an 8-step onboarding process and identifying that AI can automate document generation and scheduling, but that the welcome conversation and probation goal-setting must remain human-led.",
   },
   {
-    key: "appropriateness",
-    name: "AI Appropriateness",
-    colour: "#EE8866",
+    key: "workforce_ai_readiness",
+    name: "Workforce AI Readiness",
+    colour: "#059669",
+    foundation: false,
     description:
-      "Measures the ability to assess whether AI is suitable for a given HR decision context. Not every HR task should involve AI, and this domain captures whether someone can distinguish between appropriate and inappropriate applications — considering factors like decision sensitivity, data quality, explainability requirements, and stakeholder impact.",
-    example: "Identifying that using AI to screen candidates for a senior leadership role may be inappropriate given the need for nuanced cultural fit assessment and the high reputational risk of algorithmic bias.",
+      "Measures the ability to diagnose AI capability gaps in teams and organisations, design targeted interventions, advise leaders on readiness, and rigorously measure capability development progress over time.",
+    example: "Diagnosing that a team's low AI adoption isn't a training problem but a trust problem, and designing an intervention that starts with transparent AI demonstrations rather than mandatory e-learning.",
   },
   {
-    key: "workflow",
-    name: "AI Workflow Application",
+    key: "ai_ethics_trust",
+    name: "AI Ethics & Employee Trust",
     colour: "#AA3377",
+    foundation: false,
     description:
-      "Measures competence in integrating AI into multi-step HR processes without creating bottlenecks, errors, or governance gaps. This includes understanding which workflow steps are suitable for AI automation, which require human ownership, and how to design handoff points between AI and human decision-makers.",
-    example: "Mapping a recruitment workflow to identify that AI can assist with initial screening and scheduling, but that shortlisting decisions and offer negotiations require human ownership.",
+      "Measures ethical reasoning about AI in the workplace — identifying dilemmas, maintaining positions under pressure, considering stakeholder impact, preserving employee trust during AI-driven changes, and communicating decisions transparently.",
+    example: "Pushing back when a CEO demands immediate deployment of keystroke monitoring 'for productivity data', articulating the employee trust, legal, and ethical risks clearly and constructively.",
   },
   {
-    key: "data_interpretation",
-    name: "AI Data & Insight",
-    colour: "#66CCEE",
+    key: "ai_change_leadership",
+    name: "AI Change Leadership",
+    colour: "#D97706",
+    foundation: false,
     description:
-      "Measures the ability to critically evaluate AI-generated data, statistics, and analysis. This includes spotting correlation-causation errors, identifying when sample sizes are too small, recognising when AI-generated insights are based on incomplete or biased data, and understanding the limitations of predictive models.",
-    example: "Spotting that an AI workforce analytics report claiming 'high performers work longer hours' is confusing correlation with causation and could lead to harmful policy decisions.",
+      "Measures the ability to lead AI transformation — handling resistance constructively, calibrating the pace of change to organisational readiness, distinguishing legitimate concerns from unfounded resistance, and articulating a compelling vision for AI adoption.",
+    example: "Recognising that a team's resistance to an AI screening tool stems from legitimate concerns about bias in their specific candidate pool, not from general technophobia, and adjusting the rollout accordingly.",
   },
 ];
 
@@ -217,7 +223,7 @@ export default function MethodologyPage() {
           <h3 className="text-lg font-semibold text-foreground font-sora mt-8">Six Capability Domains</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             The assessment operationalises AI capability across six domains, each targeting a distinct
-            facet of professional judgement in AI-augmented work.
+            facet of practical AI capability in the modern workplace.
           </p>
 
           <div className="grid gap-4">
@@ -307,12 +313,13 @@ export default function MethodologyPage() {
             ))}
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Eleven Interaction Types</h3>
+          <h3 className="text-lg font-semibold text-foreground font-sora mt-6">Fifteen Interaction Types</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            The assessment uses at least 5 of 11 available question formats to ensure measurement
-            diversity and reduce method bias. These include situational judgement, scenario critique,
-            output improvement, error detection, prioritisation, risk judgement, data interpretation,
-            governance decision, multi-step workflow, contradiction probe, and confidence calibration.
+            The assessment uses at least 5 of 15 available question formats to ensure measurement
+            diversity and reduce method bias. These include prompt refinement, chatbot dialogue, agent oversight,
+            output critique, error detection, workflow mapping, process redesign, capability diagnosis,
+            intervention design, ethical dilemma, pressure test, stakeholder advisory, change narrative,
+            resistance handling, and confidence calibration.
           </p>
         </section>
 
@@ -360,8 +367,8 @@ export default function MethodologyPage() {
             <p>
               <strong className="text-foreground">Contradiction probes</strong> test consistency by presenting
               the same underlying capability challenge in a completely different surface context. If
-              someone demonstrates strong governance judgement in one scenario but weak governance
-              judgement in another, the contradiction is flagged and factored into the confidence profile.
+              someone demonstrates strong ethical reasoning in one scenario but weak ethical reasoning
+              in another, the contradiction is flagged and factored into the confidence profile.
             </p>
           </div>
 
@@ -458,7 +465,7 @@ export default function MethodologyPage() {
               {
                 standard: "CIPD AI Skills Planning",
                 clause: "Five Principles for Practice",
-                alignment: "CIPD's principles of Transparent Intent, Human Accountability, and Evidence-Led Evolution map directly to AiQ's governance, judgement, and data interpretation domains.",
+                alignment: "CIPD's principles of Transparent Intent, Human Accountability, and Evidence-Led Evolution map directly to AiQ's Ethics & Trust, Output Evaluation, and Workflow Design domains.",
               },
               {
                 standard: "Alan Turing Institute",

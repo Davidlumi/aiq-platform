@@ -42,10 +42,10 @@ import { cn } from "@/lib/utils";
 // ─── Capability Domain Info ───────────────────────────────────────────────────
 
 const CAPABILITY_DOMAINS = [
-  { key: "execution",           label: "AI Execution",            icon: Target,    colour: "#4477AA", description: "Quality of AI task execution and validation" },
-  { key: "judgement",           label: "AI Judgement",            icon: Brain,     colour: "#AA3377", description: "Proportionate decision-making with AI outputs" },
-  { key: "governance",          label: "AI Risk & Governance",    icon: Shield,    colour: "#228833", description: "Risk identification and governance application" },
-  { key: "appropriateness",     label: "AI Appropriateness",      icon: Gavel,     colour: "#EE6677", description: "Knowing when AI use is appropriate" },
+  { key: "ai_interaction",      label: "AI Interaction",          icon: Target,    colour: "#4477AA", description: "Practical competence with AI tools and chatbots" },
+  { key: "ai_output_evaluation",label: "AI Output Evaluation",   icon: Brain,     colour: "#228833", description: "Critical assessment of AI outputs before acting" },
+  { key: "ai_ethics_trust",     label: "AI Ethics & Trust",       icon: Shield,    colour: "#AA3377", description: "Ethical reasoning and employee trust in AI" },
+  { key: "ai_change_leadership",label: "AI Change Leadership",    icon: Gavel,     colour: "#D97706", description: "Leading AI transformation and handling resistance" },
   { key: "workflow",            label: "AI Workflow Application", icon: Workflow,  colour: "#66CCEE", description: "Integrating AI into professional workflows" },
   { key: "data_interpretation", label: "AI Data & Insight",       icon: Database,  colour: "#228833", description: "Interpreting and challenging AI-generated data" },
 ];
@@ -125,7 +125,7 @@ export default function AssessmentPage() {
       hrbp: "hrbp",
       analytics: "people_analytics",
       reward: "reward",
-      governance: "hr_professional",
+      ai_ethics_trust: "hr_professional",
       operations: "hr_ops",
       other: "hr_professional",
     };

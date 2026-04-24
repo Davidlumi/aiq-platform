@@ -22,12 +22,12 @@ import {
 } from "recharts";
 
 const CAP_META: Record<string, { label: string; color: string; shortLabel: string }> = {
-  execution:           { label: "Execution",           color: "#4477AA", shortLabel: "EXEC" },
+  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", shortLabel: "INTR" },
   prioritisation:      { label: "Prioritisation",      color: "#AA3377", shortLabel: "PRIO" },
   validation:          { label: "Validation",          color: "#228833", shortLabel: "VALD" },
-  judgement:           { label: "Judgement",           color: "#EE6677", shortLabel: "JUDG" },
-  governance:          { label: "Governance",          color: "#EE8866", shortLabel: "GOVN" },
-  appropriateness:     { label: "Appropriateness",     color: "#66CCEE", shortLabel: "APPR" },
+  ai_output_evaluation:{ label: "Output Evaluation",   color: "#228833", shortLabel: "EVAL" },
+  ai_ethics_trust:     { label: "Ethics & Trust",      color: "#AA3377", shortLabel: "ETHI" },
+  ai_change_leadership:{ label: "Change Leadership",   color: "#D97706", shortLabel: "CHNG" },
   data_interpretation: { label: "Data Interpretation", color: "#BBBBBB", shortLabel: "DATA" },
 };
 

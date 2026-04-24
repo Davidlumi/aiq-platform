@@ -38,10 +38,13 @@ const C = {
   text: "#0E1726",
   muted: "#64748B",
   border: "#E5E7EB",
-  judgement: "#7C3AED",
-  execution: "#2563EB",
-  governance: "#DB2777",
-  data: "#D97706",
+  interaction: "#2563EB",
+  outputEval: "#7C3AED",
+  workflow: "#0D9488",
+  ethics: "#DB2777",
+  change: "#D97706",
+  readiness: "#059669",
+
 };
 
 // ─── AiQ Logo ─────────────────────────────────────────────────────────────────
@@ -123,9 +126,9 @@ function ProductMockup() {
         </div>
         <span
           className="text-xs px-2 py-0.5 rounded-full font-medium"
-          style={{ background: `${C.judgement}30`, color: "#C4B5FD" }}
+          style={{ background: `${C.outputEval}30`, color: "#C4B5FD" }}
         >
-          AI Judgement
+          AI Output Evaluation
         </span>
       </div>
 
@@ -230,7 +233,7 @@ function Hero() {
             </h1>
 
             <p className="text-lg text-slate-300 mb-10 leading-relaxed">
-              AiQ simulates real AI decisions, reveals where judgement falls short, and closes
+              AiQ simulates real AI decisions, reveals where capability falls short, and closes
               the gap — at scale across your organisation.
             </p>
 
@@ -326,7 +329,7 @@ function TheProblem() {
               The real issue isn't knowledge
             </p>
             <p className="text-2xl font-bold text-white mb-4 leading-snug">
-              It's <span style={{ color: C.mintAccent }}>judgement</span>.
+              It's <span style={{ color: C.mintAccent }}>practical AI capability</span>.
             </p>
             <p className="text-slate-300 leading-relaxed mb-6">
               How people interpret, trust, and act on AI outputs.
@@ -361,8 +364,8 @@ function HowItWorks() {
       num: "02",
       title: "Simulate",
       desc: "Real-world decisions your people actually face",
-      color: C.execution,
-      bg: `${C.execution}15`,
+      color: C.interaction,
+      bg: `${C.interaction}15`,
     },
     {
       num: "03",
@@ -375,8 +378,8 @@ function HowItWorks() {
       num: "04",
       title: "Improve",
       desc: "Adaptive learning plans that close the gap",
-      color: C.data,
-      bg: `${C.data}15`,
+      color: C.change,
+      bg: `${C.change}15`,
     },
   ];
 
@@ -428,8 +431,8 @@ function HowItWorks() {
           </div>
 
           <p className="text-center text-sm mt-10" style={{ color: C.muted }}>
-            Runs continuously — each <span className="font-semibold" style={{ color: C.data }}>Improve</span> cycle feeds the next{" "}
-            <span className="font-semibold" style={{ color: C.execution }}>Simulate</span>.
+            Runs continuously — each <span className="font-semibold" style={{ color: C.change }}>Improve</span> cycle feeds the next{" "}
+            <span className="font-semibold" style={{ color: C.interaction }}>Simulate</span>.
           </p>
         </div>
       </div>
@@ -443,7 +446,7 @@ function Example() {
   return (
     <section className="py-24 px-6" style={{ background: C.chalk }}>
       <div className="max-w-5xl mx-auto">
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: C.judgement }}>
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: C.outputEval }}>
           Example
         </span>
 
@@ -490,7 +493,7 @@ function Example() {
             </p>
             <p className="text-slate-400 leading-relaxed">
               AiQ simulates real scenarios like this one and measures how your people
-              actually respond — capturing the judgement, confidence, and reasoning
+              actually respond — capturing the capability, confidence, and reasoning
               behind each choice.
             </p>
           </div>
@@ -518,13 +521,13 @@ function WhatYouGet() {
     },
     {
       num: "03",
-      color: C.judgement,
+      color: C.outputEval,
       title: "Insight into how decisions are made",
       desc: "See the reasoning and confidence behind every choice.",
     },
     {
       num: "04",
-      color: C.execution,
+      color: C.interaction,
       title: "A path to improve capability over time",
       desc: "Targeted development that moves the needle on real behaviour.",
     },
@@ -533,7 +536,7 @@ function WhatYouGet() {
   return (
     <section className="py-24 px-6" style={{ background: "white" }}>
       <div className="max-w-5xl mx-auto">
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: C.execution }}>
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: C.interaction }}>
           What You Get
         </span>
 
@@ -584,7 +587,7 @@ function SeeInside() {
             </h2>
             <p className="text-lg text-slate-600 leading-relaxed">
               Every assessment produces a capability dashboard showing exactly where your
-              people's AI judgement is strong, where it breaks down, and how it compares
+              people's AI capability is strong, where it breaks down, and how it compares
               to what your organisation needs.
             </p>
           </div>
@@ -636,10 +639,11 @@ function SeeInside() {
                 </p>
                 <div className="space-y-2.5">
                   {[
-                    { cap: "AI Judgement", score: 62, color: C.judgement },
-                    { cap: "AI Execution", score: 74, color: C.execution },
-                    { cap: "Risk Governance", score: 48, color: C.governance },
-                    { cap: "Data Stewardship", score: 55, color: C.data },
+                    { cap: "AI Interaction", score: 74, color: C.interaction },
+                    { cap: "Output Evaluation", score: 62, color: C.outputEval },
+                    { cap: "Workflow Design", score: 55, color: C.workflow },
+                    { cap: "Ethics & Trust", score: 48, color: C.ethics },
+                    { cap: "Change Leadership", score: 58, color: C.change },
                   ].map((c) => (
                     <div key={c.cap}>
                       <div className="flex justify-between mb-1">
@@ -667,7 +671,7 @@ function SeeInside() {
                     </p>
                     <p className="text-xs text-slate-400 leading-relaxed">
                       Model validation rate (34%) is 28 points below benchmark for this role.
-                      High-confidence incorrect answers detected on 3 governance scenarios.
+                      High-confidence incorrect answers detected on 3 ethics scenarios.
                     </p>
                   </div>
                 </div>
@@ -877,10 +881,10 @@ function BetaProgramme() {
 
 function FinalClose() {
   const outcomes = [
-    { label: "Measure", desc: "Real AI decision behaviour across your organisation", color: C.execution },
+    { label: "Measure", desc: "Real AI decision behaviour across your organisation", color: C.interaction },
     { label: "Identify", desc: "Capability gaps and behavioural risks before they cause harm", color: "#F59E0B" },
     { label: "Improve", desc: "Targeted learning that closes the gap — continuously", color: C.primaryGreen },
-    { label: "Align", desc: "AI capability to your strategy and risk appetite", color: C.judgement },
+    { label: "Align", desc: "AI capability to your strategy and risk appetite", color: C.outputEval },
   ];
 
   return (

@@ -119,6 +119,16 @@ const READINESS_CONFIG = {
     icon: HelpCircle,
     dotColor: "#888888",
   },
+  // v10: foundation gap state
+  foundation_gap: {
+    label: "Foundation Gap",
+    description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
+    color: "text-[#AA3377]",
+    bg: "border-[#AA3377]/30 bg-[#AA3377]/5",
+    barColor: "#AA3377",
+    icon: ShieldAlert,
+    dotColor: "#AA3377",
+  },
   // S2: new state for low-confidence results
   unknown_insufficient_evidence: {
     label: "Result Unavailable",
@@ -456,29 +466,40 @@ function CapabilityBar({
 
 // ─── Signal Row ───────────────────────────────────────────────────────────────
 
+// v10 signal glossary — 26 signals across 6 domains
 const SIGNAL_GLOSSARY: Record<string, string> = {
-  governance_quality:          "How well you apply AI governance principles, including data privacy, compliance, and appropriate oversight.",
-  judgement_quality:           "The quality of your decision-making when AI outputs require human evaluation or escalation.",
-  validation_quality:          "How thoroughly you verify AI outputs before acting on them.",
-  execution_quality:           "How effectively you apply AI tools to complete HR tasks accurately and efficiently.",
-  workflow_quality:            "How well you integrate AI into HR workflows without creating bottlenecks or errors.",
-  data_quality:                "The rigour you apply when interpreting AI-generated data, statistics, or reports.",
-  blind_acceptance_risk:       "Risk of accepting AI outputs without sufficient critical evaluation.",
-  hallucination_acceptance_risk: "Risk of treating AI-fabricated information as factual without verification.",
-  governance_bypass_risk:      "Risk of using AI in ways that circumvent required governance or compliance controls.",
-  unsafe_hr_decision_risk:     "Risk of making HR decisions using AI in contexts where human judgement is legally or ethically required.",
-  over_reliance_risk:          "Risk of depending on AI to a degree that undermines your own professional judgement.",
-  inappropriate_use_risk:      "Risk of applying AI to tasks where its use is inappropriate, disproportionate, or harmful.",
-  weak_judgement_risk:         "Risk of poor-quality decisions that are superficially plausible but lack substantive reasoning.",
-  poor_validation_risk:        "Risk of insufficient checking of AI outputs before they influence real decisions.",
-  confidence_calibration:      "How accurately your self-assessed confidence aligns with the quality of your answers.",
-  over_caution_risk:           "Risk of excessive caution that prevents appropriate and proportionate AI use.",
-  escalation_quality:          "How appropriately you identify situations that require human escalation or senior review.",
-  context_sensitivity:         "How well you adapt AI use to the specific context, sensitivity, and stakes of each situation.",
-  output_improvement_quality:  "How effectively you identify and correct errors or weaknesses in AI-generated outputs.",
+  // AI Interaction (foundation)
+  prompt_quality:              "How effectively you construct prompts that produce useful, accurate AI outputs.",
+  iteration_quality:           "How well you refine and improve prompts when initial results are unsatisfactory.",
+  context_framing:             "How clearly you provide context, constraints, and format requirements to AI tools.",
+  tool_selection:              "How appropriately you choose the right AI tool or approach for each task.",
+  // AI Output Evaluation (foundation)
   error_detection_quality:     "How accurately you spot factual errors, hallucinations, or logical flaws in AI outputs.",
-  scenario_critique_quality:   "How well you evaluate AI-generated scenarios for appropriateness and risk.",
-  data_interpretation_quality: "How accurately you interpret and contextualise AI-generated data and analytics.",
+  fitness_for_purpose:           "How well you assess whether AI output is fit for its intended purpose and audience.",
+  confidence_calibration:      "How accurately your self-assessed confidence aligns with the quality of your answers.",
+  source_verification:         "How thoroughly you verify AI claims against authoritative sources.",
+  // AI Workflow Design (strategic)
+  process_analysis:            "How well you identify where AI adds value in existing workflows.",
+  handoff_design:              "How appropriately you design human-AI handoff points with clear accountability.",
+  efficiency_gain:             "How effectively your AI workflow designs improve efficiency without introducing risk.",
+  oversight_integration:       "How well you build quality checks and human oversight into AI-augmented processes.",
+  // Workforce AI Readiness (strategic)
+  gap_diagnosis:               "How accurately you diagnose AI capability gaps in teams and organisations.",
+  intervention_quality:        "How well you design targeted interventions to address identified capability gaps.",
+  advisory_quality:            "How effectively you advise leaders on AI readiness and capability development.",
+  measurement_rigour:          "How rigorously you measure and track AI capability development progress.",
+  // AI Ethics & Employee Trust (strategic)
+  ethical_reasoning:           "How well you identify and navigate ethical dilemmas involving AI in the workplace.",
+  pressure_resistance:         "How firmly you maintain ethical positions when pressure escalates.",
+  stakeholder_awareness:       "How well you consider the impact of AI decisions on different stakeholder groups.",
+  trust_preservation:          "How effectively you maintain employee trust during AI-driven changes.",
+  transparency_quality:        "How well you communicate AI decisions and their rationale to affected parties.",
+  // AI Change Leadership (strategic)
+  resistance_handling:         "How constructively you address resistance to AI adoption.",
+  pace_calibration:            "How well you calibrate the pace of AI change to organisational readiness.",
+  legitimate_concern_recognition: "How accurately you distinguish legitimate AI concerns from unfounded resistance.",
+  change_sustainability:       "How well you design AI changes that are sustainable and self-reinforcing.",
+  vision_articulation:         "How clearly you articulate the case for AI transformation to diverse audiences.",
 };
 
 function SignalRow({ signal, delta }: { signal: string; delta: number }) {
@@ -515,16 +536,11 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
 
 // ─── Capability Development Actions ─────────────────────────────────────────
 
-const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = {
-  governance:        "Review your organisation's AI governance policy and practice identifying which decisions require human sign-off. Complete the Governance & Compliance module in your learning plan.",
-  judgement:         "Practice scenario-based exercises where you must decide when to escalate AI outputs. Focus on the Judgement & Escalation module and seek feedback from a senior colleague on two real AI-assisted decisions.",
-  validation:        "Build a personal checklist for verifying AI outputs before acting on them. Apply it to your next three AI-generated documents and note any errors caught.",
-  execution:         "Identify one HR workflow where you currently avoid AI and experiment with it under supervision. Review the Practical AI Use module for structured guidance.",
-  workflow:          "Map one end-to-end HR process and identify where AI could reduce manual effort without introducing risk. Discuss the design with your manager before implementing.",
-  data_literacy:     "Take one AI-generated report and manually verify three of its key statistics against source data. Complete the Data Interpretation module to strengthen your analytical confidence.",
-  critical_thinking: "For your next AI-assisted task, write a two-sentence critique of the AI output before acting on it. This habit builds the reflective practice that distinguishes strong AI users.",
-  ethics:            "Review the ethical AI use guidelines for HR and identify one recent decision where AI was involved. Consider whether the process met the standard and discuss with your HR governance lead.",
-};
+// v10 capability development actions — imported from shared constants
+import { DOMAIN_COLOURS, DOMAIN_LABELS, DOMAIN_DESCRIPTIONS, DOMAIN_RECOMMENDATIONS, DOMAIN_SHORT_LABELS, READINESS_STATES, FOUNDATION_DOMAINS, STRATEGIC_DOMAINS } from "@/lib/domains";
+import type { CapabilityKey } from "@/lib/domains";
+
+const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = DOMAIN_RECOMMENDATIONS;
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
@@ -695,7 +711,7 @@ export default function AssessmentResultsPage() {
         {/* ══════════════════════════════════════════════════════════════════════
             TAB 1: SUMMARY
             Contains: readiness banner, narrative, capability breakdown (radar +
-            bars), signal profile, contradiction profile, governance profile,
+            bars), signal profile, contradiction profile, ethics profile,
             score summary, actions, disclaimer.
         ══════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="summary" className="space-y-6">
@@ -891,7 +907,7 @@ export default function AssessmentResultsPage() {
                     <h3 className="text-sm font-semibold text-foreground font-sora mb-1">Contradiction Profile</h3>
                     <p className="text-xs text-muted-foreground mb-3">
                       {(breakdown.contradictionProfile as any).detected} inconsistenc{(breakdown.contradictionProfile as any).detected === 1 ? 'y' : 'ies'} detected across your responses.
-                      Contradictions reduce credibility and may indicate uncertainty or inconsistent application of judgement.
+                      Contradictions reduce credibility and may indicate uncertainty or inconsistent reasoning across domains.
                     </p>
                     {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
                       <div className="space-y-2">
@@ -909,24 +925,24 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Governance Profile */}
+          {/* Ethics & Trust Profile (v10) */}
           {breakdown.governanceProfile && (
             <Card className="border-border">
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground font-sora mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#10B981]" />
-                  Governance Profile
+                  <Shield className="w-4 h-4 text-[#AA3377]" />
+                  Ethics & Trust Profile
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Governance Score</p>
+                    <p className="text-xs text-muted-foreground mb-1">Ethics Score</p>
                     <p className="text-xl font-bold font-sora text-foreground">
                       {Math.round((breakdown.governanceProfile as any).score ?? 0)}
                       <span className="text-sm font-normal text-muted-foreground">/100</span>
                     </p>
                   </div>
                   <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Governance Band</p>
+                    <p className="text-xs text-muted-foreground mb-1">Ethics Band</p>
                     <p className="text-sm font-bold font-sora text-foreground capitalize">
                       {(breakdown.governanceProfile as any).band ?? "Not assessed"}
                     </p>
@@ -935,15 +951,15 @@ export default function AssessmentResultsPage() {
                 {(breakdown.governanceProfile as any).bypasses > 0 && (
                   <p className="text-xs text-[#EE6677] mt-3 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    {(breakdown.governanceProfile as any).bypasses} governance bypass{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 'es'} detected.
-                    These are flagged for review by your HR governance team.
+                    {(breakdown.governanceProfile as any).bypasses} ethical concern{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 's'} flagged.
+                    These are highlighted for review by your ethics and trust team.
                   </p>
                 )}
               </CardContent>
             </Card>
           )}
 
-          {/* A4: Governance Action Banner */}
+          {/* A4: Development Action Banner (v10) */}
           {governanceAction && (
             <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EF4444] bg-[#EF4444]/5" : "border-l-[#F59E0B] bg-[#F59E0B]/5"}`}>
               <CardContent className="p-4">
@@ -951,12 +967,12 @@ export default function AssessmentResultsPage() {
                   <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#EF4444]" : "text-[#F59E0B]"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground font-sora mb-1">
-                      {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supervised AI Use Recommended"}
+                      {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supported AI Use Recommended"}
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       {governanceAction === "development_required"
-                        ? "Your current capability profile indicates significant gaps that should be addressed through structured development before independent AI deployment."
-                        : "Your capability profile supports AI use with appropriate oversight. A line manager or governance lead should review AI outputs in high-stakes decisions."}
+                        ? "Your current capability profile indicates significant gaps that should be addressed through structured development before independent AI use."
+                        : "Your capability profile supports AI use with appropriate oversight. A manager or senior colleague should review AI outputs in high-stakes decisions."}
                     </p>
                     {governingConstraint && governingConstraint.droveClassification && (
                       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
@@ -1146,7 +1162,7 @@ export default function AssessmentResultsPage() {
         {/* ══════════════════════════════════════════════════════════════════════
             TAB 2: DEEP DIVE
             UX-1: Contains ONLY content exclusive to this tab - no duplication
-            of capability bars / signal profile / governance profile from Summary.
+            of capability bars / signal profile / ethics profile from Summary.
             Shows: longitudinal tracking, LLM narrative, expanded signal breakdown
             grouped by positive vs risk signals.
         ══════════════════════════════════════════════════════════════════════ */}

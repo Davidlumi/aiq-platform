@@ -183,7 +183,7 @@ export class SessionController {
     // High-governance roles (HRBP, ER Specialist) require stronger evidence in governance/judgement.
     // The threshold is: max(global_minimum, role_minimum_safe_threshold / 20) signals per capability.
     // Dividing by 20 converts the 0-100 score threshold to a proportional signal count threshold.
-    const ALL_CAPABILITIES: CapabilityKey[] = ["execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"];
+    const ALL_CAPABILITIES: CapabilityKey[] = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
     const uncoveredCapabilities = ALL_CAPABILITIES.filter(cap => {
       const signalCount = capabilitySignalCounts[cap] ?? 0;
       const roleThreshold = roleArchetype.minimumSafeThresholds[cap];
@@ -258,12 +258,9 @@ export class SessionController {
     // Build capability scores from answers so far
     const signalScores = computeSignalScores(
       answers.map(a => ({
-        signalDeltasJson: a.signalDeltasJson,
-        outcomeClass: a.outcomeClass,
-        riskLevel: a.riskLevel,
-        difficulty: a.difficulty,
-        confidenceScore: a.confidenceScore,
-        timeToAnswerMs: a.timeToAnswerMs,
+        signalDeltas: (() => {
+          try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+        })(),
       }))
     );
     const capabilityScores = computeCapabilityScores(signalScores);
@@ -356,18 +353,19 @@ export class SessionController {
     // Signal scores
     const signalScores = computeSignalScores(
       answers.map(a => ({
-        signalDeltasJson: a.signalDeltasJson,
-        outcomeClass: a.outcomeClass,
-        riskLevel: a.riskLevel,
-        difficulty: a.difficulty,
-        confidenceScore: a.confidenceScore,
-        timeToAnswerMs: a.timeToAnswerMs,
-        interactionType: a.interactionType,  // R7: per-type timing thresholds
+        signalDeltas: (() => {
+          try { return typeof a.signalDeltasJson === "string" ? JSON.parse(a.signalDeltasJson) : (a.signalDeltasJson as Record<string, number>) ?? {}; } catch { return {}; }
+        })(),
       }))
     );
 
     // Capability scores — WS1.1: use versioned scoring config (v2.2 sum+clip if params present)
-    const capabilityScores = computeCapabilityScores(signalScores, scoringCfg);
+    const capabilityScores = computeCapabilityScores(
+      signalScores,
+      scoringCfg?.intercept,
+      scoringCfg?.contributionCap,
+      scoringCfg?.contributionMultiplier
+    );
     // R10: Use role-specific capability weights for overall score
     const overallScore = computeOverallScore(capabilityScores, roleArchetype.capabilityWeights);
 
@@ -471,7 +469,9 @@ export class SessionController {
     const gateInputState: "safe" | "at_risk" | "unsafe" | "insufficient_evidence" =
       (readiness.state === "unknown" || readiness.state === "unknown_insufficient_evidence")
         ? "insufficient_evidence"
-        : readiness.state;
+        : readiness.state === "foundation_gap"
+          ? "at_risk"  // Foundation gap is treated as at_risk for confidence gating
+          : readiness.state as "safe" | "at_risk" | "unsafe" | "insufficient_evidence";
     const gateResult = applyClassificationConfidenceGate(
       gateInputState,
       confidenceProfile.overall,

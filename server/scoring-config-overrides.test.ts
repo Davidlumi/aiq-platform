@@ -1,12 +1,15 @@
 /**
- * WS1.2 Item 1: Scoring Config Overrides Test Suite
+ * WS1.2 Item 1: Scoring Config Overrides Test Suite (v10 migration)
  *
  * Verifies that the six previously hard-coded scoring constants are now read
  * from the active scoring_config row and honoured by the engine.
  *
- * Each test passes a non-default value for exactly one constant and asserts
- * that the engine behaves differently from the default. This proves the
- * constant is consumed, not ignored.
+ * v10 migration notes:
+ *   - blind_ai_acceptance → blind_acceptance
+ *   - detectFailureModes returns v10 FailureModeResult (pressureDriftDetected/pressureDriftMagnitude)
+ *   - classifyReadiness "safe" requires allDomainsAssessed (capabilityScores with >= 2 signals each)
+ *     so tests that expect "safe" must pass capabilityScores
+ *   - FailureModeResult no longer has hasBlockingFailure; uses classificationImpact
  *
  * Constants under test:
  *   baseFailureThresholdMagnitude  (default 1.5)
@@ -18,92 +21,97 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { detectFailureModes } from "./assessment/scoringEngine";
-import { classifyReadiness } from "./assessment/scoringEngine";
+import { detectFailureModes, classifyReadiness, ALL_DOMAINS, type CapabilityScore, type CapabilityKey } from "./assessment/scoringEngine";
 import { applyClassificationConfidenceGate } from "./assessment/classificationConfidenceGate";
+
+// ─── Helper: build full capabilityScores for "safe" classification ───────────
+function makeSafeCapabilityScores(overallScore: number = 80): Record<CapabilityKey, CapabilityScore> {
+  const result: Record<string, CapabilityScore> = {};
+  for (const domain of ALL_DOMAINS) {
+    result[domain] = {
+      score: overallScore,
+      band: overallScore >= 75 ? "strong" : "developing",
+      signalCount: 5,
+      signalSum: 3.0,
+      displayName: domain,
+    };
+  }
+  return result as Record<CapabilityKey, CapabilityScore>;
+}
 
 // ─── Shared answer fixtures ───────────────────────────────────────────────────
 
-/** One answer with blind_acceptance_risk delta = -1.6 (just above default threshold of 1.5) */
+/** Two answers with blind_acceptance_risk delta = -1.6 (just above default threshold of 1.5) */
 const BLIND_ACCEPT_DELTA_1_6 = [
   {
     outcomeClass: "failure" as const,
     signalDeltas: { blind_acceptance_risk: -1.6 },
-    eventCodes: [],
+    eventCodes: [] as string[],
   },
   {
     outcomeClass: "failure" as const,
     signalDeltas: { blind_acceptance_risk: -1.6 },
-    eventCodes: [],
+    eventCodes: [] as string[],
   },
 ];
 
-/** One answer with blind_acceptance_risk delta = -1.4 (just below default threshold of 1.5) */
+/** Two answers with blind_acceptance_risk delta = -1.4 (just below default threshold of 1.5) */
 const BLIND_ACCEPT_DELTA_1_4 = [
   {
     outcomeClass: "failure" as const,
     signalDeltas: { blind_acceptance_risk: -1.4 },
-    eventCodes: [],
+    eventCodes: [] as string[],
   },
   {
     outcomeClass: "failure" as const,
     signalDeltas: { blind_acceptance_risk: -1.4 },
-    eventCodes: [],
+    eventCodes: [] as string[],
   },
 ];
 
 // ─── Test 1: baseFailureThresholdMagnitude ────────────────────────────────────
 
 describe("baseFailureThresholdMagnitude override", () => {
-  it("default 1.5: delta -1.6 triggers blind_ai_acceptance (downgrade — single mode, no catastrophic)", () => {
-    // Two identical blind_ai_acceptance answers: blockCount=2, distinctModes=1, no catastrophic item.
-    // Quality gate requires distinctModes>=2 OR catastrophic item → fails → classificationImpact=downgrade.
+  it("default 1.5: delta -1.6 triggers blind_acceptance (downgrade — single mode, no catastrophic)", () => {
     const result = detectFailureModes(BLIND_ACCEPT_DELTA_1_6);
-    expect(result.modes).toContain("blind_ai_acceptance");
+    expect(result.modes).toContain("blind_acceptance");
     expect(result.classificationImpact).toBe("downgrade");
   });
 
-  it("raised to 2.0: delta -1.6 no longer triggers blind_ai_acceptance", () => {
+  it("raised to 2.0: delta -1.6 no longer triggers blind_acceptance", () => {
     const result = detectFailureModes(BLIND_ACCEPT_DELTA_1_6, {
       baseFailureThresholdMagnitude: 2.0,
     });
-    // -1.6 is above -2.0 threshold, so blind_ai_acceptance should NOT fire
-    expect(result.modes).not.toContain("blind_ai_acceptance");
-    expect(result.classificationImpact).toBe("none");
+    // -1.6 is above -2.0 threshold, so blind_acceptance should NOT fire
+    expect(result.modes).not.toContain("blind_acceptance");
+    // over_reliance still fires because blind_acceptance_risk < -1.0
+    // but no blocking modes → check if over_reliance alone causes downgrade
+    expect(result.classificationImpact).toBe("downgrade"); // over_reliance causes downgrade
   });
 
-  it("lowered to 1.0: delta -1.4 now triggers blind_ai_acceptance", () => {
+  it("lowered to 1.0: delta -1.4 now triggers blind_acceptance", () => {
     const result = detectFailureModes(BLIND_ACCEPT_DELTA_1_4, {
       baseFailureThresholdMagnitude: 1.0,
     });
-    // -1.4 is below -1.0 threshold, so blind_ai_acceptance SHOULD fire
-    expect(result.modes).toContain("blind_ai_acceptance");
+    // -1.4 is below -1.0 threshold, so blind_acceptance SHOULD fire
+    expect(result.modes).toContain("blind_acceptance");
   });
 });
 
 // ─── Test 2: catastrophicMarginMultiplier ─────────────────────────────────────
 
 describe("catastrophicMarginMultiplier override", () => {
-  /**
-   * With base=1.5 and margin=1.5, catastrophic threshold = 2.25.
-   * A delta of 2.0 is below 2.25 → NOT catastrophic.
-   * With margin=1.0, catastrophic threshold = 1.5 × 1.0 = 1.5.
-   * A delta of 2.0 is above 1.5 → IS catastrophic.
-   *
-   * Use a single-answer scenario (blockCount=1, distinctModes=1) so
-   * the quality gate only passes via the catastrophic path.
-   */
   const SINGLE_BLIND_ACCEPT_2_0 = [
     {
       outcomeClass: "failure" as const,
       signalDeltas: { blind_acceptance_risk: -2.0 },
-      eventCodes: [],
+      eventCodes: [] as string[],
     },
   ];
 
   it("default margin 1.5: single item delta 2.0 does NOT trigger block (not catastrophic)", () => {
     const result = detectFailureModes(SINGLE_BLIND_ACCEPT_2_0, {
-      blockingFailureMinItems: 1, // lower item gate so blockCount passes
+      blockingFailureMinItems: 1,
     });
     // delta 2.0 < 2.25 catastrophic threshold → qualityGate fails → no block
     expect(result.classificationImpact).not.toBe("block");
@@ -177,42 +185,43 @@ describe("minimumSafeClassificationConfidence override", () => {
 // ─── Test 5: provisionalConfidenceThreshold ──────────────────────────────────
 
 describe("provisionalConfidenceThreshold override (classifyReadiness)", () => {
-  const BASE_ARGS = {
-    overallScore: 80,
-    riskBand: "low" as const,
-    failureModes: { detected: false, modes: [], governanceFlag: false, classificationImpact: "none" as const },
-    evidenceSufficient: true,
+  const noFailures = {
+    detected: false, modes: [] as string[], governanceFlag: false,
+    classificationImpact: "none" as const,
+    pressureDriftDetected: false, pressureDriftMagnitude: 0,
   };
 
   it("default 0.40: confidence 0.38 → unknown_insufficient_evidence", () => {
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.38
+      80, "low", noFailures, true,
+      undefined, undefined, 0.38
     );
     expect(result.state).toBe("unknown_insufficient_evidence");
   });
 
-  it("default 0.40: confidence 0.41 → safe (not unknown)", () => {
+  it("default 0.40: confidence 0.41 → safe (with full capabilityScores)", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.41
+      80, "low", noFailures, true,
+      caps, undefined, 0.41
     );
     expect(result.state).toBe("safe");
   });
 
   it("raised to 0.50: confidence 0.45 → unknown_insufficient_evidence", () => {
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.45,
+      80, "low", noFailures, true,
+      undefined, undefined, 0.45,
       undefined, 0.50 // provisionalThreshold
     );
     expect(result.state).toBe("unknown_insufficient_evidence");
   });
 
-  it("raised to 0.50: confidence 0.51 → safe (not unknown)", () => {
+  it("raised to 0.50: confidence 0.51 → safe (with full capabilityScores)", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.51,
+      80, "low", noFailures, true,
+      caps, undefined, 0.51,
       undefined, 0.50 // provisionalThreshold
     );
     expect(result.state).toBe("safe");
@@ -222,35 +231,37 @@ describe("provisionalConfidenceThreshold override (classifyReadiness)", () => {
 // ─── Test 6: confidenceFloor (isProvisional band) ────────────────────────────
 
 describe("confidenceFloor override (isProvisional band in classifyReadiness)", () => {
-  const BASE_ARGS = {
-    overallScore: 80,
-    riskBand: "low" as const,
-    failureModes: { detected: false, modes: [], governanceFlag: false, classificationImpact: "none" as const },
-    evidenceSufficient: true,
+  const noFailures = {
+    detected: false, modes: [] as string[], governanceFlag: false,
+    classificationImpact: "none" as const,
+    pressureDriftDetected: false, pressureDriftMagnitude: 0,
   };
 
   it("default floor 0.50: confidence 0.45 → isProvisional=true", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.45
+      80, "low", noFailures, true,
+      caps, undefined, 0.45
     );
     expect(result.state).toBe("safe");
     expect(result.isProvisional).toBe(true);
   });
 
   it("default floor 0.50: confidence 0.51 → isProvisional=false", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.51
+      80, "low", noFailures, true,
+      caps, undefined, 0.51
     );
     expect(result.state).toBe("safe");
     expect(result.isProvisional).toBe(false);
   });
 
   it("floor raised to 0.65: confidence 0.60 → isProvisional=true", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.60,
+      80, "low", noFailures, true,
+      caps, undefined, 0.60,
       undefined, undefined, 0.65 // confidenceFloorOverride
     );
     expect(result.state).toBe("safe");
@@ -258,9 +269,10 @@ describe("confidenceFloor override (isProvisional band in classifyReadiness)", (
   });
 
   it("floor raised to 0.65: confidence 0.66 → isProvisional=false", () => {
+    const caps = makeSafeCapabilityScores(80);
     const result = classifyReadiness(
-      BASE_ARGS.overallScore, BASE_ARGS.riskBand, BASE_ARGS.failureModes,
-      BASE_ARGS.evidenceSufficient, undefined, undefined, 0.66,
+      80, "low", noFailures, true,
+      caps, undefined, 0.66,
       undefined, undefined, 0.65 // confidenceFloorOverride
     );
     expect(result.state).toBe("safe");

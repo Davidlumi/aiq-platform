@@ -1116,10 +1116,10 @@ function UsersTab({ orgs }: { orgs: any[] }) {
 
 // ─── Reasoning Review Tab ────────────────────────────────────────────────────
 const CAPABILITY_LABELS: Record<string, string> = {
-  ai_execution:       "AI Execution",
-  ai_judgement:       "AI Judgement",
-  risk_governance:    "Risk Governance",
-  ai_appropriateness: "AI Appropriateness",
+  ai_interaction:      "AI Interaction",
+  ai_output_evaluation:"AI Output Evaluation",
+  ai_ethics_trust:     "AI Ethics & Trust",
+  ai_change_leadership:"AI Change Leadership",
   workflow_integration: "Workflow Integration",
   data_interpretation: "Data & Insight",
   unknown:            "Unknown",
@@ -1135,10 +1135,10 @@ const OUTCOME_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 const INTERACTION_LABELS: Record<string, string> = {
-  situational_judgement: "Situational Judgement",
-  risk_judgement:        "Risk Judgement",
+  prompt_refinement:      "Prompt Refinement",
+  pressure_test:          "Pressure Test",
   scenario_critique:     "Scenario Critique",
-  governance_decision:   "Governance Decision",
+  ethical_dilemma:        "Ethical Dilemma",
   tool_selection:        "Tool Selection",
   process_design:        "Process Design",
   data_interpretation:   "Data Interpretation",
@@ -1235,7 +1235,7 @@ function ReasoningTab() {
         <div className="text-center py-16 text-muted-foreground">
           <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm font-medium">No reasoning captured yet</p>
-          <p className="text-xs mt-1">Reasoning text is collected for judgement, risk, critique, and governance items during assessments.</p>
+          <p className="text-xs mt-1">Reasoning text is collected for evaluation, ethics, critique, and change leadership items during assessments.</p>
         </div>
       ) : (
         <div className="space-y-2">

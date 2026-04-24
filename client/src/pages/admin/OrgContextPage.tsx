@@ -137,7 +137,7 @@ export default function OrgContextPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sora">Organisation Context</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure your organisation profile to personalise all simulations and assessments for your sector, risk appetite, and governance environment.
+          Configure your organisation profile to personalise all simulations and assessments for your sector, risk appetite, and regulatory environment.
         </p>
       </div>
 
@@ -301,7 +301,7 @@ export default function OrgContextPage() {
             Governance & Policies
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            These settings affect how governance pressure is applied in simulations.
+            These settings affect how ethical pressure is applied in simulations.
           </p>
         </CardHeader>
         <CardContent>

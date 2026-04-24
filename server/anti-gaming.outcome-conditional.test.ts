@@ -32,7 +32,7 @@ function makeAnswer(overrides: {
     outcomeClass: overrides.outcomeClass ?? "acceptable",
     confidenceScore: overrides.confidenceScore ?? 0.7,
     signalDeltas: overrides.signalDeltas ?? {},
-    interactionType: overrides.interactionType ?? "governance_decision",
+    interactionType: overrides.interactionType ?? "ethical_pressure_test",
     riskLevel: overrides.riskLevel ?? "Medium",
   };
 }
@@ -107,7 +107,7 @@ describe("WS2.1 — outcome-conditional safe pattern detection", () => {
       inj => inj.targetPattern === "outcome_conditional_safe"
     );
     expect(trapInjection).toBeDefined();
-    expect(trapInjection?.targetCapability).toBe("governance");
+    expect(trapInjection?.targetCapability).toBe("ai_ethics_trust");
   });
 });
 
