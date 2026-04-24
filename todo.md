@@ -1281,3 +1281,14 @@
 - [ ] TD-2: Email notifications for password reset (SMTP integration)
 - [x] TD-3: Feature flag back-office UI — configurable feature flags via admin panel
 - [x] TD-4: Multi-tenancy enforcement audit — verify all tRPC procedures enforce tenant isolation
+
+## Combined Prompt Implementation (Apr 24 2026)
+
+- [x] Part 1.1: Add audit logging to all 5 configuration write surfaces (org profile, capability thresholds, scoring config create/activate, AIL org context)
+- [x] Part 1.2: Reconcile signal count — canonical answer is 28 (22 capability + 6 risk); corrected stale "26" comments in scoringEngine.ts and architecture doc
+- [x] Part 1.3: Write load testing plan and customer admission policy document (LOAD_TESTING_AND_ADMISSION_POLICY.md)
+- [x] Part 2 CPO Dashboard: World-class redesign — readiness matrix, regulatory zone, capability heatmap, strategic mismatch feed, CSV export, audit trail
+- [x] Part 2 Participant Dashboard: Band-based redesign — above-fold readiness card, radar, scenario callbacks, LLM narrative, trajectory, no raw scores
+- [x] Part 2 Manager Dashboard: Individual detail panel (This week / Delegation guidance / Development trajectory), active module display, conversation-due indicator, anti-comparison guards (no raw score column, no ranked lists)
+- [x] Manager procedure extended: per-member capability shape, active module, conversation-due indicator
+- [x] Learner procedure extended: scenario callbacks from last session, LLM narrative from last assessment

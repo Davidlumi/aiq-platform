@@ -3,7 +3,7 @@
  *
  * Implements the v10.7 methodology:
  * - 6 capability domains (2 foundation, 1 operational, 3 strategic)
- * - 26 signals mapped to domains
+ * - 28 signals mapped to domains (22 capability + 6 risk)
  * - Foundation-first gating (strategic domains gated on foundation evidence)
  * - 7 failure modes (4 blocking, 3 downgrade)
  * - Five-state readiness classification including Foundation Gap
@@ -61,7 +61,7 @@ export const FOUNDATION_GATE_THRESHOLD = 55;
 /** Minimum signal contributions required per foundation domain before strategic routing */
 export const FOUNDATION_MINIMUM_SIGNALS = 3;
 
-// ─── v10 Signal System (26 signals) ──────────────────────────────────────────
+// ─── v10 Signal System (28 signals: 22 capability + 6 risk) ──────────────────
 
 export type SignalKey =
   // AI Interaction (4 signals)
@@ -93,7 +93,7 @@ export type SignalKey =
   | "employee_transparency_advocacy"
   | "pressure_drift_risk"
   | "legal_vs_fair_distinction"
-  // AI Change Leadership (4 signals — 28 total but spec says 26; dismissive_of_concern_risk is the 4th)
+  // AI Change Leadership (4 signals — 28 total: 22 capability + 6 risk signals)
   | "resistance_response_quality"
   | "legitimate_concern_recognition"
   | "change_pace_calibration"

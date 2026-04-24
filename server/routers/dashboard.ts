@@ -21,11 +21,15 @@ import {
   assessmentScores,
   learningPlans,
   learningPlanItems,
+  learningModules,
+  contentProgress,
   policyEvaluations,
   revalidationSchedules,
   auditLogs,
   scoringConfig,
   tenantSettings,
+  assessmentAnswers,
+  contentScenarios,
 } from "../../drizzle/schema";
 import { eq, and, desc, isNull, sql, gte } from "drizzle-orm";
 
@@ -170,6 +174,56 @@ export const dashboardRouter = router({
       .from(assessmentSessions)
       .where(and(eq(assessmentSessions.userId, userId), eq(assessmentSessions.state, "completed")));
 
+    // ── Scenario callbacks: last session's answered items with outcome class ──
+    let scenarioCallbacks: Array<{
+      itemId: string;
+      outcomeClass: string | null;
+      capabilityKey: string | null;
+      title: string | null;
+    }> = [];
+    if (recentSessions[0]) {
+      const answers = await db
+        .select({
+          itemId: assessmentAnswers.itemId,
+          outcomeClass: assessmentAnswers.outcomeClass,
+        })
+        .from(assessmentAnswers)
+        .where(eq(assessmentAnswers.sessionId, recentSessions[0].id))
+        .limit(20);
+      // Enrich with scenario metadata where available (pre-authored items only)
+      for (const ans of answers) {
+        const scenario = await db
+          .select({ title: contentScenarios.title, capabilityKey: contentScenarios.capabilityKey })
+          .from(contentScenarios)
+          .where(eq(contentScenarios.interactionId, ans.itemId))
+          .limit(1);
+        scenarioCallbacks.push({
+          itemId: ans.itemId,
+          outcomeClass: ans.outcomeClass,
+          capabilityKey: scenario[0]?.capabilityKey ?? null,
+          title: scenario[0]?.title ?? null,
+        });
+      }
+    }
+
+    // ── LLM narrative from latest score breakdown ──────────────────────────────
+    let llmNarrative: { opening: string; strengths: string; development: string } | null = null;
+    if (scoreHistory[0]) {
+      const latestScore = await db
+        .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, scoreHistory[0].sessionId))
+        .limit(1);
+      const bd = latestScore[0]?.scoreBreakdownJson as Record<string, unknown> | null;
+      const raw = bd?.llmNarrative;
+      if (raw && typeof raw === "object") {
+        const n = raw as Record<string, unknown>;
+        if (typeof n.opening === "string" && typeof n.strengths === "string" && typeof n.development === "string") {
+          llmNarrative = { opening: n.opening, strengths: n.strengths, development: n.development };
+        }
+      }
+    }
+
     return {
       state: state[0] ?? null,
       credibility: credibility[0] ?? null,
@@ -181,6 +235,8 @@ export const dashboardRouter = router({
       latestOverallScore,
       latestReadiness,
       totalAssessmentsCompleted: Number(totalCompleted[0]?.count ?? 0),
+      scenarioCallbacks,
+      llmNarrative,
     };
   }),
 
@@ -258,6 +314,63 @@ export const dashboardRouter = router({
           .where(and(eq(revalidationSchedules.userId, u.id), eq(revalidationSchedules.status, "pending")))
           .orderBy(revalidationSchedules.dueAt)
           .limit(1);
+
+        // Per-member capability shape (band per domain from latest score)
+        let capabilityShape: Record<CapKey, number> | null = null;
+        if (scoreHistory[0]) {
+          const latestScoreRow = await db
+            .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+            .from(assessmentScores)
+            .where(eq(assessmentScores.sessionId, scoreHistory[0].sessionId))
+            .limit(1);
+          capabilityShape = extractCapabilityScores(latestScoreRow[0]?.scoreBreakdownJson) ?? null;
+        }
+
+        // Active learning module (first in-progress item in active plan)
+        let activeModule: { title: string; capability: string; progressPercent: number; durationMins: number } | null = null;
+        const activePlan = await db
+          .select({ id: learningPlans.id })
+          .from(learningPlans)
+          .where(and(eq(learningPlans.userId, u.id), eq(learningPlans.state, "active")))
+          .orderBy(desc(learningPlans.generatedAt))
+          .limit(1);
+        if (activePlan[0]) {
+          const inProgressItem = await db
+            .select({ contentItemId: learningPlanItems.contentItemId })
+            .from(learningPlanItems)
+            .where(and(
+              eq(learningPlanItems.learningPlanId, activePlan[0].id),
+              eq(learningPlanItems.status, "in_progress")
+            ))
+            .orderBy(learningPlanItems.orderIndex)
+            .limit(1);
+          if (inProgressItem[0]) {
+            const mod = await db
+              .select({ title: learningModules.title, capability: learningModules.capability, durationMins: learningModules.durationMins })
+              .from(learningModules)
+              .where(eq(learningModules.id, inProgressItem[0].contentItemId))
+              .limit(1);
+            const prog = await db
+              .select({ progressPercent: contentProgress.progressPercent })
+              .from(contentProgress)
+              .where(and(eq(contentProgress.userId, u.id), eq(contentProgress.contentItemId, inProgressItem[0].contentItemId)))
+              .limit(1);
+            if (mod[0]) {
+              activeModule = {
+                title: mod[0].title,
+                capability: mod[0].capability,
+                durationMins: mod[0].durationMins,
+                progressPercent: prog[0] ? parseFloat(prog[0].progressPercent as unknown as string) : 0,
+              };
+            }
+          }
+        }
+
+        // Conversation-due indicator: revalidation overdue or risk band high
+        const conversationDue =
+          (reval[0]?.dueAt && new Date(reval[0].dueAt) < new Date()) ||
+          (risk[0] as any)?.band === "high";
+
         return {
           ...u,
           state: state[0] ?? null,
@@ -266,6 +379,9 @@ export const dashboardRouter = router({
           latestScore,
           latestReadiness,
           scoreHistory,
+          capabilityShape,
+          activeModule,
+          conversationDue: conversationDue ?? false,
           revalidationDue: reval[0]?.dueAt ?? null,
           lastAssessedAt: latestSession[0]?.completedAt ?? null,
         };

@@ -8,7 +8,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems,
-  scoringConfig, organisationCapabilityThresholds, sectorVocabulary,
+  scoringConfig, organisationCapabilityThresholds, sectorVocabulary, auditLogs,
   antiGamingThresholds, llmItemReviewQueue, assessmentReviewFlags,
   userPersonas, userStates, credibilityScores, riskScores, decisionLogs,
   revalidationSchedules, learningPlans, learningPlanItems, contentProgress,
@@ -464,6 +464,15 @@ export const backofficeRouter = router({
         notes: input.description ?? null,
         calibrationSource: "synthetic_default",
       });
+            await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.scoring_config.created",
+        targetType: "scoring_config",
+        targetId: String(versionNum),
+        metadataJson: JSON.stringify({ version: input.version, intercept: input.intercept, multiplier: input.multiplier }),
+      });
       return { success: true };
     }),
 
@@ -476,6 +485,15 @@ export const backofficeRouter = router({
       await db.update(scoringConfig).set({ isActive: false });
       const idNum = parseInt(input.id, 10);
       await db.update(scoringConfig).set({ isActive: true }).where(eq(scoringConfig.id, idNum));
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.scoring_config.activated",
+        targetType: "scoring_config",
+        targetId: input.id,
+        metadataJson: JSON.stringify({ activatedConfigId: input.id }),
+      });
       return { success: true };
     }),
 
@@ -514,6 +532,7 @@ export const backofficeRouter = router({
           eq(organisationCapabilityThresholds.archetypeId, input.archetypeId),
           eq(organisationCapabilityThresholds.capability, input.capability)
         ));
+      let thresholdId: string;
       if (existing.length > 0) {
         await db
           .update(organisationCapabilityThresholds)
@@ -522,19 +541,28 @@ export const backofficeRouter = router({
             updatedBy: ctx.user.id,
           })
           .where(eq(organisationCapabilityThresholds.id, existing[0].id));
-        return { id: existing[0].id };
+        thresholdId = existing[0].id;
       } else {
-        const id = nanoid();
+        thresholdId = nanoid();
         await db.insert(organisationCapabilityThresholds).values({
-          id,
+          id: thresholdId,
           orgId: input.orgId,
           archetypeId: input.archetypeId,
           capability: input.capability,
           minimumSafeThreshold: input.minimumSafeThreshold,
           updatedBy: ctx.user.id,
         });
-        return { id };
       }
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.capability_threshold.upserted",
+        targetType: "capability_threshold",
+        targetId: input.orgId,
+        metadataJson: JSON.stringify({ orgId: input.orgId, archetypeId: input.archetypeId, capability: input.capability, threshold: input.minimumSafeThreshold, operation: existing.length > 0 ? "update" : "create" }),
+      });
+      return { id: thresholdId };
     }),
 
   deleteOrgThreshold: protectedProcedure
@@ -544,6 +572,15 @@ export const backofficeRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.delete(organisationCapabilityThresholds).where(eq(organisationCapabilityThresholds.id, input.id));
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.capability_threshold.deleted",
+        targetType: "capability_threshold",
+        targetId: input.id,
+        metadataJson: JSON.stringify({ deletedId: input.id }),
+      });
       return { success: true };
     }),
   // ── WS2.2: Anti-gaming threshold management ───────────────────────────────

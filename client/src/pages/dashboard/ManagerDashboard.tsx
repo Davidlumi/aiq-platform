@@ -1,12 +1,9 @@
 /**
  * Manager Dashboard — AiQ Platform
  *
- * Team readiness overview:
- * - Distribution ring (safe / at-risk / unsafe / unknown)
- * - Capability gap bar chart
- * - Risk & credibility alerts
- * - Revalidation due-soon table
- * - Full team member table with inline readiness badges
+ * Team readiness overview with individual detail panel.
+ * Anti-comparison design: no ranked lists, no raw score league tables.
+ * Primary frame: each team member against their own development trajectory.
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -22,7 +19,7 @@ import {
   Calendar, TrendingDown, Search, ChevronRight, RefreshCw,
   BarChart3, ShieldAlert, Award, MessageSquare, TrendingUp,
   Layers, Zap, Info, ArrowUpRight, ArrowDownRight, Minus,
-  BookOpen, Flame,
+  BookOpen, Flame, X, ChevronLeft, Activity, Target, Clock,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -46,6 +43,48 @@ const CAP_LABELS: Record<string, string> = {
   ai_interaction: "AI Interaction", ai_output_evaluation: "Output Evaluation", ai_workflow_design: "Workflow Design",
   workforce_ai_readiness: "Workforce Readiness", ai_ethics_trust: "Ethics & Trust", ai_change_leadership: "Change Leadership",
 };
+
+// Delegation tier logic — deterministic, not ranked
+const DELEGATION_TIERS = [
+  { key: "autonomous",  label: "Tier 1 — Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#228833", bg: "#22883310", border: "#22883330", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
+  { key: "supervised",  label: "Tier 2 — Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
+  { key: "restricted",  label: "Tier 3 — Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
+  { key: "paused",      label: "Tier 4 — Paused",        desc: "AI use should be paused pending capability development",     color: "#EE6677", bg: "#EE667710", border: "#EE667730", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
+  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data — tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
+];
+
+function getDelegationTier(m: any) {
+  return DELEGATION_TIERS.find(t => t.test(m)) ?? DELEGATION_TIERS[4];
+}
+
+function getDelegationGuidance(m: any): string[] {
+  const tier = getDelegationTier(m);
+  if (tier.key === "autonomous") return [
+    "Can be assigned AI-assisted analysis tasks independently.",
+    "Suitable for reviewing and acting on AI-generated recommendations.",
+    "Can mentor peers on responsible AI use.",
+  ];
+  if (tier.key === "supervised") return [
+    "AI-assisted outputs should be reviewed before acting on them.",
+    "Pair with a Tier 1 colleague for high-stakes AI tasks.",
+    "Focus development on the weakest capability domain.",
+  ];
+  if (tier.key === "restricted") return [
+    "Limit AI use to low-stakes, reversible tasks only.",
+    "Avoid assigning AI-generated content for external use without review.",
+    "Prioritise completing the active learning plan before expanding AI scope.",
+  ];
+  if (tier.key === "paused") return [
+    "Do not assign AI-dependent tasks until reassessment is complete.",
+    "Schedule a capability conversation this week.",
+    "Refer to HR if there are concerns about AI misuse patterns.",
+  ];
+  return [
+    "Assessment not yet completed — capability tier cannot be assigned.",
+    "Encourage completion of the initial assessment.",
+    "No AI task delegation guidance is available without assessment data.",
+  ];
+}
 
 function ReadinessBadge({ readiness }: { readiness: string | null }) {
   const meta = READINESS_META[readiness ?? "unknown"] ?? READINESS_META.unknown;
@@ -104,9 +143,218 @@ function DistributionRing({ distribution }: { distribution: { safe: number; atRi
   );
 }
 
+// ─── Individual Member Detail Panel ──────────────────────────────────────────
+function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => void }) {
+  const tier = getDelegationTier(member);
+  const guidance = getDelegationGuidance(member);
+  const history = ((member.scoreHistory ?? []) as Array<{ sessionId: string; completedAt: Date | null; overallScore: number; readiness: string | null }>).slice().reverse();
+  const first = history[0]?.overallScore;
+  const last = history[history.length - 1]?.overallScore;
+  const delta = first != null && last != null ? last - first : null;
+  const trend = delta == null ? "unknown" : delta > 3 ? "improving" : delta < -3 ? "declining" : "stable";
+  const trendColor = trend === "improving" ? "#228833" : trend === "declining" ? "#EE6677" : "#9CA3AF";
+  const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
+  const capShape = member.capabilityShape as Record<string, number> | null;
+  const revalDays = member.revalidationDue
+    ? Math.ceil((new Date(member.revalidationDue).getTime() - Date.now()) / 86400000)
+    : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      {/* Backdrop */}
+      <div className="flex-1 bg-black/40" onClick={onClose} />
+      {/* Panel */}
+      <div className="w-full max-w-md bg-background border-l border-border shadow-2xl overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-background z-10">
+          <div>
+            <h2 className="text-base font-bold text-foreground font-sora">{member.firstName} {member.lastName}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{member.roleFamily ?? member.jobFunction ?? member.email}</p>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <div className="p-5 space-y-6 flex-1">
+          {/* Readiness + conversation-due */}
+          <div className="flex items-center gap-3">
+            <ReadinessBadge readiness={member.latestReadiness} />
+            {member.conversationDue && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EE8866]/10 text-[#EE8866] border border-[#EE8866]/30">
+                <MessageSquare className="w-3 h-3" />Conversation due
+              </span>
+            )}
+            {revalDays != null && revalDays <= 14 && (
+              <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
+                revalDays <= 0 ? "bg-[#EE6677]/10 text-[#EE6677] border border-[#EE6677]/30" : "bg-[#EE8866]/10 text-[#EE8866] border border-[#EE8866]/30")}>
+                <Calendar className="w-3 h-3" />
+                {revalDays <= 0 ? "Revalidation overdue" : `Revalidation in ${revalDays}d`}
+              </span>
+            )}
+          </div>
+
+          {/* Section 1: This week */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" />This Week
+            </h3>
+            {member.activeModule ? (
+              <div className="rounded-lg border border-border p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-[#4477AA] mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground leading-snug">{member.activeModule.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {CAP_LABELS[member.activeModule.capability] ?? member.activeModule.capability}
+                      {" · "}{member.activeModule.durationMins} min
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Progress</span>
+                    <span>{Math.round(member.activeModule.progressPercent)}%</span>
+                  </div>
+                  <Progress value={member.activeModule.progressPercent} className="h-1.5" />
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                <p className="text-xs text-muted-foreground">No active module this week.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Consider nudging them to start their next module.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Delegation guidance */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />Delegation Guidance
+            </h3>
+            <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: tier.border, backgroundColor: tier.bg }}>
+              <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-full" style={{ color: tier.color, border: `1px solid ${tier.border}` }}>
+                {tier.label}
+              </span>
+              <p className="text-xs text-muted-foreground">{tier.desc}</p>
+              <ul className="space-y-1.5 mt-1">
+                {guidance.map((g, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground mt-1.5 shrink-0" />
+                    {g}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              Guidance is based on assessed capability and risk profile, not on personal judgement.
+            </p>
+          </div>
+
+          {/* Section 3: Development trajectory */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />Development Trajectory
+            </h3>
+            {history.length >= 2 ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendIcon className="w-4 h-4" style={{ color: trendColor }} />
+                  <span className="text-sm font-semibold capitalize" style={{ color: trendColor }}>{trend}</span>
+                  {delta != null && (
+                    <span className="text-xs text-muted-foreground">
+                      ({delta > 0 ? "+" : ""}{Math.round(delta)} across {history.length} assessments)
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-end gap-1 h-14">
+                  {history.map((h, i) => {
+                    const RSTATE_COLORS: Record<string, string> = { safe: "#228833", at_risk: "#EE8866", unsafe: "#EE6677" };
+                    const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#9CA3AF";
+                    const barH = Math.max(4, Math.round((h.overallScore / 100) * 56));
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${Math.round(h.overallScore)} — ${h.readiness ?? "unknown"}`}>
+                        <div className="w-full rounded-sm" style={{ height: barH, backgroundColor: barColor, opacity: 0.8 }} />
+                        <span className="text-[9px] text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Bar height reflects readiness band, not a ranked score. Each bar is one completed assessment.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {history.length === 0 ? "No assessment data yet." : "One assessment completed. Trajectory requires at least two."}
+                </p>
+              </div>
+            )}
+
+            {/* Capability shape */}
+            {capShape && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Capability Shape</p>
+                {Object.entries(capShape).map(([key, score]) => (
+                  <div key={key} className="space-y-0.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">{CAP_LABELS[key] ?? key}</span>
+                      <span className="font-semibold text-foreground" style={{ color: CAP_COLORS[key] }}>
+                        {score < 40 ? "Developing" : score < 65 ? "Building" : score < 80 ? "Practitioner" : "Advanced"}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: CAP_COLORS[key] ?? "#4477AA" }} />
+                    </div>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground italic mt-1">
+                  Bands reflect development state, not a comparative ranking.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Risk & credibility */}
+          {(member.risk || member.credibility) && (
+            <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5" />Signal Quality
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {member.risk?.band && (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Risk Band</p>
+                    <p className={cn("text-sm font-bold capitalize",
+                      member.risk.band === "high" ? "text-[#EE6677]" : member.risk.band === "medium" ? "text-[#EE8866]" : "text-[#228833]")}>
+                      {member.risk.band}
+                    </p>
+                  </div>
+                )}
+                {member.credibility?.band && (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Credibility</p>
+                    <p className={cn("text-sm font-bold capitalize",
+                      member.credibility.band === "high" ? "text-[#228833]" : member.credibility.band === "medium" ? "text-[#EE8866]" : "text-[#EE6677]")}>
+                      {member.credibility.band}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ManagerDashboard() {
   const { data, isLoading } = trpc.dashboard.manager.useQuery();
   const [search, setSearch] = useState("");
+  const [selectedMember, setSelectedMember] = useState<any | null>(null);
 
   if (isLoading) {
     return (
@@ -141,185 +389,191 @@ export default function ManagerDashboard() {
     .slice(0, 5);
 
   const highRiskMembers = team
-    .filter(m => m.risk?.band === "high" || m.latestReadiness === "unsafe")
+    .filter(m => (m as any).risk?.band === "high" || m.latestReadiness === "unsafe")
     .slice(0, 5);
 
+  const conversationDueMembers = team.filter(m => (m as any).conversationDue);
+
   return (
-    <div className="p-6 space-y-6 max-w-7xl">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground font-sora">Team Readiness</h1>
-          <p className="text-muted-foreground mt-1 text-sm">AI capability intelligence across your team</p>
+    <>
+      {selectedMember && (
+        <MemberDetailPanel member={selectedMember} onClose={() => setSelectedMember(null)} />
+      )}
+
+      <div className="p-6 space-y-6 max-w-7xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground font-sora">Team Readiness</h1>
+            <p className="text-muted-foreground mt-1 text-sm">AI capability intelligence across your team</p>
+          </div>
+          <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
+            <RefreshCw className="w-3 h-3" />Refresh
+          </Button>
         </div>
-        <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
-          <RefreshCw className="w-3 h-3" />Refresh
-        </Button>
-      </div>
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Members",       value: dist?.total ?? 0,                icon: Users,        color: "#4477AA" },
-          { label: "Safe",                value: dist?.safe ?? 0,                 icon: CheckCircle,  color: "#228833" },
-          { label: "At Risk / Unsafe",    value: (dist?.atRisk ?? 0) + (dist?.unsafe ?? 0), icon: AlertTriangle, color: "#EE6677" },
-          { label: "Revalidation Due",    value: dist?.revalidationDueSoon ?? 0,  icon: Calendar,     color: "#EE8866" },
-        ].map(kpi => {
-          const Icon = kpi.icon;
-          return (
-            <Card key={kpi.label} className="border-border">
-              <CardContent className="pt-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}15` }}>
-                    <Icon className="w-4 h-4" style={{ color: kpi.color }} />
+        {/* KPI row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Total Members",       value: dist?.total ?? 0,                icon: Users,        color: "#4477AA" },
+            { label: "Safe",                value: dist?.safe ?? 0,                 icon: CheckCircle,  color: "#228833" },
+            { label: "At Risk / Unsafe",    value: (dist?.atRisk ?? 0) + (dist?.unsafe ?? 0), icon: AlertTriangle, color: "#EE6677" },
+            { label: "Conversations Due",   value: conversationDueMembers.length,   icon: MessageSquare, color: "#EE8866" },
+          ].map(kpi => {
+            const Icon = kpi.icon;
+            return (
+              <Card key={kpi.label} className="border-border">
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}15` }}>
+                      <Icon className="w-4 h-4" style={{ color: kpi.color }} />
+                    </div>
+                    <span className="text-xs text-muted-foreground">{kpi.label}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{kpi.label}</span>
+                  <p className="text-3xl font-bold text-foreground font-sora">{kpi.value}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Distribution + Capability gaps */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                <Users className="w-4 h-4 text-[#4477AA]" />Readiness Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dist ? (
+                <DistributionRing distribution={dist} />
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">No data</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                <TrendingDown className="w-4 h-4 text-[#EE6677]" />Capability Gaps (Team Average)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {capGaps.length > 0 ? (
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
+                    layout="vertical" margin={{ top: 0, right: 16, left: 80, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={78} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                      formatter={(v: number) => [`${v}`, "Avg Band Score"]} />
+                    <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                      {capGaps.map((g, i) => (
+                        <Cell key={i} fill={CAP_COLORS[g.capability] ?? "#4477AA"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">No assessment data yet</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Alerts: Conversations due + Revalidation due */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                <MessageSquare className="w-4 h-4 text-[#EE8866]" />Conversations Due
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Members with overdue revalidation or high risk band — a conversation is recommended</p>
+            </CardHeader>
+            <CardContent>
+              {conversationDueMembers.length === 0 ? (
+                <div className="text-center py-6">
+                  <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No urgent conversations needed</p>
                 </div>
-                <p className="text-3xl font-bold text-foreground font-sora">{kpi.value}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Distribution + Capability gaps */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <Users className="w-4 h-4 text-[#4477AA]" />Readiness Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {dist ? (
-              <DistributionRing distribution={dist} />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">No data</div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <TrendingDown className="w-4 h-4 text-[#EE6677]" />Capability Gaps (Team Average)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {capGaps.length > 0 ? (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
-                  layout="vertical" margin={{ top: 0, right: 16, left: 80, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={78} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                    formatter={(v: number) => [`${v}`, "Avg Score"]} />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                    {capGaps.map((g, i) => (
-                      <Cell key={i} fill={CAP_COLORS[g.capability] ?? "#4477AA"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">No assessment data yet</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Alerts: High risk + Revalidation due */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <ShieldAlert className="w-4 h-4 text-[#EE6677]" />High Risk Members
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {highRiskMembers.length === 0 ? (
-              <div className="text-center py-6">
-                <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No high-risk members</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {highRiskMembers.map(m => (
-                  <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-[#EE6677]/5 border border-[#EE6677]/15">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
-                      <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ReadinessBadge readiness={m.latestReadiness} />
-                      {m.risk?.band === "high" && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#EE6677]/10 text-[#EE6677] font-semibold">High Risk</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <Calendar className="w-4 h-4 text-[#EE8866]" />Revalidation Due (14 days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {revalDueSoon.length === 0 ? (
-              <div className="text-center py-6">
-                <Calendar className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No revalidations due soon</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {revalDueSoon.map(m => {
-                  const days = Math.ceil((new Date(m.revalidationDue!).getTime() - Date.now()) / 86400000);
-                  return (
-                    <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-[#EE8866]/5 border border-[#EE8866]/15">
+              ) : (
+                <div className="space-y-2">
+                  {conversationDueMembers.slice(0, 5).map(m => (
+                    <button key={m.id} onClick={() => setSelectedMember(m)}
+                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#EE8866]/5 border border-[#EE8866]/15 hover:bg-[#EE8866]/10 transition-colors text-left">
                       <div>
                         <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
                         <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
                       </div>
-                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full",
-                        days <= 3 ? "bg-[#EE6677]/10 text-[#EE6677]" : "bg-[#EE8866]/10 text-[#EE8866]")}>
-                        {days}d
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                      <div className="flex items-center gap-2">
+                        <ReadinessBadge readiness={m.latestReadiness} />
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                    </button>
+                  ))}
+                  {conversationDueMembers.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center">+{conversationDueMembers.length - 5} more</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Delegation Tiers */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 font-sora">
-            <Layers className="w-4 h-4 text-[#4477AA]" />Delegation Tiers
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">Recommended AI task delegation level based on assessed capability and risk profile</p>
-        </CardHeader>
-        <CardContent>
-          {team.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
-          ) : (
-            <div className="space-y-2">
-              {(() => {
-                const TIERS = [
-                  { key: "autonomous",  label: "Tier 1 — Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#228833", bg: "#22883310", border: "#22883330", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
-                  { key: "supervised",  label: "Tier 2 — Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
-                  { key: "restricted",  label: "Tier 3 — Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
-                  { key: "paused",      label: "Tier 4 — Paused",        desc: "AI use should be paused pending capability development",     color: "#EE6677", bg: "#EE667710", border: "#EE667730", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
-                  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data — tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
-                ];
-                return TIERS.map(tier => {
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                <Calendar className="w-4 h-4 text-[#EE8866]" />Revalidation Due (14 days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {revalDueSoon.length === 0 ? (
+                <div className="text-center py-6">
+                  <Calendar className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No revalidations due soon</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {revalDueSoon.map(m => {
+                    const days = Math.ceil((new Date(m.revalidationDue!).getTime() - Date.now()) / 86400000);
+                    return (
+                      <button key={m.id} onClick={() => setSelectedMember(m)}
+                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#EE8866]/5 border border-[#EE8866]/15 hover:bg-[#EE8866]/10 transition-colors text-left">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
+                          <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
+                        </div>
+                        <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full",
+                          days <= 3 ? "bg-[#EE6677]/10 text-[#EE6677]" : "bg-[#EE8866]/10 text-[#EE8866]")}>
+                          {days}d
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Delegation Tiers — aggregated, no ranked list */}
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 font-sora">
+              <Layers className="w-4 h-4 text-[#4477AA]" />Delegation Tiers
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Recommended AI task delegation level based on assessed capability and risk profile.
+              Click a name to open their individual detail.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {team.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
+            ) : (
+              <div className="space-y-2">
+                {DELEGATION_TIERS.map(tier => {
                   const members = team.filter(tier.test);
                   if (members.length === 0) return null;
                   return (
@@ -333,77 +587,22 @@ export default function ManagerDashboard() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {members.slice(0, 8).map(m => (
-                          <span key={m.id} className="text-xs px-2 py-0.5 rounded-full bg-background border border-border text-foreground">
+                          <button key={m.id} onClick={() => setSelectedMember(m)}
+                            className="text-xs px-2 py-0.5 rounded-full bg-background border border-border text-foreground hover:bg-muted transition-colors">
                             {m.firstName} {m.lastName}
-                          </span>
+                          </button>
                         ))}
                         {members.length > 8 && <span className="text-xs text-muted-foreground">+{members.length - 8} more</span>}
                       </div>
                     </div>
                   );
-                });
-              })()}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Suggested Conversations + Misuse Friction Indicators */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <MessageSquare className="w-4 h-4 text-[#0D9488]" />Suggested Conversations
-            </CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Team members who would benefit from a 1:1 capability conversation</p>
-          </CardHeader>
-          <CardContent>
-            {team.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground text-sm">No team data</div>
-            ) : (() => {
-              const suggestions = team
-                .filter(m => m.latestReadiness && m.latestReadiness !== "safe")
-                .map(m => {
-                  const reason = m.latestReadiness === "unsafe" && m.risk?.band === "high"
-                    ? "High risk + unsafe classification — discuss AI task restrictions"
-                    : m.latestReadiness === "unsafe"
-                    ? "Unsafe classification — review AI task scope and support plan"
-                    : m.credibility?.band === "low"
-                    ? "Low credibility score — explore confidence calibration gaps"
-                    : m.revalidationDue && Math.ceil((new Date(m.revalidationDue).getTime() - Date.now()) / 86400000) <= 7
-                    ? "Revalidation overdue — discuss reassessment readiness"
-                    : "At-risk classification — explore development priorities";
-                  const priority = m.latestReadiness === "unsafe" && m.risk?.band === "high" ? 0
-                    : m.latestReadiness === "unsafe" ? 1
-                    : m.credibility?.band === "low" ? 2 : 3;
-                  return { ...m, reason, priority };
-                })
-                .sort((a, b) => a.priority - b.priority)
-                .slice(0, 5);
-              if (suggestions.length === 0) return (
-                <div className="text-center py-6">
-                  <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No urgent conversations needed</p>
-                </div>
-              );
-              return (
-                <div className="space-y-2">
-                  {suggestions.map(m => (
-                    <div key={m.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30 border border-border">
-                      <MessageSquare className="w-3.5 h-3.5 text-[#0D9488] mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{m.reason}</p>
-                      </div>
-                      <ReadinessBadge readiness={m.latestReadiness} />
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Misuse Friction Indicators */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 font-sora">
@@ -419,13 +618,13 @@ export default function ManagerDashboard() {
                 {
                   label: "High risk + safe classification",
                   desc: "High risk score despite safe readiness — may indicate gaming or inconsistent behaviour",
-                  members: team.filter(m => m.risk?.band === "high" && m.latestReadiness === "safe"),
+                  members: team.filter(m => (m as any).risk?.band === "high" && m.latestReadiness === "safe"),
                   color: "#EE8866",
                 },
                 {
                   label: "Low credibility + safe classification",
                   desc: "Low credibility band suggests inconsistent or low-confidence responses despite safe classification",
-                  members: team.filter(m => m.credibility?.band === "low" && m.latestReadiness === "safe"),
+                  members: team.filter(m => (m as any).credibility?.band === "low" && m.latestReadiness === "safe"),
                   color: "#EE6677",
                 },
                 {
@@ -452,7 +651,10 @@ export default function ManagerDashboard() {
                       <p className="text-xs text-muted-foreground mb-2">{ind.desc}</p>
                       <div className="flex flex-wrap gap-1">
                         {ind.members.slice(0, 5).map(m => (
-                          <span key={m.id} className="text-xs px-1.5 py-0.5 rounded bg-background border border-border text-foreground">{m.firstName} {m.lastName[0]}.</span>
+                          <button key={m.id} onClick={() => setSelectedMember(m)}
+                            className="text-xs px-1.5 py-0.5 rounded bg-background border border-border text-foreground hover:bg-muted transition-colors">
+                            {m.firstName} {m.lastName[0]}.
+                          </button>
                         ))}
                         {ind.members.length > 5 && <span className="text-xs text-muted-foreground">+{ind.members.length - 5}</span>}
                       </div>
@@ -463,162 +665,96 @@ export default function ManagerDashboard() {
             })()}
           </CardContent>
         </Card>
-      </div>
 
-      {/* P2-MD-4: Individual Development Trajectory */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 font-sora">
-            <TrendingUp className="w-4 h-4 text-[#10B981]" />Development Trajectories
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">Multi-assessment score trend per team member — improving / stable / declining</p>
-        </CardHeader>
-        <CardContent>
-          {team.filter(m => (m as any).scoreHistory?.length >= 2).length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              Team members need at least 2 completed assessments to show trajectory data.
+        {/* Team table — anti-comparison: no raw score column, no ranking */}
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm flex items-center gap-2 font-sora">
+                  <Users className="w-4 h-4 text-[#4477AA]" />Team Members ({filtered.length})
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Click any row to open the individual detail panel</p>
+              </div>
+              <div className="relative w-56">
+                <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input placeholder="Search members..." className="pl-8 h-8 text-xs"
+                  value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
             </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {team.filter(m => (m as any).scoreHistory?.length >= 2).map(m => {
-                const history = ((m as any).scoreHistory as Array<{ sessionId: string; completedAt: Date | null; overallScore: number; readiness: string | null }>).slice().reverse();
-                const first = history[0].overallScore;
-                const last = history[history.length - 1].overallScore;
-                const delta = last - first;
-                const trend = delta > 3 ? "improving" : delta < -3 ? "declining" : "stable";
-                const trendColor = trend === "improving" ? "#228833" : trend === "declining" ? "#EE6677" : "#EE8866";
-                const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
-                return (
-                  <div key={m.id} className="rounded-lg border border-border p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{m.firstName} {m.lastName}</p>
-                        <p className="text-xs text-muted-foreground">{history.length} assessments</p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <TrendIcon className="w-3.5 h-3.5" style={{ color: trendColor }} />
-                        <span className="text-xs font-bold" style={{ color: trendColor }}>
-                          {delta > 0 ? "+" : ""}{Math.round(delta)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-end gap-1 h-10">
-                      {history.map((h, i) => {
-                        const RSTATE_COLORS: Record<string, string> = { safe: "#228833", at_risk: "#EE8866", unsafe: "#EE6677" };
-                        const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#9CA3AF";
-                        const barH = Math.max(4, Math.round((h.overallScore / 100) * 40));
-                        return (
-                          <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                            <div className="w-full rounded-sm" style={{ height: barH, backgroundColor: barColor, opacity: 0.8 }} />
-                            <span className="text-[9px] text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-muted-foreground capitalize">{trend}</span>
-                      <span className="text-[10px] text-muted-foreground">·</span>
-                      <span className="text-[10px] text-muted-foreground">Latest: {Math.round(last)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Full team table */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2 font-sora">
-              <Users className="w-4 h-4 text-[#4477AA]" />Team Members ({filtered.length})
-            </CardTitle>
-            <div className="relative w-56">
-              <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input placeholder="Search members..." className="pl-8 h-8 text-xs"
-                value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Name", "Role / Function", "Readiness", "Score", "Risk", "Credibility", "Last Assessed", "Revalidation"].map(h => (
-                    <th key={h} className="text-left text-xs font-semibold text-muted-foreground pb-2 pr-4 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(m => {
-                  const revalDays = m.revalidationDue
-                    ? Math.ceil((new Date(m.revalidationDue).getTime() - Date.now()) / 86400000)
-                    : null;
-                  return (
-                    <tr key={m.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5 pr-4">
-                        <div>
-                          <p className="font-medium text-foreground">{m.firstName} {m.lastName}</p>
-                          <p className="text-xs text-muted-foreground">{m.email}</p>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
-                        {m.roleFamily ?? m.jobFunction ?? "—"}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <ReadinessBadge readiness={m.latestReadiness} />
-                      </td>
-                      <td className="py-2.5 pr-4 font-mono text-xs font-semibold text-foreground">
-                        {m.latestScore != null ? Math.round(m.latestScore) : "—"}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        {m.risk?.band ? (
-                          <span className={cn("text-xs font-semibold capitalize",
-                            m.risk.band === "high" ? "text-[#EE6677]" : m.risk.band === "medium" ? "text-[#EE8866]" : "text-[#228833]")}>
-                            {m.risk.band}
-                          </span>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        {m.credibility?.band ? (
-                          <span className={cn("text-xs font-semibold capitalize",
-                            m.credibility.band === "high" ? "text-[#228833]" : m.credibility.band === "medium" ? "text-[#EE8866]" : "text-[#EE6677]")}>
-                            {m.credibility.band}
-                          </span>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </td>
-                      <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
-                        {m.lastAssessedAt ? new Date(m.lastAssessedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" }) : "Never"}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        {revalDays != null ? (
-                          <span className={cn("text-xs font-semibold",
-                            revalDays <= 7 ? "text-[#EE6677]" : revalDays <= 14 ? "text-[#EE8866]" : "text-muted-foreground")}>
-                            {revalDays}d
-                          </span>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center text-muted-foreground text-sm">No members found</td>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Name", "Role / Function", "Readiness", "Delegation Tier", "Active Module", "Last Assessed", ""].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-muted-foreground pb-2 pr-4 whitespace-nowrap">{h}</th>
+                    ))}
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {filtered.map(m => {
+                    const tier = getDelegationTier(m);
+                    const hasConversation = (m as any).conversationDue;
+                    return (
+                      <tr key={m.id}
+                        className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => setSelectedMember(m)}>
+                        <td className="py-2.5 pr-4">
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium text-foreground">{m.firstName} {m.lastName}</p>
+                              <p className="text-xs text-muted-foreground">{m.email}</p>
+                            </div>
+                            {hasConversation && (
+                              <span title="Conversation due" className="w-2 h-2 rounded-full bg-[#EE8866] flex-shrink-0" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
+                          {m.roleFamily ?? m.jobFunction ?? "—"}
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <ReadinessBadge readiness={m.latestReadiness} />
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <span className="text-xs font-semibold" style={{ color: tier.color }}>{tier.label}</span>
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          {(m as any).activeModule ? (
+                            <div className="max-w-[180px]">
+                              <p className="text-xs text-foreground truncate">{(m as any).activeModule.title}</p>
+                              <p className="text-xs text-muted-foreground">{Math.round((m as any).activeModule.progressPercent)}% complete</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
+                          {m.lastAssessedAt ? new Date(m.lastAssessedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" }) : "Never"}
+                        </td>
+                        <td className="py-2.5">
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground text-sm">No members found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Learning Overview */}
-      <LearningOverviewSection />
-    </div>
+        {/* Learning Overview */}
+        <LearningOverviewSection />
+      </div>
+    </>
   );
 }
 

@@ -13,7 +13,9 @@ import {
   organisations,
   organisationProfiles,
   organisationCapabilityThresholds,
+  auditLogs,
 } from "../../drizzle/schema";
+import { nanoid } from "nanoid";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +139,18 @@ export const organisationRouter = router({
       } else {
         await db.insert(organisationProfiles).values({ id: randomUUID(), ...profileData } as typeof organisationProfiles.$inferInsert);
       }
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.organisation_profile.updated",
+        targetType: "organisation_profile",
+        targetId: input.organisationId,
+        metadataJson: JSON.stringify({
+          fields: Object.keys(input).filter(k => k !== "organisationId"),
+          operation: existing ? "update" : "create",
+        }),
+      });
       return { ok: true };
     }),
 
@@ -181,6 +195,20 @@ export const organisationRouter = router({
           minimumSafeThreshold: input.minimumSafeThreshold,
         });
       }
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId,
+        actorUserId: ctx.user.id,
+        action: "config.capability_threshold.upserted",
+        targetType: "capability_threshold",
+        targetId: input.organisationId,
+        metadataJson: JSON.stringify({
+          capability: input.capability,
+          archetypeId: input.archetypeId ?? "default",
+          minimumSafeThreshold: input.minimumSafeThreshold,
+          operation: existing ? "update" : "create",
+        }),
+      });
       return { ok: true };
     }),
 

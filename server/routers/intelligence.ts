@@ -22,6 +22,9 @@ import {
 import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
+import { getDb } from "../db";
+import { auditLogs } from "../../drizzle/schema";
+import { nanoid } from "nanoid";
 
 import {
   generateCapabilityReport,
@@ -141,6 +144,21 @@ export const intelligenceRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await upsertOrgContext({ tenantId: ctx.user.tenantId, ...input });
+      const db = await getDb();
+      if (db) {
+        await db.insert(auditLogs).values({
+          id: nanoid(),
+          tenantId: ctx.user.tenantId,
+          actorUserId: ctx.user.id,
+          action: "config.org_context.updated",
+          targetType: "ail_org_context",
+          targetId: ctx.user.tenantId,
+          metadataJson: JSON.stringify({
+            fields: Object.keys(input),
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      }
       return { success: true };
     }),
 
