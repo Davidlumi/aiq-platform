@@ -1,9 +1,17 @@
 /**
- * Gap Analysis Engine — AiQ Adaptive Learning
+ * Gap Analysis Engine — AiQ Adaptive Learning (v10)
  *
  * Reads assessment capability scores and computes structured gaps
  * against role-level benchmarks. Classifies each capability into
  * severity bands and produces a prioritised remediation order.
+ *
+ * v10 Capability Domains:
+ *   ai_interaction         — Foundation: prompting, iteration, tool fluency
+ *   ai_output_evaluation   — Foundation: output quality, error detection, bias
+ *   ai_workflow_design     — Operational: workflow redesign, handoff, oversight
+ *   workforce_ai_readiness — Strategic: capability diagnosis, intervention design
+ *   ai_ethics_trust        — Strategic: ethics under pressure, transparency, legal
+ *   ai_change_leadership   — Strategic: resistance response, concern recognition, pace
  *
  * Severity bands (based on gap from benchmark):
  *   critical    — score < 50 OR gap > 25 points below benchmark
@@ -13,12 +21,12 @@
  */
 
 export type CapabilityKey =
-  | "execution"
-  | "judgement"
-  | "governance"
-  | "appropriateness"
-  | "workflow"
-  | "data_interpretation";
+  | "ai_interaction"
+  | "ai_output_evaluation"
+  | "ai_workflow_design"
+  | "workforce_ai_readiness"
+  | "ai_ethics_trust"
+  | "ai_change_leadership";
 
 export type GapSeverity = "critical" | "developing" | "proficient" | "advanced";
 
@@ -47,93 +55,99 @@ export interface GapAnalysisResult {
   recommendedFocusAreas: string[];
 }
 
-// ─── Role Benchmarks ──────────────────────────────────────────────────────────
-// Default benchmarks by role seniority tier
+// ─── All v10 capability keys ──────────────────────────────────────────────────
+const ALL_CAPABILITIES: CapabilityKey[] = [
+  "ai_interaction",
+  "ai_output_evaluation",
+  "ai_workflow_design",
+  "workforce_ai_readiness",
+  "ai_ethics_trust",
+  "ai_change_leadership",
+];
+
+// ─── Role-level benchmarks by seniority tier ─────────────────────────────────
+const DEFAULT_BENCHMARK: Record<CapabilityKey, number> = {
+  ai_interaction:         65,
+  ai_output_evaluation:   65,
+  ai_workflow_design:     60,
+  workforce_ai_readiness: 55,
+  ai_ethics_trust:        60,
+  ai_change_leadership:   55,
+};
+
 const ROLE_BENCHMARKS: Record<string, Record<CapabilityKey, number>> = {
   junior: {
-    execution: 55,
-    judgement: 52,
-    governance: 50,
-    appropriateness: 53,
-    workflow: 56,
-    data_interpretation: 50,
+    ai_interaction:         55,
+    ai_output_evaluation:   55,
+    ai_workflow_design:     50,
+    workforce_ai_readiness: 45,
+    ai_ethics_trust:        50,
+    ai_change_leadership:   45,
   },
-  mid: {
-    execution: 65,
-    judgement: 63,
-    governance: 62,
-    appropriateness: 64,
-    workflow: 66,
-    data_interpretation: 60,
-  },
+  mid: DEFAULT_BENCHMARK,
   senior: {
-    execution: 73,
-    judgement: 71,
-    governance: 70,
-    appropriateness: 72,
-    workflow: 74,
-    data_interpretation: 68,
-  },
-  lead: {
-    execution: 78,
-    judgement: 76,
-    governance: 76,
-    appropriateness: 77,
-    workflow: 79,
-    data_interpretation: 74,
+    ai_interaction:         72,
+    ai_output_evaluation:   72,
+    ai_workflow_design:     68,
+    workforce_ai_readiness: 65,
+    ai_ethics_trust:        70,
+    ai_change_leadership:   65,
   },
 };
 
-const DEFAULT_BENCHMARK = ROLE_BENCHMARKS.mid;
-
-// ─── Capability Metadata ──────────────────────────────────────────────────────
+// ─── Capability metadata ──────────────────────────────────────────────────────
 const CAPABILITY_META: Record<CapabilityKey, { label: string; description: string; improvementTip: string }> = {
-  execution: {
-    label: "AI Task Execution",
-    description: "Ability to effectively use AI tools to complete HR tasks, including prompt crafting, output evaluation, and iterative refinement.",
-    improvementTip: "Practice structured prompting techniques and build a personal library of effective HR prompts.",
+  ai_interaction: {
+    label: "AI Interaction",
+    description: "Skill in constructing effective prompts, iterating on AI outputs, directing AI tools purposefully, and demonstrating fluency across different AI platforms.",
+    improvementTip: "Practise structured prompting techniques — start with clear context, specify the format you need, and iterate systematically rather than accepting the first output.",
   },
-  judgement: {
-    label: "AI Judgement & Critical Thinking",
-    description: "Capacity to critically evaluate AI outputs, identify hallucinations, biases, and errors before acting on AI-generated content.",
-    improvementTip: "Develop a systematic verification checklist for AI outputs and practice spotting common failure patterns.",
+  ai_output_evaluation: {
+    label: "AI Output Evaluation",
+    description: "Ability to critically evaluate AI-generated content for quality, accuracy, fitness for purpose, and potential biases — including detecting hallucinations and blind acceptance patterns.",
+    improvementTip: "Before acting on any AI output, apply a 3-point check: Is it factually accurate? Is it fit for this specific purpose? Could it contain hidden bias or hallucinated content?",
   },
-  governance: {
-    label: "AI Governance & Compliance",
-    description: "Understanding of organisational AI policies, data protection requirements, and ethical frameworks for responsible AI use in HR.",
-    improvementTip: "Review your organisation's AI policy and GDPR obligations; map each AI tool you use to its data handling requirements.",
+  ai_workflow_design: {
+    label: "AI Workflow Design",
+    description: "Proficiency in redesigning HR workflows to incorporate AI effectively, designing appropriate human-AI handoff points, and preserving human oversight where it matters most.",
+    improvementTip: "Map your top 5 most time-consuming HR processes and identify which steps could be AI-assisted — then design explicit handoff points where human review is non-negotiable.",
   },
-  appropriateness: {
-    label: "AI Appropriateness Assessment",
-    description: "Skill in determining when AI assistance is appropriate versus when human judgement must take precedence, especially in sensitive HR contexts.",
-    improvementTip: "Build a decision framework for AI vs. human tasks, particularly for sensitive cases involving employee welfare.",
+  workforce_ai_readiness: {
+    label: "Workforce AI Readiness",
+    description: "Capability in diagnosing team and organisational AI readiness, designing targeted interventions, advising leaders on AI adoption, and avoiding generic one-size-fits-all prescriptions.",
+    improvementTip: "Conduct a skills audit of your team's current AI capabilities — identify specific gaps rather than assuming everyone needs the same training.",
   },
-  workflow: {
-    label: "AI Workflow Integration",
-    description: "Proficiency in integrating AI tools into existing HR workflows, automating repetitive tasks, and designing AI-augmented processes.",
-    improvementTip: "Map your top 5 most time-consuming HR tasks and identify which steps could be AI-assisted without compromising quality.",
+  ai_ethics_trust: {
+    label: "AI Ethics & Employee Trust",
+    description: "Skill in navigating ethical dilemmas involving AI in HR, maintaining employee trust and transparency, distinguishing legal compliance from genuine fairness, and resisting pressure to compromise ethical standards.",
+    improvementTip: "Review your organisation's AI policy through the lens of employee trust — would your team feel comfortable if they knew exactly how AI was being used in decisions that affect them?",
   },
-  data_interpretation: {
-    label: "AI Data & Insight Interpretation",
-    description: "Ability to interpret AI-generated analytics, workforce insights, and predictive models to inform HR strategy and decisions.",
-    improvementTip: "Practice reading AI-generated workforce reports critically — always ask what data was used and what assumptions were made.",
+  ai_change_leadership: {
+    label: "AI Change Leadership",
+    description: "Ability to lead AI adoption initiatives, respond constructively to resistance, recognise legitimate concerns versus fear-based objections, and calibrate the pace of change to organisational readiness.",
+    improvementTip: "When facing resistance to AI adoption, listen first — distinguish between legitimate concerns about job quality and fear-based objections, then address each differently.",
   },
+};
+
+// ─── Capability weights for overall readiness score ───────────────────────────
+const CAPABILITY_WEIGHTS: Record<CapabilityKey, number> = {
+  ai_interaction:         0.18,
+  ai_output_evaluation:   0.18,
+  ai_workflow_design:     0.17,
+  workforce_ai_readiness: 0.16,
+  ai_ethics_trust:        0.16,
+  ai_change_leadership:   0.15,
 };
 
 // ─── Core Engine ──────────────────────────────────────────────────────────────
-
 export function computeGapAnalysis(
   capabilityScores: Partial<Record<CapabilityKey, number>>,
   seniorityTier: string = "mid"
 ): GapAnalysisResult {
   const benchmarks = ROLE_BENCHMARKS[seniorityTier] ?? DEFAULT_BENCHMARK;
-  const allCapabilities: CapabilityKey[] = [
-    "execution", "judgement", "governance", "appropriateness", "workflow", "data_interpretation"
-  ];
 
   const capabilityGaps: Record<CapabilityKey, CapabilityGap> = {} as any;
-
-  for (const cap of allCapabilities) {
+  for (const cap of ALL_CAPABILITIES) {
     const score = capabilityScores[cap] ?? 50;
     const benchmark = benchmarks[cap];
     const gap = benchmark - score;
@@ -156,7 +170,7 @@ export function computeGapAnalysis(
       benchmark,
       gap,
       severity,
-      priority: 0, // assigned below
+      priority: 0,
       label: meta.label,
       description: meta.description,
       improvementTip: meta.improvementTip,
@@ -165,35 +179,24 @@ export function computeGapAnalysis(
 
   // Priority order: critical first (by gap size), then developing, then proficient, then advanced
   const severityOrder: Record<GapSeverity, number> = {
-    critical: 0, developing: 1, proficient: 2, advanced: 3
+    critical: 0, developing: 1, proficient: 2, advanced: 3,
   };
-
-  const priorityOrder = allCapabilities.sort((a, b) => {
+  const priorityOrder = [...ALL_CAPABILITIES].sort((a, b) => {
     const gA = capabilityGaps[a];
     const gB = capabilityGaps[b];
     const sevDiff = severityOrder[gA.severity] - severityOrder[gB.severity];
     if (sevDiff !== 0) return sevDiff;
-    return gB.gap - gA.gap; // larger gap = higher priority within same severity
+    return gB.gap - gA.gap;
   }) as CapabilityKey[];
 
-  // Assign priority numbers
   priorityOrder.forEach((cap, i) => {
     capabilityGaps[cap].priority = i + 1;
   });
 
-  // Overall readiness score = weighted average of capability scores
-  const weights: Record<CapabilityKey, number> = {
-    execution: 0.20,
-    judgement: 0.20,
-    governance: 0.15,
-    appropriateness: 0.15,
-    workflow: 0.15,
-    data_interpretation: 0.15,
-  };
-
+  // Overall readiness score = weighted average
   let overallReadinessScore = 0;
-  for (const cap of allCapabilities) {
-    overallReadinessScore += (capabilityScores[cap] ?? 50) * weights[cap];
+  for (const cap of ALL_CAPABILITIES) {
+    overallReadinessScore += (capabilityScores[cap] ?? 50) * CAPABILITY_WEIGHTS[cap];
   }
   overallReadinessScore = Math.round(overallReadinessScore * 10) / 10;
 
@@ -204,13 +207,12 @@ export function computeGapAnalysis(
   else if (overallReadinessScore < 78) readinessBand = "proficient";
   else readinessBand = "advanced";
 
-  const criticalCount = allCapabilities.filter(c => capabilityGaps[c].severity === "critical").length;
-  const developingCount = allCapabilities.filter(c => capabilityGaps[c].severity === "developing").length;
-  const proficientCount = allCapabilities.filter(c => capabilityGaps[c].severity === "proficient").length;
-  const advancedCount = allCapabilities.filter(c => capabilityGaps[c].severity === "advanced").length;
+  const criticalCount = ALL_CAPABILITIES.filter(c => capabilityGaps[c].severity === "critical").length;
+  const developingCount = ALL_CAPABILITIES.filter(c => capabilityGaps[c].severity === "developing").length;
+  const proficientCount = ALL_CAPABILITIES.filter(c => capabilityGaps[c].severity === "proficient").length;
+  const advancedCount = ALL_CAPABILITIES.filter(c => capabilityGaps[c].severity === "advanced").length;
 
   const topGap = capabilityGaps[priorityOrder[0]] ?? null;
-
   const recommendedFocusAreas = priorityOrder
     .filter(c => ["critical", "developing"].includes(capabilityGaps[c].severity))
     .slice(0, 3)
