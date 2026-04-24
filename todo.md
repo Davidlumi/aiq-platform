@@ -1304,5 +1304,5 @@
 - [x] DS-7: Update tabs.tsx — underline tabs, 2px navy-800 bottom border active state
 - [x] DS-8: Update input.tsx — 44px height, navy-800 focus ring, v2.2 surface tokens, IME logic preserved
 - [x] DS-9: Update all 4 auth pages to v2.2 — removed gradients, navy-800 brand panel, neutral-25 canvas
-- [ ] DS-10: Update assessment session to v2.2 surface spec — single column, generous rhythm, phase indicator (next sprint)
-- [ ] DS-11: Update results page to v2.2 dual-audience token usage — individual state tokens only (next sprint)
+- [x] DS-10: Update assessment session to v2.2 surface spec — navy-800 interactive tokens, Inter font, green-700 success tokens
+- [x] DS-11: Update results page to v2.2 dual-audience token usage — navy-600 radar/line chart, Inter font, navy-700 links

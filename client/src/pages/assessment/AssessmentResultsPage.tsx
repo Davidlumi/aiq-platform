@@ -186,11 +186,11 @@ function RadarCapabilityChart({
           <Radar
             name="Score"
             dataKey="score"
-            stroke="#10B981"
-            fill="#10B981"
-            fillOpacity={0.15}
+            stroke="var(--navy-600)"
+            fill="var(--navy-600)"
+            fillOpacity={0.12}
             strokeWidth={2}
-            dot={{ r: 4, fill: "#10B981", strokeWidth: 0 }}
+            dot={{ r: 4, fill: "var(--navy-600)", strokeWidth: 0 }}
           />
         </RadarChart>
       </ResponsiveContainer>
@@ -243,7 +243,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[#10B981]" />
+          <TrendingUp className="w-4 h-4" style={{ color: "var(--navy-600)" }} />
           Progress Over Time
         </CardTitle>
         <div className="flex items-center gap-4 flex-wrap mt-1">
@@ -286,7 +286,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="#10B981"
+                stroke="var(--navy-600)"
                 strokeWidth={2}
                 dot={<ReadinessDot />}
                 activeDot={{ r: 8 }}
@@ -323,7 +323,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold font-sora" style={{ color }}>{score}</span>
+        <span className="text-3xl font-bold" style={{ color }}>{score}</span>
         <span className="text-xs text-muted-foreground">/ 100</span>
       </div>
     </div>
@@ -695,7 +695,7 @@ export default function AssessmentResultsPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground font-sora">Assessment Results</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Assessment results</h1>
           <p className="text-sm text-muted-foreground mt-1">
           AiQ Adaptive Assessment · Completed {completedAt}
         </p>
@@ -703,7 +703,7 @@ export default function AssessmentResultsPage() {
 
       {/* ── Three-Layer Tabs ── */}
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
+        <TabsList className="mb-6">
           <TabsTrigger value="summary" className="gap-1.5 text-xs">
             <Target className="w-3.5 h-3.5" />
             Summary
@@ -756,7 +756,7 @@ export default function AssessmentResultsPage() {
                       Readiness State
                     </span>
                   </div>
-                  <h2 className={cn("text-2xl font-bold font-sora", stateConfig.color)}>
+                  <h2 className={cn("text-2xl font-semibold", stateConfig.color)}>
                     {stateConfig.label}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
@@ -785,7 +785,7 @@ export default function AssessmentResultsPage() {
                     {/* P15: ExplanationDrawer - score transparency */}
                     <ExplanationDrawer
                       trigger={
-                        <button className="text-xs text-[#10B981] underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity">
+                        <button className="text-xs underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity" style={{ color: "var(--navy-700)" }}>
                           <Info className="w-3 h-3" />
                           How is this calculated?
                         </button>

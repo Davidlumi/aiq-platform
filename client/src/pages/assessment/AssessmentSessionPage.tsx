@@ -441,8 +441,9 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
       <Card className="border-border shadow-sm">
         <CardContent className="p-6 space-y-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#10B981]/8 border border-[#10B981]/20 flex items-center justify-center shrink-0">
-              <Loader2 className="w-4 h-4 text-[#10B981] animate-spin" />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: "var(--navy-50)", border: "1px solid var(--navy-100)" }}>
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--navy-700)" }} />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
@@ -455,15 +456,15 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
                 key={i}
                 className={cn(
                   "flex items-center gap-2.5 text-xs transition-all duration-500",
-                  i < activeStep ? "text-[#228833]" :
+                  i < activeStep ? "" :
                   i === activeStep ? "text-foreground" :
                   "text-muted-foreground/40"
                 )}
               >
                 {i < activeStep ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#228833]" />
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--green-700)" }} />
                 ) : i === activeStep ? (
-                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-[#10B981]" />
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "var(--navy-700)" }} />
                 ) : (
                   <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
                 )}
@@ -507,10 +508,11 @@ function CompletionScreen({
   return (
     <div className="p-6 space-y-5 max-w-2xl">
       <div className="text-center py-5">
-        <div className="w-16 h-16 rounded-full bg-[#10B981]/8 border-2 border-[#10B981]/20 flex items-center justify-center mx-auto mb-3">
-          <CheckCircle2 className="w-8 h-8 text-[#10B981]" />
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+          style={{ background: "var(--green-50)", border: "2px solid var(--green-100)" }}>
+          <CheckCircle2 className="w-8 h-8" style={{ color: "var(--green-700)" }} />
         </div>
-        <h1 className="text-xl font-bold text-foreground font-sora">Assessment Complete</h1>
+        <h1 className="text-xl font-semibold text-foreground">Assessment complete</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">
           Your capability profile has been updated. View your full results below.
         </p>
@@ -570,9 +572,9 @@ function CompletionScreen({
       <div className="space-y-2">
         <Button
           onClick={() => onNavigate(`/assessment/${sessionId}/results`)}
-          className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
-        >
-          View Full Results <ChevronRight className="w-4 h-4" />
+className="w-full gap-2"
+          >
+          View full results <ChevronRight className="w-4 h-4" />
         </Button>
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => onNavigate("/learning")} variant="outline" className="text-sm">
@@ -839,19 +841,19 @@ export default function AssessmentSessionPage() {
       return (
         <div className="p-6 space-y-6 max-w-2xl">
           <div className="text-center py-8">
-            <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-foreground font-sora">You've answered all {answeredCount} questions</h2>
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--green-700)" }} />
+            <h2 className="text-xl font-semibold text-foreground">You've answered all {answeredCount} questions</h2>
             <p className="text-muted-foreground mt-2 text-sm max-w-sm mx-auto leading-relaxed">
               The engine is ready to compute your capability profile across all six domains. This takes a few seconds.
             </p>
             <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#228833]" /> {answeredCount} responses recorded</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-[#228833]" /> 6 capability domains</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--green-700)" }} /> {answeredCount} responses recorded</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--green-700)" }} /> 6 capability domains</span>
             </div>
             <Button
               onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
               disabled={completeMutation.isPending}
-              className="mt-6 bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 min-w-[200px]"
+              className="mt-6 gap-2 min-w-[200px]"
             >
               {completeMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Calculating scores…</>
@@ -883,7 +885,8 @@ export default function AssessmentSessionPage() {
             </span>
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5"
+              className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
+              style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -896,9 +899,9 @@ export default function AssessmentSessionPage() {
             {/* Pulsing analysis indicator */}
             <div className="flex items-center gap-3 px-3 py-3 rounded-lg border border-border bg-muted/20">
               <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#10B981] opacity-20" />
-                <span className="relative inline-flex h-5 w-5 rounded-full bg-[#10B981]/30 items-center justify-center">
-                  <Bot className="w-3 h-3 text-[#10B981]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-20" style={{ background: "var(--navy-700)" }} />
+                <span className="relative inline-flex h-5 w-5 rounded-full items-center justify-center" style={{ background: "var(--navy-100)" }}>
+                  <Bot className="w-3 h-3" style={{ color: "var(--navy-700)" }} />
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -958,7 +961,8 @@ export default function AssessmentSessionPage() {
             </span>
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5"
+              className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
+              style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -1042,9 +1046,9 @@ export default function AssessmentSessionPage() {
                     completeMutation.mutate({ sessionId: sessionId! });
                   }}
                   disabled={completeMutation.isPending}
-                  className="w-full bg-[#228833] hover:bg-[#228833]/90 text-white gap-2"
+                  className="w-full gap-2"
                 >
-                  {completeMutation.isPending ? "Calculating scores…" : "Complete Assessment"}
+                  {completeMutation.isPending ? "Calculating scores…" : "Complete assessment"}
                   {!completeMutation.isPending && <CheckCircle2 className="w-4 h-4" />}
                 </Button>
               ) : (
@@ -1060,7 +1064,7 @@ export default function AssessmentSessionPage() {
                     setRevisionCount(0); // B1: reset per-item counters
                     setFocusLossCount(0);
                   }}
-                  className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+                  className="w-full gap-2"
                 >
                   Continue <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -1109,7 +1113,8 @@ export default function AssessmentSessionPage() {
           {/* Save & Exit — always visible so users know they can leave safely */}
           <button
             onClick={() => setShowLeaveDialog(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:text-[#10B981]/80 border border-[#10B981]/30 hover:border-[#10B981]/60 rounded-md px-2.5 py-1 transition-colors bg-[#10B981]/5 hover:bg-[#10B981]/10"
+            className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
+            style={{ color: "var(--navy-800)", borderColor: "var(--navy-200)", background: "var(--neutral-50)" }}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Save &amp; Exit
@@ -1219,7 +1224,7 @@ export default function AssessmentSessionPage() {
 
           {/* Title */}
           {(nextItem as any).title && (
-            <h2 className="text-base font-bold text-foreground font-sora leading-snug">
+            <h2 className="text-base font-semibold text-foreground leading-snug">
               {(nextItem as any).title}
             </h2>
           )}
@@ -1322,15 +1327,15 @@ export default function AssessmentSessionPage() {
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value
-                      ? "border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]/20"
-                      : "border-border hover:border-[#10B981]/40 hover:bg-muted/30"
+                      ? "border-[var(--navy-800)] bg-[var(--navy-50)] ring-1 ring-[var(--navy-800)]/20"
+                      : "border-border hover:border-[var(--navy-400)] hover:bg-muted/30"
                   )}
                 >
                   <span
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-[#10B981] bg-[#10B981] text-white"
+                        ? "border-[var(--navy-800)] bg-[var(--navy-800)] text-white"
                         : "border-border text-muted-foreground"
                     )}
                   >
@@ -1387,7 +1392,7 @@ export default function AssessmentSessionPage() {
                 const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
                   guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#EE6677" },
                   fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#EE8866" },
-                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "#10B981" },
+                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--green-700)" },
                 };
                 const { label, desc, weight, color } = labels[stake];
                 return (
@@ -1414,14 +1419,14 @@ export default function AssessmentSessionPage() {
           <Button
             onClick={handleSubmit}
             disabled={submitMutation.isPending || !selectedValue || (nextItem.reasoningRequired && reasoningText.trim().length < 40)}
-            className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+            className="w-full gap-2"
           >
             {submitMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Saving…
               </>
-            ) : answeredCount + 1 === totalItems ? "Submit Final Answer" : "Next Question"}
+            ) : answeredCount + 1 === totalItems ? "Submit final answer" : "Next question"}
             {!submitMutation.isPending && <ChevronRight className="w-4 h-4" />}
           </Button>
         </CardContent>
