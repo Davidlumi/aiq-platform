@@ -916,8 +916,8 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const member = await db.select().from(users).where(eq(users.email, input.memberEmail)).limit(1);
-      if (!member[0]) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const member = await db.select().from(users).where(and(eq(users.email, input.memberEmail), eq(users.tenantId, ctx.user.tenantId))).limit(1);
+      if (!member[0]) throw new TRPCError({ code: "NOT_FOUND", message: "User not found in your organisation" });
       if (member[0].id === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot add yourself" });
 
       const existing = await db.select().from(managerTeamMembers)

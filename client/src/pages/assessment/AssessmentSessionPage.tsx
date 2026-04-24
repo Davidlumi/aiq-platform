@@ -228,7 +228,7 @@ function DataContextBlock({ content }: { content: string }) {
 
 // ─── Artefact Block (Immersive Scenario Rendering) ─────────────────────────────
 
-type ArtefactType = "email_thread" | "cv_extract" | "policy_doc" | "meeting_notes" | "chat_log" | "data_table" | "none";
+type ArtefactType = "email_thread" | "cv_extract" | "policy_doc" | "meeting_notes" | "chat_log" | "data_table" | "dashboard_card" | "screening_output" | "alert" | "document_excerpt" | "none";
 
 function ArtefactBlock({ content, artefactType }: { content: string; artefactType: ArtefactType }) {
   const configs: Record<ArtefactType, { label: string; sublabel: string; borderColor: string; bgColor: string; labelColor: string; headerBg: string }> = {
@@ -279,6 +279,38 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
       bgColor: "bg-rose-500/4",
       labelColor: "text-rose-400",
       headerBg: "bg-rose-500/10",
+    },
+    dashboard_card: {
+      label: "Analytics Dashboard",
+      sublabel: "Review the AI-generated insight",
+      borderColor: "border-indigo-500/30",
+      bgColor: "bg-indigo-500/4",
+      labelColor: "text-indigo-400",
+      headerBg: "bg-indigo-500/10",
+    },
+    screening_output: {
+      label: "AI Screening Output",
+      sublabel: "Review the automated screening result",
+      borderColor: "border-orange-500/30",
+      bgColor: "bg-orange-500/4",
+      labelColor: "text-orange-400",
+      headerBg: "bg-orange-500/10",
+    },
+    alert: {
+      label: "System Alert",
+      sublabel: "Review the automated alert",
+      borderColor: "border-red-500/30",
+      bgColor: "bg-red-500/4",
+      labelColor: "text-red-400",
+      headerBg: "bg-red-500/10",
+    },
+    document_excerpt: {
+      label: "Document Excerpt",
+      sublabel: "Review the extract",
+      borderColor: "border-slate-500/30",
+      bgColor: "bg-slate-500/4",
+      labelColor: "text-slate-400",
+      headerBg: "bg-slate-500/10",
     },
     none: {
       label: "Context",
@@ -1311,28 +1343,36 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* C2.1: Optional reasoning capture — shown for all output-facing types */}
-          {["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType) && (
+          {/* C2.1 / S4.3: Reasoning capture — required for high-signal items, optional for others */}
+          {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Explain your thinking <span className="font-normal normal-case">(optional)</span>
+                <Label className={cn("text-xs font-semibold uppercase tracking-wider", nextItem.reasoningRequired ? "text-foreground" : "text-muted-foreground")}>
+                  Explain your thinking
+                  {nextItem.reasoningRequired ? (
+                    <span className="ml-1 text-red-500">*</span>
+                  ) : (
+                    <span className="font-normal normal-case text-muted-foreground"> (optional)</span>
+                  )}
                 </Label>
                 <span className={cn(
                   "text-xs tabular-nums",
-                  reasoningText.length > 1800 ? "text-amber-500" : "text-muted-foreground"
+                  reasoningText.length > 1800 ? "text-amber-500" : nextItem.reasoningRequired && reasoningText.trim().length < 40 ? "text-red-400" : "text-muted-foreground"
                 )}>
-                  {reasoningText.length}/2000
+                  {nextItem.reasoningRequired ? `${reasoningText.trim().length}/40 min` : `${reasoningText.length}/2000`}
                 </span>
               </div>
               <Textarea
                 value={reasoningText}
                 onChange={e => setReasoningText(e.target.value)}
                 maxLength={2000}
-                rows={3}
-                placeholder="What factors shaped your decision? What would you want to verify or challenge?"
-                className="text-sm resize-none"
+                rows={nextItem.reasoningRequired ? 4 : 3}
+                placeholder={nextItem.reasoningRequired ? "Required: explain your reasoning (at least 40 characters). What factors shaped your decision?" : "What factors shaped your decision? What would you want to verify or challenge?"}
+                className={cn("text-sm resize-none", nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 ? "border-red-400" : "")}
               />
+              {nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 && (
+                <p className="text-xs text-red-400">{40 - reasoningText.trim().length} more characters needed</p>
+              )}
             </div>
           )}
 
@@ -1373,7 +1413,7 @@ export default function AssessmentSessionPage() {
 
           <Button
             onClick={handleSubmit}
-            disabled={submitMutation.isPending || !selectedValue}
+            disabled={submitMutation.isPending || !selectedValue || (nextItem.reasoningRequired && reasoningText.trim().length < 40)}
             className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
           >
             {submitMutation.isPending ? (

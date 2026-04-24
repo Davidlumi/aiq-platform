@@ -21,6 +21,14 @@ import {
 import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { hashPassword, generateResetToken } from "../auth";
+import {
+  isOutcomeConditionalAntiGamingEnabled,
+  isValidationPhaseRandomised,
+  isLlmCheckerEnabled,
+  isSaveAndResumeEnabled,
+  isPersonaAdaptationEnabled,
+  isPersonaLabelSofteningEnabled,
+} from "../assessment/featureFlags";
 
 // ─── Guard: super_admin only ──────────────────────────────────────────────────
 async function assertSuperAdmin(userId: string, tenantId: string, db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
@@ -820,6 +828,63 @@ export const backofficeRouter = router({
       await db.delete(tenants).where(eq(tenants.id, input.tenantId));
       return { success: true };
     }),
+
+  // ── Feature Flags (TD-3) ───────────────────────────────────────────────
+  getFeatureFlags: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+    return [
+      {
+        key: "LLM_CHECKER_ENABLED",
+        label: "LLM Quality Gate",
+        description: "AI-generated assessment items are passed through a multi-check quality gate before serving to participants.",
+        defaultOn: true,
+        enabled: isLlmCheckerEnabled(),
+        category: "quality",
+      },
+      {
+        key: "ANTI_GAMING_OUTCOME_CONDITIONAL",
+        label: "Outcome-Conditional Anti-Gaming",
+        description: "Stricter scrutiny for answer sequences that are suspiciously consistent with a single outcome class.",
+        defaultOn: true,
+        enabled: isOutcomeConditionalAntiGamingEnabled(),
+        category: "integrity",
+      },
+      {
+        key: "SAVE_AND_RESUME_ENABLED",
+        label: "Save and Resume",
+        description: "Participants can pause an in-progress assessment and resume within the 48-hour window.",
+        defaultOn: true,
+        enabled: isSaveAndResumeEnabled(),
+        category: "ux",
+      },
+      {
+        key: "VALIDATION_PHASE_ORDER_RANDOMISED",
+        label: "Validation Phase Randomisation",
+        description: "Validation-phase items are interleaved with adaptive items to reduce order effects and recency bias.",
+        defaultOn: false,
+        enabled: isValidationPhaseRandomised(),
+        category: "assessment",
+      },
+      {
+        key: "PERSONA_ADAPTATION_ENABLED",
+        label: "AIL Persona Adaptation",
+        description: "Assessment difficulty adapts based on detected participant persona patterns (requires 3+ prior sessions).",
+        defaultOn: false,
+        enabled: isPersonaAdaptationEnabled(),
+        category: "assessment",
+      },
+      {
+        key: "PERSONA_LABEL_SOFTENING_ENABLED",
+        label: "Persona Label Softening",
+        description: "Raw persona classification keys are replaced with participant-appropriate labels in all user-facing surfaces.",
+        defaultOn: true,
+        enabled: isPersonaLabelSofteningEnabled(),
+        category: "ux",
+      },
+    ];
+  }),
 
   // ── Platform stats ──────────────────────────────────────────────────
   stats: protectedProcedure.query(async ({ ctx }) => {

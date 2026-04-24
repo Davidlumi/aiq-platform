@@ -128,6 +128,8 @@ type NextItem = {
   dataContext?: string;
   /** Immersive artefact type for rich rendering */
   artefactType?: string;
+  /** S4: Whether reasoning text is required (>=40 chars) before submit */
+  reasoningRequired: boolean;
   capability: string;
   capabilityKey: string;
   workflow: string;
@@ -306,6 +308,8 @@ async function persistAndBuildNextItem(
     aiOutput: generated.aiOutput,
     dataContext: generated.dataContext,
     artefactType: generated.artefactType,
+    // S4.2: reasoning required for high/critical risk items and governance/risk judgement types
+    reasoningRequired: generated.riskLevel === "High" || ["governance_decision", "risk_judgement", "ethical_dilemma", "scenario_critique"].includes(generated.interactionType),
     capability: CAPABILITY_DISPLAY[generated.capabilityKey] ?? generated.capabilityKey,
     capabilityKey: generated.capabilityKey,
     workflow: generated.workflow,
@@ -509,6 +513,8 @@ async function getEmergencyFallbackItem(
     primarySignal: (meta.primary_signal as string) ?? "",
     displayOrder: (meta.display_order as number) ?? answeredCount + 1,
     isGenerated: false,
+    // S4.2: reasoning required for high/critical risk items and governance/risk judgement types
+    reasoningRequired: ((meta.risk_level as string) ?? "Medium") === "High" || ((meta.risk_level as string) ?? "Medium") === "Critical" || ["governance_decision", "risk_judgement", "ethical_dilemma", "scenario_critique"].includes((meta.interaction_type as string) ?? ""),
     options: options.map(({ isCorrect: _ic, scoreWeight: _sw, signalDeltasJson: _sd, eventCodesJson: _ec, outcomeClass: _oc, ...o }) => o),
   };
 }
@@ -536,8 +542,9 @@ export const assessmentRouter = router({
       .where(eq(assessmentBlueprints.status, "published"))
       .orderBy(desc(assessmentBlueprints.createdAt))
       .limit(5);
+    const v10 = bps.find(b => b.key === "aiq_v10_standard");
     const v9 = bps.find(b => b.key === "aiq_v9_standard");
-    const bp = v9 ?? bps[0] ?? null;
+    const bp = v10 ?? v9 ?? bps[0] ?? null;
     if (!bp) return null;
     const items = await db
       .select({ id: assessmentItems.id })
@@ -1078,6 +1085,20 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active session not found" });
+      // S4.4: Validate reasoning_required items — reject if reasoning_text < 40 chars
+      if (input.itemId) {
+        const itemRow = await db
+          .select({ reasoningRequired: assessmentItems.reasoningRequired })
+          .from(assessmentItems)
+          .where(eq(assessmentItems.id, input.itemId))
+          .limit(1);
+        if (itemRow[0]?.reasoningRequired && (!input.reasoningText || input.reasoningText.trim().length < 40)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This item requires a reasoning explanation of at least 40 characters before you can submit.",
+          });
+        }
+      }
       // D1: Load active scoring config for configurable evidence thresholds
       const activeScoringCfg = await getActiveScoringConfig();
 
@@ -1471,6 +1492,7 @@ Assessment results:
 - Over-reliance risk: ${results.failureModes.modes.includes("over_reliance") ? "Yes" : "No"}
 - C2: All failure modes detected: ${results.failureModes.modes.length > 0 ? results.failureModes.modes.join(", ") : "None"}
 - C2: Gaming scrutiny level: ${results.gamingAnalysis.scrutinyLevel}
+${results.readiness.governingConstraint ? `- S3.4: Governing constraint: ${String((results.readiness.governingConstraint as any).capability).replace(/_/g, " ")} (score ${Math.round(Number((results.readiness.governingConstraint as any).score))}, threshold ${Math.round(Number((results.readiness.governingConstraint as any).thresholdRequired))}, gap ${Math.round(Number((results.readiness.governingConstraint as any).gap))} points) — this drove the classification` : "- S3.4: No single governing constraint (safe classification)"}
 ${priorCapabilityScoresForNarrative ? `- C1: Prior session capability scores: ${Object.entries(priorCapabilityScoresForNarrative).map(([k, v]) => `${k}: ${Math.round(v as number)}/100`).join(", ")}` : "- C1: First assessment (no prior scores available)"}
 
 Paragraph 1 (Strengths): What this person does well in their AI capability profile. Reference specific capabilities and any improvements since their last assessment if prior scores are available.

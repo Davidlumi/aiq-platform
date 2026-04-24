@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import { rateLimit } from "express-rate-limit";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
@@ -34,6 +35,30 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Rate limiting on auth/OAuth endpoints (TD-1)
+  // 20 requests per 15 minutes per IP — prevents brute-force and credential stuffing
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many authentication requests, please try again later." },
+    skip: () => process.env.NODE_ENV === "test",
+  });
+  app.use("/api/oauth", authLimiter);
+
+  // General API rate limit — 300 requests per 5 minutes per IP
+  const apiLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please try again later." },
+    skip: () => process.env.NODE_ENV === "test",
+  });
+  app.use("/api/trpc", apiLimiter);
+
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   // tRPC API
