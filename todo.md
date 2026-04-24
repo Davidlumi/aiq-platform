@@ -1306,3 +1306,10 @@
 - [x] DS-9: Update all 4 auth pages to v2.2 — removed gradients, navy-800 brand panel, neutral-25 canvas
 - [x] DS-10: Update assessment session to v2.2 surface spec — navy-800 interactive tokens, Inter font, green-700 success tokens
 - [x] DS-11: Update results page to v2.2 dual-audience token usage — navy-600 radar/line chart, Inter font, navy-700 links
+
+## Acme Ltd Demo Org (50 HR Employees)
+- [ ] ACME-1: Design org structure — 50 HR employees, major HR roles, reporting lines, score distribution plan
+- [ ] ACME-2: Seed tenant (company code: acme), 50 users (password: manutd99), org hierarchy, personas
+- [ ] ACME-3: Seed completed assessment sessions with realistic score distributions for all 50 users
+- [ ] ACME-4: Verify CPO/CHRO view, Manager view, and Individual view all show correct Acme Ltd data
+- [ ] ACME-5: Verify admin board shows Acme Ltd with all users listed
