@@ -227,26 +227,26 @@ const CAPABILITY_META: Record<string, { label: string; color: string; icon: Reac
   ai_interaction:       { label: "AI Interaction",         color: "#4477AA", icon: Zap },
   ai_output_evaluation: { label: "AI Output Evaluation",   color: "#228833", icon: Brain },
   ai_ethics_trust:      { label: "AI Ethics & Trust",      color: "#AA3377", icon: Target },
-  ai_change_leadership: { label: "AI Change Leadership",   color: "#D97706", icon: Lightbulb },
-  ai_workflow_design:   { label: "AI Workflow Design",     color: "#3b82f6", icon: Layers },
-  workflow:             { label: "Workflow Integration",   color: "#3b82f6", icon: Layers },
-  data_interpretation:  { label: "Data Interpretation",    color: "#8b5cf6", icon: BarChart3 },
-  appropriateness:      { label: "AI Appropriateness",     color: "#059669", icon: Target },
-  execution:            { label: "AI Execution",           color: "#dc2626", icon: Zap },
-  judgement:            { label: "AI Judgement",           color: "#7c3aed", icon: Brain },
-  governance:           { label: "AI Governance",          color: "#0891b2", icon: ListChecks },
-  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#b45309", icon: Users },
+  ai_change_leadership: { label: "AI Change Leadership",   color: "#EE8866", icon: Lightbulb },
+  ai_workflow_design:   { label: "AI Workflow Design",     color: "#228833", icon: Layers },
+  workflow:             { label: "Workflow Integration",   color: "#228833", icon: Layers },
+  data_interpretation:  { label: "Data Interpretation",    color: "#BBBBBB", icon: BarChart3 },
+  appropriateness:      { label: "AI Appropriateness",     color: "#228833", icon: Target },
+  execution:            { label: "AI Execution",           color: "#EE6677", icon: Zap },
+  judgement:            { label: "AI Judgement",           color: "#AA3377", icon: Brain },
+  governance:           { label: "AI Governance",          color: "#66CCEE", icon: ListChecks },
+  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#CCBB44", icon: Users },
 };
 
 const MODALITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  tutorial:   { label: "Tutorial",   color: "#6366f1", icon: BookOpen },
-  practical:  { label: "Practical",  color: "#10b981", icon: FlaskConical },
-  case_study: { label: "Case Study", color: "#f59e0b", icon: FileText },
-  quiz:       { label: "Quiz",       color: "#ec4899", icon: HelpCircle },
-  scenario:   { label: "Scenario",   color: "#8b5cf6", icon: Layers },
-  video:      { label: "Video",      color: "#ef4444", icon: Video },
-  reflection: { label: "Reflection", color: "#06b6d4", icon: MessageSquare },
-  coaching:   { label: "Coaching",   color: "#84cc16", icon: Users },
+  tutorial:   { label: "Tutorial",   color: "#4477AA", icon: BookOpen },
+  practical:  { label: "Practical",  color: "#228833", icon: FlaskConical },
+  case_study: { label: "Case Study", color: "#CCBB44", icon: FileText },
+  quiz:       { label: "Quiz",       color: "#AA3377", icon: HelpCircle },
+  scenario:   { label: "Scenario",   color: "#EE8866", icon: Layers },
+  video:      { label: "Video",      color: "#EE6677", icon: Video },
+  reflection: { label: "Reflection", color: "#66CCEE", icon: MessageSquare },
+  coaching:   { label: "Coaching",   color: "#228833", icon: Users },
 };
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ function IntroductionPanel({ intro }: { intro: any }) {
           <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Why This Matters</p>
-            <p className="text-sm text-slate-700 leading-relaxed">{intro.whyItMatters}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{intro.whyItMatters}</p>
           </div>
         </div>
       )}
@@ -276,7 +276,7 @@ function IntroductionPanel({ intro }: { intro: any }) {
             {intro.learningObjectives.map((obj: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-slate-700">{obj}</span>
+                <span className="text-foreground/80">{obj}</span>
               </li>
             ))}
           </ul>
@@ -298,27 +298,27 @@ function ConceptSection({ section, index, total }: { section: any; index: number
       {section.body && (
         <div className="space-y-3">
           {String(section.body).split("\n\n").map((para: string, i: number) => (
-            <p key={i} className="text-sm leading-relaxed text-slate-700">{para}</p>
+            <p key={i} className="text-sm leading-relaxed text-foreground/80">{para}</p>
           ))}
         </div>
       )}
       {section.keyPoints && section.keyPoints.length > 0 && (
-        <div className="p-4 rounded-xl bg-slate-50 border border-border">
+        <div className="p-4 rounded-xl bg-muted border border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Key Points</p>
           <ul className="space-y-2">
             {section.keyPoints.map((kp: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                <span className="text-slate-700">{kp}</span>
+                <span className="text-foreground/80">{kp}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
       {section.example && (
-        <div className="p-4 rounded-xl bg-slate-50 border-l-4 border-primary/60">
+        <div className="p-4 rounded-xl bg-muted border-l-4 border-primary/60">
           <p className="text-xs font-semibold text-primary mb-1.5">Real-World Example</p>
-          <p className="text-sm text-slate-700 leading-relaxed">{section.example}</p>
+          <p className="text-sm text-foreground/80 leading-relaxed">{section.example}</p>
         </div>
       )}
       {section.researchNote && (
@@ -354,27 +354,27 @@ function WorkedExamplePanel({ example }: { example: any }) {
           <div className="pt-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">The Scenario</p>
             {String(example.scenario ?? "").split("\n\n").map((p: string, i: number) => (
-              <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+              <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
             ))}
           </div>
           {example.analysis && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expert Analysis</p>
               {String(example.analysis).split("\n\n").map((p: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+                <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
             </div>
           )}
           {example.outcome && (
             <div className="p-3 rounded-lg bg-[#7A9E8E]/10 border border-[#7A9E8E]/20">
               <p className="text-xs font-semibold text-[#4A6E5E] mb-1">Outcome</p>
-              <p className="text-sm text-slate-700">{example.outcome}</p>
+              <p className="text-sm text-foreground/80">{example.outcome}</p>
             </div>
           )}
           {example.lessonLearned && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
               <p className="text-xs font-semibold text-primary mb-1">Lesson Learned</p>
-              <p className="text-sm text-slate-700 font-medium">{example.lessonLearned}</p>
+              <p className="text-sm text-foreground/80 font-medium">{example.lessonLearned}</p>
             </div>
           )}
         </div>
@@ -392,7 +392,7 @@ function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
         {takeaways.map((t: string, i: number) => (
           <li key={i} className="flex items-start gap-2.5 text-sm">
             <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-            <span className="text-slate-700 font-medium">{t}</span>
+            <span className="text-foreground/80 font-medium">{t}</span>
           </li>
         ))}
       </ul>
@@ -403,7 +403,7 @@ function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
 function FurtherReadingPanel({ items }: { items: any[] }) {
   if (!items || items.length === 0) return null;
   return (
-    <div className="p-4 rounded-xl bg-slate-50/70 border border-border">
+    <div className="p-4 rounded-xl bg-muted/40 border border-border">
       <div className="flex items-center gap-2 mb-3">
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Further Reading</p>
@@ -413,7 +413,7 @@ function FurtherReadingPanel({ items }: { items: any[] }) {
           <li key={i} className="space-y-0.5">
             <p className="text-xs font-semibold text-foreground">{item.title}</p>
             <p className="text-xs text-muted-foreground">{item.author} · {item.source} · {item.year}</p>
-            {item.relevance && <p className="text-xs text-slate-600 italic">{item.relevance}</p>}
+            {item.relevance && <p className="text-xs text-muted-foreground italic">{item.relevance}</p>}
           </li>
         ))}
       </ul>
@@ -488,7 +488,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
   if (normalisedSections.length === 0 && !intro) {
     return (
       <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-slate-50 border border-border">
+        <div className="p-4 rounded-xl bg-muted border border-border">
           <p className="text-sm text-muted-foreground">Module content is being prepared. Check back soon.</p>
         </div>
         <Button onClick={() => onComplete(80)} className="w-full gap-2">
@@ -501,7 +501,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
   return (
     <div className="space-y-6">
       {/* Phase tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
+      <div className="flex gap-1 p-1 rounded-xl bg-muted border border-border/50">
         {([
           { id: "intro", label: "Overview" },
           { id: "learn", label: "Learn" },
@@ -521,7 +521,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
         <div className="space-y-5">
           <IntroductionPanel intro={intro} />
           {normalisedSections.length > 0 && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-border">
+            <div className="p-3 rounded-xl bg-muted border border-border">
               <p className="text-xs font-semibold text-muted-foreground mb-2">In this module</p>
               <ul className="space-y-1">
                 {normalisedSections.map((s, i) => (
@@ -603,7 +603,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
                 i < quizIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === quizIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
-          <div className="p-4 rounded-xl bg-slate-50 border border-border">
+          <div className="p-4 rounded-xl bg-muted border border-border">
             <p className="font-semibold text-sm leading-relaxed">{currentQ?.question}</p>
           </div>
           <div className="space-y-2">
@@ -699,7 +699,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
         {sections.map((s: any, i: number) => (
           <div key={i} className="space-y-2">
             <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-            <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+            <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
           </div>
         ))}
         <KeyTakeawaysPanel takeaways={keyTakeaways} />
@@ -721,7 +721,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                   {(s.keyPoints ?? []).map((kp: string, j: number) => (
                     <div key={j} className="flex items-start gap-2 text-xs text-muted-foreground ml-3">
                       <span className="text-primary mt-0.5">›</span><span>{kp}</span>
@@ -749,7 +749,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
                 i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
-          <div className="p-4 rounded-xl bg-slate-50 border border-border">
+          <div className="p-4 rounded-xl bg-muted border border-border">
             <p className="font-semibold text-sm leading-relaxed">{q?.question}</p>
           </div>
           <div className="space-y-2">
@@ -846,7 +846,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
@@ -855,7 +855,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
             <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Exercise</p>
               <p className="text-sm font-semibold">{exercise.title}</p>
-              {exercise.context && <p className="text-sm text-slate-700">{exercise.context}</p>}
+              {exercise.context && <p className="text-sm text-foreground/80">{exercise.context}</p>}
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-muted-foreground">{steps.length} steps</span>
                 {exercise.successCriteria && (
@@ -890,21 +890,21 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
                   {step.title && step.title !== `Step ${stepIdx + 1}` && (
                     <h3 className="font-semibold text-sm mb-1">{step.title}</h3>
                   )}
-                  <p className="text-sm leading-relaxed text-slate-700">{step.instruction}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{step.instruction}</p>
                 </div>
               </div>
 
               {step.tip && (
                 <div className="p-3 rounded-xl bg-[#C8B07A]/10 border border-[#C8B07A]/30">
                   <p className="text-xs font-semibold text-[#8E7848] mb-1">Expert Tip</p>
-                  <p className="text-xs text-slate-700">{step.tip}</p>
+                  <p className="text-xs text-foreground/80">{step.tip}</p>
                 </div>
               )}
 
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5">Your Response</p>
                 <textarea
-                  className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50 transition-colors"
                   placeholder="Type your response here…"
                   value={responses[stepIdx] ?? ""}
                   onChange={e => setResponses(r => ({ ...r, [stepIdx]: e.target.value }))}
@@ -919,7 +919,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
               <p className="text-xs font-semibold text-[#4A6E5E] mb-2">Success Criteria</p>
               <ul className="space-y-1.5">
                 {exercise.successCriteria.map((c: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
                     <CheckCircle2 className="h-3.5 w-3.5 text-[#4A6E5E] mt-0.5 flex-shrink-0" />
                     {c}
                   </li>
@@ -933,7 +933,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
               <p className="text-xs font-semibold text-[#8E7848] mb-2">Common Mistakes to Avoid</p>
               <ul className="space-y-1.5">
                 {exercise.commonMistakes.map((m: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
                     <AlertCircle className="h-3.5 w-3.5 text-[#8E7848] mt-0.5 flex-shrink-0" />
                     {m}
                   </li>
@@ -993,7 +993,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
   return (
     <div className="space-y-6">
       {/* Phase tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
+      <div className="flex gap-1 p-1 rounded-xl bg-muted border border-border/50">
         {(["intro", "case", ...(choices.length > 0 ? ["decision"] : []), "insights"] as const).map(p => (
           <button key={p} className={cn("flex-1 py-1.5 px-2 rounded-lg text-xs font-medium capitalize transition-all",
             phase === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
@@ -1012,7 +1012,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
@@ -1029,7 +1029,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
             <div className="space-y-4">
               <h3 className="font-semibold text-sm">The Situation</h3>
               {String(scenario.situation ?? "").split("\n\n").map((p: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+                <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
               {scenario.yourRole && (
                 <div className="p-4 rounded-xl bg-muted/20 border border-border">
@@ -1038,9 +1038,9 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
                 </div>
               )}
               {scenario.stakeholders && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-border">
+                <div className="p-3 rounded-xl bg-muted border border-border">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">Key Stakeholders</p>
-                  <p className="text-sm text-slate-700">{scenario.stakeholders}</p>
+                  <p className="text-sm text-foreground/80">{scenario.stakeholders}</p>
                 </div>
               )}
             </div>
@@ -1049,7 +1049,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
             <div className="space-y-3">
               <h3 className="font-semibold text-sm">The Case</h3>
               {String(legacyNarrative).split("\n\n").map((p: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+                <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
             </div>
           )}
@@ -1063,7 +1063,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
                 <div key={i} className="space-y-2">
                   <p className="text-sm font-medium">{i + 1}. {q.question ?? q}</p>
                   <textarea
-                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                     placeholder="Your analysis…"
                     value={answers[i] ?? ""}
                     onChange={e => setAnswers(a => ({ ...a, [i]: e.target.value }))}
@@ -1116,7 +1116,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
             </div>
           )}
           {scenario?.bestPractice && chosen !== null && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-border">
+            <div className="p-4 rounded-xl bg-muted border border-border">
               <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
               <p className="text-sm">{scenario.bestPractice}</p>
             </div>
@@ -1169,7 +1169,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
   return (
     <div className="space-y-6">
       {/* Phase tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
+      <div className="flex gap-1 p-1 rounded-xl bg-muted border border-border/50">
         {(["intro", "situation", "decision", "outcome"] as const).map(p => (
           <button key={p} className={cn("flex-1 py-1.5 px-2 rounded-lg text-xs font-medium capitalize transition-all",
             phase === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
@@ -1187,7 +1187,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
@@ -1204,7 +1204,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
             <div className="space-y-3">
               <h3 className="font-semibold text-sm">The Situation</h3>
               {String(scenario?.situation ?? legacySituation ?? "").split("\n\n").map((p: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+                <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
             </div>
           )}
@@ -1215,9 +1215,9 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
             </div>
           )}
           {scenario?.stakeholders && (
-            <div className="p-3 rounded-xl bg-slate-50 border border-border">
+            <div className="p-3 rounded-xl bg-muted border border-border">
               <p className="text-xs font-semibold text-muted-foreground mb-1">Key Stakeholders</p>
-              <p className="text-sm text-slate-700">{scenario.stakeholders}</p>
+              <p className="text-sm text-foreground/80">{scenario.stakeholders}</p>
             </div>
           )}
           <Button className="w-full gap-1.5" onClick={() => setPhase("decision")}>
@@ -1270,7 +1270,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
             </div>
           )}
           {(scenario?.bestPractice ?? body?.bestPractice) && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-border">
+            <div className="p-4 rounded-xl bg-muted border border-border">
               <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
               <p className="text-sm">{scenario?.bestPractice ?? body?.bestPractice}</p>
             </div>
@@ -1324,7 +1324,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
@@ -1359,12 +1359,12 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
                 <p className="text-sm font-semibold leading-relaxed">{currentPrompt.prompt}</p>
               </div>
               {currentPrompt.guidance && (
-                <div className="ml-8 p-3 rounded-lg bg-slate-50 border border-border">
+                <div className="ml-8 p-3 rounded-lg bg-muted border border-border">
                   <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
                 </div>
               )}
               <textarea
-                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                 placeholder="Reflect here — there are no right or wrong answers…"
                 value={responses[promptIdx] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [promptIdx]: e.target.value }))}
@@ -1447,7 +1447,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
@@ -1482,7 +1482,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
               {framework.model} — {currentFrameworkPhase?.phase}
             </p>
-            <p className="text-sm text-slate-700">{currentFrameworkPhase?.purpose}</p>
+            <p className="text-sm text-foreground/80">{currentFrameworkPhase?.purpose}</p>
           </div>
           {currentFrameworkPhase?.questions && (
             <div className="space-y-3">
@@ -1493,7 +1493,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
                     <p className="text-sm font-medium">{q}</p>
                   </div>
                   <textarea
-                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                     placeholder="Your response…"
                     value={responses[`p${phaseIdx}_q${i}`] ?? ""}
                     onChange={e => setResponses(r => ({ ...r, [`p${phaseIdx}_q${i}`]: e.target.value }))}
@@ -1539,12 +1539,12 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
                 <p className="text-sm font-semibold leading-relaxed">{currentPrompt.prompt}</p>
               </div>
               {currentPrompt.guidance && (
-                <div className="ml-6 p-3 rounded-lg bg-slate-50 border border-border">
+                <div className="ml-6 p-3 rounded-lg bg-muted border border-border">
                   <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
                 </div>
               )}
               <textarea
-                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                 placeholder="Your response…"
                 value={responses[`q_${questionIdx}`] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [`q_${questionIdx}`]: e.target.value }))}
@@ -1613,7 +1613,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
       {phase === "watch" && (
         <div className="space-y-5">
           {/* Video placeholder */}
-          <div className="rounded-xl overflow-hidden bg-slate-50 border border-border aspect-video flex items-center justify-center">
+          <div className="rounded-xl overflow-hidden bg-muted border border-border aspect-video flex items-center justify-center">
             {body?.videoUrl ? (
               <iframe src={body.videoUrl} className="w-full h-full" allowFullScreen onLoad={() => setWatched(true)} />
             ) : (
@@ -1638,7 +1638,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
                 {intro.learningObjectives.map((obj: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-700">{obj}</span>
+                    <span className="text-foreground/80">{obj}</span>
                   </li>
                 ))}
               </ul>
@@ -1656,7 +1656,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
                 {sections.map((s: any, i: number) => (
                   <div key={i} className="space-y-2 pl-4 border-l-2 border-border">
                     <h4 className="font-semibold text-sm">{s.heading ?? s.title}</h4>
-                    <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                    <p className="text-sm leading-relaxed text-foreground/80">{s.body ?? s.content}</p>
                   </div>
                 ))}
               </div>
@@ -1690,7 +1690,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
                     <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
                   )}
                   <textarea
-                    className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                     placeholder="Your reflection…"
                     value={responses[reflectionIdx] ?? ""}
                     onChange={e => setResponses(r => ({ ...r, [reflectionIdx]: e.target.value }))}
@@ -1724,7 +1724,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
               <p className="text-sm font-semibold">Reflection</p>
               <p className="text-sm text-muted-foreground">{body?.reflectionPrompt ?? "What was your key takeaway? How will you apply it?"}</p>
               <textarea
-                className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
                 placeholder="Your reflection…"
                 value={responses[0] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [0]: e.target.value }))}
@@ -1817,22 +1817,22 @@ function CompletionScreen({
 
       {/* Score + XP + review row */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
+        <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-[#7A9E8E]">{score}%</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Score</p>
         </div>
-        <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
+        <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-[#C8B07A]">+{xpEarned}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">XP earned</p>
         </div>
-        <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
+        <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-primary">{reviewDays}d</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Next review</p>
         </div>
       </div>
 
       {/* Capability context */}
-      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-slate-50/50">
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
           <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
         </div>
@@ -1859,10 +1859,10 @@ function CompletionScreen({
               {nextModule.subtitle && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{nextModule.subtitle}</p>}
               <div className="flex gap-2 mt-1.5">
                 {nextModule.modality && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-muted-foreground capitalize">{nextModule.modality?.replace("_", " ")}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">{nextModule.modality?.replace("_", " ")}</span>
                 )}
                 {nextModule.durationMins && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-muted-foreground">{nextModule.durationMins} min</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{nextModule.durationMins} min</span>
                 )}
               </div>
             </div>
@@ -1892,7 +1892,7 @@ function CompletionScreen({
           Didn't feel like this translated to practice?
         </button>
       ) : (
-        <div className="rounded-xl border border-border bg-slate-50 p-4 text-left space-y-3">
+        <div className="rounded-xl border border-border bg-muted p-4 text-left space-y-3">
           <p className="text-sm font-medium">What happened?</p>
           <p className="text-xs text-muted-foreground">This helps us find a better approach for you.</p>
           <div className="grid grid-cols-1 gap-2">
@@ -2069,7 +2069,7 @@ export default function ModulePlayerPage() {
               {personalised ? (
                 <>
                   {personalised.personalisedIntro && (
-                    <p className="text-sm text-slate-700 leading-relaxed pt-3">{personalised.personalisedIntro}</p>
+                    <p className="text-sm text-foreground/80 leading-relaxed pt-3">{personalised.personalisedIntro}</p>
                   )}
                   {Array.isArray(personalised.contextualExamples) && (personalised.contextualExamples as string[]).length > 0 && (
                     <div className="space-y-1">

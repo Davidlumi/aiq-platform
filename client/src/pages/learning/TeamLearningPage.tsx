@@ -19,10 +19,10 @@ import { Users, BookOpen, Flame, AlertTriangle, Send, TrendingUp } from "lucide-
 function ReadinessBadge({ band }: { band: string | null }) {
   if (!band) return <Badge variant="outline" className="text-xs">No data</Badge>;
   const map: Record<string, { label: string; className: string }> = {
-    safe: { label: "Safe", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-    at_risk: { label: "At Risk", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
-    provisional: { label: "Provisional", className: "bg-blue-500/15 text-blue-700 border-blue-200" },
-    critical: { label: "Critical", className: "bg-red-500/15 text-red-700 border-red-200" },
+    safe: { label: "Safe", className: "bg-[#228833]/12 text-[#228833] border-[#228833]/25" },
+    at_risk: { label: "At Risk", className: "bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25" },
+    provisional: { label: "Provisional", className: "bg-[#4477AA]/12 text-[#4477AA] border-[#4477AA]/25" },
+    critical: { label: "Critical", className: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25" },
   };
   const cfg = map[band] ?? { label: band, className: "bg-muted text-muted-foreground" };
   return <Badge variant="outline" className={`text-xs ${cfg.className}`}>{cfg.label}</Badge>;
@@ -81,7 +81,7 @@ export default function TeamLearningPage() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><AlertTriangle className="h-3.5 w-3.5" />At risk (no activity)</div>
-              <div className="text-2xl font-bold text-amber-600">{atRisk.length}</div>
+              <div className="text-2xl font-bold text-[#CC6644]">{atRisk.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -107,12 +107,12 @@ export default function TeamLearningPage() {
                         <span className="font-medium text-sm truncate">{member.name}</span>
                         <ReadinessBadge band={member.readinessBand} />
                         {(member.streak?.currentStreak ?? 0) > 0 && (
-                          <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-700 border-orange-200">
+                          <Badge variant="outline" className="text-xs bg-[#EE8866]/12 text-[#CC6644] border-[#EE8866]/25">
                             🔥 {member.streak!.currentStreak}-day streak
                           </Badge>
                         )}
                         {(member.streak?.currentStreak ?? 0) === 0 && (
-                          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-700 border-amber-200">
+                          <Badge variant="outline" className="text-xs bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25">
                             <AlertTriangle className="h-3 w-3 mr-1" />No activity
                           </Badge>
                         )}
@@ -135,7 +135,7 @@ export default function TeamLearningPage() {
                       {member.overallScore !== null && (
                         <div className="text-right">
                           <div className="text-xs text-muted-foreground">AI Score</div>
-                          <div className="font-bold text-sm">{Math.round(member.overallScore)}</div>
+                          <div className="font-bold text-sm">{(member.overallScore / 10).toFixed(1)}</div>
                         </div>
                       )}
                       <Button

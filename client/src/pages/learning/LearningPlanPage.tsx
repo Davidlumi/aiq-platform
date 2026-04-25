@@ -103,10 +103,10 @@ function ModuleCard({
   return (
     <div className={cn(
       "group relative flex gap-4 p-4 rounded-2xl border transition-all",
-      isCompleted && "bg-slate-50/50 border-border/50",
+      isCompleted && "bg-muted/30 border-border/50",
       isNext && "bg-card border-primary/30 shadow-sm ring-1 ring-primary/10",
       isInProgress && !isNext && "bg-card border-border",
-      isLocked && "bg-slate-50/30 border-border/30 opacity-50",
+      isLocked && "bg-muted/20 border-border/30 opacity-50",
       !isCompleted && !isLocked && !isNext && !isInProgress && "bg-card border-border hover:border-primary/20 hover:shadow-sm",
     )}>
       {/* Capability accent bar */}
@@ -260,11 +260,11 @@ function InsightsTab() {
               <p className="text-xs text-muted-foreground capitalize">{readinessBand.replace("_", " ")}</p>
             </div>
             <div className="text-3xl font-bold" style={{ color: scoreToColor(overallScore / 10).text }}>
-              {overallScore.toFixed(1)}
+              {(overallScore / 10).toFixed(1)}
             </div>
           </div>
           <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
-            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(overallScore * 10, 100)}%`, background: scoreToColor(overallScore / 10).bg }} />
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(overallScore, 100)}%`, background: scoreToColor(overallScore / 10).bg }} />
           </div>
         </div>
       )}
@@ -295,20 +295,20 @@ function InsightsTab() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-xl font-bold" style={{ color: cap.color as string }}>{Number(score).toFixed(1)}</p>
-                    <p className="text-[10px] text-muted-foreground">vs {Number(benchmark).toFixed(1)} benchmark</p>
+                    <p className="text-xl font-bold" style={{ color: cap.color as string }}>{(Number(score) / 10).toFixed(1)}</p>
+                    <p className="text-[10px] text-muted-foreground">vs {(Number(benchmark) / 10).toFixed(1)} benchmark</p>
                   </div>
                 </div>
                 {/* Score bar */}
                 <div className="space-y-1">
                   <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden relative">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Number(score) * 10, 100)}%`, background: cap.color }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Number(score), 100)}%`, background: cap.color }} />
                     {/* Benchmark marker */}
-                    <div className="absolute top-0 bottom-0 w-0.5 bg-slate-400/60" style={{ left: `${Math.min(Number(benchmark) * 10, 100)}%` }} />
+                    <div className="absolute top-0 bottom-0 w-0.5 bg-muted-foreground/40" style={{ left: `${Math.min(Number(benchmark), 100)}%` }} />
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground">
                     <span>0</span>
-                    <span>Benchmark: {Number(benchmark).toFixed(1)}</span>
+                    <span>Benchmark: {(Number(benchmark) / 10).toFixed(1)}</span>
                     <span>10</span>
                   </div>
                 </div>
@@ -400,7 +400,7 @@ function ActivityTab({ items }: { items: any[] }) {
               } catch { return null; }
             })();
             return (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-slate-50/50">
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-muted/30">
                 <div className="w-7 h-7 rounded-full bg-[#7A9E8E]/20 flex items-center justify-center flex-shrink-0">
                   <CheckCircle2 className="h-3.5 w-3.5 text-[#7A9E8E]" />
                 </div>

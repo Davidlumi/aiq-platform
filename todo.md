@@ -1697,3 +1697,15 @@
 - [x] R6-08: OVERALL_ALIGNMENT_STYLES borders use saturated #10B981/#F59E0B/#EF4444 — replace with muted equivalents
 - [x] R6-09: DomainDrillDown signal breakdown dots use saturated emerald/amber/red — replace with muted Peakon palette
 - [x] R6-10: Round 5 todo items (A5-01 through A5-10) not marked as complete — update todo.md
+
+## Learning Dashboard Deep Dive — Round 7 (Apr 2026)
+- [x] L7-01: Insights tab overallReadinessScore displayed as raw 0-100 — convert to Peakon format (÷10) and fix progress bar width
+- [x] L7-02: Insights tab capability scores/benchmarks displayed as raw 0-100 — convert to Peakon format (÷10) and fix bar widths
+- [x] L7-03: ContentLibraryPage uses saturated #10B981 in 5 places (modality badge, hover, difficulty bar, progress text, chevron) — replace with muted Peakon primary
+- [x] L7-04: ContentLibraryPage difficulty bar inactive segments use hardcoded #E5E7EB — replace with theme-aware muted colour
+- [x] L7-05: ModulePlayerPage MODALITY_META uses saturated Tailwind colours (#10b981, #f59e0b, #ec4899, #ef4444, #84cc16, #059669, #dc2626) — replace with Paul Tol palette
+- [x] L7-06: ModulePlayerPage has 63 hardcoded slate/light-mode classes (bg-slate-50, text-slate-700, text-slate-600, bg-slate-100) — replace with semantic theme classes
+- [x] L7-07: TeamLearningPage ReadinessBadge uses saturated emerald/amber/red — replace with muted Peakon palette
+- [x] L7-08: TeamLearningPage AI Score shows raw 0-100 integer — convert to Peakon format (÷10)
+- [x] L7-09: TeamLearningPage "No activity" badge uses saturated amber — replace with muted Peakon palette
+- [x] L7-10: ContentLibraryPage CAPABILITY_COLORS is local duplicate with incomplete entries — import from canonical domains.ts
