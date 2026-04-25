@@ -174,8 +174,8 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
           <>
             <ResponsiveContainer width="100%" height={220}>
               <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <PolarGrid stroke="var(--border)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                 <Radar name="Score" dataKey="score" stroke="#10B981" fill="#10B981" fillOpacity={0.18} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>

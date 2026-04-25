@@ -773,7 +773,7 @@ export default function LearningPlanPage() {
                   { label: "Done",      value: completedItems.length,color: "#6b7280" },
                 ].map(s => (
                   <div key={s.label} className="p-3 rounded-xl border border-border bg-card text-center">
-                    <p className="text-xl font-bold" style={{ color: s.value > 0 ? s.color : "hsl(var(--muted-foreground))" }}>{s.value}</p>
+                    <p className="text-xl font-bold" style={{ color: s.value > 0 ? s.color : "var(--muted-foreground)" }}>{s.value}</p>
                     <p className="text-[11px] text-muted-foreground">{s.label}</p>
                   </div>
                 ))}

@@ -60,11 +60,11 @@ function Input({
         "text-sm leading-none",
         // Surface & border
         "bg-[var(--neutral-0)]",
-        "border border-[var(--neutral-300)]",
+        "border border-[var(--color-neutral-300)]",
         "rounded-[var(--radius-token-sm)]",
         // Text
-        "text-[var(--neutral-900)]",
-        "placeholder:text-[var(--neutral-400)]",
+        "text-[var(--color-neutral-900)]",
+        "placeholder:text-[var(--color-neutral-400)]",
         // Selection
         "selection:bg-[var(--navy-200)] selection:text-[var(--navy-900)]",
         // Transition
@@ -74,12 +74,12 @@ function Input({
         "focus-visible:border-[var(--navy-800)]",
         "focus-visible:ring-2 focus-visible:ring-[var(--navy-800)] focus-visible:ring-offset-2",
         // Error state
-        "aria-invalid:border-[var(--red-700)]",
-        "aria-invalid:ring-2 aria-invalid:ring-[var(--red-700)]/20",
+        "aria-invalid:border-[var(--color-red-700)]",
+        "aria-invalid:ring-2 aria-invalid:ring-[var(--color-red-700)]/20",
         // Disabled
-        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--neutral-50)]",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--color-neutral-50)]",
         // File input
-        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[var(--neutral-900)]",
+        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[var(--color-neutral-900)]",
         className
       )}
       onCompositionStart={handleCompositionStart}

@@ -681,9 +681,9 @@ export default function HRDashboard() {
             <CardContent className="pt-5">
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={barData} margin={{ top: 0, right: 16, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                   <Tooltip content={<ChartTooltip />} />
                   <ReferenceLine y={70} stroke={GREEN} strokeDasharray="4 2" strokeWidth={1.5}
                     label={{ value: "Safe", fontSize: 9, fill: GREEN, position: "right" }} />
@@ -739,9 +739,9 @@ export default function HRDashboard() {
                 )}
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={trajectoryPoints} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
                     <Tooltip content={<ChartTooltip />} />
                     <ReferenceLine y={70} stroke={GREEN} strokeDasharray="4 2" strokeWidth={1.5} />
                     <Line type="monotone" dataKey="avgScore" stroke={BLUE} strokeWidth={2}
@@ -945,7 +945,7 @@ export default function HRDashboard() {
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30">
                       <span className="text-xs text-muted-foreground">{item.label}</span>
-                      <span className="text-sm font-bold" style={{ color: item.value > 0 ? item.color : "hsl(var(--muted-foreground))" }}>
+                      <span className="text-sm font-bold" style={{ color: item.value > 0 ? item.color : "var(--muted-foreground)" }}>
                         {item.value}
                       </span>
                     </div>

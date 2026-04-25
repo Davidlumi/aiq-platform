@@ -41,19 +41,19 @@ const buttonVariants = cva(
 
         /** Secondary — outlined, transparent bg */
         secondary:
-          "bg-transparent text-[var(--neutral-900)] border-[var(--neutral-300)] hover:bg-[var(--neutral-50)] hover:border-[var(--neutral-400)] active:bg-[var(--neutral-100)]",
+          "bg-transparent text-[var(--color-neutral-900)] border-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-50)] hover:border-[var(--color-neutral-400)] active:bg-[var(--color-neutral-100)]",
 
         /** Outline — alias for secondary (backward compat) */
         outline:
-          "bg-transparent text-[var(--neutral-900)] border-[var(--neutral-300)] hover:bg-[var(--neutral-50)] hover:border-[var(--neutral-400)] active:bg-[var(--neutral-100)]",
+          "bg-transparent text-[var(--color-neutral-900)] border-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-50)] hover:border-[var(--color-neutral-400)] active:bg-[var(--color-neutral-100)]",
 
         /** Ghost — no border, hover fill only */
         ghost:
-          "bg-transparent text-[var(--neutral-700)] border-transparent hover:bg-[var(--neutral-100)] hover:text-[var(--neutral-900)] active:bg-[var(--neutral-200)]",
+          "bg-transparent text-[var(--color-neutral-700)] border-transparent hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-neutral-900)] active:bg-[var(--color-neutral-200)]",
 
         /** Destructive — irreversible actions */
         destructive:
-          "bg-[var(--red-700)] text-white border-[var(--red-700)] hover:bg-[var(--red-900)] active:bg-[var(--red-900)]",
+          "bg-[var(--color-red-700)] text-white border-[var(--color-red-700)] hover:bg-[var(--color-red-900)] active:bg-[var(--color-red-900)]",
 
         /** Link — inline text action */
         link:

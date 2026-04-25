@@ -296,7 +296,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !isPending) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-background">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">

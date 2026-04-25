@@ -1488,3 +1488,19 @@
 - [x] DF-04: Department filter dropdown added to Leader Dashboard header with 7 role family options + 'All departments'
 - [x] DF-05: All 5 queries wired to useMemo-stabilised queryInput; active filter indicator with clear button shown when filtering
 - [x] DF-06: Vitest tests for department filtering logic (707 tests, all passing)
+
+## Platform UI Polish Audit
+- [x] POLISH-01: Fixed global theme — removed 40+ broken hsl(var(--)) references (oklch values wrapped in hsl()), added missing --navy-xxx, --neutral-0, --elevation-xxx, --state-xxx CSS variables, fixed var(--color-red/green-xxx) prefixes
+- [x] POLISH-02: Fixed ProfilingModal — added explicit bg-background to DialogContent to prevent content bleeding through
+- [x] POLISH-03: Fixed AssessmentPage — fixed var(--green-700) to var(--color-green-700), fixed var(--green-50/100) to var(--color-green-50/100)
+- [x] POLISH-04: ModulePlayerPage — verified clean, no broken CSS references
+- [x] POLISH-05: Individual Dashboard V2 — verified clean, no broken CSS references
+- [x] POLISH-06: Manager Dashboard V2 — verified clean, no broken CSS references
+- [x] POLISH-07: Leader Dashboard V2 — verified clean, no broken CSS references
+- [x] POLISH-08: Fixed LearningPlanPage — removed last hsl(var(--muted-foreground)) reference
+- [x] POLISH-09: Fixed ResultsPage — fixed 16 hsl(var(--)) references to var(--)
+- [x] POLISH-10: BackOffice/Admin pages — verified clean after global fixes
+- [x] POLISH-11: OrgContext/Onboarding pages — verified clean after global fixes
+- [x] POLISH-12: Fixed AppShell sidebar — fixed hsl(var(--sidebar-border/accent)) in sidebar.tsx
+- [x] POLISH-13: Home/Landing page — verified clean after global fixes
+- [x] POLISH-14: Fixed shared UI components — badge.tsx, button.tsx, card.tsx, input.tsx, tabs.tsx all fixed (var(--neutral-xxx) → var(--color-neutral-xxx), added missing state badge CSS variables)

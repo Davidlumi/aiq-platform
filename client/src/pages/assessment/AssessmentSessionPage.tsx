@@ -443,7 +443,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
               style={{ background: "#F0FDF4", border: "1px solid #ECFDF5" }}>
-              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#059669" }} />
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--color-green-700)" }} />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
@@ -462,9 +462,9 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
                 )}
               >
                 {i < activeStep ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--green-700)" }} />
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--color-green-700)" }} />
                 ) : i === activeStep ? (
-                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "#059669" }} />
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "var(--color-green-700)" }} />
                 ) : (
                   <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
                 )}
@@ -509,8 +509,8 @@ function CompletionScreen({
     <div className="p-6 space-y-5 max-w-2xl">
       <div className="text-center py-5">
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-          style={{ background: "var(--green-50)", border: "2px solid var(--green-100)" }}>
-          <CheckCircle2 className="w-8 h-8" style={{ color: "var(--green-700)" }} />
+          style={{ background: "var(--color-green-50)", border: "2px solid var(--color-green-100)" }}>
+          <CheckCircle2 className="w-8 h-8" style={{ color: "var(--color-green-700)" }} />
         </div>
         <h1 className="text-xl font-semibold text-foreground">Assessment complete</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">
@@ -841,14 +841,14 @@ export default function AssessmentSessionPage() {
       return (
         <div className="p-6 space-y-6 max-w-2xl">
           <div className="text-center py-8">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--green-700)" }} />
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--color-green-700)" }} />
             <h2 className="text-xl font-semibold text-foreground">You've answered all {answeredCount} questions</h2>
             <p className="text-muted-foreground mt-2 text-sm max-w-sm mx-auto leading-relaxed">
               The engine is ready to compute your capability profile across all six domains. This takes a few seconds.
             </p>
             <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--green-700)" }} /> {answeredCount} responses recorded</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--green-700)" }} /> 6 capability domains</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--color-green-700)" }} /> {answeredCount} responses recorded</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--color-green-700)" }} /> 6 capability domains</span>
             </div>
             <Button
               onClick={() => completeMutation.mutate({ sessionId: sessionId! })}
@@ -899,9 +899,9 @@ export default function AssessmentSessionPage() {
             {/* Pulsing analysis indicator */}
             <div className="flex items-center gap-3 px-3 py-3 rounded-lg border border-border bg-muted/20">
               <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-20" style={{ background: "#059669" }} />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-20" style={{ background: "var(--color-green-700)" }} />
                 <span className="relative inline-flex h-5 w-5 rounded-full items-center justify-center" style={{ background: "#ECFDF5" }}>
-                  <Bot className="w-3 h-3" style={{ color: "#059669" }} />
+                  <Bot className="w-3 h-3" style={{ color: "var(--color-green-700)" }} />
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -1392,7 +1392,7 @@ export default function AssessmentSessionPage() {
                 const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
                   guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#DC2626" },
                   fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#F59E0B" },
-                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--green-700)" },
+                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--color-green-700)" },
                 };
                 const { label, desc, weight, color } = labels[stake];
                 return (

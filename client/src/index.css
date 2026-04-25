@@ -55,6 +55,53 @@
   --color-unknown-border:     oklch(86.2% 0.012 240);
   --color-unknown-text:       oklch(40.8% 0.030 240);
 
+  /* ── READINESS STATE BADGE COLOURS (Individual — softer, never red) ── */
+  --state-strong-individual-bg:       oklch(97.2% 0.025 162);
+  --state-strong-individual-text:     oklch(38.2% 0.130 162);
+  --state-strong-individual-border:   oklch(88.5% 0.075 162);
+  --state-developing-individual-bg:   oklch(98.0% 0.030 68);
+  --state-developing-individual-text: oklch(42.0% 0.120 68);
+  --state-developing-individual-border: oklch(88.0% 0.090 68);
+  --state-critical-individual-bg:     oklch(97.5% 0.020 27);
+  --state-critical-individual-text:   oklch(42.0% 0.120 27);
+  --state-critical-individual-border: oklch(88.0% 0.060 27);
+  --state-foundation-individual-bg:   oklch(96.5% 0.015 290);
+  --state-foundation-individual-text: oklch(40.0% 0.100 290);
+  --state-foundation-individual-border: oklch(88.0% 0.050 290);
+  --state-insufficient-bg:            oklch(96.1% 0.006 240);
+  --state-insufficient-text:          oklch(40.8% 0.030 240);
+  --state-insufficient-border:        oklch(86.2% 0.012 240);
+
+  /* ── READINESS STATE BADGE COLOURS (Org — semantic, bolder) ── */
+  --state-strong-org-bg:              oklch(97.2% 0.025 162);
+  --state-strong-org-text:            oklch(38.2% 0.130 162);
+  --state-strong-org-border:          oklch(88.5% 0.075 162);
+  --state-developing-org-bg:          oklch(98.0% 0.030 68);
+  --state-developing-org-text:        oklch(42.0% 0.120 68);
+  --state-developing-org-border:      oklch(88.0% 0.090 68);
+  --state-critical-org-bg:            oklch(97.5% 0.020 27);
+  --state-critical-org-text:          oklch(35.0% 0.160 27);
+  --state-critical-org-border:        oklch(87.0% 0.075 27);
+  --state-foundation-org-bg:          oklch(96.5% 0.015 290);
+  --state-foundation-org-text:        oklch(40.0% 0.100 290);
+  --state-foundation-org-border:      oklch(88.0% 0.050 290);
+
+  /* ── NAVY SCALE (used by shadcn overrides) ── */
+  --navy-50:                  oklch(96.5% 0.012 250);
+  --navy-100:                 oklch(92.5% 0.020 250);
+  --navy-200:                 oklch(85.0% 0.030 250);
+  --navy-400:                 oklch(62.0% 0.060 250);
+  --navy-800:                 oklch(28.0% 0.055 250);
+  --navy-900:                 oklch(22.0% 0.050 250);
+  --navy-1000:                oklch(16.0% 0.045 250);
+
+  /* ── NEUTRAL EXTRAS ── */
+  --neutral-0:                oklch(100% 0 0);
+
+  /* ── ELEVATION (box-shadow aliases) ── */
+  --elevation-sm:             0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --elevation-md:             0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+
   /* ── CAPABILITY DOMAIN COLOURS ── */
   --color-cap-execution:      oklch(60.5% 0.200 250);
   --color-cap-judgement:      oklch(55.0% 0.230 295);
@@ -307,23 +354,23 @@
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 .aiq-body {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 .aiq-caption {
   font-size: 0.75rem;
   line-height: 1.4;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 .aiq-label {
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 /* UX Deep Dive: Global polish */

@@ -169,15 +169,15 @@ function RadarCapabilityChart({
     <div className="w-full" style={{ height: 260 }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-          <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.5} />
+          <PolarGrid stroke="var(--border)" strokeOpacity={0.5} />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
               borderRadius: "8px",
               fontSize: 12,
             }}
@@ -213,7 +213,7 @@ function ReadinessDot(props: any) {
   const { cx, cy, payload } = props;
   const state = (payload?.readinessState ?? "unknown") as keyof typeof READINESS_CONFIG;
   const color = READINESS_CONFIG[state]?.dotColor ?? "#888888";
-  return <circle cx={cx} cy={cy} r={6} fill={color} stroke="hsl(var(--background))" strokeWidth={2} />;
+  return <circle cx={cx} cy={cy} r={6} fill={color} stroke="var(--background)" strokeWidth={2} />;
 }
 
 function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
@@ -263,13 +263,13 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
         <div style={{ height: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
                   fontSize: 12,
                 }}
@@ -308,7 +308,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--muted)" strokeWidth="8" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -1536,23 +1536,23 @@ export default function AssessmentResultsPage() {
                         barCategoryGap="25%"
                         barGap={2}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
                         <XAxis
                           dataKey="name"
-                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
                           tickLine={false}
                           axisLine={false}
                         />
                         <YAxis
                           domain={[0, 100]}
-                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
                           tickLine={false}
                           axisLine={false}
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "var(--card)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
                             fontSize: 12,
                           }}

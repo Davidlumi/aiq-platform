@@ -164,7 +164,7 @@ function DistributionRing({ distribution }: { distribution: { safe: number; atRi
     <div className="flex items-center gap-6">
       <div className="relative w-28 h-28 flex-shrink-0">
         <svg width="112" height="112" viewBox="0 0 112 112" className="-rotate-90">
-          <circle cx="56" cy="56" r={r} fill="none" stroke="hsl(var(--border))" strokeWidth="12" />
+          <circle cx="56" cy="56" r={r} fill="none" stroke="var(--border)" strokeWidth="12" />
           {arcs.map((arc, i) => (
             <circle key={i} cx="56" cy="56" r={r} fill="none" stroke={arc.color} strokeWidth="12"
               strokeDasharray={`${arc.dash} ${circ}`} strokeDashoffset={-arc.offset} strokeLinecap="butt" />
@@ -756,10 +756,10 @@ export default function ManagerDashboard() {
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
                     layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={120} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} width={120} />
+                    <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                       formatter={(v: number) => [`${v}`, "Avg Band Score"]} />
                     <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                       {capGaps.map((g, i) => (

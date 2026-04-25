@@ -119,10 +119,10 @@ export default function AuditorDashboard() {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={incidentTypeData} layout="vertical"
                   margin={{ top: 0, right: 16, left: 90, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={88} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} width={88} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                     formatter={(v: number) => [`${v}`, "Count"]} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {incidentTypeData.map((d, i) => <Cell key={i} fill={d.color} />)}

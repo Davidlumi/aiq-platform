@@ -34,11 +34,11 @@ const badgeVariants = cva(
         default:
           "bg-[var(--navy-800)] text-white border-[var(--navy-800)]",
         secondary:
-          "bg-[var(--neutral-100)] text-[var(--neutral-800)] border-[var(--neutral-200)]",
+          "bg-[var(--color-neutral-100)] text-[var(--color-neutral-800)] border-[var(--color-neutral-200)]",
         outline:
-          "bg-transparent text-[var(--neutral-800)] border-[var(--neutral-300)]",
+          "bg-transparent text-[var(--color-neutral-800)] border-[var(--color-neutral-300)]",
         destructive:
-          "bg-[var(--red-50)] text-[var(--red-900)] border-[var(--red-100)]",
+          "bg-[var(--color-red-50)] text-[var(--color-red-900)] border-[var(--color-red-100)]",
 
         // ── Individual (participant-facing) — never red ─────────────────
         "strong-individual":
@@ -64,7 +64,7 @@ const badgeVariants = cva(
 
         // ── Neutral / muted ─────────────────────────────────────────────
         muted:
-          "bg-[var(--neutral-50)] text-[var(--neutral-700)] border-[var(--neutral-200)]",
+          "bg-[var(--color-neutral-50)] text-[var(--color-neutral-700)] border-[var(--color-neutral-200)]",
         navy:
           "bg-[var(--navy-50)] text-[var(--navy-800)] border-[var(--navy-100)]",
       },
