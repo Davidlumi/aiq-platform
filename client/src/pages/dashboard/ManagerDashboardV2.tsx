@@ -387,29 +387,29 @@ export default function ManagerDashboardV2() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-1">
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div className="p-4 rounded-xl bg-[#228833]/8 border border-[#228833]/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs font-semibold text-emerald-800">On track</span>
+                  <TrendingUp className="w-4 h-4 text-[#228833]" />
+                  <span className="text-xs font-semibold text-[#1A6625]">On track</span>
                 </div>
-                <span className="text-2xl font-bold tabular-nums text-emerald-700">{devOverview.statusCounts.onTrack}</span>
-                <p className="text-[10px] text-emerald-600 mt-1">Progressing as expected</p>
+                <span className="text-2xl font-bold tabular-nums text-[#228833]">{devOverview.statusCounts.onTrack}</span>
+                <p className="text-[10px] text-[#228833] mt-1">Progressing as expected</p>
               </div>
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+              <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-semibold text-amber-800">Slipping</span>
+                  <AlertTriangle className="w-4 h-4 text-[#99882A]" />
+                  <span className="text-xs font-semibold text-[#7A6E22]">Slipping</span>
                 </div>
-                <span className="text-2xl font-bold tabular-nums text-amber-700">{devOverview.statusCounts.slipping}</span>
-                <p className="text-[10px] text-amber-600 mt-1">Behind expected pace</p>
+                <span className="text-2xl font-bold tabular-nums text-[#99882A]">{devOverview.statusCounts.slipping}</span>
+                <p className="text-[10px] text-[#99882A] mt-1">Behind expected pace</p>
               </div>
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100">
+              <div className="p-4 rounded-xl bg-[#EE6677]/8 border border-[#EE6677]/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-red-600" />
-                  <span className="text-xs font-semibold text-red-800">Stalled</span>
+                  <Clock className="w-4 h-4 text-[#CC3344]" />
+                  <span className="text-xs font-semibold text-[#AA2233]">Stalled</span>
                 </div>
-                <span className="text-2xl font-bold tabular-nums text-red-700">{devOverview.statusCounts.stalled}</span>
-                <p className="text-[10px] text-red-600 mt-1">No activity in 14+ days</p>
+                <span className="text-2xl font-bold tabular-nums text-[#CC3344]">{devOverview.statusCounts.stalled}</span>
+                <p className="text-[10px] text-[#CC3344] mt-1">No activity in 14+ days</p>
               </div>
             </div>
             <Separator className="my-4" />

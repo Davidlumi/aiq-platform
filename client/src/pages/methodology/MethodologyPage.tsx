@@ -34,7 +34,7 @@ import {
 const BRAND = {
   midnight: "#0d1821",
   teal: "#0F6E56",
-  sage: "#5ee8b0",
+  sage: "var(--primary)",
   chalk: "#f7f8fa",
 };
 
@@ -69,7 +69,7 @@ const CAPABILITY_DOMAINS = [
   {
     key: "workforce_ai_readiness",
     name: "Workforce AI Readiness",
-    colour: "#059669",
+    colour: "var(--primary)",
     foundation: false,
     description:
       "Measures the ability to diagnose AI capability gaps in teams and organisations, design targeted interventions, advise leaders on readiness, and rigorously measure capability development progress over time.",
@@ -87,7 +87,7 @@ const CAPABILITY_DOMAINS = [
   {
     key: "ai_change_leadership",
     name: "AI Change Leadership",
-    colour: "#D97706",
+    colour: "#99882A",
     foundation: false,
     description:
       "Measures the ability to lead AI transformation — handling resistance constructively, calibrating the pace of change to organisational readiness, distinguishing legitimate concerns from unfounded resistance, and articulating a compelling vision for AI adoption.",
@@ -490,8 +490,8 @@ export default function MethodologyPage() {
         {/* ── Section 6: Limitations & Transparency ────────────────────── */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <div className="w-8 h-8 rounded-lg bg-[#CCBB44]/12 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-[#99882A]" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Limitations & Transparency</h2>
           </div>
@@ -532,14 +532,14 @@ export default function MethodologyPage() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                      <AlertTriangle className="w-3.5 h-3.5 text-[#99882A]" />
                       <span className="text-sm font-semibold text-foreground">{lim.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         lim.severity === "High"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-amber-100 text-amber-700"
+                          ? "bg-[#EE6677]/12 text-[#CC3344]"
+                          : "bg-[#CCBB44]/12 text-[#99882A]"
                       }`}>
                         {lim.severity}
                       </span>

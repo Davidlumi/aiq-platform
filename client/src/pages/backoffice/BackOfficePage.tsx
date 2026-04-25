@@ -90,9 +90,9 @@ type ApplicationStatus = typeof APPLICATION_STATUSES[number];
 
 function AppStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-    pending:    { label: "Pending",    className: "bg-amber-50 text-amber-700 border-amber-200",       icon: Clock },
-    approved:   { label: "Approved",   className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-    rejected:   { label: "Rejected",   className: "bg-red-50 text-red-700 border-red-200",             icon: XCircle },
+    pending:    { label: "Pending",    className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25",       icon: Clock },
+    approved:   { label: "Approved",   className: "bg-primary/8 text-primary border-primary/25", icon: CheckCircle2 },
+    rejected:   { label: "Rejected",   className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",             icon: XCircle },
     waitlisted: { label: "Waitlisted", className: "bg-blue-50 text-blue-700 border-blue-200",          icon: Clock },
   };
   const c = config[status] ?? { label: status, className: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock };
@@ -140,10 +140,10 @@ function BetaApplicationsTab() {
 
   const statCards = [
     { label: "Total",      value: (stats as any)?.total ?? 0,      color: "text-slate-700" },
-    { label: "Pending",    value: (stats as any)?.pending ?? 0,    color: "text-amber-600" },
-    { label: "Approved",   value: (stats as any)?.approved ?? 0,   color: "text-emerald-600" },
+    { label: "Pending",    value: (stats as any)?.pending ?? 0,    color: "text-[#99882A]" },
+    { label: "Approved",   value: (stats as any)?.approved ?? 0,   color: "text-primary" },
     { label: "Waitlisted", value: (stats as any)?.waitlisted ?? 0, color: "text-blue-600" },
-    { label: "Rejected",   value: (stats as any)?.rejected ?? 0,   color: "text-red-600" },
+    { label: "Rejected",   value: (stats as any)?.rejected ?? 0,   color: "text-[#CC3344]" },
   ];
 
   return (
@@ -170,8 +170,8 @@ function BetaApplicationsTab() {
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
               statusFilter === s
-                ? "bg-[#10B981] text-white border-[#10B981]"
-                : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
+                ? "bg-primary text-white border-primary"
+                : "bg-background text-muted-foreground border-border hover:border-primary hover:text-primary"
             )}
           >
             {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -236,12 +236,12 @@ function BetaApplicationsTab() {
                         <p><span className="text-muted-foreground">Name:</span> {app.contactFirstName} {app.contactLastName}</p>
                         <p><span className="text-muted-foreground">Title:</span> {app.contactTitle}</p>
                         <p><span className="text-muted-foreground">Email:</span>{" "}
-                          <a href={`mailto:${app.contactEmail}`} className="text-[#10B981] hover:underline">{app.contactEmail}</a>
+                          <a href={`mailto:${app.contactEmail}`} className="text-primary hover:underline">{app.contactEmail}</a>
                         </p>
                         {app.linkedinUrl && (
                           <p>
                             <span className="text-muted-foreground">LinkedIn:</span>{" "}
-                            <a href={app.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-[#10B981] hover:underline inline-flex items-center gap-1">
+                            <a href={app.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
                               View profile <ExternalLink className="w-3 h-3" />
                             </a>
                           </p>
@@ -281,7 +281,7 @@ function BetaApplicationsTab() {
                     {editNotes?.id === app.id ? (
                       <div className="space-y-2">
                         <textarea
-                          className="w-full border border-border rounded-lg p-2 text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
+                          className="w-full border border-border rounded-lg p-2 text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
                           rows={3}
                           value={editNotes.notes}
                           onChange={(e) => setEditNotes({ id: app.id, notes: e.target.value })}
@@ -292,7 +292,7 @@ function BetaApplicationsTab() {
                             size="sm"
                             onClick={() => handleSaveNotes(app.id)}
                             disabled={updateMutation.isPending}
-                            className="bg-[#10B981] hover:bg-[#2d3fd9] text-white h-8 text-xs"
+                            className="bg-primary hover:bg-[#2d3fd9] text-white h-8 text-xs"
                           >
                             {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save notes"}
                           </Button>
@@ -321,10 +321,10 @@ function BetaApplicationsTab() {
                         onClick={() => handleStatusChange(app.id, s)}
                         className={cn(
                           "h-7 text-xs border",
-                          s === "approved"   && "border-emerald-300 text-emerald-700 hover:bg-emerald-50",
-                          s === "rejected"   && "border-red-300 text-red-700 hover:bg-red-50",
+                          s === "approved"   && "border-primary/30 text-primary hover:bg-primary/8",
+                          s === "rejected"   && "border-[#EE6677]/30 text-[#CC3344] hover:bg-[#EE6677]/8",
                           s === "waitlisted" && "border-blue-300 text-blue-700 hover:bg-blue-50",
-                          s === "pending"    && "border-amber-300 text-amber-700 hover:bg-amber-50",
+                          s === "pending"    && "border-[#CCBB44]/30 text-[#99882A] hover:bg-[#CCBB44]/8",
                         )}
                       >
                         {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -344,12 +344,12 @@ function BetaApplicationsTab() {
 // ─── Status badge helpers ─────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    active:      { label: "Active",      className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    active:      { label: "Active",      className: "bg-primary/8 text-primary border-primary/25" },
     trial:       { label: "Trial",       className: "bg-blue-50 text-blue-700 border-blue-200" },
-    suspended:   { label: "Suspended",   className: "bg-amber-50 text-amber-700 border-amber-200" },
+    suspended:   { label: "Suspended",   className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
     archived:    { label: "Archived",    className: "bg-gray-100 text-gray-500 border-gray-200" },
     pending:     { label: "Pending",     className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-    deactivated: { label: "Deactivated", className: "bg-red-50 text-red-700 border-red-200" },
+    deactivated: { label: "Deactivated", className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
   };
   const c = config[status] ?? { label: status, className: "bg-gray-100 text-gray-600 border-gray-200" };
   return (
@@ -364,9 +364,9 @@ function DashboardTab() {
   const { data: stats, isLoading } = trpc.backoffice.stats.useQuery();
 
   const statCards = [
-    { label: "Total Organisations", value: stats?.totalOrgs ?? 0, sub: `${stats?.activeOrgs ?? 0} active, ${stats?.trialOrgs ?? 0} trial`, icon: Building2, color: "#10B981" },
-    { label: "Total Users", value: stats?.totalUsers ?? 0, sub: `${stats?.activeUsers ?? 0} active`, icon: Users, color: "#10B981" },
-    { label: "New Users (30d)", value: stats?.newUsersLast30Days ?? 0, sub: "registered in last 30 days", icon: TrendingUp, color: "#F59E0B" },
+    { label: "Total Organisations", value: stats?.totalOrgs ?? 0, sub: `${stats?.activeOrgs ?? 0} active, ${stats?.trialOrgs ?? 0} trial`, icon: Building2, color: "var(--primary)" },
+    { label: "Total Users", value: stats?.totalUsers ?? 0, sub: `${stats?.activeUsers ?? 0} active`, icon: Users, color: "var(--primary)" },
+    { label: "New Users (30d)", value: stats?.newUsersLast30Days ?? 0, sub: "registered in last 30 days", icon: TrendingUp, color: "#CCBB44" },
     { label: "Platform Health", value: "OK", sub: "all systems operational", icon: Activity, color: "#6366F1" },
   ];
 
@@ -414,13 +414,13 @@ function DashboardTab() {
           ].map((a) => (
             <button
               key={a.label}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-[#10B981]/40 hover:bg-[#10B981]/4 transition-all text-left group"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/4 transition-all text-left group"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#10B981]/8 flex items-center justify-center shrink-0">
-                <a.icon className="w-4 h-4 text-[#10B981]" />
+              <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                <a.icon className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground group-hover:text-[#10B981] transition-colors">{a.label}</p>
+                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{a.label}</p>
                 <p className="text-xs text-muted-foreground">{a.desc}</p>
               </div>
             </button>
@@ -489,7 +489,7 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
           <Button
             onClick={() => createMutation.mutate({ name, slug, primaryDomain: domain || undefined, status })}
             disabled={!name || !slug || createMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {createMutation.isPending ? "Creating…" : "Create Organisation"}
           </Button>
@@ -543,7 +543,7 @@ function EditOrgDialog({ org, onClose, onSaved }: { org: any; onClose: () => voi
           <Button
             onClick={() => updateMutation.mutate({ tenantId: org.id, name, primaryDomain: domain || undefined, status })}
             disabled={updateMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </Button>
@@ -586,7 +586,7 @@ function OrgsTab() {
         </div>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
           New Organisation
@@ -786,7 +786,7 @@ function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; o
           <Button
             onClick={() => createMutation.mutate({ tenantId, email, firstName, lastName, password, roleKey, jobFunction: jobFunction || undefined })}
             disabled={!tenantId || !email || !firstName || !lastName || !password || createMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {createMutation.isPending ? "Creating…" : "Create User"}
           </Button>
@@ -839,7 +839,7 @@ function ResetPasswordDialog({ user, onClose }: { user: any; onClose: () => void
           <Button
             onClick={() => resetMutation.mutate({ userId: user.id, newPassword: password })}
             disabled={password.length < 8 || resetMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {resetMutation.isPending ? "Resetting…" : "Reset Password"}
           </Button>
@@ -928,7 +928,7 @@ function EditUserDialog({ user, onClose, onSaved, orgs }: { user: any; onClose: 
           <Button
             onClick={handleSave}
             disabled={updateMutation.isPending || assignRoleMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </Button>
@@ -986,7 +986,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
         </Select>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
           New User
@@ -1020,7 +1020,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
                   <td className="px-4 py-3 text-xs text-muted-foreground max-w-[160px] truncate">{u.tenantName}</td>
                   <td className="px-4 py-3">
                     {u.roles.length > 0 ? (
-                      <span className="text-xs font-medium text-[#10B981] bg-[#10B981]/8 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-primary bg-primary/8 px-2 py-0.5 rounded-full">
                         {u.roles[0].replace(/_/g, " ")}
                       </span>
                     ) : (
@@ -1129,10 +1129,10 @@ const CAPABILITY_LABELS: Record<string, string> = {
 };
 
 const OUTCOME_CONFIG: Record<string, { label: string; className: string }> = {
-  strong:      { label: "Strong",      className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  strong:      { label: "Strong",      className: "bg-primary/8 text-primary border-primary/25" },
   adequate:    { label: "Adequate",    className: "bg-blue-50 text-blue-700 border-blue-200" },
-  partial:     { label: "Partial",     className: "bg-amber-50 text-amber-700 border-amber-200" },
-  failure:     { label: "Failure",     className: "bg-red-50 text-red-700 border-red-200" },
+  partial:     { label: "Partial",     className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
+  failure:     { label: "Failure",     className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
   abstain:     { label: "Abstain",     className: "bg-gray-100 text-gray-600 border-gray-200" },
   unknown:     { label: "Unknown",     className: "bg-gray-100 text-gray-500 border-gray-200" },
 };
@@ -1349,8 +1349,8 @@ function ReasoningTab() {
                               className={cn(
                                 "inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border",
                                 delta > 0
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-red-50 text-red-700 border-red-200"
+                                  ? "bg-primary/8 text-primary border-primary/25"
+                                  : "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25"
                               )}
                             >
                               {signal.replace(/_/g, " ")}: {delta > 0 ? "+" : ""}{delta.toFixed(2)}
@@ -1367,7 +1367,7 @@ function ReasoningTab() {
                         {" "}&middot;{" "}
                         <span className={cn(
                           "font-medium",
-                          r.sessionState === "completed" ? "text-emerald-600" : "text-amber-600"
+                          r.sessionState === "completed" ? "text-primary" : "text-[#99882A]"
                         )}>
                           {r.sessionState}
                         </span>
@@ -1548,7 +1548,7 @@ function LlmReviewQueueTab() {
         {STATUSES.map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={cn("px-3 py-1 text-xs font-medium rounded-full border transition-colors",
-              statusFilter === s ? "bg-[#10B981] text-white border-[#10B981]" : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
+              statusFilter === s ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border hover:border-primary hover:text-primary"
             )}>
             {s === "all" ? "All" : s.replace("_", " ")}
           </button>
@@ -1574,11 +1574,11 @@ function LlmReviewQueueTab() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {item.status === "pending" && (
                     <>
-                      <Button size="sm" variant="outline" className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                      <Button size="sm" variant="outline" className="gap-1 text-primary border-primary/25 hover:bg-primary/8"
                         onClick={() => updateStatus.mutate({ id: item.id, status: "approved" })}>
                         <Check className="w-3.5 h-3.5" /> Approve
                       </Button>
-                      <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                      <Button size="sm" variant="outline" className="gap-1 text-[#CC3344] border-[#EE6677]/25 hover:bg-[#EE6677]/8"
                         onClick={() => updateStatus.mutate({ id: item.id, status: "rejected" })}>
                         <X className="w-3.5 h-3.5" /> Reject
                       </Button>
@@ -1586,8 +1586,8 @@ function LlmReviewQueueTab() {
                   )}
                   {item.status !== "pending" && (
                     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border",
-                      item.status === "approved" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                      item.status === "rejected" ? "bg-red-50 text-red-700 border-red-200" :
+                      item.status === "approved" ? "bg-primary/8 text-primary border-primary/25" :
+                      item.status === "rejected" ? "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" :
                       "bg-blue-50 text-blue-700 border-blue-200"
                     )}>{item.status.replace("_", " ")}</span>
                   )}
@@ -1620,7 +1620,7 @@ function SessionFlagsTab() {
         {(["pending", "reviewed", "all"] as const).map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={cn("px-3 py-1 text-xs font-medium rounded-full border transition-colors",
-              statusFilter === s ? "bg-[#10B981] text-white border-[#10B981]" : "bg-background text-muted-foreground border-border hover:border-[#10B981] hover:text-[#10B981]"
+              statusFilter === s ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border hover:border-primary hover:text-primary"
             )}>
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
@@ -1650,7 +1650,7 @@ function SessionFlagsTab() {
                   </Button>
                 )}
                 {flag.status !== "pending" && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">Reviewed</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full border bg-primary/8 text-primary border-primary/25">Reviewed</span>
                 )}
               </div>
             </div>
@@ -1664,9 +1664,9 @@ function SessionFlagsTab() {
 // ─── TD-3: Feature Flags Tab ─────────────────────────────────────────────────
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
   quality:    { label: "Quality",    color: "#6366F1" },
-  integrity:  { label: "Integrity",  color: "#EF4444" },
-  ux:         { label: "UX",         color: "#10B981" },
-  assessment: { label: "Assessment", color: "#F59E0B" },
+  integrity:  { label: "Integrity",  color: "#EE6677" },
+  ux:         { label: "UX",         color: "var(--primary)" },
+  assessment: { label: "Assessment", color: "#CCBB44" },
 };
 function FeatureFlagsTab() {
   const { data: flags, isLoading } = trpc.backoffice.getFeatureFlags.useQuery();
@@ -1720,7 +1720,7 @@ function FeatureFlagsTab() {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-foreground">{flag.label}</p>
                           {flag.defaultOn !== flag.enabled && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full border border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full border border-[#CCBB44]/30 bg-[#CCBB44]/8 text-[#99882A] dark:bg-[#CCBB44]/8 dark:text-[#CCBB44] dark:border-[#CCBB44]/30">
                               Non-default
                             </span>
                           )}
@@ -1731,8 +1731,8 @@ function FeatureFlagsTab() {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {flag.enabled ? (
                           <>
-                            <ToggleRight className="w-6 h-6 text-[#10B981]" />
-                            <span className="text-xs font-medium text-[#10B981]">Enabled</span>
+                            <ToggleRight className="w-6 h-6 text-primary" />
+                            <span className="text-xs font-medium text-primary">Enabled</span>
                           </>
                         ) : (
                           <>
@@ -1788,8 +1788,8 @@ export default function BackOfficePage() {
     <div className="p-6 space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
-          <ShieldCheck className="w-5 h-5 text-[#10B981]" />
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <ShieldCheck className="w-5 h-5 text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">Back Office</h1>
@@ -1806,7 +1806,7 @@ export default function BackOfficePage() {
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
               tab === t.id
-                ? "border-[#10B981] text-[#10B981]"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >

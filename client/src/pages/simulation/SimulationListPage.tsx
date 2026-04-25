@@ -55,7 +55,7 @@ export default function SimulationListPage() {
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base">{sim.title}</CardTitle>
                     {isDone && (
-                      <Badge className="bg-emerald-100 text-emerald-800 text-xs">
+                      <Badge className="bg-primary/12 text-primary text-xs">
                         <Award className="w-3 h-3 mr-1" />
                         Completed
                       </Badge>

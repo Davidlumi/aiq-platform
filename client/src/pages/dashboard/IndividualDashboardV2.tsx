@@ -484,10 +484,10 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="p-3 rounded-lg bg-[#CCBB44]/8 border border-[#CCBB44]/25">
                   <div className="flex items-start gap-2">
-                    <Target className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-amber-800">{data.gapStatement}</p>
+                    <Target className="w-4 h-4 text-[#99882A] mt-0.5 shrink-0" />
+                    <p className="text-xs text-[#7A6E22]">{data.gapStatement}</p>
                   </div>
                 </div>
               )}

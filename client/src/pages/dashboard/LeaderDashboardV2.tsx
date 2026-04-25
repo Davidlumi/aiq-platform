@@ -366,7 +366,7 @@ export default function LeaderDashboardV2() {
                         </p>
                       )}
                     </div>
-                    <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <Lightbulb className="w-4 h-4 text-[#CCBB44] shrink-0 mt-0.5" />
                   </div>
                   {f.strategicImplication && (
                     <div className="px-3 pb-3 pt-0 ml-9">
@@ -449,9 +449,9 @@ function HeroFindingCard({
   totalHeadcount: number;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; iconColour: string; icon: typeof TrendingUp }> = {
-    on_track: { bg: "#ECFDF5", border: "#A7F3D0", iconColour: "#059669", icon: TrendingUp },
-    at_risk: { bg: "#FEF2F2", border: "#FECACA", iconColour: "#DC2626", icon: AlertTriangle },
-    mixed: { bg: "#FFF7ED", border: "#FED7AA", iconColour: "#D97706", icon: BarChart3 },
+    on_track: { bg: "#F0F4F0", border: "#B8CEB8", iconColour: "#228833", icon: TrendingUp },
+    at_risk: { bg: "#F5EFEE", border: "#D4B0A8", iconColour: "#EE6677", icon: AlertTriangle },
+    mixed: { bg: "#F7F3EC", border: "#D8C89A", iconColour: "#CCBB44", icon: BarChart3 },
     partial: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
     not_configured: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
   };
@@ -495,9 +495,9 @@ function HeroFindingCard({
 // ─── Strategic Alignment Section ────────────────────────────────────────────
 
 const ALIGNMENT_STYLES = {
-  aligned: { bg: "#ECFDF5", border: "#A7F3D0", text: "#065F46", label: "Aligned", icon: "✓" },
+  aligned: { bg: "#F0F4F0", border: "#B8CEB8", text: "#065F46", label: "Aligned", icon: "✓" },
   partial: { bg: "#FFFBEB", border: "#FDE68A", text: "#92400E", label: "Partial", icon: "◐" },
-  gap: { bg: "#FEF2F2", border: "#FECACA", text: "#991B1B", label: "Gap", icon: "✗" },
+  gap: { bg: "#F5EFEE", border: "#D4B0A8", text: "#991B1B", label: "Gap", icon: "✗" },
   unknown: { bg: "#F1F5F9", border: "#CBD5E1", text: "#475569", label: "Unknown", icon: "?" },
 };
 
@@ -665,7 +665,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
           <div className="space-y-1.5">
             {alignment.challenges.map((c: string, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
-                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                <AlertTriangle className="w-3 h-3 text-[#99882A] shrink-0" />
                 <span className="text-muted-foreground">{c}</span>
               </div>
             ))}

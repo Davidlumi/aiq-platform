@@ -60,7 +60,7 @@ export function HeroScore({
           {displayScore}
         </span>
         {delta != null && delta !== 0 && (
-          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-emerald-600" : "text-red-500")}>
+          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-primary" : "text-[#CC3344]")}>
             {delta > 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             {delta > 0 ? "+" : ""}{(delta / 10).toFixed(1)}
           </span>
@@ -68,7 +68,7 @@ export function HeroScore({
       </div>
       {label && <span className="text-xs text-muted-foreground font-medium">{label}</span>}
       {benchmarkDelta != null && (
-        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-emerald-600" : "text-amber-600")}>
+        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-primary" : "text-[#99882A]")}>
           {benchmarkDelta >= 0 ? "+" : ""}{benchmarkDelta.toFixed(1)} vs benchmark ({formatPeakonScore(benchmark!)})
         </span>
       )}
@@ -317,7 +317,7 @@ export function TrendArrow({ delta, suffix = "pts", className }: { delta: number
   }
   const positive = delta > 0;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-emerald-600" : "text-red-500", className)}>
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "text-[#CC3344]", className)}>
       {positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
       {positive ? "+" : ""}{(delta / 10).toFixed(1)} {suffix}
     </span>
@@ -332,7 +332,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   return (
     <span className={cn(
       "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full",
-      positive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#CCBB44]/8 text-[#99882A] border border-[#CCBB44]/25"
     )}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{delta.toFixed(1)} {label}

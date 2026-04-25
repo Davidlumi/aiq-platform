@@ -47,7 +47,7 @@ function ConsequencePanel({ consequence, scoreDelta, riskDelta, onContinue }: {
           </div>
         )}
       </div>
-      <Button onClick={onContinue} className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2">
+      <Button onClick={onContinue} className="w-full bg-primary hover:bg-primary/90 text-white gap-2">
         Continue <ChevronRight className="w-4 h-4" />
       </Button>
     </div>
@@ -62,7 +62,7 @@ function ScoreTracker({ events }: { events: any[] }) {
   return (
     <div className="flex items-center gap-4 text-sm">
       <div className="flex items-center gap-1.5">
-        <div className="w-2 h-2 rounded-full bg-[#10B981]" />
+        <div className="w-2 h-2 rounded-full bg-primary" />
         <span className="text-muted-foreground">{choices.length} decisions</span>
       </div>
       <div className="flex items-center gap-1.5">
@@ -133,7 +133,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
         </Card>
       )}
       <div className="flex gap-3">
-        <Button onClick={onBack} className="flex-1 bg-[#10B981] hover:bg-[#10B981]/90 text-white">Back to Simulations</Button>
+        <Button onClick={onBack} className="flex-1 bg-primary hover:bg-primary/90 text-white">Back to Simulations</Button>
         <Button onClick={onLearning} variant="outline" className="flex-1 gap-2"><BookOpen className="w-4 h-4" /> Learning Plan</Button>
       </div>
     </div>
@@ -206,7 +206,7 @@ export default function SimulationSessionPage() {
           <h2 className="text-xl font-bold">All scenarios complete</h2>
           <p className="text-muted-foreground text-sm">Submit your simulation to receive your score.</p>
           <Button onClick={() => completeMutation.mutate({ sessionId: sessionId! })} disabled={completeMutation.isPending}
-            className="mt-4 bg-[#10B981] hover:bg-[#10B981]/90 text-white">
+            className="mt-4 bg-primary hover:bg-primary/90 text-white">
             {completeMutation.isPending ? "Submitting…" : "Submit Simulation"}
           </Button>
         </div>
@@ -238,7 +238,7 @@ export default function SimulationSessionPage() {
           )}
           {ctx.capability && <Badge variant="outline" className="text-xs capitalize">{ctx.capability}</Badge>}
           {ctx.stakes && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs text-amber-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#CCBB44]/8 border border-[#CCBB44]/25 text-xs text-[#99882A]">
               <AlertTriangle className="w-3 h-3" />{ctx.stakes}
             </div>
           )}
@@ -248,7 +248,7 @@ export default function SimulationSessionPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
               {events.filter((e: any) => e.eventType === "choice_made").length + 1}
             </div>
             <CardTitle className="text-sm text-muted-foreground">Scenario</CardTitle>
@@ -263,8 +263,8 @@ export default function SimulationSessionPage() {
                 <button key={choice.id} onClick={() => setSelectedChoice(choice.id)}
                   className={cn("w-full text-left p-4 rounded-xl border-2 transition-all text-sm leading-relaxed",
                     selectedChoice === choice.id
-                      ? "border-[#10B981] bg-[#10B98108] text-foreground"
-                      : "border-border hover:border-[#10B981]/40 hover:bg-muted/40 text-foreground")}>
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border hover:border-primary/40 hover:bg-muted/40 text-foreground")}>
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-current text-xs font-bold mr-2.5 shrink-0">
                     {String.fromCharCode(65 + idx)}
                   </span>
@@ -274,13 +274,13 @@ export default function SimulationSessionPage() {
               <Button
                 onClick={() => { if (selectedChoice && sessionId) choiceMutation.mutate({ sessionId: sessionId, nodeId: currentNode.id, choiceId: selectedChoice }); }}
                 disabled={!selectedChoice || choiceMutation.isPending}
-                className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 mt-1">
+                className="w-full bg-primary hover:bg-primary/90 text-white gap-2 mt-1">
                 {choiceMutation.isPending ? "Processing…" : "Confirm Choice"} <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           ) : (
             <Button onClick={() => completeMutation.mutate({ sessionId: sessionId! })} disabled={completeMutation.isPending}
-              className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white">
+              className="w-full bg-primary hover:bg-primary/90 text-white">
               {completeMutation.isPending ? "Submitting…" : "Submit Simulation"}
             </Button>
           )}
@@ -288,9 +288,9 @@ export default function SimulationSessionPage() {
       </Card>
 
       {negativeChoices.length >= 2 && (
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200">
-          <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-          <p className="text-xs text-amber-700">
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#CCBB44]/8 border border-[#CCBB44]/25">
+          <Lightbulb className="w-4 h-4 text-[#99882A] mt-0.5 shrink-0" />
+          <p className="text-xs text-[#99882A]">
             <span className="font-semibold">Guided mode active.</span> Consider the policy implications carefully before making your next decision.
           </p>
         </div>

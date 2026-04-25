@@ -31,13 +31,13 @@ const CAPABILITY_META: Record<string, { label: string; color: string; icon: Reac
   ai_interaction:         { label: "AI Interaction",        color: "#4477AA", icon: Zap },
   ai_output_evaluation:   { label: "AI Output Evaluation",  color: "#228833", icon: Brain },
   ai_ethics_trust:        { label: "AI Ethics & Trust",     color: "#AA3377", icon: Target },
-  ai_change_leadership:   { label: "AI Change Leadership",  color: "#D97706", icon: Lightbulb },
+  ai_change_leadership:   { label: "AI Change Leadership",  color: "#EE8866", icon: Lightbulb },
   ai_workflow_design:     { label: "AI Workflow Design",    color: "#3b82f6", icon: Layers },
   workforce_ai_readiness: { label: "Workforce Readiness",   color: "#8b5cf6", icon: BarChart3 },
   execution:              { label: "Execution",             color: "#4477AA", icon: Zap },
   judgement:              { label: "Judgement",             color: "#228833", icon: Brain },
   governance:             { label: "Governance",            color: "#AA3377", icon: Target },
-  appropriateness:        { label: "Appropriateness",       color: "#D97706", icon: Lightbulb },
+  appropriateness:        { label: "Appropriateness",       color: "#EE8866", icon: Lightbulb },
   workflow:               { label: "Workflow",              color: "#3b82f6", icon: Layers },
   data_interpretation:    { label: "Data Interpretation",   color: "#8b5cf6", icon: BarChart3 },
 };
@@ -145,7 +145,7 @@ function ModuleCard({
                 </span>
               )}
               {isInProgress && !isNext && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#CCBB44]/12 text-[#99882A]">
                   IN PROGRESS
                 </span>
               )}

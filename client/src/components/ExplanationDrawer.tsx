@@ -73,7 +73,7 @@ export function ExplanationDrawer({
               className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
               style={{ background: "#EEF0FF" }}
             >
-              <Info className="w-4 h-4" style={{ color: "#10B981" }} />
+              <Info className="w-4 h-4" style={{ color: "var(--primary)" }} />
             </div>
             <div>
               <h2
@@ -248,9 +248,9 @@ export function PolicyDecisionExplanation({
   remediation,
 }: PolicyDecisionProps) {
   const resultConfig = {
-    allow: { icon: CheckCircle, color: "#10B981", bg: "#DCFCE7", label: "Allowed" },
-    restrict: { icon: AlertTriangle, color: "#DC2626", bg: "#FEE2E2", label: "Restricted" },
-    flag: { icon: AlertTriangle, color: "#F59E0B", bg: "#FEF9C3", label: "Flagged" },
+    allow: { icon: CheckCircle, color: "var(--primary)", bg: "#DCFCE7", label: "Allowed" },
+    restrict: { icon: AlertTriangle, color: "#EE6677", bg: "#FEE2E2", label: "Restricted" },
+    flag: { icon: AlertTriangle, color: "#CCBB44", bg: "#FEF9C3", label: "Flagged" },
     require_remediation: { icon: Clock, color: "#6366F1", bg: "#EEF2FF", label: "Remediation Required" },
   };
   const config = resultConfig[result];
@@ -282,9 +282,9 @@ export function PolicyDecisionExplanation({
           {conditions.map((cond, idx) => (
             <div key={idx} className="flex items-center gap-2.5 py-2 px-3 rounded-lg" style={{ background: "#F9FAFB" }}>
               {cond.met ? (
-                <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "#10B981" }} />
+                <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "var(--primary)" }} />
               ) : (
-                <X className="w-4 h-4 shrink-0" style={{ color: "#DC2626" }} />
+                <X className="w-4 h-4 shrink-0" style={{ color: "#EE6677" }} />
               )}
               <span className="text-sm flex-1" style={{ color: "#374151" }}>{cond.label}</span>
               {cond.value && (
@@ -347,13 +347,13 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
                   {item.value && <div className="text-xs" style={{ color: "#9CA3AF" }}>{item.value}</div>}
                 </td>
                 <td className="text-center px-2 py-2.5">
-                  {item.visibleToLearner ? <Eye className="w-4 h-4 mx-auto" style={{ color: "#10B981" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
+                  {item.visibleToLearner ? <Eye className="w-4 h-4 mx-auto" style={{ color: "var(--primary)" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
                 </td>
                 <td className="text-center px-2 py-2.5">
-                  {item.visibleToManager ? <Eye className="w-4 h-4 mx-auto" style={{ color: "#10B981" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
+                  {item.visibleToManager ? <Eye className="w-4 h-4 mx-auto" style={{ color: "var(--primary)" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
                 </td>
                 <td className="text-center px-2 py-2.5">
-                  {item.visibleToAdmin ? <Eye className="w-4 h-4 mx-auto" style={{ color: "#10B981" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
+                  {item.visibleToAdmin ? <Eye className="w-4 h-4 mx-auto" style={{ color: "var(--primary)" }} /> : <EyeOff className="w-4 h-4 mx-auto" style={{ color: "#D1D5DB" }} />}
                 </td>
               </tr>
             ))}

@@ -46,7 +46,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
         >
           {/* Icon */}
           <div className="w-10 h-10 rounded-lg bg-[#EEF0FF] flex items-center justify-center flex-shrink-0">
-            <Layers className="w-5 h-5 text-[#10B981]" />
+            <Layers className="w-5 h-5 text-primary" />
           </div>
 
           {/* Info */}
@@ -145,7 +145,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full text-xs gap-1 text-amber-600 border-amber-200"
+                      className="w-full text-xs gap-1 text-[#99882A] border-[#CCBB44]/25"
                       onClick={() => toast.info("Blueprint archived (demo)")}
                     >
                       <Archive className="w-3 h-3" />
@@ -182,7 +182,7 @@ export default function AssessmentBlueprintsPage() {
           </p>
         </div>
         <Button
-          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
           onClick={() => toast.info("Blueprint creator coming in next release")}
         >
           <Plus className="w-4 h-4" />
@@ -193,7 +193,7 @@ export default function AssessmentBlueprintsPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Total Blueprints", value: stats.total, colour: "#10B981" },
+          { label: "Total Blueprints", value: stats.total, colour: "var(--primary)" },
           { label: "Published", value: stats.published, colour: "#228833" },
           { label: "Draft", value: stats.draft, colour: "#EE8866" },
         ].map(stat => (

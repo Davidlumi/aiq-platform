@@ -87,29 +87,29 @@ const READINESS_CONFIG = {
   safe: {
     label: "AI-Ready",
     description: "Demonstrates consistent, appropriate application of AI tools with strong awareness of risks and limitations.",
-    color: "text-emerald-700",
-    bg: "border-emerald-200 bg-emerald-50",
-    barColor: "#10B981",
+    color: "text-primary",
+    bg: "border-primary/25 bg-primary/8",
+    barColor: "var(--primary)",
     icon: CheckCircle2,
-    dotColor: "#10B981",
+    dotColor: "var(--primary)",
   },
   at_risk: {
     label: "Developing",
     description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
-    color: "text-amber-700",
-    bg: "border-amber-200 bg-amber-50",
-    barColor: "#F59E0B",
+    color: "text-[#99882A]",
+    bg: "border-[#CCBB44]/25 bg-[#CCBB44]/8",
+    barColor: "#CCBB44",
     icon: AlertTriangle,
-    dotColor: "#F59E0B",
+    dotColor: "#CCBB44",
   },
   unsafe: {
     label: "Not Yet Ready",
     description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
-    color: "text-red-700",
-    bg: "border-red-200 bg-red-50",
-    barColor: "#DC2626",
+    color: "text-[#CC3344]",
+    bg: "border-[#EE6677]/25 bg-[#EE6677]/8",
+    barColor: "#EE6677",
     icon: ShieldAlert,
-    dotColor: "#DC2626",
+    dotColor: "#EE6677",
   },
   unknown: {
     label: "Insufficient Data",
@@ -125,9 +125,9 @@ const READINESS_CONFIG = {
     description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
     color: "text-violet-700",
     bg: "border-violet-200 bg-violet-50",
-    barColor: "#8B5CF6",
+    barColor: "#AA3377",
     icon: ShieldAlert,
-    dotColor: "#8B5CF6",
+    dotColor: "#AA3377",
   },
   unknown_insufficient_evidence: {
     label: "Result Unavailable",
@@ -141,15 +141,15 @@ const READINESS_CONFIG = {
 } as const;
 
 const CREDIBILITY_CONFIG = {
-  high: { label: "High Credibility", color: "text-emerald-700", bg: "bg-emerald-50" },
-  medium: { label: "Medium Credibility", color: "text-amber-700", bg: "bg-amber-50" },
-  low: { label: "Low Credibility", color: "text-red-700", bg: "bg-red-50" },
+  high: { label: "High Credibility", color: "text-primary", bg: "bg-primary/8" },
+  medium: { label: "Medium Credibility", color: "text-[#99882A]", bg: "bg-[#CCBB44]/8" },
+  low: { label: "Low Credibility", color: "text-[#CC3344]", bg: "bg-[#EE6677]/8" },
 } as const;
 
 const RISK_CONFIG = {
-  low: { label: "Low Risk", color: "text-emerald-700", bg: "bg-emerald-50" },
-  medium: { label: "Medium Risk", color: "text-amber-700", bg: "bg-amber-50" },
-  high: { label: "High Risk", color: "text-red-700", bg: "bg-red-50" },
+  low: { label: "Low Risk", color: "text-primary", bg: "bg-primary/8" },
+  medium: { label: "Medium Risk", color: "text-[#99882A]", bg: "bg-[#CCBB44]/8" },
+  high: { label: "High Risk", color: "text-[#CC3344]", bg: "bg-[#EE6677]/8" },
 } as const;
 
 // ─── Radar Chart Component ────────────────────────────────────────────────────
@@ -185,11 +185,11 @@ function RadarCapabilityChart({
           <Radar
             name="Score"
             dataKey="score"
-            stroke="#10B981"
-            fill="#10B981"
+            stroke="var(--primary)"
+            fill="var(--primary)"
             fillOpacity={0.12}
             strokeWidth={2}
-            dot={{ r: 4, fill: "#10B981", strokeWidth: 0 }}
+            dot={{ r: 4, fill: "var(--primary)", strokeWidth: 0 }}
           />
         </RadarChart>
       </ResponsiveContainer>
@@ -242,7 +242,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" style={{ color: "#10B981" }} />
+          <TrendingUp className="w-4 h-4" style={{ color: "var(--primary)" }} />
           Progress Over Time
         </CardTitle>
         <div className="flex items-center gap-4 flex-wrap mt-1">
@@ -253,7 +253,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
             </div>
           ))}
           <div className="flex items-center gap-1.5">
-            <div className="w-6 h-0.5 border-t-2 border-dashed border-[#10B981]/60" />
+            <div className="w-6 h-0.5 border-t-2 border-dashed border-primary/60" />
             <span className="text-xs text-muted-foreground">Safe threshold (7.5)</span>
           </div>
         </div>
@@ -281,15 +281,15 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
               {/* UX-10: Safe threshold reference line — A5-07: label updated to Peakon format */}
               <ReferenceLine
                 y={75}
-                stroke="#10B981"
+                stroke="var(--primary)"
                 strokeDasharray="4 4"
                 strokeOpacity={0.6}
-                label={{ value: "7.5 (Safe)", position: "right", fontSize: 10, fill: "#10B981" }}
+                label={{ value: "7.5 (Safe)", position: "right", fontSize: 10, fill: "var(--primary)" }}
               />
               <Line
                 type="monotone"
                 dataKey="score"
-                stroke="#10B981"
+                stroke="var(--primary)"
                 strokeWidth={2}
                 dot={<ReadinessDot />}
                 activeDot={{ r: 8 }}
@@ -342,10 +342,10 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
 // ─── Percentile Band Badge with Tooltip ─────────────────────────────────────
 
 const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
-  "Top 20%":        { colour: "#10B981", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
+  "Top 20%":        { colour: "var(--primary)", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
   "Above average":  { colour: "#44bb99", description: "Your score is above the midpoint for your peer group. You are performing better than most HR professionals at a similar level and role." },
-  "Around average": { colour: "#F59E0B", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
-  "Below average":  { colour: "#DC2626", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
+  "Around average": { colour: "#CCBB44", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
+  "Below average":  { colour: "#EE6677", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
   "Bottom 20%":     { colour: "#CC3311", description: "Your score is in the bottom fifth of your peer group. Focused development in this capability is recommended before taking on AI-assisted decisions in this area." },
 };
 
@@ -421,7 +421,7 @@ function CapabilityBar({
   normGroupLabel?: string;
 }) {
   const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
-  const bandColor = score >= 75 ? "#10B981" : score >= 55 ? "#F59E0B" : "#DC2626";
+  const bandColor = score >= 75 ? "var(--primary)" : score >= 55 ? "#CCBB44" : "#EE6677";
   const hw = computeConfidenceHalfWidth(signalCount ?? 0);
   const lo = Math.max(0, score - hw);
   const hi = Math.min(100, score + hw);
@@ -468,7 +468,7 @@ function CapabilityBar({
           Range: {lo}–{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
         </span>
         {hw >= 15 && (
-          <span className="text-[10px] text-amber-500 flex items-center gap-0.5">
+          <span className="text-[10px] text-[#99882A] flex items-center gap-0.5">
             <AlertTriangle className="w-2.5 h-2.5" />
             Low evidence
           </span>
@@ -525,15 +525,15 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
     <div className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
       <div className="flex items-center gap-2 min-w-0">
         {isPositive ? (
-          <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
         ) : (
-          <TrendingDown className="w-3.5 h-3.5 text-red-600 shrink-0" />
+          <TrendingDown className="w-3.5 h-3.5 text-[#CC3344] shrink-0" />
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-foreground">{displayName}</span>
             {isRisk && (
-              <span className="text-xs text-amber-600 bg-[#F59E0B]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
+              <span className="text-xs text-[#99882A] bg-[#CCBB44]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
             )}
           </div>
           {glossaryEntry && (
@@ -541,7 +541,7 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
           )}
         </div>
       </div>
-      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-emerald-600" : "text-red-600")}>
+      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-primary" : "text-[#CC3344]")}>
         {isPositive ? "+" : ""}{delta.toFixed(1)}
       </span>
     </div>
@@ -623,8 +623,8 @@ export default function AssessmentResultsPage() {
       <div className="p-6 text-center max-w-2xl mx-auto">
         {isInProgress ? (
           <>
-            <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center mx-auto mb-4">
-              <RotateCcw className="w-7 h-7 text-amber-500" />
+            <div className="w-14 h-14 rounded-full bg-[#CCBB44]/8 border-2 border-[#CCBB44]/25 flex items-center justify-center mx-auto mb-4">
+              <RotateCcw className="w-7 h-7 text-[#99882A]" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Assessment in progress</h2>
             <p className="text-muted-foreground text-sm mt-2 mb-6">
@@ -695,7 +695,7 @@ export default function AssessmentResultsPage() {
       key,
       score: typeof val === "object" ? val.score : (val as number),
       displayName: typeof val === "object" ? val.displayName : key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-      colour: typeof val === "object" ? val.colour : "#3B82F6",
+      colour: typeof val === "object" ? val.colour : "#4477AA",
       signalCount: typeof val === "object" ? (val.signalCount ?? 0) : 0,
     }))
     .sort((a, b) => b.score - a.score);
@@ -830,7 +830,7 @@ export default function AssessmentResultsPage() {
                     </span>
                     {/* S3.3: Governing constraint in header when classification is not safe */}
                     {governingConstraint && (governingConstraint as any).droveClassification && primaryState !== "safe" && (
-                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <span className="text-xs font-medium text-[#99882A] dark:text-[#CCBB44] flex items-center gap-1">
                         <Flag className="w-3 h-3 flex-shrink-0" />
                         Governing constraint: <span className="capitalize">{String((governingConstraint as any).capability).replace(/_/g, " ")}</span>
                         &nbsp;(gap {Math.round(Number((governingConstraint as any).gap))} pts)
@@ -839,7 +839,7 @@ export default function AssessmentResultsPage() {
                     {/* P15: ExplanationDrawer - score transparency */}
                     <ExplanationDrawer
                       trigger={
-                        <button className="text-xs underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity" style={{ color: "#059669" }}>
+                        <button className="text-xs underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity" style={{ color: "var(--primary)" }}>
                           <Info className="w-3 h-3" />
                           How is this calculated?
                         </button>
@@ -876,12 +876,12 @@ export default function AssessmentResultsPage() {
 
           {/* P3: Classification confidence gate caveat */}
           {classificationConfidence?.caveat && (
-            <Card className="border-amber-200 bg-amber-50">
+            <Card className="border-[#CCBB44]/25 bg-[#CCBB44]/8">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-[#99882A] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
+                    <p className="text-xs font-semibold text-[#99882A] uppercase tracking-wider mb-1">
                       About This Result
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{classificationConfidence.caveat}</p>
@@ -896,9 +896,9 @@ export default function AssessmentResultsPage() {
             <Card className="border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
                       Your Results Narrative
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
@@ -942,10 +942,10 @@ export default function AssessmentResultsPage() {
                 {/* Score bands legend */}
                 <div className="flex items-center gap-4 pt-2 flex-wrap">
                   {[
-                    { label: "Strong", range: "75–100", color: "#10B981" },
-                    { label: "Developing", range: "55–74", color: "#F59E0B" },
-                    { label: "Needs Work", range: "35–54", color: "#DC2626" },
-                    { label: "Critical", range: "0–34", color: "#8B5CF6" },
+                    { label: "Strong", range: "75–100", color: "var(--primary)" },
+                    { label: "Developing", range: "55–74", color: "#CCBB44" },
+                    { label: "Needs Work", range: "35–54", color: "#EE6677" },
+                    { label: "Critical", range: "0–34", color: "#AA3377" },
                   ].map(b => (
                     <div key={b.label} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
@@ -955,8 +955,8 @@ export default function AssessmentResultsPage() {
                 </div>
                 {/* S5: Provisional percentile band disclosure */}
                 {normGroupVersion && (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 mt-1">
-                    <p className="text-xs text-amber-700 flex items-center gap-1.5">
+                  <div className="rounded-md border border-[#CCBB44]/25 bg-[#CCBB44]/8 px-3 py-2 mt-1">
+                    <p className="text-xs text-[#99882A] flex items-center gap-1.5">
                       <Info className="w-3 h-3 shrink-0" />
                       <span>
                         <strong>Provisional benchmark:</strong> Relative standing is shown as broad quartile bands rather than precise percentiles. These benchmarks are based on synthetic baseline distributions ({normGroupVersion}) and will be recalibrated once sufficient real-world assessment data is available.
@@ -998,10 +998,10 @@ export default function AssessmentResultsPage() {
 
           {/* Contradiction Profile */}
           {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
-            <Card className="border-red-200 bg-red-50">
+            <Card className="border-[#EE6677]/25 bg-[#EE6677]/8">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-[#CC3344] shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-foreground  mb-1">Contradiction Profile</h3>
                     <p className="text-xs text-muted-foreground mb-3">
@@ -1011,8 +1011,8 @@ export default function AssessmentResultsPage() {
                     {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
                       <div className="space-y-2">
                         {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
-                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-red-200">
-                            <span className="font-medium text-red-600">Inconsistency {i + 1}:</span>{" "}
+                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#EE6677]/25">
+                            <span className="font-medium text-[#CC3344]">Inconsistency {i + 1}:</span>{" "}
                             {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
                           </div>
                         ))}
@@ -1048,7 +1048,7 @@ export default function AssessmentResultsPage() {
                   </div>
                 </div>
                 {(breakdown.governanceProfile as any).bypasses > 0 && (
-                  <p className="text-xs text-red-600 mt-3 flex items-center gap-1.5">
+                  <p className="text-xs text-[#CC3344] mt-3 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     {(breakdown.governanceProfile as any).bypasses} ethical concern{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 's'} flagged.
                     These are highlighted for review by your ethics and trust team.
@@ -1060,10 +1060,10 @@ export default function AssessmentResultsPage() {
 
           {/* A4: Development Action Banner (v10) */}
           {governanceAction && (
-            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-red-400 bg-red-50" : "border-l-amber-400 bg-amber-50"}`}>
+            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EE6677] bg-[#EE6677]/8" : "border-l-[#CCBB44] bg-[#CCBB44]/8"}`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-red-600" : "text-amber-600"}`} />
+                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#CC3344]" : "text-[#99882A]"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground  mb-1">
                       {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supported AI Use Recommended"}
@@ -1096,8 +1096,8 @@ export default function AssessmentResultsPage() {
                   </p>
                   {isEarlyCompletion && (
                     <div className="flex items-center justify-center gap-1 mt-1">
-                      <Zap className="w-3 h-3 text-emerald-600" />
-                      <span className="text-[10px] text-emerald-600 font-semibold">Early completion</span>
+                      <Zap className="w-3 h-3 text-primary" />
+                      <span className="text-[10px] text-primary font-semibold">Early completion</span>
                     </div>
                   )}
                 </div>
@@ -1134,10 +1134,10 @@ export default function AssessmentResultsPage() {
             href="/methodology"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer no-underline"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-primary/25 bg-primary/8 hover:bg-primary/12 transition-colors cursor-pointer no-underline"
           >
-            <Shield className="w-3.5 h-3.5 text-emerald-700" />
-            <span className="text-xs text-emerald-700 font-medium">SJT-based adaptive assessment</span>
+            <Shield className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs text-primary font-medium">SJT-based adaptive assessment</span>
             <span className="text-[10px] text-muted-foreground ml-auto">View methodology</span>
           </a>
 
@@ -1163,8 +1163,8 @@ export default function AssessmentResultsPage() {
                 {explanationData && (
                   <>
                     {(explanationData as any).isProvisional && (
-                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                        <p className="text-xs text-amber-700 flex items-center gap-1.5">
+                      <div className="rounded-md border border-[#CCBB44]/25 bg-[#CCBB44]/8 px-3 py-2">
+                        <p className="text-xs text-[#99882A] flex items-center gap-1.5">
                           <Info className="w-3 h-3 shrink-0" />
                           This classification is provisional due to limited evidence or low assessment confidence.
                         </p>
@@ -1174,9 +1174,9 @@ export default function AssessmentResultsPage() {
                       {((explanationData as any).factors ?? []).map((f: any, i: number) => (
                         <div key={i} className="flex items-start gap-2.5 text-sm">
                           {f.direction === "positive" ? (
-                            <ThumbsUp className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <ThumbsUp className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                           ) : f.direction === "negative" ? (
-                            <ThumbsDown className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <ThumbsDown className="w-4 h-4 text-[#CC3344] shrink-0 mt-0.5" />
                           ) : (
                             <Minus className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                           )}
@@ -1188,14 +1188,14 @@ export default function AssessmentResultsPage() {
                       ))}
                     </div>
                     {((explanationData as any).topStrengths ?? []).length > 0 && (
-                      <div className="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
-                        <p className="text-xs font-semibold text-emerald-600 mb-1">Top strengths</p>
+                      <div className="rounded-md bg-primary/8 border border-primary/25 px-3 py-2">
+                        <p className="text-xs font-semibold text-primary mb-1">Top strengths</p>
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topStrengths.join(" · ")}</p>
                       </div>
                     )}
                     {((explanationData as any).topGaps ?? []).length > 0 && (
-                      <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2">
-                        <p className="text-xs font-semibold text-red-600 mb-1">Development priorities</p>
+                      <div className="rounded-md bg-[#EE6677]/8 border border-[#EE6677]/25 px-3 py-2">
+                        <p className="text-xs font-semibold text-[#CC3344] mb-1">Development priorities</p>
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
                       </div>
                     )}
@@ -1208,8 +1208,8 @@ export default function AssessmentResultsPage() {
                             .map((c, i) => (
                               <div key={i} className="flex items-start gap-2 text-xs">
                                 <span className={`shrink-0 mt-0.5 font-mono text-[10px] px-1 rounded ${
-                                  c.outcomeClass === "strong" ? "bg-[#10B981]/10 text-emerald-600" :
-                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#DC2626]/10 text-red-600" :
+                                  c.outcomeClass === "strong" ? "bg-primary/10 text-primary" :
+                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#EE6677]/10 text-[#CC3344]" :
                                   "bg-muted text-muted-foreground"
                                 }`}>{c.outcomeClass ?? "?"}</span>
                                 <div className="min-w-0">
@@ -1257,7 +1257,7 @@ export default function AssessmentResultsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
               onClick={() => navigate("/learning")}
-              className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+              className="bg-primary hover:bg-primary/90 text-white gap-2"
             >
               <BookOpen className="w-4 h-4" />
               View Learning Plan
@@ -1304,10 +1304,10 @@ export default function AssessmentResultsPage() {
 
           {/* LLM Development Narrative (also shown in Development tab) */}
           {llmNarrative && (
-            <Card className="border-[#10B981]/30 bg-emerald-50">
+            <Card className="border-primary/30 bg-primary/8">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   Your Development Narrative
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -1316,15 +1316,15 @@ export default function AssessmentResultsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Strengths</h4>
+                  <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">Strengths</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Development Areas</h4>
+                  <h4 className="text-xs font-semibold text-[#99882A] uppercase tracking-wide">Development Areas</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Priorities</h4>
+                  <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">Priorities</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
                 </div>
               </CardContent>
@@ -1347,7 +1347,7 @@ export default function AssessmentResultsPage() {
                 {/* Positive signals */}
                 {sortedSignals.filter(([, v]) => (v as number) > 0).length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
                       Positive Signals ({sortedSignals.filter(([, v]) => (v as number) > 0).length})
                     </p>
@@ -1363,7 +1363,7 @@ export default function AssessmentResultsPage() {
                 {/* Risk signals */}
                 {sortedSignals.filter(([, v]) => (v as number) <= 0).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <TrendingDown className="w-3.5 h-3.5" />
                       Risk Signals ({sortedSignals.filter(([, v]) => (v as number) <= 0).length})
                     </p>
@@ -1421,10 +1421,10 @@ export default function AssessmentResultsPage() {
 
           {/* UX-2: LLM narrative as primary content */}
           {llmNarrative ? (
-            <Card className="border-[#10B981]/30 bg-emerald-50">
+            <Card className="border-primary/30 bg-primary/8">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <Sparkles className="w-4 h-4 text-primary" />
                   Personalised Development Report
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -1432,22 +1432,22 @@ export default function AssessmentResultsPage() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-emerald-200 space-y-1.5">
-                  <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-wide flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Your Strengths
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#F59E0B]/8 border border-[#F59E0B]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20 space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#99882A] uppercase tracking-wide flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Development Areas
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-emerald-200 space-y-1.5">
-                  <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-wide flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5" />
                     Immediate Priorities
                   </h4>
@@ -1462,9 +1462,9 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3">
-                      <FileText className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Your Results Narrative</p>
                         <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
                       </div>
                     </div>
@@ -1475,7 +1475,7 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-emerald-600" />
+                      <Lightbulb className="w-4 h-4 text-primary" />
                       Development Focus Areas
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">
@@ -1505,7 +1505,7 @@ export default function AssessmentResultsPage() {
 
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button onClick={() => navigate("/learning")} className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2">
+            <Button onClick={() => navigate("/learning")} className="bg-primary hover:bg-primary/90 text-white gap-2">
               <BookOpen className="w-4 h-4" />
               View Learning Plan
             </Button>
@@ -1546,8 +1546,8 @@ export default function AssessmentResultsPage() {
             <>
               {/* Header */}
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[#3B82F6]/10">
-                  <BarChart2 className="w-5 h-5 text-[#3B82F6]" />
+                <div className="p-2 rounded-lg bg-[#4477AA]/10">
+                  <BarChart2 className="w-5 h-5 text-[#4477AA]" />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Benchmark Comparison</h3>
@@ -1564,11 +1564,11 @@ export default function AssessmentResultsPage() {
                   <CardTitle className="text-sm font-semibold text-foreground">Score Comparison by Capability</CardTitle>
                   <div className="flex items-center gap-5 flex-wrap mt-1">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-[#10B981]" />
+                      <div className="w-3 h-3 rounded-sm bg-primary" />
                       <span className="text-xs text-muted-foreground">Your Score</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-[#3B82F6]" />
+                      <div className="w-3 h-3 rounded-sm bg-[#4477AA]" />
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Users className="w-3 h-3" /> Role Average
                       </span>
@@ -1618,11 +1618,11 @@ export default function AssessmentResultsPage() {
                           }}
                           formatter={(value: number, name: string) => [formatPeakonScore(value), name]}
                         />
-                        <ReferenceLine y={75} stroke="#10B981" strokeDasharray="4 4" strokeOpacity={0.5}
-                          label={{ value: "7.5 (Safe)", position: "right", fontSize: 9, fill: "#10B981" }}
+                        <ReferenceLine y={75} stroke="var(--primary)" strokeDasharray="4 4" strokeOpacity={0.5}
+                          label={{ value: "7.5 (Safe)", position: "right", fontSize: 9, fill: "var(--primary)" }}
                         />
-                        <Bar dataKey="Your Score" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                        <Bar dataKey="Role Average" fill="#3B82F6" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="Your Score" fill="var(--primary)" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="Role Average" fill="#4477AA" radius={[3, 3, 0, 0]} maxBarSize={28} />
                         <Bar dataKey="Platform Average" fill="#CCBB44" radius={[3, 3, 0, 0]} maxBarSize={28} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -1641,8 +1641,8 @@ export default function AssessmentResultsPage() {
                       <thead>
                         <tr className="border-b border-border">
                           <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Capability</th>
-                          <th className="text-center px-3 py-2.5 text-emerald-600 font-medium">Your Score</th>
-                          <th className="text-center px-3 py-2.5 text-[#3B82F6] font-medium">Role Avg</th>
+                          <th className="text-center px-3 py-2.5 text-primary font-medium">Your Score</th>
+                          <th className="text-center px-3 py-2.5 text-[#4477AA] font-medium">Role Avg</th>
                           <th className="text-center px-3 py-2.5 text-[#CCBB44] font-medium">Platform Avg</th>
                           <th className="text-center px-3 py-2.5 text-muted-foreground font-medium">vs Role</th>
                         </tr>
@@ -1666,7 +1666,7 @@ export default function AssessmentResultsPage() {
                               <td className="text-center px-3 py-2.5">
                                 <span className={cn(
                                   "inline-flex items-center gap-0.5 font-medium",
-                                  isAbove ? "text-emerald-600" : isBelow ? "text-red-600" : "text-muted-foreground"
+                                  isAbove ? "text-primary" : isBelow ? "text-[#CC3344]" : "text-muted-foreground"
                                 )}>
                                   {isAbove ? <TrendingUp className="w-3 h-3" /> : isBelow ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                                   {isAbove ? `+${(diff / 10).toFixed(1)}` : (diff / 10).toFixed(1)}
@@ -1701,7 +1701,7 @@ export default function AssessmentResultsPage() {
                             className="h-full rounded-full transition-all"
                             style={{
                               width: `${cap.userScore}%`,
-                              backgroundColor: cap.userScore >= 75 ? "#10B981" : cap.userScore >= 55 ? "#F59E0B" : "#DC2626",
+                              backgroundColor: cap.userScore >= 75 ? "var(--primary)" : cap.userScore >= 55 ? "#CCBB44" : "#EE6677",
                             }}
                           />
                         </div>
@@ -1757,9 +1757,9 @@ export default function AssessmentResultsPage() {
                 signalDeltas: Record<string, number>;
               }>).map((cb, idx) => {
                 const OUTCOME_COLORS: Record<string, { bg: string; border: string; badge: string; text: string; label: string }> = {
-                  strong:     { bg: "bg-[#10B981]/8",  border: "border-[#10B981]/30", badge: "bg-[#10B981]/15 text-emerald-600",  text: "text-emerald-600",  label: "Strong" },
+                  strong:     { bg: "bg-primary/8",  border: "border-primary/30", badge: "bg-primary/15 text-primary",  text: "text-primary",  label: "Strong" },
                   acceptable: { bg: "bg-[#44bb99]/8",  border: "border-[#44bb99]/30", badge: "bg-[#44bb99]/15 text-[#44bb99]",  text: "text-[#44bb99]",  label: "Acceptable" },
-                  weak:       { bg: "bg-[#F59E0B]/8",  border: "border-[#F59E0B]/30", badge: "bg-[#F59E0B]/15 text-amber-600",  text: "text-amber-600",  label: "Needs Work" },
+                  weak:       { bg: "bg-[#CCBB44]/8",  border: "border-[#CCBB44]/30", badge: "bg-[#CCBB44]/15 text-[#99882A]",  text: "text-[#99882A]",  label: "Needs Work" },
                   poor:       { bg: "bg-[#CC3311]/8",  border: "border-[#CC3311]/30", badge: "bg-[#CC3311]/15 text-[#CC3311]",  text: "text-[#CC3311]",  label: "Critical Gap" },
                 };
                 const oc = cb.outcomeClass ?? "weak";
@@ -1795,7 +1795,7 @@ export default function AssessmentResultsPage() {
                           {topSignals.map(([sig, delta]) => (
                             <span key={sig} className={cn(
                               "text-[10px] font-medium px-2 py-0.5 rounded-full border",
-                              (delta as number) >= 0 ? "bg-[#10B981]/10 text-emerald-600 border-emerald-200" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
+                              (delta as number) >= 0 ? "bg-primary/10 text-primary border-primary/25" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
                             )}>
                               {DOMAIN_LABELS[sig as keyof typeof DOMAIN_LABELS] ?? sig.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
                             </span>
@@ -1838,7 +1838,7 @@ export default function AssessmentResultsPage() {
             const calibrationScore = cal.totalAnswers > 0
               ? Math.round((cal.wellCalibratedCount / cal.totalAnswers) * 100)
               : 0;
-            const calColor = calibrationScore >= 70 ? "#10B981" : calibrationScore >= 45 ? "#F59E0B" : "#CC3311";
+            const calColor = calibrationScore >= 70 ? "var(--primary)" : calibrationScore >= 45 ? "#CCBB44" : "#CC3311";
             return (
               <div className="space-y-4">
                 {/* Summary banner */}
@@ -1855,17 +1855,17 @@ export default function AssessmentResultsPage() {
                 </Card>
                 {/* Three-bucket breakdown */}
                 <div className="grid grid-cols-3 gap-3">
-                  <Card className="border-[#10B981]/30 bg-emerald-50">
+                  <Card className="border-primary/30 bg-primary/8">
                     <CardContent className="p-4 text-center">
-                      <ThumbsUp className="w-5 h-5 text-emerald-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-emerald-600">{cal.wellCalibratedCount}</div>
+                      <ThumbsUp className="w-5 h-5 text-primary mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-primary">{cal.wellCalibratedCount}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">Well calibrated</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-[#F59E0B]/30 bg-[#F59E0B]/5">
+                  <Card className="border-[#CCBB44]/30 bg-[#CCBB44]/5">
                     <CardContent className="p-4 text-center">
-                      <ThumbsDown className="w-5 h-5 text-amber-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-amber-600">{cal.overconfidentCount}</div>
+                      <ThumbsDown className="w-5 h-5 text-[#99882A] mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-[#99882A]">{cal.overconfidentCount}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">Overconfident</div>
                     </CardContent>
                   </Card>
@@ -1889,7 +1889,7 @@ export default function AssessmentResultsPage() {
                         <span className="font-semibold text-foreground">{cal.avgConfidenceOnStrong}%</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-[#10B981] transition-all" style={{ width: `${cal.avgConfidenceOnStrong}%` }} />
+                        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${cal.avgConfidenceOnStrong}%` }} />
                       </div>
                     </div>
                     <div className="space-y-1.5">
@@ -1954,10 +1954,10 @@ export default function AssessmentResultsPage() {
             }
 
             const QUADRANT_COLOURS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-              unconscious_incompetence: { bg: "bg-red-500/10", border: "border-red-500/30", text: "text-red-600", dot: "#EF4444" },
-              conscious_incompetence: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-600", dot: "#F59E0B" },
-              conscious_competence: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-600", dot: "#3B82F6" },
-              unconscious_competence: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-600", dot: "#10B981" },
+              unconscious_incompetence: { bg: "bg-[#EE6677]/80/10", border: "border-[#EE6677]/30", text: "text-[#CC3344]", dot: "#EE6677" },
+              conscious_incompetence: { bg: "bg-[#CCBB44]/80/10", border: "border-[#CCBB44]/30", text: "text-[#99882A]", dot: "#CCBB44" },
+              conscious_competence: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-600", dot: "#4477AA" },
+              unconscious_competence: { bg: "bg-primary/80/10", border: "border-primary/30", text: "text-primary", dot: "var(--primary)" },
             };
 
             return (
@@ -1986,18 +1986,18 @@ export default function AssessmentResultsPage() {
                       {/* Grid */}
                       <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
                         {/* Q1: Top-left = Low competence, High confidence = Blind Spot */}
-                        <div className="bg-red-500/5 border border-red-500/20 rounded-tl-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-red-500/70 uppercase tracking-wider">Blind Spot</span>
+                        <div className="bg-[#EE6677]/80/5 border border-[#EE6677]/20 rounded-tl-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-[#CC3344]/70 uppercase tracking-wider">Blind Spot</span>
                           <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, low competence</p>
                         </div>
                         {/* Q4: Top-right = High competence, High confidence = Mastery */}
-                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-tr-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-emerald-500/70 uppercase tracking-wider">Mastery</span>
+                        <div className="bg-primary/80/5 border border-primary/20 rounded-tr-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">Mastery</span>
                           <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, high competence</p>
                         </div>
                         {/* Q2: Bottom-left = Low competence, Low confidence = Aware Gap */}
-                        <div className="bg-amber-500/5 border border-amber-500/20 rounded-bl-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-amber-500/70 uppercase tracking-wider">Aware Gap</span>
+                        <div className="bg-[#CCBB44]/80/5 border border-[#CCBB44]/20 rounded-bl-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-[#99882A]/70 uppercase tracking-wider">Aware Gap</span>
                           <p className="text-[9px] text-muted-foreground mt-0.5">Low confidence, low competence</p>
                         </div>
                         {/* Q3: Bottom-right = High competence, Low confidence = Developing */}
@@ -2092,11 +2092,11 @@ export default function AssessmentResultsPage() {
 
                 {/* Blind Spots Alert */}
                 {blindSpotsList.length > 0 && (
-                  <Card className="border-red-500/30 bg-red-500/5">
+                  <Card className="border-[#EE6677]/30 bg-[#EE6677]/80/5">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <ShieldAlert className="w-5 h-5 text-red-500" />
-                        <span className="text-red-600">Blind Spots Detected</span>
+                        <ShieldAlert className="w-5 h-5 text-[#CC3344]" />
+                        <span className="text-[#CC3344]">Blind Spots Detected</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -2105,9 +2105,9 @@ export default function AssessmentResultsPage() {
                         You may be making AI-related decisions in these areas without recognising the risks.
                       </p>
                       {blindSpotsList.map((bs) => (
-                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-[#EE6677]/80/5 border border-[#EE6677]/20">
+                          <div className="w-10 h-10 rounded-full bg-[#EE6677]/80/20 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-5 h-5 text-[#CC3344]" />
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">{bs.displayName}</p>

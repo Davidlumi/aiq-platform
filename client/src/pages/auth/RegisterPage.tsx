@@ -31,7 +31,7 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 function AiQLogoMark({ size = 36, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "#5ee8b0" : "#10B981";
+  const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
       <circle cx="100" cy="100" r="90" fill="#1E293B" />
@@ -99,7 +99,7 @@ export default function RegisterPage() {
           <div className="flex flex-col leading-none">
             <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", lineHeight: 1, marginBottom: "3px" }}>HR</span>
             <span style={{ fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "#F8FAFC" }}>
-              Ai<span style={{ color: "#5ee8b0" }}>Q</span>
+              Ai<span style={{ color: "var(--primary)" }}>Q</span>
             </span>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
               return (
                 <div key={f.label} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(94,232,176,0.12)" }}>
-                    <Icon className="w-4 h-4" style={{ color: "#5ee8b0" }} />
+                    <Icon className="w-4 h-4" style={{ color: "var(--primary)" }} />
                   </div>
                   <div>
                     <p style={{ fontSize: "13px", fontWeight: 600, color: "#F8FAFC", marginBottom: "3px" }}>{f.label}</p>
@@ -140,14 +140,14 @@ export default function RegisterPage() {
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
           <AiQLogoMark size={36} />
-          <span style={{ fontSize: "18px", fontWeight: 600, color: "#0F172A" }}>
-            Ai<span style={{ color: "#10B981" }}>Q</span>
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)" }}>
+            Ai<span className="text-primary">Q</span>
           </span>
         </div>
 
         <div className="w-full max-w-[440px]">
           <div className="mb-8">
-            <h1 style={{ fontSize: "24px", fontWeight: 600, color: "#0F172A", marginBottom: "6px" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: 600, color: "var(--foreground)", marginBottom: "6px" }}>
               Create your account
             </h1>
             <p style={{ fontSize: "14px", color: "#64748B" }}>
@@ -237,7 +237,7 @@ export default function RegisterPage() {
           <p className="mt-6 text-center text-sm" style={{ color: "#64748B" }}>
             Already have an account?{" "}
             <Link href="/login">
-              <span className="font-medium cursor-pointer hover:underline" style={{ color: "#10B981" }}>
+              <span className="font-medium cursor-pointer hover:underline text-primary">
                 Sign in
               </span>
             </Link>

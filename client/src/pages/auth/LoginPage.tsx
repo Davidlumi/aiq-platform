@@ -20,7 +20,7 @@ type FormData = z.infer<typeof schema>;
 
 /** AiQ logo mark — dark slate circle, white A+Q, green i dot */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "#5ee8b0" : "#10B981";
+  const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
   return (
     <svg
       width={size}
@@ -158,7 +158,7 @@ export default function LoginPage() {
                 color: "#F8FAFC",
               }}
             >
-              Ai<span style={{ color: "#5ee8b0" }}>Q</span>
+              Ai<span style={{ color: "var(--primary)" }}>Q</span>
             </span>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function LoginPage() {
                     className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: "rgba(94,232,176,0.12)" }}
                   >
-                    <Icon className="w-4 h-4" style={{ color: "#5ee8b0" }} />
+                    <Icon className="w-4 h-4" style={{ color: "var(--primary)" }} />
                   </div>
                   <div>
                     <p
@@ -231,7 +231,7 @@ export default function LoginPage() {
                     fontFamily: "monospace",
                     fontSize: "22px",
                     fontWeight: 600,
-                    color: "#5ee8b0",
+                    color: "var(--primary)",
                     lineHeight: 1,
                   }}
                 >
@@ -255,8 +255,8 @@ export default function LoginPage() {
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
           <AiQLogoMark size={36} />
-          <span style={{ fontSize: "18px", fontWeight: 600, color: "#0F172A" }}>
-            Ai<span style={{ color: "#10B981" }}>Q</span>
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)" }}>
+            Ai<span className="text-primary">Q</span>
           </span>
         </div>
 
@@ -266,7 +266,7 @@ export default function LoginPage() {
               style={{
                 fontSize: "24px",
                 fontWeight: 600,
-                color: "#0F172A",
+                color: "var(--foreground)",
                 marginBottom: "6px",
               }}
             >
@@ -330,8 +330,7 @@ export default function LoginPage() {
                 </Label>
                 <Link href="/forgot-password">
                   <span
-                    className="text-xs hover:underline cursor-pointer"
-                    style={{ color: "#10B981", fontWeight: 500 }}
+                    className="text-xs hover:underline cursor-pointer text-primary font-medium"
                   >
                     Forgot password?
                   </span>
@@ -383,7 +382,7 @@ export default function LoginPage() {
             <Link href="/register">
               <span
                 className="hover:underline cursor-pointer"
-                style={{ fontSize: "13px", color: "#10B981", fontWeight: 500 }}
+                style={{ fontSize: "13px", color: "var(--primary)", fontWeight: 500 }}
               >
                 Create account
               </span>
@@ -408,7 +407,7 @@ export default function LoginPage() {
               <span
                 style={{
                   fontFamily: "monospace",
-                  color: "#10B981",
+                  color: "var(--primary)",
                   fontWeight: 500,
                   textTransform: "none",
                   letterSpacing: "0.02em",

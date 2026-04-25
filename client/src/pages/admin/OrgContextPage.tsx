@@ -125,8 +125,8 @@ function ToggleChip({
       className={cn(
         "text-xs rounded-lg border px-3 py-2 text-left transition-all",
         selected
-          ? "border-[#10B981] bg-[#10B981]/5 text-foreground font-medium"
-          : "border-border text-muted-foreground hover:border-[#10B981]/40"
+          ? "border-primary bg-primary/5 text-foreground font-medium"
+          : "border-border text-muted-foreground hover:border-primary/40"
       )}
     >
       {label}
@@ -305,7 +305,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#10B981]" />
+            <Building2 className="w-4 h-4 text-primary" />
             Block 1 — Organisation Profile
           </CardTitle>
         </CardHeader>
@@ -329,7 +329,7 @@ export default function OrgContextPage() {
                 value={headcount}
                 onChange={e => setHeadcount(e.target.value)}
                 placeholder="e.g. 3800"
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
             <div>
@@ -357,7 +357,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#3B82F6]" />
+            <Target className="w-4 h-4 text-[#4477AA]" />
             Strategic Context
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -381,7 +381,7 @@ export default function OrgContextPage() {
                   }
                 }}
                 placeholder="e.g. Automate recruitment screening with AI"
-                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4477AA]"
               />
               <Button
                 variant="outline"
@@ -400,13 +400,13 @@ export default function OrgContextPage() {
             {strategicPriorities.length > 0 ? (
               <div className="space-y-1.5">
                 {strategicPriorities.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs bg-[#3B82F6]/5 border border-[#3B82F6]/10 rounded-lg px-3 py-2">
-                    <span className="w-5 h-5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                  <div key={i} className="flex items-center gap-2 text-xs bg-[#4477AA]/5 border border-[#4477AA]/10 rounded-lg px-3 py-2">
+                    <span className="w-5 h-5 rounded-full bg-[#4477AA]/10 text-[#4477AA] flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
                     <span className="flex-1 text-foreground">{p}</span>
                     <button
                       type="button"
                       onClick={() => setStrategicPriorities(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-red-500 text-xs"
+                      className="text-muted-foreground hover:text-[#CC3344] text-xs"
                     >
                       ×
                     </button>
@@ -436,7 +436,7 @@ export default function OrgContextPage() {
                   }
                 }}
                 placeholder="e.g. Regulatory pressure on AI transparency in hiring"
-                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4477AA]"
               />
               <Button
                 variant="outline"
@@ -455,13 +455,13 @@ export default function OrgContextPage() {
             {currentChallenges.length > 0 ? (
               <div className="space-y-1.5">
                 {currentChallenges.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <div key={i} className="flex items-center gap-2 text-xs bg-[#CCBB44]/8 border border-[#CCBB44]/20 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-[#99882A] shrink-0" />
                     <span className="flex-1 text-foreground">{c}</span>
                     <button
                       type="button"
                       onClick={() => setCurrentChallenges(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-red-500 text-xs"
+                      className="text-muted-foreground hover:text-[#CC3344] text-xs"
                     >
                       ×
                     </button>
@@ -479,7 +479,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Bot className="w-4 h-4 text-[#10B981]" />
+            <Bot className="w-4 h-4 text-primary" />
             Block 2 — AI Tools & Company AI Context
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -498,8 +498,8 @@ export default function OrgContextPage() {
                   className={cn(
                     "text-xs rounded-full border px-3 py-1.5 transition-all",
                     aiToolsInUse.includes(tool)
-                      ? "border-[#10B981] bg-[#10B981]/10 text-[#10B981] font-medium"
-                      : "border-border text-muted-foreground hover:border-[#10B981]/40"
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-border text-muted-foreground hover:border-primary/40"
                   )}
                 >
                   {aiToolsInUse.includes(tool) ? "✓ " : ""}{tool}
@@ -527,7 +527,7 @@ export default function OrgContextPage() {
                 onChange={e => setCustomAiTool(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addCustomTool()}
                 placeholder="Add a custom tool..."
-                className="flex-1 text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#10B981]/30"
+                className="flex-1 text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               <Button variant="outline" size="sm" onClick={addCustomTool} className="shrink-0">Add</Button>
             </div>
@@ -546,7 +546,7 @@ export default function OrgContextPage() {
               rows={4}
               maxLength={2000}
               placeholder="Describe how AI is used in your organisation. For example: 'We use Microsoft Copilot for drafting HR communications and Workday AI for workforce planning. Our AI governance is managed by the CISO with quarterly reviews. We are in the early stages of deploying AI-assisted recruitment screening.'"
-              className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#10B981]/30 resize-none"
+              className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
             />
             <p className="text-xs text-muted-foreground mt-1">{companyAiContextNarrative.length}/2000 characters</p>
           </div>
@@ -557,7 +557,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[#10B981]" />
+            <Shield className="w-4 h-4 text-primary" />
             Block 3 — Risk Appetite & AI Maturity
           </CardTitle>
         </CardHeader>
@@ -572,11 +572,11 @@ export default function OrgContextPage() {
                   className={cn(
                     "w-full text-left rounded-lg border px-4 py-3 transition-all",
                     riskAppetite === r.value
-                      ? "border-[#10B981] bg-[#10B981]/5"
-                      : "border-border hover:border-[#10B981]/40"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
                   )}
                 >
-                  <p className={cn("text-xs font-semibold", riskAppetite === r.value ? "text-[#10B981]" : "text-foreground")}>{r.label}</p>
+                  <p className={cn("text-xs font-semibold", riskAppetite === r.value ? "text-primary" : "text-foreground")}>{r.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
                 </button>
               ))}
@@ -595,11 +595,11 @@ export default function OrgContextPage() {
                   className={cn(
                     "w-full text-left rounded-lg border px-4 py-3 transition-all",
                     aiMaturity === a.value
-                      ? "border-[#10B981] bg-[#10B981]/5"
-                      : "border-border hover:border-[#10B981]/40"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
                   )}
                 >
-                  <p className={cn("text-xs font-semibold", aiMaturity === a.value ? "text-[#10B981]" : "text-foreground")}>{a.label}</p>
+                  <p className={cn("text-xs font-semibold", aiMaturity === a.value ? "text-primary" : "text-foreground")}>{a.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
                 </button>
               ))}
@@ -612,7 +612,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#10B981]" />
+            <Settings className="w-4 h-4 text-primary" />
             Block 4 — Governance & Policies
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -631,11 +631,11 @@ export default function OrgContextPage() {
                   className={cn(
                     "text-left rounded-lg border px-3 py-2.5 transition-all",
                     aiPolicyStatus === p.value
-                      ? "border-[#10B981] bg-[#10B981]/5"
-                      : "border-border hover:border-[#10B981]/40"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
                   )}
                 >
-                  <p className={cn("text-xs font-semibold", aiPolicyStatus === p.value ? "text-[#10B981]" : "text-foreground")}>{p.label}</p>
+                  <p className={cn("text-xs font-semibold", aiPolicyStatus === p.value ? "text-primary" : "text-foreground")}>{p.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
                 </button>
               ))}
@@ -684,7 +684,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Scale className="w-4 h-4 text-[#10B981]" />
+            <Scale className="w-4 h-4 text-primary" />
             Block 5 — UK Regulatory Context
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -701,8 +701,8 @@ export default function OrgContextPage() {
                 className={cn(
                   "text-xs rounded-lg border px-3 py-2 transition-all",
                   ukRegulatoryFrameworks.includes(fw.value)
-                    ? "border-[#10B981] bg-[#10B981]/5 text-foreground font-medium"
-                    : "border-border text-muted-foreground hover:border-[#10B981]/40"
+                    ? "border-primary bg-primary/5 text-foreground font-medium"
+                    : "border-border text-muted-foreground hover:border-primary/40"
                 )}
               >
                 {ukRegulatoryFrameworks.includes(fw.value) ? "✓ " : ""}{fw.label}
@@ -721,7 +721,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <RefreshCw className="w-4 h-4 text-[#10B981]" />
+            <RefreshCw className="w-4 h-4 text-primary" />
             Block 6 — Assessment Configuration
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -755,13 +755,13 @@ export default function OrgContextPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-4 py-3 text-left transition-all flex-1",
                 quarterlyReviewEnabled
-                  ? "border-[#10B981] bg-[#10B981]/5"
-                  : "border-border hover:border-[#10B981]/40"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
               )}
             >
               <div className={cn(
                 "w-4 h-4 rounded flex items-center justify-center shrink-0",
-                quarterlyReviewEnabled ? "bg-[#10B981]" : "bg-muted border border-border"
+                quarterlyReviewEnabled ? "bg-primary" : "bg-muted border border-border"
               )}>
                 {quarterlyReviewEnabled && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
@@ -782,13 +782,13 @@ export default function OrgContextPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-4 py-3 text-left transition-all flex-1",
                 smallHRFunctionMode
-                  ? "border-[#F59E0B] bg-[#F59E0B]/5"
-                  : "border-border hover:border-[#F59E0B]/40"
+                  ? "border-[#CCBB44] bg-[#CCBB44]/5"
+                  : "border-border hover:border-[#CCBB44]/40"
               )}
             >
               <div className={cn(
                 "w-4 h-4 rounded flex items-center justify-center shrink-0",
-                smallHRFunctionMode ? "bg-[#F59E0B]" : "bg-muted border border-border"
+                smallHRFunctionMode ? "bg-[#CCBB44]" : "bg-muted border border-border"
               )}>
                 {smallHRFunctionMode && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
@@ -802,7 +802,7 @@ export default function OrgContextPage() {
           </div>
 
           {smallHRFunctionMode && (
-            <div className="flex items-start gap-2 text-xs text-[#F59E0B] bg-[#F59E0B]/8 rounded-lg px-3 py-2 border border-[#F59E0B]/20">
+            <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>Small HR Function Mode reduces assessment length by ~40% and lowers the minimum evidence threshold. Results are clearly marked as small-function assessments in all reports.</span>
             </div>
@@ -819,7 +819,7 @@ export default function OrgContextPage() {
         <Button
           onClick={handleSave}
           disabled={upsert.isPending}
-          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {upsert.isPending ? "Saving..." : "Save Configuration"}
         </Button>

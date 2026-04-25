@@ -38,7 +38,7 @@ export default function TenantsPage() {
         {isSuperAdmin && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
+              <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
                 <Plus className="h-4 w-4" /> New Tenant
               </Button>
             </DialogTrigger>
@@ -66,7 +66,7 @@ export default function TenantsPage() {
                   />
                 </div>
                 <Button
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
+                  className="w-full bg-primary hover:bg-[var(--primary)] text-white"
                   disabled={!newTenant.name || !newTenant.slug}
                   onClick={() => {
                     toast.info("Tenant creation coming soon — contact platform admin");
@@ -99,7 +99,7 @@ export default function TenantsPage() {
         <Card className="aiq-card">
           <CardHeader className="pb-3">
             <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-[#10B981]" />
+              <Building2 className="h-5 w-5 text-primary" />
               Your Organisation
             </CardTitle>
           </CardHeader>
@@ -172,7 +172,7 @@ function TenantSettingsCard() {
     <Card className="aiq-card">
       <CardHeader className="pb-3">
         <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-          <Globe className="h-5 w-5 text-[#10B981]" />
+          <Globe className="h-5 w-5 text-primary" />
           Tenant Settings
         </CardTitle>
       </CardHeader>
@@ -202,7 +202,7 @@ function TenantSettingsCard() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    className="bg-[#10B981] hover:bg-[#059669] text-white"
+                    className="bg-primary hover:bg-[var(--primary)] text-white"
                     disabled={updateMutation.isPending}
                     onClick={() => updateMutation.mutate({ credibilityThreshold: form.credibilityThreshold })}
                   >

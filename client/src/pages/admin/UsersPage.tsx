@@ -26,14 +26,14 @@ const ROLE_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-green-50 text-green-700 border-green-200",
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  suspended: "bg-red-50 text-red-700 border-red-200",
+  suspended: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",
   deactivated: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
 
 const AVATAR_COLORS = [
   "#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE",
-  "#AA3377", "#EE8866", "#10B981", "#6366F1", "#EC4899",
+  "#AA3377", "#EE8866", "var(--primary)", "#6366F1", "#EC4899",
 ];
 function avatarColor(name: string): string {
   let hash = 0;
@@ -120,7 +120,7 @@ export default function UsersPage() {
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
+            <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
               <Plus className="h-4 w-4" /> Add User
             </Button>
           </DialogTrigger>
@@ -189,7 +189,7 @@ export default function UsersPage() {
                 </Select>
               </div>
               <Button
-                className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
+                className="w-full bg-primary hover:bg-[var(--primary)] text-white"
                 disabled={!newUser.email || !newUser.firstName || !newUser.password || createMutation.isPending}
                 onClick={() => createMutation.mutate({ email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName, password: newUser.password, roleKey: newUser.roleKey })}
               >
@@ -229,10 +229,10 @@ export default function UsersPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Users", value: total, icon: <Users className="h-4 w-4 text-[#10B981]" /> },
+          { label: "Total Users", value: total, icon: <Users className="h-4 w-4 text-primary" /> },
           { label: "Active", value: (data?.users ?? []).filter((u: any) => u.status === "active").length, icon: <CheckCircle2 className="h-4 w-4 text-green-500" /> },
           { label: "Pending", value: (data?.users ?? []).filter((u: any) => u.status === "pending").length, icon: <Clock className="h-4 w-4 text-yellow-500" /> },
-          { label: "Suspended", value: (data?.users ?? []).filter((u: any) => u.status === "suspended").length, icon: <Ban className="h-4 w-4 text-red-500" /> },
+          { label: "Suspended", value: (data?.users ?? []).filter((u: any) => u.status === "suspended").length, icon: <Ban className="h-4 w-4 text-[#CC3344]" /> },
         ].map(s => (
           <Card key={s.label} className="aiq-card">
             <CardContent className="p-3 flex items-center gap-2">
@@ -250,7 +250,7 @@ export default function UsersPage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-[#10B981]" />
+            <Users className="h-5 w-5 text-primary" />
             Users ({total})
           </CardTitle>
         </CardHeader>
@@ -336,7 +336,7 @@ export default function UsersPage() {
                               <DropdownMenuItem
                                 onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "suspended" })}
                                 disabled={updateStatusMutation.isPending}
-                                className="text-xs gap-2 text-red-600 focus:text-red-600"
+                                className="text-xs gap-2 text-[#CC3344] focus:text-[#CC3344]"
                               >
                                 <Ban className="w-3.5 h-3.5" />Suspend
                               </DropdownMenuItem>
@@ -429,7 +429,7 @@ export default function UsersPage() {
               </Select>
             </div>
             <Button
-              className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
+              className="w-full bg-primary hover:bg-[var(--primary)] text-white"
               disabled={!selectedRole || selectedRole === changeRoleTarget?.currentRole || changeRoleMutation.isPending}
               onClick={() => changeRoleTarget && changeRoleMutation.mutate({ userId: changeRoleTarget.id, roleKey: selectedRole })}
             >

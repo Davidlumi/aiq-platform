@@ -160,7 +160,7 @@ export default function ContentCMSPage() {
           </p>
         </div>
         <Button
-          className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
           onClick={() => toast.info("Content authoring editor coming in next release")}
         >
           <FolderOpen className="w-4 h-4" />
@@ -171,7 +171,7 @@ export default function ContentCMSPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Total", value: allItems.length, colour: "#10B981" },
+          { label: "Total", value: allItems.length, colour: "var(--primary)" },
           { label: "Published", value: published, colour: "#228833" },
           { label: "Draft", value: draft, colour: "#EE8866" },
           { label: "Archived", value: archived, colour: "#9CA3AF" },

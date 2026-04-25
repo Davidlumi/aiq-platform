@@ -30,8 +30,8 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
 
 const READINESS_COLORS: Record<string, string> = {
   safe: "text-[#228833] bg-[#228833]/10 border-[#228833]/20",
-  at_risk: "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20",
-  foundation_gap: "text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20",
+  at_risk: "text-[#CCBB44] bg-[#CCBB44]/10 border-[#CCBB44]/20",
+  foundation_gap: "text-[#EE6677] bg-[#EE6677]/10 border-[#EE6677]/20",
   not_assessed: "text-muted-foreground bg-muted border-border",
   insufficient_evidence: "text-[#6366F1] bg-[#6366F1]/10 border-[#6366F1]/20",
 };
@@ -56,7 +56,7 @@ function ScoreBar({ score, threshold, label }: { score: number; threshold: numbe
   const pct = Math.min(100, score);
   const thresholdPct = Math.min(100, threshold);
   const status = score >= threshold ? "meets" : score >= threshold * 0.8 ? "approaching" : "gap";
-  const barColor = status === "meets" ? "bg-[#228833]" : status === "approaching" ? "bg-[#F59E0B]" : "bg-[#EF4444]";
+  const barColor = status === "meets" ? "bg-[#228833]" : status === "approaching" ? "bg-[#CCBB44]" : "bg-[#EE6677]";
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
@@ -66,8 +66,8 @@ function ScoreBar({ score, threshold, label }: { score: number; threshold: numbe
           <span className="text-xs text-muted-foreground">/ {threshold} req.</span>
           <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium",
             status === "meets" ? "text-[#228833] bg-[#228833]/10" :
-            status === "approaching" ? "text-[#F59E0B] bg-[#F59E0B]/10" :
-            "text-[#EF4444] bg-[#EF4444]/10"
+            status === "approaching" ? "text-[#CCBB44] bg-[#CCBB44]/10" :
+            "text-[#EE6677] bg-[#EE6677]/10"
           )}>
             {status === "meets" ? "Meets" : status === "approaching" ? "Approaching" : "Gap"}
           </span>
@@ -100,11 +100,11 @@ function DualAudienceNarrativeView({ data }: { data: any }) {
         {audienceConfig.map(a => (
           <button key={a.key} onClick={() => setAudience(a.key)}
             className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all",
-              audience === a.key ? "border-[#10B981] bg-[#10B981]/5" : "border-border hover:border-[#10B981]/40"
+              audience === a.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
             )}>
-            <a.icon className={cn("w-3.5 h-3.5", audience === a.key ? "text-[#10B981]" : "text-muted-foreground")} />
+            <a.icon className={cn("w-3.5 h-3.5", audience === a.key ? "text-primary" : "text-muted-foreground")} />
             <div>
-              <p className={cn("text-xs font-semibold", audience === a.key ? "text-[#10B981]" : "text-foreground")}>{a.label}</p>
+              <p className={cn("text-xs font-semibold", audience === a.key ? "text-primary" : "text-foreground")}>{a.label}</p>
               <p className="text-xs text-muted-foreground">{a.desc}</p>
             </div>
           </button>
@@ -126,7 +126,7 @@ function CapabilityFitView({ data }: { data: any }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className={cn("text-2xl font-bold",
-          overallFit >= 0.8 ? "text-[#228833]" : overallFit >= 0.5 ? "text-[#F59E0B]" : "text-[#EF4444]"
+          overallFit >= 0.8 ? "text-[#228833]" : overallFit >= 0.5 ? "text-[#CCBB44]" : "text-[#EE6677]"
         )}>
           {Math.round(overallFit * 100)}%
         </div>
@@ -139,7 +139,7 @@ function CapabilityFitView({ data }: { data: any }) {
         {fitAnalysis.map((f: any) => <ScoreBar key={f.capability} score={f.score} threshold={f.threshold} label={f.label} />)}
       </div>
       {fitAnalysis.some((f: any) => f.status === "gap") && (
-        <div className="flex items-start gap-2 text-xs text-[#F59E0B] bg-[#F59E0B]/8 rounded-lg px-3 py-2 border border-[#F59E0B]/20">
+        <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>{fitAnalysis.filter((f: any) => f.status === "gap").length} domain(s) below minimum threshold. A targeted learning plan has been generated.</span>
         </div>
@@ -152,7 +152,7 @@ function TrajectoryView({ data }: { data: any }) {
   const trajectory = data?.trajectory ?? [];
   const trend = data?.trend ?? "insufficient_data";
   const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
-  const trendColor = trend === "improving" ? "text-[#228833]" : trend === "declining" ? "text-[#EF4444]" : "text-muted-foreground";
+  const trendColor = trend === "improving" ? "text-[#228833]" : trend === "declining" ? "text-[#EE6677]" : "text-muted-foreground";
   const validPoints = trajectory.filter((t: any) => t.overallScore !== null);
   const maxScore = Math.max(...validPoints.map((t: any) => t.overallScore ?? 0), 100);
   return (
@@ -176,7 +176,7 @@ function TrajectoryView({ data }: { data: any }) {
               return (
                 <div key={t.sessionId} className="flex-1 flex flex-col items-center gap-1 min-w-0">
                   <span className="text-xs text-muted-foreground">{Math.round(t.overallScore)}</span>
-                  <div className={cn("w-full rounded-t-sm", i === validPoints.length - 1 ? "bg-[#10B981]" : "bg-[#10B981]/40")} style={{ height: `${height}%` }} />
+                  <div className={cn("w-full rounded-t-sm", i === validPoints.length - 1 ? "bg-primary" : "bg-primary/40")} style={{ height: `${height}%` }} />
                 </div>
               );
             })}
@@ -211,14 +211,14 @@ function SmallFunctionView({ data }: { data: any }) {
   const dist = data?.readinessDistribution ?? {};
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2 text-xs text-[#F59E0B] bg-[#F59E0B]/8 rounded-lg px-3 py-2 border border-[#F59E0B]/20">
+      <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
         <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{data?.note}</span>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Total Headcount", value: data?.totalHeadcount ?? 0, color: "text-foreground" },
-          { label: "Assessed", value: data?.assessed ?? 0, color: "text-[#10B981]" },
-          { label: "Assessment Rate", value: `${Math.round((data?.assessmentRate ?? 0) * 100)}%`, color: "text-[#10B981]" },
+          { label: "Assessed", value: data?.assessed ?? 0, color: "text-primary" },
+          { label: "Assessment Rate", value: `${Math.round((data?.assessmentRate ?? 0) * 100)}%`, color: "text-primary" },
         ].map(m => (
           <Card key={m.label} className="border-border">
             <CardContent className="pt-4 text-center">
@@ -231,7 +231,7 @@ function SmallFunctionView({ data }: { data: any }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "AI-Ready", value: dist.ready ?? 0, color: "text-[#228833]" },
-          { label: "Developing", value: dist.developing ?? 0, color: "text-[#F59E0B]" },
+          { label: "Developing", value: dist.developing ?? 0, color: "text-[#CCBB44]" },
           { label: "Not Started", value: dist.notStarted ?? 0, color: "text-muted-foreground" },
         ].map(m => (
           <Card key={m.label} className="border-border">
@@ -278,7 +278,7 @@ function LearnerReportView({ data }: { data: any }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Readiness State", value: state?.readinessState ?? "—", color: "text-foreground" },
-          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#228833]" : "text-[#F59E0B]" },
+          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#228833]" : "text-[#CCBB44]" },
           { label: "Assessments", value: sessions.length, color: "text-primary" },
         ].map(m => (
           <Card key={m.label} className="border-border">
@@ -345,7 +345,7 @@ function ManagerTeamReportView({ data }: { data: any }) {
         {[
           { label: "Total Members", value: members.length, color: "text-foreground" },
           { label: "Compliant", value: members.filter(m => m.state?.complianceState === "compliant").length, color: "text-[#228833]" },
-          { label: "At Risk", value: members.filter(m => m.state?.complianceState === "at_risk").length, color: "text-[#F59E0B]" },
+          { label: "At Risk", value: members.filter(m => m.state?.complianceState === "at_risk").length, color: "text-[#CCBB44]" },
         ].map(m => (
           <Card key={m.label} className="border-border">
             <CardContent className="pt-4 text-center">
@@ -470,7 +470,7 @@ export default function ReportsPage() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Plus className="w-4 h-4 text-[#10B981]" />Generate Report
+                <Plus className="w-4 h-4 text-primary" />Generate Report
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -484,14 +484,14 @@ export default function ReportsPage() {
                     {cat.reports.map(r => (
                       <button key={r.value} onClick={() => setSelectedType(r.value)}
                         className={cn("w-full text-left rounded-lg border px-3 py-2.5 transition-all flex items-start gap-2.5",
-                          selectedType === r.value ? "border-[#10B981] bg-[#10B981]/8 ring-1 ring-[#10B981]/20" : "border-border hover:border-[#10B981]/40 hover:bg-muted/30"
+                          selectedType === r.value ? "border-primary bg-primary/8 ring-1 ring-primary/20" : "border-border hover:border-primary/40 hover:bg-muted/30"
                         )}>
-                        {r.icon && <r.icon className={cn("w-3.5 h-3.5 mt-0.5 shrink-0", selectedType === r.value ? "text-[#10B981]" : "text-muted-foreground")} />}
+                        {r.icon && <r.icon className={cn("w-3.5 h-3.5 mt-0.5 shrink-0", selectedType === r.value ? "text-primary" : "text-muted-foreground")} />}
                         <div className="flex-1 min-w-0">
-                          <p className={cn("text-xs font-semibold", selectedType === r.value ? "text-[#10B981]" : "text-foreground")}>{r.label}</p>
+                          <p className={cn("text-xs font-semibold", selectedType === r.value ? "text-primary" : "text-foreground")}>{r.label}</p>
                           <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{r.desc}</p>
                         </div>
-                        {selectedType === r.value && <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-1.5 shrink-0" />}
+                        {selectedType === r.value && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                       </button>
                     ))}
                   </div>
@@ -500,7 +500,7 @@ export default function ReportsPage() {
               <Button
                 onClick={() => requestMutation.mutate({ reportType: selectedType as any, parameters: {}, format: "json" })}
                 disabled={requestMutation.isPending}
-                className="w-full bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+                className="w-full bg-primary hover:bg-primary/90 text-white gap-2"
               >
                 {requestMutation.isPending ? (
                   <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generating...</>
@@ -532,8 +532,8 @@ export default function ReportsPage() {
                     <button key={j.id} onClick={() => setActiveJobId(j.id)}
                       className={cn("shrink-0 text-xs rounded-lg border px-3 py-2 transition-all",
                         (activeJobId === j.id || (!activeJobId && j === jobs[0]))
-                          ? "border-[#10B981] bg-[#10B981]/5 text-[#10B981] font-medium"
-                          : "border-border text-muted-foreground hover:border-[#10B981]/40"
+                          ? "border-primary bg-primary/5 text-primary font-medium"
+                          : "border-border text-muted-foreground hover:border-primary/40"
                       )}>
                       {REPORT_TYPE_LABELS[j.reportType] ?? j.reportType}
                     </button>

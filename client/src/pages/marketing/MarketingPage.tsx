@@ -32,18 +32,18 @@ import {
 const C = {
   darkSlate: "#1E293B",
   deepDark: "#0F172A",
-  primaryGreen: "#10B981",
-  mintAccent: "#34D399",
+  primaryGreen: "var(--primary)",
+  mintAccent: "var(--primary)",
   chalk: "#F7F8FA",
   text: "#0E1726",
   muted: "#64748B",
   border: "#E5E7EB",
-  interaction: "#2563EB",
-  outputEval: "#7C3AED",
-  workflow: "#0D9488",
-  ethics: "#DB2777",
-  change: "#D97706",
-  readiness: "#059669",
+  interaction: "#4477AA",
+  outputEval: "#AA3377",
+  workflow: "#228833",
+  ethics: "#EE6677",
+  change: "#EE8866",
+  readiness: "#CCBB44",
 
 };
 
@@ -300,7 +300,7 @@ function TheProblem() {
     <section className="py-24 px-6" style={{ background: C.chalk }}>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#F59E0B" }}>
+          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#CCBB44" }}>
             The Problem
           </span>
         </div>
@@ -319,7 +319,7 @@ function TheProblem() {
                 "Where capability gaps exist",
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "#F59E0B" }} />
+                  <span className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "#CCBB44" }} />
                   <p className="text-slate-700 text-lg">{item}</p>
                 </div>
               ))}
@@ -460,9 +460,9 @@ function Example() {
 
             <div className="space-y-3 mb-8">
               {[
-                { label: "The data is incomplete", color: "#F59E0B" },
-                { label: "The model has limitations", color: "#EF4444" },
-                { label: "The manager wants immediate action", color: "#8B5CF6" },
+                { label: "The data is incomplete", color: "#CCBB44" },
+                { label: "The model has limitations", color: "#EE6677" },
+                { label: "The manager wants immediate action", color: "#AA3377" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -517,7 +517,7 @@ function WhatYouGet() {
     },
     {
       num: "02",
-      color: "#F59E0B",
+      color: "#CCBB44",
       title: "Visibility into gaps and risks",
       desc: "Know where decisions are most likely to go wrong.",
     },
@@ -612,9 +612,9 @@ function SeeInside() {
               {/* Key metrics */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Judgement quality", value: "62", unit: "/100", trend: "up", color: "#F59E0B" },
-                  { label: "Model validation rate", value: "34", unit: "%", trend: "down", color: "#EF4444" },
-                  { label: "Capability gap", value: "−18", unit: "pts", trend: "neutral", color: "#8B5CF6" },
+                  { label: "Judgement quality", value: "62", unit: "/100", trend: "up", color: "#CCBB44" },
+                  { label: "Model validation rate", value: "34", unit: "%", trend: "down", color: "#EE6677" },
+                  { label: "Capability gap", value: "−18", unit: "pts", trend: "neutral", color: "#AA3377" },
                 ].map((m) => (
                   <div
                     key={m.label}
@@ -627,7 +627,7 @@ function SeeInside() {
                     </p>
                     <div className="flex justify-center mt-1">
                       {m.trend === "up" && <TrendingUp className="w-3 h-3" style={{ color: C.primaryGreen }} />}
-                      {m.trend === "down" && <TrendingDown className="w-3 h-3" style={{ color: "#EF4444" }} />}
+                      {m.trend === "down" && <TrendingDown className="w-3 h-3" style={{ color: "#EE6677" }} />}
                       {m.trend === "neutral" && <Minus className="w-3 h-3" style={{ color: C.muted }} />}
                     </div>
                   </div>
@@ -663,10 +663,10 @@ function SeeInside() {
               {/* Flagged insight */}
               <div
                 className="rounded-xl p-4"
-                style={{ background: "#EF444410", border: "1px solid #EF444430" }}
+                style={{ background: "#EE667710", border: "1px solid #EE667730" }}
               >
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#EF4444" }} />
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#EE6677" }} />
                   <div>
                     <p className="text-xs font-semibold mb-1" style={{ color: "#FCA5A5" }}>
                       Flagged finding
@@ -857,7 +857,7 @@ function BetaProgramme() {
         <div className="text-center">
           <div
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium mb-6"
-            style={{ background: "#F59E0B15", color: "#F59E0B", border: "1px solid #F59E0B30" }}
+            style={{ background: "#CCBB4415", color: "#CCBB44", border: "1px solid #CCBB4430" }}
           >
             <AlertTriangle className="w-4 h-4" />
             Requires 10+ HR professionals · Once the cohort is full, access will close
@@ -884,7 +884,7 @@ function BetaProgramme() {
 function FinalClose() {
   const outcomes = [
     { label: "Measure", desc: "Real AI decision behaviour across your organisation", color: C.interaction },
-    { label: "Identify", desc: "Capability gaps and behavioural risks before they cause harm", color: "#F59E0B" },
+    { label: "Identify", desc: "Capability gaps and behavioural risks before they cause harm", color: "#CCBB44" },
     { label: "Improve", desc: "Targeted learning that closes the gap — continuously", color: C.primaryGreen },
     { label: "Align", desc: "AI capability to your strategy and risk appetite", color: C.outputEval },
   ];

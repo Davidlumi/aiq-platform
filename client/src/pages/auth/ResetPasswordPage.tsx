@@ -31,9 +31,9 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
       <circle cx="100" cy="100" r="90" fill="#1E293B" />
       <text x="100" y="122" fontFamily="system-ui, -apple-system, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
-        A<tspan fill="#10B981">i</tspan>Q
+        A<tspan fill="var(--primary)">i</tspan>Q
       </text>
-      <path d="M 58 140 Q 100 158 142 140" stroke="#10B981" strokeWidth="6" strokeLinecap="round" fill="none" />
+      <path d="M 58 140 Q 100 158 142 140" stroke="var(--primary)" strokeWidth="6" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -70,8 +70,8 @@ export default function ResetPasswordPage() {
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <AiQLogoMark size={36} />
-        <span style={{ fontSize: "18px", fontWeight: 600, color: "#0F172A" }}>
-          Ai<span style={{ color: "#10B981" }}>Q</span>
+        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)" }}>
+          Ai<span className="text-primary">Q</span>
         </span>
       </div>
 
@@ -91,10 +91,10 @@ export default function ResetPasswordPage() {
                 className="w-12 h-12 rounded-full flex items-center justify-center"
                 style={{ background: "#ECFDF5" }}
               >
-                <CheckCircle2 className="w-6 h-6" style={{ color: "#10B981" }} />
+                <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 600, color: "#0F172A" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)" }}>
               Password updated
             </h1>
             <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.6 }}>
@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
         ) : (
           <>
             <div className="mb-6">
-              <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#0F172A", marginBottom: "6px" }}>
+              <h1 style={{ fontSize: "22px", fontWeight: 600, color: "var(--foreground)", marginBottom: "6px" }}>
                 Set new password
               </h1>
               <p style={{ fontSize: "14px", color: "#64748B" }}>
@@ -174,7 +174,7 @@ export default function ResetPasswordPage() {
 
             <div className="mt-5 text-center">
               <Link href="/login">
-                <span className="text-sm cursor-pointer hover:underline" style={{ color: "#10B981", fontWeight: 500 }}>
+                <span className="text-sm cursor-pointer hover:underline text-primary font-medium">
                   <ArrowLeft className="w-3 h-3 inline mr-1" />
                   Back to sign in
                 </span>

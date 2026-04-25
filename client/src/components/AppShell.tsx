@@ -1,9 +1,7 @@
 /**
  * AppShell — AiQ Platform Navigation Shell
- * Original brand: #10B981 green accent, #1E293B dark slate sidebar,
- * #F7F8FA canvas background, system font stack.
+ * Uses semantic CSS variables from index.css for all colours.
  * Sidebar: 240px expanded, 56px collapsed.
- * Simulations removed per proposition realignment brief.
  */
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -124,7 +122,7 @@ const SECTION_LABELS: Record<string, string> = {
   admin:  "Administration",
 };
 
-/** AiQ logo mark — dark slate circle, white A+Q, green i dot */
+/** AiQ logo mark — dark slate circle, white A+Q, primary i dot */
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg
@@ -136,7 +134,7 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
       aria-label="AiQ logo"
       role="img"
     >
-      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <circle cx="100" cy="100" r="90" className="fill-sidebar" />
       <text
         x="100"
         y="122"
@@ -147,11 +145,11 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
         textAnchor="middle"
         letterSpacing="-3"
       >
-        A<tspan fill="#10B981">i</tspan>Q
+        A<tspan className="fill-primary">i</tspan>Q
       </text>
       <path
         d="M 58 140 Q 100 158 142 140"
-        stroke="#10B981"
+        className="stroke-primary"
         strokeWidth="6"
         strokeLinecap="round"
         fill="none"
@@ -164,11 +162,11 @@ function AiQWordmark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) return null;
   return (
     <div className="flex flex-col leading-none select-none">
-      <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "#94A3B8", lineHeight: 1, marginBottom: "2px" }}>
+      <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-sidebar-foreground/50" style={{ lineHeight: 1, marginBottom: "2px" }}>
         HR
       </span>
-      <span style={{ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "#F8FAFC" }}>
-        Ai<span style={{ color: "#10B981" }}>Q</span>
+      <span className="text-[17px] font-semibold tracking-tight text-sidebar-foreground" style={{ lineHeight: 1 }}>
+        Ai<span className="text-primary">Q</span>
       </span>
     </div>
   );
@@ -219,20 +217,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const SidebarInner = () => (
-    <div
-      className="flex flex-col h-full"
-      style={{
-        background: "#1E293B",
-        borderRight: "1px solid #334155",
-      }}
-    >
+    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       {/* Logo header */}
       <div
         className={cn(
-          "flex items-center h-16 px-4 shrink-0",
+          "flex items-center h-16 px-4 shrink-0 border-b border-sidebar-border",
           collapsed ? "justify-center" : "justify-between"
         )}
-        style={{ borderBottom: "1px solid #334155" }}
       >
         <div className="flex items-center gap-2.5">
           <AiQLogoMark size={collapsed ? 28 : 32} />
@@ -241,10 +232,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded transition-colors hidden lg:flex"
-            style={{ color: "#64748B" }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "#94A3B8")}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "#64748B")}
+            className="p-1.5 rounded transition-colors hidden lg:flex text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             aria-label="Collapse sidebar"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -254,11 +242,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Expand button when collapsed */}
       {collapsed && (
-        <div className="flex justify-center py-2" style={{ borderBottom: "1px solid #334155" }}>
+        <div className="flex justify-center py-2 border-b border-sidebar-border">
           <button
             onClick={() => setCollapsed(false)}
-            className="p-1.5 rounded transition-colors"
-            style={{ color: "#64748B" }}
+            className="p-1.5 rounded transition-colors text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             aria-label="Expand sidebar"
           >
             <ChevronRight className="w-4 h-4" />
@@ -272,8 +259,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
               <div
-                className="px-4 py-2 text-[11px] font-bold tracking-widest uppercase"
-                style={{ color: "#64748B" }}
+                className="px-4 py-2 text-[11px] font-bold tracking-widest uppercase text-sidebar-foreground/40"
                 aria-hidden="true"
               >
                 {section.label}
@@ -290,29 +276,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         onClick={() => setMobileOpen(false)}
                         className={cn(
                           "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
-                          collapsed ? "justify-center px-2" : "px-3",
+                          collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
+                          active
+                            ? "bg-primary/14 text-primary font-semibold border-l-primary"
+                            : "text-sidebar-foreground/60 hover:bg-white/5 hover:text-sidebar-foreground/85 border-l-transparent",
                         )}
-                        style={{
-                          background: active ? "rgba(16,185,129,0.14)" : "transparent",
-                          color: active ? "#10B981" : "#94A3B8",
-                          fontWeight: active ? 600 : 400,
-                          borderLeft: active && !collapsed ? "3px solid #10B981" : "3px solid transparent",
-                          borderRadius: "8px",
-                        }}
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
-                        onMouseEnter={e => {
-                          if (!active) {
-                            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
-                            (e.currentTarget as HTMLElement).style.color = "#CBD5E1";
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (!active) {
-                            (e.currentTarget as HTMLElement).style.background = "transparent";
-                            (e.currentTarget as HTMLElement).style.color = "#94A3B8";
-                          }
-                        }}
                       >
                         <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
                           <Icon className="w-[18px] h-[18px]" />
@@ -329,31 +299,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* User profile footer */}
-      <div className="shrink-0 p-2" style={{ borderTop: "1px solid #334155" }}>
+      <div className="shrink-0 p-2 border-t border-sidebar-border">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded transition-colors",
+                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/60 hover:bg-white/5",
                 collapsed && "justify-center"
               )}
-              style={{ color: "#94A3B8" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)")}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               aria-label="Account menu"
             >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                style={{ background: "rgba(16,185,129,0.2)", color: "#10B981" }}
-              >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/20 text-primary">
                 {initials}
               </div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "#F1F5F9", fontSize: "13px" }}>
+                  <p className="text-[13px] font-medium truncate text-sidebar-foreground">
                     {displayName}
                   </p>
-                  <p className="text-xs truncate" style={{ color: "#64748B", fontSize: "12px" }}>
+                  <p className="text-[12px] truncate text-sidebar-foreground/40">
                     {roleLabel}
                   </p>
                 </div>
@@ -365,7 +329,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
-                <p className="text-xs font-medium" style={{ color: "#10B981" }}>{roleLabel}</p>
+                <p className="text-xs font-medium text-primary">{roleLabel}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -378,7 +342,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              className="text-destructive focus:text-destructive focus:bg-destructive/5"
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sign out</span>
@@ -390,10 +354,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div
-      className="flex h-screen overflow-hidden"
-      style={{ background: "#F7F8FA" }}
-    >
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop sidebar — 240px expanded, 56px collapsed */}
       <aside
         className={cn(
@@ -409,8 +370,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: "rgba(15,23,42,0.6)" }}
+          className="fixed inset-0 z-40 lg:hidden bg-foreground/60"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
@@ -431,20 +391,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header
-          className="flex items-center px-4 lg:px-6 gap-3 shrink-0"
-          style={{
-            height: "56px",
-            background: "#FFFFFF",
-            borderBottom: "1px solid #E2E8F0",
-            boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.03)",
-          }}
-        >
+        <header className="flex items-center h-14 px-4 lg:px-6 gap-3 shrink-0 bg-card border-b border-border shadow-sm">
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 rounded transition-colors"
-            style={{ color: "#64748B" }}
+            className="lg:hidden p-2 rounded transition-colors text-muted-foreground hover:text-foreground"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
@@ -453,8 +404,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2">
             <AiQLogoMark size={26} />
-            <span style={{ fontWeight: 600, fontSize: "15px", color: "#1E293B" }}>
-              Ai<span style={{ color: "#10B981" }}>Q</span>
+            <span className="font-semibold text-[15px] text-foreground">
+              Ai<span className="text-primary">Q</span>
             </span>
           </div>
 
@@ -463,10 +414,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Right actions */}
           <div className="flex items-center gap-1">
             <button
-              className="p-2 rounded transition-colors"
-              style={{ color: "#64748B" }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#F1F5F9")}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />
@@ -475,22 +423,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2 px-2 py-1.5 rounded transition-colors"
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#F1F5F9")}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded transition-colors hover:bg-accent"
                   aria-label="Account menu"
                 >
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                    style={{ background: "rgba(16,185,129,0.15)", color: "#10B981" }}
-                  >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/15 text-primary">
                     {initials}
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium leading-none" style={{ color: "#1E293B", fontSize: "13px" }}>
+                    <p className="text-[13px] font-medium leading-none text-foreground">
                       {displayName}
                     </p>
-                    <p className="text-xs leading-none mt-0.5" style={{ color: "#64748B", fontSize: "12px" }}>
+                    <p className="text-[12px] leading-none mt-0.5 text-muted-foreground">
                       {roleLabel}
                     </p>
                   </div>
@@ -501,7 +444,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{displayName}</p>
                     <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
-                    <p className="text-xs font-medium" style={{ color: "#10B981" }}>{roleLabel}</p>
+                    <p className="text-xs font-medium text-primary">{roleLabel}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -514,7 +457,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  className="text-destructive focus:text-destructive focus:bg-destructive/5"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>

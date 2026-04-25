@@ -223,7 +223,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
               <SlidersHorizontal className="w-3.5 h-3.5" />
               {activeCount > 0 ? `${activeCount} selected` : "All segments"}
               {activeCount > 0 && (
-                <span className="ml-1 bg-emerald-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
+                <span className="ml-1 bg-primary text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
                   {activeCount}
                 </span>
               )}
@@ -245,7 +245,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                     type="button"
                     className={cn(
                       "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md transition-colors text-left",
-                      isChecked ? "bg-emerald-50 hover:bg-emerald-100" : "hover:bg-neutral-50",
+                      isChecked ? "bg-primary/8 hover:bg-primary/12" : "hover:bg-neutral-50",
                     )}
                     onClick={() => toggleDept(opt.value)}
                   >
@@ -256,13 +256,13 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                         <span className="text-[10px] text-muted-foreground">{headcount} people</span>
                       )}
                     </div>
-                    {isChecked && <Check className="w-3 h-3 text-emerald-600 shrink-0" />}
+                    {isChecked && <Check className="w-3 h-3 text-primary shrink-0" />}
                   </button>
                 );
               })}
             </div>
             <div className="p-2 border-t border-neutral-100 flex items-center justify-between bg-neutral-50/50">
-              <button type="button" className="text-[10px] text-emerald-700 hover:text-emerald-900 font-medium transition-colors" onClick={selectAll}>
+              <button type="button" className="text-[10px] text-primary hover:text-primary font-medium transition-colors" onClick={selectAll}>
                 Select all
               </button>
               <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors" onClick={clearFilter}>
@@ -322,7 +322,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
             <tr className="bg-white font-semibold">
               <td className="sticky left-0 z-10 bg-white py-0 px-4 border-b border-r border-neutral-200">
                 <div className="flex items-center gap-2 py-2.5">
-                  <div className="w-1.5 h-6 rounded-full bg-emerald-500" />
+                  <div className="w-1.5 h-6 rounded-full bg-primary/80" />
                   <div>
                     <span className="text-xs font-bold text-foreground block">{computedOverall.label}</span>
                     <span className="text-[10px] text-muted-foreground flex items-center gap-1">

@@ -35,33 +35,33 @@ import {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const CAP_META: Record<string, { label: string; color: string; shortLabel: string }> = {
-  ai_interaction:         { label: "AI Interaction",         color: "#3B82F6", shortLabel: "Interact" },
-  ai_output_evaluation:   { label: "Output Evaluation",      color: "#10B981", shortLabel: "Evaluate" },
+  ai_interaction:         { label: "AI Interaction",         color: "#4477AA", shortLabel: "Interact" },
+  ai_output_evaluation:   { label: "Output Evaluation",      color: "var(--primary)", shortLabel: "Evaluate" },
   ai_workflow_design:     { label: "Workflow Design",        color: "#06B6D4", shortLabel: "Workflow" },
-  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#F59E0B", shortLabel: "Readiness" },
-  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#8B5CF6", shortLabel: "Ethics" },
+  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#CCBB44", shortLabel: "Readiness" },
+  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#AA3377", shortLabel: "Ethics" },
   ai_change_leadership:   { label: "Change Leadership",      color: "#EC4899", shortLabel: "Leadership" },
 };
 
 const READINESS_META: Record<string, { label: string; color: string; bg: string; icon: any; description: string }> = {
   safe: {
     label: "Deployment Ready",
-    color: "#10B981",
-    bg: "#10B98118",
+    color: "var(--primary)",
+    bg: "color-mix(in srgb, var(--primary) 10%, transparent)",
     icon: CheckCircle,
     description: "Your AI capability profile meets the threshold for responsible AI deployment in your role.",
   },
   at_risk: {
     label: "Developing",
-    color: "#F59E0B",
-    bg: "#F59E0B18",
+    color: "#CCBB44",
+    bg: "#CCBB4418",
     icon: AlertTriangle,
     description: "You're building your AI capability. Focus on the areas highlighted below to progress.",
   },
   unsafe: {
     label: "Foundational",
-    color: "#DC2626",
-    bg: "#DC262618",
+    color: "#EE6677",
+    bg: "#EE667718",
     icon: XCircle,
     description: "Your assessment indicates foundational gaps. Your learning plan has been tailored to address these.",
   },
@@ -77,19 +77,19 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
 // Band from score — never show raw number to participant
 function scoreToBand(score: number | null): { label: string; color: string; icon: any } {
   if (score === null) return { label: "Not assessed", color: "#9CA3AF", icon: HelpCircle };
-  if (score >= 75) return { label: "Strong",         color: "#10B981",  icon: ThumbsUp };
-  if (score >= 55) return { label: "Developing",     color: "#F59E0B",  icon: Minus };
-  return                  { label: "Foundational",   color: "#DC2626",  icon: ThumbsDown };
+  if (score >= 75) return { label: "Strong",         color: "var(--primary)",  icon: ThumbsUp };
+  if (score >= 55) return { label: "Developing",     color: "#CCBB44",  icon: Minus };
+  return                  { label: "Foundational",   color: "#EE6677",  icon: ThumbsDown };
 }
 
 // Outcome class → signal for scenario callbacks
 function outcomeToSignal(oc: string | null): { label: string; color: string; icon: any } {
   if (!oc) return { label: "Answered", color: "#9CA3AF", icon: Minus };
-  if (oc === "strong")           return { label: "Handled well",    color: "#10B981", icon: ThumbsUp };
-  if (oc === "acceptable")       return { label: "Solid approach",  color: "#10B981", icon: ThumbsUp };
-  if (oc === "weak")             return { label: "Needs attention", color: "#F59E0B", icon: Minus };
-  if (oc === "failure")          return { label: "Area to develop", color: "#DC2626", icon: ThumbsDown };
-  if (oc === "critical_failure") return { label: "Priority gap",    color: "#DC2626", icon: ThumbsDown };
+  if (oc === "strong")           return { label: "Handled well",    color: "var(--primary)", icon: ThumbsUp };
+  if (oc === "acceptable")       return { label: "Solid approach",  color: "var(--primary)", icon: ThumbsUp };
+  if (oc === "weak")             return { label: "Needs attention", color: "#CCBB44", icon: Minus };
+  if (oc === "failure")          return { label: "Area to develop", color: "#EE6677", icon: ThumbsDown };
+  if (oc === "critical_failure") return { label: "Priority gap",    color: "#EE6677", icon: ThumbsDown };
   return { label: "Answered", color: "#9CA3AF", icon: Minus };
 }
 
@@ -131,14 +131,14 @@ function ReadinessHeroCard({
           {daysToRevalidation !== null && (
             <div className={cn(
               "shrink-0 text-center px-5 py-4 rounded-2xl border",
-              urgency === "critical" ? "border-[#DC2626]/30 bg-[#DC2626]/6" :
-              urgency === "soon"     ? "border-[#F59E0B]/30 bg-[#F59E0B]/6" :
+              urgency === "critical" ? "border-[#EE6677]/30 bg-[#EE6677]/6" :
+              urgency === "soon"     ? "border-[#CCBB44]/30 bg-[#CCBB44]/6" :
               "border-border bg-muted/20"
             )}>
               <p className={cn(
                 "text-4xl font-bold leading-none",
-                urgency === "critical" ? "text-[#DC2626]" :
-                urgency === "soon"     ? "text-[#F59E0B]" : "text-foreground"
+                urgency === "critical" ? "text-[#EE6677]" :
+                urgency === "soon"     ? "text-[#CCBB44]" : "text-foreground"
               )}>{daysToRevalidation}</p>
               <p className="text-[11px] text-muted-foreground mt-1">days to<br />revalidation</p>
               {revalidationDue && (
@@ -166,7 +166,7 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
     <Card className="border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-[#3B82F6]" />Capability Shape
+          <BarChart3 className="w-4 h-4 text-[#4477AA]" />Capability Shape
         </CardTitle>
         <p className="text-xs text-muted-foreground">Your relative strengths across 6 AI capability domains</p>
       </CardHeader>
@@ -177,7 +177,7 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
               <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                 <PolarGrid stroke="var(--border)" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                <Radar name="Score" dataKey="score" stroke="#10B981" fill="#10B981" fillOpacity={0.18} strokeWidth={2} />
+                <Radar name="Score" dataKey="score" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.18} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-3 gap-1.5 mt-2">
@@ -223,20 +223,20 @@ function ScenarioCallbacksCard({
     <Card className="border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Target className="w-4 h-4 text-[#8B5CF6]" />Recent Assessment Moments
+          <Target className="w-4 h-4 text-[#AA3377]" />Recent Assessment Moments
         </CardTitle>
         <p className="text-xs text-muted-foreground">Scenarios from your last assessment — what you handled well and where to focus</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {strong.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[#10B981] mb-2 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-primary mb-2 flex items-center gap-1.5">
               <ThumbsUp className="w-3 h-3" />Handled well
             </p>
             <div className="space-y-1.5">
               {strong.map(c => (
-                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-[#10B981]/5 border border-[#10B981]/15">
-                  <CheckCircle className="w-3 h-3 text-[#10B981] shrink-0 mt-0.5" />
+                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-primary/5 border border-primary/15">
+                  <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-xs text-foreground leading-snug">{c.title}</p>
                     {c.capabilityKey && (
@@ -250,13 +250,13 @@ function ScenarioCallbacksCard({
         )}
         {weak.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[#F59E0B] mb-2 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-[#CCBB44] mb-2 flex items-center gap-1.5">
               <Target className="w-3 h-3" />Areas to develop
             </p>
             <div className="space-y-1.5">
               {weak.map(c => (
-                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-[#F59E0B]/5 border border-[#F59E0B]/15">
-                  <AlertTriangle className="w-3 h-3 text-[#F59E0B] shrink-0 mt-0.5" />
+                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-[#CCBB44]/5 border border-[#CCBB44]/15">
+                  <AlertTriangle className="w-3 h-3 text-[#CCBB44] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-xs text-foreground leading-snug">{c.title}</p>
                     {c.capabilityKey && (
@@ -286,7 +286,7 @@ function NarrativeCard({ narrative }: {
     <Card className="border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#10B981]" />Your Development Narrative
+          <Sparkles className="w-4 h-4 text-primary" />Your Development Narrative
         </CardTitle>
         <p className="text-xs text-muted-foreground">Personalised insight based on your assessment results</p>
       </CardHeader>
@@ -304,9 +304,9 @@ function TransferFindingsPanel() {
   if (!data || !data.findings || data.findings.length === 0) return null;
   const summary = data.summary;
   return (
-    <Card className="border-[#F59E0B]/30 bg-[#F59E0B]/5">
+    <Card className="border-[#CCBB44]/30 bg-[#CCBB44]/5">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2 text-[#F59E0B]">
+        <CardTitle className="text-sm flex items-center gap-2 text-[#CCBB44]">
           <AlertTriangle className="w-4 h-4" />Learning Transfer Check
         </CardTitle>
       </CardHeader>
@@ -320,7 +320,7 @@ function TransferFindingsPanel() {
           {data.findings.slice(0, 3).map((item: { planItemId: string; moduleTitle: string; capabilityKey?: string; reason: string }) => (
             <div key={item.planItemId} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#CCBB44] shrink-0" />
                 <span className="text-xs text-foreground">{item.moduleTitle}</span>
               </div>
               <span className="text-xs text-muted-foreground capitalize">{String(item.reason ?? "").replace(/_/g, " ")}</span>
@@ -352,17 +352,17 @@ function CompetenceConfidenceWidget() {
   if (!matrix || matrix.length === 0) return null;
 
   const QUADRANT_META = {
-    competent_confident:     { label: "Competent & Confident",      color: "#10B981", bg: "#10B98115", dot: "bg-emerald-500" },
-    competent_underconfident:{ label: "Competent, Underconfident",   color: "#3B82F6", bg: "#3B82F615", dot: "bg-blue-500" },
-    incompetent_overconfident:{ label: "Blind Spot",                 color: "#DC2626", bg: "#DC262615", dot: "bg-red-500" },
-    incompetent_unconfident: { label: "Developing",                  color: "#F59E0B", bg: "#F59E0B15", dot: "bg-amber-500" },
+    competent_confident:     { label: "Competent & Confident",      color: "var(--primary)", bg: "color-mix(in srgb, var(--primary) 8%, transparent)", dot: "bg-primary" },
+    competent_underconfident:{ label: "Competent, Underconfident",   color: "#4477AA", bg: "#4477AA15", dot: "bg-blue-500" },
+    incompetent_overconfident:{ label: "Blind Spot",                 color: "#EE6677", bg: "#EE667715", dot: "bg-[#EE6677]/80" },
+    incompetent_unconfident: { label: "Developing",                  color: "#CCBB44", bg: "#CCBB4415", dot: "bg-[#CCBB44]/80" },
   } as const;
 
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Target className="w-4 h-4 text-[#8B5CF6]" />Competence vs. Confidence
+          <Target className="w-4 h-4 text-[#AA3377]" />Competence vs. Confidence
         </CardTitle>
         <p className="text-xs text-muted-foreground">How your self-assessment aligns with your demonstrated capability</p>
       </CardHeader>
@@ -383,10 +383,10 @@ function CompetenceConfidenceWidget() {
           })}
         </div>
         {blindSpots && blindSpots.length > 0 && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="rounded-lg border border-[#EE6677]/25 bg-[#EE6677]/8 p-3 flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#EE6677] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-red-400">Blind spot detected</p>
+              <p className="text-xs font-semibold text-[#EE6677]">Blind spot detected</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 You rated yourself highly in {blindSpots.map((b: { domain: string; displayName: string }) => CAP_META[b.domain]?.shortLabel ?? b.displayName).join(", ")} but scored below threshold. Your learning plan has been adjusted.
               </p>
@@ -453,7 +453,7 @@ export default function LearnerDashboard() {
           {hasAssessment && data?.latestReadiness && data.latestReadiness !== "safe" ? (
             <>
               <Link href="/learning">
-                <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white text-xs">
+                <Button size="sm" className="gap-2 bg-primary hover:bg-[var(--primary)] text-white text-xs">
                   <BookOpen className="w-3.5 h-3.5" />Start Learning
                 </Button>
               </Link>
@@ -465,7 +465,7 @@ export default function LearnerDashboard() {
             </>
           ) : (
             <Link href="/assessment">
-              <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white text-xs">
+              <Button size="sm" className="gap-2 bg-primary hover:bg-[var(--primary)] text-white text-xs">
                 <ClipboardList className="w-3.5 h-3.5" />
                 {hasAssessment ? "Reassess" : "Take Assessment"}
               </Button>
@@ -484,15 +484,15 @@ export default function LearnerDashboard() {
 
       {/* ── No assessment CTA ── */}
       {!hasAssessment && (
-        <Card className="border-dashed border-2 border-[#10B981]/30 bg-[#10B981]/5">
+        <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
           <CardContent className="pt-8 pb-8 text-center">
-            <ClipboardList className="w-10 h-10 text-[#10B981] mx-auto mb-3" />
+            <ClipboardList className="w-10 h-10 text-primary mx-auto mb-3" />
             <h3 className="text-base font-semibold text-foreground mb-1">Ready to discover your AI capability profile?</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
               The adaptive assessment takes 25–35 minutes and produces a personalised profile across 6 AI capability domains.
             </p>
             <Link href="/assessment">
-              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
+              <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
                 Start Assessment <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -524,7 +524,7 @@ export default function LearnerDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#10B981]" />Learning Plan
+                <BookOpen className="w-4 h-4 text-primary" />Learning Plan
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -576,7 +576,7 @@ export default function LearnerDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#F59E0B]" />Revalidation
+                <Calendar className="w-4 h-4 text-[#CCBB44]" />Revalidation
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -585,8 +585,8 @@ export default function LearnerDashboard() {
                   <div className="flex items-end gap-1">
                     <span className={cn(
                       "text-4xl font-bold",
-                      daysToRevalidation !== null && daysToRevalidation <= 7  ? "text-[#DC2626]" :
-                      daysToRevalidation !== null && daysToRevalidation <= 30 ? "text-[#F59E0B]" : "text-foreground"
+                      daysToRevalidation !== null && daysToRevalidation <= 7  ? "text-[#EE6677]" :
+                      daysToRevalidation !== null && daysToRevalidation <= 30 ? "text-[#CCBB44]" : "text-foreground"
                     )}>{daysToRevalidation}</span>
                     <span className="text-muted-foreground mb-1 text-sm">days remaining</span>
                   </div>
@@ -598,7 +598,7 @@ export default function LearnerDashboard() {
                   )}
                   {daysToRevalidation !== null && daysToRevalidation <= 14 && (
                     <Link href="/assessment">
-                      <Button size="sm" className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs gap-1.5">
+                      <Button size="sm" className="w-full bg-[#EE6677] hover:bg-[#B91C1C] text-white text-xs gap-1.5">
                         <AlertTriangle className="w-3 h-3" />Start Revalidation Now
                       </Button>
                     </Link>
@@ -623,7 +623,7 @@ export default function LearnerDashboard() {
             <Card className="border-border">
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <Award className="w-4 h-4 text-[#3B82F6]" />
+                  <Award className="w-4 h-4 text-[#4477AA]" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Response Quality</span>
                 </div>
                 <p className="text-2xl font-bold text-foreground capitalize">{data.credibility.band}</p>
@@ -635,12 +635,12 @@ export default function LearnerDashboard() {
             <Card className="border-border">
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
+                  <AlertTriangle className="w-4 h-4 text-[#CCBB44]" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Risk Indicator</span>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold capitalize",
-                  data.risk.band === "high" ? "text-[#DC2626]" : data.risk.band === "medium" ? "text-[#F59E0B]" : "text-[#10B981]"
+                  data.risk.band === "high" ? "text-[#EE6677]" : data.risk.band === "medium" ? "text-[#CCBB44]" : "text-primary"
                 )}>{data.risk.band}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Based on governance and ethics signal patterns</p>
               </CardContent>
@@ -657,9 +657,9 @@ export default function LearnerDashboard() {
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Take Assessment",  path: "/assessment",  icon: ClipboardList, color: "#10B981" },
-            { label: "My Learning Plan", path: "/learning",    icon: BookOpen,      color: "#3B82F6" },
-            { label: "Content Library",  path: "/library",     icon: Library,       color: "#8B5CF6" },
+            { label: "Take Assessment",  path: "/assessment",  icon: ClipboardList, color: "var(--primary)" },
+            { label: "My Learning Plan", path: "/learning",    icon: BookOpen,      color: "#4477AA" },
+            { label: "Content Library",  path: "/library",     icon: Library,       color: "#AA3377" },
           ].map(action => {
             const Icon = action.icon;
             return (

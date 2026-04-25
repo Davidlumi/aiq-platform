@@ -1709,3 +1709,15 @@
 - [x] L7-08: TeamLearningPage AI Score shows raw 0-100 integer — convert to Peakon format (÷10)
 - [x] L7-09: TeamLearningPage "No activity" badge uses saturated amber — replace with muted Peakon palette
 - [x] L7-10: ContentLibraryPage CAPABILITY_COLORS is local duplicate with incomplete entries — import from canonical domains.ts
+
+## Colour Scheme Audit — Round 8 (Apr 2026)
+- [x] C8-01: Bulk-replace 294 hardcoded #10B981 refs across 29 files with Tailwind semantic classes (text-primary, bg-primary, border-primary)
+- [x] C8-02: AppShell sidebar — replace 11 inline style hex values with Tailwind sidebar-* token classes (bg-sidebar, text-sidebar-foreground, border-sidebar-border)
+- [x] C8-03: AppShell top header bar — replace hardcoded #FFFFFF bg + #E2E8F0 border with bg-background + border-border
+- [x] C8-04: ProfilingModal — replace 32 hardcoded #10B981 refs with text-primary/bg-primary/border-primary
+- [x] C8-05: Auth pages (Login, Register, ForgotPassword, ResetPassword) — replace ~18 hardcoded brand hex values with semantic Tailwind classes
+- [x] C8-06: OnboardingWizard — replace 14 hardcoded #10B981 refs with semantic primary classes
+- [x] C8-07: ProfilePage — replace 13 hardcoded colour refs (#10B981, #059669, #DC2626, #F59E0B) with semantic classes and muted palette
+- [x] C8-08: AssessmentSessionPage — replace 41 saturated emerald/amber/red Tailwind classes with muted Paul Tol palette
+- [x] C8-09: ManagerDashboardV2 — replace 15 saturated emerald/amber/red status cards with muted palette
+- [x] C8-10: MarketingPage — update domain colours in local const C to use canonical Paul Tol palette from domains.ts

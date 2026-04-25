@@ -45,7 +45,7 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
 
 const CAP_COLORS: Record<string, string> = {
   ai_interaction: "#4477AA", ai_output_evaluation: "#228833", ai_workflow_design: "#0D9488",
-  workforce_ai_readiness: "#059669", ai_ethics_trust: "#AA3377", ai_change_leadership: "#D97706",
+  workforce_ai_readiness: "var(--primary)", ai_ethics_trust: "#AA3377", ai_change_leadership: "#99882A",
 };
 
 const CAP_LABELS: Record<string, string> = {
@@ -249,7 +249,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
               onClick={() => setShowStarters(v => !v)}
             >
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-[#10B981]" />
+                <MessageSquare className="w-3.5 h-3.5 text-primary" />
                 Conversation Starters
               </h3>
               <ChevronRight className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", showStarters && "rotate-90")} />
@@ -257,7 +257,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
             {showStarters && (
               <div className="mt-3 space-y-2">
                 {starters.map((s, i) => (
-                  <div key={i} className="rounded-lg border border-[#10B981]/20 bg-[#10B981]/5 p-3">
+                  <div key={i} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
                     <p className="text-xs text-foreground leading-relaxed italic">{s}</p>
                   </div>
                 ))}
@@ -512,7 +512,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-[#10B981]" />Recommended Actions
+          <Lightbulb className="w-4 h-4 text-primary" />Recommended Actions
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-0.5">
           Suggested next steps based on your team's current readiness profile.
@@ -595,7 +595,7 @@ function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; cap
   } else if (improving > 0) {
     headline = `${improving} team member${improving > 1 ? "s are" : " is"} on an improving trajectory`;
     subtext = "Development is progressing. Keep the momentum going with regular check-ins.";
-    color = "#10B981";
+    color = "var(--primary)";
   } else {
     headline = `${safe} of ${total} team members are AI-ready`;
     subtext = atRisk > 0 ? `${atRisk} member${atRisk > 1 ? "s" : ""} need support to reach readiness.` : "Continue monitoring as assessments are completed.";
@@ -795,7 +795,7 @@ export default function ManagerDashboard() {
                 <div className="space-y-2">
                   {conversationDueMembers.slice(0, 5).map(m => (
                     <button key={m.id} onClick={() => setSelectedMember(m)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#F59E0B]/5 border border-[#F59E0B]/15 hover:bg-[#F59E0B]/10 transition-colors text-left">
+                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#CCBB44]/5 border border-[#CCBB44]/15 hover:bg-[#CCBB44]/10 transition-colors text-left">
                       <div>
                         <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
                         <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
@@ -832,7 +832,7 @@ export default function ManagerDashboard() {
                     const days = Math.ceil((new Date(m.revalidationDue!).getTime() - Date.now()) / 86400000);
                     return (
                       <button key={m.id} onClick={() => setSelectedMember(m)}
-                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#F59E0B]/5 border border-[#F59E0B]/15 hover:bg-[#F59E0B]/10 transition-colors text-left">
+                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#CCBB44]/5 border border-[#CCBB44]/15 hover:bg-[#CCBB44]/10 transition-colors text-left">
                         <div>
                           <p className="text-sm font-medium text-foreground">{m.firstName} {m.lastName}</p>
                           <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
@@ -924,7 +924,7 @@ export default function ManagerDashboard() {
                   label: "Overdue revalidation",
                   desc: "Assessment is overdue — capability profile may no longer reflect current practice",
                   members: team.filter(m => m.revalidationDue && new Date(m.revalidationDue) < new Date()),
-                  color: "#D97706",
+                  color: "#99882A",
                 },
               ].filter(i => i.members.length > 0);
               if (indicators.length === 0) return (
@@ -1089,7 +1089,7 @@ function LearningOverviewSection() {
                 <div className="text-xs text-muted-foreground">Avg completion</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-lg font-bold text-[#D97706]">{activeStreaks}</div>
+                <div className="text-lg font-bold text-[#99882A]">{activeStreaks}</div>
                 <div className="text-xs text-muted-foreground">Active streaks</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
@@ -1104,7 +1104,7 @@ function LearningOverviewSection() {
                   <Progress value={m.plan?.progressPct ?? 0} className="flex-1 h-1.5" />
                   <div className="text-xs tabular-nums w-8 text-right">{m.plan?.progressPct ?? 0}%</div>
                   {(m.streak?.currentStreak ?? 0) > 0 && (
-                    <Flame className="h-3 w-3 text-[#D97706] shrink-0" />
+                    <Flame className="h-3 w-3 text-[#99882A] shrink-0" />
                   )}
                 </div>
               ))}

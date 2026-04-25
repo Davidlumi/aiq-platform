@@ -48,7 +48,7 @@ const CAPABILITY_DOMAINS = [
   { key: "ai_interaction",      label: "AI Interaction",          icon: Target,    colour: "#4477AA", description: "Practical competence with AI tools and chatbots" },
   { key: "ai_output_evaluation",label: "AI Output Evaluation",   icon: Brain,     colour: "#228833", description: "Critical assessment of AI outputs before acting" },
   { key: "ai_ethics_trust",     label: "AI Ethics & Trust",       icon: Shield,    colour: "#AA3377", description: "Ethical reasoning and employee trust in AI" },
-  { key: "ai_change_leadership",label: "AI Change Leadership",    icon: Gavel,     colour: "#D97706", description: "Leading AI transformation and handling resistance" },
+  { key: "ai_change_leadership",label: "AI Change Leadership",    icon: Gavel,     colour: "#99882A", description: "Leading AI transformation and handling resistance" },
   { key: "ai_workflow_design",   label: "AI Workflow Design",      icon: Workflow,  colour: "#66CCEE", description: "Designing AI-augmented workflows with human oversight" },
   { key: "workforce_ai_readiness",label: "Workforce AI Readiness",  icon: Database,  colour: "#CCBB44", description: "Diagnosing team capability gaps and designing interventions" },
 ];
@@ -56,9 +56,9 @@ const CAPABILITY_DOMAINS = [
 // ─── Readiness State Config ───────────────────────────────────────────────────
 
 const READINESS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType; tooltip: string }> = {
-  safe:    { label: "Safe to Deploy", color: "text-emerald-700",  bg: "bg-emerald-50 border-emerald-200", icon: CheckCircle2, tooltip: "Score ≥ 7.5 — This person demonstrates strong AI capability across all domains and is ready to work effectively with AI tools in their role." },
-  at_risk: { label: "At Risk",        color: "text-amber-700",    bg: "bg-amber-50 border-amber-200",     icon: AlertTriangle, tooltip: "Score 5.0–7.4 — Some capability gaps exist. Targeted development is recommended before full AI deployment." },
-  unsafe:  { label: "Needs Development", color: "text-red-700",  bg: "bg-red-50 border-red-200",         icon: ShieldAlert, tooltip: "Score < 5.0 — Significant gaps in AI capability. A structured development programme is strongly recommended." },
+  safe:    { label: "Safe to Deploy", color: "text-primary",  bg: "bg-primary/8 border-primary/25", icon: CheckCircle2, tooltip: "Score ≥ 7.5 — This person demonstrates strong AI capability across all domains and is ready to work effectively with AI tools in their role." },
+  at_risk: { label: "At Risk",        color: "text-[#99882A]",    bg: "bg-[#CCBB44]/8 border-[#CCBB44]/25",     icon: AlertTriangle, tooltip: "Score 5.0–7.4 — Some capability gaps exist. Targeted development is recommended before full AI deployment." },
+  unsafe:  { label: "Needs Development", color: "text-[#CC3344]",  bg: "bg-[#EE6677]/8 border-[#EE6677]/25",         icon: ShieldAlert, tooltip: "Score < 5.0 — Significant gaps in AI capability. A structured development programme is strongly recommended." },
   unknown: { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border", icon: HelpCircle, tooltip: "No assessment completed yet." },
 };
 
@@ -66,8 +66,8 @@ const READINESS_CONFIG: Record<string, { label: string; color: string; bg: strin
 
 function SessionStateBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
-    completed:   "bg-emerald-100 text-emerald-700 border-emerald-200",
-    in_progress: "bg-amber-100 text-amber-700 border-amber-200",
+    completed:   "bg-primary/12 text-primary border-primary/25",
+    in_progress: "bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25",
     abandoned:   "bg-gray-100 text-gray-600 border-gray-200",
   };
   const labels: Record<string, string> = {
@@ -190,7 +190,7 @@ export default function AssessmentPage() {
           <Button
             onClick={handleStartClick}
             disabled={startMutation.isPending}
-            className="bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2 shrink-0"
+            className="bg-primary hover:bg-primary/90 text-white gap-2 shrink-0"
           >
             <Play className="w-4 h-4" />
             {startMutation.isPending ? "Starting…" : hasCompletedBefore ? "Retake Assessment" : "Start Assessment"}
@@ -200,12 +200,12 @@ export default function AssessmentPage() {
 
       {/* ── Active Session Resume Card ── */}
       {activeSession && (
-        <Card className="border-2 border-amber-200 bg-amber-50">
+        <Card className="border-2 border-[#CCBB44]/25 bg-[#CCBB44]/8">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-full bg-[#CCBB44]/12 flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5 text-[#99882A]" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
@@ -218,7 +218,7 @@ export default function AssessmentPage() {
               </div>
               <Button
                 onClick={() => navigate(`/assessment/${activeSession.id}`)}
-                className="bg-amber-500 hover:bg-amber-600 text-white gap-2 shrink-0"
+                className="bg-[#CCBB44]/80 hover:bg-[#99882A] text-white gap-2 shrink-0"
               >
                 <RotateCcw className="w-4 h-4" />
                 Resume
@@ -231,7 +231,7 @@ export default function AssessmentPage() {
                   <span className="text-xs text-muted-foreground">
                     {(activeSession as any).answeredCount} of {(activeSession as any).totalTarget ?? 49} questions answered
                   </span>
-                  <span className="text-xs font-semibold text-amber-700">
+                  <span className="text-xs font-semibold text-[#99882A]">
                     {Math.round(((activeSession as any).answeredCount / ((activeSession as any).totalTarget ?? 49)) * 100)}% complete
                   </span>
                 </div>
@@ -250,7 +250,7 @@ export default function AssessmentPage() {
         <CardHeader className="pb-3 cursor-pointer" onClick={() => setShowAbout(!showAbout)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-[#10B981]" />
+              <ClipboardList className="w-5 h-5 text-primary" />
               <CardTitle className="text-base font-semibold">About the AIQ V9.2 Standard Assessment</CardTitle>
             </div>
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showAbout && "rotate-180")} />
@@ -321,7 +321,7 @@ export default function AssessmentPage() {
               { label: "Model Version", value: "V9.2" },
             ].map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-lg font-bold text-[#10B981]">{stat.value}</p>
+                <p className="text-lg font-bold text-primary">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             ))}
@@ -345,7 +345,7 @@ export default function AssessmentPage() {
               <Button
                 onClick={handleStartClick}
                 disabled={startMutation.isPending}
-                className="mt-4 bg-[#10B981] hover:bg-[#10B981]/90 text-white gap-2"
+                className="mt-4 bg-primary hover:bg-primary/90 text-white gap-2"
               >
                 <Play className="w-4 h-4" />
                 Start First Assessment
@@ -368,8 +368,8 @@ export default function AssessmentPage() {
                 <Card
                   key={session.id}
                   className={cn(
-                    "border-border hover:border-[#10B981]/30 transition-colors cursor-pointer",
-                    session.state === "in_progress" && "border-amber-200"
+                    "border-border hover:border-primary/30 transition-colors cursor-pointer",
+                    session.state === "in_progress" && "border-[#CCBB44]/25"
                   )}
                   onClick={() => {
                     if (session.state === "completed") navigate(`/assessment/${session.id}/results`);
@@ -383,7 +383,7 @@ export default function AssessmentPage() {
                           {session.state === "completed" ? (
                             <StateIcon className={cn("w-4 h-4", stateConfig.color)} />
                           ) : session.state === "in_progress" ? (
-                            <Clock className="w-4 h-4 text-amber-600" />
+                            <Clock className="w-4 h-4 text-[#99882A]" />
                           ) : (
                             <AlertCircle className="w-4 h-4 text-muted-foreground" />
                           )}

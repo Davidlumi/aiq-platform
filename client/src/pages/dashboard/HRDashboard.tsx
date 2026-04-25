@@ -38,11 +38,11 @@ import {
 import { cn } from "@/lib/utils";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const GREEN  = "#10B981";
-const AMBER  = "#F59E0B";
-const RED    = "#DC2626";
-const BLUE   = "#3B82F6";
-const PURPLE = "#8B5CF6";
+const GREEN  = "var(--primary)";
+const AMBER  = "#CCBB44";
+const RED    = "#EE6677";
+const BLUE   = "#4477AA";
+const PURPLE = "#AA3377";
 const CYAN   = "#06B6D4";
 
 const CAP_COLORS: Record<string, string> = {
@@ -77,11 +77,11 @@ function readinessLabel(r: string | null) {
 }
 function scoreToHeatClass(score: number | null): string {
   if (score === null) return "bg-muted/40 text-muted-foreground";
-  if (score >= 75) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  if (score >= 75) return "bg-primary/80/10 text-primary dark:text-primary";
   if (score >= 65) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400";
-  if (score >= 55) return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+  if (score >= 55) return "bg-[#CCBB44]/80/10 text-[#99882A] dark:text-[#CCBB44]";
   if (score >= 45) return "bg-orange-500/10 text-orange-600 dark:text-orange-400";
-  return "bg-red-500/10 text-red-600 dark:text-red-400";
+  return "bg-[#EE6677]/80/10 text-[#CC3344] dark:text-[#EE6677]";
 }
 
 // ─── CSV export ───────────────────────────────────────────────────────────────
@@ -120,17 +120,17 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 function NarrativePanel({ narrative }: { narrative: { headline: string; insight: string; action: string } | null }) {
   if (!narrative) return null;
   return (
-    <div className="rounded-xl border border-[#10B981]/20 bg-[#10B981]/5 p-5">
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 rounded-lg bg-[#10B981]/15 flex items-center justify-center">
-          <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
+        <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
         </div>
-        <span className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">AI Intelligence Brief</span>
+        <span className="text-xs font-semibold text-primary uppercase tracking-wide">AI Intelligence Brief</span>
       </div>
       <p className="text-base font-semibold text-foreground leading-snug mb-2">{narrative.headline}</p>
       <p className="text-sm text-muted-foreground leading-relaxed mb-3">{narrative.insight}</p>
       <div className="flex items-start gap-2 p-3 rounded-lg bg-background/60 border border-border/50">
-        <ArrowRight className="w-3.5 h-3.5 text-[#10B981] shrink-0 mt-0.5" />
+        <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
         <p className="text-xs text-foreground font-medium leading-relaxed">{narrative.action}</p>
       </div>
     </div>
@@ -222,7 +222,7 @@ function ActionRecommendations({ data }: { data: any }) {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Zap className="w-4 h-4 text-[#F59E0B]" />
+          <Zap className="w-4 h-4 text-[#CCBB44]" />
           Suggested Actions
         </CardTitle>
       </CardHeader>
@@ -286,7 +286,7 @@ function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; 
               className={cn(
                 "px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
                 deptFilter === d
-                  ? "bg-[#10B981] text-white"
+                  ? "bg-primary text-white"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}>
               {d === "all" ? "All departments" : d}
@@ -423,15 +423,15 @@ export default function HRDashboard() {
     return (
       <div className="p-6 max-w-3xl">
         <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#10B981]/10 flex items-center justify-center mx-auto mb-4">
-            <BarChart3 className="w-8 h-8 text-[#10B981]" />
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <BarChart3 className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">No assessments yet</h2>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-6">
             Once your team members complete their AI Readiness Assessment, your organisation's capability intelligence will appear here — including readiness distribution, capability gaps, and compliance status.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white">
+            <Button size="sm" className="gap-2 bg-primary hover:bg-[var(--primary)] text-white">
               <Users className="w-4 h-4" />
               Invite team members
             </Button>
@@ -485,7 +485,7 @@ export default function HRDashboard() {
           <p className="text-sm text-muted-foreground mt-1">
             Organisation-wide AI readiness intelligence
             {mismatchData?.aiAmbitionLabel && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-[#3B82F6]/10 text-[#3B82F6]">
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-[#4477AA]/10 text-[#4477AA]">
                 AI Ambition: {mismatchData.aiAmbitionLabel}
               </span>
             )}
@@ -525,7 +525,7 @@ export default function HRDashboard() {
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
               <span>0%</span>
-              <span className="text-[#10B981] font-medium">70% target</span>
+              <span className="text-primary font-medium">70% target</span>
               <span>100%</span>
             </div>
           </div>
@@ -562,28 +562,28 @@ export default function HRDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#3B82F6]" />
+              <BarChart3 className="w-4 h-4 text-[#4477AA]" />
               Capability Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] font-semibold text-[#10B981] uppercase tracking-wide mb-2">Strengths</p>
+                <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-2">Strengths</p>
                 {strengths.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No domains above 65 yet</p>
                 ) : (
                   <div className="space-y-2">
                     {strengths.map((c: any) => (
                       <div key={c.capability} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#10B981] shrink-0" />
+                        <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-foreground truncate">{CAP_LABELS[c.capability]}</span>
-                            <span className="text-xs font-bold text-[#10B981] ml-1">{c.avgScore}</span>
+                            <span className="text-xs font-bold text-primary ml-1">{c.avgScore}</span>
                           </div>
                           <div className="h-1 rounded-full bg-muted mt-1 overflow-hidden">
-                            <div className="h-full rounded-full bg-[#10B981]" style={{ width: `${c.avgScore}%` }} />
+                            <div className="h-full rounded-full bg-primary" style={{ width: `${c.avgScore}%` }} />
                           </div>
                         </div>
                       </div>
@@ -592,7 +592,7 @@ export default function HRDashboard() {
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-[#F59E0B] uppercase tracking-wide mb-2">Development priorities</p>
+                <p className="text-[10px] font-semibold text-[#CCBB44] uppercase tracking-wide mb-2">Development priorities</p>
                 {development.length === 0 ? (
                   <p className="text-xs text-muted-foreground">All domains on track</p>
                 ) : (
@@ -628,7 +628,7 @@ export default function HRDashboard() {
           <button onClick={() => setShowCapIntel(!showCapIntel)} className="flex items-center gap-2 group text-left">
             <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showCapIntel && "rotate-90")} />
             <div>
-              <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors">Capability Intelligence</h2>
+              <h2 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Capability Intelligence</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Average scores across 6 AI capability domains</p>
             </div>
           </button>
@@ -638,10 +638,10 @@ export default function HRDashboard() {
             </button>
             <div className="flex rounded-lg border border-border overflow-hidden text-xs">
               <button
-                className={cn("px-3 py-1.5 transition-colors", activeCapTab === "heatmap" ? "bg-[#10B981] text-white" : "text-muted-foreground hover:bg-muted/50")}
+                className={cn("px-3 py-1.5 transition-colors", activeCapTab === "heatmap" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted/50")}
                 onClick={() => setActiveCapTab("heatmap")}>Heatmap</button>
               <button
-                className={cn("px-3 py-1.5 transition-colors", activeCapTab === "bar" ? "bg-[#10B981] text-white" : "text-muted-foreground hover:bg-muted/50")}
+                className={cn("px-3 py-1.5 transition-colors", activeCapTab === "bar" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted/50")}
                 onClick={() => setActiveCapTab("bar")}>Bar</button>
             </div>
           </div>}
@@ -708,15 +708,15 @@ export default function HRDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#3B82F6]" />
+                <TrendingUp className="w-4 h-4 text-[#4477AA]" />
                 Readiness Trajectory
               </CardTitle>
               {projectedMonths !== null && projectedMonths !== undefined && (
                 <Badge variant="outline" className={cn(
                   "text-xs",
-                  projectedMonths === 0 ? "border-[#10B981] text-[#10B981]"
-                    : projectedMonths <= 3 ? "border-[#F59E0B] text-[#F59E0B]"
-                    : "border-[#DC2626] text-[#DC2626]"
+                  projectedMonths === 0 ? "border-primary text-primary"
+                    : projectedMonths <= 3 ? "border-[#CCBB44] text-[#CCBB44]"
+                    : "border-[#EE6677] text-[#EE6677]"
                 )}>
                   {projectedMonths === 0 ? "Safe now" : `~${projectedMonths}mo to safe`}
                 </Badge>
@@ -763,7 +763,7 @@ export default function HRDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Target className="w-4 h-4 text-[#8B5CF6]" />
+                <Target className="w-4 h-4 text-[#AA3377]" />
                 Strategic Mismatch
               </CardTitle>
               {mismatchData && (
@@ -776,7 +776,7 @@ export default function HRDashboard() {
           <CardContent>
             {mismatches.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-center">
-                <CheckCircle className="w-8 h-8 text-[#10B981] mb-2" />
+                <CheckCircle className="w-8 h-8 text-primary mb-2" />
                 <p className="text-sm text-muted-foreground">No strategic mismatches</p>
                 <p className="text-xs text-muted-foreground mt-1">All domains meet the current AI ambition threshold</p>
               </div>
@@ -819,7 +819,7 @@ export default function HRDashboard() {
         <div>
           <button onClick={() => setShowDeptBreakdown(!showDeptBreakdown)} className="flex items-center gap-2 mb-3 group">
             <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showDeptBreakdown && "rotate-90")} />
-            <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors">Department Breakdown</h2>
+            <h2 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Department Breakdown</h2>
           </button>
           {showDeptBreakdown && <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {deptBreakdown.map((dept: any) => {
@@ -850,12 +850,12 @@ export default function HRDashboard() {
       <div>
         <button
           onClick={() => setShowPeople(!showPeople)}
-          className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-[#10B981] transition-colors mb-4 group"
+          className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors mb-4 group"
         >
           <Users className="w-4 h-4" />
           People Readiness
           <span className="text-xs text-muted-foreground font-normal ml-1">({userList.length} {userList.length === 1 ? "person" : "people"})</span>
-          <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform group-hover:text-[#10B981]", showPeople && "rotate-90")} />
+          <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform group-hover:text-primary", showPeople && "rotate-90")} />
         </button>
         {showPeople && <PeopleTable users={userList} />}
       </div>
@@ -864,7 +864,7 @@ export default function HRDashboard() {
       <div>
         <button onClick={() => setShowRegulatory(!showRegulatory)} className="flex items-center gap-2 mb-4 group">
           <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showRegulatory && "rotate-90")} />
-          <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#06B6D4]" />
             Regulatory Zone
           </h2>
@@ -897,7 +897,7 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B]" />Risk Distribution
+                <AlertTriangle className="w-3.5 h-3.5 text-[#CCBB44]" />Risk Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -927,7 +927,7 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />Revalidation Status
+                <Clock className="w-3.5 h-3.5 text-[#CCBB44]" />Revalidation Status
               </CardTitle>
             </CardHeader>
             <CardContent>

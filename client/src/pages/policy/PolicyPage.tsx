@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  hard_block: { label: "Hard Block", color: "bg-red-100 text-red-700 border-red-200", icon: <Ban className="h-3 w-3" /> },
+  hard_block: { label: "Hard Block", color: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25", icon: <Ban className="h-3 w-3" /> },
   warning: { label: "Warning", color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: <AlertTriangle className="h-3 w-3" /> },
   remediation_trigger: { label: "Remediation", color: "bg-blue-100 text-blue-700 border-blue-200", icon: <RefreshCw className="h-3 w-3" /> },
   escalate: { label: "Escalate", color: "bg-purple-100 text-purple-700 border-purple-200", icon: <ArrowUpRight className="h-3 w-3" /> },
@@ -73,7 +73,7 @@ export default function PolicyPage() {
         {canManage && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
+              <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
                 <Plus className="h-4 w-4" /> New Policy
               </Button>
             </DialogTrigger>
@@ -130,7 +130,7 @@ export default function PolicyPage() {
                   />
                 </div>
                 <Button
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
+                  className="w-full bg-primary hover:bg-[var(--primary)] text-white"
                   disabled={!newPolicy.name || createMutation.isPending}
                   onClick={() => createMutation.mutate(newPolicy)}
                 >
@@ -146,9 +146,9 @@ export default function PolicyPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Policies", value: stats.total, icon: <FileText className="h-5 w-5 text-[#10B981]" />, color: stats.total > 0 ? "text-[#10B981]" : "text-muted-foreground" },
+          { label: "Total Policies", value: stats.total, icon: <FileText className="h-5 w-5 text-primary" />, color: stats.total > 0 ? "text-primary" : "text-muted-foreground" },
           { label: "Active Policies", value: stats.active, icon: <CheckCircle2 className="h-5 w-5 text-blue-500" />, color: stats.active > 0 ? "text-blue-600" : "text-muted-foreground" },
-          { label: "Hard Blocks", value: stats.hardBlocks, icon: <Ban className={`h-5 w-5 ${stats.hardBlocks > 0 ? "text-red-500" : "text-muted-foreground/50"}`} />, color: stats.hardBlocks > 0 ? "text-red-600" : "text-muted-foreground" },
+          { label: "Hard Blocks", value: stats.hardBlocks, icon: <Ban className={`h-5 w-5 ${stats.hardBlocks > 0 ? "text-[#CC3344]" : "text-muted-foreground/50"}`} />, color: stats.hardBlocks > 0 ? "text-[#CC3344]" : "text-muted-foreground" },
         ].map(s => (
           <Card key={s.label} className="aiq-card">
             <CardContent className="p-4 flex items-center gap-3">
@@ -166,14 +166,14 @@ export default function PolicyPage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#10B981]" />
+            <Shield className="h-5 w-5 text-primary" />
             Policy Rules
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-[#10B981]" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : !policies?.length ? (
             <div className="text-center py-12">
@@ -225,14 +225,14 @@ function PolicyEvaluationsLog() {
     <Card className="aiq-card">
       <CardHeader className="pb-3">
         <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-          <Bell className="h-5 w-5 text-[#F59E0B]" />
+          <Bell className="h-5 w-5 text-[#CCBB44]" />
           Recent Policy Evaluations
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-[#10B981]" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         ) : !evals?.length ? (
           <div className="text-center py-8">
@@ -259,7 +259,7 @@ function PolicyEvaluationsLog() {
                     <td className="py-2 px-3 text-muted-foreground text-xs">{ev.contextType}</td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        ev.result === "triggered" ? "bg-red-100 text-red-700" :
+                        ev.result === "triggered" ? "bg-[#EE6677]/12 text-[#CC3344]" :
                         ev.result === "passed" ? "bg-green-100 text-green-700" :
                         ev.result === "no_action" ? "bg-gray-100 text-gray-600" :
                         "bg-blue-100 text-blue-700"

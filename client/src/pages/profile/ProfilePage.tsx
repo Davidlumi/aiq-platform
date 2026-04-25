@@ -34,11 +34,11 @@ function passwordStrength(pw: string): { label: string; color: string; width: st
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { label: "Weak", color: "#DC2626", width: "20%" };
-  if (score <= 2) return { label: "Fair", color: "#F59E0B", width: "40%" };
-  if (score <= 3) return { label: "Good", color: "#3B82F6", width: "60%" };
-  if (score <= 4) return { label: "Strong", color: "#10B981", width: "80%" };
-  return { label: "Excellent", color: "#10B981", width: "100%" };
+  if (score <= 1) return { label: "Weak", color: "#EE6677", width: "20%" };
+  if (score <= 2) return { label: "Fair", color: "#CCBB44", width: "40%" };
+  if (score <= 3) return { label: "Good", color: "#4477AA", width: "60%" };
+  if (score <= 4) return { label: "Strong", color: "var(--primary)", width: "80%" };
+  return { label: "Excellent", color: "var(--primary)", width: "100%" };
 }
 
 export default function ProfilePage() {
@@ -106,7 +106,7 @@ export default function ProfilePage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <User className="h-5 w-5 text-[#10B981]" />
+            <User className="h-5 w-5 text-primary" />
             Identity
           </CardTitle>
         </CardHeader>
@@ -155,7 +155,7 @@ export default function ProfilePage() {
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="bg-[#10B981] hover:bg-[#059669] text-white"
+                  className="bg-primary hover:bg-primary/90 text-white"
                   disabled={updateNameMutation.isPending}
                   onClick={() => updateNameMutation.mutate({ firstName: nameForm.firstName, lastName: nameForm.lastName })}
                 >
@@ -188,7 +188,7 @@ export default function ProfilePage() {
         <Card className="aiq-card">
           <CardHeader className="pb-3">
             <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
+              <CheckCircle2 className="h-5 w-5 text-primary" />
               Capability Snapshot
             </CardTitle>
           </CardHeader>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <Lock className="h-5 w-5 text-[#10B981]" />
+            <Lock className="h-5 w-5 text-primary" />
             Change Password
           </CardTitle>
         </CardHeader>
@@ -264,7 +264,7 @@ export default function ProfilePage() {
             />
           </div>
           <Button
-            className="bg-[#10B981] hover:bg-[#059669] text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
             disabled={!pwForm.currentPassword || !pwForm.newPassword || changePasswordMutation.isPending}
             onClick={handlePasswordChange}
           >
@@ -278,7 +278,7 @@ export default function ProfilePage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-[#10B981]" />
+            <BarChart3 className="h-5 w-5 text-primary" />
             Your AiQ Journey
           </CardTitle>
         </CardHeader>
@@ -286,8 +286,8 @@ export default function ProfilePage() {
           <Link href="/dashboard/personal">
             <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#10B981]/10 flex items-center justify-center">
-                  <BarChart3 className="h-4 w-4 text-[#10B981]" />
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BarChart3 className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Capability Profile</p>
@@ -332,7 +332,7 @@ export default function ProfilePage() {
       <Card className="aiq-card">
         <CardHeader className="pb-3">
           <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#10B981]" />
+            <Shield className="h-5 w-5 text-primary" />
             Account Information
           </CardTitle>
         </CardHeader>

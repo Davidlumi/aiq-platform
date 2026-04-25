@@ -228,7 +228,7 @@ function ScenarioDetailDialog({
                     {Object.entries(opt.signalDeltasJson as Record<string, number>).map(([k, v]) => (
                       <span key={k} className={cn(
                         "text-xs px-1.5 py-0.5 rounded font-mono",
-                        v > 0 ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"
+                        v > 0 ? "bg-[#228833]/10 text-[#228833]" : "bg-[#EE6677]/80/10 text-[#CC3344]"
                       )}>
                         {k}: {v > 0 ? "+" : ""}{v}
                       </span>
@@ -288,7 +288,7 @@ function ScenarioDetailDialog({
         <Button size="sm" variant="outline"
           disabled={item.status === "published" || updateStatus.isPending}
           onClick={() => updateStatus.mutate({ id: item.id, status: "published", changeSummary: "Published via CMS" })}
-          className="text-green-600 border-green-500/40 hover:bg-green-500/10"
+          className="text-[#228833] border-green-500/40 hover:bg-[#228833]/10"
         >
           <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Publish
         </Button>
@@ -504,7 +504,7 @@ export default function AssessmentContentPage() {
                             <Badge className="text-xs" style={{ background: statusCfg.colour + "22", color: statusCfg.colour, border: `1px solid ${statusCfg.colour}44` }}>
                               <StatusIcon className="h-3 w-3 mr-1" />{statusCfg.label}
                             </Badge>
-                            {!!item.ethicsSensitive && <Shield className="h-3.5 w-3.5 text-red-500 shrink-0" />}
+                            {!!item.ethicsSensitive && <Shield className="h-3.5 w-3.5 text-[#CC3344] shrink-0" />}
                           </div>
                         </div>
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">

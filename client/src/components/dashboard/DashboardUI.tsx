@@ -161,8 +161,8 @@ export function ScoreDisplay({ score, size = "lg", className, peakon = false }: 
 // ─── Confidence Indicator ────────────────────────────────────────────────────
 
 const CONFIDENCE_STYLES: Record<string, { colour: string; label: string }> = {
-  high: { colour: "#10B981", label: "High confidence" },
-  moderate: { colour: "#F59E0B", label: "Moderate confidence" },
+  high: { colour: "var(--primary)", label: "High confidence" },
+  moderate: { colour: "#CCBB44", label: "Moderate confidence" },
   low: { colour: "#94A3B8", label: "Low confidence" },
 };
 
@@ -205,7 +205,7 @@ export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null
   if (value === null || value === 0) return <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>;
   const positive = value > 0;
   return (
-    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-emerald-600" : "text-red-600")}>
+    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "text-[#CC3344]")}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{value} {suffix}
     </span>
@@ -310,7 +310,7 @@ export function HeatmapCell({
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
         {headcount != null && <p>{headcount} assessed</p>}
-        {gap != null && gap > 0 && <p className="text-red-600">{gap} pts below target</p>}
+        {gap != null && gap > 0 && <p className="text-[#CC3344]">{gap} pts below target</p>}
         {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
         <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
       </TooltipContent>
@@ -321,11 +321,11 @@ export function HeatmapCell({
 // ─── Domain Colour Dot ──────────────────────────────────────────────────────
 
 const DOMAIN_COLOUR_MAP: Record<string, string> = {
-  ai_interaction: "#3B82F6",
-  ai_output_evaluation: "#8B5CF6",
-  ai_workflow_design: "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust: "#EF4444",
+  ai_interaction: "#4477AA",
+  ai_output_evaluation: "#AA3377",
+  ai_workflow_design: "var(--primary)",
+  workforce_ai_readiness: "#CCBB44",
+  ai_ethics_trust: "#EE6677",
   ai_change_leadership: "#06B6D4",
 };
 
