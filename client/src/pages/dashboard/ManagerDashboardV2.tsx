@@ -68,11 +68,11 @@ const RATING_LABELS: Record<string, string> = {
 };
 
 const RATING_COLOURS: Record<string, string> = {
-  ai_ready: "#10B981",
-  developing: "#F59E0B",
-  not_yet_ready: "#EF4444",
-  foundation_gap: "#F97316",
-  insufficient_evidence: "#94A3B8",
+  ai_ready: "#7A9E8E",
+  developing: "#C8B07A",
+  not_yet_ready: "#C08878",
+  foundation_gap: "#A87868",
+  insufficient_evidence: "#B0B8C4",
 };
 
 export default function ManagerDashboardV2() {
@@ -167,21 +167,21 @@ export default function ManagerDashboardV2() {
           label="AI Ready"
           value={data.ratingCounts.ai_ready ?? 0}
           sub={`of ${data.teamSize} members`}
-          colour="#10B981"
+          colour="#7A9E8E"
           icon={<CheckCircle2 className="w-4 h-4" />}
         />
         <StatTile
           label="Developing"
           value={data.ratingCounts.developing ?? 0}
           sub="need coaching support"
-          colour="#F59E0B"
+          colour="#C8B07A"
           icon={<TrendingUp className="w-4 h-4" />}
         />
         <StatTile
           label="At Risk"
           value={(data.ratingCounts.not_yet_ready ?? 0) + (data.ratingCounts.foundation_gap ?? 0)}
           sub="not yet ready / gap"
-          colour="#EF4444"
+          colour="#C08878"
           icon={<AlertTriangle className="w-4 h-4" />}
         />
       </div>

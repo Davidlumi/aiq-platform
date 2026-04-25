@@ -7,6 +7,7 @@
  */
 import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { scoreToColor as scoreToColorShared } from "@/lib/peakon-colors";
 import { ChevronRight, ChevronDown, SlidersHorizontal, X, Check, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,56 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ─── Peakon-style colour scale ──────────────────────────────────────────────
-// Smooth gradient from deep red (low) → amber (mid) → rich green (high)
-// Scores are 0–100 mapped to these colour stops
+// Delegates to shared peakon-colors.ts for consistency across the platform
 
 function scoreToColor(score: number): { bg: string; text: string } {
-  // Normalise to 0-1 range
-  const t = Math.max(0, Math.min(100, score)) / 100;
-
-  // Colour stops: 0=deep red, 0.4=amber, 0.55=yellow-green, 0.75=green, 1.0=deep green
-  let r: number, g: number, b: number;
-
-  if (t < 0.3) {
-    // Deep red → warm red
-    const p = t / 0.3;
-    r = lerp(220, 239, p);
-    g = lerp(53, 108, p);
-    b = lerp(69, 96, p);
-  } else if (t < 0.45) {
-    // Warm red → amber/orange
-    const p = (t - 0.3) / 0.15;
-    r = lerp(239, 245, p);
-    g = lerp(108, 166, p);
-    b = lerp(96, 84, p);
-  } else if (t < 0.55) {
-    // Amber → yellow-green
-    const p = (t - 0.45) / 0.1;
-    r = lerp(245, 210, p);
-    g = lerp(166, 200, p);
-    b = lerp(84, 90, p);
-  } else if (t < 0.7) {
-    // Yellow-green → medium green
-    const p = (t - 0.55) / 0.15;
-    r = lerp(210, 130, p);
-    g = lerp(200, 195, p);
-    b = lerp(90, 100, p);
-  } else {
-    // Medium green → deep green
-    const p = (t - 0.7) / 0.3;
-    r = lerp(130, 67, p);
-    g = lerp(195, 160, p);
-    b = lerp(100, 71, p);
-  }
-
-  const bg = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
-  // White text for all coloured cells
-  const text = "#FFFFFF";
-  return { bg, text };
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
+  return scoreToColorShared(score);
 }
 
 // ─── Score formatting ───────────────────────────────────────────────────────

@@ -220,10 +220,10 @@ export function ReadinessDistributionBar({
   className?: string;
 }) {
   const segments: DistributionSegment[] = [
-    { label: "AI Ready", value: aiReady, colour: "#10B981" },
-    { label: "Developing", value: developing, colour: "#F59E0B" },
-    { label: "Not Yet Ready", value: notYetReady, colour: "#EF4444" },
-    { label: "Foundation Gap", value: foundationGap, colour: "#F97316" },
+    { label: "AI Ready", value: aiReady, colour: "#7A9E8E" },
+    { label: "Developing", value: developing, colour: "#C8B07A" },
+    { label: "Not Yet Ready", value: notYetReady, colour: "#C08878" },
+    { label: "Foundation Gap", value: foundationGap, colour: "#A87868" },
   ].filter(s => s.value > 0);
 
   return <DistributionBar segments={segments} total={total} className={className} />;

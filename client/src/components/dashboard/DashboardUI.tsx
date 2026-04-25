@@ -13,11 +13,11 @@ import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } f
 // ─── Rating Badge ────────────────────────────────────────────────────────────
 
 const RATING_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  ai_ready:              { bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0", dot: "#10B981" },
-  developing:            { bg: "#FFF7ED", text: "#9A3412", border: "#FED7AA", dot: "#F59E0B" },
-  not_yet_ready:         { bg: "#FEF2F2", text: "#991B1B", border: "#FECACA", dot: "#EF4444" },
-  foundation_gap:        { bg: "#FFF7ED", text: "#9A3412", border: "#FDBA74", dot: "#F97316" },
-  insufficient_evidence: { bg: "#F8FAFC", text: "#475569", border: "#CBD5E1", dot: "#94A3B8" },
+  ai_ready:              { bg: "#F0F4F0", text: "#2D5A3D", border: "#B8CEB8", dot: "#7A9E8E" },
+  developing:            { bg: "#F7F3EC", text: "#6B4F1E", border: "#D8C89A", dot: "#C8B07A" },
+  not_yet_ready:         { bg: "#F5EFEE", text: "#6B3030", border: "#D4B0A8", dot: "#C08878" },
+  foundation_gap:        { bg: "#F4EEEC", text: "#6B2E2E", border: "#CCA898", dot: "#A87868" },
+  insufficient_evidence: { bg: "#F5F6F8", text: "#4A5568", border: "#C8D0D8", dot: "#B0B8C4" },
 };
 
 const RATING_DISPLAY: Record<string, string> = {
