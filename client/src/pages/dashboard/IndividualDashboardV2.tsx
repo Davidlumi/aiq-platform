@@ -23,6 +23,7 @@ import {
   PillFilter,
 } from "@/components/dashboard/PeakonPrimitives";
 import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { DOMAIN_COLOURS } from "@/lib/domains";
 import { IndividualDashboardSkeleton } from "@/components/ui/loading";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -52,14 +53,7 @@ import {
   Users,
 } from "lucide-react";
 
-const DOMAIN_COLOURS: Record<string, string> = {
-  ai_interaction: "#3B82F6",
-  ai_output_evaluation: "#8B5CF6",
-  ai_workflow_design: "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust: "#EF4444",
-  ai_change_leadership: "#06B6D4",
-};
+// DOMAIN_COLOURS imported from @/lib/domains (canonical Paul Tol palette)
 
 export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const { user } = useAuth();
@@ -290,7 +284,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <ScoreTrendCard
                 key={d.key}
                 label={d.name}
-                colour={DOMAIN_COLOURS[d.key] ?? "#94A3B8"}
+                colour={(DOMAIN_COLOURS as Record<string, string>)[d.key] ?? "#94A3B8"}
                 currentScore={d.score ?? 0}
                 delta={null}
                 history={d.score !== null ? [d.score] : []}
@@ -315,7 +309,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             </thead>
             <tbody>
               {data.gapHeatmap.map(row => {
-                const gapColour = row.gapValue === null ? "#94A3B8" : row.gapValue <= 0 ? "#10B981" : row.gapValue <= 5 ? "#F59E0B" : "#EF4444";
+                const gapPeakon = row.gapValue !== null ? row.gapValue / 10 : null;
+                const gapColour = gapPeakon === null ? "#94A3B8" : gapPeakon <= 0 ? "#7A9E8E" : gapPeakon <= 0.5 ? "#C8B07A" : "#C08878";
                 return (
                   <tr key={row.domain} className="border-b border-neutral-100 last:border-0">
                     <td className="py-2.5 pr-4">
@@ -343,7 +338,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                     <td className="text-center py-2.5 px-3">
                       {row.gapValue !== null ? (
                         <span className="font-mono font-semibold tabular-nums text-xs" style={{ color: gapColour }}>
-                          {row.gapValue > 0 ? `+${row.gapValue}` : row.gapValue}
+                          {gapPeakon !== null && gapPeakon > 0 ? `+${gapPeakon.toFixed(1)}` : gapPeakon !== null ? gapPeakon.toFixed(1) : "—"}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -354,7 +349,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                         <CapabilityBar
                           score={row.currentScore}
                           target={row.targetScore}
-                          colour={DOMAIN_COLOURS[row.domain] ?? "#94A3B8"}
+                          colour={(DOMAIN_COLOURS as Record<string, string>)[row.domain] ?? "#94A3B8"}
                           height={6}
                         />
                       )}
@@ -435,10 +430,10 @@ function ScoreProgressChart({ history, target }: {
           <Line
             type="monotone"
             dataKey="score"
-            stroke="#10B981"
+            stroke="#4477AA"
             strokeWidth={2}
-            dot={{ r: 3.5, fill: "#10B981", stroke: "#fff", strokeWidth: 2 }}
-            activeDot={{ r: 5, fill: "#10B981", stroke: "#fff", strokeWidth: 2 }}
+            dot={{ r: 3.5, fill: "#4477AA", stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: "#4477AA", stroke: "#fff", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -509,7 +504,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                   {data.signals.map(s => (
                     <div key={s.signalKey} className="flex items-center justify-between py-1.5">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${s.level === "Strong" ? "bg-emerald-500" : s.level === "Developing" ? "bg-amber-500" : "bg-red-500"}`} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#7A9E8E" : s.level === "Developing" ? "#C8B07A" : "#C08878" }} />
                         <span className="text-xs text-foreground truncate">{s.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

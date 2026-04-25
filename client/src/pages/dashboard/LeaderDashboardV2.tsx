@@ -26,6 +26,7 @@ import {
   Sparkline,
 } from "@/components/dashboard/PeakonPrimitives";
 import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { DOMAIN_LABELS, DOMAIN_COLOURS } from "@/lib/domains";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -51,23 +52,7 @@ import {
 } from "lucide-react";
 import { PeakonHeatmap } from "@/components/dashboard/PeakonHeatmap";
 
-const DOMAIN_LABELS: Record<string, string> = {
-  ai_interaction: "AI Interaction",
-  ai_output_evaluation: "AI Output Evaluation",
-  ai_workflow_design: "AI Workflow Design",
-  workforce_ai_readiness: "Workforce AI Readiness",
-  ai_ethics_trust: "AI Ethics & Trust",
-  ai_change_leadership: "AI Change Leadership",
-};
-
-const DOMAIN_COLOURS: Record<string, string> = {
-  ai_interaction: "#3B82F6",
-  ai_output_evaluation: "#8B5CF6",
-  ai_workflow_design: "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust: "#EF4444",
-  ai_change_leadership: "#06B6D4",
-};
+// DOMAIN_LABELS and DOMAIN_COLOURS imported from @/lib/domains (canonical Paul Tol palette)
 
 const RATING_LABELS: Record<string, string> = {
   ai_ready: "AI Ready",
@@ -341,7 +326,7 @@ export default function LeaderDashboardV2() {
                 <ScoreTrendCard
                   key={d.domain}
                   label={d.domainName}
-                  colour={DOMAIN_COLOURS[d.domain] ?? d.colour ?? "#94A3B8"}
+                  colour={(DOMAIN_COLOURS as Record<string, string>)[d.domain] ?? d.colour ?? "#94A3B8"}
                   currentScore={d.currentValue ?? 0}
                   delta={d.delta90d}
                   history={history.length >= 2 ? history : (d.currentValue ? [d.currentValue] : [])}
@@ -517,15 +502,15 @@ const ALIGNMENT_STYLES = {
 };
 
 const OVERALL_ALIGNMENT_STYLES = {
-  aligned: { bg: "#ECFDF5", border: "#10B981", text: "#065F46", label: "HR capability is aligned with business strategy" },
-  partial: { bg: "#FFFBEB", border: "#F59E0B", text: "#92400E", label: "Partial alignment — some strategic priorities have capability gaps" },
-  misaligned: { bg: "#FEF2F2", border: "#EF4444", text: "#991B1B", label: "Significant misalignment — HR capability does not support business strategy" },
+  aligned: { bg: "#F0F4F0", border: "#7A9E8E", text: "#2D5A3D", label: "HR capability is aligned with business strategy" },
+  partial: { bg: "#F7F3EC", border: "#C8B07A", text: "#6B4F1E", label: "Partial alignment — some strategic priorities have capability gaps" },
+  misaligned: { bg: "#F4EEEC", border: "#C08878", text: "#6B3030", label: "Significant misalignment — HR capability does not support business strategy" },
 };
 
 const GOVERNANCE_STYLES = {
-  strong: { bg: "#ECFDF5", text: "#065F46", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
-  developing: { bg: "#FFFBEB", text: "#92400E", label: "Developing", desc: "Some governance structures exist but gaps remain" },
-  weak: { bg: "#FEF2F2", text: "#991B1B", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
+  strong: { bg: "#F0F4F0", text: "#2D5A3D", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
+  developing: { bg: "#F7F3EC", text: "#6B4F1E", label: "Developing", desc: "Some governance structures exist but gaps remain" },
+  weak: { bg: "#F4EEEC", text: "#6B3030", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
 };
 
 function StrategicAlignmentSection({ alignment }: { alignment: any }) {
@@ -590,7 +575,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
             <div>
               <p className="text-sm font-semibold" style={{ color: overallStyle.text }}>{overallStyle.label}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {alignment.assessedCount}/{alignment.totalHeadcount} assessed · Function avg: {alignment.functionAvg ?? "—"}
+                {alignment.assessedCount}/{alignment.totalHeadcount} assessed · Function avg: {alignment.functionAvg !== null && alignment.functionAvg !== undefined ? formatPeakonScore(alignment.functionAvg) : "—"}
               </p>
             </div>
           </div>
@@ -616,7 +601,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
                       className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                       style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
                     >
-                      {style.label}{p.avgRelevantScore !== null ? ` · ${p.avgRelevantScore}` : ""}
+                      {style.label}{p.avgRelevantScore !== null ? ` · ${formatPeakonScore(p.avgRelevantScore)}` : ""}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -630,7 +615,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
                         }}
                       >
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.colour }} />
-                        {d.domainName}: <strong className="font-mono">{d.avgScore ?? "—"}</strong>
+                        {d.domainName}: <strong className="font-mono">{d.avgScore !== null && d.avgScore !== undefined ? formatPeakonScore(d.avgScore) : "—"}</strong>
                       </span>
                     ))}
                   </div>

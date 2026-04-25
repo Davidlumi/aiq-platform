@@ -96,7 +96,7 @@ function HeatmapScoreCell({ score, headcount }: { score: number | null; headcoun
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs space-y-1 max-w-48">
-          <p className="font-semibold">Score: {score}/100 ({displayScore}/10)</p>
+          <p className="font-semibold">Score: {displayScore} / 10</p>
           <p>{headcount} assessed</p>
           <p className="text-muted-foreground">{readiness}</p>
         </TooltipContent>

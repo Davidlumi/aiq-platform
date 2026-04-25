@@ -1675,13 +1675,25 @@
 - [x] R4-10: Users page — add trpc.users.changeRole mutation; wire up "Change Role" dropdown item with a proper dialog
 
 ## Assessment UX/UI Audit Round 5 (Apr 2026)
-- [ ] A5-01: Completion screen shows raw integer score (54) instead of Peakon format (5.4)
-- [ ] A5-02: Results page "Overall Score" stat card shows raw integer + raw confidence interval instead of Peakon format
-- [ ] A5-03: Benchmarks tab — chart Y-axis, table cells, percentile cards all show raw integers; convert to Peakon 0-10 format
-- [ ] A5-04: Question prompt label uses text-xs uppercase — visually indistinguishable from section labels; promote to text-sm/text-base
-- [ ] A5-05: Confidence staking section not visually dimmed when no answer selected — add opacity-50 + pointer-events-none
-- [ ] A5-06: Results page TabsList has 7 tabs that overflow on narrow screens — add horizontal scroll + hide icon labels on mobile
-- [ ] A5-07: Development tab has no on-demand "Generate AI Report" button when llmNarrative is null
-- [ ] A5-08: Scenarios tab signal delta chips show raw keys (ai_interaction) — use DOMAIN_LABELS for human-readable labels
-- [ ] A5-09: Benchmarks chart tooltip formatter shows raw integers — format with formatPeakonScore
-- [ ] A5-10: Assessment landing page "About" section collapsed by default — expand for first-time users (no prior sessions)
+- [x] A5-01: Completion screen shows raw integer score (54) instead of Peakon format (5.4)
+- [x] A5-02: Results page "Overall Score" stat card shows raw integer + raw confidence interval instead of Peakon format
+- [x] A5-03: Benchmarks tab — chart Y-axis, table cells, percentile cards all show raw integers; convert to Peakon 0-10 format
+- [x] A5-04: Question prompt label uses text-xs uppercase — visually indistinguishable from section labels; promote to text-sm/text-base
+- [x] A5-05: Confidence staking section not visually dimmed when no answer selected — add opacity-50 + pointer-events-none
+- [x] A5-06: Results page TabsList has 7 tabs that overflow on narrow screens — add horizontal scroll + hide icon labels on mobile
+- [x] A5-07: Development tab has no on-demand "Generate AI Report" button when llmNarrative is null
+- [x] A5-08: Scenarios tab signal delta chips show raw keys (ai_interaction) — use DOMAIN_LABELS for human-readable labels
+- [x] A5-09: Benchmarks chart tooltip formatter shows raw integers — format with formatPeakonScore
+- [x] A5-10: Assessment landing page "About" section collapsed by default — expand for first-time users (no prior sessions)
+
+## Dashboard UX/UI Audit Round 6 (Apr 2026)
+- [x] R6-01: Strategic Alignment section — 3 raw score displays (functionAvg, avgRelevantScore, domain avgScore) need formatPeakonScore
+- [x] R6-02: Gap analysis gapValue column shows raw 0-100 difference — convert to Peakon scale (÷10)
+- [x] R6-03: Gap analysis gap colour thresholds use saturated traffic-light colours — replace with muted Peakon palette
+- [x] R6-04: ScoreProgressChart line/dot colours use saturated #10B981 — replace with muted Peakon primary
+- [x] R6-05: Both dashboards define local DOMAIN_COLOURS with wrong saturated palette — import canonical from domains.ts
+- [x] R6-06: LeaderDashboardV2 defines local DOMAIN_LABELS duplicate — import from domains.ts
+- [x] R6-07: Heatmap tooltip exposes raw 0-100 internal score — show only Peakon format (x.x / 10)
+- [x] R6-08: OVERALL_ALIGNMENT_STYLES borders use saturated #10B981/#F59E0B/#EF4444 — replace with muted equivalents
+- [x] R6-09: DomainDrillDown signal breakdown dots use saturated emerald/amber/red — replace with muted Peakon palette
+- [x] R6-10: Round 5 todo items (A5-01 through A5-10) not marked as complete — update todo.md
