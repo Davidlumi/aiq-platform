@@ -1523,3 +1523,8 @@
 - [x] LD-02: Add HR-business strategy alignment section — new strategicAlignment API, priority-to-domain mapping, overall alignment signal, governance readiness, HR influence, AI maturity context, and strategic priorities input in OrgContext admin
 - [x] LD-03: Fix strategic findings section — widened thresholds, added 7 patterns (readiness risk, domain gap, development engagement, function stall, role family disparity, confidence misalignment, capability concentration), improved frontend rendering with observation/data/implication
 - [x] LD-04: Improve heatmap data — colour scale now differentiates scores visually even when numerically close, added headcount context
+
+## Heatmap Department Filter
+- [x] HF-01: Add department/business unit filter UI to the heatmap card — popover multi-select with checkboxes, badge chips, select/clear all
+- [x] HF-02: Support filtering of heatmap data by department — client-side filtering of existing heatmap rows by selected role families
+- [x] HF-03: Filter state visually clear — active count badge on trigger, removable chips, "Showing X of Y" summary, empty state message
