@@ -24,6 +24,7 @@ import {
   gapAnalyses,
   contentScenarios,
   contentScenarioOptions,
+  ailOrgContext,
 } from "../../drizzle/schema";
 import { eq, and, desc, isNull, sql, gte, inArray, asc } from "drizzle-orm";
 import {
@@ -1112,9 +1113,11 @@ const leaderRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-    // For now, AI roadmap is not yet implemented — use Pattern 5 (not configured)
-    // When AI roadmap is built, this will check captured initiatives
-    // For now, compute function-wide readiness as a general metric
+    // Check if org context (strategic business input / AI roadmap) has been configured
+    const orgCtxRows = await db.select().from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const orgCtx = orgCtxRows[0] ?? null;
 
     const allUsers = await db
       .select({ id: users.id })
@@ -1123,25 +1126,95 @@ const leaderRouter = router({
 
     let totalScore = 0;
     let assessedCount = 0;
+    const ratingCounts: Record<RatingKey, number> = {
+      ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0,
+    };
 
     for (const u of allUsers) {
       const scoreData = await getLatestScoreData(db, u.id);
       if (scoreData) {
         totalScore += scoreData.overallScore;
         assessedCount++;
+        const state = extractReadinessState(scoreData.scoreBreakdownJson);
+        const rating = stateToRating(state);
+        ratingCounts[rating]++;
       }
     }
 
     const functionScore = assessedCount > 0 ? Math.round(totalScore / assessedCount) : null;
 
-    // Without AI roadmap, use Pattern 5
+    // Pattern 5: No strategic context configured
+    if (!orgCtx) {
+      return {
+        readinessStatus: "not_configured" as const,
+        statement: "Strategic context not yet captured. Your function\u2019s capability position is shown below, but readiness against business requirements requires capturing your AI roadmap.",
+        cta: { label: "Configure AI roadmap", route: "/admin/org-context" },
+        functionScore,
+        assessedCount,
+        totalHeadcount: allUsers.length,
+      };
+    }
+
+    // Strategic context IS configured — determine the correct hero pattern
+    const aiReadyPct = assessedCount > 0 ? Math.round((ratingCounts.ai_ready / assessedCount) * 100) : 0;
+    const atRiskPct = assessedCount > 0 ? Math.round(((ratingCounts.not_yet_ready + ratingCounts.foundation_gap) / assessedCount) * 100) : 0;
+    const developingPct = assessedCount > 0 ? Math.round((ratingCounts.developing / assessedCount) * 100) : 0;
+
+    // Parse strategic priorities for context
+    let strategicPriorities: string[] = [];
+    try { strategicPriorities = JSON.parse(orgCtx.strategicPrioritiesJson ?? "[]"); } catch { /* ignore */ }
+
+    const sector = orgCtx.sector ?? "other";
+    const aiMaturity = orgCtx.aiMaturityLevel ?? "early_adopter";
+
+    // Pattern 4: Partial data — less than 50% assessed
+    if (assessedCount < allUsers.length * 0.5) {
+      return {
+        readinessStatus: "partial" as const,
+        statement: `${assessedCount} of ${allUsers.length} employees assessed. Complete assessment coverage to unlock full strategic insights against your AI roadmap.`,
+        cta: { label: "View assessment progress", route: "/admin/users" },
+        functionScore,
+        assessedCount,
+        totalHeadcount: allUsers.length,
+        strategicContext: { sector, aiMaturity, priorityCount: strategicPriorities.length },
+      };
+    }
+
+    // Pattern 1: On track — majority AI Ready
+    if (aiReadyPct >= 60) {
+      return {
+        readinessStatus: "on_track" as const,
+        statement: `Your HR function is performing well. ${aiReadyPct}% of assessed employees are AI Ready, with a function score of ${functionScore}. Strategic alignment with your ${strategicPriorities.length} priority area${strategicPriorities.length !== 1 ? "s" : ""} is strong.`,
+        cta: { label: "View strategic alignment", route: "/dashboard/leader" },
+        functionScore,
+        assessedCount,
+        totalHeadcount: allUsers.length,
+        strategicContext: { sector, aiMaturity, priorityCount: strategicPriorities.length },
+      };
+    }
+
+    // Pattern 2: At risk — significant portion not ready
+    if (atRiskPct >= 30) {
+      return {
+        readinessStatus: "at_risk" as const,
+        statement: `${atRiskPct}% of assessed employees are Not Yet Ready or have Foundation Gaps. Function score is ${functionScore}. Immediate intervention is recommended to meet your AI roadmap objectives.`,
+        cta: { label: "View risk areas", route: "/dashboard/leader" },
+        functionScore,
+        assessedCount,
+        totalHeadcount: allUsers.length,
+        strategicContext: { sector, aiMaturity, priorityCount: strategicPriorities.length },
+      };
+    }
+
+    // Pattern 3: Mixed — majority developing
     return {
-      readinessStatus: "not_configured" as const,
-      statement: "Strategic context not yet captured. Your function's capability position is shown below, but readiness against business requirements requires capturing your AI roadmap.",
-      cta: { label: "Configure AI roadmap", route: "/admin/org-context" },
+      readinessStatus: "mixed" as const,
+      statement: `Your function shows a mixed readiness profile. ${developingPct}% are Developing, ${aiReadyPct}% are AI Ready, with a function score of ${functionScore}. Targeted development aligned to your ${strategicPriorities.length} strategic priorities will accelerate progress.`,
+      cta: { label: "View development priorities", route: "/dashboard/leader" },
       functionScore,
       assessedCount,
       totalHeadcount: allUsers.length,
+      strategicContext: { sector, aiMaturity, priorityCount: strategicPriorities.length },
     };
   }),
 

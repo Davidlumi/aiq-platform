@@ -1477,3 +1477,6 @@
 - [x] DB-39: Design system compliance — Inter typography, JetBrains Mono for numbers, navy palette, custom charts, 8pt grid
 - [x] DB-40: Skeleton loaders, progressive loading, WCAG 2.2 AA compliance
 - [x] DB-41: Responsive behaviour per spec (Individual: all viewports, Manager: lg+, Leader: xl+)
+
+## Bug Fixes — Dashboard v1.1
+- [x] BF-DB-01: Leader Dashboard hero finding shows "Strategic context not yet captured" even after completing AI roadmap configuration — fixed heroFinding to query ailOrgContext table, now shows correct hero pattern (on_track/at_risk/mixed/partial) when strategic input is configured
