@@ -1519,27 +1519,54 @@ const leaderRouter = router({
     const totalAssessed = userData.length;
     if (totalAssessed === 0) return { findings: [] };
 
-    // Pattern 5: foundation_gap_concentration (High)
+    // Aggregate stats for patterns
+    const avgScore = Math.round(userData.reduce((s, u) => s + u.overallScore, 0) / totalAssessed);
+    const aiReadyCount = userData.filter(u => u.rating === "ai_ready").length;
+    const aiReadyPct = Math.round((aiReadyCount / totalAssessed) * 100);
+    const developingCount = userData.filter(u => u.rating === "developing").length;
+    const developingPct = Math.round((developingCount / totalAssessed) * 100);
+    const notReadyCount = userData.filter(u => u.rating === "not_yet_ready").length;
+    const notReadyPct = Math.round((notReadyCount / totalAssessed) * 100);
     const foundationGapCount = userData.filter(u => u.rating === "foundation_gap").length;
     const foundationGapPct = Math.round((foundationGapCount / totalAssessed) * 100);
-    if (foundationGapPct > 25) {
-      // Check which foundation domains
-      const foundationDomains: DomainKey[] = ["ai_interaction", "ai_output_evaluation"];
-      for (const dk of foundationDomains) {
-        const belowThreshold = userData.filter(u => u.domainScores[dk] < 55).length;
-        const pct = Math.round((belowThreshold / totalAssessed) * 100);
-        if (pct > 25) {
-          findings.push({
-            patternId: "foundation_gap_concentration",
-            observation: `${foundationGapPct}% of your function is classified as Foundation Gap, with ${pct}% scoring below threshold on ${DOMAIN_LABELS[dk]}.`,
-            supportingData: `${foundationGapCount} of ${totalAssessed} assessed individuals. ${belowThreshold} below threshold on ${DOMAIN_LABELS[dk]}.`,
-            strategicImplication: "Consider whether to invest in a function-wide foundation programme before targeted capability development, or whether to segment the function and run parallel tracks.",
-            priority: "high",
-            drillDownTarget: dk,
-          });
-          break;
-        }
-      }
+
+    // Pattern 1: Readiness distribution insight (always fires)
+    if (notReadyPct + foundationGapPct > 10) {
+      findings.push({
+        patternId: "readiness_risk_concentration",
+        observation: `${notReadyPct + foundationGapPct}% of your function (${notReadyCount + foundationGapCount} people) are classified as Not Yet Ready or Foundation Gap. These individuals may pose governance risk if they are using AI tools without adequate capability.`,
+        supportingData: `Not Yet Ready: ${notReadyCount} (${notReadyPct}%), Foundation Gap: ${foundationGapCount} (${foundationGapPct}%) of ${totalAssessed} assessed.`,
+        strategicImplication: "Prioritise these individuals for immediate foundation-level development. Consider whether AI tool access should be restricted or supervised until capability improves.",
+        priority: "high",
+        drillDownTarget: null,
+      });
+    } else if (aiReadyPct < 50) {
+      findings.push({
+        patternId: "ai_readiness_below_target",
+        observation: `Only ${aiReadyPct}% of your function is AI Ready. The majority (${developingPct}% Developing) still need targeted development to reach full capability.`,
+        supportingData: `AI Ready: ${aiReadyCount} (${aiReadyPct}%), Developing: ${developingCount} (${developingPct}%) of ${totalAssessed} assessed.`,
+        strategicImplication: "Focus development investment on moving the Developing cohort to AI Ready. Identify what specific domain gaps are holding them back and target interventions accordingly.",
+        priority: "high",
+        drillDownTarget: null,
+      });
+    }
+
+    // Pattern 2: Domain weakness — find the weakest domain
+    const domainAvgs: { dk: DomainKey; avg: number }[] = DOMAIN_KEYS.map(dk => {
+      const scores = userData.map(u => u.domainScores[dk]);
+      return { dk, avg: scores.length > 0 ? Math.round(scores.reduce((s, v) => s + v, 0) / scores.length) : 0 };
+    }).sort((a, b) => a.avg - b.avg);
+    const weakest = domainAvgs[0];
+    const strongest = domainAvgs[domainAvgs.length - 1];
+    if (weakest && strongest && strongest.avg - weakest.avg > 3) {
+      findings.push({
+        patternId: "domain_capability_gap",
+        observation: `${DOMAIN_LABELS[weakest.dk]} is your function's weakest domain at ${weakest.avg} avg, ${strongest.avg - weakest.avg} points below your strongest (${DOMAIN_LABELS[strongest.dk]} at ${strongest.avg}).`,
+        supportingData: `Domain averages range from ${weakest.avg} (${DOMAIN_LABELS[weakest.dk]}) to ${strongest.avg} (${DOMAIN_LABELS[strongest.dk]}).`,
+        strategicImplication: `If ${DOMAIN_LABELS[weakest.dk]} is critical to your AI strategy, this gap needs targeted intervention. Consider whether this domain is being adequately covered in current development plans.`,
+        priority: "high",
+        drillDownTarget: weakest.dk,
+      });
     }
 
     // Pattern 3: development_investment_underconsumed (High)
@@ -1558,45 +1585,79 @@ const leaderRouter = router({
       }
     }
     const completionRate = totalPlanModules > 0 ? Math.round((completedPlanModules / totalPlanModules) * 100) : 0;
-    if (completionRate < 30 && totalPlanModules > 0) {
-      findings.push({
-        patternId: "development_investment_underconsumed",
-        observation: `Active development plans across the function have an aggregate completion rate of ${completionRate}%. Development investment is being made but not consumed.`,
-        supportingData: `${completedPlanModules} of ${totalPlanModules} modules completed across all active plans.`,
-        strategicImplication: "Consider whether development time is being protected in workload planning, whether the modules are relevant to daily work, or whether a different delivery format would improve engagement.",
-        priority: "high",
-        drillDownTarget: null,
-      });
+    if (totalPlanModules > 0) {
+      if (completionRate < 50) {
+        findings.push({
+          patternId: "development_investment_underconsumed",
+          observation: `Active development plans across the function have an aggregate completion rate of ${completionRate}%. Development investment is being made but not fully consumed.`,
+          supportingData: `${completedPlanModules} of ${totalPlanModules} modules completed across all active plans.`,
+          strategicImplication: "Consider whether development time is being protected in workload planning, whether the modules are relevant to daily work, or whether a different delivery format would improve engagement.",
+          priority: completionRate < 25 ? "high" : "medium",
+          drillDownTarget: null,
+        });
+      } else {
+        findings.push({
+          patternId: "development_engagement_positive",
+          observation: `Development plan completion rate is ${completionRate}% across the function. This suggests reasonable engagement with the learning programme.`,
+          supportingData: `${completedPlanModules} of ${totalPlanModules} modules completed across all active plans.`,
+          strategicImplication: "Maintain momentum by ensuring new modules are added as people complete existing ones. Consider whether completion is translating into measurable capability improvement.",
+          priority: "low",
+          drillDownTarget: null,
+        });
+      }
     }
 
-    // Pattern 6: sustained_function_stall (Medium)
-    // Simplified: check if function avg score has changed < 2 points
-    // Would need historical data — for now check if most people are developing with low variance
-    const developingCount = userData.filter(u => u.rating === "developing").length;
-    const developingPct = Math.round((developingCount / totalAssessed) * 100);
-    if (developingPct > 60) {
+    // Pattern 4: sustained_function_stall (Medium)
+    if (developingPct > 40) {
       findings.push({
         patternId: "sustained_function_stall",
-        observation: `${developingPct}% of your function is classified as Developing. While this is not critical, the concentration suggests the function may be plateauing rather than progressing.`,
-        supportingData: `${developingCount} of ${totalAssessed} assessed individuals at Developing level.`,
+        observation: `${developingPct}% of your function is classified as Developing. ${developingPct > 60 ? "This high concentration suggests the function may be plateauing." : "While progress is being made, a significant portion still needs to advance."}`,
+        supportingData: `${developingCount} of ${totalAssessed} assessed individuals at Developing level. Function average: ${avgScore}.`,
         strategicImplication: "Consider whether the current development approach is producing measurable capability change, or whether a different intervention strategy is needed to move people from Developing to AI Ready.",
-        priority: "medium",
+        priority: developingPct > 60 ? "medium" : "low",
         drillDownTarget: null,
       });
     }
 
-    // Pattern 8: confidence_capability_misalignment_pattern (Medium)
+    // Pattern 5: Role family disparity
+    const rfScores: Record<string, { total: number; count: number }> = {};
+    for (const u of userData) {
+      if (!rfScores[u.roleFamily]) rfScores[u.roleFamily] = { total: 0, count: 0 };
+      rfScores[u.roleFamily].total += u.overallScore;
+      rfScores[u.roleFamily].count++;
+    }
+    const rfAvgs = Object.entries(rfScores)
+      .filter(([, v]) => v.count >= 2)
+      .map(([rf, v]) => ({ rf, avg: Math.round(v.total / v.count), count: v.count }))
+      .sort((a, b) => a.avg - b.avg);
+    if (rfAvgs.length >= 2) {
+      const lowestRf = rfAvgs[0];
+      const highestRf = rfAvgs[rfAvgs.length - 1];
+      const gap = highestRf.avg - lowestRf.avg;
+      if (gap > 5) {
+        findings.push({
+          patternId: "role_family_disparity",
+          observation: `There is a ${gap}-point gap between your highest-performing role family (${ROLE_FAMILY_LABELS[highestRf.rf as RoleFamilyKey] ?? highestRf.rf} at ${highestRf.avg}) and lowest (${ROLE_FAMILY_LABELS[lowestRf.rf as RoleFamilyKey] ?? lowestRf.rf} at ${lowestRf.avg}).`,
+          supportingData: `${ROLE_FAMILY_LABELS[highestRf.rf as RoleFamilyKey] ?? highestRf.rf}: ${highestRf.avg} avg (${highestRf.count} people). ${ROLE_FAMILY_LABELS[lowestRf.rf as RoleFamilyKey] ?? lowestRf.rf}: ${lowestRf.avg} avg (${lowestRf.count} people).`,
+          strategicImplication: "Investigate whether the lower-performing role family has different development needs, less access to AI tools, or different job requirements that affect their capability profile.",
+          priority: gap > 10 ? "high" : "medium",
+          drillDownTarget: null,
+        });
+      }
+    }
+
+    // Pattern 6: confidence_capability_misalignment_pattern (Medium)
     const misaligned = userData.filter(u => {
       if (u.confidence === null) return false;
-      return Math.abs(u.confidence * 100 - u.overallScore) > 15;
+      return Math.abs(u.confidence * 100 - u.overallScore) > 12;
     });
     const misalignedPct = Math.round((misaligned.length / totalAssessed) * 100);
-    if (misalignedPct > 30) {
+    if (misalignedPct > 15) {
       const overconfident = misaligned.filter(u => (u.confidence ?? 0) * 100 > u.overallScore).length;
       findings.push({
         patternId: "confidence_capability_misalignment_pattern",
         observation: `${misalignedPct}% of your function shows significant divergence between stated confidence and measured capability. ${overconfident} are overconfident; ${misaligned.length - overconfident} are underconfident.`,
-        supportingData: `${misaligned.length} of ${totalAssessed} individuals with >15 point divergence.`,
+        supportingData: `${misaligned.length} of ${totalAssessed} individuals with >12 point divergence.`,
         strategicImplication: "Overconfidence is a governance risk — people who believe they are more capable than they are may make unsupervised AI decisions they shouldn't. Consider whether to address this through awareness sessions or adjusted supervision levels.",
         priority: "medium",
         drillDownTarget: null,
@@ -1614,7 +1675,7 @@ const leaderRouter = router({
           rfCounts[t.rf] = (rfCounts[t.rf] ?? 0) + 1;
         }
         const dominant = Object.entries(rfCounts).sort(([, a], [, b]) => b - a)[0];
-        if (dominant && dominant[1] / top20pct.length > 0.6) {
+        if (dominant && dominant[1] / top20pct.length > 0.5) {
           findings.push({
             patternId: "strongest_capability_concentration",
             observation: `Your function's strongest performers on ${DOMAIN_LABELS[dk]} are concentrated in the ${ROLE_FAMILY_LABELS[dominant[0] as RoleFamilyKey] ?? dominant[0]} role family. This is a strategic resource for upcoming initiatives requiring this capability.`,
@@ -1623,7 +1684,7 @@ const leaderRouter = router({
             priority: "low",
             drillDownTarget: dk,
           });
-          break; // Only one of these
+          break;
         }
       }
     }
@@ -1633,6 +1694,182 @@ const leaderRouter = router({
     findings.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
     return { findings: findings.slice(0, 5) };
+  }),
+
+  /** Strategic Alignment — maps business priorities to capability readiness */
+  strategicAlignment: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
+
+    // Load org context
+    const orgCtxRows = await db.select().from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const orgCtx = orgCtxRows[0] ?? null;
+    if (!orgCtx) {
+      return {
+        configured: false as const,
+        priorities: [],
+        challenges: [],
+        overallAlignment: null,
+        governanceReadiness: null,
+        hrInfluence: null,
+        aiMaturity: null,
+      };
+    }
+
+    let strategicPriorities: string[] = [];
+    let currentChallenges: string[] = [];
+    try { strategicPriorities = JSON.parse(orgCtx.strategicPrioritiesJson ?? "[]"); } catch {}
+    try { currentChallenges = JSON.parse(orgCtx.currentChallengesJson ?? "[]"); } catch {}
+
+    // Get all users and their capability scores
+    let allUsers = await db
+      .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+    if (rfFilter) {
+      allUsers = allUsers.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter);
+    }
+
+    // Aggregate domain scores across all assessed users
+    const domainTotals: Record<DomainKey, { total: number; count: number }> = {} as any;
+    for (const dk of DOMAIN_KEYS) domainTotals[dk] = { total: 0, count: 0 };
+    let assessedCount = 0;
+    let totalScore = 0;
+
+    for (const u of allUsers) {
+      const scoreData = await getLatestScoreData(db, u.id);
+      if (!scoreData) continue;
+      assessedCount++;
+      totalScore += scoreData.overallScore;
+      const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
+      if (domainScores) {
+        for (const dk of DOMAIN_KEYS) {
+          domainTotals[dk].total += domainScores[dk];
+          domainTotals[dk].count++;
+        }
+      }
+    }
+
+    const functionAvg = assessedCount > 0 ? Math.round(totalScore / assessedCount) : null;
+    const domainAvgs: Record<DomainKey, number | null> = {} as any;
+    for (const dk of DOMAIN_KEYS) {
+      domainAvgs[dk] = domainTotals[dk].count > 0 ? Math.round(domainTotals[dk].total / domainTotals[dk].count) : null;
+    }
+
+    // Map each strategic priority to the most relevant capability domains
+    // This is a heuristic mapping based on keyword analysis
+    const PRIORITY_DOMAIN_MAP: Record<string, DomainKey[]> = {
+      recruit: ["ai_interaction", "ai_output_evaluation"],
+      hiring: ["ai_interaction", "ai_output_evaluation"],
+      screening: ["ai_interaction", "ai_output_evaluation"],
+      automat: ["ai_workflow_design", "ai_interaction"],
+      workflow: ["ai_workflow_design"],
+      process: ["ai_workflow_design", "ai_interaction"],
+      ethic: ["ai_ethics_trust"],
+      trust: ["ai_ethics_trust"],
+      bias: ["ai_ethics_trust", "ai_output_evaluation"],
+      fairness: ["ai_ethics_trust"],
+      governance: ["ai_ethics_trust", "ai_change_leadership"],
+      compliance: ["ai_ethics_trust"],
+      regulat: ["ai_ethics_trust"],
+      transform: ["ai_change_leadership", "workforce_ai_readiness"],
+      change: ["ai_change_leadership"],
+      adopt: ["ai_change_leadership", "workforce_ai_readiness"],
+      train: ["workforce_ai_readiness", "ai_interaction"],
+      learn: ["workforce_ai_readiness"],
+      upskill: ["workforce_ai_readiness", "ai_interaction"],
+      reskill: ["workforce_ai_readiness"],
+      talent: ["workforce_ai_readiness", "ai_interaction"],
+      analytic: ["ai_output_evaluation", "ai_workflow_design"],
+      data: ["ai_output_evaluation", "ai_workflow_design"],
+      decision: ["ai_output_evaluation"],
+      output: ["ai_output_evaluation"],
+      quality: ["ai_output_evaluation"],
+      evaluat: ["ai_output_evaluation"],
+      leader: ["ai_change_leadership"],
+      strateg: ["ai_change_leadership", "workforce_ai_readiness"],
+      innovat: ["ai_workflow_design", "ai_change_leadership"],
+      productiv: ["ai_workflow_design", "ai_interaction"],
+      efficien: ["ai_workflow_design"],
+    };
+
+    function mapPriorityToDomains(priority: string): DomainKey[] {
+      const lower = priority.toLowerCase();
+      const matched = new Set<DomainKey>();
+      for (const [keyword, domains] of Object.entries(PRIORITY_DOMAIN_MAP)) {
+        if (lower.includes(keyword)) {
+          for (const d of domains) matched.add(d);
+        }
+      }
+      // Default: all domains if no match
+      if (matched.size === 0) return [...DOMAIN_KEYS].slice(0, 3);
+      return Array.from(matched);
+    }
+
+    const priorities = strategicPriorities.map((p, idx) => {
+      const relevantDomains = mapPriorityToDomains(p);
+      const domainDetails = relevantDomains.map(dk => ({
+        domain: dk,
+        domainName: DOMAIN_LABELS[dk],
+        avgScore: domainAvgs[dk],
+        colour: DOMAIN_COLOURS[dk],
+      }));
+      const avgRelevantScore = domainDetails.filter(d => d.avgScore !== null).length > 0
+        ? Math.round(domainDetails.filter(d => d.avgScore !== null).reduce((sum, d) => sum + (d.avgScore ?? 0), 0) / domainDetails.filter(d => d.avgScore !== null).length)
+        : null;
+      const alignmentStatus: "aligned" | "partial" | "gap" | "unknown" =
+        avgRelevantScore === null ? "unknown" :
+        avgRelevantScore >= 70 ? "aligned" :
+        avgRelevantScore >= 50 ? "partial" : "gap";
+      return {
+        priority: p,
+        index: idx,
+        relevantDomains: domainDetails,
+        avgRelevantScore,
+        alignmentStatus,
+      };
+    });
+
+    // Governance readiness signal
+    const governanceScore = (
+      (orgCtx.aiGovernanceFramework ? 25 : 0) +
+      (orgCtx.aiEthicsCommittee ? 25 : 0) +
+      (orgCtx.hasDataProtectionPolicy ? 15 : 0) +
+      ((orgCtx as any).aiPolicyStatus === "approved" || (orgCtx as any).aiPolicyStatus === "embedded" ? 25 : (orgCtx as any).aiPolicyStatus === "draft" ? 10 : 0) +
+      (orgCtx.hasEdiPolicy ? 5 : 0) +
+      (orgCtx.hasWhistleblowingPolicy ? 5 : 0)
+    );
+    const governanceReadiness: "strong" | "developing" | "weak" =
+      governanceScore >= 70 ? "strong" : governanceScore >= 40 ? "developing" : "weak";
+
+    // Overall alignment
+    const alignedCount = priorities.filter(p => p.alignmentStatus === "aligned").length;
+    const gapCount = priorities.filter(p => p.alignmentStatus === "gap").length;
+    const overallAlignment: "aligned" | "partial" | "misaligned" | null =
+      priorities.length === 0 ? null :
+      alignedCount === priorities.length ? "aligned" :
+      gapCount > priorities.length / 2 ? "misaligned" : "partial";
+
+    return {
+      configured: true as const,
+      priorities,
+      challenges: currentChallenges,
+      overallAlignment,
+      governanceReadiness,
+      governanceScore,
+      hrInfluence: orgCtx.hrInfluence,
+      aiMaturity: orgCtx.aiMaturityLevel,
+      functionAvg,
+      assessedCount,
+      totalHeadcount: allUsers.length,
+    };
   }),
 
   /** Teams view */

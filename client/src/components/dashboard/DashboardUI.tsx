@@ -166,48 +166,75 @@ export function InfoTip({ text }: { text: string }) {
 
 // ─── Heatmap Cell ────────────────────────────────────────────────────────────
 
+/** Semantic readiness colour scale — communicates capability level at a glance */
+function scoreToReadinessBg(score: number): { bg: string; text: string; ring: string } {
+  if (score >= 75) return { bg: "#ECFDF5", text: "#065F46", ring: "#10B981" }; // AI Ready
+  if (score >= 60) return { bg: "#F0FDF4", text: "#166534", ring: "#4ADE80" }; // Strong Developing
+  if (score >= 50) return { bg: "#FFFBEB", text: "#92400E", ring: "#F59E0B" }; // Developing
+  if (score >= 40) return { bg: "#FFF7ED", text: "#9A3412", ring: "#F97316" }; // Weak Developing
+  if (score >= 30) return { bg: "#FEF2F2", text: "#991B1B", ring: "#EF4444" }; // Not Yet Ready
+  return { bg: "#FEF2F2", text: "#7F1D1D", ring: "#DC2626" }; // Foundation Gap
+}
+
 export function HeatmapCell({
   score,
+  headcount,
+  target,
   onClick,
   size = "md",
 }: {
   score: number | null;
+  headcount?: number;
+  target?: number | null;
   onClick?: () => void;
   size?: "sm" | "md";
 }) {
   if (score === null) {
     return (
-      <div className={cn("rounded flex items-center justify-center text-xs text-muted-foreground", size === "sm" ? "w-10 h-8" : "w-14 h-10")}
-        style={{ backgroundColor: "#F1F5F9" }}>
-        —
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn("rounded-lg flex flex-col items-center justify-center text-muted-foreground border border-dashed border-neutral-200", size === "sm" ? "w-14 h-10" : "w-16 h-12")}
+            style={{ backgroundColor: "#F8FAFC" }}>
+            <span className="text-[10px]">—</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          No assessments completed
+        </TooltipContent>
+      </Tooltip>
     );
   }
-  const bg = scoreToNavyBg(score);
-  const text = score >= 50 ? "#F8FAFC" : "#1E293B";
+  const { bg, text, ring } = scoreToReadinessBg(score);
+  const gap = target != null ? target - score : null;
   return (
-    <div
-      className={cn(
-        "rounded flex items-center justify-center font-mono text-xs font-semibold tabular-nums transition-transform",
-        size === "sm" ? "w-10 h-8" : "w-14 h-10",
-        onClick && "cursor-pointer hover:scale-105",
-      )}
-      style={{ backgroundColor: bg, color: text }}
-      onClick={onClick}
-    >
-      {score}
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn(
+            "rounded-lg flex flex-col items-center justify-center font-mono tabular-nums transition-all relative",
+            size === "sm" ? "w-14 h-10" : "w-16 h-12",
+            onClick && "cursor-pointer hover:scale-105 hover:shadow-md",
+          )}
+          style={{ backgroundColor: bg, color: text, borderLeft: `3px solid ${ring}` }}
+          onClick={onClick}
+        >
+          <span className="text-xs font-bold">{score}</span>
+          {headcount != null && headcount > 0 && (
+            <span className="text-[8px] opacity-60 font-normal">n={headcount}</span>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs space-y-1">
+        <p className="font-semibold">Score: {score}/100</p>
+        {headcount != null && <p>{headcount} assessed</p>}
+        {gap != null && gap > 0 && <p className="text-red-600">{gap} pts below target</p>}
+        {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
+        <p className="text-muted-foreground">
+          {score >= 75 ? "AI Ready" : score >= 60 ? "Strong Developing" : score >= 50 ? "Developing" : score >= 40 ? "Weak Developing" : score >= 30 ? "Not Yet Ready" : "Foundation Gap"}
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
-}
-
-function scoreToNavyBg(score: number): string {
-  if (score >= 80) return "#0F172A";
-  if (score >= 70) return "#1E293B";
-  if (score >= 60) return "#334155";
-  if (score >= 50) return "#475569";
-  if (score >= 40) return "#64748B";
-  if (score >= 30) return "#94A3B8";
-  return "#CBD5E1";
 }
 
 // ─── Domain Colour Dot ──────────────────────────────────────────────────────

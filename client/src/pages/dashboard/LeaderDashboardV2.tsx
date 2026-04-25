@@ -103,6 +103,7 @@ export default function LeaderDashboardV2() {
   const { data: trajectory, isLoading: trajLoading } = trpc.dashboardV2.leader.domainTrajectory.useQuery(queryInput);
   const { data: findings, isLoading: findingsLoading } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
   const { data: teams, isLoading: teamsLoading } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
+  const { data: alignment, isLoading: alignmentLoading } = trpc.dashboardV2.leader.strategicAlignment.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
 
@@ -278,14 +279,14 @@ export default function LeaderDashboardV2() {
 
       {/* ── 5. Role-Family Heatmap ── */}
       {main && main.heatmap && (
-        <DashboardCard title="Capability heatmap" subtitle="Average score by role family and domain">
+        <DashboardCard title="Capability heatmap" subtitle="Average score by role family and domain — colour indicates readiness level">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-neutral-200">
-                  <th className="text-left py-2 pr-4 font-semibold text-muted-foreground w-40">Role Family</th>
+                  <th className="text-left py-3 pr-4 font-semibold text-muted-foreground w-44">Role Family</th>
                   {Object.keys(DOMAIN_LABELS).map(dk => (
-                    <th key={dk} className="text-center py-2 px-1 font-semibold text-muted-foreground">
+                    <th key={dk} className="text-center py-3 px-2 font-semibold text-muted-foreground">
                       <div className="flex flex-col items-center gap-1">
                         <DomainDot domain={dk} size={6} />
                         <span className="text-[10px] leading-tight whitespace-nowrap">{DOMAIN_LABELS[dk]?.split(" ").slice(0, 2).join(" ")}</span>
@@ -297,16 +298,34 @@ export default function LeaderDashboardV2() {
               <tbody>
                 {main.heatmap.map((row: any) => (
                   <tr key={row.roleFamily} className="border-b border-neutral-100 last:border-0">
-                    <td className="py-2 pr-4 font-medium text-foreground">{row.roleFamilyName}</td>
+                    <td className="py-3 pr-4 font-medium text-foreground">{row.roleFamilyName}</td>
                     {row.domains.map((cell: any) => (
-                      <td key={cell.domain} className="py-2 px-1 text-center">
-                        <HeatmapCell score={cell.avgScore} size="sm" />
+                      <td key={cell.domain} className="py-3 px-2 text-center">
+                        <HeatmapCell score={cell.avgScore} headcount={cell.headcount} target={cell.target} size="sm" />
                       </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Heatmap colour legend */}
+          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-neutral-100 flex-wrap">
+            <span className="text-[10px] text-muted-foreground font-medium">Readiness:</span>
+            {[
+              { label: "AI Ready", bg: "#ECFDF5", ring: "#10B981" },
+              { label: "Strong Dev.", bg: "#F0FDF4", ring: "#4ADE80" },
+              { label: "Developing", bg: "#FFFBEB", ring: "#F59E0B" },
+              { label: "Weak Dev.", bg: "#FFF7ED", ring: "#F97316" },
+              { label: "Not Ready", bg: "#FEF2F2", ring: "#EF4444" },
+              { label: "Foundation Gap", bg: "#FEF2F2", ring: "#DC2626" },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.bg, borderLeft: `2px solid ${l.ring}` }} />
+                <span className="text-[10px] text-muted-foreground">{l.label}</span>
+              </div>
+            ))}
+            <span className="text-[10px] text-muted-foreground ml-2">— = No data</span>
           </div>
         </DashboardCard>
       )}
@@ -356,26 +375,45 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
+      {/* ── 6b. Strategic Alignment ── */}
+      {!alignmentLoading && alignment && (
+        <StrategicAlignmentSection alignment={alignment} />
+      )}
+
       {/* ── 7. Strategic Findings ── */}
       {!findingsLoading && findings && (
         <DashboardCard title="Strategic findings" subtitle="Priority-ordered insights for your function">
           {findings.findings.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4">No strategic findings at this time.</p>
+            <p className="text-xs text-muted-foreground py-4">No strategic findings at this time. Findings are generated once assessment data is available.</p>
           ) : (
             <div className="space-y-3 mt-1">
               {findings.findings.map((f: any, i: number) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all"
+                  className="rounded-lg border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all overflow-hidden"
                 >
-                  <div className="mt-0.5 shrink-0">
-                    <PriorityBadge priority={f.priority} />
+                  <div className="flex items-start gap-3 p-3">
+                    <div className="mt-0.5 shrink-0">
+                      <PriorityBadge priority={f.priority} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground leading-relaxed">{f.observation}</p>
+                      {f.supportingData && (
+                        <p className="text-[10px] text-muted-foreground mt-1.5 font-mono bg-neutral-50 rounded px-2 py-1 inline-block">
+                          {f.supportingData}
+                        </p>
+                      )}
+                    </div>
+                    <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground mb-0.5">{f.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{f.description}</p>
-                  </div>
-                  <Lightbulb className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                  {f.strategicImplication && (
+                    <div className="px-3 pb-3 pt-0 ml-9">
+                      <div className="text-[11px] text-muted-foreground leading-relaxed bg-blue-50/50 border border-blue-100 rounded-md px-3 py-2">
+                        <span className="font-semibold text-blue-700">Strategic implication:</span>{" "}
+                        {f.strategicImplication}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -484,5 +522,198 @@ function HeroFindingCard({
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Strategic Alignment Section ────────────────────────────────────────────
+
+const ALIGNMENT_STYLES = {
+  aligned: { bg: "#ECFDF5", border: "#A7F3D0", text: "#065F46", label: "Aligned", icon: "✓" },
+  partial: { bg: "#FFFBEB", border: "#FDE68A", text: "#92400E", label: "Partial", icon: "◐" },
+  gap: { bg: "#FEF2F2", border: "#FECACA", text: "#991B1B", label: "Gap", icon: "✗" },
+  unknown: { bg: "#F1F5F9", border: "#CBD5E1", text: "#475569", label: "Unknown", icon: "?" },
+};
+
+const OVERALL_ALIGNMENT_STYLES = {
+  aligned: { bg: "#ECFDF5", border: "#10B981", text: "#065F46", label: "HR capability is aligned with business strategy" },
+  partial: { bg: "#FFFBEB", border: "#F59E0B", text: "#92400E", label: "Partial alignment — some strategic priorities have capability gaps" },
+  misaligned: { bg: "#FEF2F2", border: "#EF4444", text: "#991B1B", label: "Significant misalignment — HR capability does not support business strategy" },
+};
+
+const GOVERNANCE_STYLES = {
+  strong: { bg: "#ECFDF5", text: "#065F46", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
+  developing: { bg: "#FFFBEB", text: "#92400E", label: "Developing", desc: "Some governance structures exist but gaps remain" },
+  weak: { bg: "#FEF2F2", text: "#991B1B", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
+};
+
+function StrategicAlignmentSection({ alignment }: { alignment: any }) {
+  if (!alignment.configured) {
+    return (
+      <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+            <Target className="w-6 h-6 text-blue-500" />
+          </div>
+          <p className="text-sm font-semibold text-foreground mb-1">Strategic context not configured</p>
+          <p className="text-xs text-muted-foreground max-w-md mb-4">
+            Define your AI strategic priorities in Organisation Context to see how your HR function's capability aligns with business strategy.
+          </p>
+          <Link href="/admin/org-context">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5">
+              <Target className="w-3.5 h-3.5" />
+              Configure strategic priorities
+            </Button>
+          </Link>
+        </div>
+      </DashboardCard>
+    );
+  }
+
+  if (alignment.priorities.length === 0) {
+    return (
+      <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+            <Target className="w-6 h-6 text-blue-500" />
+          </div>
+          <p className="text-sm font-semibold text-foreground mb-1">No strategic priorities defined</p>
+          <p className="text-xs text-muted-foreground max-w-md mb-4">
+            Add your AI strategic priorities to see alignment analysis. This shows whether your HR function has the capability to support each business objective.
+          </p>
+          <Link href="/admin/org-context">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5">
+              <Target className="w-3.5 h-3.5" />
+              Add strategic priorities
+            </Button>
+          </Link>
+        </div>
+      </DashboardCard>
+    );
+  }
+
+  const overallStyle = alignment.overallAlignment ? OVERALL_ALIGNMENT_STYLES[alignment.overallAlignment as keyof typeof OVERALL_ALIGNMENT_STYLES] : null;
+  const govStyle = alignment.governanceReadiness ? GOVERNANCE_STYLES[alignment.governanceReadiness as keyof typeof GOVERNANCE_STYLES] : null;
+
+  return (
+    <DashboardCard title="Strategic alignment" subtitle="How well HR capability supports your business AI strategy">
+      {/* Overall alignment signal */}
+      {overallStyle && (
+        <div
+          className="p-4 rounded-lg border mb-4"
+          style={{ backgroundColor: overallStyle.bg, borderColor: overallStyle.border }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${overallStyle.border}30` }}>
+              <Target className="w-4 h-4" style={{ color: overallStyle.border }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: overallStyle.text }}>{overallStyle.label}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {alignment.assessedCount}/{alignment.totalHeadcount} assessed · Function avg: {alignment.functionAvg ?? "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Priority-by-priority alignment */}
+      <div className="space-y-3">
+        {alignment.priorities.map((p: any) => {
+          const style = ALIGNMENT_STYLES[p.alignmentStatus as keyof typeof ALIGNMENT_STYLES] ?? ALIGNMENT_STYLES.unknown;
+          return (
+            <div key={p.index} className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
+                  style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
+                >
+                  {style.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-semibold text-foreground">{p.priority}</p>
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                      style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
+                    >
+                      {style.label}{p.avgRelevantScore !== null ? ` · ${p.avgRelevantScore}` : ""}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {p.relevantDomains.map((d: any) => (
+                      <span
+                        key={d.domain}
+                        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border"
+                        style={{
+                          borderColor: d.colour + "40",
+                          backgroundColor: d.colour + "08",
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.colour }} />
+                        {d.domainName}: <strong className="font-mono">{d.avgScore ?? "—"}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Governance & context signals */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-neutral-100">
+        {/* Governance readiness */}
+        {govStyle && (
+          <div className="p-3 rounded-lg" style={{ backgroundColor: govStyle.bg }}>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">Governance</p>
+            <p className="text-xs font-semibold" style={{ color: govStyle.text }}>{govStyle.label}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{govStyle.desc}</p>
+          </div>
+        )}
+
+        {/* HR Influence */}
+        {alignment.hrInfluence && (
+          <div className="p-3 rounded-lg bg-neutral-50">
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">HR Influence</p>
+            <p className="text-xs font-semibold text-foreground capitalize">{alignment.hrInfluence.replace(/_/g, " ")}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {alignment.hrInfluence === "strategic_partner" ? "HR has a seat at the strategy table" :
+               alignment.hrInfluence === "operational" ? "HR focuses on operational delivery" :
+               "HR is primarily administrative"}
+            </p>
+          </div>
+        )}
+
+        {/* AI Maturity */}
+        {alignment.aiMaturity && (
+          <div className="p-3 rounded-lg bg-neutral-50">
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">AI Maturity</p>
+            <p className="text-xs font-semibold text-foreground capitalize">{alignment.aiMaturity.replace(/_/g, " ")}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {alignment.aiMaturity === "mature" ? "Advanced AI integration across the business" :
+               alignment.aiMaturity === "scaling" ? "Expanding AI use cases beyond pilots" :
+               alignment.aiMaturity === "cautious" ? "Careful, measured approach to AI adoption" :
+               "Beginning the AI journey"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Current challenges */}
+      {alignment.challenges.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-neutral-100">
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Active Business Challenges</p>
+          <div className="space-y-1.5">
+            {alignment.challenges.map((c: string, i: number) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                <span className="text-muted-foreground">{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </DashboardCard>
   );
 }

@@ -1517,3 +1517,9 @@
 - [x] LOAD-04: Learning pages (LearningPlanPage, ModulePlayerPage) — skeleton module cards, journey map shimmer
 - [x] LOAD-05: Admin pages (BackOffice, OrgContext, ContentCMS) — table skeletons, form shimmer
 - [x] LOAD-06: AppShell and navigation — route transition fade-in animation on page mount
+
+## Leader Dashboard Review & Fixes
+- [x] LD-01: Fix capability heatmap — replaced monochrome navy palette with semantic red-amber-green colour scale, added headcount badges, colour legend, and tooltip-style hover
+- [x] LD-02: Add HR-business strategy alignment section — new strategicAlignment API, priority-to-domain mapping, overall alignment signal, governance readiness, HR influence, AI maturity context, and strategic priorities input in OrgContext admin
+- [x] LD-03: Fix strategic findings section — widened thresholds, added 7 patterns (readiness risk, domain gap, development engagement, function stall, role family disparity, confidence misalignment, capability concentration), improved frontend rendering with observation/data/implication
+- [x] LD-04: Improve heatmap data — colour scale now differentiates scores visually even when numerically close, added headcount context

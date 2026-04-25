@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Users,
   Info,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -145,6 +146,12 @@ export default function OrgContextPage() {
   const [structure, setStructure] = useState<string>("");
   const [hrInfluence, setHrInfluence] = useState<string>("");
 
+  // Block 1b: Strategic Context
+  const [strategicPriorities, setStrategicPriorities] = useState<string[]>([]);
+  const [newPriority, setNewPriority] = useState<string>("");
+  const [currentChallenges, setCurrentChallenges] = useState<string[]>([]);
+  const [newChallenge, setNewChallenge] = useState<string>("");
+
   // Block 2: AI Tools & Company AI Context
   const [aiToolsInUse, setAiToolsInUse] = useState<string[]>([]);
   const [customAiTool, setCustomAiTool] = useState<string>("");
@@ -193,6 +200,10 @@ export default function OrgContextPage() {
       if ((existing as any).ukRegulatoryFrameworksJson) setUkRegulatoryFrameworks(JSON.parse((existing as any).ukRegulatoryFrameworksJson));
     } catch {}
     if ((existing as any).companyAiContextNarrative) setCompanyAiContextNarrative((existing as any).companyAiContextNarrative);
+    try {
+      if ((existing as any).strategicPrioritiesJson) setStrategicPriorities(JSON.parse((existing as any).strategicPrioritiesJson));
+      if ((existing as any).currentChallengesJson) setCurrentChallenges(JSON.parse((existing as any).currentChallengesJson));
+    } catch {}
     if ((existing as any).quarterlyReviewEnabled != null) setQuarterlyReviewEnabled((existing as any).quarterlyReviewEnabled);
     if ((existing as any).revalidationCycleMonths) setRevalidationCycleMonths((existing as any).revalidationCycleMonths);
     if ((existing as any).smallHRFunctionMode != null) setSmallHRFunctionMode((existing as any).smallHRFunctionMode);
@@ -245,6 +256,8 @@ export default function OrgContextPage() {
       aiToolsInUse,
       ukRegulatoryFrameworks,
       companyAiContextNarrative: companyAiContextNarrative || undefined,
+      strategicPriorities,
+      currentChallenges,
       quarterlyReviewEnabled,
       revalidationCycleMonths,
       smallHRFunctionMode,
@@ -336,6 +349,128 @@ export default function OrgContextPage() {
                 <ToggleChip key={h.value} value={h.value} label={h.label} selected={hrInfluence === h.value} onClick={() => setHrInfluence(h.value)} />
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Block 1b: Strategic Context */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Target className="w-4 h-4 text-[#3B82F6]" />
+            Strategic Context
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Define your organisation's AI strategic priorities and current challenges. These drive the alignment analysis on the Leadership Dashboard.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Strategic Priorities */}
+          <div>
+            <label className="text-xs font-medium text-foreground mb-2 block">AI Strategic Priorities</label>
+            <p className="text-[11px] text-muted-foreground mb-2">What are the key AI-related business objectives your HR function needs to support?</p>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newPriority.trim()) {
+                    setStrategicPriorities(prev => [...prev, newPriority.trim()]);
+                    setNewPriority("");
+                  }
+                }}
+                placeholder="e.g. Automate recruitment screening with AI"
+                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  if (newPriority.trim()) {
+                    setStrategicPriorities(prev => [...prev, newPriority.trim()]);
+                    setNewPriority("");
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </div>
+            {strategicPriorities.length > 0 ? (
+              <div className="space-y-1.5">
+                {strategicPriorities.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs bg-[#3B82F6]/5 border border-[#3B82F6]/10 rounded-lg px-3 py-2">
+                    <span className="w-5 h-5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                    <span className="flex-1 text-foreground">{p}</span>
+                    <button
+                      type="button"
+                      onClick={() => setStrategicPriorities(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-red-500 text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground italic">No strategic priorities added yet. These are essential for alignment analysis.</p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Current Challenges */}
+          <div>
+            <label className="text-xs font-medium text-foreground mb-2 block">Current Business Challenges</label>
+            <p className="text-[11px] text-muted-foreground mb-2">What challenges is the organisation currently facing that affect HR capability requirements?</p>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={newChallenge}
+                onChange={(e) => setNewChallenge(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newChallenge.trim()) {
+                    setCurrentChallenges(prev => [...prev, newChallenge.trim()]);
+                    setNewChallenge("");
+                  }
+                }}
+                placeholder="e.g. Regulatory pressure on AI transparency in hiring"
+                className="flex-1 text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  if (newChallenge.trim()) {
+                    setCurrentChallenges(prev => [...prev, newChallenge.trim()]);
+                    setNewChallenge("");
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </div>
+            {currentChallenges.length > 0 ? (
+              <div className="space-y-1.5">
+                {currentChallenges.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span className="flex-1 text-foreground">{c}</span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentChallenges(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-red-500 text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground italic">No challenges added yet.</p>
+            )}
           </div>
         </CardContent>
       </Card>
