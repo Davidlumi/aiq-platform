@@ -211,7 +211,7 @@ const scenariosRouter = router({
 
       const p = input;
       const page = p.page ?? 1;
-      const pageSize = Math.min(p.pageSize ?? 20, 100);
+      const pageSize = Math.min(p.pageSize ?? 20, 200);
       const offset = (page - 1) * pageSize;
 
       let rows: ContentScenario[] = await db

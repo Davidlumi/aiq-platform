@@ -1636,16 +1636,16 @@
 
 ## UX/UI Audit Round 4 (Apr 25, 2026)
 
-- [ ] R4-01: Content Library shows 0 modules — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
-- [ ] R4-02: Audit Log shows 0 entries — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
-- [ ] R4-03: Scenario Library stats show 0 Published / 0 Ethics Cases / 0 Workflow Domains — UI reads wrong keys
-- [ ] R4-04: Learning Plan "0 In Progress" counter — no items have status "in_progress"; show started_at items as in-progress
-- [ ] R4-05: Dashboard "View development priorities" button should deep-link to /learning?tab=insights
-- [ ] R4-06: Assessment session domain sidebar shows raw capability key instead of human label
-- [ ] R4-07: Simulations page "Start your assessment" CTA links to dead route; fix to /assessment
-- [ ] R4-08: Reports page "Download JSON" button label is confusing; rename to "Export Data (JSON)"
-- [ ] R4-09: Users admin page "Change Role" shows toast "coming soon"; implement actual role change mutation
-- [ ] R4-10: Policy page form validation — "Create Policy" button should be disabled when name is empty (already done) but also show inline error on blur
+- [x] R4-01: Content Library shows 0 modules — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
+- [x] R4-02: Audit Log shows 0 entries — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
+- [x] R4-03: Scenario Library stats show 0 Published / 0 Ethics Cases / 0 Workflow Domains — UI reads wrong keys
+- [x] R4-04: Learning Plan "0 In Progress" counter — no items have status "in_progress"; show started_at items as in-progress
+- [x] R4-05: Dashboard "View development priorities" button should deep-link to /learning?tab=insights
+- [x] R4-06: Assessment session domain sidebar shows raw capability key instead of human label
+- [x] R4-07: Simulations page "Start your assessment" CTA links to dead route; fix to /assessment
+- [x] R4-08: Reports page "Download JSON" button label is confusing; rename to "Export Data (JSON)"
+- [x] R4-09: Users admin page "Change Role" shows toast "coming soon"; implement actual role change mutation
+- [x] R4-10: Policy page form validation — "Create Policy" button should be disabled when name is empty (already done) but also show inline error on blur
 
 ## UX/UI Audit Round 4 (Apr 25, 2026)
 

@@ -66,7 +66,7 @@ export const auditRouter = router({
       z.object({
         eventType: z.string().optional(),
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(100).default(50),
+        pageSize: z.number().int().min(1).max(200).default(50),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -101,7 +101,7 @@ export const auditRouter = router({
       z.object({
         active: z.boolean().optional(),
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(100).default(20),
+        pageSize: z.number().int().min(1).max(200).default(20),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -137,7 +137,7 @@ export const auditRouter = router({
         userId: z.string().optional(),
         triggeredOnly: z.boolean().default(true),
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(100).default(50),
+        pageSize: z.number().int().min(1).max(200).default(50),
       })
     )
     .query(async ({ input, ctx }) => {

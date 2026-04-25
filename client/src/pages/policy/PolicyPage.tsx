@@ -18,8 +18,8 @@ const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.
   hard_block: { label: "Hard Block", color: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25", icon: <Ban className="h-3 w-3" /> },
   warning: { label: "Warning", color: "bg-[#CCBB44]/10 text-[#99882A] border-[#CCBB44]/30", icon: <AlertTriangle className="h-3 w-3" /> },
   remediation_trigger: { label: "Remediation", color: "bg-primary/10 text-primary border-primary/30", icon: <RefreshCw className="h-3 w-3" /> },
-  escalate: { label: "Escalate", color: "bg-purple-100 text-purple-700 border-purple-200", icon: <ArrowUpRight className="h-3 w-3" /> },
-  force_revalidation: { label: "Force Revalidation", color: "bg-orange-100 text-orange-700 border-orange-200", icon: <RefreshCw className="h-3 w-3" /> },
+  escalate: { label: "Escalate", color: "bg-primary/10 text-primary border-primary/30", icon: <ArrowUpRight className="h-3 w-3" /> },
+  force_revalidation: { label: "Force Revalidation", color: "bg-[#CCBB44]/10 text-[#99882A] border-[#CCBB44]/30", icon: <RefreshCw className="h-3 w-3" /> },
 };
 
 function ActionBadge({ action }: { action: string }) {
@@ -83,13 +83,17 @@ export default function PolicyPage() {
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div>
-                  <Label className="aiq-label text-muted-foreground">Policy Name</Label>
+                  <Label className="aiq-label text-muted-foreground">Policy Name <span className="text-destructive">*</span></Label>
                   <Input
                     value={newPolicy.name}
                     onChange={e => setNewPolicy(p => ({ ...p, name: e.target.value }))}
                     placeholder="e.g. AI Usage Compliance Policy"
-                    className="mt-1"
+                    className={`mt-1 ${!newPolicy.name ? 'border-destructive/50' : ''}`}
+                    aria-required="true"
                   />
+                  {!newPolicy.name && (
+                    <p className="text-xs text-destructive mt-1">Policy name is required</p>
+                  )}
                 </div>
                 <div>
                   <Label className="aiq-label text-muted-foreground">Description</Label>
@@ -177,7 +181,7 @@ export default function PolicyPage() {
             </div>
           ) : !policies?.length ? (
             <div className="text-center py-12">
-              <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <Shield className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="aiq-body text-muted-foreground">No policies defined yet</p>
               {canManage && <p className="aiq-caption text-muted-foreground mt-1">Click <strong>+ New Policy</strong> to get started</p>}
             </div>
@@ -236,7 +240,7 @@ function PolicyEvaluationsLog() {
           </div>
         ) : !evals?.length ? (
           <div className="text-center py-8">
-            <Bell className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+            <Bell className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="aiq-caption text-muted-foreground">No policy evaluations recorded yet</p>
           </div>
         ) : (
@@ -252,7 +256,7 @@ function PolicyEvaluationsLog() {
               </thead>
               <tbody>
                 {(evals as any[]).map((ev: any) => (
-                  <tr key={ev.id} className="border-b border-[#F3F4F6] hover:bg-muted/50">
+                  <tr key={ev.id} className="border-b border-border hover:bg-muted/50">
                     <td className="py-2 px-3 text-foreground font-medium font-['DM_Mono'] text-xs">
                       {ev.policyRuleId?.slice(0, 12) ?? "—"}…
                     </td>
@@ -261,7 +265,7 @@ function PolicyEvaluationsLog() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         ev.result === "triggered" ? "bg-[#EE6677]/12 text-[#CC3344]" :
                         ev.result === "passed" ? "bg-[#228833]/10 text-[#228833]" :
-                        ev.result === "no_action" ? "bg-gray-100 text-gray-600" :
+                        ev.result === "no_action" ? "bg-muted text-muted-foreground" :
                         "bg-blue-100 text-blue-700"
                       }`}>{ev.result}</span>
                     </td>
