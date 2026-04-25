@@ -16,6 +16,7 @@ import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AssessmentResultsSkeleton } from "@/components/ui/loading";
@@ -1463,6 +1464,14 @@ export default function AssessmentResultsPage() {
               <RotateCcw className="w-4 h-4" />
               Retake Assessment
             </Button>
+            <DownloadPdfButton
+              type="assessment_report"
+              sessionId={sessionId ?? undefined}
+              label="Download Report PDF"
+              variant="outline"
+              size="default"
+              className="sm:col-span-2"
+            />
           </div>
         </TabsContent>
 

@@ -14,6 +14,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { toast } from "sonner";
 import {
   BookOpen, Zap, FileText, HelpCircle, Layers, Video, MessageSquare,
@@ -514,6 +515,14 @@ export default function LearningPlanPage() {
           <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
         </div>
 
+        {/* Download PDF */}
+        <DownloadPdfButton
+          type="learning_plan"
+          label="Download Learning Plan PDF"
+          variant="outline"
+          size="sm"
+          className="w-full"
+        />
         {/* Next up CTA */}
         {nextItem && (
           <button

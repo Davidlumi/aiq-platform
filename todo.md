@@ -1589,3 +1589,12 @@
 - [x] PROG-02: Render a sticky progress bar at the top of the module player showing % complete and section indicators
 - [x] PROG-03: Mark sections as visited when scrolled into view or navigated to
 - [x] PROG-04: Persist progress state across page refreshes (localStorage keyed by module id)
+
+## PDF Download (Apr 2026)
+- [x] PDF-01: Build server-side PDF generation router (pdfRouter) with branded HTML-to-PDF using puppeteer or html-pdf-node
+- [x] PDF-02: Assessment Report PDF — full capability scores, strengths, gaps, recommended actions
+- [x] PDF-03: Learning Plan PDF — personalised module list, progress, completion status
+- [x] PDF-04: Module PDF — printable version of a module's content
+- [x] PDF-05: Team/Org Dashboard PDF — aggregate capability scores across team/org (admin)
+- [x] PDF-06: Capability Profile PDF — one-page summary of learner capability scores across all domains
+- [x] PDF-07: Wire up Download PDF buttons on all relevant pages

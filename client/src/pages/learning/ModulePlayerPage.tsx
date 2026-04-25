@@ -17,6 +17,7 @@ import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { ModulePlayerSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
@@ -2022,7 +2023,17 @@ export default function ModulePlayerPage() {
                 <Clock className="h-3 w-3 mr-1" />{mod.durationMins} min
               </Badge>
             </div>
-            <h1 className="text-2xl font-bold">{mod.title}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold flex-1">{mod.title}</h1>
+              <DownloadPdfButton
+                type="module"
+                moduleId={params.moduleId}
+                label="PDF"
+                variant="ghost"
+                size="sm"
+                className="flex-shrink-0 text-muted-foreground hover:text-foreground"
+              />
+            </div>
             {mod.subtitle && <p className="text-sm text-muted-foreground">{mod.subtitle}</p>}
           </div>
 

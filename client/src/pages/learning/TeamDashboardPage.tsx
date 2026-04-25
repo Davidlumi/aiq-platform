@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { toast } from "sonner";
 import {
   Users, UserPlus, Target, BookOpen, Clock, Flame,
@@ -240,10 +241,13 @@ export default function TeamDashboardPage() {
             Monitor your team's AI readiness and learning progress
           </p>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => setShowAddForm(v => !v)}>
-          <UserPlus className="h-4 w-4" />
-          Add Member
-        </Button>
+        <div className="flex items-center gap-2">
+          <DownloadPdfButton type="team_dashboard" label="Export PDF" size="sm" variant="outline" />
+          <Button size="sm" className="gap-1.5" onClick={() => setShowAddForm(v => !v)}>
+            <UserPlus className="h-4 w-4" />
+            Add Member
+          </Button>
+        </div>
       </div>
 
       {/* Add member form */}

@@ -27,6 +27,7 @@ import { IndividualDashboardSkeleton } from "@/components/ui/loading";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { Badge } from "@/components/ui/badge";
 import {
   LineChart,
@@ -147,14 +148,19 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             )}
           </div>
         </div>
-        {isOwnDashboard && (
-          <Link href="/assessment">
-            <Button variant="default" size="sm" className="gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              {data.overallScore !== null ? "Reassess" : "Start assessment"}
-            </Button>
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {isOwnDashboard && (
+            <DownloadPdfButton type="capability_profile" label="Download Profile" size="sm" variant="outline" />
+          )}
+          {isOwnDashboard && (
+            <Link href="/assessment">
+              <Button variant="default" size="sm" className="gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                {data.overallScore !== null ? "Reassess" : "Start assessment"}
+              </Button>
+            </Link>
+          )}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
