@@ -555,7 +555,9 @@ export default function ReportsPage() {
                         </Badge>
                         <button
                           onClick={() => {
-                            const blob = new Blob([JSON.stringify(activeJob.manifestJson, null, 2)], { type: "application/json" });
+                            // Export the report data if available, otherwise fall back to full manifest
+                            const exportData = (activeJob.manifestJson as any)?.data ?? activeJob.manifestJson;
+                            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");
                             a.href = url;
@@ -565,7 +567,7 @@ export default function ReportsPage() {
                           }}
                           className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
                         >
-                          <Download className="w-3.5 h-3.5" />Export
+                          <Download className="w-3.5 h-3.5" />Export Data (JSON)
                         </button>
                       </div>
                     </div>

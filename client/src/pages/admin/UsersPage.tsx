@@ -49,6 +49,8 @@ export default function UsersPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const [changeRoleTarget, setChangeRoleTarget] = useState<{ id: string; name: string; currentRole: string } | null>(null);
+  const [selectedRole, setSelectedRole] = useState("");
   const [newUser, setNewUser] = useState({
     email: "", firstName: "", lastName: "", password: "", roleKey: "learner"
   });
@@ -70,6 +72,15 @@ export default function UsersPage() {
       utils.users.list.invalidate();
       setCreateOpen(false);
       setNewUser({ email: "", firstName: "", lastName: "", password: "", roleKey: "learner" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const changeRoleMutation = trpc.users.changeRole.useMutation({
+    onSuccess: () => {
+      toast.success("Role updated successfully");
+      utils.users.list.invalidate();
+      setChangeRoleTarget(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -311,7 +322,13 @@ export default function UsersPage() {
                             <DropdownMenuItem onClick={() => toast.info("View profile — coming soon")} className="text-xs gap-2">
                               <Eye className="w-3.5 h-3.5" />View Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info("Change role — coming soon")} className="text-xs gap-2">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRole((u.roles ?? [])[0] ?? "learner");
+                                setChangeRoleTarget({ id: u.id, name: `${u.firstName} ${u.lastName}`, currentRole: (u.roles ?? [])[0] ?? "learner" });
+                              }}
+                              className="text-xs gap-2"
+                            >
                               <UserCog className="w-3.5 h-3.5" />Change Role
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -382,6 +399,46 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Change Role Dialog */}
+      <Dialog open={!!changeRoleTarget} onOpenChange={open => !open && setChangeRoleTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-semibold">Change Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Update role for <strong>{changeRoleTarget?.name}</strong>
+            </p>
+            <div>
+              <Label className="aiq-label text-muted-foreground">New Role</Label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles
+                    ? availableRoles.map((r: { id: string; key: string; label: string }) => (
+                        <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>
+                      ))
+                    : ["learner", "manager", "hr_leader", "tenant_admin", "auditor"].map(r => (
+                        <SelectItem key={r} value={r}>{ROLE_LABELS[r] ?? r}</SelectItem>
+                      ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
+              disabled={!selectedRole || selectedRole === changeRoleTarget?.currentRole || changeRoleMutation.isPending}
+              onClick={() => changeRoleTarget && changeRoleMutation.mutate({ userId: changeRoleTarget.id, roleKey: selectedRole })}
+            >
+              {changeRoleMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Update Role
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -557,8 +557,8 @@ function CompletionScreen({
             const colors = scoreToColor(peakonScore);
             return (
               <div key={key} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-40 truncate capitalize">
-                  {key.replace(/_/g, " ")}
+                <span className="text-xs text-muted-foreground w-40 truncate">
+                  {DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                 </span>
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div

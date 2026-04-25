@@ -233,4 +233,48 @@ export const policyRouter = router({
 
       return { overrideId };
     }),
+
+  // Create a new policy rule
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(200),
+        description: z.string().optional(),
+        action: z.enum(["hard_block", "warning", "remediation_trigger", "escalate", "force_revalidation"]),
+        priority: z.number().int().min(1).max(100).default(50),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const id = nanoid();
+      const key = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 80) + "_" + id.slice(0, 6);
+      const severity = input.priority <= 33 ? "low" : input.priority <= 66 ? "medium" : "high";
+      await db.insert(policyRules).values({
+        id,
+        tenantId: ctx.user.tenantId,
+        key,
+        name: input.name,
+        actionType: input.action,
+        severity,
+        status: "draft",
+        version: 1,
+        conditionsJson: {},
+        consequencesJson: { message: input.description ?? "" },
+      });
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "policy.created",
+        targetType: "policy",
+        targetId: id,
+        metadataJson: JSON.stringify({ name: input.name, action: input.action }),
+      });
+      return { id };
+    }),
 });

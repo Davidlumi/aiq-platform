@@ -1633,3 +1633,43 @@
 - [x] R3-08: dashboardV2.ts — gapHeatmap key mismatch fixed; extraGapRows added for HR-specific capability keys
 - [x] R3-09: audit.ts + AuditLogPage — actor names enriched via users join; search filter updated
 - [x] R3-10: AssessmentResultsPage — Copy link button added to results header
+
+## UX/UI Audit Round 4 (Apr 25, 2026)
+
+- [ ] R4-01: Content Library shows 0 modules — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
+- [ ] R4-02: Audit Log shows 0 entries — pageSize 200 exceeds backend max 100; fix to 100 and raise backend max
+- [ ] R4-03: Scenario Library stats show 0 Published / 0 Ethics Cases / 0 Workflow Domains — UI reads wrong keys
+- [ ] R4-04: Learning Plan "0 In Progress" counter — no items have status "in_progress"; show started_at items as in-progress
+- [ ] R4-05: Dashboard "View development priorities" button should deep-link to /learning?tab=insights
+- [ ] R4-06: Assessment session domain sidebar shows raw capability key instead of human label
+- [ ] R4-07: Simulations page "Start your assessment" CTA links to dead route; fix to /assessment
+- [ ] R4-08: Reports page "Download JSON" button label is confusing; rename to "Export Data (JSON)"
+- [ ] R4-09: Users admin page "Change Role" shows toast "coming soon"; implement actual role change mutation
+- [ ] R4-10: Policy page form validation — "Create Policy" button should be disabled when name is empty (already done) but also show inline error on blur
+
+## UX/UI Audit Round 4 (Apr 25, 2026)
+
+- [x] R4-01: Content Library — raise listModules pageSize max to 200 (was 100); page now loads all 145 published modules
+- [x] R4-02: Audit Log — raise audit.logs pageSize max to 200 (was 100); log now shows all entries
+- [x] R4-03: Scenario Library stats — fix stats mapping in AssessmentContentPage (byStatus/byDomain keys vs published/ethicsSensitive/domains)
+- [x] R4-04: Learning Plan "0 In Progress" counter — treat items with startedAt but no completedAt as in-progress
+- [x] R4-05: Dashboard CTA — fix "View development priorities" link to route to /learning?tab=insights
+- [x] R4-06: Assessment session sidebar — use DOMAIN_LABELS to show human-readable capability names instead of raw snake_case keys
+- [x] R4-07: Simulations page — replace native anchor tag with wouter Link for "Start your assessment" CTA
+- [x] R4-08: Reports page — rename "Export" to "Export Data (JSON)" and export report data not the full manifest envelope
+- [x] R4-09: Policy page — wire up real trpc.policy.create mutation (was a no-op placeholder); add create procedure to policy router
+- [x] R4-10: Users page — add trpc.users.changeRole mutation; wire up "Change Role" dropdown item with a proper dialog
+
+
+## UX/UI Audit Round 4 (Apr 25, 2026)
+
+- [x] R4-01: Content Library — raise listModules pageSize max to 200 (was 100); page now loads all 145 published modules
+- [x] R4-02: Audit Log — raise audit.logs pageSize max to 200 (was 100); log now shows all entries
+- [x] R4-03: Scenario Library stats — fix stats mapping in AssessmentContentPage (byStatus/byDomain keys vs published/ethicsSensitive/domains)
+- [x] R4-04: Learning Plan "0 In Progress" counter — treat items with startedAt but no completedAt as in-progress
+- [x] R4-05: Dashboard CTA — fix "View development priorities" link to route to /learning?tab=insights
+- [x] R4-06: Assessment session sidebar — use DOMAIN_LABELS to show human-readable capability names instead of raw snake_case keys
+- [x] R4-07: Simulations page — replace native anchor tag with wouter Link for "Start your assessment" CTA
+- [x] R4-08: Reports page — rename "Export" to "Export Data (JSON)" and export report data not the full manifest envelope
+- [x] R4-09: Policy page — wire up real trpc.policy.create mutation (was a no-op placeholder); add create procedure to policy router
+- [x] R4-10: Users page — add trpc.users.changeRole mutation; wire up "Change Role" dropdown item with a proper dialog

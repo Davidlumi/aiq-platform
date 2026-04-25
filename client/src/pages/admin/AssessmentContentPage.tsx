@@ -317,10 +317,10 @@ function StatsBar() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[
-        { label: "Total Scenarios",  value: stats.total ?? 0,               icon: FileText,     colour: "#4477AA" },
-        { label: "Published",        value: stats.published ?? 0,           icon: CheckCircle2, colour: "#228833" },
-        { label: "Ethics Cases", value: stats.ethicsSensitive ?? 0, icon: Shield,       colour: "#EE6677" },
-        { label: "Workflow Domains", value: stats.domains ?? 0,             icon: Layers,       colour: "#AA3377" },
+        { label: "Total Scenarios",  value: stats.total ?? 0,                                                                                       icon: FileText,     colour: "#4477AA" },
+        { label: "Published",        value: (stats.byStatus?.published ?? stats.byStatus?.Published ?? 0),   icon: CheckCircle2, colour: "#228833" },
+        { label: "Ethics Cases",     value: stats.govSensitiveCount ?? 0,                                    icon: Shield,       colour: "#EE6677" },
+        { label: "Workflow Domains", value: Object.keys(stats.byDomain ?? {}).length,                        icon: Layers,       colour: "#AA3377" },
       ].map(({ label, value, icon: Icon, colour }) => (
         <Card key={label} className="border-border">
           <CardContent className="p-4 flex items-center gap-3">

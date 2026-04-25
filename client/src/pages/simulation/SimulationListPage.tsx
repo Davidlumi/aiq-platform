@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,9 +41,9 @@ export default function SimulationListPage() {
           <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
             Simulations are unlocked after you complete your capability assessment. They give you a safe environment to practise real-world HR scenarios involving AI.
           </p>
-          <a href="/assessment" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+          <Link href="/assessment" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
             Start your assessment <span aria-hidden="true">→</span>
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

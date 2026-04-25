@@ -16,7 +16,7 @@ export const auditRouter = router({
         fromDate: z.number().optional(),
         toDate: z.number().optional(),
         page: z.number().int().min(1).default(1),
-        pageSize: z.number().int().min(1).max(100).default(50),
+        pageSize: z.number().int().min(1).max(200).default(50),
       })
     )
     .query(async ({ input, ctx }) => {

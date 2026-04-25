@@ -449,7 +449,10 @@ export default function LearningPlanPage() {
   const items: any[] = plan?.items ?? [];
   const totalItems = items.length;
   const completedCount = items.filter(i => i.status === "completed").length;
-  const inProgressCount = items.filter(i => i.status === "in_progress").length;
+  // Treat items with startedAt but not completedAt as in-progress (status may still be "available")
+  const inProgressCount = items.filter(i =>
+    i.status === "in_progress" || (i.startedAt && !i.completedAt && i.status !== "completed" && i.status !== "locked")
+  ).length;
   const pct = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
   const nextItem = items.find(i => i.status === "in_progress" || i.status === "available");
 

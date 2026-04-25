@@ -174,6 +174,38 @@ export const usersRouter = router({
       return { success: true };
     }),
 
+  // Change a user's primary role
+  changeRole: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        roleKey: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+      if (input.userId === ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot change your own role" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const roleRows = await db.select().from(roles).where(eq(roles.key, input.roleKey)).limit(1);
+      if (!roleRows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Role not found" });
+      const roleId = roleRows[0].id;
+      await db.delete(userRoles).where(
+        and(eq(userRoles.userId, input.userId), eq(userRoles.tenantId, ctx.user.tenantId))
+      );
+      await db.insert(userRoles).values({
+        id: nanoid(),
+        userId: input.userId,
+        roleId,
+        tenantId: ctx.user.tenantId,
+        assignedBy: ctx.user.id,
+      });
+      return { success: true };
+    }),
+
   // Get all available roles
   availableRoles: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);

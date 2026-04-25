@@ -1251,7 +1251,7 @@ const leaderRouter = router({
     return {
       readinessStatus: "mixed" as const,
       statement: `Your function shows a mixed readiness profile. ${developingPct}% are Developing, ${aiReadyPct}% are AI Ready, with a function score of ${functionScore}. Targeted development aligned to your ${strategicPriorities.length} strategic priorities will accelerate progress.`,
-      cta: { label: "View development priorities", route: "/dashboard/leader" },
+      cta: { label: "View development priorities", route: "/learning?tab=insights" },
       functionScore,
       assessedCount,
       totalHeadcount: allUsers.length,

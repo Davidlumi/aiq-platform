@@ -652,7 +652,7 @@ export const adaptiveLearningRouter = router({
       modality: z.string().optional(),
       difficulty: z.number().optional(),
       page: z.number().int().min(1).default(1),
-      pageSize: z.number().int().min(1).max(100).default(24),
+      pageSize: z.number().int().min(1).max(200).default(24),
     }))
     .query(async ({ input }) => {
       const db = await getDb();

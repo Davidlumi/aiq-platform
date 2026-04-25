@@ -34,13 +34,20 @@ function ActionBadge({ action }: { action: string }) {
 export default function PolicyPage() {
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
-  const [newPolicy, setNewPolicy] = useState({ name: "", description: "", action: "warning", priority: 50 });
+  const [newPolicy, setNewPolicy] = useState<{ name: string; description: string; action: "hard_block" | "warning" | "remediation_trigger" | "escalate" | "force_revalidation"; priority: number }>({ name: "", description: "", action: "warning", priority: 50 });
   const utils = trpc.useUtils();
 
   const { data: policies, isLoading } = trpc.policy.list.useQuery();
 
-  // create not yet exposed — placeholder
-  const createMutation = { mutate: (_: any) => {}, isPending: false } as any;
+  const createMutation = trpc.policy.create.useMutation({
+    onSuccess: () => {
+      toast.success("Policy created successfully");
+      setCreateOpen(false);
+      setNewPolicy({ name: "", description: "", action: "warning", priority: 50 });
+      utils.policy.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const canManage = user?.roles?.some((r: string) =>
     ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r)
@@ -97,7 +104,7 @@ export default function PolicyPage() {
                   <Label className="aiq-label text-muted-foreground">Enforcement Action</Label>
                   <Select
                     value={newPolicy.action}
-                    onValueChange={v => setNewPolicy(p => ({ ...p, action: v }))}
+                    onValueChange={v => setNewPolicy(p => ({ ...p, action: v as "hard_block" | "warning" | "remediation_trigger" | "escalate" | "force_revalidation" }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
