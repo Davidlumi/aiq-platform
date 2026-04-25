@@ -248,7 +248,7 @@ export default function ProfilePage() {
                   <div className="h-1 rounded-full bg-muted overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-300" style={{ width: s.width, backgroundColor: s.color }} />
                   </div>
-                  <p className="text-[10px] font-medium" style={{ color: s.color }}>{s.label}</p>
+                  <p className="text-xs font-medium" style={{ color: s.color }}>{s.label}</p>
                 </div>
               );
             })()}

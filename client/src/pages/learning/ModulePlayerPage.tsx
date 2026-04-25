@@ -165,7 +165,7 @@ function ModuleProgressBar({
     <div className="rounded-xl border border-border bg-card px-4 pt-3.5 pb-3 space-y-2.5">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           {completed ? "Module Complete" : "Your Progress"}
         </span>
         <span className="text-xs font-bold tabular-nums" style={{ color: completed ? "#4A6E5E" : "var(--primary)" }}>
@@ -201,13 +201,13 @@ function ModuleProgressBar({
                   {isDone ? (
                     <CheckCircle2 className="h-3 w-3 text-white" />
                   ) : (
-                    <span className={cn("text-[9px] font-bold", isCurrent ? "text-primary" : "text-muted-foreground")}>
+                    <span className={cn("text-xs font-bold", isCurrent ? "text-primary" : "text-muted-foreground")}>
                       {i + 1}
                     </span>
                   )}
                 </div>
                 <span className={cn(
-                  "text-[9px] text-center leading-tight max-w-[52px] truncate",
+                  "text-xs text-center leading-tight max-w-[52px] truncate",
                   isCurrent ? "text-foreground font-semibold" : isDone ? "text-primary" : "text-muted-foreground"
                 )}>
                   {step.label}
@@ -264,14 +264,14 @@ function IntroductionPanel({ intro }: { intro: any }) {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border">
           <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Why This Matters</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Why This Matters</p>
             <p className="text-sm text-foreground/80 leading-relaxed">{intro.whyItMatters}</p>
           </div>
         </div>
       )}
       {intro.learningObjectives && intro.learningObjectives.length > 0 && (
         <div className="p-4 rounded-xl bg-muted/20 border border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Learning Objectives</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">Learning Objectives</p>
           <ul className="space-y-2">
             {intro.learningObjectives.map((obj: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
@@ -290,7 +290,7 @@ function ConceptSection({ section, index, total }: { section: any; index: number
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           Section {index + 1} of {total}
         </span>
       </div>
@@ -304,7 +304,7 @@ function ConceptSection({ section, index, total }: { section: any; index: number
       )}
       {section.keyPoints && section.keyPoints.length > 0 && (
         <div className="p-4 rounded-xl bg-muted border border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Key Points</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">Key Points</p>
           <ul className="space-y-2">
             {section.keyPoints.map((kp: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm">
@@ -343,7 +343,7 @@ function WorkedExamplePanel({ example }: { example: any }) {
         <div className="flex items-center gap-2.5">
           <BookMarked className="h-4 w-4 text-[#8E7848]" />
           <div>
-            <p className="text-xs font-semibold text-[#8E7848] uppercase tracking-wide">Worked Example</p>
+            <p className="text-xs font-semibold text-[#8E7848] uppercase tracking-widest">Worked Example</p>
             <p className="text-sm font-semibold text-foreground mt-0.5">{example.title}</p>
           </div>
         </div>
@@ -352,14 +352,14 @@ function WorkedExamplePanel({ example }: { example: any }) {
       {expanded && (
         <div className="px-4 pb-4 space-y-4 border-t border-[#C8B07A]/20">
           <div className="pt-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">The Scenario</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">The Scenario</p>
             {String(example.scenario ?? "").split("\n\n").map((p: string, i: number) => (
               <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
             ))}
           </div>
           {example.analysis && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expert Analysis</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Expert Analysis</p>
               {String(example.analysis).split("\n\n").map((p: string, i: number) => (
                 <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
@@ -387,7 +387,7 @@ function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
   if (!takeaways || takeaways.length === 0) return null;
   return (
     <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-      <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3">Key Takeaways</p>
+      <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Key Takeaways</p>
       <ul className="space-y-2.5">
         {takeaways.map((t: string, i: number) => (
           <li key={i} className="flex items-start gap-2.5 text-sm">
@@ -406,7 +406,7 @@ function FurtherReadingPanel({ items }: { items: any[] }) {
     <div className="p-4 rounded-xl bg-muted/40 border border-border">
       <div className="flex items-center gap-2 mb-3">
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Further Reading</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Further Reading</p>
       </div>
       <ul className="space-y-3">
         {items.map((item: any, i: number) => (
@@ -526,7 +526,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
               <ul className="space-y-1">
                 {normalisedSections.map((s, i) => (
                   <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                    <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{i + 1}</span>
                     {s.heading}
                   </li>
                 ))}
@@ -616,7 +616,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
                   !answered && "border-border bg-card")}
                 onClick={() => handleAnswer(i)}>
                 <div className="flex items-start gap-2.5">
-                  <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
+                  <span className={cn("w-5 h-5 rounded-full border text-xs flex items-center justify-center flex-shrink-0 mt-0.5",
                     answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
                     answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
                     "border-muted-foreground text-muted-foreground")}>
@@ -717,7 +717,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pre-reading</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Pre-reading</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -762,7 +762,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
                   !answered && "border-border bg-card")}
                 onClick={() => handleAnswer(i)}>
                 <div className="flex items-start gap-2.5">
-                  <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
+                  <span className={cn("w-5 h-5 rounded-full border text-xs flex items-center justify-center flex-shrink-0 mt-0.5",
                     answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
                     answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
                     "border-muted-foreground text-muted-foreground")}>
@@ -842,7 +842,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && !exercise && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Background</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Background</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -853,7 +853,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
           )}
           {exercise && (
             <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Exercise</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Exercise</p>
               <p className="text-sm font-semibold">{exercise.title}</p>
               {exercise.context && <p className="text-sm text-foreground/80">{exercise.context}</p>}
               <div className="flex items-center gap-2 mt-2">
@@ -1008,7 +1008,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Context</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Context</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1095,7 +1095,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
                   chosen === i ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}
                 onClick={() => setChosen(i)}>
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full border border-muted-foreground text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full border border-muted-foreground text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                     {String.fromCharCode(65 + i)}
                   </span>
                   <span>{c.text ?? c.option ?? c}</span>
@@ -1241,7 +1241,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
                   chosen === i ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}
                 onClick={() => setChosen(i)}>
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full border border-muted-foreground text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full border border-muted-foreground text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                     {String.fromCharCode(65 + i)}
                   </span>
                   <span>{c.text ?? c.option ?? c}</span>
@@ -1320,7 +1320,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priming Your Thinking</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Priming Your Thinking</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1443,7 +1443,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Coaching Context</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Coaching Context</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1479,7 +1479,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
             ))}
           </div>
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">
               {framework.model} — {currentFrameworkPhase?.phase}
             </p>
             <p className="text-sm text-foreground/80">{currentFrameworkPhase?.purpose}</p>
@@ -1633,7 +1633,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
           {/* Learning objectives */}
           {intro?.learningObjectives && intro.learningObjectives.length > 0 && (
             <div className="p-4 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Learning Objectives</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Learning Objectives</p>
               <ul className="space-y-1.5">
                 {intro.learningObjectives.map((obj: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
@@ -1805,7 +1805,7 @@ function CompletionScreen({
                 style={{ width: `${masteryGateResult.score}%`, background: masteryGateResult.score >= masteryGateResult.threshold ? "#7A9E8E" : "#C8B07A" }} />
             </div>
             <span className="text-xs font-semibold text-[#8E7848]">{masteryGateResult.score}%</span>
-            <span className="text-[10px] text-muted-foreground">/ {masteryGateResult.threshold}% required</span>
+            <span className="text-xs text-muted-foreground">/ {masteryGateResult.threshold}% required</span>
           </div>
           {onRetake && (
             <Button size="sm" className="w-full gap-1.5 bg-[#C8B07A] hover:bg-[#B89A6A] text-white" onClick={onRetake}>
@@ -1819,15 +1819,15 @@ function CompletionScreen({
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-[#7A9E8E]">{score}%</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Score</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Score</p>
         </div>
         <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-[#C8B07A]">+{xpEarned}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">XP earned</p>
+          <p className="text-xs text-muted-foreground mt-0.5">XP earned</p>
         </div>
         <div className="rounded-xl border border-border bg-muted p-3 text-center">
           <p className="text-2xl font-bold text-primary">{reviewDays}d</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Next review</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Next review</p>
         </div>
       </div>
 
@@ -1849,7 +1849,7 @@ function CompletionScreen({
       {/* Next module suggestion */}
       {nextModule && (
         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Up next in your plan</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Up next in your plan</p>
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0 mt-0.5">
               <ChevronRight className="h-4 w-4 text-primary" />
@@ -1859,10 +1859,10 @@ function CompletionScreen({
               {nextModule.subtitle && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{nextModule.subtitle}</p>}
               <div className="flex gap-2 mt-1.5">
                 {nextModule.modality && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">{nextModule.modality?.replace("_", " ")}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">{nextModule.modality?.replace("_", " ")}</span>
                 )}
                 {nextModule.durationMins && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{nextModule.durationMins} min</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{nextModule.durationMins} min</span>
                 )}
               </div>
             </div>
@@ -2014,7 +2014,7 @@ export default function ModulePlayerPage() {
   const ModalIcon = modal.icon;
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
+    <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />Learning Plan
       </Button>

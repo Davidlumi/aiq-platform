@@ -105,7 +105,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
   if (isLoading) return <IndividualDashboardSkeleton />;
   if (!data) return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto">
       <EmptyState
         title="No data available"
         description="Complete an assessment to see your capability dashboard."
@@ -115,7 +115,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">
@@ -162,7 +162,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Overall Score</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Overall Score</p>
                 <HeroScore
                   score={data.overallScore}
                   label={data.overallScore !== null ? scoreToReadinessLabel(data.overallScore) : undefined}
@@ -195,7 +195,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           <div className="flex flex-col gap-4 h-full">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Readiness Distribution</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Readiness Distribution</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Across {readinessDistribution.total} capability domains</p>
               </div>
               <Users className="w-4 h-4 text-muted-foreground" />
@@ -271,7 +271,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 </div>
                 <CapabilityBar score={d.score} colour={d.colour} height={5} />
                 {!d.hasEvidence && (
-                  <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" /> Limited evidence
                   </p>
                 )}
@@ -300,10 +300,10 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-neutral-200">
-                <th className="text-left py-2 pr-4 font-semibold text-muted-foreground w-48">Domain</th>
-                <th className="text-center py-2 px-3 font-semibold text-muted-foreground w-20">Current</th>
-                <th className="text-center py-2 px-3 font-semibold text-muted-foreground w-20">Target</th>
-                <th className="text-center py-2 px-3 font-semibold text-muted-foreground w-20">Gap</th>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground w-48">Domain</th>
+                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Current</th>
+                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Target</th>
+                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Gap</th>
                 <th className="py-2 pl-4 font-semibold text-muted-foreground">Progress</th>
               </tr>
             </thead>
@@ -313,7 +313,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 const gapColour = gapPeakon === null ? "#94A3B8" : gapPeakon <= 0 ? "#7A9E8E" : gapPeakon <= 0.5 ? "#C8B07A" : "#C08878";
                 return (
                   <tr key={row.domain} className="border-b border-neutral-100 last:border-0">
-                    <td className="py-2.5 pr-4">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <DomainDot domain={row.domain} />
                         <span className="font-medium text-foreground">{row.domainName}</span>
@@ -496,7 +496,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
             <Separator />
 
             <div className="py-4 space-y-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Signal breakdown</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Signal breakdown</h4>
               {data.signals.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No signal data available for this domain.</p>
               ) : (
@@ -509,7 +509,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <PeakonScoreBadge score={s.score} />
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">
                           {s.level}
                         </Badge>
                       </div>
@@ -523,7 +523,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
 
             {data.developmentModules.length > 0 && (
               <div className="py-4 space-y-3">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Development modules</h4>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Development modules</h4>
                 <div className="space-y-2">
                   {data.developmentModules.map(m => (
                     <Link key={m.moduleId} href={`/learning/module/${m.moduleId}`}>
@@ -532,7 +532,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                           <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-medium text-foreground">{m.title}</span>
                         </div>
-                        <Badge variant={m.status === "completed" ? "default" : "outline"} className="text-[10px]">
+                        <Badge variant={m.status === "completed" ? "default" : "outline"} className="text-xs">
                           {m.status}
                         </Badge>
                       </div>

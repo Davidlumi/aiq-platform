@@ -368,7 +368,7 @@ export default function OrgContextPage() {
           {/* Strategic Priorities */}
           <div>
             <label className="text-xs font-medium text-foreground mb-2 block">AI Strategic Priorities</label>
-            <p className="text-[11px] text-muted-foreground mb-2">What are the key AI-related business objectives your HR function needs to support?</p>
+            <p className="text-xs text-muted-foreground mb-2">What are the key AI-related business objectives your HR function needs to support?</p>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -401,7 +401,7 @@ export default function OrgContextPage() {
               <div className="space-y-1.5">
                 {strategicPriorities.map((p, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs bg-[#4477AA]/5 border border-[#4477AA]/10 rounded-lg px-3 py-2">
-                    <span className="w-5 h-5 rounded-full bg-[#4477AA]/10 text-[#4477AA] flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                    <span className="w-5 h-5 rounded-full bg-[#4477AA]/10 text-[#4477AA] flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
                     <span className="flex-1 text-foreground">{p}</span>
                     <button
                       type="button"
@@ -414,7 +414,7 @@ export default function OrgContextPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground italic">No strategic priorities added yet. These are essential for alignment analysis.</p>
+              <p className="text-xs text-muted-foreground italic">No strategic priorities added yet. These are essential for alignment analysis.</p>
             )}
           </div>
 
@@ -423,7 +423,7 @@ export default function OrgContextPage() {
           {/* Current Challenges */}
           <div>
             <label className="text-xs font-medium text-foreground mb-2 block">Current Business Challenges</label>
-            <p className="text-[11px] text-muted-foreground mb-2">What challenges is the organisation currently facing that affect HR capability requirements?</p>
+            <p className="text-xs text-muted-foreground mb-2">What challenges is the organisation currently facing that affect HR capability requirements?</p>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -469,7 +469,7 @@ export default function OrgContextPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground italic">No challenges added yet.</p>
+              <p className="text-xs text-muted-foreground italic">No challenges added yet.</p>
             )}
           </div>
         </CardContent>

@@ -162,7 +162,7 @@ function AiQWordmark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) return null;
   return (
     <div className="flex flex-col leading-none select-none">
-      <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-sidebar-foreground/50" style={{ lineHeight: 1, marginBottom: "2px" }}>
+      <span className="text-xs font-medium tracking-[0.12em] uppercase text-sidebar-foreground/50" style={{ lineHeight: 1, marginBottom: "2px" }}>
         HR
       </span>
       <span className="text-[17px] font-semibold tracking-tight text-sidebar-foreground" style={{ lineHeight: 1 }}>
@@ -221,7 +221,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Logo header */}
       <div
         className={cn(
-          "flex items-center h-16 px-4 shrink-0 border-b border-sidebar-border",
+          "flex items-center h-14 px-4 shrink-0 border-b border-sidebar-border",
           collapsed ? "justify-center" : "justify-between"
         )}
       >
@@ -259,7 +259,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
               <div
-                className="px-4 py-2 text-[11px] font-bold tracking-widest uppercase text-sidebar-foreground/40"
+                className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-sidebar-foreground/40"
                 aria-hidden="true"
               >
                 {section.label}
@@ -314,10 +314,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-[13px] font-medium truncate text-sidebar-foreground">
+                  <p className="text-sm font-medium truncate text-sidebar-foreground">
                     {displayName}
                   </p>
-                  <p className="text-[12px] truncate text-sidebar-foreground/40">
+                  <p className="text-xs truncate text-sidebar-foreground/40">
                     {roleLabel}
                   </p>
                 </div>
@@ -430,10 +430,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     {initials}
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-[13px] font-medium leading-none text-foreground">
+                    <p className="text-sm font-medium leading-none text-foreground">
                       {displayName}
                     </p>
-                    <p className="text-[12px] leading-none mt-0.5 text-muted-foreground">
+                    <p className="text-xs leading-none mt-0.5 text-muted-foreground">
                       {roleLabel}
                     </p>
                   </div>

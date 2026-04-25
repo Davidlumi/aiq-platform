@@ -190,7 +190,7 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
       <div className="flex items-center gap-2 mb-3">
         <Bot className={cn("w-4 h-4", cfg.iconColor)} />
         <div>
-          <p className={cn("text-xs font-bold uppercase tracking-wider", cfg.labelColor)}>
+          <p className={cn("text-xs font-bold uppercase tracking-widest", cfg.labelColor)}>
             {cfg.label}
           </p>
           <p className="text-xs text-muted-foreground">{cfg.sublabel}</p>
@@ -213,7 +213,7 @@ function DataContextBlock({ content }: { content: string }) {
       <div className="flex items-center gap-2 mb-3">
         <BarChart3 className="w-4 h-4 text-cyan-600" />
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-cyan-700">
+          <p className="text-xs font-bold uppercase tracking-widest text-cyan-700">
             Data / AI Insight
           </p>
           <p className="text-xs text-muted-foreground">Interpret this output</p>
@@ -332,7 +332,7 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
       <div className={cn("flex items-center gap-2 px-4 py-2.5", cfg.headerBg)}>
         <FileText className={cn("w-4 h-4", cfg.labelColor)} />
         <div>
-          <p className={cn("text-xs font-bold uppercase tracking-wider", cfg.labelColor)}>{cfg.label}</p>
+          <p className={cn("text-xs font-bold uppercase tracking-widest", cfg.labelColor)}>{cfg.label}</p>
           <p className="text-xs text-muted-foreground">{cfg.sublabel}</p>
         </div>
       </div>
@@ -392,7 +392,7 @@ function NarrativeWrapper({ context }: { context: string }) {
       >
         <Layers className="w-4 h-4 text-blue-600 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Your Scenario Context</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Your Scenario Context</p>
           {!expanded && (
             <p className="text-xs text-muted-foreground truncate mt-0.5">{context.slice(0, 80)}{context.length > 80 ? "…" : ""}</p>
           )}
@@ -430,7 +430,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
   }, []);
 
   return (
-    <div className="p-6 space-y-5 max-w-2xl">
+    <div className="p-6 space-y-5 max-w-2xl mx-auto">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">
@@ -508,7 +508,7 @@ function CompletionScreen({
   const caveat = result?.classificationConfidence?.caveat;
 
   return (
-    <div className="p-6 space-y-5 max-w-2xl">
+    <div className="p-6 space-y-5 max-w-2xl mx-auto">
       <div className="text-center py-5">
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
           style={{ background: "var(--color-green-50)", border: "2px solid var(--color-green-100)" }}>
@@ -522,7 +522,7 @@ function CompletionScreen({
 
       {result && (
         <div className={cn("rounded-2xl border-2 p-5", stateConfig.bg)}>
-          <p className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1")}>Your Readiness</p>
+          <p className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1")}>Your Readiness</p>
           <div className="flex items-baseline gap-3">
             <p className={cn("text-2xl font-bold ", stateConfig.color)}>{stateConfig.label}</p>
             <p className={cn("text-4xl font-bold", stateConfig.color)}>{formatPeakonScore(result.overallScore)}<span className="text-xl font-medium opacity-60"> / 10</span></p>
@@ -842,7 +842,7 @@ export default function AssessmentSessionPage() {
   if (isComplete && answeredCount > 0) {
     if (!completeMutation.isSuccess) {
       return (
-        <div className="p-6 space-y-6 max-w-2xl">
+        <div className="p-6 space-y-6 max-w-2xl mx-auto">
           <div className="text-center py-8">
             <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--color-green-700)" }} />
             <h2 className="text-xl font-semibold text-foreground">You've answered all {answeredCount} questions</h2>
@@ -880,7 +880,7 @@ export default function AssessmentSessionPage() {
   // T2-5a: Rationale loading skeleton — shown immediately after submit, before rationale arrives
   if (rationaleLoading && !rationaleData) {
     return (
-      <div className="p-6 space-y-5 max-w-2xl animate-in fade-in duration-200">
+      <div className="p-6 space-y-5 max-w-2xl mx-auto animate-in fade-in duration-200">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
@@ -956,7 +956,7 @@ export default function AssessmentSessionPage() {
     const outcomeColor = outcomeColors[rationaleData.outcomeClass ?? ""] ?? "#4477AA";
     const outcomeLabel = outcomeLabels[rationaleData.outcomeClass ?? ""] ?? "Response recorded";
     return (
-      <div className="p-6 space-y-5 max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="p-6 space-y-5 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
@@ -988,7 +988,7 @@ export default function AssessmentSessionPage() {
                 className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm"
                 {...stagger(1)}
               >
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">Your answer</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block mb-0.5">Your answer</span>
                 <span className="text-foreground">{rationaleData.selectedLabel}</span>
               </div>
             )}
@@ -998,7 +998,7 @@ export default function AssessmentSessionPage() {
                 className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both space-y-1.5"
                 {...stagger(2)}
               >
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Why this matters</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Why this matters</p>
                 <p className="text-sm text-foreground leading-relaxed">{rationaleData.rationaleText}</p>
               </div>
             )}
@@ -1008,7 +1008,7 @@ export default function AssessmentSessionPage() {
                 className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both space-y-2"
                 {...stagger(3)}
               >
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Other options</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Other options</p>
                 {rationaleData.allOptionsRationale
                   .filter(o => o.rationaleText && o.value !== rationaleData.selectedValue)
                   .map(o => {
@@ -1101,7 +1101,7 @@ export default function AssessmentSessionPage() {
     interactionType === "error_detection" ? "error" : "critique";
 
   return (
-    <div className="p-6 space-y-5 max-w-2xl">
+    <div className="p-6 space-y-5 max-w-2xl mx-auto">
       {/* Back + Progress header */}
       <div className="space-y-3">
         {/* Top row: back link + Save & Exit button */}
@@ -1235,7 +1235,7 @@ export default function AssessmentSessionPage() {
           {/* Scenario */}
           {(nextItem as any).scenario && (
             <div className="bg-muted/40 rounded-xl p-4 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
                 Scenario
               </p>
               <p className="text-sm text-foreground leading-relaxed">{(nextItem as any).scenario}</p>
@@ -1250,7 +1250,7 @@ export default function AssessmentSessionPage() {
           {/* Constraint — only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
             <div className="bg-[#CCBB44]/8 rounded-xl p-3 border border-[#CCBB44]/25">
-              <p className="text-xs font-semibold text-[#99882A] uppercase tracking-wider mb-1">
+              <p className="text-xs font-semibold text-[#99882A] uppercase tracking-widest mb-1">
                 Constraint
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1260,7 +1260,7 @@ export default function AssessmentSessionPage() {
           {/* Risk framing for pressure_test */}
           {interactionType === "pressure_test" && (nextItem as any).constraint && (
             <div className="bg-[#EE6677]/8 rounded-xl p-3 border border-[#EE6677]/25">
-              <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-wider mb-1">
+              <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-widest mb-1">
                 Risk Factor
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1270,7 +1270,7 @@ export default function AssessmentSessionPage() {
           {/* Governance framing */}
           {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
             <div className="bg-[#228833]/8 rounded-xl p-3 border border-[#228833]/25">
-              <p className="text-xs font-semibold text-[#228833] uppercase tracking-wider mb-1">
+              <p className="text-xs font-semibold text-[#228833] uppercase tracking-widest mb-1">
                 Policy Context
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1354,7 +1354,7 @@ export default function AssessmentSessionPage() {
           {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className={cn("text-xs font-semibold uppercase tracking-wider", nextItem.reasoningRequired ? "text-foreground" : "text-muted-foreground")}>
+                <Label className={cn("text-xs font-semibold uppercase tracking-widest", nextItem.reasoningRequired ? "text-foreground" : "text-muted-foreground")}>
                   Explain your thinking
                   {nextItem.reasoningRequired ? (
                     <span className="ml-1 text-[#CC3344]">*</span>
@@ -1385,7 +1385,7 @@ export default function AssessmentSessionPage() {
 
           {/* v10: Three-level confidence staking — A5-05: dimmed until an answer is selected */}
           <div className={cn("space-y-2 pt-1 transition-opacity duration-200", !selectedValue ? "opacity-40 pointer-events-none" : "")}>
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
               How confident are you in this answer?
             </Label>
             <div className="grid grid-cols-3 gap-2">
@@ -1411,7 +1411,7 @@ export default function AssessmentSessionPage() {
                   >
                     <span className="text-sm font-bold">{label}</span>
                     <span className="text-xs opacity-70 leading-tight">{desc}</span>
-                    <span className="text-[10px] font-mono mt-0.5 opacity-50">score {weight}</span>
+                    <span className="text-xs font-mono mt-0.5 opacity-50">score {weight}</span>
                   </button>
                 );
               })}
@@ -1432,8 +1432,8 @@ export default function AssessmentSessionPage() {
             {!submitMutation.isPending && <ChevronRight className="w-4 h-4" />}
           </Button>
           {!submitMutation.isPending && selectedValue && (
-            <p className="text-center text-[11px] text-muted-foreground/55 flex items-center justify-center gap-1.5 mt-1">
-              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-border/50 bg-muted/40 font-mono text-[10px] leading-none">↵</kbd>
+            <p className="text-center text-xs text-muted-foreground/55 flex items-center justify-center gap-1.5 mt-1">
+              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-border/50 bg-muted/40 font-mono text-xs leading-none">↵</kbd>
               <span>Press Enter to continue</span>
             </p>
           )}

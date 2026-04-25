@@ -299,7 +299,7 @@ export default function AssessmentPage() {
                           />
                         </div>
                         <span
-                          className="text-[10px] font-bold shrink-0 px-1.5 py-0.5 rounded"
+                          className="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded"
                           style={{ backgroundColor: scoreToColor(lastCapabilityScores[domain.key] / 10).bg, color: "white" }}
                         >
                           {formatPeakonScore(lastCapabilityScores[domain.key] / 10)}
@@ -412,7 +412,7 @@ export default function AssessmentPage() {
                               {formatPeakonScore(overallScore / 10)}
                             </span>
                             <p
-                              className={cn("text-[10px] font-medium mt-0.5 text-center cursor-help", stateConfig.color)}
+                              className={cn("text-xs font-medium mt-0.5 text-center cursor-help", stateConfig.color)}
                               title={stateConfig.tooltip}
                             >
                               {stateConfig.label}

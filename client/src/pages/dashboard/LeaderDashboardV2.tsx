@@ -120,7 +120,7 @@ export default function LeaderDashboardV2() {
   if (isLoading) return <LeaderDashboardSkeleton />;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
       {/* ── Header ── */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div>
@@ -190,7 +190,7 @@ export default function LeaderDashboardV2() {
       {main && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard className="col-span-2 lg:col-span-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Function Score</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Function Score</p>
             <HeroScore
               score={main.functionScore}
               label={main.functionScore !== null ? scoreToReadinessLabel(main.functionScore) : undefined}
@@ -295,7 +295,7 @@ export default function LeaderDashboardV2() {
             {RATING_KEYS.map(rk => (
               <div key={rk} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLOURS[rk] }} />
-                <span className="text-[10px] text-muted-foreground">{RATING_LABELS[rk]}</span>
+                <span className="text-xs text-muted-foreground">{RATING_LABELS[rk]}</span>
               </div>
             ))}
           </div>
@@ -361,7 +361,7 @@ export default function LeaderDashboardV2() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-foreground leading-relaxed">{f.observation}</p>
                       {f.supportingData && (
-                        <p className="text-[10px] text-muted-foreground mt-1.5 font-mono bg-neutral-50 rounded px-2 py-1 inline-block">
+                        <p className="text-xs text-muted-foreground mt-1.5 font-mono bg-neutral-50 rounded px-2 py-1 inline-block">
                           {f.supportingData}
                         </p>
                       )}
@@ -370,7 +370,7 @@ export default function LeaderDashboardV2() {
                   </div>
                   {f.strategicImplication && (
                     <div className="px-3 pb-3 pt-0 ml-9">
-                      <div className="text-[11px] text-muted-foreground leading-relaxed bg-blue-50/50 border border-blue-100 rounded-md px-3 py-2">
+                      <div className="text-xs text-muted-foreground leading-relaxed bg-blue-50/50 border border-blue-100 rounded-md px-3 py-2">
                         <span className="font-semibold text-blue-700">Strategic implication:</span>{" "}
                         {f.strategicImplication}
                       </div>
@@ -395,7 +395,7 @@ export default function LeaderDashboardV2() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">{team.managerName}</p>
-                    <p className="text-[10px] text-muted-foreground">{team.teamSize} members</p>
+                    <p className="text-xs text-muted-foreground">{team.teamSize} members</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -598,7 +598,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-xs font-semibold text-foreground">{p.priority}</p>
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                      className="text-xs px-1.5 py-0.5 rounded-full font-medium"
                       style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
                     >
                       {style.label}{p.avgRelevantScore !== null ? ` · ${formatPeakonScore(p.avgRelevantScore)}` : ""}
@@ -608,7 +608,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
                     {p.relevantDomains.map((d: any) => (
                       <span
                         key={d.domain}
-                        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border"
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border"
                         style={{
                           borderColor: d.colour + "40",
                           backgroundColor: d.colour + "08",
@@ -629,16 +629,16 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-neutral-100">
         {govStyle && (
           <div className="p-3 rounded-xl" style={{ backgroundColor: govStyle.bg }}>
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">Governance</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">Governance</p>
             <p className="text-xs font-semibold" style={{ color: govStyle.text }}>{govStyle.label}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{govStyle.desc}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{govStyle.desc}</p>
           </div>
         )}
         {alignment.hrInfluence && (
           <div className="p-3 rounded-xl bg-neutral-50">
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">HR Influence</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">HR Influence</p>
             <p className="text-xs font-semibold text-foreground capitalize">{alignment.hrInfluence.replace(/_/g, " ")}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {alignment.hrInfluence === "strategic_partner" ? "HR has a seat at the strategy table" :
                alignment.hrInfluence === "operational" ? "HR focuses on operational delivery" :
                "HR is primarily administrative"}
@@ -647,9 +647,9 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
         )}
         {alignment.aiMaturity && (
           <div className="p-3 rounded-xl bg-neutral-50">
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">AI Maturity</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">AI Maturity</p>
             <p className="text-xs font-semibold text-foreground capitalize">{alignment.aiMaturity.replace(/_/g, " ")}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {alignment.aiMaturity === "mature" ? "Advanced AI integration across the business" :
                alignment.aiMaturity === "scaling" ? "Expanding AI use cases beyond pilots" :
                alignment.aiMaturity === "cautious" ? "Careful, measured approach to AI adoption" :
@@ -661,7 +661,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
 
       {alignment.challenges.length > 0 && (
         <div className="mt-4 pt-4 border-t border-neutral-100">
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Active Business Challenges</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">Active Business Challenges</p>
           <div className="space-y-1.5">
             {alignment.challenges.map((c: string, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">

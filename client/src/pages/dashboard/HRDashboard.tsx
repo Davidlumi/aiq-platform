@@ -125,7 +125,7 @@ function NarrativePanel({ narrative }: { narrative: { headline: string; insight:
         <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
         </div>
-        <span className="text-xs font-semibold text-primary uppercase tracking-wide">AI Intelligence Brief</span>
+        <span className="text-xs font-semibold text-primary uppercase tracking-widest">AI Intelligence Brief</span>
       </div>
       <p className="text-base font-semibold text-foreground leading-snug mb-2">{narrative.headline}</p>
       <p className="text-sm text-muted-foreground leading-relaxed mb-3">{narrative.insight}</p>
@@ -239,7 +239,7 @@ function ActionRecommendations({ data }: { data: any }) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-xs font-semibold text-foreground">{action.title}</p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize"
+                  <span className="text-xs px-1.5 py-0.5 rounded-full font-medium capitalize"
                     style={{ color: action.color, backgroundColor: `${action.color}15` }}>
                     {action.priority}
                   </span>
@@ -313,10 +313,10 @@ function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; 
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Name</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground hidden sm:table-cell">Department</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground hidden md:table-cell">Role</th>
-              <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Readiness</th>
+              <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Name</th>
+              <th className="text-left py-3 px-4 font-semibold text-muted-foreground hidden sm:table-cell">Department</th>
+              <th className="text-left py-3 px-4 font-semibold text-muted-foreground hidden md:table-cell">Role</th>
+              <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Readiness</th>
             </tr>
           </thead>
           <tbody>
@@ -331,13 +331,13 @@ function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; 
                 const color = readinessColor(u.readiness);
                 return (
                   <tr key={u.id} className={cn("border-b border-border/50 hover:bg-muted/20 transition-colors", i % 2 === 0 ? "" : "bg-muted/10")}>
-                    <td className="px-3 py-2.5 font-medium text-foreground">
+                    <td className="py-3 px-4 font-medium text-foreground">
                       {u.firstName} {u.lastName}
                     </td>
-                    <td className="px-3 py-2.5 text-muted-foreground hidden sm:table-cell">{u.roleFamily ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell truncate max-w-[160px]">{u.jobFunction ?? "—"}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{u.roleFamily ?? "—"}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell truncate max-w-[160px]">{u.jobFunction ?? "—"}</td>
                     <td className="px-3 py-2.5">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
                         style={{ color, backgroundColor: `${color}15` }}>
                         {readinessLabel(u.readiness)}
                       </span>
@@ -523,7 +523,7 @@ export default function HRDashboard() {
               <div className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${safePercent}%`, backgroundColor: safePercent >= 70 ? GREEN : safePercent >= 50 ? AMBER : RED }} />
             </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>0%</span>
               <span className="text-primary font-medium">70% target</span>
               <span>100%</span>
@@ -534,17 +534,17 @@ export default function HRDashboard() {
           <div className="grid grid-cols-3 gap-4 sm:gap-6 sm:border-l sm:border-border sm:pl-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{rd?.at_risk ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Developing</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Developing</p>
               <div className="w-2 h-2 rounded-full mx-auto mt-1" style={{ backgroundColor: AMBER }} />
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{rd?.unsafe ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Not Yet Ready</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Not Yet Ready</p>
               <div className="w-2 h-2 rounded-full mx-auto mt-1" style={{ backgroundColor: RED }} />
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{data?.assessmentsLast30Days ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Assessed (30d)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Assessed (30d)</p>
               <div className="w-2 h-2 rounded-full mx-auto mt-1" style={{ backgroundColor: BLUE }} />
             </div>
           </div>
@@ -569,7 +569,7 @@ export default function HRDashboard() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-2">Strengths</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2">Strengths</p>
                 {strengths.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No domains above 65 yet</p>
                 ) : (
@@ -592,7 +592,7 @@ export default function HRDashboard() {
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-[#CCBB44] uppercase tracking-wide mb-2">Development priorities</p>
+                <p className="text-xs font-semibold text-[#CCBB44] uppercase tracking-widest mb-2">Development priorities</p>
                 {development.length === 0 ? (
                   <p className="text-xs text-muted-foreground">All domains on track</p>
                 ) : (
@@ -655,16 +655,16 @@ export default function HRDashboard() {
               const heatClass = scoreToHeatClass(score);
               return (
                 <Card key={c.capability} className="border-border overflow-hidden">
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                       <span className="text-xs font-semibold text-foreground">{CAP_LABELS[c.capability]}</span>
                     </div>
                     <div className={cn("rounded-lg p-3 text-center", heatClass)}>
                       <p className="text-3xl font-bold">{score !== null ? score : "—"}</p>
-                      <p className="text-[10px] mt-0.5 opacity-80">avg score</p>
+                      <p className="text-xs mt-0.5 opacity-80">avg score</p>
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                       <span>{c.assessedCount} assessed</span>
                       {score !== null && (
                         <span className="font-medium" style={{ color }}>
@@ -749,7 +749,7 @@ export default function HRDashboard() {
                       dot={{ r: 3, fill: BLUE }} name="Org Avg" />
                   </LineChart>
                 </ResponsiveContainer>
-                <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                   <Info className="w-3 h-3" />
                   Green dashed = safe threshold (70). Projection assumes current monthly rate of change.
                 </p>
@@ -789,10 +789,10 @@ export default function HRDashboard() {
                       style={{ borderColor: `${color}30`, backgroundColor: `${color}08` }}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-semibold text-foreground">{m.label}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded capitalize"
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded capitalize"
                           style={{ color, backgroundColor: `${color}15` }}>{m.severity}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Assessed: <strong className="text-foreground">{m.avgScore !== null ? m.avgScore : "N/A"}</strong></span>
                         <span>Required: <strong className="text-foreground">{m.requiredScore}</strong></span>
                         {m.gap !== null && m.gap > 0 && (
@@ -828,7 +828,7 @@ export default function HRDashboard() {
               const color = deptSafePct >= 70 ? GREEN : deptSafePct >= 50 ? AMBER : RED;
               return (
                 <Card key={dept.department} className="border-border">
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <p className="text-xs font-semibold text-foreground truncate mb-2">{dept.department}</p>
                     <div className="flex items-end gap-2 mb-2">
                       <span className="text-2xl font-bold" style={{ color }}>{deptSafePct}%</span>
@@ -837,7 +837,7 @@ export default function HRDashboard() {
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${deptSafePct}%`, backgroundColor: color }} />
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">{deptTotal} {deptTotal === 1 ? "person" : "people"}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5">{deptTotal} {deptTotal === 1 ? "person" : "people"}</p>
                   </CardContent>
                 </Card>
               );
@@ -935,7 +935,7 @@ export default function HRDashboard() {
                 <div className="text-center py-4">
                   <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-xs text-muted-foreground">No revalidations scheduled yet</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Revalidation cycles begin after first assessments.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Revalidation cycles begin after first assessments.</p>
                 </div>
               ) : (
                 <div className="space-y-2">

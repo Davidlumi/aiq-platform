@@ -333,7 +333,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
         >
           {formatPeakonScore(score)}
         </span>
-        <span className="text-[10px] text-muted-foreground mt-0.5">/ 10</span>
+        <span className="text-xs text-muted-foreground mt-0.5">/ 10</span>
       </div>
     </div>
   );
@@ -438,7 +438,7 @@ function CapabilityBar({
           )}
           <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
           <span
-            className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded"
+            className="text-xs font-bold font-mono px-1.5 py-0.5 rounded"
             style={{ backgroundColor: scoreToColor(score).bg, color: scoreToColor(score).text }}
           >
             {formatPeakonScore(score)}
@@ -464,11 +464,11 @@ function CapabilityBar({
       </div>
       {/* Confidence interval label */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           Range: {lo}–{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
         </span>
         {hw >= 15 && (
-          <span className="text-[10px] text-[#99882A] flex items-center gap-0.5">
+          <span className="text-xs text-[#99882A] flex items-center gap-0.5">
             <AlertTriangle className="w-2.5 h-2.5" />
             Low evidence
           </span>
@@ -533,11 +533,11 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-foreground">{displayName}</span>
             {isRisk && (
-              <span className="text-xs text-[#99882A] bg-[#CCBB44]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
+              <span className="text-xs text-[#99882A] bg-[#CCBB44]/10 px-1.5 py-0.5 rounded text-xs">risk signal</span>
             )}
           </div>
           {glossaryEntry && (
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{glossaryEntry}</p>
+            <p className="text-xs text-muted-foreground leading-tight mt-0.5">{glossaryEntry}</p>
           )}
         </div>
       </div>
@@ -716,7 +716,7 @@ export default function AssessmentResultsPage() {
     : "Unknown";
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="p-6 space-y-6 max-w-3xl mx-auto">
       {/* Back nav */}
       <div className="flex items-center justify-between">
         <button
@@ -806,7 +806,7 @@ export default function AssessmentResultsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
-                    <span className={cn("text-xs font-semibold uppercase tracking-wider", stateConfig.color)}>
+                    <span className={cn("text-xs font-semibold uppercase tracking-widest", stateConfig.color)}>
                       Readiness State
                     </span>
                   </div>
@@ -877,11 +877,11 @@ export default function AssessmentResultsPage() {
           {/* P3: Classification confidence gate caveat */}
           {classificationConfidence?.caveat && (
             <Card className="border-[#CCBB44]/25 bg-[#CCBB44]/8">
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-4 h-4 text-[#99882A] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-[#99882A] uppercase tracking-wider mb-1">
+                    <p className="text-xs font-semibold text-[#99882A] uppercase tracking-widest mb-1">
                       About This Result
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{classificationConfidence.caveat}</p>
@@ -898,7 +898,7 @@ export default function AssessmentResultsPage() {
                 <div className="flex items-start gap-3">
                   <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1.5">
                       Your Results Narrative
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
@@ -1061,7 +1061,7 @@ export default function AssessmentResultsPage() {
           {/* A4: Development Action Banner (v10) */}
           {governanceAction && (
             <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EE6677] bg-[#EE6677]/8" : "border-l-[#CCBB44] bg-[#CCBB44]/8"}`}>
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#CC3344]" : "text-[#99882A]"}`} />
                   <div className="flex-1 min-w-0">
@@ -1097,7 +1097,7 @@ export default function AssessmentResultsPage() {
                   {isEarlyCompletion && (
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <Zap className="w-3 h-3 text-primary" />
-                      <span className="text-[10px] text-primary font-semibold">Early completion</span>
+                      <span className="text-xs text-primary font-semibold">Early completion</span>
                     </div>
                   )}
                 </div>
@@ -1114,7 +1114,7 @@ export default function AssessmentResultsPage() {
                     const oLo = Math.max(0, overallScore - oHw);
                     const oHi = Math.min(100, overallScore + oHw);
                     return (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Range: {formatPeakonScore(oLo)}\u2013{formatPeakonScore(oHi)}
                       </p>
                     );
@@ -1138,7 +1138,7 @@ export default function AssessmentResultsPage() {
           >
             <Shield className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs text-primary font-medium">SJT-based adaptive assessment</span>
-            <span className="text-[10px] text-muted-foreground ml-auto">View methodology</span>
+            <span className="text-xs text-muted-foreground ml-auto">View methodology</span>
           </a>
 
           {/* WS4.2: Why this classification? expandable panel */}
@@ -1207,14 +1207,14 @@ export default function AssessmentResultsPage() {
                             .slice(0, 5)
                             .map((c, i) => (
                               <div key={i} className="flex items-start gap-2 text-xs">
-                                <span className={`shrink-0 mt-0.5 font-mono text-[10px] px-1 rounded ${
+                                <span className={`shrink-0 mt-0.5 font-mono text-xs px-1 rounded ${
                                   c.outcomeClass === "strong" ? "bg-primary/10 text-primary" :
                                   c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#EE6677]/10 text-[#CC3344]" :
                                   "bg-muted text-muted-foreground"
                                 }`}>{c.outcomeClass ?? "?"}</span>
                                 <div className="min-w-0">
                                   <p className="text-muted-foreground truncate">{c.questionSummary}</p>
-                                  <p className="text-[10px] text-muted-foreground/70">{c.signalKey.replace(/_/g, " ")} · Δ{c.delta > 0 ? "+" : ""}{c.delta.toFixed(2)}{c.capabilityKey ? ` · ${c.capabilityKey.replace(/_/g, " ")}` : ""}</p>
+                                  <p className="text-xs text-muted-foreground/70">{c.signalKey.replace(/_/g, " ")} · Δ{c.delta > 0 ? "+" : ""}{c.delta.toFixed(2)}{c.capabilityKey ? ` · ${c.capabilityKey.replace(/_/g, " ")}` : ""}</p>
                                 </div>
                               </div>
                             ))
@@ -1222,7 +1222,7 @@ export default function AssessmentResultsPage() {
                         </div>
                       </div>
                     )}
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Scoring model: {(explanationData as any).scoringConfigVersion} · Confidence: {(explanationData as any).confidenceBand}
                     </p>
                   </>
@@ -1316,15 +1316,15 @@ export default function AssessmentResultsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">Strengths</h4>
+                  <h4 className="text-xs font-semibold text-primary uppercase tracking-widest">Strengths</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-[#99882A] uppercase tracking-wide">Development Areas</h4>
+                  <h4 className="text-xs font-semibold text-[#99882A] uppercase tracking-widest">Development Areas</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-primary uppercase tracking-wide">Priorities</h4>
+                  <h4 className="text-xs font-semibold text-primary uppercase tracking-widest">Priorities</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
                 </div>
               </CardContent>
@@ -1347,7 +1347,7 @@ export default function AssessmentResultsPage() {
                 {/* Positive signals */}
                 {sortedSignals.filter(([, v]) => (v as number) > 0).length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
                       Positive Signals ({sortedSignals.filter(([, v]) => (v as number) > 0).length})
                     </p>
@@ -1363,7 +1363,7 @@ export default function AssessmentResultsPage() {
                 {/* Risk signals */}
                 {sortedSignals.filter(([, v]) => (v as number) <= 0).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-widest mb-2 flex items-center gap-1.5">
                       <TrendingDown className="w-3.5 h-3.5" />
                       Risk Signals ({sortedSignals.filter(([, v]) => (v as number) <= 0).length})
                     </p>
@@ -1433,21 +1433,21 @@ export default function AssessmentResultsPage() {
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
-                  <h4 className="text-xs font-bold text-primary uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Your Strengths
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#99882A] uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-[#99882A] uppercase tracking-widest flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Development Areas
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
-                  <h4 className="text-xs font-bold text-primary uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5" />
                     Immediate Priorities
                   </h4>
@@ -1464,7 +1464,7 @@ export default function AssessmentResultsPage() {
                     <div className="flex items-start gap-3">
                       <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                        <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1.5">Your Results Narrative</p>
                         <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
                       </div>
                     </div>
@@ -1689,7 +1689,7 @@ export default function AssessmentResultsPage() {
                   const percentileApprox = Math.round(Math.min(99, Math.max(1, 50 + sigmas * 34)));
                   return (
                     <Card key={cap.key} className="border-border">
-                      <CardContent className="p-3">
+                      <CardContent className="p-4">
                         <div className="flex items-center gap-1.5 mb-2">
                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
                           <span className="text-xs font-semibold text-foreground truncate">{cap.displayName.replace("AI ", "")}</span>
@@ -1705,7 +1705,7 @@ export default function AssessmentResultsPage() {
                             }}
                           />
                         </div>
-                        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
                           <span>Role avg: {formatPeakonScore(cap.roleMean)}</span>
                           <span>Platform: {formatPeakonScore(cap.platformMean)}</span>
                         </div>
@@ -1794,7 +1794,7 @@ export default function AssessmentResultsPage() {
                         <div className="flex flex-wrap gap-1.5">
                           {topSignals.map(([sig, delta]) => (
                             <span key={sig} className={cn(
-                              "text-[10px] font-medium px-2 py-0.5 rounded-full border",
+                              "text-xs font-medium px-2 py-0.5 rounded-full border",
                               (delta as number) >= 0 ? "bg-primary/10 text-primary border-primary/25" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
                             )}>
                               {DOMAIN_LABELS[sig as keyof typeof DOMAIN_LABELS] ?? sig.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
@@ -1847,7 +1847,7 @@ export default function AssessmentResultsPage() {
                     <div className="flex items-center gap-5">
                       <ScoreRing score={calibrationScore} color={calColor} size={90} />
                       <div className="flex-1">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Calibration Score</p>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Calibration Score</p>
                         <p className="text-sm text-foreground leading-relaxed">{cal.summary}</p>
                       </div>
                     </div>
@@ -1914,7 +1914,7 @@ export default function AssessmentResultsPage() {
                 </Card>
                 {/* Interpretation guide */}
                 <Card className="border-border bg-muted/30">
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <p className="text-xs font-semibold text-foreground mb-2">What does calibration mean?</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       Confidence calibration measures whether your certainty levels matched the actual quality of your decisions. 
@@ -1987,23 +1987,23 @@ export default function AssessmentResultsPage() {
                       <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
                         {/* Q1: Top-left = Low competence, High confidence = Blind Spot */}
                         <div className="bg-[#EE6677]/80/5 border border-[#EE6677]/20 rounded-tl-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-[#CC3344]/70 uppercase tracking-wider">Blind Spot</span>
-                          <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, low competence</p>
+                          <span className="text-xs font-semibold text-[#CC3344]/70 uppercase tracking-widest">Blind Spot</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">High confidence, low competence</p>
                         </div>
                         {/* Q4: Top-right = High competence, High confidence = Mastery */}
                         <div className="bg-primary/80/5 border border-primary/20 rounded-tr-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">Mastery</span>
-                          <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, high competence</p>
+                          <span className="text-xs font-semibold text-primary/70 uppercase tracking-widest">Mastery</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">High confidence, high competence</p>
                         </div>
                         {/* Q2: Bottom-left = Low competence, Low confidence = Aware Gap */}
                         <div className="bg-[#CCBB44]/80/5 border border-[#CCBB44]/20 rounded-bl-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-[#99882A]/70 uppercase tracking-wider">Aware Gap</span>
-                          <p className="text-[9px] text-muted-foreground mt-0.5">Low confidence, low competence</p>
+                          <span className="text-xs font-semibold text-[#99882A]/70 uppercase tracking-widest">Aware Gap</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Low confidence, low competence</p>
                         </div>
                         {/* Q3: Bottom-right = High competence, Low confidence = Developing */}
                         <div className="bg-blue-500/5 border border-blue-500/20 rounded-br-lg p-3 relative">
-                          <span className="text-[10px] font-semibold text-blue-500/70 uppercase tracking-wider">Developing</span>
-                          <p className="text-[9px] text-muted-foreground mt-0.5">Low confidence, high competence</p>
+                          <span className="text-xs font-semibold text-blue-500/70 uppercase tracking-widest">Developing</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Low confidence, high competence</p>
                         </div>
 
                         {/* Plot domain dots */}
@@ -2037,7 +2037,7 @@ export default function AssessmentResultsPage() {
                                   <span className={cn("font-medium", qc.text)}>{d.quadrantLabel}</span>
                                   {" "}— {d.quadrantDescription}
                                 </p>
-                                <p className="text-[10px] text-muted-foreground mt-1">Based on {d.answerCount} answers</p>
+                                <p className="text-xs text-muted-foreground mt-1">Based on {d.answerCount} answers</p>
                               </TooltipContent>
                             </UITooltip>
                           );
@@ -2053,7 +2053,7 @@ export default function AssessmentResultsPage() {
                     const qc = QUADRANT_COLOURS[d.quadrant] ?? QUADRANT_COLOURS.conscious_competence;
                     return (
                       <Card key={d.domain} className={cn("border", qc.border, qc.bg)}>
-                        <CardContent className="p-4">
+                        <CardContent className="p-5">
                           <div className="flex items-start justify-between mb-2">
                             <div>
                               <h4 className="text-sm font-semibold text-foreground">{d.displayName}</h4>
@@ -2065,7 +2065,7 @@ export default function AssessmentResultsPage() {
                           </div>
                           <div className="space-y-2 mt-3">
                             <div>
-                              <div className="flex justify-between text-[11px] mb-0.5">
+                              <div className="flex justify-between text-xs mb-0.5">
                                 <span className="text-muted-foreground">Competence</span>
                                 <span className="font-medium text-foreground">{d.competenceScore}/100</span>
                               </div>
@@ -2074,7 +2074,7 @@ export default function AssessmentResultsPage() {
                               </div>
                             </div>
                             <div>
-                              <div className="flex justify-between text-[11px] mb-0.5">
+                              <div className="flex justify-between text-xs mb-0.5">
                                 <span className="text-muted-foreground">Confidence</span>
                                 <span className="font-medium text-foreground">{d.avgConfidence}%</span>
                               </div>
@@ -2083,7 +2083,7 @@ export default function AssessmentResultsPage() {
                               </div>
                             </div>
                           </div>
-                          <p className="text-[10px] text-muted-foreground mt-2">{d.quadrantDescription}</p>
+                          <p className="text-xs text-muted-foreground mt-2">{d.quadrantDescription}</p>
                         </CardContent>
                       </Card>
                     );
@@ -2132,7 +2132,7 @@ export default function AssessmentResultsPage() {
 
                 {/* Interpretation guide */}
                 <Card className="border-border bg-muted/30">
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <p className="text-xs font-semibold text-foreground mb-2">About the Competence-Confidence Matrix</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       This analysis is based on Area9 Lyceum's 4-Dimensional Learning Model, which maps learners across

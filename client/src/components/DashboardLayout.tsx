@@ -213,7 +213,7 @@ function DashboardLayoutContent({
             {navSections.map(section => (
               <div key={section.section}>
                 {!isCollapsed && (
-                  <p className="px-4 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  <p className="px-4 pt-4 pb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
                     {section.section}
                   </p>
                 )}

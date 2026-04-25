@@ -190,15 +190,15 @@ export default function AuditorDashboard() {
               <tbody>
                 {filteredIncidents.slice(0, 20).map(inc => (
                   <tr key={inc.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="py-2.5 pr-4 text-xs font-medium text-foreground">{inc.policyRuleId ?? "—"}</td>
-                    <td className="py-2.5 pr-4">
+                    <td className="py-3 px-4 text-xs font-medium text-foreground">{inc.policyRuleId ?? "—"}</td>
+                    <td className="py-3 px-4">
                       <span className="text-xs px-2 py-0.5 rounded-full bg-[#EE6677]/10 text-[#EE6677] font-semibold capitalize">
                         {inc.result?.replace(/_/g, " ") ?? "—"}
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground font-mono">{inc.userId?.slice(0, 8) ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground font-mono">{inc.contextId?.slice(0, 8) ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="py-3 px-4 text-xs text-muted-foreground font-mono">{inc.userId?.slice(0, 8) ?? "—"}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground font-mono">{inc.contextId?.slice(0, 8) ?? "—"}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(inc.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })}
                     </td>
                   </tr>
@@ -239,13 +239,13 @@ export default function AuditorDashboard() {
               <tbody>
                 {filteredLogs.slice(0, 30).map(log => (
                   <tr key={log.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="py-2.5 pr-4">
+                    <td className="py-3 px-4">
                       <span className="text-xs font-semibold text-foreground capitalize">{log.action?.replace(/_/g, " ") ?? "—"}</span>
                     </td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground capitalize">{log.targetType?.replace(/_/g, " ") ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground font-mono">{log.targetId?.slice(0, 8) ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground font-mono">{log.actorUserId?.slice(0, 8) ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="py-3 px-4 text-xs text-muted-foreground capitalize">{log.targetType?.replace(/_/g, " ") ?? "—"}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground font-mono">{log.targetId?.slice(0, 8) ?? "—"}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground font-mono">{log.actorUserId?.slice(0, 8) ?? "—"}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(log.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </td>
                   </tr>

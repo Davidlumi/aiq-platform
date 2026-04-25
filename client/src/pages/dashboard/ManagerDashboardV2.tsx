@@ -121,13 +121,13 @@ export default function ManagerDashboardV2() {
 
   if (isLoading) return <ManagerDashboardSkeleton />;
   if (!data) return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto">
       <EmptyState title="No team data" description="You don't have any team members assigned yet." />
     </div>
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
       {/* ── 1. Header ── */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -156,7 +156,7 @@ export default function ManagerDashboardV2() {
       {/* ── 2. Hero Stats Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard className="col-span-2 lg:col-span-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Team Average</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Team Average</p>
           <HeroScore
             score={teamAvgScore}
             label={teamAvgScore !== null ? scoreToReadinessLabel(teamAvgScore) : undefined}
@@ -242,12 +242,12 @@ export default function ManagerDashboardV2() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-neutral-200">
-                <th className="text-left py-2 pr-4 font-semibold text-muted-foreground" style={{ minWidth: 160 }}>Name</th>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground" style={{ minWidth: 160 }}>Name</th>
                 {DOMAIN_KEYS_ORDERED.map(dk => (
                   <th key={dk} className="text-center py-2 px-1 font-semibold text-muted-foreground" style={{ minWidth: 64 }}>
                     <div className="flex flex-col items-center gap-1">
                       <DomainDot domain={dk} size={6} />
-                      <span className="text-[10px] leading-tight">{DOMAIN_LABELS[dk]}</span>
+                      <span className="text-xs leading-tight">{DOMAIN_LABELS[dk]}</span>
                     </div>
                   </th>
                 ))}
@@ -271,17 +271,17 @@ export default function ManagerDashboardV2() {
                     className={`border-b border-neutral-100 last:border-0 hover:bg-neutral-50 cursor-pointer transition-colors ${!hasData ? 'opacity-50' : ''}`}
                     onClick={() => setSelectedMember(member.id)}
                   >
-                    <td className="py-2.5 pr-4">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-[10px] font-bold text-neutral-600 shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-600 shrink-0">
                           {member.name?.split(' ')[0]?.[0]}{member.name?.split(' ')[1]?.[0]}
                         </div>
                         <div className="min-w-0">
                           <p className={`font-medium truncate max-w-[130px] ${!hasData ? 'text-muted-foreground italic' : 'text-foreground'}`}>{member.name}</p>
                           {member.rating ? (
-                            <p className="text-[10px] text-muted-foreground">{RATING_LABELS[member.rating] ?? member.rating}</p>
+                            <p className="text-xs text-muted-foreground">{RATING_LABELS[member.rating] ?? member.rating}</p>
                           ) : (
-                            <p className="text-[10px] text-muted-foreground/60">Not yet assessed</p>
+                            <p className="text-xs text-muted-foreground/60">Not yet assessed</p>
                           )}
                         </div>
                       </div>
@@ -292,13 +292,13 @@ export default function ManagerDashboardV2() {
                         <td key={dk} className="py-2 px-1 text-center">
                           {domainScore !== null ? (
                             <div
-                              className="w-14 h-8 rounded mx-auto flex items-center justify-center font-mono font-bold text-[11px] tabular-nums text-white"
+                              className="w-14 h-8 rounded mx-auto flex items-center justify-center font-mono font-bold text-xs tabular-nums text-white"
                               style={{ backgroundColor: scoreToColor(domainScore).bg }}
                             >
                               {formatPeakonScore(domainScore)}
                             </div>
                           ) : (
-                            <div className="w-14 h-8 rounded mx-auto flex items-center justify-center text-[10px] text-neutral-300 border border-dashed border-neutral-200">
+                            <div className="w-14 h-8 rounded mx-auto flex items-center justify-center text-xs text-neutral-300 border border-dashed border-neutral-200">
                               —
                             </div>
                           )}
@@ -355,8 +355,8 @@ export default function ManagerDashboardV2() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-semibold text-foreground">{prompt.memberName}</span>
-                    <span className="text-[10px] text-muted-foreground">·</span>
-                    <span className="text-[10px] text-muted-foreground">{prompt.patternId.replace(/_/g, ' ')}</span>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    <span className="text-xs text-muted-foreground">{prompt.patternId.replace(/_/g, ' ')}</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{prompt.suggestedAction}</p>
                 </div>
@@ -393,7 +393,7 @@ export default function ManagerDashboardV2() {
                   <span className="text-xs font-semibold text-[#1A6625]">On track</span>
                 </div>
                 <span className="text-2xl font-bold tabular-nums text-[#228833]">{devOverview.statusCounts.onTrack}</span>
-                <p className="text-[10px] text-[#228833] mt-1">Progressing as expected</p>
+                <p className="text-xs text-[#228833] mt-1">Progressing as expected</p>
               </div>
               <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20">
                 <div className="flex items-center gap-2 mb-2">
@@ -401,7 +401,7 @@ export default function ManagerDashboardV2() {
                   <span className="text-xs font-semibold text-[#7A6E22]">Slipping</span>
                 </div>
                 <span className="text-2xl font-bold tabular-nums text-[#99882A]">{devOverview.statusCounts.slipping}</span>
-                <p className="text-[10px] text-[#99882A] mt-1">Behind expected pace</p>
+                <p className="text-xs text-[#99882A] mt-1">Behind expected pace</p>
               </div>
               <div className="p-4 rounded-xl bg-[#EE6677]/8 border border-[#EE6677]/20">
                 <div className="flex items-center gap-2 mb-2">
@@ -409,7 +409,7 @@ export default function ManagerDashboardV2() {
                   <span className="text-xs font-semibold text-[#AA2233]">Stalled</span>
                 </div>
                 <span className="text-2xl font-bold tabular-nums text-[#CC3344]">{devOverview.statusCounts.stalled}</span>
-                <p className="text-[10px] text-[#CC3344] mt-1">No activity in 14+ days</p>
+                <p className="text-xs text-[#CC3344] mt-1">No activity in 14+ days</p>
               </div>
             </div>
             <Separator className="my-4" />

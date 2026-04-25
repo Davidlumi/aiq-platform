@@ -73,7 +73,7 @@ export default function AdminDashboard() {
 
       {/* User KPIs */}
       <div>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Users</h2>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Users</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Users"     value={data?.totalUsers ?? 0}     icon={Users}     color="#4477AA" />
           <KpiCard label="Active"          value={data?.activeUsers ?? 0}    icon={UserCheck} color="#228833" sub={`${data?.totalUsers ? Math.round(((data.activeUsers ?? 0) / data.totalUsers) * 100) : 0}% of total`} />
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
 
       {/* Session KPIs */}
       <div>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Assessment Sessions</h2>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Assessment Sessions</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Sessions"     value={data?.totalSessions ?? 0}     icon={ClipboardList} color="#4477AA" />
           <KpiCard label="Completed"          value={data?.completedSessions ?? 0} icon={CheckCircle}   color="#228833" sub={`${data?.totalSessions ? Math.round(((data.completedSessions ?? 0) / data.totalSessions) * 100) : 0}% completion rate`} />

@@ -172,7 +172,7 @@ export function DistributionBar({
                   style={{ width: `${pct}%`, backgroundColor: seg.colour }}
                 >
                   {pct > 8 && (
-                    <span className="text-[11px] font-bold tabular-nums" style={{ color: seg.textColour || "#fff" }}>
+                    <span className="text-xs font-bold tabular-nums" style={{ color: seg.textColour || "#fff" }}>
                       {Math.round(pct)}%
                     </span>
                   )}
@@ -192,8 +192,8 @@ export function DistributionBar({
           {segments.map((seg, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: seg.colour }} />
-              <span className="text-[11px] text-muted-foreground">{seg.label}</span>
-              <span className="text-[11px] font-semibold tabular-nums text-foreground">{seg.value}</span>
+              <span className="text-xs text-muted-foreground">{seg.label}</span>
+              <span className="text-xs font-semibold tabular-nums text-foreground">{seg.value}</span>
             </div>
           ))}
         </div>
@@ -251,7 +251,7 @@ export function PillFilter({
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium rounded-full border border-neutral-200 bg-white text-foreground cursor-pointer hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-colors"
+        className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium rounded-full border border-border bg-card text-foreground cursor-pointer hover:border-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm transition-colors"
         style={{ minWidth: 120 }}
       >
         {options.map(opt => (
@@ -278,24 +278,24 @@ export function AIInsightCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4", className)}>
+    <div className={cn("rounded-xl border border-primary/20 bg-primary/5 p-5", className)}>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
-          <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+        <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
         </div>
-        <span className="text-xs font-semibold text-violet-800">{title || "AI-generated insight"}</span>
+        <span className="text-xs font-semibold text-primary">{title || "AI-generated insight"}</span>
       </div>
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-3 bg-violet-100 rounded animate-pulse" style={{ width: `${70 + i * 10}%` }} />
+            <div key={i} className="h-3 bg-primary/10 rounded animate-pulse" style={{ width: `${70 + i * 10}%` }} />
           ))}
         </div>
       ) : (
         <ul className="space-y-1.5">
           {insights.map((insight, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs text-violet-900">
-              <span className="w-1 h-1 rounded-full bg-violet-400 mt-1.5 shrink-0" />
+            <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+              <span className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" />
               {insight}
             </li>
           ))}
@@ -331,7 +331,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   const positive = delta >= 0;
   return (
     <span className={cn(
-      "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full",
+      "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
       positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#CCBB44]/8 text-[#99882A] border border-[#CCBB44]/25"
     )}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -388,10 +388,10 @@ export function SegmentRow({
         )}
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">{label}</p>
-          {sublabel && <p className="text-[10px] text-muted-foreground truncate">{sublabel}</p>}
+          {sublabel && <p className="text-xs text-muted-foreground truncate">{sublabel}</p>}
         </div>
         {headcount != null && (
-          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0 ml-auto">{headcount}</span>
+          <span className="text-xs text-muted-foreground tabular-nums shrink-0 ml-auto">{headcount}</span>
         )}
       </div>
       {/* Score cells */}
@@ -408,7 +408,7 @@ function ScoreCell({ score }: { score: number | null }) {
   if (score === null) {
     return (
       <div
-        className="w-14 h-9 rounded flex items-center justify-center text-[10px] text-neutral-300 border border-dashed border-neutral-200"
+        className="w-14 h-9 rounded flex items-center justify-center text-xs text-neutral-300 border border-dashed border-neutral-200"
         style={{ backgroundColor: "#FAFAFA" }}
       >
         —
@@ -499,9 +499,9 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn("bg-white rounded-xl border border-neutral-200 p-5 flex flex-col gap-1", className)}>
+    <div className={cn("bg-card rounded-xl border border-border p-5 flex flex-col gap-1", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</span>
+        <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">{label}</span>
         {icon && <span className="text-muted-foreground">{icon}</span>}
       </div>
       <span

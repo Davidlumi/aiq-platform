@@ -69,7 +69,7 @@ function HeatmapScoreCell({ score, headcount }: { score: number | null; headcoun
     return (
       <td className="border border-neutral-200 text-center p-0">
         <div className="h-11 flex items-center justify-center bg-neutral-50">
-          <span className="text-[11px] text-neutral-300 font-medium">—</span>
+          <span className="text-xs text-neutral-300 font-medium">—</span>
         </div>
       </td>
     );
@@ -112,7 +112,7 @@ function OverallScoreCell({ score, headcount }: { score: number | null; headcoun
     return (
       <td className="border border-neutral-200 text-center p-0">
         <div className="h-11 flex items-center justify-center bg-neutral-50">
-          <span className="text-[11px] text-neutral-300 font-medium">—</span>
+          <span className="text-xs text-neutral-300 font-medium">—</span>
         </div>
       </td>
     );
@@ -223,7 +223,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
               <SlidersHorizontal className="w-3.5 h-3.5" />
               {activeCount > 0 ? `${activeCount} selected` : "All segments"}
               {activeCount > 0 && (
-                <span className="ml-1 bg-primary text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
+                <span className="ml-1 bg-primary text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">
                   {activeCount}
                 </span>
               )}
@@ -232,7 +232,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
           <PopoverContent align="start" className="w-64 p-0">
             <div className="p-3 border-b border-neutral-100 bg-neutral-50/50">
               <p className="text-xs font-semibold text-foreground">Selected segments</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{activeCount > 0 ? `${activeCount} segments` : "All segments shown"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{activeCount > 0 ? `${activeCount} segments` : "All segments shown"}</p>
             </div>
             <div className="p-1.5 space-y-0.5 max-h-64 overflow-y-auto">
               {departmentOptions.map(opt => {
@@ -253,7 +253,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                     <div className="flex-1 min-w-0">
                       <span className="text-xs text-foreground block">{opt.label}</span>
                       {headcount > 0 && (
-                        <span className="text-[10px] text-muted-foreground">{headcount} people</span>
+                        <span className="text-xs text-muted-foreground">{headcount} people</span>
                       )}
                     </div>
                     {isChecked && <Check className="w-3 h-3 text-primary shrink-0" />}
@@ -262,10 +262,10 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
               })}
             </div>
             <div className="p-2 border-t border-neutral-100 flex items-center justify-between bg-neutral-50/50">
-              <button type="button" className="text-[10px] text-primary hover:text-primary font-medium transition-colors" onClick={selectAll}>
+              <button type="button" className="text-xs text-primary hover:text-primary font-medium transition-colors" onClick={selectAll}>
                 Select all
               </button>
-              <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors" onClick={clearFilter}>
+              <button type="button" className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={clearFilter}>
                 Clear all
               </button>
             </div>
@@ -283,7 +283,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                 </button>
               </Badge>
             ))}
-            <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground underline transition-colors" onClick={clearFilter}>
+            <button type="button" className="text-xs text-muted-foreground hover:text-foreground underline transition-colors" onClick={clearFilter}>
               Reset
             </button>
           </>
@@ -297,17 +297,17 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
           <thead>
             <tr className="bg-neutral-50">
               <th className="sticky left-0 z-10 bg-neutral-50 text-left py-2.5 px-4 border-b border-r border-neutral-200 w-56 min-w-56">
-                <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Segments</span>
+                <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Segments</span>
               </th>
               {domainKeys.map(dk => (
                 <th key={dk} className="text-center py-2.5 px-1 border-b border-neutral-200 min-w-[100px]">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex flex-col items-center gap-0.5 cursor-help">
-                        <span className="text-[10px] font-semibold text-neutral-600 leading-tight whitespace-nowrap">
+                        <span className="text-xs font-semibold text-neutral-600 leading-tight whitespace-nowrap">
                           {shortDomainLabel(dk)}
                         </span>
-                        <span className="text-[9px] text-neutral-400 font-normal">Overall score</span>
+                        <span className="text-xs text-neutral-400 font-normal">Overall score</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">{domainLabels[dk]}</TooltipContent>
@@ -325,7 +325,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                   <div className="w-1.5 h-6 rounded-full bg-primary/80" />
                   <div>
                     <span className="text-xs font-bold text-foreground block">{computedOverall.label}</span>
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       {computedOverall.headcount}
                     </span>
@@ -376,7 +376,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                         </button>
                         <div className="min-w-0">
                           <span className="text-xs font-medium text-foreground block truncate">{row.roleFamilyName}</span>
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {hasData ? `${rowHeadcount} people` : "No data"}
                           </span>
                         </div>
@@ -396,7 +396,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
       {/* ── Footer: gradient legend ── */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground font-medium">Score scale:</span>
+          <span className="text-xs text-muted-foreground font-medium">Score scale:</span>
           <div className="flex items-center gap-0">
             {[0, 20, 35, 50, 65, 80, 100].map((score, i) => (
               <div key={i} className="flex flex-col items-center">
@@ -407,14 +407,14 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>0 (Low)</span>
             <span>→</span>
             <span>10 (High)</span>
           </div>
         </div>
         {activeCount > 0 && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             Showing {filteredHeatmap.length} of {heatmap.length} segments
           </span>
         )}

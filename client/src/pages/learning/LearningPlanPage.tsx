@@ -132,20 +132,20 @@ function ModuleCard({
           <div className="flex-1 min-w-0">
             {/* Type + capability badges */}
             <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                 <ModIcon className="h-3 w-3" />{modality.label}
               </span>
-              <span className="text-muted-foreground/30 text-[10px]">·</span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: isLocked ? "#aaa" : cap.color }}>
+              <span className="text-muted-foreground/30 text-xs">·</span>
+              <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: isLocked ? "#aaa" : cap.color }}>
                 <CapIcon className="h-3 w-3" />{cap.label}
               </span>
               {isNext && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                   NEXT UP
                 </span>
               )}
               {isInProgress && !isNext && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#CCBB44]/12 text-[#99882A]">
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#CCBB44]/12 text-[#99882A]">
                   IN PROGRESS
                 </span>
               )}
@@ -170,14 +170,14 @@ function ModuleCard({
 
             {/* Meta row */}
             <div className="flex items-center gap-3 mt-2">
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />{mod.durationMins ?? 15} min
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 {mod.levelLabel ?? `Level ${mod.difficulty ?? 1}`}
               </span>
               {isCompleted && score !== null && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: scoreToColor(score / 10).text }}>
+                <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: scoreToColor(score / 10).text }}>
                   <CheckCircle2 className="h-3 w-3" />{score}%
                 </span>
               )}
@@ -189,7 +189,7 @@ function ModuleCard({
             {isCompleted ? (
               <button
                 onClick={onStart}
-                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 py-1"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 py-1"
               >
                 <RotateCcw className="h-3 w-3" />Review
               </button>
@@ -289,14 +289,14 @@ function InsightsTab() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold">{cap.label}</p>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${sev.color}20`, color: sev.color }}>
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${sev.color}20`, color: sev.color }}>
                         {sev.label}
                       </span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xl font-bold" style={{ color: cap.color as string }}>{(Number(score) / 10).toFixed(1)}</p>
-                    <p className="text-[10px] text-muted-foreground">vs {(Number(benchmark) / 10).toFixed(1)} benchmark</p>
+                    <p className="text-xs text-muted-foreground">vs {(Number(benchmark) / 10).toFixed(1)} benchmark</p>
                   </div>
                 </div>
                 {/* Score bar */}
@@ -306,7 +306,7 @@ function InsightsTab() {
                     {/* Benchmark marker */}
                     <div className="absolute top-0 bottom-0 w-0.5 bg-muted-foreground/40" style={{ left: `${Math.min(Number(benchmark), 100)}%` }} />
                   </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>0</span>
                     <span>Benchmark: {(Number(benchmark) / 10).toFixed(1)}</span>
                     <span>10</span>
@@ -314,7 +314,7 @@ function InsightsTab() {
                 </div>
                 {gap.failureModes && (gap.failureModes as string[]).length > 0 && (
                   <div className="mt-2.5 pt-2.5 border-t border-current/10">
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       <span className="font-semibold text-foreground/70">Risk: </span>{(gap.failureModes as string[])[0]}
                     </p>
                   </div>
@@ -371,17 +371,17 @@ function ActivityTab({ items }: { items: any[] }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="p-4 rounded-xl border border-border bg-card text-center">
           <p className="text-2xl font-bold text-[#7A9E8E]">{completedItems.length}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Completed</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Completed</p>
         </div>
         <div className="p-4 rounded-xl border border-border bg-card text-center">
           <p className="text-2xl font-bold text-[#C8B07A] flex items-center justify-center gap-1">
             <Flame className="h-5 w-5" />{dayStreak}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Day streak</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Day streak</p>
         </div>
         <div className="p-4 rounded-xl border border-border bg-card text-center">
           <p className="text-2xl font-bold text-primary">{Math.round(totalXP)}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Total XP</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Total XP</p>
         </div>
       </div>
 
@@ -406,7 +406,7 @@ function ActivityTab({ items }: { items: any[] }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{mod.title ?? "Module"}</p>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <CapIcon className="h-3 w-3" style={{ color: cap.color }} />{cap.label}
                   </p>
                 </div>
@@ -465,7 +465,7 @@ export default function LearningPlanPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+      <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
         <Skeleton className="h-36 rounded-2xl" />
         <Skeleton className="h-10 rounded-xl" />
         {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
@@ -475,7 +475,7 @@ export default function LearningPlanPage() {
 
   if (!plan) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto">
+      <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto">
         <div className="text-center py-16 space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
             <BookOpen className="h-8 w-8 text-primary" />
@@ -498,7 +498,7 @@ export default function LearningPlanPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
+    <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
 
       {/* ── Plan Header ── */}
       <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
@@ -523,17 +523,17 @@ export default function LearningPlanPage() {
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <p className="text-base font-bold text-[#7A9E8E]">{completedCount}</p>
-                <p className="text-[10px] text-muted-foreground">Done</p>
+                <p className="text-xs text-muted-foreground">Done</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
                 <p className="text-base font-bold text-[#C8B07A]">{inProgressCount}</p>
-                <p className="text-[10px] text-muted-foreground">In Progress</p>
+                <p className="text-xs text-muted-foreground">In Progress</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
                 <p className="text-base font-bold text-muted-foreground">{totalItems - completedCount - inProgressCount}</p>
-                <p className="text-[10px] text-muted-foreground">Remaining</p>
+                <p className="text-xs text-muted-foreground">Remaining</p>
               </div>
             </div>
           </div>
@@ -562,7 +562,7 @@ export default function LearningPlanPage() {
               <Play className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-0.5">Continue Learning</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-0.5">Continue Learning</p>
               <p className="text-sm font-semibold truncate">{nextItem.module?.title ?? "Next Module"}</p>
             </div>
             <ArrowRight className="h-4 w-4 text-primary flex-shrink-0" />

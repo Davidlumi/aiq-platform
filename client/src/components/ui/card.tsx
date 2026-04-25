@@ -116,7 +116,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="card-footer"
       className={cn(
         "flex items-center px-6 pb-6 pt-0",
-        "text-[13px] font-normal leading-[18px] text-[var(--color-neutral-500)]",
+        "text-sm font-normal leading-[18px] text-[var(--color-neutral-500)]",
         className
       )}
       {...props}

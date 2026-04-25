@@ -85,7 +85,7 @@ function NudgeDialog({
               maxLength={500}
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
             />
-            <p className="text-[10px] text-muted-foreground text-right mt-0.5">{message.length}/500</p>
+            <p className="text-xs text-muted-foreground text-right mt-0.5">{message.length}/500</p>
           </div>
           <div className="flex gap-2 pt-1">
             <Button
@@ -118,7 +118,7 @@ function MemberCard({ member, onNudge }: { member: any; onNudge: (member: any) =
         </div>
         <div className="flex items-center gap-2">
           {member.readinessBand && (
-            <Badge variant="outline" className={cn("text-[10px] border-0 capitalize", colours.bg, colours.text)}>
+            <Badge variant="outline" className={cn("text-xs border-0 capitalize", colours.bg, colours.text)}>
               {member.readinessBand}
             </Badge>
           )}
@@ -280,7 +280,7 @@ export default function TeamDashboardPage() {
             <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center">
               <stat.icon className="h-5 w-5 mx-auto mb-1.5" style={{ color: stat.color }} />
               <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground">{stat.label}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>

@@ -1721,3 +1721,15 @@
 - [x] C8-08: AssessmentSessionPage — replace 41 saturated emerald/amber/red Tailwind classes with muted Paul Tol palette
 - [x] C8-09: ManagerDashboardV2 — replace 15 saturated emerald/amber/red status cards with muted palette
 - [x] C8-10: MarketingPage — update domain colours in local const C to use canonical Paul Tol palette from domains.ts
+
+## Sizing & Spacing Audit — Round 9 (Apr 2026)
+- [x] S9-01: CardContent padding is inconsistent (p-3/p-4/p-5/p-6/p-8/p-12) — standardise to p-5 for data cards, p-6 for hero/feature cards
+- [x] S9-02: Page wrapper padding inconsistent — some pages use p-6, others p-4 md:p-6 — standardise all app pages to px-5 py-6 md:px-8 md:py-8 max-w-7xl mx-auto
+- [x] S9-03: Assessment session page max-w-2xl not centred (missing mx-auto) — add mx-auto to all 5 render variants
+- [x] S9-04: 128 instances of arbitrary pixel font sizes (text-[9px] through text-[13px]) — replace with Tailwind scale: text-[9px]→text-[10px], text-[10px]→text-xs, text-[11px]→text-xs, text-[12px]→text-xs, text-[13px]→text-sm
+- [x] S9-05: StatTile component uses bg-white (light-mode only) — replace with bg-card for theme compatibility; also standardise to p-5 and rounded-xl
+- [x] S9-06: Section label tracking inconsistent — tracking-wide vs tracking-wider vs tracking-widest used interchangeably — standardise all section labels to tracking-widest
+- [x] S9-07: Table cell padding inconsistent — py-2/py-2.5/py-3 mixed — standardise all data table cells to py-3 px-4 for comfortable reading
+- [x] S9-08: PeakonPrimitives PillFilter uses bg-white (light-mode only) — replace with bg-card; also AIInsightCard uses violet-50/indigo-50 hardcoded — replace with bg-primary/5 border-primary/20
+- [x] S9-09: Gap between dashboard section cards is space-y-6 on some pages and space-y-5 on others — standardise to space-y-6 across all dashboard pages
+- [x] S9-10: AppShell sidebar header height h-16 vs top bar h-14 — misaligned by 8px creating visual jump — align both to h-14 (56px)

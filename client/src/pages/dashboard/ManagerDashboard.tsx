@@ -248,7 +248,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
               className="w-full flex items-center justify-between text-left group"
               onClick={() => setShowStarters(v => !v)}
             >
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
                 Conversation Starters
               </h3>
@@ -270,7 +270,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
 
           {/* Section 1: This week */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5" />This Week
             </h3>
             {member.activeModule ? (
@@ -303,7 +303,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
 
           {/* Section 2: Delegation guidance */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5" />Delegation Guidance
             </h3>
             <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: tier.border, backgroundColor: tier.bg }}>
@@ -327,7 +327,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
 
           {/* Section 3: Development trajectory */}
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" />Development Trajectory
             </h3>
             {history.length >= 2 ? (
@@ -349,7 +349,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${Math.round(h.overallScore)} — ${h.readiness ?? "unknown"}`}>
                         <div className="w-full rounded-sm" style={{ height: barH, backgroundColor: barColor, opacity: 0.8 }} />
-                        <span className="text-[9px] text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
                       </div>
                     );
                   })}
@@ -369,7 +369,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
             {/* Capability shape */}
             {capShape && (
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Capability Shape</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Capability Shape</p>
                 {Object.entries(capShape).map(([key, score]) => (
                   <div key={key} className="space-y-0.5">
                     <div className="flex justify-between text-xs">
@@ -393,7 +393,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
           {/* Risk & credibility */}
           {(member.risk || member.credibility) && (
             <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
                 <ShieldAlert className="w-3.5 h-3.5" />Signal Quality
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -533,7 +533,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-medium text-foreground leading-snug">{action.label}</p>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
                       style={{ color: pm.color, backgroundColor: `${pm.color}20` }}>
                       {pm.label}
                     </span>

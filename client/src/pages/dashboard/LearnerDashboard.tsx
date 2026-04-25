@@ -119,7 +119,7 @@ function ReadinessHeroCard({
               <Icon className="w-7 h-7" style={{ color: meta.color }} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-0.5">AI Readiness Status</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-0.5">AI Readiness Status</p>
               <h2 className="text-3xl font-bold leading-none" style={{ color: meta.color }}>
                 {meta.label}
               </h2>
@@ -140,9 +140,9 @@ function ReadinessHeroCard({
                 urgency === "critical" ? "text-[#EE6677]" :
                 urgency === "soon"     ? "text-[#CCBB44]" : "text-foreground"
               )}>{daysToRevalidation}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">days to<br />revalidation</p>
+              <p className="text-xs text-muted-foreground mt-1">days to<br />revalidation</p>
               {revalidationDue && (
-                <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">
+                <p className="text-xs text-muted-foreground mt-1.5 font-medium">
                   {new Date(revalidationDue).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </p>
               )}
@@ -188,8 +188,8 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
                   <div key={key} className="flex items-center gap-1.5 p-1.5 rounded-lg bg-muted/20">
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
                     <div className="min-w-0">
-                      <p className="text-[9px] text-muted-foreground truncate">{meta.shortLabel}</p>
-                      <p className="text-[10px] font-semibold" style={{ color: band.color }}>{band.label}</p>
+                      <p className="text-xs text-muted-foreground truncate">{meta.shortLabel}</p>
+                      <p className="text-xs font-semibold" style={{ color: band.color }}>{band.label}</p>
                     </div>
                   </div>
                 );
@@ -240,7 +240,7 @@ function ScenarioCallbacksCard({
                   <div className="min-w-0">
                     <p className="text-xs text-foreground leading-snug">{c.title}</p>
                     {c.capabilityKey && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{CAP_META[c.capabilityKey]?.label ?? c.capabilityKey}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{CAP_META[c.capabilityKey]?.label ?? c.capabilityKey}</p>
                     )}
                   </div>
                 </div>
@@ -260,7 +260,7 @@ function ScenarioCallbacksCard({
                   <div className="min-w-0">
                     <p className="text-xs text-foreground leading-snug">{c.title}</p>
                     {c.capabilityKey && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{CAP_META[c.capabilityKey]?.label ?? c.capabilityKey}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{CAP_META[c.capabilityKey]?.label ?? c.capabilityKey}</p>
                     )}
                   </div>
                 </div>
@@ -270,7 +270,7 @@ function ScenarioCallbacksCard({
         )}
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border">
           <Info className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             These reflect scenarios from your most recent assessment. Your learning plan has been adapted based on these patterns.
           </p>
         </div>
@@ -375,9 +375,9 @@ function CompetenceConfidenceWidget() {
               <div key={item.domain} className="rounded-lg border border-border p-2.5 space-y-1" style={{ background: meta.bg }}>
                 <div className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${meta.dot}`} />
-                  <span className="text-[11px] font-medium text-foreground truncate">{capMeta.shortLabel ?? item.displayName}</span>
+                  <span className="text-xs font-medium text-foreground truncate">{capMeta.shortLabel ?? item.displayName}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-snug">{item.quadrantLabel}</p>
+                <p className="text-xs text-muted-foreground leading-snug">{item.quadrantLabel}</p>
               </div>
             );
           })}
@@ -387,7 +387,7 @@ function CompetenceConfidenceWidget() {
             <AlertTriangle className="w-3.5 h-3.5 text-[#EE6677] flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-[#EE6677]">Blind spot detected</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 You rated yourself highly in {blindSpots.map((b: { domain: string; displayName: string }) => CAP_META[b.domain]?.shortLabel ?? b.displayName).join(", ")} but scored below threshold. Your learning plan has been adjusted.
               </p>
             </div>
@@ -624,7 +624,7 @@ export default function LearnerDashboard() {
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
                   <Award className="w-4 h-4 text-[#4477AA]" />
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Response Quality</span>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Response Quality</span>
                 </div>
                 <p className="text-2xl font-bold text-foreground capitalize">{data.credibility.band}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Consistency of your responses across the assessment</p>
@@ -636,7 +636,7 @@ export default function LearnerDashboard() {
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className="w-4 h-4 text-[#CCBB44]" />
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Risk Indicator</span>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Risk Indicator</span>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold capitalize",
@@ -654,7 +654,7 @@ export default function LearnerDashboard() {
 
       {/* ── Quick actions ── */}
       <div>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h2>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Take Assessment",  path: "/assessment",  icon: ClipboardList, color: "var(--primary)" },

@@ -32,7 +32,7 @@ export function RatingBadge({ rating, size = "md" }: { rating: string; size?: "s
   const style = RATING_STYLES[rating] ?? RATING_STYLES.insufficient_evidence;
   const label = RATING_DISPLAY[rating] ?? rating;
   const sizeClasses = {
-    sm: "text-[11px] px-2 py-0.5 gap-1",
+    sm: "text-xs px-2 py-0.5 gap-1",
     md: "text-xs px-2.5 py-1 gap-1.5",
     lg: "text-sm px-3 py-1.5 gap-2",
   };
@@ -65,7 +65,7 @@ export function PeakonScoreCell({
 }) {
   if (score === null) {
     const emptySize = {
-      sm: "w-10 h-8 text-[10px]",
+      sm: "w-10 h-8 text-xs",
       md: "w-14 h-10 text-xs",
       lg: "w-16 h-12 text-sm",
       xl: "w-20 h-14 text-base",
@@ -79,7 +79,7 @@ export function PeakonScoreCell({
 
   const { bg, text } = scoreToColor(score);
   const sizeClasses = {
-    sm: "w-10 h-8 text-[11px] rounded",
+    sm: "w-10 h-8 text-xs rounded",
     md: "w-14 h-10 text-xs rounded-md",
     lg: "w-16 h-12 text-sm rounded-md",
     xl: "w-20 h-14 text-lg rounded-lg",
@@ -116,7 +116,7 @@ export function PeakonScoreBadge({ score, className }: { score: number | null; c
   const { bg, text } = scoreToColor(score);
   return (
     <span
-      className={cn("inline-flex items-center justify-center font-mono font-bold tabular-nums text-[11px] px-1.5 py-0.5 rounded", className)}
+      className={cn("inline-flex items-center justify-center font-mono font-bold tabular-nums text-xs px-1.5 py-0.5 rounded", className)}
       style={{ backgroundColor: bg, color: text }}
     >
       {formatPeakonScore(score)}
@@ -281,7 +281,7 @@ export function HeatmapCell({
         <TooltipTrigger asChild>
           <div className={cn("rounded-md flex flex-col items-center justify-center text-muted-foreground border border-dashed border-neutral-200", size === "sm" ? "w-12 h-8" : "w-14 h-10")}
             style={{ backgroundColor: "#F8FAFC" }}>
-            <span className="text-[10px]">—</span>
+            <span className="text-xs">—</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
@@ -298,7 +298,7 @@ export function HeatmapCell({
         <div
           className={cn(
             "rounded-md flex flex-col items-center justify-center font-mono tabular-nums transition-all",
-            size === "sm" ? "w-12 h-8 text-[11px]" : "w-14 h-10 text-xs",
+            size === "sm" ? "w-12 h-8 text-xs" : "w-14 h-10 text-xs",
             onClick && "cursor-pointer hover:scale-105 hover:shadow-md",
           )}
           style={{ backgroundColor: bg, color: text }}
@@ -399,7 +399,7 @@ export function PeakonProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-[10px] font-mono font-semibold tabular-nums text-muted-foreground w-8 text-right">
+        <span className="text-xs font-mono font-semibold tabular-nums text-muted-foreground w-8 text-right">
           {Math.round(pct)}%
         </span>
       )}
@@ -419,7 +419,7 @@ export function PriorityBadge({ priority }: { priority: "critical" | "high" | "m
   const s = styles[priority];
   return (
     <span
-      className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize"
+      className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
       style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border}` }}
     >
       {priority}

@@ -69,8 +69,8 @@ const badgeVariants = cva(
           "bg-[var(--navy-50)] text-[var(--navy-800)] border-[var(--navy-100)]",
       },
       size: {
-        default: "text-[13px] px-2 py-1",
-        sm:      "text-[12px] px-1.5 py-0.5",
+        default: "text-sm px-2 py-1",
+        sm:      "text-xs px-1.5 py-0.5",
       },
     },
     defaultVariants: {

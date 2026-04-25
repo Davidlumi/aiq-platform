@@ -335,7 +335,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                   "text-muted-foreground"
                 )}>
                   <div className={cn(
-                    "w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                    "w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold",
                     i + 1 < step ? "bg-primary text-white" :
                     i + 1 === step ? "bg-foreground text-background" :
                     "bg-muted text-muted-foreground"
@@ -546,7 +546,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                     Which AI tools have you used?
                     <span className="font-normal normal-case ml-1">(optional)</span>
                     {selectedTools.length > 0 && (
-                      <Badge variant="secondary" className="ml-2 text-[10px] py-0">{selectedTools.length} selected</Badge>
+                      <Badge variant="secondary" className="ml-2 text-xs py-0">{selectedTools.length} selected</Badge>
                     )}
                   </p>
                   <ChevronDown className={cn(
