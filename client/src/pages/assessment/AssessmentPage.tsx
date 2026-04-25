@@ -10,7 +10,7 @@
  * - Start new / resume CTA
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -103,9 +103,18 @@ export default function AssessmentPage() {
 
   // P12: derive prior capability scores from last completed session
   const lastCompletedSession = sessions?.find((s: any) => s.state === "completed");
-  const [showAbout, setShowAbout] = useState(false);
-  const lastCapabilityScores: Record<string, number> = lastCompletedSession?.score?.capabilityScores ?? {};
   const hasCompletedBefore = !!lastCompletedSession;
+  const lastCapabilityScores: Record<string, number> = lastCompletedSession?.score?.capabilityScores ?? {};
+  // A5-10: Open About panel by default for first-time users; collapse once they have a result
+  const [showAbout, setShowAbout] = useState(false);
+  // Sync once sessions load (avoids SSR/loading-state mismatch)
+  const [aboutInitialised, setAboutInitialised] = useState(false);
+  useEffect(() => {
+    if (!aboutInitialised && sessions !== undefined) {
+      setAboutInitialised(true);
+      if (!hasCompletedBefore) setShowAbout(true);
+    }
+  }, [sessions, aboutInitialised, hasCompletedBefore]);
 
   const handleStartClick = () => {
     const blueprintId = defaultBlueprint?.id;

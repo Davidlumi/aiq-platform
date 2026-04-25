@@ -1673,3 +1673,15 @@
 - [x] R4-08: Reports page — rename "Export" to "Export Data (JSON)" and export report data not the full manifest envelope
 - [x] R4-09: Policy page — wire up real trpc.policy.create mutation (was a no-op placeholder); add create procedure to policy router
 - [x] R4-10: Users page — add trpc.users.changeRole mutation; wire up "Change Role" dropdown item with a proper dialog
+
+## Assessment UX/UI Audit Round 5 (Apr 2026)
+- [ ] A5-01: Completion screen shows raw integer score (54) instead of Peakon format (5.4)
+- [ ] A5-02: Results page "Overall Score" stat card shows raw integer + raw confidence interval instead of Peakon format
+- [ ] A5-03: Benchmarks tab — chart Y-axis, table cells, percentile cards all show raw integers; convert to Peakon 0-10 format
+- [ ] A5-04: Question prompt label uses text-xs uppercase — visually indistinguishable from section labels; promote to text-sm/text-base
+- [ ] A5-05: Confidence staking section not visually dimmed when no answer selected — add opacity-50 + pointer-events-none
+- [ ] A5-06: Results page TabsList has 7 tabs that overflow on narrow screens — add horizontal scroll + hide icon labels on mobile
+- [ ] A5-07: Development tab has no on-demand "Generate AI Report" button when llmNarrative is null
+- [ ] A5-08: Scenarios tab signal delta chips show raw keys (ai_interaction) — use DOMAIN_LABELS for human-readable labels
+- [ ] A5-09: Benchmarks chart tooltip formatter shows raw integers — format with formatPeakonScore
+- [ ] A5-10: Assessment landing page "About" section collapsed by default — expand for first-time users (no prior sessions)

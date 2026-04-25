@@ -525,7 +525,7 @@ function CompletionScreen({
           <p className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1")}>Your Readiness</p>
           <div className="flex items-baseline gap-3">
             <p className={cn("text-2xl font-bold ", stateConfig.color)}>{stateConfig.label}</p>
-            <p className={cn("text-4xl font-bold", stateConfig.color)}>{Math.round(result.overallScore)}</p>
+            <p className={cn("text-4xl font-bold", stateConfig.color)}>{formatPeakonScore(result.overallScore)}<span className="text-xl font-medium opacity-60"> / 10</span></p>
           </div>
           {stateConfig.description && (
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stateConfig.description}</p>
@@ -1307,11 +1307,10 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Question prompt */}
+          {/* Question prompt — A5-04: promoted from text-xs uppercase to text-sm for readability */}
           <div>
             <p
-              className="text-xs font-bold uppercase tracking-wider mb-2"
-              style={{ color: iConfig.accent }}
+              className="text-sm font-semibold text-foreground leading-snug mb-2"
             >
               {(nextItem as any).question || iConfig.questionLabel}
             </p>
@@ -1384,8 +1383,8 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* v10: Three-level confidence staking */}
-          <div className="space-y-2 pt-1">
+          {/* v10: Three-level confidence staking — A5-05: dimmed until an answer is selected */}
+          <div className={cn("space-y-2 pt-1 transition-opacity duration-200", !selectedValue ? "opacity-40 pointer-events-none" : "")}>
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               How confident are you in this answer?
             </Label>

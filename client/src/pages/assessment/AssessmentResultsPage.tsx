@@ -254,7 +254,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-0.5 border-t-2 border-dashed border-[#10B981]/60" />
-            <span className="text-xs text-muted-foreground">Safe threshold (75)</span>
+            <span className="text-xs text-muted-foreground">Safe threshold (7.5)</span>
           </div>
         </div>
       </CardHeader>
@@ -264,7 +264,11 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
             <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                tickFormatter={(v: number) => formatPeakonScore(v)}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "var(--card)",
@@ -272,15 +276,15 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
                   borderRadius: "8px",
                   fontSize: 12,
                 }}
-                formatter={(value: number) => [`${value}`, "Overall Score"]}
+                formatter={(value: number) => [formatPeakonScore(value), "Overall Score"]}
               />
-              {/* UX-10: Safe threshold reference line */}
+              {/* UX-10: Safe threshold reference line — A5-07: label updated to Peakon format */}
               <ReferenceLine
                 y={75}
                 stroke="#10B981"
                 strokeDasharray="4 4"
                 strokeOpacity={0.6}
-                label={{ value: "Safe", position: "right", fontSize: 10, fill: "#10B981" }}
+                label={{ value: "7.5 (Safe)", position: "right", fontSize: 10, fill: "#10B981" }}
               />
               <Line
                 type="monotone"
@@ -329,7 +333,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
         >
           {formatPeakonScore(score)}
         </span>
-        <span className="text-[10px] text-muted-foreground mt-0.5">/ 10.0</span>
+        <span className="text-[10px] text-muted-foreground mt-0.5">/ 10</span>
       </div>
     </div>
   );
@@ -746,36 +750,39 @@ export default function AssessmentResultsPage() {
 
       {/* ── Three-Layer Tabs ── */}
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="summary" className="gap-1.5 text-xs">
-            <Target className="w-3.5 h-3.5" />
-            Summary
-          </TabsTrigger>
-          <TabsTrigger value="deepdive" className="gap-1.5 text-xs">
-            <Brain className="w-3.5 h-3.5" />
-            Deep Dive
-          </TabsTrigger>
-          <TabsTrigger value="development" className="gap-1.5 text-xs">
-            <Lightbulb className="w-3.5 h-3.5" />
-            Development
-          </TabsTrigger>
-          <TabsTrigger value="benchmarks" className="gap-1.5 text-xs">
-            <BarChart2 className="w-3.5 h-3.5" />
-            Benchmarks
-          </TabsTrigger>
-          <TabsTrigger value="scenarios" className="gap-1.5 text-xs">
-            <FileText className="w-3.5 h-3.5" />
-            Scenarios
-          </TabsTrigger>
-          <TabsTrigger value="calibration" className="gap-1.5 text-xs">
-            <Zap className="w-3.5 h-3.5" />
-            Calibration
-          </TabsTrigger>
-          <TabsTrigger value="metacognition" className="gap-1.5 text-xs">
-            <Globe className="w-3.5 h-3.5" />
-            Metacognition
-          </TabsTrigger>
-        </TabsList>
+        {/* A5-06: Horizontally scrollable tab bar — icons hidden on mobile to prevent overflow */}
+        <div className="overflow-x-auto -mx-1 px-1 mb-6 scrollbar-none">
+          <TabsList className="w-max min-w-full">
+            <TabsTrigger value="summary" className="gap-1.5 text-xs">
+              <Target className="w-3.5 h-3.5 hidden sm:block" />
+              Summary
+            </TabsTrigger>
+            <TabsTrigger value="deepdive" className="gap-1.5 text-xs">
+              <Brain className="w-3.5 h-3.5 hidden sm:block" />
+              Deep Dive
+            </TabsTrigger>
+            <TabsTrigger value="development" className="gap-1.5 text-xs">
+              <Lightbulb className="w-3.5 h-3.5 hidden sm:block" />
+              Development
+            </TabsTrigger>
+            <TabsTrigger value="benchmarks" className="gap-1.5 text-xs">
+              <BarChart2 className="w-3.5 h-3.5 hidden sm:block" />
+              Benchmarks
+            </TabsTrigger>
+            <TabsTrigger value="scenarios" className="gap-1.5 text-xs">
+              <FileText className="w-3.5 h-3.5 hidden sm:block" />
+              Scenarios
+            </TabsTrigger>
+            <TabsTrigger value="calibration" className="gap-1.5 text-xs">
+              <Zap className="w-3.5 h-3.5 hidden sm:block" />
+              Calibration
+            </TabsTrigger>
+            <TabsTrigger value="metacognition" className="gap-1.5 text-xs">
+              <Globe className="w-3.5 h-3.5 hidden sm:block" />
+              Metacognition
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* ══════════════════════════════════════════════════════════════════════
             TAB 1: SUMMARY
@@ -1096,10 +1103,11 @@ export default function AssessmentResultsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
-                  <p className="text-2xl font-bold " style={{ color: stateConfig.barColor }}>
-                    {overallScore}
+                  <p className="text-2xl font-bold" style={{ color: stateConfig.barColor }}>
+                    {formatPeakonScore(overallScore)}
+                    <span className="text-sm font-normal text-muted-foreground"> / 10</span>
                   </p>
-                  {/* CR-2: Overall confidence interval */}
+                  {/* CR-2: Overall confidence interval — A5-02: formatted as Peakon 0-10 */}
                   {(() => {
                     const totalSignals = sortedCapabilities.reduce((sum, c) => sum + c.signalCount, 0);
                     const oHw = computeConfidenceHalfWidth(totalSignals);
@@ -1107,7 +1115,7 @@ export default function AssessmentResultsPage() {
                     const oHi = Math.min(100, overallScore + oHw);
                     return (
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Range: {oLo}\u2013{oHi}
+                        Range: {formatPeakonScore(oLo)}\u2013{formatPeakonScore(oHi)}
                       </p>
                     );
                   })()}
@@ -1599,6 +1607,7 @@ export default function AssessmentResultsPage() {
                           tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
                           tickLine={false}
                           axisLine={false}
+                          tickFormatter={(v: number) => formatPeakonScore(v)}
                         />
                         <Tooltip
                           contentStyle={{
@@ -1607,10 +1616,10 @@ export default function AssessmentResultsPage() {
                             borderRadius: "8px",
                             fontSize: 12,
                           }}
-                          formatter={(value: number, name: string) => [`${value}`, name]}
+                          formatter={(value: number, name: string) => [formatPeakonScore(value), name]}
                         />
                         <ReferenceLine y={75} stroke="#10B981" strokeDasharray="4 4" strokeOpacity={0.5}
-                          label={{ value: "Safe", position: "right", fontSize: 9, fill: "#10B981" }}
+                          label={{ value: "7.5 (Safe)", position: "right", fontSize: 9, fill: "#10B981" }}
                         />
                         <Bar dataKey="Your Score" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={28} />
                         <Bar dataKey="Role Average" fill="#3B82F6" radius={[3, 3, 0, 0]} maxBarSize={28} />
@@ -1651,16 +1660,16 @@ export default function AssessmentResultsPage() {
                                   <span className="font-medium text-foreground">{cap.displayName.replace("AI ", "")}</span>
                                 </div>
                               </td>
-                              <td className="text-center px-3 py-2.5 font-semibold text-foreground">{cap.userScore}</td>
-                              <td className="text-center px-3 py-2.5 text-muted-foreground">{cap.roleMean}</td>
-                              <td className="text-center px-3 py-2.5 text-muted-foreground">{cap.platformMean}</td>
+                              <td className="text-center px-3 py-2.5 font-semibold text-foreground">{formatPeakonScore(cap.userScore)}</td>
+                              <td className="text-center px-3 py-2.5 text-muted-foreground">{formatPeakonScore(cap.roleMean)}</td>
+                              <td className="text-center px-3 py-2.5 text-muted-foreground">{formatPeakonScore(cap.platformMean)}</td>
                               <td className="text-center px-3 py-2.5">
                                 <span className={cn(
                                   "inline-flex items-center gap-0.5 font-medium",
                                   isAbove ? "text-emerald-600" : isBelow ? "text-red-600" : "text-muted-foreground"
                                 )}>
                                   {isAbove ? <TrendingUp className="w-3 h-3" /> : isBelow ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                                  {isAbove ? `+${diff}` : diff}
+                                  {isAbove ? `+${(diff / 10).toFixed(1)}` : (diff / 10).toFixed(1)}
                                 </span>
                               </td>
                             </tr>
@@ -1685,7 +1694,7 @@ export default function AssessmentResultsPage() {
                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
                           <span className="text-xs font-semibold text-foreground truncate">{cap.displayName.replace("AI ", "")}</span>
                         </div>
-                        <div className="text-2xl font-bold text-foreground">{cap.userScore}</div>
+                        <div className="text-2xl font-bold text-foreground">{formatPeakonScore(cap.userScore)}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">~{percentileApprox}th percentile</div>
                         <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                           <div
@@ -1697,8 +1706,8 @@ export default function AssessmentResultsPage() {
                           />
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                          <span>Role avg: {cap.roleMean}</span>
-                          <span>Platform: {cap.platformMean}</span>
+                          <span>Role avg: {formatPeakonScore(cap.roleMean)}</span>
+                          <span>Platform: {formatPeakonScore(cap.platformMean)}</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -1764,7 +1773,7 @@ export default function AssessmentResultsPage() {
                           <span className="text-xs font-bold text-muted-foreground w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">{idx + 1}</span>
                           <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", colors.badge)}>{colors.label}</span>
                           {cb.capabilityKey && (
-                            <span className="text-xs text-muted-foreground">· {cb.capabilityKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</span>
+                            <span className="text-xs text-muted-foreground">· {DOMAIN_LABELS[cb.capabilityKey as keyof typeof DOMAIN_LABELS] ?? cb.capabilityKey.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
                           )}
                         </div>
                         <span className="text-xs font-mono text-muted-foreground shrink-0">Option {cb.chosenLabel}</span>
@@ -1788,7 +1797,7 @@ export default function AssessmentResultsPage() {
                               "text-[10px] font-medium px-2 py-0.5 rounded-full border",
                               (delta as number) >= 0 ? "bg-[#10B981]/10 text-emerald-600 border-emerald-200" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
                             )}>
-                              {sig.replace(/_/g, " ")} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
+                              {DOMAIN_LABELS[sig as keyof typeof DOMAIN_LABELS] ?? sig.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
                             </span>
                           ))}
                         </div>
