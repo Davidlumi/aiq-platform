@@ -501,9 +501,6 @@ export default function HRDashboard() {
         </div>
       </div>
 
-      {/* ── LLM Narrative ── */}
-      {narrative && <NarrativePanel narrative={narrative} />}
-
       {/* ── HERO KPI — single dominant number ── */}
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -553,6 +550,9 @@ export default function HRDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── LLM Narrative ── */}
+      {narrative && <NarrativePanel narrative={narrative} />}
 
       {/* ── Action Recommendations + Strengths/Development split ── */}
       <div className="grid lg:grid-cols-2 gap-4">

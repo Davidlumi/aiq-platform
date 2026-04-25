@@ -253,6 +253,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 key={d.key}
                 onClick={() => setDrillDomain(d.key)}
                 className="group text-left p-4 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all bg-white"
+                style={d.score !== null ? { borderLeftColor: scoreToColor(d.score).bg, borderLeftWidth: '4px' } : {}}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">

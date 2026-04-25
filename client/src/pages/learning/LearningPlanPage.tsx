@@ -565,22 +565,62 @@ export default function LearningPlanPage() {
 
       {/* ── My Path Tab ── */}
       {activeTab === "path" && (
-        <div className="space-y-2">
+        <div className="space-y-6">
           {items.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Your learning path is being prepared.</p>
             </div>
           ) : (
-            items.map((item: any, i: number) => (
-              <ModuleCard
-                key={item.id ?? i}
-                item={item}
-                index={i}
-                isNext={nextItem && item.id === nextItem.id}
-                onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
-              />
-            ))
+            (() => {
+              // Group items by capability domain, preserving order of first appearance
+              const capOrder: string[] = [];
+              const grouped = new Map<string, any[]>();
+              items.forEach((item: any) => {
+                const cap = item.module?.capability ?? "other";
+                if (!grouped.has(cap)) { grouped.set(cap, []); capOrder.push(cap); }
+                grouped.get(cap)!.push(item);
+              });
+              return capOrder.map((capKey) => {
+                const capItems = grouped.get(capKey)!;
+                const meta = CAPABILITY_META[capKey] ?? { label: capKey, color: "#888", icon: BookOpen };
+                const CapIcon = meta.icon;
+                const capCompleted = capItems.filter((i: any) => i.status === "completed").length;
+                const capTotal = capItems.length;
+                const capPct = capTotal > 0 ? Math.round((capCompleted / capTotal) * 100) : 0;
+                return (
+                  <div key={capKey}>
+                    {/* Capability group header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: `${meta.color}20` }}>
+                          <CapIcon className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground">{meta.label}</span>
+                        <span className="text-xs text-muted-foreground">{capCompleted}/{capTotal} modules</span>
+                      </div>
+                      <span className="text-xs font-semibold" style={{ color: meta.color }}>{capPct}%</span>
+                    </div>
+                    {/* Mini progress bar */}
+                    <div className="h-1 rounded-full bg-muted overflow-hidden mb-3">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${capPct}%`, backgroundColor: meta.color }} />
+                    </div>
+                    {/* Module cards */}
+                    <div className="space-y-2">
+                      {capItems.map((item: any, i: number) => (
+                        <ModuleCard
+                          key={item.id ?? i}
+                          item={item}
+                          index={items.indexOf(item)}
+                          isNext={!!(nextItem && item.id === nextItem.id)}
+                          onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              });
+            })()
           )}
         </div>
       )}

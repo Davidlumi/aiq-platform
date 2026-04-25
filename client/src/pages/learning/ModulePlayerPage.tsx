@@ -53,7 +53,12 @@ function buildProgressSteps(modality: string, body: any): ProgressStep[] {
   switch (modality) {
     case "tutorial": {
       const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
-      sections.forEach((s, i) => base.push({ id: `section_${i}`, label: s?.heading ?? `Section ${i + 1}`, sublabel: "Learn" }));
+      sections.forEach((s, i) => {
+        const full = s?.heading ?? `Section ${i + 1}`;
+        const words = full.split(' ');
+        const short = words.length > 3 ? words.slice(0, 3).join(' ') + '…' : full;
+        base.push({ id: `section_${i}`, label: short, sublabel: "Learn" });
+      });
       if (quizQuestions.length > 0) base.push({ id: "quiz", label: "Knowledge Check" });
       return base;
     }
@@ -94,7 +99,12 @@ function buildProgressSteps(modality: string, body: any): ProgressStep[] {
     case "coaching": {
       const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
       if (frameworkPhases.length > 0) {
-        frameworkPhases.forEach((fp: any, i: number) => base.push({ id: `phase_${i}`, label: fp?.phase ?? `Phase ${i + 1}`, sublabel: "Coaching" }));
+        frameworkPhases.forEach((fp: any, i: number) => {
+          const phaseLabel = fp?.phase ?? `Phase ${i + 1}`;
+          const words = phaseLabel.split(' ');
+          const short = words.length > 3 ? words.slice(0, 3).join(' ') + '…' : phaseLabel;
+          base.push({ id: `phase_${i}`, label: short, sublabel: "Coaching" });
+        });
       }
       rawPrompts.forEach((_, i) => base.push({ id: `reflect_${i}`, label: `Reflection ${i + 1}` }));
       return base;
@@ -1970,6 +1980,20 @@ export default function ModulePlayerPage() {
 
   const handleBack = () => setLocation("/learning");
 
+  // Derive progress steps from mod data (or use fallback when mod not yet loaded).
+  // IMPORTANT: hooks must be called unconditionally before any early returns.
+  const body = (() => {
+    if (!mod) return {};
+    try {
+      return typeof mod.bodyJson === "string" ? JSON.parse(mod.bodyJson as string) : (mod.bodyJson ?? {});
+    } catch { return {}; }
+  })();
+  const progressSteps = mod ? buildProgressSteps(mod.modality, body) : [{ id: "loading", label: "Loading" }];
+  const [currentProgressStep, setCurrentProgressStep] = useModuleProgress(
+    params.moduleId ?? "",
+    progressSteps.length
+  );
+
   if (isLoading) return <ModulePlayerSkeleton />;
 
   if (!mod) {
@@ -1988,18 +2012,6 @@ export default function ModulePlayerPage() {
   const modal = MODALITY_META[mod.modality] ?? { label: mod.modality, color: "#888", icon: BookOpen };
   const CapIcon = cap.icon;
   const ModalIcon = modal.icon;
-
-  const body = (() => {
-    try {
-      return typeof mod.bodyJson === "string" ? JSON.parse(mod.bodyJson as string) : (mod.bodyJson ?? {});
-    } catch { return {}; }
-  })();
-
-  const progressSteps = buildProgressSteps(mod.modality, body);
-  const [currentProgressStep, setCurrentProgressStep] = useModuleProgress(
-    params.moduleId ?? "",
-    progressSteps.length
-  );
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
@@ -2037,18 +2049,27 @@ export default function ModulePlayerPage() {
             {mod.subtitle && <p className="text-sm text-muted-foreground">{mod.subtitle}</p>}
           </div>
 
-          {/* LLM Personalised Context Panel */}
+              {/* Progress bar */}
+          <ModuleProgressBar
+            steps={progressSteps}
+            currentStepIdx={currentProgressStep}
+            completed={false}
+          />
+
+          {/* LLM Personalised Context Panel — collapsible, shown below progress bar */}
           {(personalisedLoading || personalised) && (
-            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">Personalised for you</span>
-                {personalisedLoading && <span className="text-xs text-muted-foreground animate-pulse ml-1">Generating…</span>}
-              </div>
+            <details className="group rounded-xl border border-border bg-muted/20 overflow-hidden">
+              <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none list-none">
+                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="text-sm font-semibold text-primary flex-1">Personalised for you</span>
+                {personalisedLoading && <span className="text-xs text-muted-foreground animate-pulse">Generating…</span>}
+                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="px-4 pb-4 space-y-2 border-t border-border">
               {personalised ? (
                 <>
                   {personalised.personalisedIntro && (
-                    <p className="text-sm text-slate-700 leading-relaxed">{personalised.personalisedIntro}</p>
+                    <p className="text-sm text-slate-700 leading-relaxed pt-3">{personalised.personalisedIntro}</p>
                   )}
                   {Array.isArray(personalised.contextualExamples) && (personalised.contextualExamples as string[]).length > 0 && (
                     <div className="space-y-1">
@@ -2068,20 +2089,14 @@ export default function ModulePlayerPage() {
                   )}
                 </>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 pt-3">
                   <div className="h-3 rounded bg-muted animate-pulse w-3/4" />
                   <div className="h-3 rounded bg-muted animate-pulse w-1/2" />
                 </div>
               )}
-            </div>
+              </div>
+            </details>
           )}
-
-          {/* Progress bar */}
-          <ModuleProgressBar
-            steps={progressSteps}
-            currentStepIdx={currentProgressStep}
-            completed={false}
-          />
 
           {/* Module content */}
           <div className="p-5 rounded-2xl border border-border bg-card">

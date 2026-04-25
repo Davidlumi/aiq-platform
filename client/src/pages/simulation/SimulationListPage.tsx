@@ -35,9 +35,15 @@ export default function SimulationListPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48" />)}
         </div>
       ) : !simulations || (simulations as any[]).length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
+        <div className="text-center py-16 border-2 border-dashed border-border rounded-xl px-6">
           <Layers className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No simulations available yet</p>
+          <p className="font-semibold text-foreground mb-1">No simulations available yet</p>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+            Simulations are unlocked after you complete your capability assessment. They give you a safe environment to practise real-world HR scenarios involving AI.
+          </p>
+          <a href="/assessment" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+            Start your assessment <span aria-hidden="true">→</span>
+          </a>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

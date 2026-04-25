@@ -1598,3 +1598,15 @@
 - [x] PDF-05: Team/Org Dashboard PDF — aggregate capability scores across team/org (admin)
 - [x] PDF-06: Capability Profile PDF — one-page summary of learner capability scores across all domains
 - [x] PDF-07: Wire up Download PDF buttons on all relevant pages
+
+## UX/UI Audit Improvements (Apr 2026)
+- [ ] UX-01: HR Function Dashboard — restructure into Hero/Insight/Detail zones with visual hierarchy
+- [ ] UX-02: Capability domain cards — colour-coded left-border accents (green/amber/red) by readiness status
+- [ ] UX-03: Learning plan — group modules by capability domain with collapsible sections and mini progress bars
+- [ ] UX-04: Progress bar step labels — shorten to 2-3 words max to prevent truncation
+- [ ] UX-05: Empty states — contextual guidance with action CTAs on Simulations, Content Library, Team Dashboard
+- [ ] UX-06: Sidebar — role-based filtering (hide ADMINISTRATION section from non-admin users)
+- [ ] UX-07: Assessment page — add View Results link on completed assessments, readiness band tooltips
+- [ ] UX-08: Reports page — stronger selected state, rename history tabs with dates
+- [ ] UX-09: Gap analysis table — replace broken dashes with contextual empty state message
+- [ ] UX-10: Module player — move personalised context panel below title and progress bar

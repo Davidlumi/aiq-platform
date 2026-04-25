@@ -55,11 +55,11 @@ const CAPABILITY_DOMAINS = [
 
 // ─── Readiness State Config ───────────────────────────────────────────────────
 
-const READINESS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  safe:    { label: "Safe to Deploy", color: "text-emerald-700",  bg: "bg-emerald-50 border-emerald-200", icon: CheckCircle2 },
-  at_risk: { label: "At Risk",        color: "text-amber-700",    bg: "bg-amber-50 border-amber-200",     icon: AlertTriangle },
-  unsafe:  { label: "Unsafe",         color: "text-red-700",      bg: "bg-red-50 border-red-200",         icon: ShieldAlert },
-  unknown: { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border", icon: HelpCircle },
+const READINESS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType; tooltip: string }> = {
+  safe:    { label: "Safe to Deploy", color: "text-emerald-700",  bg: "bg-emerald-50 border-emerald-200", icon: CheckCircle2, tooltip: "Score ≥ 7.5 — This person demonstrates strong AI capability across all domains and is ready to work effectively with AI tools in their role." },
+  at_risk: { label: "At Risk",        color: "text-amber-700",    bg: "bg-amber-50 border-amber-200",     icon: AlertTriangle, tooltip: "Score 5.0–7.4 — Some capability gaps exist. Targeted development is recommended before full AI deployment." },
+  unsafe:  { label: "Needs Development", color: "text-red-700",  bg: "bg-red-50 border-red-200",         icon: ShieldAlert, tooltip: "Score < 5.0 — Significant gaps in AI capability. A structured development programme is strongly recommended." },
+  unknown: { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border", icon: HelpCircle, tooltip: "No assessment completed yet." },
 };
 
 // ─── Session State Badge ──────────────────────────────────────────────────────
@@ -402,12 +402,19 @@ export default function AssessmentPage() {
                             >
                               {formatPeakonScore(overallScore / 10)}
                             </span>
-                            <p className={cn("text-[10px] font-medium mt-0.5 text-center", stateConfig.color)}>
+                            <p
+                              className={cn("text-[10px] font-medium mt-0.5 text-center cursor-help", stateConfig.color)}
+                              title={stateConfig.tooltip}
+                            >
                               {stateConfig.label}
                             </p>
                           </div>
                         )}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        {session.state === "completed" ? (
+                          <span className="text-xs font-medium text-primary whitespace-nowrap">View Results →</span>
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
                     </div>
                   </CardContent>

@@ -270,7 +270,7 @@ export default function LeaderDashboardV2() {
             {main.domainDistribution.map((dd: any) => {
               const total = dd.totalAssessed || 1;
               return (
-                <div key={dd.domain} className="flex items-center gap-3">
+                <div key={dd.domain} className="flex items-center gap-3 pl-2 border-l-4 rounded-sm" style={dd.avgScore !== null ? { borderLeftColor: scoreToColor(dd.avgScore).bg } : { borderLeftColor: '#e5e7eb' }}>
                   <div className="flex items-center gap-2 w-40 shrink-0">
                     <DomainDot domain={dd.domain} />
                     <span className="text-xs font-medium text-foreground truncate">{dd.domainName}</span>
