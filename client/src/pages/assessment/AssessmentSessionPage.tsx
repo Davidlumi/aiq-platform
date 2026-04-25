@@ -1432,6 +1432,12 @@ export default function AssessmentSessionPage() {
             ) : answeredCount + 1 === totalItems ? "Submit final answer" : "Next question"}
             {!submitMutation.isPending && <ChevronRight className="w-4 h-4" />}
           </Button>
+          {!submitMutation.isPending && selectedValue && (
+            <p className="text-center text-[11px] text-muted-foreground/55 flex items-center justify-center gap-1.5 mt-1">
+              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-border/50 bg-muted/40 font-mono text-[10px] leading-none">↵</kbd>
+              <span>Press Enter to continue</span>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

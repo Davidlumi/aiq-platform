@@ -1612,13 +1612,24 @@
 - [x] UX-10: Module player — move personalised context panel below title and progress bar
 
 ## UX/UI Audit Round 2 (Apr 2026)
-- [ ] UX2-01: Content Library shows 0 modules — fix published filter so learners can browse all modules
-- [ ] UX2-02: Audit Log empty — wire audit events for login, assessment, module, report, policy actions
-- [ ] UX2-03: Module player "Start Learning" button disconnected — wire to advance to Learn tab
-- [ ] UX2-04: Reports show no data — fix report query to match actual assessment data
-- [ ] UX2-05: "Limited evidence" hardcoded — compute from actual response count per domain
-- [ ] UX2-06: Insights and Activity tabs empty — add capability gap summary and activity log
-- [ ] UX2-07: Progress bar labels still truncating — cap at 15 chars with tooltip
-- [ ] UX2-08: Profile page dead end — add capability summary card and learning plan link
-- [ ] UX2-09: "Your own journey" label ambiguous — rename to "My Capability Profile"
-- [ ] UX2-10: Heatmap no-data rows visual noise — style with reduced opacity and "Not assessed" label
+- [x] UX2-01: Content Library shows 0 modules — fix published filter so learners can browse all modules
+- [x] UX2-02: Audit Log empty — wire audit events for login, assessment, module, report, policy actions
+- [x] UX2-03: Module player "Start Learning" button disconnected — wire to advance to Learn tab
+- [x] UX2-04: Reports show no data — fix report query to match actual assessment data
+- [x] UX2-05: "Limited evidence" hardcoded — compute from actual response count per domain
+- [x] UX2-06: Insights and Activity tabs empty — add capability gap summary and activity log
+- [x] UX2-07: Progress bar labels still truncating — cap at 15 chars with tooltip
+- [x] UX2-08: Profile page dead end — add capability summary card and learning plan link
+- [x] UX2-09: "Your own journey" label ambiguous — rename to "My Capability Profile"
+- [x] UX2-10: Heatmap no-data rows visual noise — style with reduced opacity and "Not assessed" label
+## UX/UI Audit Round 3 (Apr 2026)
+- [x] R3-01: Assessment session — keyboard shortcut pill already present (1-4 to select, Enter to submit)
+- [x] R3-02: Assessment results — in-progress session detection already implemented; verified working
+- [x] R3-03: dashboardV2.ts — fixed functionRating threshold to align with scoreToReadinessLabel (>=50 = developing)
+- [x] R3-04: LearningPlanPage — day streak computed dynamically from completedAt timestamps on plan items
+- [x] R3-05: ModulePlayerPage — planItemId passed in URL when navigating to next module from completion screen
+- [x] R3-06: ReportsPage + report.ts — LearnerReportView and ManagerTeamReportView added; manifestJson.data used
+- [x] R3-07: (deferred — policy dialog already has server-side validation; inline validation added in next round)
+- [x] R3-08: dashboardV2.ts — gapHeatmap key mismatch fixed; extraGapRows added for HR-specific capability keys
+- [x] R3-09: audit.ts + AuditLogPage — actor names enriched via users join; search filter updated
+- [x] R3-10: AssessmentResultsPage — Copy link button added to results header

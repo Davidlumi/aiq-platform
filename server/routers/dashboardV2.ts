@@ -318,9 +318,20 @@ const individualRouter = router({
         .limit(1);
       const gapData = latestGap[0]?.capabilityGapsJson as Record<string, any> | null;
 
+      // Build a flat lookup of all gap entries by capability key (gap analysis may use
+      // different key names than DOMAIN_KEYS, e.g. "execution" vs "ai_interaction")
+      const allGapEntries: Record<string, any> = {};
+      if (gapData) {
+        for (const [k, v] of Object.entries(gapData)) {
+          allGapEntries[k] = v;
+          // Also index by the "capability" field inside the entry if present
+          if (v?.capability && v.capability !== k) allGapEntries[v.capability] = v;
+        }
+      }
       const gapHeatmap = DOMAIN_KEYS.map(key => {
         const current = domainScores?.[key] ?? null;
-        const gapEntry = gapData?.[key];
+        // Try exact key first, then fall back to any entry whose capability field matches
+        const gapEntry = allGapEntries[key] ?? null;
         const target = gapEntry?.benchmark ?? null;
         const gap = current !== null && target !== null ? target - current : null;
         return {
@@ -331,6 +342,19 @@ const individualRouter = router({
           gapValue: gap !== null ? Math.round(gap) : null,
         };
       });
+      // Also include any gap entries that don't map to DOMAIN_KEYS (e.g. HR-specific keys)
+      const extraGapRows = Object.entries(allGapEntries)
+        .filter(([k]) => !DOMAIN_KEYS.includes(k as any) && allGapEntries[k]?.benchmark != null)
+        .map(([k, v]) => ({
+          domain: k,
+          domainName: v.label ?? k.replace(/_/g, " "),
+          currentScore: v.score != null ? Math.round(v.score) : null,
+          targetScore: Math.round(v.benchmark),
+          gapValue: v.gap != null ? Math.round(v.gap) : null,
+        }))
+        // Deduplicate
+        .filter((r, i, arr) => arr.findIndex(x => x.domain === r.domain) === i);
+      const fullGapHeatmap = [...gapHeatmap.filter(r => r.currentScore !== null || r.targetScore !== null), ...extraGapRows];
 
       // Learning plan summary
       const activePlan = await db
@@ -387,11 +411,11 @@ const individualRouter = router({
         confidenceBand: confidenceBand(latestConfidence),
         assessmentHistory,
         domains,
-        gapHeatmap,
+        gapHeatmap: fullGapHeatmap,
         planSummary,
         // For target line on score progress chart
-        roleTarget: gapData ? Math.round(
-          DOMAIN_KEYS.reduce((sum, k) => sum + (gapData[k]?.benchmark ?? 0), 0) / DOMAIN_KEYS.length
+        roleTarget: fullGapHeatmap.length > 0 ? Math.round(
+          fullGapHeatmap.reduce((sum, r) => sum + (r.targetScore ?? 0), 0) / fullGapHeatmap.filter(r => r.targetScore !== null).length
         ) : null,
         businessContext: null, // Will be populated when AI roadmap is implemented
       };
@@ -1327,7 +1351,7 @@ const leaderRouter = router({
     const functionScore = assessedCount > 0 ? Math.round(totalScore / assessedCount) : null;
     const functionRating = stateToRating(
       functionScore === null ? null :
-      functionScore >= 75 ? "safe" : functionScore >= 55 ? "at_risk" : functionScore >= 40 ? "unsafe" : "foundation_gap"
+      functionScore >= 75 ? "safe" : functionScore >= 50 ? "at_risk" : functionScore >= 30 ? "unsafe" : "foundation_gap"
     );
 
     // 90-day trajectory

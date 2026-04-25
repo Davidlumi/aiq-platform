@@ -115,6 +115,8 @@ export const reportRouter = router({
         expiresAt: expiresAt.toISOString(),
         recordCount: Array.isArray(reportData) ? reportData.length : 1,
         tenantId: ctx.user.tenantId,
+        // Include the actual report data so the frontend can render it
+        data: reportData,
       };
 
       // Store as JSON download URL (in production, upload to S3)

@@ -332,6 +332,32 @@ function InsightsTab() {
 
 function ActivityTab({ items }: { items: any[] }) {
   const completedItems = items.filter(i => i.status === "completed");
+  // R3-04: Compute day streak from completedAt timestamps
+  const dayStreak = (() => {
+    const dates = completedItems
+      .map((i: any) => i.completedAt)
+      .filter(Boolean)
+      .map((ts: number) => {
+        const d = new Date(ts);
+        return `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      });
+    const uniqueDays = Array.from(new Set(dates)).sort().reverse() as string[];
+    if (uniqueDays.length === 0) return 0;
+    const todayD = new Date();
+    const today = `${todayD.getFullYear()}-${String(todayD.getMonth()).padStart(2,'0')}-${String(todayD.getDate()).padStart(2,'0')}`;
+    const yesterdayD = new Date(Date.now() - 86400000);
+    const yesterday = `${yesterdayD.getFullYear()}-${String(yesterdayD.getMonth()).padStart(2,'0')}-${String(yesterdayD.getDate()).padStart(2,'0')}`;
+    if (uniqueDays[0] !== today && uniqueDays[0] !== yesterday) return 0;
+    let streak = 1;
+    for (let i = 1; i < uniqueDays.length; i++) {
+      const prev = new Date(uniqueDays[i - 1]);
+      const curr = new Date(uniqueDays[i]);
+      const diffDays = Math.round((prev.getTime() - curr.getTime()) / 86400000);
+      if (diffDays === 1) streak++;
+      else break;
+    }
+    return streak;
+  })();
   const totalXP = completedItems.reduce((acc: number, i: any) => {
     try {
       const s = typeof i.scoreJson === "string" ? JSON.parse(i.scoreJson) : (i.scoreJson ?? {});
@@ -349,7 +375,7 @@ function ActivityTab({ items }: { items: any[] }) {
         </div>
         <div className="p-4 rounded-xl border border-border bg-card text-center">
           <p className="text-2xl font-bold text-[#C8B07A] flex items-center justify-center gap-1">
-            <Flame className="h-5 w-5" />0
+            <Flame className="h-5 w-5" />{dayStreak}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Day streak</p>
         </div>

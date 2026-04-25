@@ -86,10 +86,10 @@ function AuditEntryRow({ log }: { log: any }) {
               </Badge>
             </div>
             <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
-              {log.actorUserId && (
-                <span className="flex items-center gap-1">
+              {((log as any).actorName || log.actorUserId) && (
+                <span className="flex items-center gap-1" title={log.actorUserId ?? undefined}>
                   <User className="w-3 h-3" />
-                  {log.actorUserId}
+                  {(log as any).actorName ?? log.actorUserId}
                 </span>
               )}
               {log.targetType && (
@@ -145,7 +145,7 @@ export default function AuditLogPage() {
   const logs = (data?.logs ?? []).filter((log: any) => {
     const matchSearch = !search ||
       log.action?.toLowerCase().includes(search.toLowerCase()) ||
-      log.actorUserId?.toLowerCase().includes(search.toLowerCase()) ||
+      (log.actorUserId?.toLowerCase().includes(search.toLowerCase()) || (log as any).actorName?.toLowerCase().includes(search.toLowerCase())) ||
       log.targetType?.toLowerCase().includes(search.toLowerCase());
     const matchCategory = categoryFilter === "all" || getEventCategory(log.action) === categoryFilter;
     return matchSearch && matchCategory;

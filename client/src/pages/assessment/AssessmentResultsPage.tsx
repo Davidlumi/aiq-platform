@@ -51,6 +51,7 @@ import {
   BarChart2,
   Users,
   Globe,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
@@ -612,17 +613,43 @@ export default function AssessmentResultsPage() {
   }
 
   if (error || !data?.score) {
+    const sessionState = (data as any)?.session?.state;
+    const isInProgress = sessionState === "in_progress" || (!error && !data?.score && data?.session);
     return (
-      <div className="p-6 text-center max-w-2xl">
-        <ShieldAlert className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-lg font-semibold text-foreground">Results not available</h2>
-        <p className="text-muted-foreground text-sm mt-2 mb-6">
-          {error ? error.message : "This session has not been completed yet or results are still processing."}
-        </p>
-        <Button onClick={() => navigate("/assessment")} variant="outline">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Assessments
-        </Button>
+      <div className="p-6 text-center max-w-2xl mx-auto">
+        {isInProgress ? (
+          <>
+            <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center mx-auto mb-4">
+              <RotateCcw className="w-7 h-7 text-amber-500" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Assessment in progress</h2>
+            <p className="text-muted-foreground text-sm mt-2 mb-6">
+              This assessment hasn't been completed yet. Results will appear here once you submit your final answer.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={() => navigate(`/assessment/${sessionId}`)} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Resume Assessment
+              </Button>
+              <Button onClick={() => navigate("/assessment")} variant="outline" className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Assessments
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <ShieldAlert className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-foreground">Results not available</h2>
+            <p className="text-muted-foreground text-sm mt-2 mb-6">
+              {error ? error.message : "This session has not been completed yet or results are still processing."}
+            </p>
+            <Button onClick={() => navigate("/assessment")} variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Assessments
+            </Button>
+          </>
+        )}
       </div>
     );
   }
@@ -687,13 +714,27 @@ export default function AssessmentResultsPage() {
   return (
     <div className="p-6 space-y-6 max-w-3xl">
       {/* Back nav */}
-      <button
-        onClick={() => navigate("/assessment")}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        Back to Assessments
-      </button>
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate("/assessment")}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Assessments
+        </button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied to clipboard");
+          }}
+        >
+          <Link2 className="w-3.5 h-3.5" />
+          Copy link
+        </Button>
+      </div>
 
       {/* Header */}
       <div>

@@ -268,8 +268,125 @@ function SmallFunctionView({ data }: { data: any }) {
   );
 }
 
+function LearnerReportView({ data }: { data: any }) {
+  const state = data?.state;
+  const cred = data?.credibility;
+  const risk = data?.risk;
+  const sessions = data?.assessmentHistory ?? [];
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Readiness State", value: state?.readinessState ?? "—", color: "text-foreground" },
+          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#228833]" : "text-[#F59E0B]" },
+          { label: "Assessments", value: sessions.length, color: "text-primary" },
+        ].map(m => (
+          <Card key={m.label} className="border-border">
+            <CardContent className="pt-4 text-center">
+              <p className={cn("text-lg font-bold capitalize", m.color)}>{m.value}</p>
+              <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      {(cred || risk) && (
+        <div className="grid grid-cols-2 gap-3">
+          {cred && (
+            <Card className="border-border">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Credibility</p>
+                <p className="text-sm font-bold text-foreground capitalize">{cred.credibilityState ?? "—"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Score: {cred.credibilityScore != null ? Math.round(Number(cred.credibilityScore)) : "—"}</p>
+              </CardContent>
+            </Card>
+          )}
+          {risk && (
+            <Card className="border-border">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Risk</p>
+                <p className="text-sm font-bold text-foreground capitalize">{risk.riskState ?? "—"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Score: {risk.riskScore != null ? Math.round(Number(risk.riskScore)) : "—"}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+      {sessions.length > 0 && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-left px-3 py-2 text-muted-foreground font-medium">Session</th>
+                <th className="text-left px-3 py-2 text-muted-foreground font-medium">Completed</th>
+                <th className="text-center px-3 py-2 text-muted-foreground font-medium">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s: any, i: number) => (
+                <tr key={s.id ?? i} className="border-t border-border">
+                  <td className="px-3 py-2 font-mono text-muted-foreground">{(s.id ?? "").slice(0, 12)}…</td>
+                  <td className="px-3 py-2 text-foreground">{s.completedAt ? new Date(s.completedAt).toLocaleDateString() : "—"}</td>
+                  <td className="px-3 py-2 text-center"><StatusBadge state={s.state} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ManagerTeamReportView({ data }: { data: any }) {
+  const members: any[] = Array.isArray(data) ? data : [];
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Total Members", value: members.length, color: "text-foreground" },
+          { label: "Compliant", value: members.filter(m => m.state?.complianceState === "compliant").length, color: "text-[#228833]" },
+          { label: "At Risk", value: members.filter(m => m.state?.complianceState === "at_risk").length, color: "text-[#F59E0B]" },
+        ].map(m => (
+          <Card key={m.label} className="border-border">
+            <CardContent className="pt-4 text-center">
+              <p className={cn("text-2xl font-bold", m.color)}>{m.value}</p>
+              <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      {members.length > 0 && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-left px-3 py-2 text-muted-foreground font-medium">Name</th>
+                <th className="text-left px-3 py-2 text-muted-foreground font-medium">Email</th>
+                <th className="text-center px-3 py-2 text-muted-foreground font-medium">Readiness</th>
+                <th className="text-center px-3 py-2 text-muted-foreground font-medium">Compliance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m: any) => (
+                <tr key={m.id} className="border-t border-border">
+                  <td className="px-3 py-2 text-foreground">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{m.email ?? "—"}</td>
+                  <td className="px-3 py-2 text-center"><StatusBadge state={m.state?.readinessState} /></td>
+                  <td className="px-3 py-2 text-center"><StatusBadge state={m.state?.complianceState} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReportDataView({ job }: { job: any }) {
-  const data = job.manifestJson;
+  const manifest = job.manifestJson;
+  // New reports store actual data in manifest.data; older ones may have it at top level
+  const data = manifest?.data ?? manifest;
   if (!data) return (
     <div className="text-center py-12">
       <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -278,6 +395,8 @@ function ReportDataView({ job }: { job: any }) {
     </div>
   );
   switch (job.reportType) {
+    case "learner_report": return <LearnerReportView data={data} />;
+    case "manager_team_report": return <ManagerTeamReportView data={data} />;
     case "dual_audience_narrative": return <DualAudienceNarrativeView data={data} />;
     case "capability_requirement_fit": return <CapabilityFitView data={data} />;
     case "trajectory_report": return <TrajectoryView data={data} />;

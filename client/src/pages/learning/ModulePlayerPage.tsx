@@ -1867,7 +1867,7 @@ function CompletionScreen({
               </div>
             </div>
           </div>
-          <Button size="sm" className="w-full gap-1.5" onClick={() => setLocation(`/learning/module/${nextModule.moduleId}`)}>
+          <Button size="sm" className="w-full gap-1.5" onClick={() => setLocation(`/learning/module/${nextModule.moduleId}${nextModule.planItemId ? `?planItemId=${nextModule.planItemId}` : ''}`)}>
             Start Next Module<ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>

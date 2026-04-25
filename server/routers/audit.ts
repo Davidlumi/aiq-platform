@@ -2,8 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb, getUserRoleKeys } from "../db";
-import { auditLogs, events, adminOverrides, policyEvaluations } from "../../drizzle/schema";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { auditLogs, events, adminOverrides, policyEvaluations, users } from "../../drizzle/schema";
+import { eq, and, desc, gte, lte, inArray } from "drizzle-orm";
 
 export const auditRouter = router({
   // Get audit log (auditor, admin, hr_leader)
@@ -42,7 +42,22 @@ export const auditRouter = router({
         .limit(input.pageSize)
         .offset(offset);
 
-      return { logs, page: input.page, pageSize: input.pageSize };
+      // Enrich with actor names
+      const actorIds = Array.from(new Set(logs.map(l => l.actorUserId).filter(Boolean))) as string[];
+      const actorUsers = actorIds.length > 0
+        ? await db.select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+            .from(users).where(inArray(users.id, actorIds))
+        : [];
+      const actorMap: Record<string, string> = {};
+      for (const u of actorUsers) {
+        actorMap[u.id] = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.id;
+      }
+      const enrichedLogs = logs.map(l => ({
+        ...l,
+        actorName: l.actorUserId ? (actorMap[l.actorUserId] ?? l.actorUserId) : null,
+      }));
+
+      return { logs: enrichedLogs, page: input.page, pageSize: input.pageSize };
     }),
 
   // Get events stream
