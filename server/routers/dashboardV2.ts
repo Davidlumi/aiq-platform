@@ -70,16 +70,29 @@ function extractDomainRatings(breakdown: unknown): Record<DomainKey, { score: nu
   const bd = breakdown as Record<string, unknown>;
   const cap = bd.capabilityScores;
   if (!cap || typeof cap !== "object") return null;
+  // totalAnswers at top level is used as a proxy for evidence depth
+  const totalAnswers = Number(bd.totalAnswers) || 0;
   const result = {} as Record<DomainKey, { score: number; band: string; signalCount: number }>;
   for (const key of DOMAIN_KEYS) {
     const entry = (cap as Record<string, unknown>)[key];
-    if (entry && typeof entry === "object") {
-      const e = entry as Record<string, unknown>;
-      result[key] = {
-        score: Number(e.score) || 0,
-        band: (e.band as string) ?? "needs_work",
-        signalCount: Number(e.signalCount) || 0,
-      };
+    if (entry !== undefined && entry !== null) {
+      if (typeof entry === "object") {
+        // Rich object format: { score, band, signalCount }
+        const e = entry as Record<string, unknown>;
+        result[key] = {
+          score: Number(e.score) || 0,
+          band: (e.band as string) ?? "needs_work",
+          signalCount: Number(e.signalCount) || totalAnswers,
+        };
+      } else {
+        // Plain number format: score is the value directly
+        const score = Number(entry) || 0;
+        result[key] = {
+          score,
+          band: score >= 70 ? "good" : score >= 50 ? "developing" : "needs_work",
+          signalCount: totalAnswers,
+        };
+      }
     } else {
       result[key] = { score: 0, band: "needs_work", signalCount: 0 };
     }

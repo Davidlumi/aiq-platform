@@ -148,7 +148,7 @@ export default function ManagerDashboardV2() {
         <Link href="/dashboard/personal">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs">
             <UserCircle className="w-3.5 h-3.5" />
-            Your own journey
+            My Capability Profile
           </Button>
         </Link>
       </header>
@@ -263,10 +263,12 @@ export default function ManagerDashboardV2() {
                   </td>
                 </tr>
               ) : (
-                filteredHeatmap.map(member => (
+                filteredHeatmap.map(member => {
+                  const hasData = member.overallScore != null;
+                  return (
                   <tr
                     key={member.id}
-                    className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50 cursor-pointer transition-colors"
+                    className={`border-b border-neutral-100 last:border-0 hover:bg-neutral-50 cursor-pointer transition-colors ${!hasData ? 'opacity-50' : ''}`}
                     onClick={() => setSelectedMember(member.id)}
                   >
                     <td className="py-2.5 pr-4">
@@ -275,9 +277,11 @@ export default function ManagerDashboardV2() {
                           {member.name?.split(' ')[0]?.[0]}{member.name?.split(' ')[1]?.[0]}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate max-w-[130px]">{member.name}</p>
-                          {member.rating && (
+                          <p className={`font-medium truncate max-w-[130px] ${!hasData ? 'text-muted-foreground italic' : 'text-foreground'}`}>{member.name}</p>
+                          {member.rating ? (
                             <p className="text-[10px] text-muted-foreground">{RATING_LABELS[member.rating] ?? member.rating}</p>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground/60">Not yet assessed</p>
                           )}
                         </div>
                       </div>
@@ -317,7 +321,8 @@ export default function ManagerDashboardV2() {
                       <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -167,7 +167,7 @@ export default function LeaderDashboardV2() {
           <Link href="/dashboard/personal">
             <Button variant="outline" size="sm" className="gap-1.5 text-xs">
               <UserCircle className="w-3.5 h-3.5" />
-              Your own journey
+              My Capability Profile
             </Button>
           </Link>
         </div>

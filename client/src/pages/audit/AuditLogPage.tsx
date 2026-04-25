@@ -140,7 +140,7 @@ function AuditEntryRow({ log }: { log: any }) {
 export default function AuditLogPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const { data, isLoading } = trpc.audit.logs.useQuery({ page: 1, pageSize: 200 });
+  const { data, isLoading, error } = trpc.audit.logs.useQuery({ page: 1, pageSize: 200 });
 
   const logs = (data?.logs ?? []).filter((log: any) => {
     const matchSearch = !search ||
@@ -158,6 +158,19 @@ export default function AuditLogPage() {
     return acc;
   }, {} as Record<string, number>);
 
+  if (error?.data?.code === 'FORBIDDEN') {
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Shield className="w-12 h-12 text-muted-foreground mb-4" />
+          <h2 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            The audit log is only accessible to HR Leaders, Tenant Admins, and Auditors. Contact your administrator to request access.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header */}

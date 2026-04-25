@@ -58,21 +58,16 @@ function formatDuration(seconds: number): string | null {
 
 function ContentCard({ item }: { item: any }) {
   const [, navigate] = useLocation();
-  const duration = formatDuration(item.durationSeconds);
-  const modality = MODALITY_CONFIG[item.contentType] ?? { label: item.contentType, color: "#9CA3AF" };
+  // learning_modules uses durationMins and modality fields
+  const durationMins = item.durationMins ?? Math.round((item.durationSeconds ?? 0) / 60);
+  const duration = durationMins > 0 ? `${durationMins} min` : "";
+  const modality = MODALITY_CONFIG[item.modality ?? item.contentType] ?? { label: item.modality ?? item.contentType ?? "Module", color: "#9CA3AF" };
 
-  // Parse capability from metadata
-  let capabilityArea = "";
-  try {
-    const meta = typeof item.metadataJson === "string"
-      ? JSON.parse(item.metadataJson)
-      : (item.metadataJson ?? {});
-    capabilityArea = meta.capability_area ?? (meta.target_capabilities_list ?? [])[0] ?? "";
-  } catch {}
-
+  // capability comes directly from the learning_modules.capability field
+  const capabilityArea = item.capability ?? "";
   const capColor = CAPABILITY_COLORS[capabilityArea?.toLowerCase()] ?? "#9CA3AF";
-  const isCompleted = !!item.progress?.completedAt;
-  const progressPct = item.progress?.progressPct ?? 0;
+  const isCompleted = false; // progress tracked separately via learning plan
+  const progressPct = 0;
 
   return (
     <Card
@@ -178,8 +173,8 @@ export default function ContentLibraryPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [capabilityFilter, setCapabilityFilter] = useState("all");
 
-  const { data, isLoading } = trpc.learning.contentLibrary.useQuery({
-    contentType: typeFilter === "all" ? undefined : typeFilter,
+  const { data, isLoading } = trpc.adaptiveLearning.listModules.useQuery({
+    modality: typeFilter === "all" ? undefined : typeFilter,
     pageSize: 200,
   });
 
@@ -188,22 +183,11 @@ export default function ContentLibraryPage() {
   // Client-side filtering for search and capability
   const filtered = items.filter((item: any) => {
     if (search && !item.title?.toLowerCase().includes(search.toLowerCase())) return false;
-
-    if (capabilityFilter !== "all") {
-      let capabilityArea = "";
-      try {
-        const meta = typeof item.metadataJson === "string"
-          ? JSON.parse(item.metadataJson)
-          : (item.metadataJson ?? {});
-        capabilityArea = (meta.capability_area ?? (meta.target_capabilities_list ?? [])[0] ?? "").toLowerCase();
-      } catch {}
-      if (!capabilityArea.includes(capabilityFilter)) return false;
-    }
-
+    if (capabilityFilter !== "all" && item.capability !== capabilityFilter) return false;
     return true;
   });
 
-  const completedCount = items.filter((i: any) => i.progress?.completedAt).length;
+  const completedCount = 0; // progress tracked separately via learning plan
 
   return (
     <div className="p-6 space-y-6 max-w-6xl">

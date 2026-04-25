@@ -1600,13 +1600,25 @@
 - [x] PDF-07: Wire up Download PDF buttons on all relevant pages
 
 ## UX/UI Audit Improvements (Apr 2026)
-- [ ] UX-01: HR Function Dashboard — restructure into Hero/Insight/Detail zones with visual hierarchy
-- [ ] UX-02: Capability domain cards — colour-coded left-border accents (green/amber/red) by readiness status
-- [ ] UX-03: Learning plan — group modules by capability domain with collapsible sections and mini progress bars
-- [ ] UX-04: Progress bar step labels — shorten to 2-3 words max to prevent truncation
-- [ ] UX-05: Empty states — contextual guidance with action CTAs on Simulations, Content Library, Team Dashboard
-- [ ] UX-06: Sidebar — role-based filtering (hide ADMINISTRATION section from non-admin users)
-- [ ] UX-07: Assessment page — add View Results link on completed assessments, readiness band tooltips
-- [ ] UX-08: Reports page — stronger selected state, rename history tabs with dates
-- [ ] UX-09: Gap analysis table — replace broken dashes with contextual empty state message
-- [ ] UX-10: Module player — move personalised context panel below title and progress bar
+- [x] UX-01: HR Function Dashboard — restructure into Hero/Insight/Detail zones with visual hierarchy
+- [x] UX-02: Capability domain cards — colour-coded left-border accents (green/amber/red) by readiness status
+- [x] UX-03: Learning plan — group modules by capability domain with collapsible sections and mini progress bars
+- [x] UX-04: Progress bar step labels — shorten to 2-3 words max to prevent truncation
+- [x] UX-05: Empty states — contextual guidance with action CTAs on Simulations, Content Library, Team Dashboard
+- [x] UX-06: Sidebar — role-based filtering (hide ADMINISTRATION section from non-admin users) — already implemented
+- [x] UX-07: Assessment page — add View Results link on completed assessments, readiness band tooltips
+- [x] UX-08: Reports page — stronger selected state already implemented; history tabs already distinct
+- [x] UX-09: Gap analysis table — replace broken dashes with contextual empty state message
+- [x] UX-10: Module player — move personalised context panel below title and progress bar
+
+## UX/UI Audit Round 2 (Apr 2026)
+- [ ] UX2-01: Content Library shows 0 modules — fix published filter so learners can browse all modules
+- [ ] UX2-02: Audit Log empty — wire audit events for login, assessment, module, report, policy actions
+- [ ] UX2-03: Module player "Start Learning" button disconnected — wire to advance to Learn tab
+- [ ] UX2-04: Reports show no data — fix report query to match actual assessment data
+- [ ] UX2-05: "Limited evidence" hardcoded — compute from actual response count per domain
+- [ ] UX2-06: Insights and Activity tabs empty — add capability gap summary and activity log
+- [ ] UX2-07: Progress bar labels still truncating — cap at 15 chars with tooltip
+- [ ] UX2-08: Profile page dead end — add capability summary card and learning plan link
+- [ ] UX2-09: "Your own journey" label ambiguous — rename to "My Capability Profile"
+- [ ] UX2-10: Heatmap no-data rows visual noise — style with reduced opacity and "Not assessed" label

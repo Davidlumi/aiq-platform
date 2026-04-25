@@ -269,7 +269,7 @@ function SmallFunctionView({ data }: { data: any }) {
 }
 
 function ReportDataView({ job }: { job: any }) {
-  const data = job.dataJson;
+  const data = job.manifestJson;
   if (!data) return (
     <div className="text-center py-12">
       <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -436,7 +436,7 @@ export default function ReportsPage() {
                         </Badge>
                         <button
                           onClick={() => {
-                            const blob = new Blob([JSON.stringify(activeJob.dataJson, null, 2)], { type: "application/json" });
+                            const blob = new Blob([JSON.stringify(activeJob.manifestJson, null, 2)], { type: "application/json" });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");
                             a.href = url;

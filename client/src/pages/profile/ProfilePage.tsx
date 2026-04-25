@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { User, Shield, Lock, Loader2, CheckCircle2, Clock } from "lucide-react";
+import { User, Shield, Lock, Loader2, CheckCircle2, Clock, BarChart3, BookOpen, ClipboardList, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import { ProfileHeaderSkeleton, CardSkeleton } from "@/components/ui/loading";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -270,6 +271,60 @@ export default function ProfilePage() {
             {changePasswordMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Update Password
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Quick Navigation */}
+      <Card className="aiq-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-[#10B981]" />
+            Your AiQ Journey
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Link href="/dashboard/personal">
+            <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#10B981]/10 flex items-center justify-center">
+                  <BarChart3 className="h-4 w-4 text-[#10B981]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Capability Profile</p>
+                  <p className="text-xs text-muted-foreground">View your AI readiness scores</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </Link>
+          <Link href="/learning">
+            <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#4477AA]/10 flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-[#4477AA]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Learning Plan</p>
+                  <p className="text-xs text-muted-foreground">Continue your personalised modules</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </Link>
+          <Link href="/assessment">
+            <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#AA3377]/10 flex items-center justify-center">
+                  <ClipboardList className="h-4 w-4 text-[#AA3377]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Assessment</p>
+                  <p className="text-xs text-muted-foreground">Take or retake your capability assessment</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </Link>
         </CardContent>
       </Card>
 
