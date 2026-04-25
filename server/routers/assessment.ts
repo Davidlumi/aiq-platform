@@ -2039,6 +2039,86 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         scenarioCallbacks.push({ itemId: answer.itemId, scenarioText, chosenLabel, chosenText, outcomeClass, revealText: OUTCOME_REVEAL[outcomeClass] ?? OUTCOME_REVEAL.weak, capabilityKey, signalDeltas: deltas });
       }
 
+      // ── Competence-Confidence Matrix (Area9 Lyceum 4-Dimensional Model) ────
+      // Compute per-domain competence (score) and confidence (avg self-reported)
+      // to place each domain in one of 4 quadrants:
+      //   Q1: Unconscious Incompetence (low competence, high confidence) — BLIND SPOT
+      //   Q2: Conscious Incompetence (low competence, low confidence)
+      //   Q3: Conscious Competence (high competence, low confidence)
+      //   Q4: Unconscious Competence (high competence, high confidence) — MASTERY
+      const domainAnswerMap: Record<string, Array<{ confidence: number; outcomeClass: string }>> = {};
+      // Build per-domain answer map by joining answers to items
+      for (const answer of allAnswers) {
+        if (answer.confidenceScore === null || answer.outcomeClass === null) continue;
+        // Find the capability_key for this answer's item from scenarioCallbacks or item metadata
+        const cb = scenarioCallbacks.find(sc => sc.itemId === answer.itemId);
+        const capKey = cb?.capabilityKey;
+        if (!capKey) continue;
+        if (!domainAnswerMap[capKey]) domainAnswerMap[capKey] = [];
+        domainAnswerMap[capKey].push({
+          confidence: parseFloat(String(answer.confidenceScore ?? 0.5)),
+          outcomeClass: answer.outcomeClass ?? "weak",
+        });
+      }
+      // Also process answers not in scenarioCallbacks (which only has top 5)
+      const itemCapCache: Record<string, string> = {};
+      for (const sc of scenarioCallbacks) { itemCapCache[sc.itemId] = sc.capabilityKey; }
+      for (const answer of allAnswers) {
+        if (answer.confidenceScore === null || answer.outcomeClass === null) continue;
+        if (itemCapCache[answer.itemId]) continue; // already processed via scenarioCallbacks
+        // Fetch from item metadata
+        const itemRow = await db.select({ metadataJson: assessmentItems.metadataJson }).from(assessmentItems).where(eq(assessmentItems.id, answer.itemId)).limit(1);
+        if (!itemRow[0]) continue;
+        const meta = (typeof itemRow[0].metadataJson === "string" ? JSON.parse(itemRow[0].metadataJson as string) : (itemRow[0].metadataJson ?? {})) as Record<string, unknown>;
+        const capKey = (meta.capability_key as string) ?? "";
+        if (!capKey) continue;
+        itemCapCache[answer.itemId] = capKey;
+        if (!domainAnswerMap[capKey]) domainAnswerMap[capKey] = [];
+        domainAnswerMap[capKey].push({
+          confidence: parseFloat(String(answer.confidenceScore ?? 0.5)),
+          outcomeClass: answer.outcomeClass ?? "weak",
+        });
+      }
+      type QuadrantLabel = "unconscious_incompetence" | "conscious_incompetence" | "conscious_competence" | "unconscious_competence";
+      const QUADRANT_DISPLAY: Record<QuadrantLabel, { label: string; description: string; risk: "critical" | "developing" | "proficient" | "mastery" }> = {
+        unconscious_incompetence: { label: "Blind Spot", description: "High confidence but low competence — the most dangerous state. You don't know what you don't know.", risk: "critical" },
+        conscious_incompetence: { label: "Aware Gap", description: "Low confidence and low competence — you recognise the gap. This is a healthy starting point for learning.", risk: "developing" },
+        conscious_competence: { label: "Developing", description: "High competence but low confidence — you can do it but doubt yourself. Practice will build automaticity.", risk: "proficient" },
+        unconscious_competence: { label: "Mastery", description: "High confidence and high competence — this capability is second nature.", risk: "mastery" },
+      };
+      const competenceConfidenceMatrix: Array<{
+        domain: string; displayName: string; colour: string;
+        competenceScore: number; avgConfidence: number;
+        quadrant: QuadrantLabel; quadrantLabel: string; quadrantDescription: string;
+        risk: string; answerCount: number;
+      }> = [];
+      const COMPETENCE_THRESHOLD = 55; // score threshold for "competent"
+      const CONFIDENCE_THRESHOLD = 0.55; // confidence threshold for "confident"
+      for (const [domain, answers] of Object.entries(domainAnswerMap)) {
+        if (answers.length < 2) continue; // need minimum evidence
+        const competenceScore = enrichedCapScores[domain]?.score ?? 0;
+        const avgConf = answers.reduce((s, a) => s + a.confidence, 0) / answers.length;
+        const isCompetent = competenceScore >= COMPETENCE_THRESHOLD;
+        const isConfident = avgConf >= CONFIDENCE_THRESHOLD;
+        const quadrant: QuadrantLabel = !isCompetent && isConfident ? "unconscious_incompetence"
+          : !isCompetent && !isConfident ? "conscious_incompetence"
+          : isCompetent && !isConfident ? "conscious_competence"
+          : "unconscious_competence";
+        const qInfo = QUADRANT_DISPLAY[quadrant];
+        competenceConfidenceMatrix.push({
+          domain, displayName: enrichedCapScores[domain]?.displayName ?? domain,
+          colour: enrichedCapScores[domain]?.colour ?? "#4477AA",
+          competenceScore: Math.round(competenceScore),
+          avgConfidence: Math.round(avgConf * 100),
+          quadrant, quadrantLabel: qInfo.label, quadrantDescription: qInfo.description,
+          risk: qInfo.risk, answerCount: answers.length,
+        });
+      }
+      // ── Blind Spots (Metacognitive Feedback) ────────────────────────────────
+      const blindSpots = competenceConfidenceMatrix
+        .filter(d => d.quadrant === "unconscious_incompetence")
+        .sort((a, b) => b.avgConfidence - a.avgConfidence); // most overconfident first
+
       // ── Confidence calibration ─────────────────────────────────────────────
       const calibrationPoints = allAnswers
         .filter(a => a.confidenceScore !== null && a.outcomeClass !== null)
@@ -2078,6 +2158,8 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         longitudinalData: longitudinalData.filter(Boolean),
         scenarioCallbacks,
         confidenceCalibration,
+        competenceConfidenceMatrix,
+        blindSpots,
       };
     }),
   // ── Get user's assessment history ──────────────────────────────────────────

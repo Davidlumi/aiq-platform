@@ -1493,6 +1493,43 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
     }),
 
   // ─── Trending modules (most completed in last 30 days across platform) ───────
+  // ─── Post-completion: suggest next module ──────────────────────────────────
+  getNextModuleSuggestion: protectedProcedure
+    .input(z.object({ completedModuleId: z.string(), capability: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const userId = ctx.user.id;
+      // Get next available plan items, excluding the just-completed module
+      const nextItems = await db.select({
+        planItemId: adaptivePlanItems.id,
+        moduleId: adaptivePlanItems.moduleId,
+        phase: adaptivePlanItems.phase,
+        title: learningModules.title,
+        capability: learningModules.capability,
+        modality: learningModules.modality,
+        difficulty: learningModules.difficulty,
+        levelLabel: learningModules.levelLabel,
+        durationMins: learningModules.durationMins,
+        subtitle: learningModules.subtitle,
+      })
+        .from(adaptivePlanItems)
+        .leftJoin(learningModules, eq(adaptivePlanItems.moduleId, learningModules.id))
+        .leftJoin(adaptiveLearningPlans, eq(adaptivePlanItems.planId, adaptiveLearningPlans.id))
+        .where(and(
+          eq(adaptiveLearningPlans.userId, userId),
+          eq(adaptiveLearningPlans.state, "active"),
+          eq(adaptivePlanItems.status, "available"),
+          ne(adaptivePlanItems.moduleId, input.completedModuleId),
+        ))
+        .orderBy(asc(adaptivePlanItems.orderIndex))
+        .limit(3);
+      if (nextItems.length === 0) return null;
+      // Prefer same capability first, then any
+      const sameCap = nextItems.find(i => i.capability === input.capability);
+      return sameCap ?? nextItems[0];
+    }),
+
   getTrendingModules: protectedProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();

@@ -728,6 +728,10 @@ export default function AssessmentResultsPage() {
             <Zap className="w-3.5 h-3.5" />
             Calibration
           </TabsTrigger>
+          <TabsTrigger value="metacognition" className="gap-1.5 text-xs">
+            <Globe className="w-3.5 h-3.5" />
+            Metacognition
+          </TabsTrigger>
         </TabsList>
 
         {/* ══════════════════════════════════════════════════════════════════════
@@ -1856,6 +1860,226 @@ export default function AssessmentResultsPage() {
                       Confidence calibration measures whether your certainty levels matched the actual quality of your decisions. 
                       A well-calibrated professional is certain when they are right and uncertain when they are wrong — this is a 
                       distinct metacognitive skill that predicts real-world AI decision quality.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+        </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════════════
+            TAB 7: METACOGNITION — Competence-Confidence Matrix & Blind Spots
+            Based on Area9 Lyceum's 4-Dimensional Learning Model
+            ══════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="metacognition" className="space-y-6">
+          {(() => {
+            const matrix = ((data as any).competenceConfidenceMatrix ?? []) as Array<{
+              domain: string; displayName: string; colour: string;
+              competenceScore: number; avgConfidence: number;
+              quadrant: string; quadrantLabel: string; quadrantDescription: string;
+              risk: string; answerCount: number;
+            }>;
+            const blindSpotsList = ((data as any).blindSpots ?? []) as typeof matrix;
+
+            if (matrix.length === 0) {
+              return (
+                <Card className="border-border">
+                  <CardContent className="p-8 text-center">
+                    <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Metacognitive analysis requires confidence data per answer. Complete an assessment with confidence staking enabled to see this analysis.</p>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            const QUADRANT_COLOURS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+              unconscious_incompetence: { bg: "bg-red-500/10", border: "border-red-500/30", text: "text-red-600", dot: "#EF4444" },
+              conscious_incompetence: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-600", dot: "#F59E0B" },
+              conscious_competence: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-600", dot: "#3B82F6" },
+              unconscious_competence: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-600", dot: "#10B981" },
+            };
+
+            return (
+              <div className="space-y-6">
+                {/* Section header */}
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">Competence-Confidence Matrix</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Based on Area9 Lyceum's 4-Dimensional Learning Model. Each capability domain is placed in one of four quadrants
+                    based on your actual competence (assessment score) and your self-reported confidence.
+                  </p>
+                </div>
+
+                {/* 2x2 Matrix Visualisation */}
+                <Card className="border-border">
+                  <CardContent className="p-6">
+                    <div className="relative w-full" style={{ aspectRatio: "1.4/1", minHeight: 320 }}>
+                      {/* Axis labels */}
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ transformOrigin: "center" }}>
+                        Confidence →
+                      </div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-medium text-muted-foreground">
+                        Competence →
+                      </div>
+
+                      {/* Grid */}
+                      <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
+                        {/* Q1: Top-left = Low competence, High confidence = Blind Spot */}
+                        <div className="bg-red-500/5 border border-red-500/20 rounded-tl-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-red-500/70 uppercase tracking-wider">Blind Spot</span>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, low competence</p>
+                        </div>
+                        {/* Q4: Top-right = High competence, High confidence = Mastery */}
+                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-tr-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-emerald-500/70 uppercase tracking-wider">Mastery</span>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">High confidence, high competence</p>
+                        </div>
+                        {/* Q2: Bottom-left = Low competence, Low confidence = Aware Gap */}
+                        <div className="bg-amber-500/5 border border-amber-500/20 rounded-bl-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-amber-500/70 uppercase tracking-wider">Aware Gap</span>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">Low confidence, low competence</p>
+                        </div>
+                        {/* Q3: Bottom-right = High competence, Low confidence = Developing */}
+                        <div className="bg-blue-500/5 border border-blue-500/20 rounded-br-lg p-3 relative">
+                          <span className="text-[10px] font-semibold text-blue-500/70 uppercase tracking-wider">Developing</span>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">Low confidence, high competence</p>
+                        </div>
+
+                        {/* Plot domain dots */}
+                        {matrix.map((d) => {
+                          // Map competence (0-100) to x% within the grid (0=left, 100=right)
+                          const x = Math.max(5, Math.min(95, d.competenceScore));
+                          // Map confidence (0-100) to y% within the grid (0=bottom, 100=top)
+                          const y = Math.max(5, Math.min(95, 100 - d.avgConfidence));
+                          const qc = QUADRANT_COLOURS[d.quadrant] ?? QUADRANT_COLOURS.conscious_competence;
+                          return (
+                            <UITooltip key={d.domain}>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="absolute z-10 w-8 h-8 rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                                  style={{
+                                    left: `${x}%`,
+                                    top: `${y}%`,
+                                    transform: "translate(-50%, -50%)",
+                                    backgroundColor: qc.dot,
+                                  }}
+                                >
+                                  <span className="text-[8px] font-bold text-white">{d.competenceScore}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p className="font-semibold text-sm">{d.displayName}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Competence: {d.competenceScore}/100 · Confidence: {d.avgConfidence}%
+                                </p>
+                                <p className="text-xs mt-1">
+                                  <span className={cn("font-medium", qc.text)}>{d.quadrantLabel}</span>
+                                  {" "}— {d.quadrantDescription}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-1">Based on {d.answerCount} answers</p>
+                              </TooltipContent>
+                            </UITooltip>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Domain cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {matrix.map((d) => {
+                    const qc = QUADRANT_COLOURS[d.quadrant] ?? QUADRANT_COLOURS.conscious_competence;
+                    return (
+                      <Card key={d.domain} className={cn("border", qc.border, qc.bg)}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground">{d.displayName}</h4>
+                              <span className={cn("text-xs font-medium", qc.text)}>{d.quadrantLabel}</span>
+                            </div>
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: d.colour + "20" }}>
+                              <span className="text-xs font-bold" style={{ color: d.colour }}>{d.competenceScore}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2 mt-3">
+                            <div>
+                              <div className="flex justify-between text-[11px] mb-0.5">
+                                <span className="text-muted-foreground">Competence</span>
+                                <span className="font-medium text-foreground">{d.competenceScore}/100</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${d.competenceScore}%`, backgroundColor: d.colour }} />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex justify-between text-[11px] mb-0.5">
+                                <span className="text-muted-foreground">Confidence</span>
+                                <span className="font-medium text-foreground">{d.avgConfidence}%</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${d.avgConfidence}%`, backgroundColor: qc.dot }} />
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-2">{d.quadrantDescription}</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* Blind Spots Alert */}
+                {blindSpotsList.length > 0 && (
+                  <Card className="border-red-500/30 bg-red-500/5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-red-500" />
+                        <span className="text-red-600">Blind Spots Detected</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        These domains show high confidence but low competence — the most dangerous metacognitive state.
+                        You may be making AI-related decisions in these areas without recognising the risks.
+                      </p>
+                      {blindSpotsList.map((bs) => (
+                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">{bs.displayName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Score: {bs.competenceScore}/100 but confidence: {bs.avgConfidence}% —
+                              {" "}a {bs.avgConfidence - bs.competenceScore > 20 ? "significant" : "notable"} gap between
+                              what you think you know and what the assessment revealed.
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">What to do:</span> Blind spots require deliberate practice with feedback.
+                          Your learning plan will prioritise these domains. Focus on scenarios where you must evaluate AI outputs critically
+                          rather than accepting them at face value.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Interpretation guide */}
+                <Card className="border-border bg-muted/30">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-semibold text-foreground mb-2">About the Competence-Confidence Matrix</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This analysis is based on Area9 Lyceum's 4-Dimensional Learning Model, which maps learners across
+                      competence (what you can actually do) and confidence (what you think you can do). The most productive
+                      learning happens when you move from "Blind Spot" (unconscious incompetence) to "Aware Gap" (conscious
+                      incompetence) — recognising what you don't know is the first step to building genuine capability.
+                      The goal is to reach "Mastery" (unconscious competence) where correct behaviour is automatic.
                     </p>
                   </CardContent>
                 </Card>

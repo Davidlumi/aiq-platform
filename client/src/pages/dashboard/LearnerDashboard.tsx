@@ -336,6 +336,71 @@ function TransferFindingsPanel() {
   );
 }
 
+// ─── Competence-Confidence Matrix Widget ────────────────────────────────────
+function CompetenceConfidenceWidget() {
+  const { data: results, isLoading } = trpc.assessment.results.useQuery(
+    { sessionId: undefined as any },
+    { retry: 1, staleTime: 5 * 60_000 }
+  );
+  if (isLoading) return (
+    <Card className="border-border"><CardContent className="pt-5"><Skeleton className="h-24 w-full" /></CardContent></Card>
+  );
+  const matrix = results?.competenceConfidenceMatrix;
+  const blindSpots = results?.blindSpots;
+  if (!matrix || matrix.length === 0) return null;
+
+  const QUADRANT_META = {
+    competent_confident:     { label: "Competent & Confident",      color: "#10B981", bg: "#10B98115", dot: "bg-emerald-500" },
+    competent_underconfident:{ label: "Competent, Underconfident",   color: "#3B82F6", bg: "#3B82F615", dot: "bg-blue-500" },
+    incompetent_overconfident:{ label: "Blind Spot",                 color: "#DC2626", bg: "#DC262615", dot: "bg-red-500" },
+    incompetent_unconfident: { label: "Developing",                  color: "#F59E0B", bg: "#F59E0B15", dot: "bg-amber-500" },
+  } as const;
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Target className="w-4 h-4 text-[#8B5CF6]" />Competence vs. Confidence
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">How your self-assessment aligns with your demonstrated capability</p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {matrix.map((item: { domain: string; displayName: string; colour: string; competenceScore: number; avgConfidence: number; quadrant: string; quadrantLabel: string }) => {
+            const meta = QUADRANT_META[item.quadrant as keyof typeof QUADRANT_META] ?? QUADRANT_META.incompetent_unconfident;
+            const capMeta = CAP_META[item.domain] ?? { label: item.displayName, shortLabel: item.displayName };
+            return (
+              <div key={item.domain} className="rounded-lg border border-border p-2.5 space-y-1" style={{ background: meta.bg }}>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${meta.dot}`} />
+                  <span className="text-[11px] font-medium text-foreground truncate">{capMeta.shortLabel ?? item.displayName}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-snug">{item.quadrantLabel}</p>
+              </div>
+            );
+          })}
+        </div>
+        {blindSpots && blindSpots.length > 0 && (
+          <div className="rounded-lg border border-red-700/30 bg-red-950/20 p-3 flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-red-400">Blind spot detected</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                You rated yourself highly in {blindSpots.map((b: { domain: string; displayName: string }) => CAP_META[b.domain]?.shortLabel ?? b.displayName).join(", ")} but scored below threshold. Your learning plan has been adjusted.
+              </p>
+            </div>
+          </div>
+        )}
+        <Link href="/assessment/results">
+          <Button size="sm" variant="outline" className="w-full text-xs gap-1.5">
+            <BarChart3 className="w-3 h-3" />View Full Metacognition Report
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function LearnerDashboard() {
   const { user } = useAuth();
@@ -439,6 +504,11 @@ export default function LearnerDashboard() {
           <CapabilityRadarCard scores={capScores} />
           <ScenarioCallbacksCard callbacks={data?.scenarioCallbacks ?? []} />
         </div>
+      )}
+
+      {/* ── Competence-Confidence Matrix (compact) ── */}
+      {hasAssessment && capScores && (
+        <CompetenceConfidenceWidget />
       )}
 
       {/* ── LLM narrative ── */}

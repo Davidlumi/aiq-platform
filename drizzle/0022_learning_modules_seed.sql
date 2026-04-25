@@ -1298,3 +1298,56 @@ INSERT INTO learning_modules (id, `key`, title, subtitle, capability, modality, 
   1777035192155
 );
 
+
+-- ─── Additional ai_ethics_trust foundation modules (AL-03 content coverage) ───
+INSERT INTO learning_modules (id, `key`, title, subtitle, capability, modality, difficulty, level_label, duration_mins, estimated_reading_mins, status, body_json, metadata_json, created_at, updated_at) VALUES (
+  'c1a2b3d4-e5f6-4789-abcd-ef0123456789',
+  'ai-eth-tut-03',
+  'AI Bias, Fairness and Protected Characteristics',
+  'Understand how algorithmic bias emerges in HR AI systems and your legal and ethical obligations to prevent discriminatory outcomes.',
+  'ai_ethics_trust',
+  'tutorial',
+  1,
+  'Foundation',
+  15,
+  10,
+  'published',
+  '{"overview":"Covers AI bias and fairness within AI Ethics & Employee Trust. Understand how algorithmic bias emerges in HR AI systems.","objectives":["Define algorithmic bias and explain how it arises in HR AI tools","Identify protected characteristics at risk in AI-assisted recruitment","Apply a fairness checklist before deploying any AI HR tool","Understand the legal landscape: Equality Act 2010, GDPR Article 22"],"sections":[{"title":"What is Algorithmic Bias?","content":"Algorithmic bias occurs when an AI system produces systematically prejudiced results due to flawed assumptions in training data. In HR, this can mean AI recruitment tools that favour certain demographics or performance systems that penalise protected groups.","examples":["An AI CV screener trained on historical hires may learn to deprioritise female candidates for technical roles"],"tips":["Always ask: what data was this model trained on?","Request bias audits from AI vendors before procurement"]},{"title":"Legal Obligations","content":"Under the Equality Act 2010, employers remain liable for discriminatory outcomes even when produced by automated systems. GDPR Article 22 gives employees the right not to be subject to solely automated decisions with significant effects.","examples":[],"tips":["Document every AI-assisted decision that affects employment","Ensure a named human is accountable for each AI HR tool"]}],"reflectionPrompts":["Think of an AI tool currently used in your organisation. What protected characteristics could be at risk?"],"citations":["CIPD (2024) AI and People Management: Ethical Principles","ICO (2023) Explaining Decisions Made with AI"],"keyTakeaways":["Algorithmic bias is a legal and reputational risk","HR leaders must demand bias audits and maintain human oversight"]}',
+  '{"roleRelevance":["all_hr_roles"],"prerequisites":[],"tags":["tutorial","ai_ethics_trust","bias","fairness","foundation"],"researchBasis":"CIPD AI Ethics guidance, ICO Explaining AI Decisions, Equality Act 2010"}',
+  1777035192155,
+  1777035192155
+);
+INSERT INTO learning_modules (id, `key`, title, subtitle, capability, modality, difficulty, level_label, duration_mins, estimated_reading_mins, status, body_json, metadata_json, created_at, updated_at) VALUES (
+  'd2e3f4a5-b6c7-4890-bcde-f01234567890',
+  'ai-eth-prac-03',
+  'Conducting an AI Ethics Impact Assessment',
+  'Step-by-step practical guide to running an AI Ethics Impact Assessment before deploying any AI tool that affects employees.',
+  'ai_ethics_trust',
+  'practical',
+  1,
+  'Foundation',
+  20,
+  8,
+  'published',
+  '{"overview":"Guides you through conducting an AI Ethics Impact Assessment (AIEIA) — evaluating ethical risks before deploying AI tools that affect employees.","objectives":["Complete a structured AIEIA for a real or hypothetical HR AI tool","Identify key risk dimensions: bias, transparency, consent, data minimisation, human oversight","Produce a one-page ethics summary for senior leadership"],"sections":[{"title":"The AIEIA Framework","content":"An AIEIA evaluates five dimensions: (1) Fairness — equitable outcomes across protected groups? (2) Transparency — can decisions be explained? (3) Consent — do employees know AI is being used? (4) Data minimisation — only necessary data used? (5) Human oversight — named human accountable?","examples":["Before deploying an AI interview scoring tool, HR discovers the vendor cannot explain how scores are computed — deployment paused"],"tips":["Use the CIPD AI Ethics Checklist as your starting framework","Involve employee representatives in the assessment"]},{"title":"Practical Exercise","content":"Choose one AI tool in your organisation. Work through each AIEIA dimension and record findings. Identify top two risks and propose mitigations.","examples":[],"tips":["Be honest about gaps — an incomplete assessment is more useful than a superficial one"]}],"reflectionPrompts":["What was the most surprising risk you identified?","How would you present findings to a sceptical CFO?"],"citations":["CIPD (2024) Responsible AI in HR: A Practical Guide","Alan Turing Institute (2023) Understanding AI Ethics and Safety"],"keyTakeaways":["An AIEIA is a structured, repeatable process","Five dimensions: fairness, transparency, consent, data minimisation, human oversight"]}',
+  '{"roleRelevance":["all_hr_roles"],"prerequisites":[],"tags":["practical","ai_ethics_trust","impact_assessment","foundation"],"researchBasis":"CIPD Responsible AI in HR, Alan Turing Institute AI Ethics"}',
+  1777035192155,
+  1777035192155
+);
+INSERT INTO learning_modules (id, `key`, title, subtitle, capability, modality, difficulty, level_label, duration_mins, estimated_reading_mins, status, body_json, metadata_json, created_at, updated_at) VALUES (
+  'e3f4a5b6-c7d8-4901-cdef-012345678901',
+  'ai-eth-scn-03',
+  'Scenario: The Biased Recruitment Algorithm',
+  'Your organisation''s AI recruitment tool has flagged a potential bias issue. Navigate the ethical, legal, and communication decisions.',
+  'ai_ethics_trust',
+  'scenario',
+  1,
+  'Foundation',
+  15,
+  5,
+  'published',
+  '{"overview":"You are an HR Business Partner who has received a complaint that the AI recruitment screening tool is systematically downgrading candidates from certain postcodes. Work through the ethical, legal, and communication decisions.","objectives":["Apply the AIEIA framework to a live incident","Navigate tension between speed-to-hire pressure and ethical obligation","Communicate transparently with affected candidates and senior leadership","Decide when to pause, remediate, or discontinue an AI tool"],"sections":[{"title":"The Situation","content":"Your organisation deployed an AI CV screening tool 6 months ago. A hiring manager has noticed candidates from certain postcodes are being systematically downgraded, even when qualifications are equivalent. The tool vendor says the model is working as designed.","examples":[],"tips":["Postcode data can be a proxy for ethnicity, socioeconomic background, and disability — all protected characteristics under the Equality Act 2010"]},{"title":"Decision Points","content":"Three immediate decisions: (1) Pause the tool or continue while investigating? (2) Who to inform — legal, CEO, employee representatives? (3) How to communicate with candidates who may have been unfairly screened out?","examples":[],"tips":["When in doubt, pause — cost of delayed hire is lower than cost of a discrimination claim","Document every decision and reasoning"]}],"reflectionPrompts":["What would you do first in the next 24 hours?","What would you say to a candidate who asks why they were rejected?"],"citations":["CIPD (2024) AI and People Management: Ethical Principles","EHRC (2023) AI and Equality"],"keyTakeaways":["Postcode data is a common proxy for protected characteristics","When bias is suspected, pause first and investigate","Transparent communication with affected candidates is both ethical and legally prudent"]}',
+  '{"roleRelevance":["all_hr_roles"],"prerequisites":[],"tags":["scenario","ai_ethics_trust","bias","recruitment","foundation"],"researchBasis":"CIPD AI Ethics guidance, EHRC AI and Equality report"}',
+  1777035192155,
+  1777035192155
+);

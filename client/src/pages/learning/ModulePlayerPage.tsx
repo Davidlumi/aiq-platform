@@ -767,33 +767,97 @@ function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: nu
 // ─── Completion Screen ────────────────────────────────────────────────────────
 
 function CompletionScreen({
-  score, title, onContinue, onReportNoTransfer, noTransferResult,
+  score, title, capability, moduleId, onContinue, onReportNoTransfer, noTransferResult,
 }: {
   score: number;
   title: string;
+  capability: string;
+  moduleId: string;
   onContinue: () => void;
   onReportNoTransfer?: (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => void;
   noTransferResult?: { alternativeTitle: string | null; alternativeModality: string | null; message: string } | null;
 }) {
   const [showNoTransferPrompt, setShowNoTransferPrompt] = useState(false);
+  const [, setLocation] = useLocation();
+  const { data: nextModule } = trpc.adaptiveLearning.getNextModuleSuggestion.useQuery(
+    { completedModuleId: moduleId, capability },
+    { enabled: !!moduleId, staleTime: 0 }
+  );
+  const cap = CAPABILITY_META[capability] ?? { label: capability, color: "#888", icon: BookOpen };
+  const CapIcon = cap.icon;
+  const xpEarned = score >= 80 ? 100 : score >= 60 ? 70 : 40;
+  const reviewDays = score >= 80 ? 7 : score >= 60 ? 3 : 1;
   return (
-    <div className="text-center py-8 space-y-4">
-      <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
-        <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+    <div className="py-6 space-y-5 max-w-lg mx-auto">
+      {/* Hero completion banner */}
+      <div className="text-center space-y-3">
+        <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center mx-auto">
+          <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Module Complete!</h2>
+          <p className="text-sm text-muted-foreground">{title}</p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-xl font-bold mb-1">Module Complete!</h2>
-        <p className="text-sm text-muted-foreground">{title}</p>
+      {/* Score + XP + review row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+          <p className="text-2xl font-bold text-emerald-400">{score}%</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Score</p>
+        </div>
+        <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+          <p className="text-2xl font-bold text-amber-400">+{xpEarned}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">XP earned</p>
+        </div>
+        <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+          <p className="text-2xl font-bold text-primary">{reviewDays}d</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Next review</p>
+        </div>
       </div>
-      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-950/30 border border-emerald-700/30">
-        <Star className="h-4 w-4 text-amber-400" />
-        <span className="font-semibold text-emerald-300">{score}% score</span>
+      {/* Capability context */}
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/10">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
+          <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground">Capability domain</p>
+          <p className="text-sm font-medium truncate">{cap.label}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Spaced repetition</p>
+          <p className="text-xs font-medium text-emerald-400">Scheduled ✓</p>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {score >= 80 ? "Excellent work! This module is scheduled for review in 7 days." :
-         score >= 60 ? "Good effort! Review scheduled in 3 days." :
-         "Keep practising — review scheduled for tomorrow."}
-      </p>
+      {/* Next module suggestion */}
+      {nextModule && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wide">Up next in your plan</p>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <ChevronRight className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-snug">{nextModule.title}</p>
+              {nextModule.subtitle && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{nextModule.subtitle}</p>}
+              <div className="flex gap-2 mt-1.5">
+                {nextModule.modality && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground capitalize">{nextModule.modality?.replace("_", " ")}</span>
+                )}
+                {nextModule.durationMins && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">{nextModule.durationMins} min</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="w-full gap-1.5"
+            onClick={() => setLocation(`/learning/module/${nextModule.moduleId}`)}
+          >
+            Start Next Module<ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
 
       {/* No-transfer disclosure */}
       {noTransferResult ? (
@@ -1029,6 +1093,8 @@ export default function ModulePlayerPage() {
           <CompletionScreen
             score={finalScore}
             title={mod.title}
+            capability={mod.capability}
+            moduleId={params.moduleId ?? ""}
             onContinue={handleBack}
             onReportNoTransfer={planItemId ? handleNoTransfer : undefined}
             noTransferResult={noTransferResult}
