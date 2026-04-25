@@ -1773,7 +1773,7 @@
 - [x] PR-07: Frontend — Manager Dashboard: add "View full report" link on each team member card navigating to `/people/:userId`
 - [x] PR-08: Frontend — Leader Dashboard: link from team breakdown cards to `/people/:userId`
 - [x] PR-09: Frontend — AppShell: add "People" nav item in Governance section for leaders and admins
-- [ ] PR-10: Frontend — scope guard on MemberReportPage so managers can only view their direct reports
+- [x] PR-10: Frontend scope guard on MemberReportPage — 403 from backend surfaces as 'Access Restricted' with clear message for managers
 
 ## People Reports — Leader & Manager Individual Report Access
 
@@ -1786,4 +1786,3 @@
 - [x] PR-07: Frontend — Manager Dashboard: View full report links on team member cards
 - [x] PR-08: Frontend — Leader Dashboard: links from team breakdown to /people/:userId
 - [x] PR-09: Frontend — AppShell: People nav item for leaders and admins
-- [ ] PR-10: Frontend — scope guard on MemberReportPage for manager access

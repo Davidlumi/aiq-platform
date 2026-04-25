@@ -101,15 +101,22 @@ export default function MemberReportPage() {
   );
 
   if (error) {
+    const isForbidden = error.data?.code === "FORBIDDEN" || error.data?.httpStatus === 403;
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-6">
         <AlertTriangle className="w-10 h-10 text-[#EE6677]" />
-        <p className="text-lg font-semibold">Access Denied</p>
-        <p className="text-sm text-muted-foreground max-w-xs">{error.message}</p>
+        <p className="text-lg font-semibold">
+          {isForbidden ? "Access Restricted" : "Report Unavailable"}
+        </p>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          {isForbidden
+            ? "You can only view reports for your direct reports. Contact your HR leader for access to this profile."
+            : error.message}
+        </p>
         <Link href="/people">
           <Button variant="outline" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to People
+            {isForbidden ? "Back to My Team" : "Back to People"}
           </Button>
         </Link>
       </div>
