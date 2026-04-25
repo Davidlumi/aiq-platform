@@ -1749,3 +1749,15 @@
 - [x] QA10-08: MarketingPage nav links use hardcoded `text-slate-300 hover:text-white` — replace with semantic tokens
 - [x] QA10-09: AssessmentContentPage StatsBar "Workflow Domains" shows 0 when no scenarios exist — add empty state fallback
 - [x] QA10-10: IndividualDashboardV2 empty state "Start Assessment" link verified correct — mark as confirmed
+
+## AI Readiness → Business Ambition Linkage — Round 11 (Apr 2026)
+- [x] BA-01: LeaderDashboardV2 — "Readiness vs Ambition" hero banner: show org-level readiness score vs a configurable ambition target (from OrgContext), with a gap indicator and plain-English verdict ("Your function is 2.1 points below the capability level needed to deliver your AI strategy")
+- [x] BA-02: LeaderDashboardV2 Strategic Alignment card — add per-priority "Readiness Gap" progress bars showing current score vs required score for each strategic priority, with colour-coded gap magnitude
+- [x] BA-03: IndividualDashboardV2 — "Your role in the AI strategy" panel: show the user's top 2 capability gaps mapped to the org's strategic priorities (e.g. "Your AI Ethics score affects the organisation's priority: Responsible AI Deployment")
+- [x] BA-04: AssessmentResultsPage — "Business Impact" section in the Summary tab: translate each capability score into a plain-English business consequence (e.g. "Your AI Output Evaluation score of 4.2 means you may accept AI-generated content without sufficient critical review — a risk in regulated environments")
+- [x] BA-05: OrgContextPage — add "Ambition Target" field: a numeric readiness target (0–10 Peakon scale) the organisation is aiming for, with a target date; stored in ail_org_context; used by BA-01 and BA-02
+- [x] BA-06: LeaderDashboardV2 — "Capability-to-Outcome" table: a new card mapping each of the 6 capability domains to 2–3 concrete business outcomes (e.g. AI Workflow Design → "Faster process automation, reduced manual effort"), with current domain score and RAG status
+- [x] BA-07: LearningPlanPage — "Why this matters for your organisation" banner: pull the org's top strategic priority from OrgContext and show how the user's current plan addresses it (e.g. "Your plan targets AI Ethics & Trust — directly supporting your org's priority: Responsible AI Governance")
+- [x] BA-08: ManagerDashboardV2 — "Team Ambition Gap" card: show the team's aggregate readiness score vs the org ambition target, with a count of team members who are above/below target and a recommended action
+- [x] BA-09: AssessmentResultsPage — "Strategic Fit Score" in the Summary tab: a single computed score (0–10) showing how well the user's capability profile matches the org's stated strategic priorities, with a brief explanation of which priorities they are most/least aligned to
+- [x] BA-10: AppShell sidebar — add "AI Strategy" nav item (under "govern" section) linking to a new AiStrategyPage that shows the org's ambition target, current readiness, gap by domain, and a 3-step action plan generated from the data

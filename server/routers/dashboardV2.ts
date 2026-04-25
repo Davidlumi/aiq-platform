@@ -1982,6 +1982,132 @@ const leaderRouter = router({
 
     return { teams };
   }),
+
+  /** BA-01/BA-02: Readiness vs Ambition gap — org-level and per-priority */
+  ambitionGap: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const orgCtxRows = await db.select().from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const orgCtx = orgCtxRows[0] ?? null;
+
+    const ambitionTargetScore: number | null = (orgCtx as any)?.ambitionTargetScore ?? null;
+    const ambitionTargetDate: string | null = (orgCtx as any)?.ambitionTargetDate ?? null;
+    const ambitionTargetLabel: string | null = (orgCtx as any)?.ambitionTargetLabel ?? null;
+    const strategicPriorities: string[] = (() => {
+      try { return JSON.parse(orgCtx?.strategicPrioritiesJson ?? "[]") as string[]; } catch { return []; }
+    })();
+
+    const rfFilter = input?.roleFamily ?? null;
+    const allUsers = await db
+      .select({
+        id: users.id,
+        scoreBreakdownJson: assessmentScores.scoreBreakdownJson,
+        overallScore: assessmentScores.overallScore,
+        completedAt: assessmentSessions.completedAt,
+      })
+      .from(users)
+      .innerJoin(assessmentSessions, and(
+        eq(assessmentSessions.userId, users.id),
+        eq(assessmentSessions.tenantId, users.tenantId),
+        eq(assessmentSessions.state, "completed"),
+      ))
+      .innerJoin(assessmentScores, eq(assessmentScores.sessionId, assessmentSessions.id))
+      .where(and(
+        eq(users.tenantId, ctx.user.tenantId),
+        rfFilter ? eq(users.roleFamily, rfFilter) : undefined,
+      ))
+      .orderBy(desc(assessmentSessions.completedAt));
+
+    const seenUsers = new Set<string>();
+    const userData: { id: string; overallScore: number; domainScores: Record<DomainKey, number> }[] = [];
+    for (const u of allUsers) {
+      if (seenUsers.has(u.id)) continue;
+      seenUsers.add(u.id);
+      const domainScores: Record<DomainKey, number> = {} as any;
+      try {
+        const raw = u.scoreBreakdownJson; const breakdown = typeof raw === 'string' ? JSON.parse(raw) : (raw ?? {});
+        const caps = (breakdown as any).capabilityScores ?? breakdown; for (const dk of DOMAIN_KEYS) domainScores[dk] = (caps as any)[dk] ?? 50;
+      } catch { for (const dk of DOMAIN_KEYS) domainScores[dk] = 50; }
+      if (u.overallScore !== null) userData.push({ id: u.id, overallScore: parseFloat(String(u.overallScore)), domainScores });
+    }
+
+    const assessedCount = userData.length;
+    const functionAvgRaw = assessedCount > 0
+      ? Math.round(userData.reduce((s, u) => s + u.overallScore, 0) / assessedCount)
+      : null;
+
+    const domainAvgs: Record<DomainKey, number | null> = {} as any;
+    for (const dk of DOMAIN_KEYS) {
+      const vals = userData.map(u => u.domainScores[dk]);
+      domainAvgs[dk] = vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+    }
+
+    const gapRaw = (functionAvgRaw !== null && ambitionTargetScore !== null)
+      ? ambitionTargetScore - functionAvgRaw : null;
+
+    let verdict: "on_track" | "gap" | "exceeds" | "no_target" = "no_target";
+    if (gapRaw !== null) {
+      if (gapRaw <= 0) verdict = "exceeds";
+      else if (gapRaw <= 10) verdict = "on_track";
+      else verdict = "gap";
+    }
+
+    const PRIORITY_DOMAIN_MAP: Record<string, DomainKey[]> = {
+      recruit: ["ai_interaction", "ai_output_evaluation"], hiring: ["ai_interaction", "ai_output_evaluation"],
+      screening: ["ai_interaction", "ai_output_evaluation"], automat: ["ai_workflow_design", "ai_interaction"],
+      workflow: ["ai_workflow_design"], process: ["ai_workflow_design", "ai_interaction"],
+      ethic: ["ai_ethics_trust"], trust: ["ai_ethics_trust"], bias: ["ai_ethics_trust", "ai_output_evaluation"],
+      fairness: ["ai_ethics_trust"], governance: ["ai_ethics_trust", "ai_change_leadership"],
+      compliance: ["ai_ethics_trust"], regulat: ["ai_ethics_trust"],
+      transform: ["ai_change_leadership", "workforce_ai_readiness"], change: ["ai_change_leadership"],
+      adopt: ["ai_change_leadership", "workforce_ai_readiness"], train: ["workforce_ai_readiness", "ai_interaction"],
+      learn: ["workforce_ai_readiness"], upskill: ["workforce_ai_readiness", "ai_interaction"],
+      reskill: ["workforce_ai_readiness"], talent: ["workforce_ai_readiness", "ai_interaction"],
+      analytic: ["ai_output_evaluation", "ai_workflow_design"], data: ["ai_output_evaluation", "ai_workflow_design"],
+      decision: ["ai_output_evaluation"], output: ["ai_output_evaluation"], quality: ["ai_output_evaluation"],
+      evaluat: ["ai_output_evaluation"], leader: ["ai_change_leadership"],
+      strateg: ["ai_change_leadership", "workforce_ai_readiness"],
+      innovat: ["ai_workflow_design", "ai_change_leadership"], productiv: ["ai_workflow_design", "ai_interaction"],
+      efficien: ["ai_workflow_design"],
+    };
+    function mapPriorityToDomains2(priority: string): DomainKey[] {
+      const lower = priority.toLowerCase();
+      const matched = new Set<DomainKey>();
+      for (const [keyword, domains] of Object.entries(PRIORITY_DOMAIN_MAP)) {
+        if (lower.includes(keyword)) for (const d of domains) matched.add(d);
+      }
+      if (matched.size === 0) return [...DOMAIN_KEYS].slice(0, 3);
+      return Array.from(matched);
+    }
+
+    const priorityGaps = strategicPriorities.map((p, idx) => {
+      const relevantDomains = mapPriorityToDomains2(p);
+      const domainDetails = relevantDomains.map(dk => ({
+        domain: dk, domainName: DOMAIN_LABELS[dk], currentScore: domainAvgs[dk], colour: DOMAIN_COLOURS[dk],
+      }));
+      const scoredDomains = domainDetails.filter(d => d.currentScore !== null);
+      const avgCurrentScore = scoredDomains.length > 0
+        ? Math.round(scoredDomains.reduce((s, d) => s + (d.currentScore ?? 0), 0) / scoredDomains.length) : null;
+      const requiredScore = ambitionTargetScore;
+      const gap = (avgCurrentScore !== null && requiredScore !== null) ? requiredScore - avgCurrentScore : null;
+      const status: "aligned" | "partial" | "gap" | "unknown" =
+        gap === null ? "unknown" : gap <= 0 ? "aligned" : gap <= 15 ? "partial" : "gap";
+      return { priority: p, index: idx, relevantDomains: domainDetails, avgCurrentScore, requiredScore, gap, status };
+    });
+
+    return {
+      configured: ambitionTargetScore !== null,
+      ambitionTargetScore, ambitionTargetDate, ambitionTargetLabel,
+      functionAvgRaw, gapRaw, verdict, assessedCount, priorityGaps,
+    };
+  }),
 });
 
 // ─── Export combined router ──────────────────────────────────────────────────

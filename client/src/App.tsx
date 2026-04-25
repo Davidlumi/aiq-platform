@@ -20,6 +20,7 @@ import AppShell from "./components/AppShell";
 import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
 import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
+import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
 // Legacy dashboards (admin/auditor fallback)
 import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
@@ -136,6 +137,9 @@ function Router() {
       </Route>
       <Route path="/reports">
         <ProtectedRoute component={ReportsPage} />
+      </Route>
+      <Route path="/ai-strategy">
+        <ProtectedRoute component={AIStrategyPage} />
       </Route>
       <Route path="/audit">
         <ProtectedRoute component={AuditLogPage} />

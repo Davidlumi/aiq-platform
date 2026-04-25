@@ -83,6 +83,11 @@ export default function ManagerDashboardV2() {
   const { data, isLoading } = trpc.dashboardV2.manager.main.useQuery();
   const { data: prompts, isLoading: promptsLoading } = trpc.dashboardV2.manager.conversationPrompts.useQuery();
   const { data: devOverview, isLoading: devLoading } = trpc.dashboardV2.manager.developmentOverview.useQuery();
+  // BA-08: Org ambition gap for team context
+  const { data: ambitionGap } = (trpc.dashboardV2.leader.ambitionGap as any).useQuery(undefined, {
+    retry: false,
+    onError: () => {},
+  });
 
   // Team average score
   const teamAvgScore = useMemo(() => {
@@ -428,6 +433,63 @@ export default function ManagerDashboardV2() {
         )}
       </DashboardCard>
 
+      {/* BA-08: Team vs Ambition Target */}
+      {ambitionGap && ambitionGap.configured && teamAvgScore !== null && (
+        <DashboardCard
+          title="Team vs ambition target"
+          subtitle="How your team's average readiness compares to the organisation's AI ambition"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                  {(teamAvgScore / 10).toFixed(1)}
+                </span>
+                <span className="text-sm text-muted-foreground">team avg</span>
+                <span className="text-base text-muted-foreground mx-1">→</span>
+                <span className="text-2xl font-bold font-mono tabular-nums"
+                  style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#228833" : "#C08878" }}>
+                  {(ambitionGap.ambitionTargetScore / 10).toFixed(1)}
+                </span>
+                <span className="text-sm text-muted-foreground">target</span>
+              </div>
+              {ambitionGap.ambitionTargetLabel && (
+                <p className="text-xs text-muted-foreground mt-1 italic">"{ambitionGap.ambitionTargetLabel}"</p>
+              )}
+            </div>
+            <div className="px-3 py-2 rounded-xl border text-center shrink-0"
+              style={{
+                backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#F0F4F0" : "#F4EEEC",
+                borderColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#C08878",
+              }}>
+              <p className="text-xs font-medium" style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#2D5A3D" : "#6B3030" }}>
+                {teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0)
+                  ? "Team meets target ✓"
+                  : `${((ambitionGap.ambitionTargetScore - teamAvgScore) / 10).toFixed(1)} pts gap`}
+              </p>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="mt-3 space-y-1">
+            <div className="relative h-2 rounded-full bg-neutral-100 overflow-hidden">
+              <div className="absolute left-0 top-0 h-full rounded-full transition-all"
+                style={{
+                  width: Math.min(100, teamAvgScore) + "%",
+                  backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#C08878",
+                }} />
+              {ambitionGap.ambitionTargetScore > 0 && (
+                <div className="absolute top-0 h-full w-0.5 bg-neutral-400"
+                  style={{ left: Math.min(ambitionGap.ambitionTargetScore, 99) + "%" }} />
+              )}
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0</span>
+              <span>Org target: {(ambitionGap.ambitionTargetScore / 10).toFixed(1)}</span>
+              <span>10</span>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
       {/* ── Member Drill-down ── */}
       <Sheet open={selectedMember !== null} onOpenChange={v => !v && setSelectedMember(null)}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">

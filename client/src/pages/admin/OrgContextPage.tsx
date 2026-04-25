@@ -156,6 +156,10 @@ export default function OrgContextPage() {
   const [aiToolsInUse, setAiToolsInUse] = useState<string[]>([]);
   const [customAiTool, setCustomAiTool] = useState<string>("");
   const [companyAiContextNarrative, setCompanyAiContextNarrative] = useState<string>("");
+  // Phase 3: Business Ambition Linkage
+  const [ambitionTargetScore, setAmbitionTargetScore] = useState<string>("");
+  const [ambitionTargetDate, setAmbitionTargetDate] = useState<string>("");
+  const [ambitionTargetLabel, setAmbitionTargetLabel] = useState<string>("");
 
   // Block 3: Risk Appetite & AI Maturity
   const [riskAppetite, setRiskAppetite] = useState<string>("");
@@ -200,6 +204,9 @@ export default function OrgContextPage() {
       if ((existing as any).ukRegulatoryFrameworksJson) setUkRegulatoryFrameworks(JSON.parse((existing as any).ukRegulatoryFrameworksJson));
     } catch {}
     if ((existing as any).companyAiContextNarrative) setCompanyAiContextNarrative((existing as any).companyAiContextNarrative);
+    if ((existing as any).ambitionTargetScore != null) setAmbitionTargetScore(String((existing as any).ambitionTargetScore));
+    if ((existing as any).ambitionTargetDate) setAmbitionTargetDate((existing as any).ambitionTargetDate);
+    if ((existing as any).ambitionTargetLabel) setAmbitionTargetLabel((existing as any).ambitionTargetLabel);
     try {
       if ((existing as any).strategicPrioritiesJson) setStrategicPriorities(JSON.parse((existing as any).strategicPrioritiesJson));
       if ((existing as any).currentChallengesJson) setCurrentChallenges(JSON.parse((existing as any).currentChallengesJson));
@@ -261,6 +268,10 @@ export default function OrgContextPage() {
       quarterlyReviewEnabled,
       revalidationCycleMonths,
       smallHRFunctionMode,
+      // Phase 3: Business Ambition Linkage
+      ambitionTargetScore: ambitionTargetScore ? parseInt(ambitionTargetScore) : null,
+      ambitionTargetDate: ambitionTargetDate || null,
+      ambitionTargetLabel: ambitionTargetLabel || null,
     });
   }
 
@@ -472,6 +483,74 @@ export default function OrgContextPage() {
               <p className="text-xs text-muted-foreground italic">No challenges added yet.</p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Block 1c: Ambition Target */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Target className="w-4 h-4 text-[#228833]" />
+            AI Readiness Ambition Target
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Set a target readiness score and date for your HR function. This drives the gap analysis on the Leadership Dashboard and individual "role in the AI strategy" panels.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Readiness Score (0–10)</label>
+              <p className="text-xs text-muted-foreground mb-2">The Peakon-scale score your function is aiming for. 7.5 = "AI Ready", 9.0 = "Advanced".</p>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value={ambitionTargetScore ? (parseFloat(ambitionTargetScore) / 10).toFixed(1) : ""}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  if (!isNaN(v) && v >= 0 && v <= 10) setAmbitionTargetScore(String(Math.round(v * 10)));
+                  else if (e.target.value === "") setAmbitionTargetScore("");
+                }}
+                placeholder="e.g. 7.5"
+                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Date</label>
+              <p className="text-xs text-muted-foreground mb-2">When does the organisation need to reach this capability level?</p>
+              <input
+                type="date"
+                value={ambitionTargetDate}
+                onChange={(e) => setAmbitionTargetDate(e.target.value)}
+                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-foreground mb-1.5 block">Ambition Statement (optional)</label>
+            <p className="text-xs text-muted-foreground mb-2">A plain-English description of what this target means for the business.</p>
+            <input
+              type="text"
+              value={ambitionTargetLabel}
+              onChange={(e) => setAmbitionTargetLabel(e.target.value)}
+              placeholder="e.g. HR function fully capable of deploying and governing AI tools across all people processes"
+              className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              maxLength={200}
+            />
+            <p className="text-xs text-muted-foreground mt-1">{ambitionTargetLabel.length}/200 characters</p>
+          </div>
+          {ambitionTargetScore && (
+            <div className="p-3 rounded-xl bg-[#228833]/5 border border-[#228833]/15">
+              <p className="text-xs font-semibold text-[#228833] mb-0.5">Ambition preview</p>
+              <p className="text-xs text-muted-foreground">
+                Target: <strong className="text-foreground">{(parseFloat(ambitionTargetScore) / 10).toFixed(1)}</strong> / 10
+                {ambitionTargetDate && <> by <strong className="text-foreground">{new Date(ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
+                {ambitionTargetLabel && <> — {ambitionTargetLabel}</>}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

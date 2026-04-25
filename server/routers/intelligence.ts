@@ -141,6 +141,10 @@ export const intelligenceRouter = router({
       revalidationCycleMonths: z.number().int().min(1).max(60).optional(),
       smallHRFunctionMode: z.boolean().optional(),
       companyAiContextNarrative: z.string().max(2000).optional(),
+      // Phase 3: Business Ambition Linkage
+      ambitionTargetScore: z.number().int().min(0).max(100).nullable().optional(),
+      ambitionTargetDate: z.string().max(10).nullable().optional(),
+      ambitionTargetLabel: z.string().max(200).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await upsertOrgContext({ tenantId: ctx.user.tenantId, ...input });

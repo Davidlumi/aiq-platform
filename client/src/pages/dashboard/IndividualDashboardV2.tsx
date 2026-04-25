@@ -65,6 +65,12 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   );
 
   const isOwnDashboard = !userId || userId === (user as any)?.id;
+  // BA-03: Fetch org ambition target to show "Your role in the AI strategy"
+  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
+    retry: false,
+    // Non-leaders get FORBIDDEN — suppress error, show nothing
+    onError: () => {},
+  } as any);
 
   const readinessDistribution = useMemo(() => {
     const domains = (data?.domains ?? []).filter(d => d.score !== null);
@@ -89,6 +95,20 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     const sorted = [...data.assessmentHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return sorted[sorted.length - 1].overallScore - sorted[sorted.length - 2].overallScore;
   }, [data]);
+
+  // BA-09: Strategic Fit Score — how well this person's domain profile matches priority domains
+  const strategicFitScore = useMemo(() => {
+    if (!ambitionGap || !ambitionGap.configured || !data) return null;
+    const priorityDomains = (ambitionGap.priorityGaps ?? []).flatMap((pg: any) =>
+      pg.relevantDomains.map((d: any) => d.domain)
+    );
+    const uniquePriorityDomains = Array.from(new Set(priorityDomains)) as string[];
+    if (uniquePriorityDomains.length === 0) return null;
+    const scored = data.domains.filter(d => uniquePriorityDomains.includes(d.key) && d.score !== null);
+    if (scored.length === 0) return null;
+    const avg = Math.round(scored.reduce((s, d) => s + (d.score ?? 0), 0) / scored.length);
+    return avg;
+  }, [ambitionGap, data]);
 
   const insights = useMemo(() => {
     if (!data) return [];
@@ -187,6 +207,26 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <p className="text-xs text-muted-foreground leading-relaxed border-t border-neutral-100 pt-3">
                 {data.ratingExplanation}
               </p>
+            )}
+            {/* BA-09: Strategic Fit Score */}
+            {strategicFitScore !== null && (
+              <div className="border-t border-neutral-100 pt-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1.5">Strategic Fit Score</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold font-mono tabular-nums"
+                    style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#C08878" }}>
+                    {(strategicFitScore / 10).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">/ 10 on priority domains</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {strategicFitScore >= 70
+                    ? "Strong alignment with org AI priorities"
+                    : strategicFitScore >= 50
+                      ? "Partial alignment — targeted development recommended"
+                      : "Priority development needed for strategic alignment"}
+                </p>
+              </div>
             )}
           </div>
         </DashboardCard>
@@ -391,6 +431,14 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </Link>
       )}
 
+      {/* BA-03: Your role in the AI strategy */}
+      {isOwnDashboard && ambitionGap && ambitionGap.configured && data.overallScore !== null && (
+        <IndividualStrategyPanel
+          overallScore={data.overallScore}
+          ambitionGap={ambitionGap}
+          domains={data.domains}
+        />
+      )}
       <DomainDrillDown
         open={drillDomain !== null}
         onClose={() => setDrillDomain(null)}
@@ -545,5 +593,108 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
         ) : null}
       </SheetContent>
     </Sheet>
+  );
+}
+
+
+// ─── BA-03: Individual "Your role in the AI strategy" panel ──────────────────
+
+function IndividualStrategyPanel({
+  overallScore,
+  ambitionGap,
+  domains,
+}: {
+  overallScore: number;
+  ambitionGap: any;
+  domains: Array<{ key: string; name: string; score: number | null; colour?: string }>;
+}) {
+  const currentPeakon = (overallScore / 10).toFixed(1);
+  const targetPeakon = ambitionGap.ambitionTargetScore !== null
+    ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : null;
+  const gapRaw = ambitionGap.ambitionTargetScore !== null
+    ? ambitionGap.ambitionTargetScore - overallScore : null;
+  const gapPeakon = gapRaw !== null ? Math.abs(gapRaw / 10).toFixed(1) : null;
+  const isAboveOrgAvg = ambitionGap.functionAvgRaw !== null && overallScore > ambitionGap.functionAvgRaw;
+  const isAboveTarget = gapRaw !== null && gapRaw <= 0;
+  const orgGapRaw = ambitionGap.gapRaw ?? null;
+
+  const priorityDomains = (ambitionGap.priorityGaps ?? []).flatMap((pg: any) =>
+    pg.relevantDomains.map((d: any) => d.domain)
+  );
+  const uniquePriorityDomains = Array.from(new Set(priorityDomains)) as string[];
+  const myWeakPriorityDomains = domains
+    .filter(d => uniquePriorityDomains.includes(d.key) && d.score !== null && d.score < 70)
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+    .slice(0, 3);
+
+  return (
+    <DashboardCard
+      title="Your role in the AI strategy"
+      subtitle="How your personal readiness contributes to the organisation's AI ambition"
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+        <div className="p-3 rounded-xl bg-muted/40 border border-border text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Your score</p>
+          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{currentPeakon}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">/ 10</p>
+        </div>
+        <div className="p-3 rounded-xl bg-muted/40 border border-border text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Org average</p>
+          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
+            {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: isAboveOrgAvg ? "#7A9E8E" : "#C08878" }}>
+            {isAboveOrgAvg ? "Above org average" : "Below org average"}
+          </p>
+        </div>
+        <div className="p-3 rounded-xl border text-center"
+          style={{ backgroundColor: isAboveTarget ? "#F0F4F0" : "#F4EEEC", borderColor: isAboveTarget ? "#7A9E8E" : "#C08878" }}>
+          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>Org target</p>
+          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>
+            {targetPeakon ?? "—"}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>
+            {isAboveTarget ? "You meet the target ✓" : gapPeakon ? `${gapPeakon} pts to reach target` : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/15">
+        <p className="text-xs font-semibold text-primary mb-1">What this means for you</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {isAboveTarget
+            ? `You are already at or above the organisation's AI readiness target of ${targetPeakon}/10. Your capability is helping drive the function forward — consider mentoring colleagues or taking on AI-led projects.`
+            : orgGapRaw !== null && orgGapRaw > 0
+              ? `The organisation needs to close a ${(orgGapRaw / 10).toFixed(1)}-point gap to reach its AI ambition. Your personal development directly contributes to this goal — focusing on the priority areas below will have the greatest strategic impact.`
+              : `Your development directly contributes to the organisation reaching its AI ambition target of ${targetPeakon}/10.`
+          }
+          {ambitionGap.ambitionTargetLabel ? ` The target: "${ambitionGap.ambitionTargetLabel}".` : ""}
+        </p>
+      </div>
+
+      {myWeakPriorityDomains.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-border">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
+            Your highest-impact development areas
+          </p>
+          <div className="space-y-2">
+            {myWeakPriorityDomains.map(d => (
+              <div key={d.key} className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.colour ?? "#94A3B8" }} />
+                <span className="text-xs text-foreground flex-1">{d.name}</span>
+                <span className="text-xs font-mono font-semibold" style={{ color: d.colour ?? "#94A3B8" }}>
+                  {d.score !== null ? (d.score / 10).toFixed(1) : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3">
+            <a href="/learning?tab=insights" className="text-xs text-primary hover:underline font-medium">
+              View your personalised learning plan →
+            </a>
+          </div>
+        </div>
+      )}
+    </DashboardCard>
   );
 }

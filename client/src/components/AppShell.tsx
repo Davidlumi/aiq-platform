@@ -34,6 +34,7 @@ import {
   Layers,
   BookMarked,
   ShieldCheck,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,13 @@ const NAV_ITEMS: NavItem[] = [
     path: "/reports",
     icon: BarChart3,
     roles: ["platform_super_admin", "tenant_admin", "hr_leader", "auditor"],
+    section: "govern",
+  },
+  {
+    label: "AI Strategy",
+    path: "/ai-strategy",
+    icon: Target,
+    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
     section: "govern",
   },
   {

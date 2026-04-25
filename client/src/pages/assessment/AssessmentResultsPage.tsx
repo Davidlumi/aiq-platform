@@ -595,6 +595,11 @@ export default function AssessmentResultsPage() {
     { enabled: !!sessionId, refetchOnWindowFocus: false }
   );
 
+  // BA-04: Org ambition context for business impact section
+  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
+    retry: false,
+    onError: () => {},
+  } as any);
   // WS4.3: Flag for review
   const flagMutation = trpc.assessment.flagForReview.useMutation({
     onSuccess: (res: any) => {
@@ -1512,6 +1517,13 @@ export default function AssessmentResultsPage() {
             </>
           )}
 
+          {/* BA-04: Business Impact — how this result connects to org ambition */}
+          {ambitionGap && ambitionGap.configured && data.score?.overallScore !== null && data.score?.overallScore !== undefined && (
+            <AssessmentBusinessImpactCard
+              overallScore={data.score.overallScore}
+              ambitionGap={ambitionGap}
+            />
+          )}
           {/* HP-01: Learning plan ready card */}
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="p-5">
@@ -2218,5 +2230,105 @@ export default function AssessmentResultsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+
+// ─── BA-04 / BA-06: Assessment Business Impact Card ──────────────────────────
+
+function AssessmentBusinessImpactCard({
+  overallScore,
+  ambitionGap,
+}: {
+  overallScore: number;
+  ambitionGap: any;
+}) {
+  const currentPeakon = (overallScore / 10).toFixed(1);
+  const targetPeakon = ambitionGap.ambitionTargetScore !== null
+    ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : null;
+  const gapRaw = ambitionGap.ambitionTargetScore !== null
+    ? ambitionGap.ambitionTargetScore - overallScore : null;
+  const isAboveTarget = gapRaw !== null && gapRaw <= 0;
+  const isAboveOrgAvg = ambitionGap.functionAvgRaw !== null && overallScore > ambitionGap.functionAvgRaw;
+
+  // BA-06: Capability-to-outcome table
+  const CAPABILITY_OUTCOMES: Array<{ domain: string; label: string; outcome: string; colour: string }> = [
+    { domain: "ai_interaction", label: "AI Interaction", outcome: "Faster, higher-quality AI-assisted HR decisions", colour: "#4477AA" },
+    { domain: "ai_output_evaluation", label: "Output Evaluation", outcome: "Reduced risk from AI errors and hallucinations", colour: "#228833" },
+    { domain: "ai_workflow_design", label: "Workflow Design", outcome: "Scalable automation of repetitive HR processes", colour: "#CCBB44" },
+    { domain: "ai_ethics_trust", label: "Ethics & Trust", outcome: "Compliant, fair AI use that maintains employee confidence", colour: "#EE6677" },
+    { domain: "workforce_ai_readiness", label: "Workforce Readiness", outcome: "Faster organisation-wide AI adoption", colour: "#AA3377" },
+    { domain: "ai_change_leadership", label: "Change Leadership", outcome: "Sustainable AI transformation with stakeholder buy-in", colour: "#66CCEE" },
+  ];
+
+  return (
+    <Card className="border-[#228833]/20 bg-[#228833]/3">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#228833]/10 border border-[#228833]/20 flex items-center justify-center shrink-0">
+            <Target className="w-4.5 h-4.5 text-[#228833]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Business impact of your result</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              How your score of <strong className="text-foreground">{currentPeakon}/10</strong> relates to the organisation's AI ambition
+              {targetPeakon && <> (target: <strong className="text-foreground">{targetPeakon}/10</strong>)</>}
+            </p>
+          </div>
+        </div>
+
+        {/* Position summary */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-lg bg-background border border-border text-center">
+            <p className="text-xs text-muted-foreground mb-0.5">vs org average</p>
+            <p className="text-sm font-bold" style={{ color: isAboveOrgAvg ? "#228833" : "#C08878" }}>
+              {isAboveOrgAvg ? "Above" : "Below"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} avg
+            </p>
+          </div>
+          <div className="p-2.5 rounded-lg bg-background border border-border text-center">
+            <p className="text-xs text-muted-foreground mb-0.5">vs ambition target</p>
+            <p className="text-sm font-bold" style={{ color: isAboveTarget ? "#228833" : "#C08878" }}>
+              {isAboveTarget ? "Meets target ✓" : gapRaw !== null ? `${(gapRaw / 10).toFixed(1)} pts gap` : "—"}
+            </p>
+            <p className="text-xs text-muted-foreground">target: {targetPeakon ?? "—"}</p>
+          </div>
+        </div>
+
+        {/* BA-06: Capability-to-outcome table */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
+            What each capability unlocks for the business
+          </p>
+          <div className="space-y-1.5">
+            {CAPABILITY_OUTCOMES.map(co => (
+              <div key={co.domain} className="flex items-start gap-2.5 text-xs">
+                <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: co.colour }} />
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-foreground">{co.label}</span>
+                  <span className="text-muted-foreground"> — {co.outcome}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {ambitionGap.ambitionTargetLabel && (
+          <div className="p-2.5 rounded-lg bg-[#228833]/5 border border-[#228833]/15">
+            <p className="text-xs text-[#228833] font-medium">Organisation's AI ambition</p>
+            <p className="text-xs text-muted-foreground mt-0.5 italic">"{ambitionGap.ambitionTargetLabel}"</p>
+            {ambitionGap.ambitionTargetDate && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Target date: <strong className="text-foreground">
+                  {new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+                </strong>
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

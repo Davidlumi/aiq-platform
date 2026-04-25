@@ -51,6 +51,10 @@ export interface OrgContextInput {
   revalidationCycleMonths?: number;
   smallHRFunctionMode?: boolean;
   companyAiContextNarrative?: string;
+  // Phase 3: Business Ambition Linkage
+  ambitionTargetScore?: number | null;   // 0-100 raw (shown as 0-10 Peakon)
+  ambitionTargetDate?: string | null;    // ISO date YYYY-MM-DD
+  ambitionTargetLabel?: string | null;   // e.g. "Ready to deploy AI across all HR workflows"
 }
 
 export interface SimulationContextInjection {
@@ -186,6 +190,10 @@ export async function upsertOrgContext(input: OrgContextInput): Promise<void> {
     revalidationCycleMonths: input.revalidationCycleMonths ?? 12,
     smallHRFunctionMode: input.smallHRFunctionMode ?? false,
     companyAiContextNarrative: input.companyAiContextNarrative ?? null,
+    // Phase 3: Business Ambition Linkage
+    ambitionTargetScore: input.ambitionTargetScore ?? null,
+    ambitionTargetDate: input.ambitionTargetDate ?? null,
+    ambitionTargetLabel: input.ambitionTargetLabel ?? null,
     updatedAt: new Date(),
   };
 

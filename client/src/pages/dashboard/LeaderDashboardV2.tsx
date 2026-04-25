@@ -96,6 +96,7 @@ export default function LeaderDashboardV2() {
   const { data: findings, isLoading: findingsLoading } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
   const { data: teams, isLoading: teamsLoading } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
   const { data: alignment, isLoading: alignmentLoading } = trpc.dashboardV2.leader.strategicAlignment.useQuery(queryInput);
+  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
 
@@ -337,6 +338,10 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
+      {/* ── 7b. Readiness vs Ambition Banner (BA-01) ── */}
+      {ambitionGap && ambitionGap.configured && (
+        <AmbitionGapBanner gap={ambitionGap} />
+      )}
       {/* ── 8. Strategic Alignment ── */}
       {!alignmentLoading && alignment && (
         <StrategicAlignmentSection alignment={alignment} />
@@ -672,6 +677,113 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
           </div>
         </div>
       )}
+    </DashboardCard>
+  );
+}
+
+// ─── BA-01 / BA-02: Readiness vs Ambition Banner ─────────────────────────────
+
+function AmbitionGapBanner({ gap }: { gap: any }) {
+  const currentPeakon = gap.functionAvgRaw !== null ? (gap.functionAvgRaw / 10).toFixed(1) : null;
+  const targetPeakon = gap.ambitionTargetScore !== null ? (gap.ambitionTargetScore / 10).toFixed(1) : null;
+  const gapPeakon = gap.gapRaw !== null ? Math.abs(gap.gapRaw / 10).toFixed(1) : null;
+
+  const VERDICT_CONFIG: Record<string, { bg: string; border: string; text: string; label: string }> = {
+    exceeds:  { bg: "#F0F4F0", border: "#7A9E8E", text: "#2D5A3D", label: "Exceeds ambition target" },
+    on_track: { bg: "#F7F3EC", border: "#C8B07A", text: "#6B4F1E", label: "Within reach of target" },
+    gap:      { bg: "#F4EEEC", border: "#C08878", text: "#6B3030", label: "Significant capability gap" },
+    no_target:{ bg: "#F5F5F5", border: "#D0D0D0", text: "#555",    label: "No target set" },
+  };
+  const vc = VERDICT_CONFIG[gap.verdict] ?? VERDICT_CONFIG.no_target;
+
+  return (
+    <DashboardCard
+      title="Readiness vs ambition"
+      subtitle="How your function's current AI capability compares to your strategic target"
+    >
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 mb-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-3xl font-bold font-mono tabular-nums text-foreground">
+              {currentPeakon ?? "—"}
+            </span>
+            <span className="text-sm text-muted-foreground">current</span>
+            <span className="text-lg text-muted-foreground mx-1">→</span>
+            <span className="text-3xl font-bold font-mono tabular-nums" style={{ color: vc.text }}>
+              {targetPeakon ?? "—"}
+            </span>
+            <span className="text-sm text-muted-foreground">target</span>
+          </div>
+          {gap.ambitionTargetLabel && (
+            <p className="text-xs text-muted-foreground mt-1 italic">"{gap.ambitionTargetLabel}"</p>
+          )}
+          {gap.ambitionTargetDate && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Target date: <strong className="text-foreground">{new Date(gap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong>
+            </p>
+          )}
+        </div>
+        <div
+          className="px-4 py-3 rounded-xl border text-center shrink-0"
+          style={{ backgroundColor: vc.bg, borderColor: vc.border }}
+        >
+          <p className="text-xs font-medium uppercase tracking-widest mb-0.5" style={{ color: vc.text }}>{vc.label}</p>
+          {gapPeakon && gap.verdict !== "exceeds" && (
+            <p className="text-lg font-bold font-mono" style={{ color: vc.text }}>{gapPeakon} pts gap</p>
+          )}
+          {gap.verdict === "exceeds" && (
+            <p className="text-lg font-bold" style={{ color: vc.text }}>On target ✓</p>
+          )}
+        </div>
+      </div>
+
+      {gap.priorityGaps && gap.priorityGaps.length > 0 && (
+        <div className="space-y-3 pt-3 border-t border-neutral-100">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Readiness gap by strategic priority</p>
+          {gap.priorityGaps.map((pg: any, i: number) => {
+            const currentPct = pg.avgCurrentScore !== null ? Math.min(100, Math.round(pg.avgCurrentScore)) : 0;
+            const targetPct = pg.requiredScore !== null ? Math.min(100, Math.round(pg.requiredScore)) : 0;
+            const STATUS_COLOURS: Record<string, string> = { aligned: "#7A9E8E", partial: "#C8B07A", gap: "#C08878", unknown: "#B0B8C4" };
+            const barColour = STATUS_COLOURS[pg.status] ?? "#B0B8C4";
+            return (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-foreground truncate max-w-[60%]">{pg.priority}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-mono font-semibold" style={{ color: barColour }}>
+                      {pg.avgCurrentScore !== null ? (pg.avgCurrentScore / 10).toFixed(1) : "—"}
+                    </span>
+                    {pg.requiredScore !== null && (
+                      <span>/ {(pg.requiredScore / 10).toFixed(1)} target</span>
+                    )}
+                  </div>
+                </div>
+                <div className="relative h-2 rounded-full bg-neutral-100 overflow-hidden">
+                  <div className="absolute left-0 top-0 h-full rounded-full transition-all" style={{ width: currentPct + "%", backgroundColor: barColour }} />
+                  {targetPct > 0 && <div className="absolute top-0 h-full w-0.5 bg-neutral-400" style={{ left: Math.min(targetPct, 99) + "%" }} />}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {pg.relevantDomains.slice(0, 3).map((d: any) => (
+                    <span key={d.domain} className="text-xs px-1.5 py-0.5 rounded-full border"
+                      style={{ borderColor: d.colour + "40", backgroundColor: d.colour + "10", color: d.colour }}>
+                      {d.domainName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{gap.assessedCount} employee{gap.assessedCount !== 1 ? "s" : ""} assessed</p>
+        <Link href="/admin/org-context">
+          <Button variant="ghost" size="sm" className="text-xs gap-1">
+            Edit ambition target <ArrowRight className="w-3 h-3" />
+          </Button>
+        </Link>
+      </div>
     </DashboardCard>
   );
 }

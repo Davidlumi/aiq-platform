@@ -853,6 +853,10 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   revalidationCycleMonths: int("revalidation_cycle_months").default(12),
   smallHRFunctionMode: boolean("small_hr_function_mode").default(false),                   // <50 employees, simplified scoring
   companyAiContextNarrative: text("company_ai_context_narrative"),                        // free-text AI context for scenario personalisation
+  // Phase 3: Business Ambition Linkage
+  ambitionTargetScore: int("ambition_target_score"),                                       // 0-100 raw (displayed as 0-10 Peakon); org's readiness ambition level
+  ambitionTargetDate: varchar("ambition_target_date", { length: 10 }),                    // ISO date string YYYY-MM-DD
+  ambitionTargetLabel: varchar("ambition_target_label", { length: 200 }),                 // e.g. "Ready to deploy AI across all HR workflows"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

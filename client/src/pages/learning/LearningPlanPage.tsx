@@ -446,6 +446,11 @@ export default function LearningPlanPage() {
   const { data: plan, isLoading } = trpc.adaptiveLearning.getAdaptivePlan.useQuery({}, {
     staleTime: 1000 * 60 * 2,
   });
+  // BA-07: Org ambition context
+  const { data: ambitionGap } = (trpc.dashboardV2.leader.ambitionGap as any).useQuery(undefined, {
+    retry: false,
+    onError: () => {},
+  });
 
   const generatePlan = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
     { forceRegenerate: true },
@@ -507,6 +512,23 @@ export default function LearningPlanPage() {
   return (
     <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
 
+      {/* BA-07: Org ambition context banner */}
+      {ambitionGap && ambitionGap.configured && (
+        <div className="rounded-xl border border-[#228833]/20 bg-[#228833]/3 px-4 py-3 flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-[#228833]/10 flex items-center justify-center shrink-0 mt-0.5">
+            <span className="text-[#228833] text-sm font-bold">↑</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[#228833]">Aligned to your organisation's AI ambition</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Your learning plan is designed to close the gap between the function's current readiness
+              (<strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}/10</strong>) and
+              the target (<strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}/10</strong>).
+              {ambitionGap.ambitionTargetLabel && <> Goal: <em>"{ambitionGap.ambitionTargetLabel}"</em>.</>}
+            </p>
+          </div>
+        </div>
+      )}
       {/* ── Plan Header ── */}
       <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
         <div className="flex items-start gap-4">
