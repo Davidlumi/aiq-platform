@@ -1,320 +1,208 @@
 /**
  * Learning Plan Page — AiQ Adaptive Learning Engine
  *
- * Three-tab layout:
- *   1. My Plan      — adaptive module queue, today's recommendations, spaced repetition reviews
- *   2. Gap Analysis — capability gap cards, benchmark comparison
- *   3. Progress     — capability progress bars, completed modules
+ * World-class LMS design patterns (LinkedIn Learning / Degreed / Workday Learning):
+ * - Clean sequential module pathway with numbered steps
+ * - Rich module cards with capability accent, status, type, duration
+ * - 3-tab layout: My Path | Insights | Activity
+ * - Clear "Next Up" emphasis with progress ring
+ * - Consistent visual language throughout
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ListSkeleton, CardSkeleton, ShimmerBlock } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
-  BookOpen, Zap, FileText, HelpCircle, Layers, Video,
-  MessageSquare, Users, Target, Brain, Lightbulb, BarChart3,
-  Clock, ChevronRight, TrendingUp, TrendingDown, Minus,
-  CheckCircle2, AlertTriangle, Award, RefreshCw, Flame,
-  ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles, Bell,
-  BarChart2, UserCheck, XCircle, Info, ShieldAlert,
-  Map, ShieldCheck, GraduationCap, Rocket,
+  BookOpen, Zap, FileText, HelpCircle, Layers, Video, MessageSquare,
+  Users, Clock, CheckCircle2, Lock, Play, RotateCcw,
+  Target, Brain, Lightbulb, BarChart3, Sparkles, TrendingUp, Award,
+  Flame, ArrowRight, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
+import { scoreToColor } from "@/lib/peakon-colors";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
-const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType; description: string }> = {
-  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", icon: Zap,       description: "Practical competence with AI tools — prompting, iterating, and tool selection" },
-  ai_output_evaluation:{ label: "AI Output Evaluation", color: "#228833", icon: Brain,     description: "Critical assessment of AI outputs — detecting errors, hallucinations, and fitness for purpose" },
-  ai_ethics_trust:     { label: "AI Ethics & Trust",    color: "#AA3377", icon: Target,    description: "Ethical reasoning, employee trust, and principled AI decision-making" },
-  ai_change_leadership:{ label: "AI Change Leadership", color: "#D97706", icon: Lightbulb, description: "Leading AI transformation, handling resistance, and calibrating pace of change" },
-  workflow:            { label: "Workflow Integration", color: "#3b82f6", icon: Layers,    description: "Embedding AI tools into HR processes and team workflows" },
-  data_interpretation: { label: "Data Interpretation",  color: "#8b5cf6", icon: BarChart3, description: "Reading and acting on AI-generated analytics and reports" },
+const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  ai_interaction:         { label: "AI Interaction",        color: "#4477AA", icon: Zap },
+  ai_output_evaluation:   { label: "AI Output Evaluation",  color: "#228833", icon: Brain },
+  ai_ethics_trust:        { label: "AI Ethics & Trust",     color: "#AA3377", icon: Target },
+  ai_change_leadership:   { label: "AI Change Leadership",  color: "#D97706", icon: Lightbulb },
+  ai_workflow_design:     { label: "AI Workflow Design",    color: "#3b82f6", icon: Layers },
+  workforce_ai_readiness: { label: "Workforce Readiness",   color: "#8b5cf6", icon: BarChart3 },
+  execution:              { label: "Execution",             color: "#4477AA", icon: Zap },
+  judgement:              { label: "Judgement",             color: "#228833", icon: Brain },
+  governance:             { label: "Governance",            color: "#AA3377", icon: Target },
+  appropriateness:        { label: "Appropriateness",       color: "#D97706", icon: Lightbulb },
+  workflow:               { label: "Workflow",              color: "#3b82f6", icon: Layers },
+  data_interpretation:    { label: "Data Interpretation",   color: "#8b5cf6", icon: BarChart3 },
 };
 
-const MODALITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  tutorial:   { label: "Tutorial",   color: "#6366f1", icon: BookOpen },
-  practical:  { label: "Practical",  color: "#10b981", icon: Zap },
-  case_study: { label: "Case Study", color: "#f59e0b", icon: FileText },
-  quiz:       { label: "Quiz",       color: "#ec4899", icon: HelpCircle },
-  scenario:   { label: "Scenario",   color: "#8b5cf6", icon: Layers },
-  video:      { label: "Video",      color: "#ef4444", icon: Video },
-  reflection: { label: "Reflection", color: "#06b6d4", icon: MessageSquare },
-  coaching:   { label: "Coaching",   color: "#84cc16", icon: Users },
+const MODALITY_META: Record<string, { label: string; icon: React.ElementType }> = {
+  tutorial:   { label: "Tutorial",   icon: BookOpen },
+  practical:  { label: "Practical",  icon: Zap },
+  case_study: { label: "Case Study", icon: FileText },
+  quiz:       { label: "Quiz",       icon: HelpCircle },
+  scenario:   { label: "Scenario",   icon: Layers },
+  video:      { label: "Video",      icon: Video },
+  reflection: { label: "Reflection", icon: MessageSquare },
+  coaching:   { label: "Coaching",   icon: Users },
 };
 
-// ─── Prescription Stage Meta ─────────────────────────────────────────────────
-const PRESCRIPTION_STAGE_META: Record<number, { label: string; color: string; desc: string }> = {
-  1: { label: "Stage 1 — Block Resolution",   color: "#EF4444", desc: "Addresses critical blocking failure modes first" },
-  2: { label: "Stage 2 — Foundation",          color: "#F59E0B", desc: "Builds foundational capability before strategy" },
-  3: { label: "Stage 3 — Regulatory",          color: "#6366F1", desc: "UK regulatory and operational compliance" },
-  4: { label: "Stage 4 — Strategic",           color: "#10B981", desc: "Strategic development and advanced capability" },
-};
+// ─── Progress Ring ─────────────────────────────────────────────────────────────
 
-const PRIORITY_COLOURS = {
-  critical:   { bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     badge: "bg-red-100 text-red-700" },
-  developing: { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   badge: "bg-amber-100 text-amber-700" },
-  proficient: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700" },
-  advanced:   { bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    badge: "bg-blue-100 text-blue-700" },
-};
-
-// ─── Stage Icons ─────────────────────────────────────────────────────────────
-const STAGE_ICONS: Record<number, React.ElementType> = {
-  1: ShieldAlert,   // Block Resolution
-  2: BookOpen,      // Foundation
-  3: ShieldCheck,   // Regulatory
-  4: Rocket,        // Strategic
-};
-
-// ─── Journey Map Section ─────────────────────────────────────────────────────
-
-function JourneyMapSection({
-  planItems,
-  onStageClick,
-}: {
-  planItems: any[];
-  onStageClick?: (stage: number) => void;
+function ProgressRing({ pct, size = 80, stroke = 6, color = "#4477AA" }: {
+  pct: number; size?: number; stroke?: number; color?: string;
 }) {
-  // Group items by prescription stage
-  const stageGroups: Record<number, { total: number; completed: number; inProgress: number; available: number; locked: number }> = {};
-  for (const stage of [1, 2, 3, 4]) {
-    stageGroups[stage] = { total: 0, completed: 0, inProgress: 0, available: 0, locked: 0 };
-  }
-
-  for (const item of planItems) {
-    const reasonJson = (() => {
-      try { return typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {}); }
-      catch { return {}; }
-    })() as any;
-    const stage: number = reasonJson?.prescriptionStage ?? 1;
-    const group = stageGroups[stage] ?? stageGroups[1];
-    group.total++;
-    if (item.status === "completed") group.completed++;
-    else if (item.status === "in_progress") group.inProgress++;
-    else if (item.status === "available") group.available++;
-    else group.locked++;
-  }
-
-  // Determine active stage: lowest stage with available/in_progress items
-  const activeStage = [1, 2, 3, 4].find(s => {
-    const g = stageGroups[s];
-    return g.available > 0 || g.inProgress > 0;
-  }) ?? 0;
-
-  // Check if all items in a stage are complete
-  const isStageComplete = (stage: number) => {
-    const g = stageGroups[stage];
-    return g.total > 0 && g.completed === g.total;
-  };
-
-  const totalItems = planItems.length;
-  const totalCompleted = planItems.filter((i: any) => i.status === "completed").length;
-  const overallPct = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
-
-  if (totalItems === 0) return null;
-
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
   return (
-    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Map className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Learning Journey</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{totalCompleted}/{totalItems} modules</span>
-          <span className="text-xs font-semibold text-primary">{overallPct}%</span>
-        </div>
-      </div>
-
-      {/* Overall progress bar */}
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${overallPct}%` }} />
-      </div>
-
-      {/* Stage pipeline */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {([1, 2, 3, 4] as const).map((stage, idx) => {
-          const meta = PRESCRIPTION_STAGE_META[stage];
-          const group = stageGroups[stage];
-          const Icon = STAGE_ICONS[stage];
-          const isActive = stage === activeStage;
-          const isComplete = isStageComplete(stage);
-          const pct = group.total > 0 ? Math.round((group.completed / group.total) * 100) : 0;
-          const hasItems = group.total > 0;
-
-          return (
-            <button
-              key={stage}
-              onClick={() => hasItems && onStageClick?.(stage)}
-              disabled={!hasItems}
-              className={cn(
-                "relative rounded-xl border p-3 text-left transition-all",
-                isActive && "ring-2 ring-offset-1 ring-offset-background",
-                isComplete && "border-emerald-200 bg-emerald-50",
-                !isComplete && isActive && "bg-card",
-                !isComplete && !isActive && hasItems && "bg-card/50 hover:bg-card",
-                !hasItems && "opacity-40 cursor-default",
-              )}
-              style={{
-                borderColor: isActive ? meta.color : undefined,
-                ...(isActive ? { '--tw-ring-color': `${meta.color}40` } as any : {}),
-              }}
-            >
-              {/* Active indicator */}
-              {isActive && (
-                <div className="absolute -top-1.5 left-3 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style={{ background: meta.color, color: "#fff" }}>
-                  Active
-                </div>
-              )}
-              {isComplete && (
-                <div className="absolute -top-1.5 right-3 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-600 text-white">
-                  Done
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mb-2 mt-1">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${meta.color}15` }}>
-                  {isComplete
-                    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                    : <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold leading-tight truncate" style={{ color: isActive ? meta.color : undefined }}>
-                    Stage {stage}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                    {meta.label.replace(`Stage ${stage} — `, "")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Module count + progress */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">{group.completed}/{group.total} modules</span>
-                  <span className="font-semibold" style={{ color: pct === 100 ? "#10B981" : meta.color }}>{pct}%</span>
-                </div>
-                <div className="h-1 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? "#10B981" : meta.color }} />
-                </div>
-              </div>
-
-              {/* Connector arrow between stages (not on last) */}
-              {idx < 3 && (
-                <div className="hidden md:block absolute -right-2.5 top-1/2 -translate-y-1/2 z-10">
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <svg width={size} height={size} className="-rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor"
+        strokeWidth={stroke} className="text-muted/30" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color}
+        strokeWidth={stroke} strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`} className="transition-all duration-700" />
+    </svg>
   );
 }
 
-// ─── Module Card ──────────────────────────────────────────────────────────────
+// ─── Module Card ───────────────────────────────────────────────────────────────
 
 function ModuleCard({
-  item,
-  onStart,
-  isReview = false,
+  item, index, isNext, onStart,
 }: {
-  item: { id: string; moduleId: string; status: string; phase: string; module: any; spacedRepetition: any; reasonJson?: any; completionState?: string };
-  onStart: (moduleId: string, planItemId: string) => void;
-  isReview?: boolean;
+  item: any;
+  index: number;
+  isNext: boolean;
+  onStart: () => void;
 }) {
-  const mod = item.module;
-  if (!mod) return null;
-
-  const cap = CAPABILITY_META[mod.capability] ?? { label: mod.capability, color: "#888", icon: BookOpen, description: "" };
-  const modal = MODALITY_META[mod.modality] ?? { label: mod.modality, color: "#888", icon: BookOpen };
+  const mod = item.module ?? {};
+  const cap = CAPABILITY_META[mod.capability] ?? { label: mod.capability ?? "Capability", color: "#888", icon: BookOpen };
+  const modality = MODALITY_META[mod.modality] ?? { label: mod.modality ?? "Module", icon: BookOpen };
   const CapIcon = cap.icon;
-  const ModalIcon = modal.icon;
-  const isLocked = item.status === "locked";
-  const isCompleted = item.status === "completed";
-  const isNoTransfer = (item as any).completionState === "no_transfer";
-  const reasonJson = (() => {
-    try { return typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {}); }
-    catch { return {}; }
-  })() as any;
-  const prescriptionStage: number | undefined = reasonJson?.prescriptionStage;
-  const stageMeta = prescriptionStage ? PRESCRIPTION_STAGE_META[prescriptionStage] : undefined;
+  const ModIcon = modality.icon;
 
-  // AL-07: Check if this locked item is blocked by a mastery gate
-  // The unlockAfterModuleId item's scoreJson will contain masteryGateBlocked flag
-  const isMasteryGateBlocked = isLocked && (item as any).unlockAfterModuleId;
+  const isCompleted = item.status === "completed";
+  const isLocked = item.status === "locked";
+  const isInProgress = item.status === "in_progress";
+
+  // Extract score from scoreJson
+  const score = (() => {
+    try {
+      const s = typeof item.scoreJson === "string" ? JSON.parse(item.scoreJson) : (item.scoreJson ?? {});
+      return s.overallScore ?? s.score ?? null;
+    } catch { return null; }
+  })();
 
   return (
     <div className={cn(
-      "rounded-xl border p-4 transition-all group bg-white",
-      isLocked ? "opacity-50 cursor-not-allowed" : "hover:border-primary/40 hover:shadow-sm cursor-pointer",
-      isReview && "border-amber-200 bg-amber-50",
-      isCompleted && !isNoTransfer && "border-emerald-200 bg-emerald-50",
-      isNoTransfer && "border-red-200 bg-red-50",
+      "group relative flex gap-4 p-4 rounded-2xl border transition-all",
+      isCompleted && "bg-slate-50/50 border-border/50",
+      isNext && "bg-card border-primary/30 shadow-sm ring-1 ring-primary/10",
+      isInProgress && !isNext && "bg-card border-border",
+      isLocked && "bg-slate-50/30 border-border/30 opacity-50",
+      !isCompleted && !isLocked && !isNext && !isInProgress && "bg-card border-border hover:border-primary/20 hover:shadow-sm",
     )}>
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${modal.color}15` }}>
-          {isLocked ? <Lock className="h-5 w-5 text-muted-foreground" /> : <ModalIcon className="h-5 w-5" style={{ color: modal.color }} />}
+      {/* Capability accent bar */}
+      <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full" style={{ background: isLocked ? "#ccc" : cap.color }} />
+
+      {/* Step number / status indicator */}
+      <div className="flex-shrink-0 flex flex-col items-center gap-1 pt-0.5 pl-1">
+        <div className={cn(
+          "w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all",
+          isCompleted && "bg-[#7A9E8E]/20 border-[#7A9E8E]/40 text-[#7A9E8E]",
+          isNext && "bg-primary/10 border-primary text-primary",
+          isInProgress && !isNext && "bg-primary/5 border-primary/40 text-primary",
+          isLocked && "bg-muted/30 border-border/50 text-muted-foreground/40",
+          !isCompleted && !isLocked && !isNext && !isInProgress && "bg-muted/20 border-border text-muted-foreground",
+        )}>
+          {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : isLocked ? <Lock className="h-3.5 w-3.5" /> : <span>{index + 1}</span>}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap gap-1.5 mb-1.5">
-            <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5" style={{ background: `${modal.color}15`, color: modal.color }}>
-              <ModalIcon className="h-2.5 w-2.5 mr-1" />{modal.label}
-            </Badge>
-            {isReview && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-100 text-amber-700">
-                <RotateCcw className="h-2.5 w-2.5 mr-1" />Review due
-              </Badge>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            {/* Type + capability badges */}
+            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                <ModIcon className="h-3 w-3" />{modality.label}
+              </span>
+              <span className="text-muted-foreground/30 text-[10px]">·</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: isLocked ? "#aaa" : cap.color }}>
+                <CapIcon className="h-3 w-3" />{cap.label}
+              </span>
+              {isNext && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                  NEXT UP
+                </span>
+              )}
+              {isInProgress && !isNext && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600">
+                  IN PROGRESS
+                </span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h3 className={cn(
+              "font-semibold text-sm leading-snug",
+              isCompleted && "text-muted-foreground",
+              isLocked && "text-muted-foreground/50",
+            )}>
+              {mod.title ?? "Untitled Module"}
+            </h3>
+
+            {/* Subtitle */}
+            {mod.subtitle && (
+              <p className={cn(
+                "text-xs mt-0.5 line-clamp-2",
+                isLocked ? "text-muted-foreground/40" : "text-muted-foreground",
+              )}>{mod.subtitle}</p>
             )}
-            {isCompleted && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-emerald-100 text-emerald-700">
-                <CheckCircle2 className="h-2.5 w-2.5 mr-1" />Done
-              </Badge>
-            )}
-            <Badge variant="outline" className="text-[10px] font-semibold" style={{ color: "#4477AA", borderColor: "#4477AA40" }}>L{mod.difficulty}</Badge>
-            <Badge variant="outline" className="text-[10px] text-muted-foreground capitalize">{item.phase}</Badge>
-            {stageMeta && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 cursor-help" style={{ background: `${stageMeta.color}15`, color: stageMeta.color }} title={stageMeta.label + " — " + stageMeta.desc}>
-                S{prescriptionStage}
-              </Badge>
-            )}
-            {isNoTransfer && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-red-100 text-red-700">
-                <XCircle className="h-2.5 w-2.5 mr-1" />No transfer
-              </Badge>
-            )}
-            {isMasteryGateBlocked && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-100 text-amber-700" title="Prerequisite module score below 70% mastery threshold">
-                <AlertTriangle className="h-2.5 w-2.5 mr-1" />Retake required
-              </Badge>
-            )}
+
+            {/* Meta row */}
+            <div className="flex items-center gap-3 mt-2">
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Clock className="h-3 w-3" />{mod.durationMins ?? 15} min
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                {mod.levelLabel ?? `Level ${mod.difficulty ?? 1}`}
+              </span>
+              {isCompleted && score !== null && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: scoreToColor(score / 10).text }}>
+                  <CheckCircle2 className="h-3 w-3" />{score}%
+                </span>
+              )}
+            </div>
           </div>
-          <p className={cn("font-semibold text-sm leading-tight mb-0.5", !isLocked && "group-hover:text-primary transition-colors")}>{mod.title}</p>
-          {mod.subtitle && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{mod.subtitle}</p>}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />{mod.durationMins} min
-            </span>
-            {!isLocked && !isCompleted && (
-              <Button size="sm" className="h-7 text-xs gap-1 bg-[#10B981] hover:bg-[#059669] text-white"
-                onClick={() => onStart(item.moduleId, item.id)}>
-                {isReview ? <><RotateCcw className="h-3 w-3" />Review</> : <><Play className="h-3 w-3" />Start</>}
-                <ChevronRight className="h-3 w-3" />
+
+          {/* CTA */}
+          <div className="flex-shrink-0 ml-2">
+            {isCompleted ? (
+              <button
+                onClick={onStart}
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 py-1"
+              >
+                <RotateCcw className="h-3 w-3" />Review
+              </button>
+            ) : isLocked ? (
+              <div className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center">
+                <Lock className="h-3.5 w-3.5 text-muted-foreground/30" />
+              </div>
+            ) : isNext ? (
+              <Button size="sm" className="gap-1.5 h-8 text-xs" onClick={onStart}>
+                <Play className="h-3 w-3" />Start
               </Button>
-            )}
-            {isCompleted && (
-              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-muted-foreground"
-                onClick={() => onStart(item.moduleId, item.id)}>
-                <RotateCcw className="h-3 w-3" />Revisit
+            ) : (
+              <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs bg-transparent" onClick={onStart}>
+                Start
               </Button>
             )}
           </div>
@@ -324,764 +212,375 @@ function ModuleCard({
   );
 }
 
-// ─── Gap Analysis Tab ─────────────────────────────────────────────────────────
+// ─── Insights Tab ──────────────────────────────────────────────────────────────
 
-function GapAnalysisTab({ gapRow }: { gapRow: any }) {
-  if (!gapRow) {
+function InsightsTab() {
+  const { data: gapData } = trpc.adaptiveLearning.getGapAnalysis.useQuery({}, {
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const gaps: any[] = useMemo(() => {
+    try {
+      const raw = gapData?.capabilityGapsJson;
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {});
+      // capabilityGapsJson is an object keyed by capability
+      if (Array.isArray(parsed)) return parsed;
+      return Object.entries(parsed).map(([key, val]: [string, any]) => ({ capabilityKey: key, ...val }));
+    } catch { return []; }
+  }, [gapData]);
+
+  const SEVERITY_CONFIG = {
+    critical:   { label: "Critical Gap",   color: "#C08878", bg: "bg-[#C08878]/10", border: "border-[#C08878]/30" },
+    developing: { label: "Developing",     color: "#C8B07A", bg: "bg-[#C8B07A]/10", border: "border-[#C8B07A]/30" },
+    proficient: { label: "Proficient",     color: "#7A9E8E", bg: "bg-[#7A9E8E]/10", border: "border-[#7A9E8E]/30" },
+    advanced:   { label: "Advanced",       color: "#4477AA", bg: "bg-[#4477AA]/10", border: "border-[#4477AA]/30" },
+  };
+
+  if (gaps.length === 0) {
     return (
-      <div className="text-center py-16">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
-        <p className="font-semibold text-lg mb-2">No assessment data yet</p>
-        <p className="text-sm text-muted-foreground mb-6">Complete an assessment to see your capability gap analysis.</p>
-        <Button onClick={() => window.location.href = "/assessment"} className="gap-2">
-          <Target className="h-4 w-4" />Take Assessment
-        </Button>
+      <div className="text-center py-12">
+        <BarChart3 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground">Complete an assessment to see your capability insights.</p>
       </div>
     );
   }
 
-  // Parse JSON fields
-  const capabilityGaps: Record<string, any> = (() => {
-    try {
-      return typeof gapRow.capabilityGapsJson === "string"
-        ? JSON.parse(gapRow.capabilityGapsJson)
-        : (gapRow.capabilityGapsJson ?? {});
-    } catch { return {}; }
-  })();
-
-  const overallReadiness = gapRow.readinessBand as string;
-  const overallScore = parseFloat(String(gapRow.overallReadinessScore));
-
-  const gaps = Object.entries(capabilityGaps).map(([key, g]: [string, any]) => ({
-    capability: key,
-    score: g.score ?? 0,
-    benchmarkScore: g.benchmarkScore ?? 60,
-    priority: g.severity ?? "developing",
-    gapDescription: g.gapDescription ?? "",
-    recommendedModuleCount: g.recommendedModuleCount ?? 0,
-  }));
+  const overallScore = gapData?.overallReadinessScore ? parseFloat(String(gapData.overallReadinessScore)) : null;
+  const readinessBand = gapData?.readinessBand ?? "developing";
 
   return (
-    <div className="space-y-6">
-      {/* Overall readiness banner */}
-      <div className={cn("p-5 rounded-xl border",
-        PRIORITY_COLOURS[overallReadiness as keyof typeof PRIORITY_COLOURS]?.bg ?? "bg-card",
-        PRIORITY_COLOURS[overallReadiness as keyof typeof PRIORITY_COLOURS]?.border ?? "border-border")}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Overall AI Readiness</p>
-            <p className={cn("text-2xl font-bold capitalize",
-              PRIORITY_COLOURS[overallReadiness as keyof typeof PRIORITY_COLOURS]?.text ?? "text-foreground")}>
-              {overallReadiness}
-            </p>
-            <p className="text-sm text-muted-foreground mt-0.5">Score: <span className="font-mono font-bold px-1.5 py-0.5 rounded text-[11px]" style={{ backgroundColor: scoreToColor(overallScore).bg, color: scoreToColor(overallScore).text }}>{formatPeakonScore(overallScore)}</span></p>
+    <div className="space-y-5">
+      {/* Overall readiness */}
+      {overallScore !== null && (
+        <div className="p-4 rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-semibold text-sm">Overall AI Readiness</h3>
+              <p className="text-xs text-muted-foreground capitalize">{readinessBand.replace("_", " ")}</p>
+            </div>
+            <div className="text-3xl font-bold" style={{ color: scoreToColor(overallScore / 10).text }}>
+              {overallScore.toFixed(1)}
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground mb-1">{gaps.length} capabilities assessed</p>
-            <p className="text-xs text-muted-foreground">{gaps.filter(g => g.priority === "critical").length} critical gaps</p>
+          <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(overallScore * 10, 100)}%`, background: scoreToColor(overallScore / 10).bg }} />
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Capability gap cards */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Capability Breakdown</h3>
-        {gaps.sort((a, b) => a.score - b.score).map(gap => {
-          const cap = CAPABILITY_META[gap.capability] ?? { label: gap.capability, color: "#888", icon: BookOpen, description: "" };
-          const CapIcon = cap.icon;
-          const colours = PRIORITY_COLOURS[gap.priority as keyof typeof PRIORITY_COLOURS] ?? PRIORITY_COLOURS.developing;
-          const delta = gap.score - gap.benchmarkScore;
-
-          return (
-            <div key={gap.capability} className={cn("p-4 rounded-xl border", colours.bg, colours.border)}>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
-                  <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="font-semibold text-sm">{cap.label}</p>
-                    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full capitalize", colours.badge)}>
-                      {gap.priority}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">{cap.description}</p>
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Your score</span>
-                      <span className="font-mono font-bold px-1 py-0.5 rounded text-[10px]" style={{ backgroundColor: scoreToColor(gap.score).bg, color: scoreToColor(gap.score).text }}>{formatPeakonScore(gap.score)}</span>
+      {/* Capability breakdown */}
+      <div>
+        <h3 className="font-semibold text-sm mb-3">Capability Breakdown</h3>
+        <div className="space-y-3">
+          {gaps.slice(0, 8).map((gap: any, i: number) => {
+            const cap = CAPABILITY_META[gap.capabilityKey] ?? { label: gap.capabilityKey, color: "#888", icon: BookOpen };
+            const CapIcon = cap.icon;
+            const sev = SEVERITY_CONFIG[gap.severity as keyof typeof SEVERITY_CONFIG] ?? SEVERITY_CONFIG.developing;
+            const score = gap.currentScore ?? gap.score ?? 0;
+            const benchmark = gap.benchmarkScore ?? gap.benchmark ?? 0;
+            return (
+              <div key={i} className={cn("p-4 rounded-xl border", sev.bg, sev.border)}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: `${cap.color}20` }}>
+                      <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
                     </div>
-                    <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${gap.score}%`, background: cap.color }} />
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground/70">
-                      <span>Role benchmark: {gap.benchmarkScore}%</span>
-                      <span className="flex items-center gap-0.5">
-                        {delta > 0 ? <TrendingUp className="h-3 w-3 text-emerald-400" /> : delta < 0 ? <TrendingDown className="h-3 w-3 text-red-400" /> : <Minus className="h-3 w-3" />}
-                        <span className={delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-muted-foreground"}>
-                          {delta > 0 ? "+" : ""}{delta}% vs benchmark
-                        </span>
+                    <div>
+                      <p className="text-sm font-semibold">{cap.label}</p>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${sev.color}20`, color: sev.color }}>
+                        {sev.label}
                       </span>
                     </div>
                   </div>
-                  {gap.gapDescription && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">{gap.gapDescription}</p>
-                  )}
-                  {gap.recommendedModuleCount > 0 && (
-                    <p className="text-xs mt-2 flex items-center gap-1" style={{ color: cap.color }}>
-                      <BookOpen className="h-3 w-3" />
-                      {gap.recommendedModuleCount} module{gap.recommendedModuleCount !== 1 ? "s" : ""} recommended
-                    </p>
-                  )}
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xl font-bold" style={{ color: cap.color as string }}>{Number(score).toFixed(1)}</p>
+                    <p className="text-[10px] text-muted-foreground">vs {Number(benchmark).toFixed(1)} benchmark</p>
+                  </div>
                 </div>
+                {/* Score bar */}
+                <div className="space-y-1">
+                  <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden relative">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Number(score) * 10, 100)}%`, background: cap.color }} />
+                    {/* Benchmark marker */}
+                    <div className="absolute top-0 bottom-0 w-0.5 bg-slate-400/60" style={{ left: `${Math.min(Number(benchmark) * 10, 100)}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>0</span>
+                    <span>Benchmark: {Number(benchmark).toFixed(1)}</span>
+                    <span>10</span>
+                  </div>
+                </div>
+                {gap.failureModes && (gap.failureModes as string[]).length > 0 && (
+                  <div className="mt-2.5 pt-2.5 border-t border-current/10">
+                    <p className="text-[11px] text-muted-foreground">
+                      <span className="font-semibold text-foreground/70">Risk: </span>{(gap.failureModes as string[])[0]}
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Progress Tab ─────────────────────────────────────────────────────────────
+// ─── Activity Tab ──────────────────────────────────────────────────────────────
 
-function ProgressTab({ capProgress }: { capProgress: any }) {
-  const capabilities: Record<string, { total: number; completed: number; inProgress: number }> = capProgress?.capabilities ?? {};
-  const totalProgress: number = capProgress?.totalProgress ?? 0;
+function ActivityTab({ items }: { items: any[] }) {
+  const completedItems = items.filter(i => i.status === "completed");
+  const totalXP = completedItems.reduce((acc: number, i: any) => {
+    try {
+      const s = typeof i.scoreJson === "string" ? JSON.parse(i.scoreJson) : (i.scoreJson ?? {});
+      return acc + (s.overallScore ?? s.score ?? 0);
+    } catch { return acc; }
+  }, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Overall progress */}
-      <div className="p-5 rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-semibold">Overall Plan Progress</p>
-          <p className="text-2xl font-bold text-primary">{totalProgress}%</p>
+    <div className="space-y-5">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-4 rounded-xl border border-border bg-card text-center">
+          <p className="text-2xl font-bold text-[#7A9E8E]">{completedItems.length}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Completed</p>
         </div>
-        <div className="h-3 rounded-full bg-muted overflow-hidden">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${totalProgress}%` }} />
+        <div className="p-4 rounded-xl border border-border bg-card text-center">
+          <p className="text-2xl font-bold text-[#C8B07A] flex items-center justify-center gap-1">
+            <Flame className="h-5 w-5" />0
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Day streak</p>
+        </div>
+        <div className="p-4 rounded-xl border border-border bg-card text-center">
+          <p className="text-2xl font-bold text-primary">{Math.round(totalXP)}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Total XP</p>
         </div>
       </div>
 
-      {/* Capability progress */}
-      {Object.keys(capabilities).length > 0 && (
-        <div>
-          <h3 className="font-semibold text-sm mb-3">By Capability</h3>
-          <div className="space-y-3">
-            {Object.entries(capabilities).map(([cap, data]) => {
-              const meta = CAPABILITY_META[cap] ?? { label: cap, color: "#888", icon: BookOpen, description: "" };
-              const Icon = meta.icon;
-              const pct = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
-              return (
-                <div key={cap} className="p-4 rounded-xl border border-border bg-card">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${meta.color}15` }}>
-                      <Icon className="h-4 w-4" style={{ color: meta.color }} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">{meta.label}</span>
-                        <span className="text-muted-foreground">{data.completed}/{data.total} modules</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: meta.color }} />
-                      </div>
-                    </div>
-                    <span className="text-sm font-semibold w-10 text-right" style={{ color: meta.color }}>{pct}%</span>
-                  </div>
-                  {data.inProgress > 0 && (
-                    <p className="text-xs text-muted-foreground">{data.inProgress} in progress</p>
-                  )}
+      {/* Completed modules */}
+      {completedItems.length > 0 ? (
+        <div className="space-y-2">
+          <h3 className="font-semibold text-sm">Completed Modules</h3>
+          {completedItems.map((item: any, i: number) => {
+            const mod = item.module ?? {};
+            const cap = CAPABILITY_META[mod.capability] ?? { label: mod.capability ?? "", color: "#888", icon: BookOpen };
+            const CapIcon = cap.icon;
+            const score = (() => {
+              try {
+                const s = typeof item.scoreJson === "string" ? JSON.parse(item.scoreJson) : (item.scoreJson ?? {});
+                return s.overallScore ?? s.score ?? null;
+              } catch { return null; }
+            })();
+            return (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-slate-50/50">
+                <div className="w-7 h-7 rounded-full bg-[#7A9E8E]/20 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[#7A9E8E]" />
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{mod.title ?? "Module"}</p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <CapIcon className="h-3 w-3" style={{ color: cap.color }} />{cap.label}
+                  </p>
+                </div>
+                {score !== null && (
+                  <span className="text-sm font-bold flex-shrink-0" style={{ color: scoreToColor(score / 10).text }}>
+                    {Math.round(score)}%
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {Object.keys(capabilities).length === 0 && (
-        <div className="text-center py-12">
-          <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
-          <p className="font-semibold mb-2">No progress yet</p>
-          <p className="text-sm text-muted-foreground">Start learning modules to see your progress here.</p>
+      ) : (
+        <div className="text-center py-8">
+          <Award className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No completed modules yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">Start your first module to begin earning XP.</p>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress" | "peers" | "digest">("plan");
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [stageFilter, setStageFilter] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"path" | "insights" | "activity">("path");
 
-  // Fetch adaptive plan (auto-generates if none exists)
-  const { data: planData, isLoading: planLoading, refetch: refetchPlan } = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
-    { forceRegenerate: false },
-    { retry: 1 }
+  const { data: plan, isLoading } = trpc.adaptiveLearning.getAdaptivePlan.useQuery({}, {
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const generatePlan = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
+    { forceRegenerate: true },
+    { enabled: false }
   );
 
-  // Fetch gap analysis
-  const { data: gapData, isLoading: gapLoading } = trpc.adaptiveLearning.getGapAnalysis.useQuery(
-    { forceRegenerate: false },
-    { retry: 1 }
-  );
+  // Compute derived stats from plan
+  const items: any[] = plan?.items ?? [];
+  const totalItems = items.length;
+  const completedCount = items.filter(i => i.status === "completed").length;
+  const inProgressCount = items.filter(i => i.status === "in_progress").length;
+  const pct = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+  const nextItem = items.find(i => i.status === "in_progress" || i.status === "available");
 
-  // Fetch capability progress
-  const { data: capProgress, isLoading: progressLoading } = trpc.adaptiveLearning.getCapabilityProgress.useQuery(
-    undefined,
-    { retry: 1 }
-  );
+  // Estimated time remaining
+  const remainingMins = items
+    .filter(i => i.status !== "completed")
+    .reduce((acc: number, i: any) => acc + (i.module?.durationMins ?? 15), 0);
+  const remainingHours = Math.floor(remainingMins / 60);
+  const remainingMinRem = remainingMins % 60;
 
-  // Fetch due reviews
-  const { data: dueReviews } = trpc.adaptiveLearning.getDueReviews.useQuery(undefined, { retry: 1 });
-  // Fetch streak & milestones
-  const { data: streakData } = trpc.adaptiveLearning.getLearningStreak.useQuery(undefined, { retry: 1 });
-  // Fetch peer benchmarks
-  const { data: peerData } = trpc.adaptiveLearning.getPeerBenchmarks.useQuery(undefined, { retry: 1 });
-  // P3-LL-4/5: Transfer findings
-  const { data: transferFindings } = trpc.adaptiveLearning.getTransferFindings.useQuery(undefined, { retry: 1 });
-  // P3-LL-6: Learning-aware reassessment context
-  const { data: learningAwareCtx } = trpc.adaptiveLearning.getLearningAwareContext.useQuery(undefined, { retry: 1 });
-  // Weekly digest, nudges & trending
-  const { data: weeklyDigest } = trpc.adaptiveLearning.getWeeklyDigest.useQuery(undefined, { retry: 1 });
-  const { data: myNudges } = trpc.adaptiveLearning.getMyNudges.useQuery(undefined, { retry: 1 });
-  const { data: trendingModules } = trpc.adaptiveLearning.getTrendingModules.useQuery(undefined, { retry: 1 });
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-10 rounded-xl" />
+        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+      </div>
+    );
+  }
 
-  // Refresh plan (force regenerate)
-  const handleRefreshPlan = async () => {
-    try {
-      await trpc.useUtils().adaptiveLearning.getAdaptivePlan.invalidate();
-      // Force regenerate by passing forceRegenerate: true via a separate call
-      setRefreshKey(k => k + 1);
-      toast.success("Refreshing your learning plan…");
-      setTimeout(() => refetchPlan(), 300);
-    } catch {
-      toast.error("Failed to refresh plan");
-    }
-  };
-
-  const handleStartModule = (moduleId: string, planItemId: string) => {
-    setLocation(`/learning/module/${moduleId}?planItemId=${planItemId}`);
-  };
-
-  // Derive plan sections from items
-  const planItems: any[] = planData?.items ?? [];
-  const now = Date.now();
-
-  const reviewItems = (dueReviews ?? []).map((r: any) => ({
-    id: r.id,
-    moduleId: r.moduleId,
-    status: "available",
-    phase: "review",
-    module: r.module,
-    spacedRepetition: r,
-  }));
-
-  // Stage filter helper
-  const getItemStage = (item: any): number => {
-    try {
-      const rj = typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {});
-      return rj?.prescriptionStage ?? 1;
-    } catch { return 1; }
-  };
-  const matchesStageFilter = (item: any) => stageFilter === null || getItemStage(item) === stageFilter;
-
-  const availableItems = planItems.filter(i => (i.status === "available" || i.status === "in_progress") && matchesStageFilter(i));
-  const completedItems = planItems.filter(i => i.status === "completed" && matchesStageFilter(i));
-  const lockedItems = planItems.filter(i => i.status === "locked" && matchesStageFilter(i));
-
-  // Today's items = first 3 available
-  const todayItems = availableItems.slice(0, 3);
-  const upcomingItems = availableItems.slice(3);
-
-  const criticalGapCount = (() => {
-    if (!gapData?.capabilityGapsJson) return 0;
-    try {
-      const gaps = typeof gapData.capabilityGapsJson === "string"
-        ? JSON.parse(gapData.capabilityGapsJson)
-        : gapData.capabilityGapsJson;
-      return Object.values(gaps).filter((g: any) => g.severity === "critical").length;
-    } catch { return 0; }
-  })();
-
-  const tabs = [
-    { id: "plan" as const,     label: "My Plan",      count: todayItems.length + reviewItems.length },
-    { id: "gaps" as const,     label: "Gap Analysis", count: criticalGapCount },
-    { id: "progress" as const, label: "Progress",     count: completedItems.length },
-    { id: "peers" as const,    label: "Benchmarks",   count: 0 },
-    { id: "digest" as const,   label: "Digest",       count: (myNudges as any[] ?? []).filter((n: any) => n.status === "sent").length },
-  ];
-  type TabId = "plan" | "gaps" | "progress" | "peers" | "digest";
+  if (!plan) {
+    return (
+      <div className="p-4 md:p-6 max-w-3xl mx-auto">
+        <div className="text-center py-16 space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <BookOpen className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold mb-2">No Learning Plan Yet</h2>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              Complete an assessment to get a personalised learning plan tailored to your capability gaps.
+            </p>
+          </div>
+          <Button
+            onClick={() => toast.info("Complete an assessment first to generate your plan.")}
+            className="gap-2"
+          >
+            <Sparkles className="h-4 w-4" />Get Started
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Learning Plan</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Adaptive modules tailored to your capability gaps
-          </p>
+    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
+
+      {/* ── Plan Header ── */}
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          {/* Progress ring */}
+          <div className="relative flex-shrink-0">
+            <ProgressRing pct={pct} size={72} stroke={5} color="#4477AA" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm font-bold">{pct}%</span>
+            </div>
+          </div>
+
+          {/* Plan info */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold leading-tight mb-1">Your AI Capability Plan</h1>
+            <p className="text-xs text-muted-foreground mb-3">
+              {completedCount} of {totalItems} modules complete
+              {remainingMins > 0 && (
+                <> · {remainingHours > 0 ? `${remainingHours}h ` : ""}{remainingMinRem}m remaining</>
+              )}
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-base font-bold text-[#7A9E8E]">{completedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Done</p>
+              </div>
+              <div className="w-px h-8 bg-border" />
+              <div className="text-center">
+                <p className="text-base font-bold text-[#C8B07A]">{inProgressCount}</p>
+                <p className="text-[10px] text-muted-foreground">In Progress</p>
+              </div>
+              <div className="w-px h-8 bg-border" />
+              <div className="text-center">
+                <p className="text-base font-bold text-muted-foreground">{totalItems - completedCount - inProgressCount}</p>
+                <p className="text-[10px] text-muted-foreground">Remaining</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={handleRefreshPlan}>
-          <RefreshCw className="h-3.5 w-3.5" />Refresh
-        </Button>
+
+        {/* Progress bar */}
+        <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+          <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
+        </div>
+
+        {/* Next up CTA */}
+        {nextItem && (
+          <button
+            className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15 hover:bg-primary/10 transition-colors text-left"
+            onClick={() => setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`)}
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Play className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-0.5">Continue Learning</p>
+              <p className="text-sm font-semibold truncate">{nextItem.module?.title ?? "Next Module"}</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-primary flex-shrink-0" />
+          </button>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50">
-        {tabs.map(tab => (
-          <button key={tab.id}
-            className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-all",
-              activeTab === tab.id ? "bg-card text-foreground shadow-sm ring-1 ring-[#10B981]/30 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
-            onClick={() => setActiveTab(tab.id)}>
-            {tab.label}
-            {tab.count > 0 && (
-              <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
-                activeTab === tab.id ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
-                {tab.count}
-              </span>
+      {/* ── Tabs ── */}
+      <div className="flex gap-1 p-1 rounded-xl bg-muted/20 border border-border/50">
+        {([
+          { key: "path",     label: "My Path",  icon: BookOpen },
+          { key: "insights", label: "Insights", icon: TrendingUp },
+          { key: "activity", label: "Activity", icon: Award },
+        ] as const).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all",
+              activeTab === tab.key
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
+          >
+            <tab.icon className="h-3.5 w-3.5" />{tab.label}
           </button>
         ))}
       </div>
 
-      {/* ── My Plan Tab ──────────────────────────────────────────────────────── */}
-      {activeTab === "plan" && (
-        <div className="space-y-6">
-          {planLoading && (
-            <ListSkeleton items={4} />
-          )}
-
-          {!planLoading && !planData && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="h-8 w-8 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold mb-2">No learning plan yet</h2>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                {gapData
-                  ? "Your gap analysis is ready. Your personalised plan will be generated automatically."
-                  : "Complete an assessment first to generate your personalised learning plan."}
-              </p>
-              {!gapData && (
-                <Button className="gap-2" onClick={() => setLocation("/assessment")}>
-                  <Target className="h-4 w-4" />Take Assessment
-                </Button>
-              )}
+      {/* ── My Path Tab ── */}
+      {activeTab === "path" && (
+        <div className="space-y-2">
+          {items.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Your learning path is being prepared.</p>
             </div>
-          )}
-
-          {planData && (
-            <>
-              {/* Auto-regeneration "plan updated" banner */}
-              {(planData as any).autoRegeneratedAt && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-blue-700 mb-0.5">Your learning plan has been updated</p>
-                    <p className="text-xs text-muted-foreground">
-                      Your plan was automatically refreshed after your latest assessment to reflect your current capability gaps.
-                      Updated {new Date((planData as any).autoRegeneratedAt).toLocaleDateString()}.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* P3-LL-6: Learning-Aware Reassessment Banner */}
-              {learningAwareCtx?.learningAwareMode && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <Brain className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-emerald-700 mb-0.5">Learning-Aware Reassessment Available</p>
-                    <p className="text-xs text-muted-foreground">
-                      You've completed {learningAwareCtx.recentlyLearnedSignals.length} learning module{learningAwareCtx.recentlyLearnedSignals.length !== 1 ? "s" : ""} since your last assessment.
-                      Your next assessment will be calibrated to test whether this learning has translated to behaviour change.
-                    </p>
-                    {learningAwareCtx.noTransferModules.length > 0 && (
-                      <p className="text-xs text-amber-600 mt-1">
-                        {learningAwareCtx.noTransferModules.length} module{learningAwareCtx.noTransferModules.length !== 1 ? "s" : ""} previously showed no transfer — these will be prioritised in your reassessment.
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setLocation("/assessment")}
-                    className="text-xs font-semibold text-emerald-600 hover:underline flex-shrink-0"
-                  >
-                    Take reassessment
-                  </button>
-                </div>
-              )}
-
-              {/* P3-LL-5: No-Transfer Findings Panel */}
-              {transferFindings?.summary && (transferFindings.summary.noTransferModules ?? 0) > 0 && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldAlert className="h-4 w-4 text-red-600" />
-                    <h3 className="text-sm font-semibold text-red-700">No-Transfer Findings</h3>
-                    <Badge variant="outline" className="text-[10px] bg-red-100 text-red-700 border-0">{transferFindings.summary.noTransferModules} module{transferFindings.summary.noTransferModules !== 1 ? "s" : ""}</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    These modules were completed but did not produce measurable behaviour change in your subsequent assessment.
-                    Transfer rate: <span className="font-semibold text-foreground">{transferFindings.summary.transferRate}%</span>.
-                    Consider revisiting these modules with a different approach.
-                  </p>
-                  <div className="space-y-2">
-                    {(transferFindings.findings ?? []).map((f: any) => (
-                      <div key={f.moduleId} className="flex items-start gap-2 text-xs">
-                        <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-medium text-foreground">{f.moduleTitle}</span>
-                          <span className="text-muted-foreground ml-1">— {f.reason?.replace(/_/g, " ")}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* AL-06: Journey Map */}
-              <JourneyMapSection
-                planItems={planItems}
-                onStageClick={(stage) => setStageFilter(prev => prev === stage ? null : stage)}
+          ) : (
+            items.map((item: any, i: number) => (
+              <ModuleCard
+                key={item.id ?? i}
+                item={item}
+                index={i}
+                isNext={nextItem && item.id === nextItem.id}
+                onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
               />
-
-              {/* Stage filter indicator */}
-              {stageFilter !== null && (
-                <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-muted/20">
-                  <span className="text-xs text-muted-foreground">Filtered to</span>
-                  <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5" style={{ background: `${PRESCRIPTION_STAGE_META[stageFilter]?.color ?? '#888'}15`, color: PRESCRIPTION_STAGE_META[stageFilter]?.color ?? '#888' }}>
-                    Stage {stageFilter} — {PRESCRIPTION_STAGE_META[stageFilter]?.label.replace(`Stage ${stageFilter} — `, "")}
-                  </Badge>
-                  <button className="text-xs text-muted-foreground hover:text-foreground ml-auto" onClick={() => setStageFilter(null)}>Clear</button>
-                </div>
-              )}
-
-              {/* Plan summary strip */}
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { label: "Today",     value: todayItems.length,    color: "#6366f1" },
-                  { label: "Reviews",   value: reviewItems.length,   color: "#f59e0b" },
-                  { label: "Upcoming",  value: upcomingItems.length, color: "#10b981" },
-                  { label: "Done",      value: completedItems.length,color: "#6b7280" },
-                ].map(s => (
-                  <div key={s.label} className="p-3 rounded-xl border border-border bg-card text-center">
-                    <p className="text-xl font-bold" style={{ color: s.value > 0 ? s.color : "var(--muted-foreground)" }}>{s.value}</p>
-                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Spaced repetition reviews */}
-              {reviewItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <RotateCcw className="h-4 w-4 text-amber-400" />
-                    <h3 className="font-semibold text-sm">Due for Review</h3>
-                    <Badge variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-0">{reviewItems.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {reviewItems.map((item: any) => (
-                      <ModuleCard key={item.id} item={item} onStart={handleStartModule} isReview />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Today's modules */}
-              {todayItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Flame className="h-4 w-4 text-primary" />
-                    <h3 className="font-semibold text-sm">Today's Learning</h3>
-                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-0">{todayItems.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {todayItems.map((item: any) => (
-                      <ModuleCard key={item.id} item={item} onStart={handleStartModule} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Upcoming modules */}
-              {upcomingItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold text-sm">Coming Up</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {upcomingItems.slice(0, 8).map((item: any) => (
-                      <ModuleCard key={item.id} item={item} onStart={handleStartModule} />
-                    ))}
-                  </div>
-                  {upcomingItems.length > 8 && (
-                    <p className="text-xs text-muted-foreground text-center mt-3">
-                      +{upcomingItems.length - 8} more modules in your plan
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Locked modules */}
-              {lockedItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold text-sm text-muted-foreground">Locked</h3>
-                    <Badge variant="outline" className="text-[10px] text-muted-foreground">{lockedItems.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {lockedItems.slice(0, 4).map((item: any) => (
-                      <ModuleCard key={item.id} item={item} onStart={handleStartModule} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {availableItems.length === 0 && reviewItems.length === 0 && completedItems.length > 0 && (
-                <div className="text-center py-12">
-                  <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
-                  <p className="font-semibold text-lg mb-2">All caught up!</p>
-                  <p className="text-sm text-muted-foreground">No modules due today. Check back tomorrow for spaced repetition reviews.</p>
-                </div>
-              )}
-            </>
+            ))
           )}
         </div>
       )}
 
-       {/* ── Peer Benchmarks Tab ─────────────────────────────────────── */}
-      {activeTab === "peers" && (
-        <div className="space-y-5">
-          {/* My stats vs platform */}
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart2 className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold">Your Standing</h2>
-            </div>
-            {!peerData ? (
-              <ListSkeleton items={3} hasIcon={false} />
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {[
-                  { label: "Modules Completed", mine: peerData.myStats.modulesCompleted, avg: peerData.platformAverages.avgModulesCompleted, pct: peerData.percentiles.modulesCompleted, icon: BookOpen, color: "#6366f1" },
-                  { label: "Mins Learned", mine: peerData.myStats.minsLearned, avg: peerData.platformAverages.avgMinsLearned, pct: null, icon: Clock, color: "#10b981" },
-                  { label: "Readiness Score", mine: Math.round(peerData.myStats.readinessScore), avg: peerData.platformAverages.avgReadinessScore, pct: peerData.percentiles.readinessScore, icon: Target, color: "#f59e0b" },
-                ].map(stat => (
-                  <div key={stat.label} className="rounded-xl border border-border bg-white p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    </div>
-                    <p className="text-2xl font-bold">{stat.mine}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Platform avg: {stat.avg}</p>
-                    {stat.pct !== null && (
-                      <div className="mt-2">
-                        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                          <span>Percentile</span><span>{stat.pct}th</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${stat.pct}%`, background: stat.color }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Readiness band distribution */}
-          {peerData && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <UserCheck className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Platform Readiness Distribution</h2>
-                <Badge variant="outline" className="text-[10px]">{peerData.platformAverages.totalLearners} learners</Badge>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(peerData.platformAverages.bandDistribution).map(([band, count]) => {
-                  const total = peerData.platformAverages.totalLearners;
-                  const pct = total > 0 ? Math.round(((count as number) / total) * 100) : 0;
-                  const colors: Record<string, string> = { critical: "#ef4444", developing: "#f59e0b", proficient: "#10b981", advanced: "#6366f1" };
-                  const isMe = peerData.myStats.readinessBand === band;
-                  return (
-                    <div key={band} className={cn("flex items-center gap-3 p-2 rounded-lg", isMe && "bg-primary/5 border border-primary/20")}>
-                      <div className="w-20 text-xs capitalize font-medium" style={{ color: colors[band] ?? "#888" }}>{band}</div>
-                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[band] ?? "#888" }} />
-                      </div>
-                      <div className="w-12 text-right text-xs text-muted-foreground">{pct}%</div>
-                      {isMe && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-0 px-1.5">You</Badge>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {/* Streak in benchmarks context */}
-          {streakData && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Flame className="h-5 w-5 text-orange-400" />
-                <h2 className="font-semibold">Your Learning Streak</h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { label: "Current Streak", value: `${streakData.currentStreak}d`, icon: Flame, color: "#f97316" },
-                  { label: "Longest Streak", value: `${streakData.longestStreak}d`, icon: Trophy, color: "#f59e0b" },
-                  { label: "Modules Done", value: streakData.totalModulesCompleted, icon: CheckCircle2, color: "#10b981" },
-                  { label: "Mins Learned", value: streakData.totalMinsLearned, icon: Clock, color: "#6366f1" },
-                ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
-                    <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
-                    <p className="text-xl font-bold">{s.value}</p>
-                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              {/* Next milestone */}
-              {streakData.nextMilestone && (
-                <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-amber-400" />
-                      <span className="text-sm font-medium">Next milestone: {streakData.nextMilestone.label}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{streakData.nextMilestone.current}/{streakData.nextMilestone.target} modules</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${Math.min(100, (streakData.nextMilestone.current / streakData.nextMilestone.target) * 100)}%` }} />
-                  </div>
-                </div>
-              )}
-              {/* Earned milestones */}
-              {streakData.milestones.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {streakData.milestones.map((m: string) => (
-                    <Badge key={m} variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">
-                      <Trophy className="h-2.5 w-2.5 mr-1" />{m.replace("modules_", "") + " modules"}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-      {/* ── Gap Analysis Tab ──────────────────────────────────────────── */}
-      {activeTab === "gaps" && (
-        gapLoading
-          ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3, 4].map(i => <CardSkeleton key={i} rows={3} />)}</div>
-          : <GapAnalysisTab gapRow={gapData} />
-      )}
+      {/* ── Insights Tab ── */}
+      {activeTab === "insights" && <InsightsTab />}
 
-      {/* ── Progress Tab ──────────────────────────────────────────────────── */}
-      {activeTab === "progress" && (
-        progressLoading
-          ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3, 4, 5, 6].map(i => <CardSkeleton key={i} rows={2} />)}</div>
-          : <ProgressTab capProgress={capProgress} />
-      )}
-      {/* ── Digest Tab ──────────────────────────────────────────────────── */}
-      {activeTab === "digest" && (
-        <div className="space-y-5">
-          {/* Nudges from manager */}
-          {myNudges && (myNudges as any[]).length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Bell className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Module Recommendations</h2>
-                <Badge variant="outline" className="text-[10px]">{(myNudges as any[]).length}</Badge>
-              </div>
-              <div className="space-y-3">
-                {(myNudges as any[]).map((nudge: any) => (
-                  <div key={nudge.id} className={cn("rounded-lg border p-3", nudge.status === "sent" ? "border-primary/30 bg-primary/5" : "border-border")}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{nudge.moduleTitle ?? "Module"}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{nudge.moduleCapability?.replace(/_/g, " ")}</p>
-                      </div>
-                      {nudge.status === "sent" && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-0">New</Badge>}
-                    </div>
-                    {nudge.message && <p className="text-xs text-muted-foreground mt-2 italic">"{nudge.message}"</p>}
-                    <p className="text-[10px] text-muted-foreground mt-1">{new Date(nudge.sentAt).toLocaleDateString("en-GB")}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Weekly digest */}
-          {weeklyDigest && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">This Week</h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                {[
-                  { label: "Modules Done", value: (weeklyDigest as any).weekCompletions, icon: CheckCircle2, color: "#10b981" },
-                  { label: "Minutes Learned", value: (weeklyDigest as any).totalMinsThisWeek, icon: Clock, color: "#6366f1" },
-                  { label: "Current Streak", value: `${(weeklyDigest as any).currentStreak}d`, icon: Flame, color: "#f97316" },
-                  { label: "Reviews Due", value: ((weeklyDigest as any).dueReviews ?? []).length, icon: RotateCcw, color: "#f59e0b" },
-                ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
-                    <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
-                    <p className="text-xl font-bold">{s.value}</p>
-                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              {(weeklyDigest as any).topPriorityCapability && (
-                <div className="rounded-lg bg-muted/30 border border-border p-3">
-                  <p className="text-xs text-muted-foreground mb-0.5">Priority focus area</p>
-                  <p className="text-sm font-medium capitalize">{(weeklyDigest as any).topPriorityCapability.capability.replace(/_/g, " ")}</p>
-                </div>
-              )}
-            </div>
-          )}
-          {/* Trending modules */}
-          {trendingModules && (trendingModules as any[]).length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Trending on Platform</h2>
-                <span className="text-xs text-muted-foreground">Last 30 days</span>
-              </div>
-              <div className="space-y-2">
-                {(trendingModules as any[]).slice(0, 5).map((mod: any, i: number) => (
-                  <div key={mod.moduleId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors">
-                    <span className="w-5 text-center text-xs font-bold text-muted-foreground">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{mod.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{mod.capability?.replace(/_/g, " ")}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
-                      <Users className="h-3 w-3" />
-                      <span>{mod.completionCount}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Empty state */}
-          {(!myNudges || (myNudges as any[]).length === 0) && (!weeklyDigest || (weeklyDigest as any).weekCompletions === 0) && (
-            <div className="text-center py-12 rounded-xl border border-dashed border-border">
-              <BarChart3 className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-              <p className="font-semibold mb-1">No digest data yet</p>
-              <p className="text-sm text-muted-foreground">Complete some modules to see your weekly progress here.</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* ── Activity Tab ── */}
+      {activeTab === "activity" && <ActivityTab items={items} />}
     </div>
   );
 }

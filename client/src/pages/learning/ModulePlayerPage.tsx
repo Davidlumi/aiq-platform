@@ -90,7 +90,7 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
     <div className="space-y-5">
       {/* Learning objectives */}
       {sectionIdx === 0 && learningObjectives.length > 0 && (
-        <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200">
+        <div className="p-4 rounded-xl bg-muted/30 border border-border">
           <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Learning Objectives</p>
           <ul className="space-y-1.5">
             {learningObjectives.map((obj, i) => (
@@ -136,8 +136,8 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
                   </div>
                 )}
                 {ex.output && (
-                  <div className="mt-2 p-2 rounded bg-emerald-50 border border-emerald-200">
-                    <p className="text-xs text-emerald-600 font-semibold mb-1">Output</p>
+                  <div className="mt-2 p-2 rounded bg-[#7A9E8E]/10 border border-[#7A9E8E]/30">
+                    <p className="text-xs text-[#4A6E5E] font-semibold mb-1">Output</p>
                     <p className="text-xs text-slate-600">{ex.output}</p>
                   </div>
                 )}
@@ -158,12 +158,12 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
         )}
         {/* Key points (on last section) */}
         {isLast && keyPoints.length > 0 && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Key Takeaways</p>
+          <div className="p-4 rounded-xl bg-muted/20 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Takeaways</p>
             <ul className="space-y-1.5">
               {keyPoints.map((kp, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <Star className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
                   <span>{kp}</span>
                 </li>
               ))}
@@ -199,7 +199,7 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
           </Button>
         )}
         {isLast && (
-          <Button className="flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(85)}>
+          <Button className="flex-1 gap-1.5 " onClick={() => onComplete(85)}>
             <CheckCircle2 className="h-4 w-4" />Complete Module
           </Button>
         )}
@@ -235,12 +235,12 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
           </div>
         )}
         {keyTakeaways.length > 0 && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Key Takeaways</p>
+          <div className="p-4 rounded-xl bg-muted/20 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Takeaways</p>
             <ul className="space-y-1.5">
               {keyTakeaways.map((kp: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <Star className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
                   <span>{kp}</span>
                 </li>
               ))}
@@ -253,7 +253,7 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
             {[{label: "Still learning", score: 60}, {label: "Mostly clear", score: 75}, {label: "Confident", score: 90}].map(opt => (
               <button key={opt.score}
                 className={cn("p-3 rounded-xl border text-xs font-medium transition-all",
-                  selfAssessScore === opt.score ? "border-primary bg-indigo-50 text-primary" : "border-border bg-card hover:border-primary/40")}
+                  selfAssessScore === opt.score ? "border-primary bg-primary/10 text-primary" : "border-border bg-card hover:border-primary/40")}
                 onClick={() => setSelfAssessScore(opt.score)}>
                 {opt.label}
               </button>
@@ -321,7 +321,7 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
       <div className="flex items-center gap-2">
         {questions.map((_, i) => (
           <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            i < qIdx ? (scores[i] ? "bg-emerald-500" : "bg-red-500") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
+            i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
         ))}
       </div>
       <p className="text-xs text-muted-foreground">Question {qIdx + 1} of {questions.length}</p>
@@ -337,17 +337,17 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
         {optionTexts.map((optText: string, i: number) => (
           <button key={i}
             className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
-              !answered && "hover:border-primary/50 hover:bg-indigo-50",
-              answered && i === correctIdx && "border-emerald-500/60 bg-emerald-50 text-emerald-700",
-              answered && i === selectedIdx && i !== correctIdx && "border-red-300 bg-red-50 text-red-600",
-              !answered && selectedIdx === i && "border-primary bg-indigo-50",
+              !answered && "hover:border-primary/50 hover:bg-muted/20",
+              answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
+              answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
+              !answered && selectedIdx === i && "border-primary bg-muted/20",
               !answered && selectedIdx !== i && "border-border bg-card",
             )}
             onClick={() => handleAnswer(i)}>
             <div className="flex items-start gap-2.5">
               <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
-                answered && i === correctIdx ? "border-emerald-500 bg-emerald-500 text-white" :
-                answered && i === selectedIdx && i !== correctIdx ? "border-red-500 bg-red-500 text-white" :
+                answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
+                answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
                 "border-muted-foreground text-muted-foreground")}>
                 {String.fromCharCode(65 + i)}
               </span>
@@ -360,7 +360,7 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
       {/* Explanation */}
       {answered && q.explanation && (
         <div className={cn("p-4 rounded-xl border text-sm",
-          isCorrect ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-amber-50 border-amber-200 text-amber-200")}>
+          isCorrect ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30 text-[#4A6E5E]" : "bg-[#C8B07A]/10 border-[#C8B07A]/30 text-[#8E7848]")}>
           <div className="flex items-start gap-2">
             {isCorrect ? <ThumbsUp className="h-4 w-4 flex-shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />}
             <div>
@@ -424,7 +424,7 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
       <div className="flex items-center gap-1.5">
         {steps.map((_, i) => (
           <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            stepsDone.has(i) ? "bg-emerald-500" : i === stepIdx ? "bg-primary/60" : "bg-muted")} />
+            stepsDone.has(i) ? "bg-primary" : i === stepIdx ? "bg-primary/60" : "bg-muted")} />
         ))}
       </div>
       <p className="text-xs text-muted-foreground">Step {stepIdx + 1} of {steps.length}</p>
@@ -432,7 +432,7 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
       {/* Step content */}
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
             {stepIdx + 1}
           </div>
           <div>
@@ -448,7 +448,7 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
         )}
 
         {step.prompt && (
-          <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+          <div className="p-3 rounded-xl bg-muted/20 border border-border">
             <p className="text-xs font-semibold text-primary mb-1">Your Task</p>
             <p className="text-sm">{step.prompt}</p>
           </div>
@@ -468,7 +468,7 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
         )}
 
         {step.tip && (
-          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          <div className="p-3 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground">
             <span className="font-semibold">Tip: </span>{step.tip}
           </div>
         )}
@@ -528,8 +528,8 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
             </div>
           )}
           {body?.challenge && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200">
-              <p className="text-xs font-semibold text-red-600 mb-1">The Challenge</p>
+            <div className="p-4 rounded-xl bg-[#C08878]/10 border border-[#C08878]/30">
+              <p className="text-xs font-semibold text-[#8E5848] mb-1">The Challenge</p>
               <p className="text-sm">{body.challenge}</p>
             </div>
           )}
@@ -562,12 +562,12 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
       {phase === "reflect" && (
         <div className="space-y-4">
           {body?.keyInsights && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-              <p className="text-xs font-semibold text-emerald-600 mb-2">Key Insights</p>
+            <div className="p-4 rounded-xl bg-[#7A9E8E]/10 border border-[#7A9E8E]/30">
+              <p className="text-xs font-semibold text-[#4A6E5E] mb-2">Key Insights</p>
               <ul className="space-y-1.5">
                 {(body.keyInsights as string[]).map((insight: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <ThumbsUp className="h-3.5 w-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <ThumbsUp className="h-3.5 w-3.5 text-[#4A6E5E] mt-0.5 flex-shrink-0" />
                     <span>{insight}</span>
                   </li>
                 ))}
@@ -575,12 +575,12 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
             </div>
           )}
           {body?.lessonsLearned && (
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200">
-              <p className="text-xs font-semibold text-primary mb-2">Lessons Learned</p>
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Lessons Learned</p>
               <p className="text-sm">{body.lessonsLearned}</p>
             </div>
           )}
-          <Button className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(85)}>
+          <Button className="w-full gap-1.5 " onClick={() => onComplete(85)}>
             <CheckCircle2 className="h-4 w-4" />Complete Case Study
           </Button>
         </div>
@@ -599,8 +599,8 @@ function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (scor
   return (
     <div className="space-y-5">
       {body?.intro && (
-        <div className="p-4 rounded-xl bg-cyan-50 border border-cyan-200">
-          <p className="text-sm text-cyan-700">{body.intro}</p>
+        <div className="p-4 rounded-xl bg-muted/30 border border-border">
+          <p className="text-sm text-muted-foreground">{body.intro}</p>
         </div>
       )}
       <h3 className="font-semibold text-sm">Reflection Prompts</h3>
@@ -608,13 +608,13 @@ function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (scor
       {prompts.map((prompt: string, i: number) => (
         <div key={i} className="space-y-2">
           <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-600 text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
               {i + 1}
             </span>
             <p className="text-sm font-medium leading-relaxed">{prompt}</p>
           </div>
           <textarea
-            className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-cyan-300"
+            className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
             placeholder="Reflect here…"
             value={responses[i] ?? ""}
             onChange={e => setResponses(r => ({ ...r, [i]: e.target.value }))}
@@ -626,7 +626,7 @@ function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (scor
           {body.closingThought}
         </div>
       )}
-      <Button className="w-full gap-1.5 bg-cyan-600 hover:bg-cyan-700" disabled={!allAnswered} onClick={() => onComplete(90)}>
+      <Button className="w-full gap-1.5 " disabled={!allAnswered} onClick={() => onComplete(90)}>
         <CheckCircle2 className="h-4 w-4" />Complete Reflection
       </Button>
     </div>
@@ -662,8 +662,8 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
             </div>
           )}
           {body?.yourRole && (
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200">
-              <p className="text-xs font-semibold text-primary mb-1">Your Role</p>
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Your Role</p>
               <p className="text-sm">{body.yourRole}</p>
             </div>
           )}
@@ -678,13 +678,13 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-muted-foreground">Reflection Prompts</p>
                   {(body.reflectionPrompts as string[]).map((prompt: string, i: number) => (
-                    <div key={i} className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                    <div key={i} className="p-3 rounded-xl bg-muted/20 border border-border">
                       <p className="text-sm">{prompt}</p>
                     </div>
                   ))}
                 </div>
               )}
-              <Button className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(80)}>
+              <Button className="w-full gap-1.5 " onClick={() => onComplete(80)}>
                 <CheckCircle2 className="h-4 w-4" />Complete Scenario
               </Button>
             </div>
@@ -694,15 +694,15 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
 
       {step === "decision" && (
         <>
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-            <p className="text-xs font-semibold text-amber-600 mb-1">Decision Point</p>
+          <div className="p-4 rounded-xl bg-muted/20 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground mb-1">Decision Point</p>
             <p className="text-sm font-medium">{body?.decisionQuestion ?? "What would you do?"}</p>
           </div>
           <div className="space-y-2">
             {choices.map((c: any, i: number) => (
               <button key={i}
                 className={cn("w-full text-left p-4 rounded-xl border text-sm transition-all",
-                  chosen === i ? "border-primary bg-indigo-50" : "border-border bg-card hover:border-primary/40")}
+                  chosen === i ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}
                 onClick={() => setChosen(i)}>
                 <div className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full border border-muted-foreground text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -722,15 +722,15 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
       {step === "outcome" && choice && (
         <>
           <div className={cn("p-4 rounded-xl border",
-            choice.isOptimal ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200")}>
-            <p className={cn("text-xs font-semibold mb-1", choice.isOptimal ? "text-emerald-600" : "text-amber-600")}>
+            choice.isOptimal ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30" : "bg-[#C8B07A]/10 border-[#C8B07A]/30")}>
+            <p className={cn("text-xs font-semibold mb-1", choice.isOptimal ? "text-[#4A6E5E]" : "text-[#8E7848]")}>
               {choice.isOptimal ? "Strong Choice" : "Consider This"}
             </p>
             <p className="text-sm">{choice.outcome ?? choice.feedback ?? "Good thinking — here's what typically happens."}</p>
           </div>
           {body?.bestPractice && (
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200">
-              <p className="text-xs font-semibold text-primary mb-1">Best Practice</p>
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
               <p className="text-sm">{body.bestPractice}</p>
             </div>
           )}
@@ -740,7 +740,7 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
               <p className="text-sm">{body.learningPoint}</p>
             </div>
           )}
-          <Button className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(choice.isOptimal ? 90 : 70)}>
+          <Button className="w-full gap-1.5" onClick={() => onComplete(choice.isOptimal ? 90 : 70)}>
             <CheckCircle2 className="h-4 w-4" />Complete Scenario
           </Button>
         </>
@@ -764,8 +764,8 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
   return (
     <div className="space-y-5">
       {body?.intro && (
-        <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-          <p className="text-xs font-semibold text-green-600 mb-1">Coaching Framework</p>
+        <div className="p-4 rounded-xl bg-muted/30 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">Coaching Framework</p>
           <p className="text-sm text-slate-700">{body.intro}</p>
         </div>
       )}
@@ -774,21 +774,21 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
       <div className="flex items-center gap-1.5">
         {questions.map((_, i) => (
           <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            (responses[i] ?? "").trim().length > 20 ? "bg-green-500" : i === qIdx ? "bg-primary/60" : "bg-muted")} />
+            (responses[i] ?? "").trim().length > 20 ? "bg-primary" : i === qIdx ? "bg-primary/60" : "bg-muted")} />
         ))}
       </div>
       <p className="text-xs text-muted-foreground">Question {qIdx + 1} of {questions.length}</p>
 
       {/* Coaching question */}
-      <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+      <div className="p-4 rounded-xl bg-muted/30 border border-border">
         <div className="flex items-start gap-2.5">
-          <Users className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+          <Users className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
           <p className="text-sm font-medium leading-relaxed">{q}</p>
         </div>
       </div>
 
       <textarea
-        className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-green-300"
+        className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
         placeholder="Your response…"
         value={responses[qIdx] ?? ""}
         onChange={e => setResponses(r => ({ ...r, [qIdx]: e.target.value }))}
@@ -807,7 +807,7 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
           </Button>
         )}
         {isLast && (
-          <Button className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700"
+          <Button className="flex-1 gap-1.5 "
             disabled={(responses[qIdx] ?? "").trim().length < 20}
             onClick={() => onComplete(90)}>
             <CheckCircle2 className="h-4 w-4" />Complete Coaching
@@ -909,12 +909,12 @@ function CompletionScreen({
         <div className={cn(
           "w-20 h-20 rounded-full border-2 flex items-center justify-center mx-auto",
           isGateBlocked
-            ? "bg-amber-100 border-amber-500/30"
-            : "bg-emerald-100 border-emerald-300"
+            ? "bg-[#C8B07A]/15 border-[#C8B07A]/30"
+            : "bg-[#7A9E8E]/15 border-[#7A9E8E]/30"
         )}>
           {isGateBlocked
-            ? <AlertCircle className="h-10 w-10 text-amber-600" />
-            : <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+            ? <AlertCircle className="h-10 w-10 text-[#C8B07A]" />
+            : <CheckCircle2 className="h-10 w-10 text-[#7A9E8E]" />
           }
         </div>
         <div>
@@ -927,10 +927,10 @@ function CompletionScreen({
 
       {/* AL-07: Mastery Gate Blocked Banner */}
       {isGateBlocked && masteryGateResult && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+        <div className="rounded-xl border border-[#C8B07A]/30 bg-[#C8B07A]/10 p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <span className="text-sm font-semibold text-amber-600">Below Mastery Threshold</span>
+            <AlertCircle className="h-4 w-4 text-[#8E7848]" />
+            <span className="text-sm font-semibold text-[#8E7848]">Below Mastery Threshold</span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
             {masteryGateResult.message}
@@ -941,17 +941,17 @@ function CompletionScreen({
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${masteryGateResult.score}%`,
-                  background: masteryGateResult.score >= masteryGateResult.threshold ? "#10B981" : "#F59E0B",
+                  background: masteryGateResult.score >= masteryGateResult.threshold ? "#7A9E8E" : "#C8B07A",
                 }}
               />
             </div>
-            <span className="text-xs font-semibold text-amber-600">{masteryGateResult.score}%</span>
+            <span className="text-xs font-semibold text-[#8E7848]">{masteryGateResult.score}%</span>
             <span className="text-[10px] text-muted-foreground">/ {masteryGateResult.threshold}% required</span>
           </div>
           {onRetake && (
             <Button
               size="sm"
-              className="w-full gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
+              className="w-full gap-1.5 bg-[#C8B07A] hover:bg-[#B89A6A] text-white"
               onClick={onRetake}
             >
               <RefreshCw className="h-3.5 w-3.5" />Retake Module
@@ -962,11 +962,11 @@ function CompletionScreen({
       {/* Score + XP + review row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
-          <p className="text-2xl font-bold text-emerald-600">{score}%</p>
+          <p className="text-2xl font-bold text-[#7A9E8E]">{score}%</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Score</p>
         </div>
         <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
-          <p className="text-2xl font-bold text-amber-600">+{xpEarned}</p>
+          <p className="text-2xl font-bold text-[#C8B07A]">+{xpEarned}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">XP earned</p>
         </div>
         <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
@@ -985,15 +985,15 @@ function CompletionScreen({
         </div>
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Spaced repetition</p>
-          <p className="text-xs font-medium text-emerald-600">Scheduled ✓</p>
+          <p className="text-xs font-medium text-[#7A9E8E]">Scheduled ✓</p>
         </div>
       </div>
       {/* Next module suggestion */}
       {nextModule && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-3">
-          <p className="text-xs font-semibold text-primary uppercase tracking-wide">Up next in your plan</p>
+            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Up next in your plan</p>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0 mt-0.5">
               <ChevronRight className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -1021,11 +1021,11 @@ function CompletionScreen({
 
       {/* No-transfer disclosure */}
       {noTransferResult ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left space-y-2">
-          <p className="text-sm font-medium text-amber-700">Transfer finding recorded</p>
+        <div className="rounded-xl border border-[#C8B07A]/30 bg-[#C8B07A]/10 p-4 text-left space-y-2">
+          <p className="text-sm font-medium text-[#8E7848]">Transfer finding recorded</p>
           <p className="text-xs text-muted-foreground">{noTransferResult.message}</p>
           {noTransferResult.alternativeTitle && (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-[#8E7848]">
               Alternative suggested: <span className="font-medium">{noTransferResult.alternativeTitle}</span>
               {noTransferResult.alternativeModality && ` (${noTransferResult.alternativeModality})`}
             </p>
@@ -1051,7 +1051,7 @@ function CompletionScreen({
             ] as const).map(([reason, label]) => (
               <button
                 key={reason}
-                className="text-left text-xs px-3 py-2 rounded-lg border border-border hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                className="text-left text-xs px-3 py-2 rounded-lg border border-border hover:border-[#C8B07A]/50 hover:bg-[#C8B07A]/10 transition-colors"
                 onClick={() => { onReportNoTransfer?.(reason); setShowNoTransferPrompt(false); }}
               >
                 {label}
@@ -1201,7 +1201,7 @@ export default function ModulePlayerPage() {
 
           {/* LLM Personalised Context Panel */}
           {(personalisedLoading || personalised) && (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 space-y-2">
+            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold text-primary">Personalised for you</span>
@@ -1215,14 +1215,14 @@ export default function ModulePlayerPage() {
                   {Array.isArray(personalised.contextualExamples) && (personalised.contextualExamples as string[]).length > 0 && (
                     <div className="space-y-1">
                       {(personalised.contextualExamples as string[]).slice(0, 2).map((ex, i) => (
-                        <p key={i} className="text-xs text-muted-foreground border-l-2 border-indigo-200 pl-3 italic">{ex}</p>
+                        <p key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 italic">{ex}</p>
                       ))}
                     </div>
                   )}
                   {Array.isArray(personalised.failureModeCallouts) && (personalised.failureModeCallouts as string[]).length > 0 && (
-                    <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 mt-1">
+                    <div className="p-2.5 rounded-lg bg-[#C8B07A]/10 border border-[#C8B07A]/30 mt-1">
                       {(personalised.failureModeCallouts as string[]).slice(0, 1).map((fm, i) => (
-                        <p key={i} className="text-xs text-amber-600">
+                        <p key={i} className="text-xs text-[#8E7848]">
                           <span className="font-semibold">Watch out: </span>{fm}
                         </p>
                       ))}
@@ -1231,8 +1231,8 @@ export default function ModulePlayerPage() {
                 </>
               ) : (
                 <div className="space-y-1.5">
-                  <div className="h-3 rounded bg-indigo-50 animate-pulse w-3/4" />
-                  <div className="h-3 rounded bg-indigo-50 animate-pulse w-1/2" />
+                  <div className="h-3 rounded bg-muted animate-pulse w-3/4" />
+                  <div className="h-3 rounded bg-muted animate-pulse w-1/2" />
                 </div>
               )}
             </div>

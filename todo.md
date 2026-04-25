@@ -1569,3 +1569,10 @@
 - [x] AL-STRESS-01: Stress test adaptive learning against 10 Acme employees — enrol, progress modules, check for errors
 - [x] AL-STRESS-02: Fix React hooks violations in IndividualDashboardV2, ManagerDashboardV2, LeaderDashboardV2 (useMemo after early returns)
 - [x] AL-STRESS-03: Fix module player renderers — all 8 modality types now handle generic seeded schema via normaliseSection fallbacks (coaching→reflectionPrompts, quiz→self-assessment, scenario→reflectionPrompts, tutorial→title/content, practical→sections-as-steps, case_study→questions fallback)
+
+## Learning System Redesign (World-Class LMS Standards)
+- [ ] LMS-01: Research world-class LMS design patterns (Workday Learning, LinkedIn Learning, Degreed, 360Learning)
+- [ ] LMS-02: Redesign Learning Plan page — clear journey stages, rich module cards, progress tracking, next action CTA
+- [ ] LMS-03: Redesign Module Player — consistent formatting across all 6 modality types, rich content rendering
+- [ ] LMS-04: Fix module content — ensure all modules render real content not generic fallback placeholders
+- [ ] LMS-05: Module state system — locked/available/in-progress/completed with clear visual distinction
