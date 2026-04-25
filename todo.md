@@ -1554,3 +1554,6 @@
 - [x] LP-04: Assessment landing page — Peakon gradient score cells, light-theme domain cards and session history
 - [x] LP-05: Assessment session page — all 44 dark-theme patterns replaced with light-theme equivalents, Peakon completion screen
 - [x] LP-06: Assessment results page — light-theme readiness/credibility/risk configs, Peakon gradient score badges throughout
+
+## Strategic Alignment Fix
+- [x] SA-01: Fix strategic priorities not loading on Leader Dashboard — seeded 5 strategic priorities and 5 current challenges for Acme tenant, org context row was missing strategic_priorities_json data
