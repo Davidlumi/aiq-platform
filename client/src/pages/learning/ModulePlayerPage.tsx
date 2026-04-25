@@ -52,11 +52,22 @@ const MODALITY_META: Record<string, { label: string; color: string; icon: React.
 
 // ─── Tutorial Renderer ────────────────────────────────────────────────────────
 
+// Normalise a section from either the typed schema (heading/body) or the generic seeded schema (title/content)
+function normaliseSection(s: any): { heading: string; body: string; examples: any[]; tips: string[] } {
+  return {
+    heading: s?.heading ?? s?.title ?? "Content",
+    body: s?.body ?? s?.content ?? "",
+    examples: s?.examples ?? [],
+    tips: s?.tips ?? [],
+  };
+}
+
 function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
   const [sectionIdx, setSectionIdx] = useState(0);
-  const sections: any[] = body?.sections ?? [];
-  const keyPoints: string[] = body?.keyPoints ?? [];
-  const learningObjectives: string[] = body?.learningObjectives ?? [];
+  const rawSections: any[] = body?.sections ?? [];
+  const sections = rawSections.map(normaliseSection);
+  const keyPoints: string[] = body?.keyPoints ?? body?.keyTakeaways ?? [];
+  const learningObjectives: string[] = body?.learningObjectives ?? body?.objectives ?? [];
   const citations: string[] = body?.citations ?? [];
 
   if (sections.length === 0) {
@@ -135,6 +146,16 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
           </div>
         )}
 
+        {/* Tips from generic seeded schema */}
+        {section.tips && section.tips.length > 0 && (
+          <div className="space-y-1.5">
+            {section.tips.map((tip: string, i: number) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                <span className="text-primary mt-0.5">›</span><span>{tip}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {/* Key points (on last section) */}
         {isLast && keyPoints.length > 0 && (
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
@@ -190,17 +211,58 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
 // ─── Quiz Renderer ────────────────────────────────────────────────────────────
 
 function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const questions: any[] = body?.questions ?? [];
+  const questions: any[] = body?.questions ?? body?.formativeQuizJson ?? [];
   const [qIdx, setQIdx] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [scores, setScores] = useState<boolean[]>([]);
+  const [selfAssessScore, setSelfAssessScore] = useState<number | null>(null);
 
+  // Generic fallback: show content sections + self-assessment when no structured questions
   if (questions.length === 0) {
+    const sections = (body?.sections ?? []).map(normaliseSection);
+    const keyTakeaways: string[] = body?.keyTakeaways ?? body?.keyPoints ?? [];
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground text-sm mb-4">No quiz questions available yet.</p>
-        <Button onClick={() => onComplete(75)}>Mark Complete</Button>
+      <div className="space-y-5">
+        {sections.length > 0 && (
+          <div className="space-y-4">
+            {sections.map((s: any, i: number) => (
+              <div key={i} className="space-y-2">
+                <h3 className="font-semibold text-sm">{s.heading}</h3>
+                {s.body && <p className="text-sm leading-relaxed text-slate-700">{s.body}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+        {keyTakeaways.length > 0 && (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Key Takeaways</p>
+            <ul className="space-y-1.5">
+              {keyTakeaways.map((kp: string, i: number) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <Star className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <span>{kp}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="p-4 rounded-xl bg-slate-50 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground mb-3">How well do you feel you understand this topic?</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[{label: "Still learning", score: 60}, {label: "Mostly clear", score: 75}, {label: "Confident", score: 90}].map(opt => (
+              <button key={opt.score}
+                className={cn("p-3 rounded-xl border text-xs font-medium transition-all",
+                  selfAssessScore === opt.score ? "border-primary bg-indigo-50 text-primary" : "border-border bg-card hover:border-primary/40")}
+                onClick={() => setSelfAssessScore(opt.score)}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button className="w-full gap-1.5" disabled={selfAssessScore === null} onClick={() => onComplete(selfAssessScore ?? 75)}>
+          <CheckCircle2 className="h-4 w-4" />Complete Knowledge Check
+        </Button>
       </div>
     );
   }
@@ -321,7 +383,15 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
 // ─── Practical Renderer ───────────────────────────────────────────────────────
 
 function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const steps: any[] = body?.steps ?? [];
+  // Support steps (typed schema) or sections (generic seeded schema) as fallback
+  const rawSteps: any[] = body?.steps ?? (body?.sections ?? []).map((s: any) => ({
+    title: s?.title ?? s?.heading ?? "Step",
+    instruction: s?.content ?? s?.body ?? "",
+    context: undefined,
+    prompt: (s?.tips ?? [])[0] ?? undefined,
+    requiresInput: true,
+  }));
+  const steps: any[] = rawSteps;
   const [stepIdx, setStepIdx] = useState(0);
   const [workspaceText, setWorkspaceText] = useState("");
   const [stepsDone, setStepsDone] = useState<Set<number>>(new Set());
@@ -417,7 +487,8 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
 function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
   const [phase, setPhase] = useState<"read" | "analyse" | "reflect">("read");
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const questions: any[] = body?.analysisQuestions ?? [];
+  // Support both analysisQuestions (typed schema) and questions (generic seeded schema)
+  const questions: any[] = body?.analysisQuestions ?? body?.questions ?? [];
 
   const allAnswered = questions.every((_, i) => (answers[i] ?? "").trim().length > 20);
 
@@ -436,6 +507,18 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
 
       {phase === "read" && (
         <div className="space-y-4">
+          {/* Generic seeded schema: show sections as narrative */}
+          {!body?.narrative && (body?.sections ?? []).length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">The Scenario</h3>
+              {(body.sections as any[]).map(normaliseSection).map((s: any, i: number) => (
+                <div key={i} className="space-y-1">
+                  {s.heading && s.heading !== "Content" && <p className="text-xs font-semibold text-muted-foreground">{s.heading}</p>}
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
           {body?.narrative && (
             <div className="space-y-3">
               <h3 className="font-semibold text-sm">The Scenario</h3>
@@ -557,16 +640,23 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
   const [chosen, setChosen] = useState<number | null>(null);
   const choices: any[] = body?.choices ?? body?.decisionPoints ?? [];
 
+  // Generic fallback: no choices → show content + reflection
+  const hasChoices = choices.length > 0;
+  const hasSituation = !!(body?.situation ?? body?.overview ?? (body?.sections ?? []).length > 0);
+  // Build situation text from generic schema
+  const situationText = body?.situation ?? body?.overview ?? 
+    (body?.sections ?? []).map(normaliseSection).map((s: any) => s.body).filter(Boolean).join("\n\n");
+
   const choice = chosen !== null ? choices[chosen] : null;
 
   return (
     <div className="space-y-5">
       {step === "setup" && (
         <>
-          {body?.situation && (
+          {situationText && (
             <div className="space-y-3">
               <h3 className="font-semibold text-sm">The Situation</h3>
-              {String(body.situation).split("\n\n").map((p: string, i: number) => (
+              {String(situationText).split("\n\n").map((p: string, i: number) => (
                 <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
               ))}
             </div>
@@ -577,9 +667,28 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
               <p className="text-sm">{body.yourRole}</p>
             </div>
           )}
-          <Button className="w-full gap-1.5" onClick={() => setStep("decision")}>
-            Make Your Decision<ChevronRight className="h-4 w-4" />
-          </Button>
+          {hasChoices ? (
+            <Button className="w-full gap-1.5" onClick={() => setStep("decision")}>
+              Make Your Decision<ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            // No choices: show reflection prompts from generic schema
+            <div className="space-y-4">
+              {(body?.reflectionPrompts ?? []).length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground">Reflection Prompts</p>
+                  {(body.reflectionPrompts as string[]).map((prompt: string, i: number) => (
+                    <div key={i} className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                      <p className="text-sm">{prompt}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(80)}>
+                <CheckCircle2 className="h-4 w-4" />Complete Scenario
+              </Button>
+            </div>
+          )}
         </>
       )}
 
@@ -643,7 +752,8 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
 // ─── Coaching Renderer ────────────────────────────────────────────────────────
 
 function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const questions: string[] = body?.coachingQuestions ?? body?.questions ?? [];
+  // Support coachingQuestions (typed), questions (generic), or reflectionPrompts (seeded fallback)
+  const questions: string[] = body?.coachingQuestions ?? body?.questions ?? body?.reflectionPrompts ?? [];
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [qIdx, setQIdx] = useState(0);
   const allAnswered = questions.every((_, i) => (responses[i] ?? "").trim().length > 20);

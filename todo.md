@@ -1565,3 +1565,7 @@
 - [x] PK-04: Rebuild Leader Dashboard — HeroScore, StatTile, ReadinessDistributionBar, AIInsightCard, ScoreTrendCard domain trajectory, domain distribution, strategic alignment
 - [x] PK-05: Assessment Results already uses scoreToColor/formatPeakonScore throughout — ScoreRing, CapabilityBar, gradient badges all aligned
 - [x] PK-06: Learning Plan already uses scoreToColor/formatPeakonScore throughout — gap analysis, progress tab, module cards all aligned
+## Adaptive Learning System Stress Test
+- [x] AL-STRESS-01: Stress test adaptive learning against 10 Acme employees — enrol, progress modules, check for errors
+- [x] AL-STRESS-02: Fix React hooks violations in IndividualDashboardV2, ManagerDashboardV2, LeaderDashboardV2 (useMemo after early returns)
+- [x] AL-STRESS-03: Fix module player renderers — all 8 modality types now handle generic seeded schema via normaliseSection fallbacks (coaching→reflectionPrompts, quiz→self-assessment, scenario→reflectionPrompts, tutorial→title/content, practical→sections-as-steps, case_study→questions fallback)
