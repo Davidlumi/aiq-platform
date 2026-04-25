@@ -1528,3 +1528,11 @@
 - [x] HF-01: Add department/business unit filter UI to the heatmap card — popover multi-select with checkboxes, badge chips, select/clear all
 - [x] HF-02: Support filtering of heatmap data by department — client-side filtering of existing heatmap rows by selected role families
 - [x] HF-03: Filter state visually clear — active count badge on trigger, removable chips, "Showing X of Y" summary, empty state message
+
+## Peakon-Style Heatmap Rebuild
+- [x] PH-01: Rebuild heatmap with smooth green-to-red gradient cells (continuous colour scale from deep red to deep green)
+- [x] PH-02: Show decimal scores (e.g. 5.5, 8.7) on 1-10 scale inside cells with white text on coloured background
+- [x] PH-03: Clean grid layout with column headers, tooltips for full domain names, sticky segment column
+- [x] PH-04: Segment hierarchy — expandable row chevrons for role families, overall aggregate row at top
+- [x] PH-05: Sticky first column for segment names, horizontal scroll for domains, min-width per column
+- [x] PH-06: Department filter integrated — popover multi-select with headcount, badge chips, select/clear all, dynamic aggregate row

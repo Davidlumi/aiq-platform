@@ -1348,7 +1348,7 @@ const leaderRouter = router({
       domains: DOMAIN_KEYS.map(dk => ({
         domain: dk,
         avgScore: roleFamilyDomainData[rf][dk].count > 0
-          ? Math.round(roleFamilyDomainData[rf][dk].total / roleFamilyDomainData[rf][dk].count)
+          ? Math.round((roleFamilyDomainData[rf][dk].total / roleFamilyDomainData[rf][dk].count) * 10) / 10
           : null,
         headcount: roleFamilyDomainData[rf][dk].count,
         target: null, // Will come from AI roadmap

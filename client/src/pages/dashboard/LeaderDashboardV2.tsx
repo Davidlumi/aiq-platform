@@ -6,14 +6,13 @@
  *
  * Department (role-family) filter applied to all queries.
  */
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
   RatingBadge,
   ScoreDisplay,
   DashboardCard,
-  HeatmapCell,
   DomainDot,
   PriorityBadge,
   EmptyState,
@@ -50,13 +49,8 @@ import {
   Lightbulb,
   ArrowRight,
   Filter,
-  X,
-  SlidersHorizontal,
-  Check,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+import { PeakonHeatmap } from "@/components/dashboard/PeakonHeatmap";
 
 const DOMAIN_LABELS: Record<string, string> = {
   ai_interaction: "AI Interaction",
@@ -97,20 +91,7 @@ const ROLE_FAMILY_OPTIONS = [
 
 export default function LeaderDashboardV2() {
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
-  const [heatmapDepts, setHeatmapDepts] = useState<Set<string>>(new Set());
-  const [heatmapFilterOpen, setHeatmapFilterOpen] = useState(false);
 
-  const toggleHeatmapDept = useCallback((dept: string) => {
-    setHeatmapDepts(prev => {
-      const next = new Set(prev);
-      if (next.has(dept)) next.delete(dept);
-      else next.add(dept);
-      return next;
-    });
-  }, []);
-
-  const clearHeatmapFilter = useCallback(() => setHeatmapDepts(new Set()), []);
-  const selectAllHeatmapDepts = useCallback(() => setHeatmapDepts(new Set(ROLE_FAMILY_OPTIONS.map(o => o.value))), []);
 
   // Stabilise the query input to avoid infinite re-renders
   const queryInput = useMemo(
@@ -297,169 +278,19 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
-      {/* ── 5. Role-Family Heatmap ── */}
-      {main && main.heatmap && (() => {
-        const filteredHeatmap = heatmapDepts.size > 0
-          ? main.heatmap.filter((row: any) => heatmapDepts.has(row.roleFamily))
-          : main.heatmap;
-        const activeCount = heatmapDepts.size;
-        return (
-          <DashboardCard
-            title="Capability heatmap"
-            subtitle="Average score by role family and domain — colour indicates readiness level"
-          >
-            {/* Heatmap filter toolbar */}
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <Popover open={heatmapFilterOpen} onOpenChange={setHeatmapFilterOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-3">
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    Filter departments
-                    {activeCount > 0 && (
-                      <span className="ml-1 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
-                        {activeCount}
-                      </span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-64 p-0">
-                  <div className="p-3 border-b border-neutral-100">
-                    <p className="text-xs font-semibold text-foreground">Show departments</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Select which role families to display</p>
-                  </div>
-                  <div className="p-2 space-y-0.5 max-h-64 overflow-y-auto">
-                    {ROLE_FAMILY_OPTIONS.map(opt => {
-                      const isChecked = heatmapDepts.has(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          className="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-md hover:bg-neutral-50 transition-colors text-left"
-                          onClick={() => toggleHeatmapDept(opt.value)}
-                        >
-                          <Checkbox checked={isChecked} tabIndex={-1} className="pointer-events-none" />
-                          <span className="text-xs text-foreground">{opt.label}</span>
-                          {isChecked && <Check className="w-3 h-3 text-primary ml-auto" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="p-2 border-t border-neutral-100 flex items-center justify-between">
-                    <button
-                      type="button"
-                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={selectAllHeatmapDepts}
-                    >
-                      Select all
-                    </button>
-                    <button
-                      type="button"
-                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={clearHeatmapFilter}
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Active filter chips */}
-              {activeCount > 0 && (
-                <>
-                  {ROLE_FAMILY_OPTIONS.filter(o => heatmapDepts.has(o.value)).map(opt => (
-                    <Badge key={opt.value} variant="secondary" size="sm" className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-neutral-200 transition-colors">
-                      {opt.label}
-                      <button
-                        type="button"
-                        className="rounded-full hover:bg-neutral-300 p-0.5 transition-colors"
-                        onClick={() => toggleHeatmapDept(opt.value)}
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </Badge>
-                  ))}
-                  <button
-                    type="button"
-                    className="text-[10px] text-muted-foreground hover:text-foreground underline transition-colors"
-                    onClick={clearHeatmapFilter}
-                  >
-                    Clear filters
-                  </button>
-                </>
-              )}
-              {activeCount === 0 && (
-                <span className="text-[10px] text-muted-foreground">Showing all {main.heatmap.length} departments</span>
-              )}
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-neutral-200">
-                    <th className="text-left py-3 pr-4 font-semibold text-muted-foreground w-44">Role Family</th>
-                    {Object.keys(DOMAIN_LABELS).map(dk => (
-                      <th key={dk} className="text-center py-3 px-2 font-semibold text-muted-foreground">
-                        <div className="flex flex-col items-center gap-1">
-                          <DomainDot domain={dk} size={6} />
-                          <span className="text-[10px] leading-tight whitespace-nowrap">{DOMAIN_LABELS[dk]?.split(" ").slice(0, 2).join(" ")}</span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHeatmap.length === 0 ? (
-                    <tr>
-                      <td colSpan={Object.keys(DOMAIN_LABELS).length + 1} className="py-8 text-center text-xs text-muted-foreground">
-                        No departments match the current filter. Try selecting different departments.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredHeatmap.map((row: any) => (
-                      <tr key={row.roleFamily} className="border-b border-neutral-100 last:border-0">
-                        <td className="py-3 pr-4 font-medium text-foreground">{row.roleFamilyName}</td>
-                        {row.domains.map((cell: any) => (
-                          <td key={cell.domain} className="py-3 px-2 text-center">
-                            <HeatmapCell score={cell.avgScore} headcount={cell.headcount} target={cell.target} size="sm" />
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Summary row when filtered */}
-            {activeCount > 0 && filteredHeatmap.length > 0 && (
-              <div className="mt-2 px-1">
-                <p className="text-[10px] text-muted-foreground">
-                  Showing {filteredHeatmap.length} of {main.heatmap.length} departments
-                </p>
-              </div>
-            )}
-
-            {/* Heatmap colour legend */}
-            <div className="flex items-center gap-3 mt-4 pt-3 border-t border-neutral-100 flex-wrap">
-              <span className="text-[10px] text-muted-foreground font-medium">Readiness:</span>
-              {[
-                { label: "AI Ready", bg: "#ECFDF5", ring: "#10B981" },
-                { label: "Strong Dev.", bg: "#F0FDF4", ring: "#4ADE80" },
-                { label: "Developing", bg: "#FFFBEB", ring: "#F59E0B" },
-                { label: "Weak Dev.", bg: "#FFF7ED", ring: "#F97316" },
-                { label: "Not Ready", bg: "#FEF2F2", ring: "#EF4444" },
-                { label: "Foundation Gap", bg: "#FEF2F2", ring: "#DC2626" },
-              ].map(l => (
-                <div key={l.label} className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.bg, borderLeft: `2px solid ${l.ring}` }} />
-                  <span className="text-[10px] text-muted-foreground">{l.label}</span>
-                </div>
-              ))}
-              <span className="text-[10px] text-muted-foreground ml-2">— = No data</span>
-            </div>
-          </DashboardCard>
-        );
-      })()}
+      {/* ── 5. Peakon-Style Capability Heatmap ── */}
+      {main && main.heatmap && (
+        <DashboardCard
+          title="Capability heatmap"
+          subtitle="Average score by segment and domain — colour intensity indicates capability level"
+        >
+          <PeakonHeatmap
+            heatmap={main.heatmap}
+            domainLabels={DOMAIN_LABELS}
+            departmentOptions={ROLE_FAMILY_OPTIONS}
+          />
+        </DashboardCard>
+      )}
 
       {/* ── 6. Domain Trajectory ── */}
       {!trajLoading && trajectory && trajectory.domains && (
