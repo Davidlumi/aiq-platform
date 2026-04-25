@@ -12,7 +12,7 @@
  *   coaching   — structured coaching framework (GROW model)
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,188 @@ import {
   ListChecks, FlaskConical, Quote, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ─── Progress Tracking ───────────────────────────────────────────────────────
+
+/** A named step in the module progress bar */
+export interface ProgressStep {
+  id: string;
+  label: string;
+  sublabel?: string;
+}
+
+/**
+ * Builds the ordered list of named steps for a given modality + body.
+ * Steps map to the phases/sections a learner moves through.
+ */
+function buildProgressSteps(modality: string, body: any): ProgressStep[] {
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const quizQuestions: any[] = body?.quizQuestions ?? body?.questions ?? [];
+  const framework = body?.coachingFramework;
+  const frameworkPhases: any[] = framework?.phases ?? [];
+  const rawPrompts: any[] = body?.reflectionPrompts ?? body?.coachingQuestions ?? [];
+  const steps: any[] = body?.practicalExercise?.steps ?? body?.steps ?? [];
+
+  switch (modality) {
+    case "tutorial": {
+      const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
+      sections.forEach((s, i) => base.push({ id: `section_${i}`, label: s?.heading ?? `Section ${i + 1}`, sublabel: "Learn" }));
+      if (quizQuestions.length > 0) base.push({ id: "quiz", label: "Knowledge Check" });
+      return base;
+    }
+    case "quiz": {
+      const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
+      quizQuestions.forEach((_, i) => base.push({ id: `q_${i}`, label: `Q${i + 1}`, sublabel: "Question" }));
+      return base;
+    }
+    case "practical": {
+      const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
+      const practSteps = body?.practicalExercise?.steps ?? body?.steps ?? sections.map((_: any, i: number) => ({ stepNumber: i + 1 }));
+      practSteps.forEach((_: any, i: number) => base.push({ id: `step_${i}`, label: `Step ${i + 1}`, sublabel: "Exercise" }));
+      return base;
+    }
+    case "case_study": {
+      const choices: any[] = body?.decisionScenario?.choices ?? body?.choices ?? [];
+      const base: ProgressStep[] = [
+        { id: "intro", label: "Overview" },
+        { id: "case", label: "The Case" },
+      ];
+      if (choices.length > 0) base.push({ id: "decision", label: "Decision" });
+      base.push({ id: "insights", label: "Insights" });
+      return base;
+    }
+    case "scenario": {
+      return [
+        { id: "intro", label: "Context" },
+        { id: "situation", label: "Scenario" },
+        { id: "decision", label: "Decide" },
+        { id: "outcome", label: "Outcome" },
+      ];
+    }
+    case "reflection": {
+      const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
+      rawPrompts.forEach((_, i) => base.push({ id: `prompt_${i}`, label: `Prompt ${i + 1}`, sublabel: "Reflect" }));
+      return base;
+    }
+    case "coaching": {
+      const base: ProgressStep[] = [{ id: "intro", label: "Overview" }];
+      if (frameworkPhases.length > 0) {
+        frameworkPhases.forEach((fp: any, i: number) => base.push({ id: `phase_${i}`, label: fp?.phase ?? `Phase ${i + 1}`, sublabel: "Coaching" }));
+      }
+      rawPrompts.forEach((_, i) => base.push({ id: `reflect_${i}`, label: `Reflection ${i + 1}` }));
+      return base;
+    }
+    case "video": {
+      const base: ProgressStep[] = [{ id: "watch", label: "Watch" }];
+      const vidPrompts: any[] = body?.reflectionPrompts ?? [];
+      if (vidPrompts.length > 0) {
+        vidPrompts.forEach((_, i) => base.push({ id: `reflect_${i}`, label: `Reflect ${i + 1}` }));
+      } else {
+        base.push({ id: "reflect", label: "Reflect" });
+      }
+      return base;
+    }
+    default:
+      return [{ id: "intro", label: "Overview" }, { id: "content", label: "Content" }];
+  }
+}
+
+/**
+ * Persists progress step index to localStorage keyed by moduleId.
+ * Returns [currentStepIdx, setCurrentStepIdx].
+ */
+function useModuleProgress(moduleId: string, totalSteps: number): [number, (idx: number) => void] {
+  const key = `aiq_module_progress_${moduleId}`;
+  const [stepIdx, setStepIdx] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < totalSteps) return parsed;
+      }
+    } catch {}
+    return 0;
+  });
+
+  const setAndPersist = useCallback((idx: number) => {
+    const clamped = Math.max(0, Math.min(idx, totalSteps - 1));
+    setStepIdx(clamped);
+    try { localStorage.setItem(key, String(clamped)); } catch {}
+  }, [key, totalSteps]);
+
+  return [stepIdx, setAndPersist];
+}
+
+/** The sticky progress bar rendered above the module content card */
+function ModuleProgressBar({
+  steps, currentStepIdx, completed,
+}: {
+  steps: ProgressStep[];
+  currentStepIdx: number;
+  completed: boolean;
+}) {
+  const total = steps.length;
+  const pct = completed ? 100 : total <= 1 ? 0 : Math.round((currentStepIdx / (total - 1)) * 100);
+
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 pt-3.5 pb-3 space-y-2.5">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {completed ? "Module Complete" : "Your Progress"}
+        </span>
+        <span className="text-xs font-bold tabular-nums" style={{ color: completed ? "#4A6E5E" : "var(--primary)" }}>
+          {pct}%
+        </span>
+      </div>
+
+      {/* Smooth fill bar */}
+      <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: completed
+              ? "#4A6E5E"
+              : "linear-gradient(90deg, var(--primary) 0%, color-mix(in oklch, var(--primary) 80%, transparent) 100%)",
+          }}
+        />
+      </div>
+
+      {/* Step indicators */}
+      {total > 1 && (
+        <div className="flex items-start gap-0.5 overflow-x-auto pb-0.5 scrollbar-none">
+          {steps.map((step, i) => {
+            const isDone = completed || i < currentStepIdx;
+            const isCurrent = !completed && i === currentStepIdx;
+            return (
+              <div key={step.id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                <div className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                  isDone ? "bg-primary" : isCurrent ? "bg-primary/20 ring-2 ring-primary ring-offset-1" : "bg-muted"
+                )}>
+                  {isDone ? (
+                    <CheckCircle2 className="h-3 w-3 text-white" />
+                  ) : (
+                    <span className={cn("text-[9px] font-bold", isCurrent ? "text-primary" : "text-muted-foreground")}>
+                      {i + 1}
+                    </span>
+                  )}
+                </div>
+                <span className={cn(
+                  "text-[9px] text-center leading-tight max-w-[52px] truncate",
+                  isCurrent ? "text-foreground font-semibold" : isDone ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -230,7 +412,7 @@ function FurtherReadingPanel({ items }: { items: any[] }) {
 
 // ─── Tutorial Renderer ────────────────────────────────────────────────────────
 
-function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "learn" | "quiz">("intro");
   const [sectionIdx, setSectionIdx] = useState(0);
   const [quizIdx, setQuizIdx] = useState(0);
@@ -283,6 +465,14 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
       setAnswered(false);
     }
   };
+
+  // Report progress changes
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "intro") { onProgressChange(0); return; }
+    if (phase === "learn") { onProgressChange(1 + sectionIdx); return; }
+    if (phase === "quiz") { onProgressChange(1 + normalisedSections.length + quizIdx); return; }
+  }, [phase, sectionIdx, quizIdx, onProgressChange, normalisedSections.length]);
 
   if (normalisedSections.length === 0 && !intro) {
     return (
@@ -451,7 +641,7 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
 
 // ─── Quiz Renderer ────────────────────────────────────────────────────────────
 
-function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "questions">("intro");
   const [qIdx, setQIdx] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -485,6 +675,12 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
       setAnswered(false);
     }
   };
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "intro") { onProgressChange(0); return; }
+    onProgressChange(1 + qIdx);
+  }, [phase, qIdx, onProgressChange]);
 
   if (questions.length === 0) {
     return (
@@ -591,7 +787,7 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
 
 // ─── Practical Renderer ───────────────────────────────────────────────────────
 
-function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "exercise">("intro");
   const [stepIdx, setStepIdx] = useState(0);
   const [responses, setResponses] = useState<Record<number, string>>({});
@@ -621,6 +817,12 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
       onComplete(90);
     }
   };
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "intro") { onProgressChange(0); return; }
+    onProgressChange(1 + stepIdx);
+  }, [phase, stepIdx, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -750,7 +952,7 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
 
 // ─── Case Study Renderer ──────────────────────────────────────────────────────
 
-function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "case" | "decision" | "insights">("intro");
   const [chosen, setChosen] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -769,6 +971,13 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
 
   const choices: any[] = scenario?.choices ?? body?.choices ?? body?.decisionPoints ?? [];
   const choice = chosen !== null ? choices[chosen] : null;
+
+  const casePhaseOrder = ["intro", "case", ...(choices.length > 0 ? ["decision"] : []), "insights"];
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    onProgressChange(casePhaseOrder.indexOf(phase));
+  }, [phase, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -923,7 +1132,7 @@ function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score
 
 // ─── Scenario Renderer ────────────────────────────────────────────────────────
 
-function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "situation" | "decision" | "outcome">("intro");
   const [chosen, setChosen] = useState<number | null>(null);
 
@@ -938,6 +1147,13 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
   const legacyChoices: any[] = body?.choices ?? body?.decisionPoints ?? [];
   const choices: any[] = scenario?.choices ?? legacyChoices;
   const choice = chosen !== null ? choices[chosen] : null;
+
+  const scenarioPhaseOrder = ["intro", "situation", "decision", "outcome"];
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    onProgressChange(scenarioPhaseOrder.indexOf(phase));
+  }, [phase, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -1061,7 +1277,7 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
 
 // ─── Reflection Renderer ──────────────────────────────────────────────────────
 
-function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "reflect">("intro");
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [promptIdx, setPromptIdx] = useState(0);
@@ -1079,6 +1295,12 @@ function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (scor
   const currentPrompt = prompts[promptIdx];
   const isLast = promptIdx === prompts.length - 1;
   const allAnswered = prompts.every((_, i) => (responses[i] ?? "").trim().length > 30);
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "intro") { onProgressChange(0); return; }
+    onProgressChange(1 + promptIdx);
+  }, [phase, promptIdx, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -1168,7 +1390,7 @@ function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (scor
 
 // ─── Coaching Renderer ────────────────────────────────────────────────────────
 
-function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "framework" | "questions">("intro");
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [questionIdx, setQuestionIdx] = useState(0);
@@ -1194,6 +1416,14 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
   const frameworkPhases: any[] = framework?.phases ?? [];
   const currentFrameworkPhase = frameworkPhases[phaseIdx];
   const isLastPhase = phaseIdx === frameworkPhases.length - 1;
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "intro") { onProgressChange(0); return; }
+    if (phase === "framework") { onProgressChange(1 + phaseIdx); return; }
+    // questions phase: after all framework phases
+    onProgressChange(1 + frameworkPhases.length + questionIdx);
+  }, [phase, phaseIdx, questionIdx, onProgressChange, frameworkPhases.length]);
 
   return (
     <div className="space-y-6">
@@ -1341,7 +1571,7 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
 
 // ─── Video Renderer ───────────────────────────────────────────────────────────
 
-function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"watch" | "reflect">("watch");
   const [watched, setWatched] = useState(false);
   const [reflectionIdx, setReflectionIdx] = useState(0);
@@ -1360,6 +1590,12 @@ function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: nu
 
   const currentPrompt = prompts[reflectionIdx];
   const isLastPrompt = reflectionIdx === prompts.length - 1;
+
+  useEffect(() => {
+    if (!onProgressChange) return;
+    if (phase === "watch") { onProgressChange(0); return; }
+    onProgressChange(1 + reflectionIdx);
+  }, [phase, reflectionIdx, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -1758,6 +1994,12 @@ export default function ModulePlayerPage() {
     } catch { return {}; }
   })();
 
+  const progressSteps = buildProgressSteps(mod.modality, body);
+  const [currentProgressStep, setCurrentProgressStep] = useModuleProgress(
+    params.moduleId ?? "",
+    progressSteps.length
+  );
+
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground" onClick={handleBack}>
@@ -1823,20 +2065,34 @@ export default function ModulePlayerPage() {
             </div>
           )}
 
+          {/* Progress bar */}
+          <ModuleProgressBar
+            steps={progressSteps}
+            currentStepIdx={currentProgressStep}
+            completed={false}
+          />
+
           {/* Module content */}
           <div className="p-5 rounded-2xl border border-border bg-card">
-            {mod.modality === "tutorial"   && <TutorialRenderer   body={body} onComplete={handleComplete} />}
-            {mod.modality === "quiz"       && <QuizRenderer        body={body} onComplete={handleComplete} />}
-            {mod.modality === "practical"  && <PracticalRenderer   body={body} onComplete={handleComplete} />}
-            {mod.modality === "case_study" && <CaseStudyRenderer   body={body} onComplete={handleComplete} />}
-            {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} />}
-            {mod.modality === "scenario"   && <ScenarioRenderer    body={body} onComplete={handleComplete} />}
-            {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} />}
-            {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} />}
+            {mod.modality === "tutorial"   && <TutorialRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "quiz"       && <QuizRenderer        body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "practical"  && <PracticalRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "case_study" && <CaseStudyRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "scenario"   && <ScenarioRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
           </div>
         </>
       ) : (
-        <div className="p-5 rounded-2xl border border-border bg-card">
+        <>
+          {/* Progress bar — 100% on completion */}
+          <ModuleProgressBar
+            steps={progressSteps}
+            currentStepIdx={progressSteps.length - 1}
+            completed={true}
+          />
+          <div className="p-5 rounded-2xl border border-border bg-card">
           <CompletionScreen
             score={finalScore}
             title={mod.title}
@@ -1848,7 +2104,8 @@ export default function ModulePlayerPage() {
             masteryGateResult={masteryGateResult}
             onRetake={() => { setCompleted(false); setFinalScore(0); setMasteryGateResult(null); }}
           />
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

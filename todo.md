@@ -1583,3 +1583,9 @@
 - [x] MOD-03: Rebuild LLM module generation prompts to produce rich content (reading + scenario + quiz + reflection + coaching + case study)
 - [x] MOD-04: Regenerate all existing module content using new rich schema
 - [x] MOD-05: Update Module Player to render all new content sections (reading blocks, key concepts, evidence, quiz, reflection, coaching, further reading)
+
+## Module Progress Tracking Bar (Apr 2026)
+- [x] PROG-01: Add section-based progress tracking to ModulePlayerPage (tracks which sections have been viewed)
+- [x] PROG-02: Render a sticky progress bar at the top of the module player showing % complete and section indicators
+- [x] PROG-03: Mark sections as visited when scrolled into view or navigated to
+- [x] PROG-04: Persist progress state across page refreshes (localStorage keyed by module id)
