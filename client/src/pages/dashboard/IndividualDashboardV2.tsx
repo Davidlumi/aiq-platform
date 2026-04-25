@@ -11,6 +11,8 @@ import { Link } from "wouter";
 import {
   RatingBadge,
   ScoreDisplay,
+  PeakonScoreCell,
+  PeakonScoreBadge,
   ConfidenceIndicator,
   DashboardCard,
   CapabilityBar,
@@ -21,6 +23,7 @@ import {
   HeatmapCell,
   PriorityBadge,
 } from "@/components/dashboard/DashboardUI";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import { IndividualDashboardSkeleton } from "@/components/ui/loading";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -124,7 +127,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         <DashboardCard className="lg:col-span-1">
           <div className="flex flex-col items-center text-center py-2">
             <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Overall Score</p>
-            <ScoreDisplay score={data.overallScore} size="lg" className="text-foreground" />
+            <ScoreDisplay score={data.overallScore} size="lg" peakon />
             <div className="mt-3">
               <RatingBadge rating={data.overallRating} size="lg" />
             </div>
@@ -166,7 +169,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 <ChevronRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 transition-colors" />
               </div>
               <div className="flex items-end justify-between mb-2">
-                <ScoreDisplay score={d.score} size="md" />
+                <PeakonScoreCell score={d.score} size="md" />
                 <RatingBadge rating={d.rating} size="sm" />
               </div>
               <CapabilityBar score={d.score} colour={d.colour} height={6} />
@@ -205,14 +208,18 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                       </div>
                     </td>
                     <td className="text-center py-2.5 px-3">
-                      <span className="font-mono font-semibold tabular-nums">{row.currentScore ?? "—"}</span>
+                      <PeakonScoreCell score={row.currentScore} size="sm" />
                     </td>
                     <td className="text-center py-2.5 px-3">
-                      <span className="font-mono tabular-nums text-muted-foreground">{row.targetScore ?? "—"}</span>
+                      {row.targetScore != null ? (
+                        <span className="font-mono font-semibold tabular-nums text-xs text-muted-foreground">{formatPeakonScore(row.targetScore)}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="text-center py-2.5 px-3">
                       {row.gapValue !== null ? (
-                        <span className="font-mono font-semibold tabular-nums" style={{ color: gapColour }}>
+                        <span className="font-mono font-semibold tabular-nums text-xs" style={{ color: gapColour }}>
                           {row.gapValue > 0 ? `+${row.gapValue}` : row.gapValue}
                         </span>
                       ) : (
@@ -354,7 +361,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
             {/* Section A: Light — Summary */}
             <div className="space-y-4 pb-4">
               <div className="flex items-center gap-4">
-                <ScoreDisplay score={data.score} size="lg" />
+                <ScoreDisplay score={data.score} size="lg" peakon />
                 <div>
                   <RatingBadge rating={data.rating} size="md" />
                   <div className="mt-1">
@@ -388,8 +395,8 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                         <span className={`w-2 h-2 rounded-full shrink-0 ${s.level === "Strong" ? "bg-emerald-500" : s.level === "Developing" ? "bg-amber-500" : "bg-red-500"}`} />
                         <span className="text-xs text-foreground truncate">{s.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-mono text-xs font-semibold tabular-nums w-8 text-right">{s.score}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <PeakonScoreBadge score={s.score} />
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                           {s.level}
                         </Badge>

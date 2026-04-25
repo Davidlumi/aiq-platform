@@ -13,6 +13,7 @@
 import { useState } from "react";
 import { X, Info, ChevronRight, AlertTriangle, CheckCircle, Clock, Target, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 
 // ─── Drawer Shell ─────────────────────────────────────────────────────────────
 
@@ -133,12 +134,7 @@ export function ScoreBreakdown({
   lastUpdated,
   factors,
 }: ScoreBreakdownProps) {
-  const stateColor =
-    overallScore >= 75
-      ? "#10B981"
-      : overallScore >= 50
-      ? "#F59E0B"
-      : "#DC2626";
+  const peakonColor = scoreToColor(overallScore);
 
   const confidenceColors = {
     high: { bg: "#DCFCE7", text: "#15803D" },
@@ -155,14 +151,17 @@ export function ScoreBreakdown({
           <span className="text-sm font-semibold" style={{ color: "#6B7280" }}>
             Overall AI Readiness Score
           </span>
-          <span className="text-3xl font-bold" style={{ color: stateColor, fontFamily: "'Sora', sans-serif" }}>
-            {overallScore}%
+          <span
+            className="text-2xl font-bold font-mono px-2.5 py-1 rounded-lg"
+            style={{ backgroundColor: peakonColor.bg, color: peakonColor.text }}
+          >
+            {formatPeakonScore(overallScore)}
           </span>
         </div>
         <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "#E5E7EB" }}>
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${overallScore}%`, background: stateColor }}
+            style={{ width: `${overallScore}%`, background: peakonColor.bg }}
           />
         </div>
         <div className="flex items-center gap-3 mt-3">
@@ -205,8 +204,11 @@ export function ScoreBreakdown({
                     {factor.description}
                   </p>
                 </div>
-                <span className="text-lg font-bold ml-3" style={{ color: factor.color, fontFamily: "'Sora', sans-serif" }}>
-                  {factor.score}%
+                <span
+                  className="text-xs font-bold font-mono ml-3 px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: scoreToColor(factor.score).bg, color: scoreToColor(factor.score).text }}
+                >
+                  {formatPeakonScore(factor.score)}
                 </span>
               </div>
               <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "#E5E7EB" }}>

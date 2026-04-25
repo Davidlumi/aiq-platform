@@ -52,6 +52,7 @@ import {
   Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -306,6 +307,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
+  const peakonColor = scoreToColor(score);
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
@@ -315,7 +317,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={peakonColor.bg}
           strokeWidth="8"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -324,8 +326,13 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold" style={{ color }}>{score}</span>
-        <span className="text-xs text-muted-foreground">/ 100</span>
+        <span
+          className="text-2xl font-bold font-mono px-2 py-0.5 rounded-md"
+          style={{ backgroundColor: peakonColor.bg, color: peakonColor.text }}
+        >
+          {formatPeakonScore(score)}
+        </span>
+        <span className="text-[10px] text-muted-foreground mt-0.5">/ 10.0</span>
       </div>
     </div>
   );
@@ -429,7 +436,12 @@ function CapabilityBar({
             />
           )}
           <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
-          <span className="text-sm font-bold w-8 text-right" style={{ color: colour }}>{score}</span>
+          <span
+            className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded"
+            style={{ backgroundColor: scoreToColor(score).bg, color: scoreToColor(score).text }}
+          >
+            {formatPeakonScore(score)}
+          </span>
         </div>
       </div>
       {/* Score bar with confidence interval overlay */}

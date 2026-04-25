@@ -12,6 +12,7 @@ import { Link } from "wouter";
 import {
   RatingBadge,
   ScoreDisplay,
+  PeakonScoreBadge,
   DashboardCard,
   DomainDot,
   PriorityBadge,
@@ -19,6 +20,7 @@ import {
   DeltaIndicator,
   CapabilityBar,
 } from "@/components/dashboard/DashboardUI";
+import { formatPeakonScore } from "@/lib/peakon-colors";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -185,7 +187,7 @@ export default function LeaderDashboardV2() {
           <DashboardCard title="Function position" className="lg:col-span-1">
             <div className="flex flex-col items-center text-center py-2">
               <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Function Score</p>
-              <ScoreDisplay score={main.functionScore} size="lg" className="text-foreground" />
+              <ScoreDisplay score={main.functionScore} size="lg" peakon />
               <div className="mt-3">
                 <RatingBadge rating={main.functionRating} size="lg" />
               </div>
@@ -260,8 +262,8 @@ export default function LeaderDashboardV2() {
                       );
                     })}
                   </div>
-                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground w-8 text-right shrink-0">
-                    {dd.avgScore ?? "—"}
+                  <span className="shrink-0">
+                    <PeakonScoreBadge score={dd.avgScore ?? null} />
                   </span>
                 </div>
               );
@@ -304,7 +306,7 @@ export default function LeaderDashboardV2() {
                     <span className="text-xs font-semibold text-foreground">{d.domainName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <ScoreDisplay score={d.currentValue} size="sm" />
+                    <PeakonScoreBadge score={d.currentValue} />
                     {d.delta90d !== null && <DeltaIndicator value={d.delta90d} />}
                   </div>
                 </div>
@@ -400,7 +402,7 @@ export default function LeaderDashboardV2() {
                 </div>
                 <div className="flex items-center gap-3">
                   {team.avgScore !== null && (
-                    <ScoreDisplay score={team.avgScore} size="sm" />
+                    <PeakonScoreBadge score={team.avgScore} />
                   )}
                   <div className="flex gap-0.5">
                     {RATING_KEYS.map(rk => {

@@ -1,13 +1,14 @@
 /**
- * AiQ Dashboard UI Components — Design System v2.2
+ * AiQ Dashboard UI Components — Peakon Design System v3.0
  *
- * Shared primitives used across Individual, Manager, and Leader dashboards.
- * Inter for body, JetBrains Mono for numbers, 8-point grid, skeleton loaders.
+ * Shared primitives used across all dashboards and data pages.
+ * Peakon-style gradient colour scale, clean data-dense layouts.
  */
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 
 // ─── Rating Badge ────────────────────────────────────────────────────────────
 
@@ -46,10 +47,105 @@ export function RatingBadge({ rating, size = "md" }: { rating: string; size?: "s
   );
 }
 
-// ─── Score Display ───────────────────────────────────────────────────────────
+// ─── Peakon Score Cell ──────────────────────────────────────────────────────
+// The core Peakon visual — gradient-coloured cell with white decimal score
 
-export function ScoreDisplay({ score, size = "lg", className }: { score: number | null; size?: "sm" | "md" | "lg"; className?: string }) {
+export function PeakonScoreCell({
+  score,
+  size = "md",
+  showDecimal = true,
+  onClick,
+  className,
+}: {
+  score: number | null;
+  size?: "sm" | "md" | "lg" | "xl";
+  showDecimal?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) {
+  if (score === null) {
+    const emptySize = {
+      sm: "w-10 h-8 text-[10px]",
+      md: "w-14 h-10 text-xs",
+      lg: "w-16 h-12 text-sm",
+      xl: "w-20 h-14 text-base",
+    };
+    return (
+      <div className={cn("rounded-md flex items-center justify-center text-muted-foreground bg-neutral-100 border border-dashed border-neutral-200", emptySize[size], className)}>
+        —
+      </div>
+    );
+  }
+
+  const { bg, text } = scoreToColor(score);
+  const sizeClasses = {
+    sm: "w-10 h-8 text-[11px] rounded",
+    md: "w-14 h-10 text-xs rounded-md",
+    lg: "w-16 h-12 text-sm rounded-md",
+    xl: "w-20 h-14 text-lg rounded-lg",
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn(
+            "flex items-center justify-center font-mono font-bold tabular-nums transition-all",
+            sizeClasses[size],
+            onClick && "cursor-pointer hover:scale-105 hover:shadow-md",
+            className,
+          )}
+          style={{ backgroundColor: bg, color: text }}
+          onClick={onClick}
+        >
+          {showDecimal ? formatPeakonScore(score) : score}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs space-y-0.5">
+        <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
+        <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ─── Peakon Score Badge (inline, for text flow) ─────────────────────────────
+
+export function PeakonScoreBadge({ score, className }: { score: number | null; className?: string }) {
+  if (score === null) return <span className={cn("text-muted-foreground font-mono text-xs", className)}>—</span>;
+  const { bg, text } = scoreToColor(score);
+  return (
+    <span
+      className={cn("inline-flex items-center justify-center font-mono font-bold tabular-nums text-[11px] px-1.5 py-0.5 rounded", className)}
+      style={{ backgroundColor: bg, color: text }}
+    >
+      {formatPeakonScore(score)}
+    </span>
+  );
+}
+
+// ─── Score Display (large hero numbers) ─────────────────────────────────────
+
+export function ScoreDisplay({ score, size = "lg", className, peakon = false }: { score: number | null; size?: "sm" | "md" | "lg"; className?: string; peakon?: boolean }) {
   if (score === null) return <span className={cn("text-muted-foreground", className)}>—</span>;
+
+  if (peakon) {
+    const { bg, text } = scoreToColor(score);
+    const sizeClasses = {
+      sm: "text-lg px-2 py-1 rounded-md",
+      md: "text-2xl px-3 py-1.5 rounded-lg",
+      lg: "text-4xl px-4 py-2 rounded-xl",
+    };
+    return (
+      <span
+        className={cn("font-mono font-bold tracking-tight tabular-nums inline-flex items-center justify-center", sizeClasses[size], className)}
+        style={{ backgroundColor: bg, color: text }}
+      >
+        {formatPeakonScore(score)}
+      </span>
+    );
+  }
+
   const sizeClasses = {
     sm: "text-lg",
     md: "text-2xl",
@@ -164,17 +260,7 @@ export function InfoTip({ text }: { text: string }) {
   );
 }
 
-// ─── Heatmap Cell ────────────────────────────────────────────────────────────
-
-/** Semantic readiness colour scale — communicates capability level at a glance */
-function scoreToReadinessBg(score: number): { bg: string; text: string; ring: string } {
-  if (score >= 75) return { bg: "#ECFDF5", text: "#065F46", ring: "#10B981" }; // AI Ready
-  if (score >= 60) return { bg: "#F0FDF4", text: "#166534", ring: "#4ADE80" }; // Strong Developing
-  if (score >= 50) return { bg: "#FFFBEB", text: "#92400E", ring: "#F59E0B" }; // Developing
-  if (score >= 40) return { bg: "#FFF7ED", text: "#9A3412", ring: "#F97316" }; // Weak Developing
-  if (score >= 30) return { bg: "#FEF2F2", text: "#991B1B", ring: "#EF4444" }; // Not Yet Ready
-  return { bg: "#FEF2F2", text: "#7F1D1D", ring: "#DC2626" }; // Foundation Gap
-}
+// ─── Heatmap Cell (legacy — uses Peakon gradient now) ───────────────────────
 
 export function HeatmapCell({
   score,
@@ -193,7 +279,7 @@ export function HeatmapCell({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn("rounded-lg flex flex-col items-center justify-center text-muted-foreground border border-dashed border-neutral-200", size === "sm" ? "w-14 h-10" : "w-16 h-12")}
+          <div className={cn("rounded-md flex flex-col items-center justify-center text-muted-foreground border border-dashed border-neutral-200", size === "sm" ? "w-12 h-8" : "w-14 h-10")}
             style={{ backgroundColor: "#F8FAFC" }}>
             <span className="text-[10px]">—</span>
           </div>
@@ -204,34 +290,29 @@ export function HeatmapCell({
       </Tooltip>
     );
   }
-  const { bg, text, ring } = scoreToReadinessBg(score);
+  const { bg, text } = scoreToColor(score);
   const gap = target != null ? target - score : null;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "rounded-lg flex flex-col items-center justify-center font-mono tabular-nums transition-all relative",
-            size === "sm" ? "w-14 h-10" : "w-16 h-12",
+            "rounded-md flex flex-col items-center justify-center font-mono tabular-nums transition-all",
+            size === "sm" ? "w-12 h-8 text-[11px]" : "w-14 h-10 text-xs",
             onClick && "cursor-pointer hover:scale-105 hover:shadow-md",
           )}
-          style={{ backgroundColor: bg, color: text, borderLeft: `3px solid ${ring}` }}
+          style={{ backgroundColor: bg, color: text }}
           onClick={onClick}
         >
-          <span className="text-xs font-bold">{score}</span>
-          {headcount != null && headcount > 0 && (
-            <span className="text-[8px] opacity-60 font-normal">n={headcount}</span>
-          )}
+          <span className="font-bold">{formatPeakonScore(score)}</span>
         </div>
       </TooltipTrigger>
-      <TooltipContent side="top" className="text-xs space-y-1">
-        <p className="font-semibold">Score: {score}/100</p>
+      <TooltipContent side="top" className="text-xs space-y-0.5">
+        <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
         {headcount != null && <p>{headcount} assessed</p>}
         {gap != null && gap > 0 && <p className="text-red-600">{gap} pts below target</p>}
         {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
-        <p className="text-muted-foreground">
-          {score >= 75 ? "AI Ready" : score >= 60 ? "Strong Developing" : score >= 50 ? "Developing" : score >= 40 ? "Weak Developing" : score >= 30 ? "Not Yet Ready" : "Foundation Gap"}
-        </p>
+        <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
       </TooltipContent>
     </Tooltip>
   );
@@ -257,7 +338,7 @@ export function DomainDot({ domain, size = 8 }: { domain: string; size?: number 
   );
 }
 
-// ─── Capability Bar ──────────────────────────────────────────────────────────
+// ─── Capability Bar (Peakon gradient fill) ──────────────────────────────────
 
 export function CapabilityBar({
   score,
@@ -267,15 +348,17 @@ export function CapabilityBar({
 }: {
   score: number;
   target?: number | null;
-  colour: string;
+  colour?: string;
   height?: number;
 }) {
+  // Use Peakon gradient colour if no explicit colour provided
+  const fillColour = colour || scoreToColor(score).bg;
   return (
     <div className="relative w-full" style={{ height }}>
       <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "#E2E8F0" }} />
       <div
         className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-        style={{ width: `${Math.min(score, 100)}%`, backgroundColor: colour }}
+        style={{ width: `${Math.min(score, 100)}%`, backgroundColor: fillColour }}
       />
       {target != null && (
         <div
@@ -284,6 +367,41 @@ export function CapabilityBar({
         >
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#1E293B" }} />
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Peakon Progress Bar (gradient fill based on percentage) ────────────────
+
+export function PeakonProgressBar({
+  value,
+  max = 100,
+  height = 6,
+  showLabel = false,
+  className,
+}: {
+  value: number;
+  max?: number;
+  height?: number;
+  showLabel?: boolean;
+  className?: string;
+}) {
+  const pct = Math.min(Math.max(0, (value / max) * 100), 100);
+  const { bg } = scoreToColor(pct);
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <div className="relative flex-1" style={{ height }}>
+        <div className="absolute inset-0 rounded-full bg-neutral-200" />
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: bg }}
+        />
+      </div>
+      {showLabel && (
+        <span className="text-[10px] font-mono font-semibold tabular-nums text-muted-foreground w-8 text-right">
+          {Math.round(pct)}%
+        </span>
       )}
     </div>
   );

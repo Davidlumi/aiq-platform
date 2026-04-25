@@ -1536,3 +1536,13 @@
 - [x] PH-04: Segment hierarchy — expandable row chevrons for role families, overall aggregate row at top
 - [x] PH-05: Sticky first column for segment names, horizontal scroll for domains, min-width per column
 - [x] PH-06: Department filter integrated — popover multi-select with headcount, badge chips, select/clear all, dynamic aggregate row
+
+## Platform-Wide Peakon Visual Language
+- [x] PV-01: Rebuilt DashboardUI shared components — ScoreDisplay with peakon prop, PeakonScoreBadge, CapabilityBar with gradient fill, shared peakon-colors.ts utility
+- [x] PV-02: Created PeakonScoreBadge and scoreToColor/formatPeakonScore utilities in peakon-colors.ts for platform-wide reuse
+- [x] PV-03: Individual Dashboard — ScoreDisplay with peakon prop, PeakonScoreBadge in gap table and domain drill-down
+- [x] PV-04: Manager Dashboard — PeakonScoreBadge in team heatmap, member drill-down, and readiness displays
+- [x] PV-05: Leader Dashboard — PeakonScoreBadge in domain distribution, trajectory sparklines, teams section, function score
+- [x] PV-06: Assessment Results Page — ScoreRing with Peakon gradient, CapabilityBar scores with gradient badges
+- [x] PV-07: Learning Plan Page — gap analysis scores with Peakon gradient badges, overall readiness score with gradient
+- [x] PV-08: ExplanationDrawer ScoreBreakdown — overall score and factor scores with Peakon gradient badges

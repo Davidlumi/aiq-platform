@@ -25,6 +25,7 @@ import {
   Map, ShieldCheck, GraduationCap, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -373,7 +374,7 @@ function GapAnalysisTab({ gapRow }: { gapRow: any }) {
               PRIORITY_COLOURS[overallReadiness as keyof typeof PRIORITY_COLOURS]?.text ?? "text-foreground")}>
               {overallReadiness}
             </p>
-            <p className="text-sm text-muted-foreground mt-0.5">Score: {overallScore.toFixed(0)}%</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Score: <span className="font-mono font-bold px-1.5 py-0.5 rounded text-[11px]" style={{ backgroundColor: scoreToColor(overallScore).bg, color: scoreToColor(overallScore).text }}>{formatPeakonScore(overallScore)}</span></p>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground mb-1">{gaps.length} capabilities assessed</p>
@@ -408,7 +409,7 @@ function GapAnalysisTab({ gapRow }: { gapRow: any }) {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Your score</span>
-                      <span className={colours.text}>{gap.score}%</span>
+                      <span className="font-mono font-bold px-1 py-0.5 rounded text-[10px]" style={{ backgroundColor: scoreToColor(gap.score).bg, color: scoreToColor(gap.score).text }}>{formatPeakonScore(gap.score)}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${gap.score}%`, background: cap.color }} />
