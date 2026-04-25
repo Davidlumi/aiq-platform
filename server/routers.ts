@@ -17,6 +17,7 @@ import { backofficeRouter } from "./routers/backoffice";
 import { waitlistRouter } from "./routers/waitlist";
 import { adaptiveLearningRouter } from "./routers/adaptiveLearning";
 import { organisationRouter } from "./routers/organisation";
+import { dashboardV2Router } from "./routers/dashboardV2";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -36,6 +37,7 @@ export const appRouter = router({
   backoffice: backofficeRouter,
   waitlist: waitlistRouter,
   organisation: organisationRouter,
+  dashboardV2: dashboardV2Router,
 });
 
 export type AppRouter = typeof appRouter;

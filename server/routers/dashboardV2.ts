@@ -1,0 +1,1600 @@
+/**
+ * Dashboard V2 Router — AiQ Dashboard Specification v1.1
+ *
+ * Three role-based dashboards: Individual, Manager, Leader
+ * Replaces the legacy dashboard router for the three primary surfaces.
+ */
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { protectedProcedure, router } from "../_core/trpc";
+import { getDb, getUserRoleKeys, getTenantPlan, planAtLeast } from "../db";
+import {
+  users,
+  userStates,
+  assessmentSessions,
+  assessmentScores,
+  assessmentAnswers,
+  revalidationSchedules,
+  adaptiveLearningPlans,
+  adaptivePlanItems,
+  learningModules,
+  managerTeamMembers,
+  auditLogs,
+  canonicalSignals,
+  gapAnalyses,
+  contentScenarios,
+  contentScenarioOptions,
+} from "../../drizzle/schema";
+import { eq, and, desc, isNull, sql, gte, inArray, asc } from "drizzle-orm";
+import {
+  DOMAIN_KEYS,
+  DOMAIN_LABELS,
+  DOMAIN_DESCRIPTIONS,
+  DOMAIN_COLOURS,
+  RATING_KEYS,
+  RATING_LABELS,
+  stateToRating,
+  confidenceBand,
+  archetypeToRoleFamily,
+  roleFamilyFromUserField,
+  ROLE_FAMILY_KEYS,
+  ROLE_FAMILY_LABELS,
+  type DomainKey,
+  type RatingKey,
+  type RoleFamilyKey,
+} from "../../shared/dashboard";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function extractCapabilityScores(breakdown: unknown): Record<DomainKey, number> | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const cap = bd.capabilityScores;
+  if (!cap || typeof cap !== "object") return null;
+  const result = {} as Record<DomainKey, number>;
+  for (const key of DOMAIN_KEYS) {
+    const entry = (cap as Record<string, unknown>)[key];
+    if (entry && typeof entry === "object" && "score" in (entry as any)) {
+      result[key] = Number((entry as any).score) || 0;
+    } else {
+      const v = (cap as Record<string, unknown>)[key];
+      result[key] = typeof v === "number" ? v : 0;
+    }
+  }
+  return result;
+}
+
+function extractDomainRatings(breakdown: unknown): Record<DomainKey, { score: number; band: string; signalCount: number }> | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const cap = bd.capabilityScores;
+  if (!cap || typeof cap !== "object") return null;
+  const result = {} as Record<DomainKey, { score: number; band: string; signalCount: number }>;
+  for (const key of DOMAIN_KEYS) {
+    const entry = (cap as Record<string, unknown>)[key];
+    if (entry && typeof entry === "object") {
+      const e = entry as Record<string, unknown>;
+      result[key] = {
+        score: Number(e.score) || 0,
+        band: (e.band as string) ?? "needs_work",
+        signalCount: Number(e.signalCount) || 0,
+      };
+    } else {
+      result[key] = { score: 0, band: "needs_work", signalCount: 0 };
+    }
+  }
+  return result;
+}
+
+function extractReadinessState(breakdown: unknown): string | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const r = bd.readiness;
+  if (!r || typeof r !== "object") return null;
+  return ((r as Record<string, unknown>).state as string) ?? null;
+}
+
+function extractReadinessLabel(breakdown: unknown): string | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const r = bd.readiness;
+  if (!r || typeof r !== "object") return null;
+  return ((r as Record<string, unknown>).label as string) ?? null;
+}
+
+function extractReadinessDescription(breakdown: unknown): string | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const r = bd.readiness;
+  if (!r || typeof r !== "object") return null;
+  return ((r as Record<string, unknown>).participantDescription as string) ?? null;
+}
+
+function extractCompositeConfidence(breakdown: unknown): number | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+  const bd = breakdown as Record<string, unknown>;
+  const conf = bd.compositeConfidence;
+  if (typeof conf === "number") return conf;
+  // Also check inside readiness
+  const r = bd.readiness;
+  if (r && typeof r === "object") {
+    const rc = (r as Record<string, unknown>).compositeConfidence;
+    if (typeof rc === "number") return rc;
+  }
+  return null;
+}
+
+function extractSignalScores(signalScoresJson: unknown): Array<{ signalKey: string; score: number; level: string; description: string }> {
+  if (!signalScoresJson || typeof signalScoresJson !== "object") return [];
+  const signals = signalScoresJson as Record<string, unknown>;
+  return Object.entries(signals).map(([key, val]) => {
+    if (val && typeof val === "object") {
+      const v = val as Record<string, unknown>;
+      return {
+        signalKey: key,
+        score: Number(v.score) || 0,
+        level: bandToLevel(Number(v.score) || 0),
+        description: (v.description as string) ?? key.replace(/_/g, " "),
+      };
+    }
+    return { signalKey: key, score: Number(val) || 0, level: "developing", description: key.replace(/_/g, " ") };
+  });
+}
+
+function bandToLevel(score: number): string {
+  if (score >= 75) return "Strong";
+  if (score >= 55) return "Developing";
+  return "Critical";
+}
+
+/** Generate contextual rating explanation */
+function generateRatingExplanation(rating: RatingKey, domainScores: Record<DomainKey, number> | null): string {
+  if (!domainScores) return RATING_LABELS[rating];
+  const sorted = DOMAIN_KEYS.map(k => ({ key: k, score: domainScores[k] })).sort((a, b) => a.score - b.score);
+  const weakest = sorted[0];
+  const strongest = sorted[sorted.length - 1];
+  switch (rating) {
+    case "ai_ready":
+      return `AI Ready — strong capability demonstrated across all domains. Your strongest area is ${DOMAIN_LABELS[strongest.key]}.`;
+    case "developing":
+      return `Developing — your foundation is solid; targeted growth needed in ${DOMAIN_LABELS[weakest.key]}.`;
+    case "not_yet_ready":
+      return `Not Yet Ready — significant gaps identified, particularly in ${DOMAIN_LABELS[weakest.key]}. Structured development recommended.`;
+    case "foundation_gap":
+      return `Foundation Gap — core capability in ${DOMAIN_LABELS[weakest.key]} needs building before progressing to advanced domains.`;
+    case "insufficient_evidence":
+      return `Insufficient Evidence — more assessment data needed to produce a reliable capability profile.`;
+  }
+}
+
+/** Get latest score breakdown for a user */
+async function getLatestScoreData(db: any, userId: string) {
+  const latestSession = await db
+    .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt, roleArchetypeId: assessmentSessions.roleArchetypeId })
+    .from(assessmentSessions)
+    .where(and(eq(assessmentSessions.userId, userId), eq(assessmentSessions.state, "completed")))
+    .orderBy(desc(assessmentSessions.completedAt))
+    .limit(1);
+  if (!latestSession[0]) return null;
+  const score = await db
+    .select()
+    .from(assessmentScores)
+    .where(eq(assessmentScores.sessionId, latestSession[0].id))
+    .limit(1);
+  if (!score[0]) return null;
+  return {
+    sessionId: latestSession[0].id,
+    completedAt: latestSession[0].completedAt,
+    roleArchetypeId: latestSession[0].roleArchetypeId,
+    overallScore: parseFloat(String(score[0].overallScore)),
+    scoreBreakdownJson: score[0].scoreBreakdownJson,
+    signalScoresJson: score[0].signalScoresJson,
+  };
+}
+
+// ─── Individual Dashboard ────────────────────────────────────────────────────
+
+const individualRouter = router({
+  /** Main Individual Dashboard data */
+  main: protectedProcedure
+    .input(z.object({ userId: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const targetUserId = input?.userId ?? ctx.user.id;
+
+      // If viewing another user, check permissions
+      if (targetUserId !== ctx.user.id) {
+        const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+        if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+
+      // User info
+      const userRow = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1);
+      if (!userRow[0]) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const u = userRow[0];
+
+      // All completed assessments (score history)
+      const completedSessions = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, targetUserId), eq(assessmentSessions.state, "completed")))
+        .orderBy(asc(assessmentSessions.completedAt));
+
+      const assessmentHistory: Array<{
+        sessionId: string;
+        date: string;
+        overallScore: number;
+        rating: RatingKey;
+      }> = [];
+
+      let latestBreakdown: unknown = null;
+      let latestSignalScores: unknown = null;
+      let latestOverallScore: number | null = null;
+      let latestRating: RatingKey = "insufficient_evidence";
+      let latestConfidence: number | null = null;
+      let ratingExplanation = "";
+      let domainScores: Record<DomainKey, number> | null = null;
+      let domainRatings: Record<DomainKey, { score: number; band: string; signalCount: number }> | null = null;
+
+      for (const sess of completedSessions) {
+        const score = await db
+          .select()
+          .from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, sess.id))
+          .limit(1);
+        if (score[0]) {
+          const overall = parseFloat(String(score[0].overallScore));
+          const state = extractReadinessState(score[0].scoreBreakdownJson);
+          const rating = stateToRating(state);
+          assessmentHistory.push({
+            sessionId: sess.id,
+            date: sess.completedAt?.toISOString() ?? new Date().toISOString(),
+            overallScore: Math.round(overall),
+            rating,
+          });
+          // Keep latest
+          latestBreakdown = score[0].scoreBreakdownJson;
+          latestSignalScores = score[0].signalScoresJson;
+          latestOverallScore = Math.round(overall);
+          latestRating = rating;
+          latestConfidence = extractCompositeConfidence(score[0].scoreBreakdownJson);
+          domainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+          domainRatings = extractDomainRatings(score[0].scoreBreakdownJson);
+        }
+      }
+
+      ratingExplanation = generateRatingExplanation(latestRating, domainScores);
+
+      // Revalidation schedule
+      const revalidation = await db
+        .select()
+        .from(revalidationSchedules)
+        .where(and(eq(revalidationSchedules.userId, targetUserId), eq(revalidationSchedules.status, "pending")))
+        .orderBy(revalidationSchedules.dueAt)
+        .limit(1);
+
+      // Build domain cards
+      const domains = DOMAIN_KEYS.map(key => {
+        const score = domainScores?.[key] ?? 0;
+        const detail = domainRatings?.[key];
+        const domainRating = detail ? stateToRating(
+          score >= 75 ? "safe" : score >= 55 ? "at_risk" : score >= 40 ? "unsafe" : "foundation_gap"
+        ) : "insufficient_evidence";
+        return {
+          key,
+          name: DOMAIN_LABELS[key],
+          description: DOMAIN_DESCRIPTIONS[key],
+          colour: DOMAIN_COLOURS[key],
+          score: Math.round(score),
+          rating: domainRating,
+          signalCount: detail?.signalCount ?? 0,
+          hasEvidence: (detail?.signalCount ?? 0) >= 3,
+        };
+      });
+
+      // Gap heatmap — targets from gap analysis
+      const latestGap = await db
+        .select()
+        .from(gapAnalyses)
+        .where(eq(gapAnalyses.userId, targetUserId))
+        .orderBy(desc(gapAnalyses.generatedAt))
+        .limit(1);
+      const gapData = latestGap[0]?.capabilityGapsJson as Record<string, any> | null;
+
+      const gapHeatmap = DOMAIN_KEYS.map(key => {
+        const current = domainScores?.[key] ?? null;
+        const gapEntry = gapData?.[key];
+        const target = gapEntry?.benchmark ?? null;
+        const gap = current !== null && target !== null ? target - current : null;
+        return {
+          domain: key,
+          domainName: DOMAIN_LABELS[key],
+          currentScore: current !== null ? Math.round(current) : null,
+          targetScore: target !== null ? Math.round(target) : null,
+          gapValue: gap !== null ? Math.round(gap) : null,
+        };
+      });
+
+      // Learning plan summary
+      const activePlan = await db
+        .select()
+        .from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, targetUserId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      let planSummary: { moduleCount: number; totalEstimatedMinutes: number; completionPercentage: number; generating: boolean } | null = null;
+      if (activePlan[0]) {
+        const items = await db
+          .select()
+          .from(adaptivePlanItems)
+          .where(eq(adaptivePlanItems.planId, activePlan[0].id));
+        const completed = items.filter(i => i.status === "completed").length;
+        // Get estimated times from modules
+        const moduleIds = items.map(i => i.moduleId);
+        let totalMins = activePlan[0].estimatedTotalMins || 0;
+        if (totalMins === 0 && moduleIds.length > 0) {
+          const modules = await db
+            .select({ durationMins: learningModules.durationMins })
+            .from(learningModules)
+            .where(inArray(learningModules.id, moduleIds));
+          totalMins = modules.reduce((sum, m) => sum + (m.durationMins ?? 15), 0);
+        }
+        planSummary = {
+          moduleCount: items.length,
+          totalEstimatedMinutes: totalMins,
+          completionPercentage: items.length > 0 ? Math.round((completed / items.length) * 100) : 0,
+          generating: false,
+        };
+      }
+
+      const lastAssessmentDate = completedSessions.length > 0
+        ? completedSessions[completedSessions.length - 1].completedAt?.toISOString() ?? null
+        : null;
+      const nextReassessmentDate = revalidation[0]?.dueAt?.toISOString() ?? null;
+
+      return {
+        user: {
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          roleFamily: u.roleFamily,
+          jobFunction: u.jobFunction,
+        },
+        lastAssessmentDate,
+        nextReassessmentDate,
+        overallScore: latestOverallScore,
+        overallRating: latestRating,
+        ratingExplanation,
+        confidenceBand: confidenceBand(latestConfidence),
+        assessmentHistory,
+        domains,
+        gapHeatmap,
+        planSummary,
+        // For target line on score progress chart
+        roleTarget: gapData ? Math.round(
+          DOMAIN_KEYS.reduce((sum, k) => sum + (gapData[k]?.benchmark ?? 0), 0) / DOMAIN_KEYS.length
+        ) : null,
+        businessContext: null, // Will be populated when AI roadmap is implemented
+      };
+    }),
+
+  /** Domain drill-down: Light + Medium */
+  domainDetail: protectedProcedure
+    .input(z.object({ userId: z.string().optional(), domainKey: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const targetUserId = input.userId ?? ctx.user.id;
+      const domainKey = input.domainKey as DomainKey;
+
+      if (!DOMAIN_KEYS.includes(domainKey)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid domain key" });
+      }
+
+      // If viewing another user, check permissions
+      if (targetUserId !== ctx.user.id) {
+        const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+        if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+
+      const scoreData = await getLatestScoreData(db, targetUserId);
+      if (!scoreData) {
+        return {
+          domainKey,
+          domainName: DOMAIN_LABELS[domainKey],
+          domainColour: DOMAIN_COLOURS[domainKey],
+          score: null,
+          rating: "insufficient_evidence" as RatingKey,
+          confidenceBand: "low" as const,
+          narrativeExplanation: "No assessment data available yet. Complete an assessment to see your capability profile for this domain.",
+          gapStatement: null,
+          signals: [],
+          developmentModules: [],
+        };
+      }
+
+      const domainRatings = extractDomainRatings(scoreData.scoreBreakdownJson);
+      const domainDetail = domainRatings?.[domainKey];
+      const score = domainDetail?.score ?? 0;
+      const signalCount = domainDetail?.signalCount ?? 0;
+
+      // Domain rating
+      const domainRating = stateToRating(
+        score >= 75 ? "safe" : score >= 55 ? "at_risk" : score >= 40 ? "unsafe" : "foundation_gap"
+      );
+
+      // Signal breakdown (Medium drill-down)
+      const allSignals = extractSignalScores(scoreData.signalScoresJson);
+      // Get canonical signals for this domain
+      const canonicals = await db
+        .select()
+        .from(canonicalSignals)
+        .where(eq(canonicalSignals.domain, domainKey));
+      const canonicalKeys = new Set(canonicals.map(c => c.signalKey));
+      const domainSignals = allSignals
+        .filter(s => canonicalKeys.has(s.signalKey))
+        .sort((a, b) => b.score - a.score)
+        .map(s => {
+          const isRisk = s.signalKey.endsWith("_risk");
+          return {
+            signalKey: s.signalKey,
+            name: s.signalKey.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+            level: s.level,
+            score: Math.round(s.score),
+            description: s.description,
+            isRiskSignal: isRisk,
+            framing: isRisk ? `${s.signalKey.replace(/_risk$/, "").replace(/_/g, " ")}: lower is better; you are at ${s.level}.` : undefined,
+          };
+        });
+
+      // Gap statement
+      const latestGap = await db
+        .select()
+        .from(gapAnalyses)
+        .where(eq(gapAnalyses.userId, targetUserId))
+        .orderBy(desc(gapAnalyses.generatedAt))
+        .limit(1);
+      const gapData = latestGap[0]?.capabilityGapsJson as Record<string, any> | null;
+      const gapEntry = gapData?.[domainKey];
+      const target = gapEntry?.benchmark;
+      const gapStatement = target
+        ? `Your role requires this capability at level ${Math.round(target)} by the relevant business timeline. You are currently at level ${Math.round(score)}. Gap of ${Math.round(target - score)} points.`
+        : null;
+
+      // Narrative explanation (generated from data)
+      const strongSignals = domainSignals.filter(s => s.level === "Strong").map(s => s.name.toLowerCase());
+      const weakSignals = domainSignals.filter(s => s.level === "Critical").map(s => s.name.toLowerCase());
+      let narrative = `Your ${DOMAIN_LABELS[domainKey]} score of ${Math.round(score)} reflects `;
+      if (strongSignals.length > 0 && weakSignals.length > 0) {
+        narrative += `strong performance on ${strongSignals.slice(0, 2).join(" and ")} and weaker performance on ${weakSignals.slice(0, 2).join(" and ")}.`;
+      } else if (strongSignals.length > 0) {
+        narrative += `consistently strong performance across the measured signals.`;
+      } else if (weakSignals.length > 0) {
+        narrative += `areas for development across several signals, particularly ${weakSignals.slice(0, 2).join(" and ")}.`;
+      } else {
+        narrative += `a developing capability profile across the measured signals.`;
+      }
+
+      // Development modules for this domain
+      const activePlan = await db
+        .select()
+        .from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, targetUserId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      let developmentModules: Array<{ moduleId: string; title: string; status: string }> = [];
+      if (activePlan[0]) {
+        const items = await db
+          .select()
+          .from(adaptivePlanItems)
+          .where(eq(adaptivePlanItems.planId, activePlan[0].id));
+        const domainItems = items.filter(i => {
+          const reason = i.reasonJson as Record<string, unknown> | null;
+          return reason?.capability === domainKey;
+        });
+        if (domainItems.length > 0) {
+          const moduleIds = domainItems.map(i => i.moduleId);
+          const modules = await db
+            .select({ id: learningModules.id, title: learningModules.title })
+            .from(learningModules)
+            .where(inArray(learningModules.id, moduleIds));
+          const moduleMap = new Map(modules.map(m => [m.id, m.title]));
+          developmentModules = domainItems.map(i => ({
+            moduleId: i.moduleId,
+            title: moduleMap.get(i.moduleId) ?? "Module",
+            status: i.status,
+          }));
+        }
+      }
+
+      return {
+        domainKey,
+        domainName: DOMAIN_LABELS[domainKey],
+        domainColour: DOMAIN_COLOURS[domainKey],
+        score: Math.round(score),
+        rating: domainRating,
+        confidenceBand: confidenceBand(null),
+        narrativeExplanation: narrative,
+        gapStatement,
+        signals: domainSignals,
+        developmentModules,
+      };
+    }),
+
+  /** Domain drill-down: Deep — scenario evidence */
+  domainEvidence: protectedProcedure
+    .input(z.object({ userId: z.string().optional(), domainKey: z.string(), sessionId: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const targetUserId = input.userId ?? ctx.user.id;
+      const domainKey = input.domainKey as DomainKey;
+
+      // If viewing another user, check permissions
+      if (targetUserId !== ctx.user.id) {
+        const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+        if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+
+      // Get latest session
+      const latestSession = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, targetUserId), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(1);
+
+      if (!latestSession[0]) {
+        return { scenarios: [], available: false, message: "No assessment data available." };
+      }
+
+      const sessionId = input.sessionId ?? latestSession[0].id;
+
+      // Get answers for this session
+      const answers = await db
+        .select()
+        .from(assessmentAnswers)
+        .where(eq(assessmentAnswers.sessionId, sessionId))
+        .limit(50);
+
+      // Match answers to scenarios in this domain
+      const scenarios: Array<{
+        scenarioSummary: string;
+        selectedOption: string;
+        indication: string;
+        signalContribution: string;
+      }> = [];
+
+      for (const ans of answers) {
+        // Try to find matching content scenario
+        const scenario = await db
+          .select()
+          .from(contentScenarios)
+          .where(and(
+            eq(contentScenarios.interactionId, ans.itemId),
+            eq(contentScenarios.capabilityKey, domainKey),
+          ))
+          .limit(1);
+
+        if (scenario[0]) {
+          // Get the selected option details
+          const selectedVal = ans.selectedValueJson as string | null;
+          let optionText = selectedVal ?? "Response recorded";
+          let indication = "Your response has been recorded for this scenario.";
+
+          if (selectedVal) {
+            const option = await db
+              .select()
+              .from(contentScenarioOptions)
+              .where(and(
+                eq(contentScenarioOptions.scenarioId, scenario[0].id),
+                eq(contentScenarioOptions.value, selectedVal),
+              ))
+              .limit(1);
+            if (option[0]) {
+              optionText = option[0].label ?? optionText;
+              // selectionIndication field — use if available, otherwise generate from outcome class
+              indication = (option[0] as any).selectionIndication
+                ?? `Your selection indicated ${ans.outcomeClass === "optimal" ? "strong" : ans.outcomeClass === "acceptable" ? "developing" : "emerging"} capability in this area.`;
+            }
+          }
+
+          scenarios.push({
+            scenarioSummary: scenario[0].title ?? "Assessment scenario",
+            selectedOption: optionText,
+            indication,
+            signalContribution: scenario[0].capabilityKey ?? domainKey,
+          });
+        }
+      }
+
+      return {
+        scenarios: scenarios.slice(0, 5),
+        available: scenarios.length > 0,
+        message: scenarios.length === 0
+          ? "Detailed scenario evidence will be available in a future release. For now, see your signal breakdown above."
+          : undefined,
+      };
+    }),
+});
+
+// ─── Manager Dashboard ───────────────────────────────────────────────────────
+
+const managerRouter = router({
+  /** Main Manager Dashboard data */
+  main: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Get direct reports via managerTeamMembers
+    const teamLinks = await db
+      .select()
+      .from(managerTeamMembers)
+      .where(eq(managerTeamMembers.managerId, ctx.user.id));
+
+    const memberIds = teamLinks.map(t => t.memberId);
+
+    // Fallback: if no team members linked, get all tenant users for hr_leader/admin
+    let teamMembers: Array<{
+      id: string; firstName: string; lastName: string; email: string;
+      roleFamily: string | null; jobFunction: string | null;
+    }> = [];
+
+    if (memberIds.length > 0) {
+      teamMembers = await db
+        .select({
+          id: users.id, firstName: users.firstName, lastName: users.lastName,
+          email: users.email, roleFamily: users.roleFamily, jobFunction: users.jobFunction,
+        })
+        .from(users)
+        .where(inArray(users.id, memberIds));
+    } else if (myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      // Leaders see all tenant users
+      teamMembers = await db
+        .select({
+          id: users.id, firstName: users.firstName, lastName: users.lastName,
+          email: users.email, roleFamily: users.roleFamily, jobFunction: users.jobFunction,
+        })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+    }
+
+    // Build team data with scores
+    const ratingCounts: Record<RatingKey, number> = {
+      ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0,
+    };
+    const teamMembersByRating: Record<RatingKey, Array<{ id: string; name: string }>> = {
+      ai_ready: [], developing: [], not_yet_ready: [], foundation_gap: [], insufficient_evidence: [],
+    };
+
+    interface TeamMemberData {
+      id: string;
+      name: string;
+      role: string;
+      roleFamily: string | null;
+      domainScores: Record<DomainKey, number | null>;
+      overallScore: number | null;
+      rating: RatingKey;
+      lastAssessmentDate: string | null;
+    }
+
+    const heatmapData: TeamMemberData[] = [];
+    let lastTeamActivity: string | null = null;
+
+    for (const member of teamMembers) {
+      const scoreData = await getLatestScoreData(db, member.id);
+      const domainScoresMap = scoreData ? extractCapabilityScores(scoreData.scoreBreakdownJson) : null;
+      const readinessState = scoreData ? extractReadinessState(scoreData.scoreBreakdownJson) : null;
+      const rating = stateToRating(readinessState);
+
+      ratingCounts[rating]++;
+      teamMembersByRating[rating].push({ id: member.id, name: `${member.firstName} ${member.lastName}` });
+
+      const memberDomainScores: Record<DomainKey, number | null> = {} as any;
+      for (const key of DOMAIN_KEYS) {
+        memberDomainScores[key] = domainScoresMap?.[key] != null ? Math.round(domainScoresMap[key]) : null;
+      }
+
+      const completedAt = scoreData?.completedAt?.toISOString() ?? null;
+      if (completedAt && (!lastTeamActivity || completedAt > lastTeamActivity)) {
+        lastTeamActivity = completedAt;
+      }
+
+      heatmapData.push({
+        id: member.id,
+        name: `${member.firstName} ${member.lastName}`,
+        role: member.jobFunction ?? member.roleFamily ?? "HR Professional",
+        roleFamily: member.roleFamily,
+        domainScores: memberDomainScores,
+        overallScore: scoreData ? Math.round(scoreData.overallScore) : null,
+        rating,
+        lastAssessmentDate: completedAt,
+      });
+    }
+
+    // Manager info
+    const managerUser = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    const managerName = managerUser[0] ? `${managerUser[0].firstName} ${managerUser[0].lastName}` : "Manager";
+
+    return {
+      manager: {
+        name: managerName,
+        teamName: `${managerName.split(" ")[0]}'s team`,
+      },
+      teamSize: teamMembers.length,
+      lastTeamActivity,
+      ratingCounts,
+      teamMembersByRating,
+      heatmapData,
+    };
+  }),
+
+  /** Conversation prompts — 10 deterministic patterns */
+  conversationPrompts: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Get team members
+    const teamLinks = await db
+      .select()
+      .from(managerTeamMembers)
+      .where(eq(managerTeamMembers.managerId, ctx.user.id));
+    let memberIds = teamLinks.map(t => t.memberId);
+
+    if (memberIds.length === 0 && myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      const allUsers = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+      memberIds = allUsers.map(u => u.id);
+    }
+
+    if (memberIds.length === 0) return { prompts: [] };
+
+    const prompts: Array<{
+      memberId: string;
+      memberName: string;
+      observation: string;
+      suggestedAction: string;
+      priority: "high" | "medium" | "low";
+      patternId: string;
+      generatedAt: string;
+    }> = [];
+
+    const now = Date.now();
+    const DAY_MS = 86400000;
+    const memberPromptUsed = new Set<string>(); // max 1 prompt per member
+
+    for (const memberId of memberIds) {
+      if (memberPromptUsed.size >= 5) break; // max 5 prompts total
+
+      const memberRow = await db.select().from(users).where(eq(users.id, memberId)).limit(1);
+      if (!memberRow[0]) continue;
+      const memberName = `${memberRow[0].firstName} ${memberRow[0].lastName}`;
+
+      // Get assessment history (last 3)
+      const sessions = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, memberId), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(3);
+
+      if (sessions.length === 0) continue;
+
+      const scores: Array<{ sessionId: string; completedAt: Date | null; overallScore: number; domainScores: Record<DomainKey, number> | null; readinessState: string | null }> = [];
+      for (const sess of sessions) {
+        const sc = await db.select().from(assessmentScores).where(eq(assessmentScores.sessionId, sess.id)).limit(1);
+        if (sc[0]) {
+          scores.push({
+            sessionId: sess.id,
+            completedAt: sess.completedAt,
+            overallScore: parseFloat(String(sc[0].overallScore)),
+            domainScores: extractCapabilityScores(sc[0].scoreBreakdownJson),
+            readinessState: extractReadinessState(sc[0].scoreBreakdownJson),
+          });
+        }
+      }
+
+      if (scores.length === 0) continue;
+      const latest = scores[0];
+      const prior = scores.length > 1 ? scores[1] : null;
+
+      // Get active learning plan
+      const plan = await db
+        .select()
+        .from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, memberId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      let planItems: any[] = [];
+      if (plan[0]) {
+        planItems = await db
+          .select()
+          .from(adaptivePlanItems)
+          .where(eq(adaptivePlanItems.planId, plan[0].id));
+      }
+
+      const hasActivePlan = plan[0] != null;
+      const planGeneratedAt = plan[0]?.generatedAt ?? 0;
+      const completedItems = planItems.filter(i => i.status === "completed");
+      const inProgressItems = planItems.filter(i => i.status === "in_progress");
+      const lastActivity = Math.max(
+        ...planItems.map(i => i.completedAt ?? i.startedAt ?? 0),
+        0
+      );
+
+      // Pattern 1: regression_detected (High)
+      if (prior && latest.domainScores && prior.domainScores && !memberPromptUsed.has(memberId)) {
+        for (const domain of DOMAIN_KEYS) {
+          const drop = (prior.domainScores[domain] ?? 0) - (latest.domainScores[domain] ?? 0);
+          if (drop > 5) {
+            const interventionClause = hasActivePlan && completedItems.length === 0 && planItems.length > 0
+              ? `The personalised module generated ${Math.round((now - planGeneratedAt) / (7 * DAY_MS))} weeks ago hasn't been started.`
+              : hasActivePlan && lastActivity > 0 && (now - lastActivity) > 14 * DAY_MS
+              ? `The personalised module is in progress but hasn't shown completion activity in ${Math.round((now - lastActivity) / DAY_MS)} days.`
+              : "No development intervention is currently active for this domain.";
+            const contextClause = hasActivePlan && completedItems.length === 0
+              ? "workload or barriers to completion"
+              : "whether the development priorities still match their role focus";
+            prompts.push({
+              memberId,
+              memberName,
+              observation: `${memberName}'s last assessment showed regression on ${DOMAIN_LABELS[domain]} (score moved from ${Math.round(prior.domainScores[domain])} to ${Math.round(latest.domainScores[domain])}). ${interventionClause}`,
+              suggestedAction: `Worth a conversation about ${contextClause}.`,
+              priority: "high",
+              patternId: "regression_detected",
+              generatedAt: new Date().toISOString(),
+            });
+            memberPromptUsed.add(memberId);
+            break;
+          }
+        }
+      }
+
+      // Pattern 2: plan_unstarted (High)
+      if (!memberPromptUsed.has(memberId) && hasActivePlan && planItems.length > 0 && completedItems.length === 0 && inProgressItems.length === 0 && (now - planGeneratedAt) > 14 * DAY_MS) {
+        prompts.push({
+          memberId,
+          memberName,
+          observation: `${memberName} has a development plan generated ${Math.round((now - planGeneratedAt) / (7 * DAY_MS))} weeks ago that hasn't been opened. The plan contains ${planItems.length} modules targeting their capability gaps.`,
+          suggestedAction: "Worth a conversation about whether they've seen the plan and what might be preventing them from starting.",
+          priority: "high",
+          patternId: "plan_unstarted",
+          generatedAt: new Date().toISOString(),
+        });
+        memberPromptUsed.add(memberId);
+      }
+
+      // Pattern 3: plan_stalled (High)
+      if (!memberPromptUsed.has(memberId) && hasActivePlan && (completedItems.length > 0 || inProgressItems.length > 0) && lastActivity > 0 && (now - lastActivity) > 14 * DAY_MS && planItems.some(i => i.status !== "completed")) {
+        prompts.push({
+          memberId,
+          memberName,
+          observation: `${memberName}'s development plan hasn't had any activity in ${Math.round((now - lastActivity) / DAY_MS)} days. ${planItems.length - completedItems.length} modules remain incomplete.`,
+          suggestedAction: "Worth checking in about what's stalled and whether the plan needs adjusting.",
+          priority: "high",
+          patternId: "plan_stalled",
+          generatedAt: new Date().toISOString(),
+        });
+        memberPromptUsed.add(memberId);
+      }
+
+      // Pattern 4: reassessment_overdue (Medium)
+      if (!memberPromptUsed.has(memberId)) {
+        const reval = await db
+          .select()
+          .from(revalidationSchedules)
+          .where(and(eq(revalidationSchedules.userId, memberId), eq(revalidationSchedules.status, "pending")))
+          .orderBy(revalidationSchedules.dueAt)
+          .limit(1);
+        if (reval[0] && new Date(reval[0].dueAt) < new Date() && completedItems.length > 0) {
+          prompts.push({
+            memberId,
+            memberName,
+            observation: `${memberName} completed development modules but their scheduled reassessment is overdue. Reassessment would measure whether the development investment has translated into capability improvement.`,
+            suggestedAction: "Worth scheduling their reassessment to capture the development impact.",
+            priority: "medium",
+            patternId: "reassessment_overdue",
+            generatedAt: new Date().toISOString(),
+          });
+          memberPromptUsed.add(memberId);
+        }
+      }
+
+      // Pattern 5: foundation_gap_persisting (Medium)
+      if (!memberPromptUsed.has(memberId) && scores.length >= 2) {
+        const consecutiveFoundationGap = scores.filter(s => stateToRating(s.readinessState) === "foundation_gap").length;
+        if (consecutiveFoundationGap >= 2) {
+          prompts.push({
+            memberId,
+            memberName,
+            observation: `${memberName} has been classified as Foundation Gap for ${consecutiveFoundationGap} consecutive assessments without movement. This suggests the current development approach may not be addressing the root capability gap.`,
+            suggestedAction: "Consider reviewing their assessment evidence together to identify whether a different development approach is needed.",
+            priority: "medium",
+            patternId: "foundation_gap_persisting",
+            generatedAt: new Date().toISOString(),
+          });
+          memberPromptUsed.add(memberId);
+        }
+      }
+
+      // Pattern 6: sustained_developing (Medium)
+      if (!memberPromptUsed.has(memberId) && scores.length >= 3) {
+        const allDeveloping = scores.every(s => stateToRating(s.readinessState) === "developing");
+        const scoreChange = Math.abs(scores[0].overallScore - scores[scores.length - 1].overallScore);
+        if (allDeveloping && scoreChange < 3) {
+          prompts.push({
+            memberId,
+            memberName,
+            observation: `${memberName} has been Developing for ${scores.length} consecutive assessments with minimal score change (${Math.round(scoreChange)} points). Their current development plan may need recalibration.`,
+            suggestedAction: "Consider reviewing whether their current responsibilities are surfacing capability stress or whether the development priorities need adjusting.",
+            priority: "medium",
+            patternId: "sustained_developing",
+            generatedAt: new Date().toISOString(),
+          });
+          memberPromptUsed.add(memberId);
+        }
+      }
+
+      // Pattern 10: new_member_first_assessment (Medium)
+      if (!memberPromptUsed.has(memberId) && sessions.length === 1) {
+        const completedAt = sessions[0].completedAt;
+        if (completedAt && (now - completedAt.getTime()) < 7 * DAY_MS) {
+          prompts.push({
+            memberId,
+            memberName,
+            observation: `${memberName} completed their first assessment recently. Their initial rating is ${RATING_LABELS[stateToRating(latest.readinessState)]} with an overall score of ${Math.round(latest.overallScore)}.`,
+            suggestedAction: "A good opportunity for an introductory conversation about their capability profile and development priorities.",
+            priority: "medium",
+            patternId: "new_member_first_assessment",
+            generatedAt: new Date().toISOString(),
+          });
+          memberPromptUsed.add(memberId);
+        }
+      }
+
+      // Pattern 9: intervention_succeeded (Low)
+      if (!memberPromptUsed.has(memberId) && prior && latest.overallScore - prior.overallScore > 5 && completedItems.length > 0) {
+        prompts.push({
+          memberId,
+          memberName,
+          observation: `${memberName}'s most recent reassessment shows measurable capability improvement (score moved from ${Math.round(prior.overallScore)} to ${Math.round(latest.overallScore)}) following completed development modules. The development investment is producing results.`,
+          suggestedAction: "Worth acknowledging their progress and discussing next development priorities.",
+          priority: "low",
+          patternId: "intervention_succeeded",
+          generatedAt: new Date().toISOString(),
+        });
+        memberPromptUsed.add(memberId);
+      }
+
+      // Pattern 8: confidence_capability_gap (Low)
+      if (!memberPromptUsed.has(memberId)) {
+        // Check confidence vs capability divergence from score breakdown
+        const bd = latest.domainScores;
+        // Simplified: check if any domain has large gap between score and confidence
+        // (would need confidence data per answer — approximate using overall)
+        const latestScoreRow = await db.select().from(assessmentScores).where(eq(assessmentScores.sessionId, latest.sessionId)).limit(1);
+        if (latestScoreRow[0]) {
+          const comp = extractCompositeConfidence(latestScoreRow[0].scoreBreakdownJson);
+          if (comp !== null) {
+            const confAsScore = comp * 100;
+            const divergence = Math.abs(confAsScore - latest.overallScore);
+            if (divergence > 15) {
+              const direction = confAsScore > latest.overallScore ? "overconfident" : "underconfident";
+              prompts.push({
+                memberId,
+                memberName,
+                observation: `${memberName}'s stated confidence diverges from measured capability by ${Math.round(divergence)} points (${direction}). ${direction === "overconfident" ? "They may not recognise their capability gaps." : "They may be underestimating their actual capability."}`,
+                suggestedAction: `Worth a conversation about their self-perception and how it aligns with their assessment evidence.`,
+                priority: "low",
+                patternId: "confidence_capability_gap",
+                generatedAt: new Date().toISOString(),
+              });
+              memberPromptUsed.add(memberId);
+            }
+          }
+        }
+      }
+    }
+
+    // Sort by priority
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    prompts.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    return { prompts: prompts.slice(0, 5) };
+  }),
+
+  /** Team development overview */
+  developmentOverview: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader", "manager"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const teamLinks = await db
+      .select()
+      .from(managerTeamMembers)
+      .where(eq(managerTeamMembers.managerId, ctx.user.id));
+    let memberIds = teamLinks.map(t => t.memberId);
+
+    if (memberIds.length === 0 && myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      const allUsers = await db.select({ id: users.id }).from(users).where(eq(users.tenantId, ctx.user.tenantId));
+      memberIds = allUsers.map(u => u.id);
+    }
+
+    let activeModuleCount = 0;
+    let totalModules = 0;
+    let completedModules = 0;
+    let onTrack = 0;
+    let slipping = 0;
+    let stalled = 0;
+    let awaitingReassessment = 0;
+    const now = Date.now();
+    const DAY_MS = 86400000;
+
+    for (const memberId of memberIds) {
+      const plan = await db
+        .select()
+        .from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, memberId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt))
+        .limit(1);
+
+      if (!plan[0]) continue;
+
+      const items = await db
+        .select()
+        .from(adaptivePlanItems)
+        .where(eq(adaptivePlanItems.planId, plan[0].id));
+
+      const completed = items.filter(i => i.status === "completed").length;
+      const remaining = items.filter(i => i.status !== "completed" && i.status !== "skipped");
+      totalModules += items.length;
+      completedModules += completed;
+      activeModuleCount += items.filter(i => i.status === "in_progress").length;
+
+      if (remaining.length === 0) {
+        awaitingReassessment++;
+        continue;
+      }
+
+      const lastActivity = Math.max(...items.map(i => i.completedAt ?? i.startedAt ?? 0), 0);
+      const daysSinceActivity = lastActivity > 0 ? (now - lastActivity) / DAY_MS : Infinity;
+
+      if (daysSinceActivity <= 7) {
+        onTrack++;
+      } else if (daysSinceActivity <= 14) {
+        slipping++;
+      } else {
+        stalled++;
+      }
+    }
+
+    return {
+      activeModuleCount,
+      aggregateCompletionRate: totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0,
+      statusCounts: { onTrack, slipping, stalled, awaitingReassessment },
+    };
+  }),
+});
+
+// ─── Leader Dashboard ────────────────────────────────────────────────────────
+
+const leaderRouter = router({
+  /** Hero finding — 5 patterns */
+  heroFinding: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // For now, AI roadmap is not yet implemented — use Pattern 5 (not configured)
+    // When AI roadmap is built, this will check captured initiatives
+    // For now, compute function-wide readiness as a general metric
+
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+
+    let totalScore = 0;
+    let assessedCount = 0;
+
+    for (const u of allUsers) {
+      const scoreData = await getLatestScoreData(db, u.id);
+      if (scoreData) {
+        totalScore += scoreData.overallScore;
+        assessedCount++;
+      }
+    }
+
+    const functionScore = assessedCount > 0 ? Math.round(totalScore / assessedCount) : null;
+
+    // Without AI roadmap, use Pattern 5
+    return {
+      readinessStatus: "not_configured" as const,
+      statement: "Strategic context not yet captured. Your function's capability position is shown below, but readiness against business requirements requires capturing your AI roadmap.",
+      cta: { label: "Configure AI roadmap", route: "/admin/org-context" },
+      functionScore,
+      assessedCount,
+      totalHeadcount: allUsers.length,
+    };
+  }),
+
+  /** Function position summary */
+  main: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+
+    let totalScore = 0;
+    let assessedCount = 0;
+    const ratingCounts: Record<RatingKey, number> = {
+      ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0,
+    };
+
+    // Per-domain aggregation
+    const domainTotals: Record<DomainKey, { total: number; count: number }> = {} as any;
+    for (const key of DOMAIN_KEYS) domainTotals[key] = { total: 0, count: 0 };
+
+    // Per-domain rating distribution
+    const domainRatingCounts: Record<DomainKey, Record<RatingKey, number>> = {} as any;
+    for (const key of DOMAIN_KEYS) {
+      domainRatingCounts[key] = { ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0 };
+    }
+
+    // Role family × domain heatmap
+    const roleFamilyDomainData: Record<RoleFamilyKey, Record<DomainKey, { total: number; count: number }>> = {} as any;
+    for (const rf of ROLE_FAMILY_KEYS) {
+      roleFamilyDomainData[rf] = {} as any;
+      for (const dk of DOMAIN_KEYS) {
+        roleFamilyDomainData[rf][dk] = { total: 0, count: 0 };
+      }
+    }
+
+    for (const u of allUsers) {
+      const scoreData = await getLatestScoreData(db, u.id);
+      if (!scoreData) {
+        ratingCounts.insufficient_evidence++;
+        for (const dk of DOMAIN_KEYS) domainRatingCounts[dk].insufficient_evidence++;
+        continue;
+      }
+
+      totalScore += scoreData.overallScore;
+      assessedCount++;
+
+      const state = extractReadinessState(scoreData.scoreBreakdownJson);
+      const rating = stateToRating(state);
+      ratingCounts[rating]++;
+
+      const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
+      if (domainScores) {
+        // Get user's role family
+        const userRow = await db.select({ roleFamily: users.roleFamily, jobFunction: users.jobFunction }).from(users).where(eq(users.id, u.id)).limit(1);
+        const rf = roleFamilyFromUserField(userRow[0]?.roleFamily ?? userRow[0]?.jobFunction);
+
+        for (const dk of DOMAIN_KEYS) {
+          const score = domainScores[dk];
+          domainTotals[dk].total += score;
+          domainTotals[dk].count++;
+
+          // Domain-level rating
+          const domainRating = stateToRating(
+            score >= 75 ? "safe" : score >= 55 ? "at_risk" : score >= 40 ? "unsafe" : "foundation_gap"
+          );
+          domainRatingCounts[dk][domainRating]++;
+
+          // Role family heatmap
+          roleFamilyDomainData[rf][dk].total += score;
+          roleFamilyDomainData[rf][dk].count++;
+        }
+      } else {
+        for (const dk of DOMAIN_KEYS) domainRatingCounts[dk].insufficient_evidence++;
+      }
+    }
+
+    const functionScore = assessedCount > 0 ? Math.round(totalScore / assessedCount) : null;
+    const functionRating = stateToRating(
+      functionScore === null ? null :
+      functionScore >= 75 ? "safe" : functionScore >= 55 ? "at_risk" : functionScore >= 40 ? "unsafe" : "foundation_gap"
+    );
+
+    // 90-day trajectory
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000);
+    let trajectory90d: number | null = null;
+    // Simplified: compare current avg to avg from 90 days ago
+    const olderSessions = await db
+      .select({ id: assessmentSessions.id, userId: assessmentSessions.userId })
+      .from(assessmentSessions)
+      .where(and(
+        eq(assessmentSessions.tenantId, ctx.user.tenantId),
+        eq(assessmentSessions.state, "completed"),
+        gte(assessmentSessions.completedAt, ninetyDaysAgo),
+      ));
+    // This is a simplified trajectory — in production would compare start vs end of period
+
+    // Build domain distribution
+    const domainDistribution = DOMAIN_KEYS.map(dk => ({
+      domain: dk,
+      domainName: DOMAIN_LABELS[dk],
+      colour: DOMAIN_COLOURS[dk],
+      avgScore: domainTotals[dk].count > 0 ? Math.round(domainTotals[dk].total / domainTotals[dk].count) : null,
+      ratingCounts: domainRatingCounts[dk],
+      totalAssessed: domainTotals[dk].count,
+    }));
+
+    // Build role family heatmap
+    const heatmap = ROLE_FAMILY_KEYS.map(rf => ({
+      roleFamily: rf,
+      roleFamilyName: ROLE_FAMILY_LABELS[rf],
+      domains: DOMAIN_KEYS.map(dk => ({
+        domain: dk,
+        avgScore: roleFamilyDomainData[rf][dk].count > 0
+          ? Math.round(roleFamilyDomainData[rf][dk].total / roleFamilyDomainData[rf][dk].count)
+          : null,
+        headcount: roleFamilyDomainData[rf][dk].count,
+        target: null, // Will come from AI roadmap
+        gap: null,
+      })),
+    }));
+
+    return {
+      functionScore,
+      functionRating,
+      targetScore: null, // Will come from AI roadmap
+      gap: null,
+      trajectory90d,
+      aggregateConfidence: null,
+      totalHeadcount: allUsers.length,
+      assessedCount,
+      ratingCounts,
+      domainDistribution,
+      heatmap,
+    };
+  }),
+
+  /** Per-domain function-wide trajectory (6 time series) */
+  domainTrajectory: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const twelveMonthsAgo = new Date(Date.now() - 365 * 86400000);
+    const sessions = await db
+      .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+      .from(assessmentSessions)
+      .where(and(
+        eq(assessmentSessions.tenantId, ctx.user.tenantId),
+        eq(assessmentSessions.state, "completed"),
+        gte(assessmentSessions.completedAt, twelveMonthsAgo),
+      ))
+      .orderBy(assessmentSessions.completedAt);
+
+    // Build monthly buckets per domain
+    const monthlyDomain: Record<string, Record<DomainKey, { total: number; count: number }>> = {};
+
+    for (const sess of sessions) {
+      if (!sess.completedAt) continue;
+      const score = await db
+        .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, sess.id))
+        .limit(1);
+      if (!score[0]) continue;
+
+      const domainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+      if (!domainScores) continue;
+
+      const d = new Date(sess.completedAt);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+      if (!monthlyDomain[monthKey]) {
+        monthlyDomain[monthKey] = {} as any;
+        for (const dk of DOMAIN_KEYS) monthlyDomain[monthKey][dk] = { total: 0, count: 0 };
+      }
+
+      for (const dk of DOMAIN_KEYS) {
+        monthlyDomain[monthKey][dk].total += domainScores[dk];
+        monthlyDomain[monthKey][dk].count++;
+      }
+    }
+
+    const months = Object.keys(monthlyDomain).sort();
+
+    const domains = DOMAIN_KEYS.map(dk => {
+      const timeSeries = months.map(month => ({
+        date: month,
+        avgScore: monthlyDomain[month][dk].count > 0
+          ? Math.round(monthlyDomain[month][dk].total / monthlyDomain[month][dk].count)
+          : null,
+        sampleSize: monthlyDomain[month][dk].count,
+      }));
+
+      const currentValue = timeSeries.length > 0 ? timeSeries[timeSeries.length - 1].avgScore : null;
+      const threeMonthsAgo = timeSeries.length >= 3 ? timeSeries[timeSeries.length - 3].avgScore : null;
+      const delta90d = currentValue !== null && threeMonthsAgo !== null ? currentValue - threeMonthsAgo : null;
+
+      return {
+        domain: dk,
+        domainName: DOMAIN_LABELS[dk],
+        colour: DOMAIN_COLOURS[dk],
+        timeSeries,
+        currentValue,
+        delta90d,
+        target: null, // Will come from AI roadmap
+      };
+    });
+
+    return { domains };
+  }),
+
+  /** Strategic findings — 8 deterministic patterns */
+  strategicFindings: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const allUsers = await db
+      .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+
+    // Collect per-user data
+    const userData: Array<{
+      id: string;
+      roleFamily: RoleFamilyKey;
+      overallScore: number;
+      rating: RatingKey;
+      domainScores: Record<DomainKey, number>;
+      confidence: number | null;
+    }> = [];
+
+    for (const u of allUsers) {
+      const scoreData = await getLatestScoreData(db, u.id);
+      if (!scoreData) continue;
+      const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
+      if (!domainScores) continue;
+      const state = extractReadinessState(scoreData.scoreBreakdownJson);
+      const confidence = extractCompositeConfidence(scoreData.scoreBreakdownJson);
+      userData.push({
+        id: u.id,
+        roleFamily: roleFamilyFromUserField(u.roleFamily ?? u.jobFunction),
+        overallScore: scoreData.overallScore,
+        rating: stateToRating(state),
+        domainScores,
+        confidence,
+      });
+    }
+
+    const findings: Array<{
+      patternId: string;
+      observation: string;
+      supportingData: string;
+      strategicImplication: string;
+      priority: "critical" | "high" | "medium" | "low";
+      drillDownTarget: string | null;
+    }> = [];
+
+    const totalAssessed = userData.length;
+    if (totalAssessed === 0) return { findings: [] };
+
+    // Pattern 5: foundation_gap_concentration (High)
+    const foundationGapCount = userData.filter(u => u.rating === "foundation_gap").length;
+    const foundationGapPct = Math.round((foundationGapCount / totalAssessed) * 100);
+    if (foundationGapPct > 25) {
+      // Check which foundation domains
+      const foundationDomains: DomainKey[] = ["ai_interaction", "ai_output_evaluation"];
+      for (const dk of foundationDomains) {
+        const belowThreshold = userData.filter(u => u.domainScores[dk] < 55).length;
+        const pct = Math.round((belowThreshold / totalAssessed) * 100);
+        if (pct > 25) {
+          findings.push({
+            patternId: "foundation_gap_concentration",
+            observation: `${foundationGapPct}% of your function is classified as Foundation Gap, with ${pct}% scoring below threshold on ${DOMAIN_LABELS[dk]}.`,
+            supportingData: `${foundationGapCount} of ${totalAssessed} assessed individuals. ${belowThreshold} below threshold on ${DOMAIN_LABELS[dk]}.`,
+            strategicImplication: "Consider whether to invest in a function-wide foundation programme before targeted capability development, or whether to segment the function and run parallel tracks.",
+            priority: "high",
+            drillDownTarget: dk,
+          });
+          break;
+        }
+      }
+    }
+
+    // Pattern 3: development_investment_underconsumed (High)
+    let totalPlanModules = 0;
+    let completedPlanModules = 0;
+    for (const u of userData) {
+      const plan = await db
+        .select()
+        .from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, u.id), eq(adaptiveLearningPlans.state, "active")))
+        .limit(1);
+      if (plan[0]) {
+        const items = await db.select().from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, plan[0].id));
+        totalPlanModules += items.length;
+        completedPlanModules += items.filter(i => i.status === "completed").length;
+      }
+    }
+    const completionRate = totalPlanModules > 0 ? Math.round((completedPlanModules / totalPlanModules) * 100) : 0;
+    if (completionRate < 30 && totalPlanModules > 0) {
+      findings.push({
+        patternId: "development_investment_underconsumed",
+        observation: `Active development plans across the function have an aggregate completion rate of ${completionRate}%. Development investment is being made but not consumed.`,
+        supportingData: `${completedPlanModules} of ${totalPlanModules} modules completed across all active plans.`,
+        strategicImplication: "Consider whether development time is being protected in workload planning, whether the modules are relevant to daily work, or whether a different delivery format would improve engagement.",
+        priority: "high",
+        drillDownTarget: null,
+      });
+    }
+
+    // Pattern 6: sustained_function_stall (Medium)
+    // Simplified: check if function avg score has changed < 2 points
+    // Would need historical data — for now check if most people are developing with low variance
+    const developingCount = userData.filter(u => u.rating === "developing").length;
+    const developingPct = Math.round((developingCount / totalAssessed) * 100);
+    if (developingPct > 60) {
+      findings.push({
+        patternId: "sustained_function_stall",
+        observation: `${developingPct}% of your function is classified as Developing. While this is not critical, the concentration suggests the function may be plateauing rather than progressing.`,
+        supportingData: `${developingCount} of ${totalAssessed} assessed individuals at Developing level.`,
+        strategicImplication: "Consider whether the current development approach is producing measurable capability change, or whether a different intervention strategy is needed to move people from Developing to AI Ready.",
+        priority: "medium",
+        drillDownTarget: null,
+      });
+    }
+
+    // Pattern 8: confidence_capability_misalignment_pattern (Medium)
+    const misaligned = userData.filter(u => {
+      if (u.confidence === null) return false;
+      return Math.abs(u.confidence * 100 - u.overallScore) > 15;
+    });
+    const misalignedPct = Math.round((misaligned.length / totalAssessed) * 100);
+    if (misalignedPct > 30) {
+      const overconfident = misaligned.filter(u => (u.confidence ?? 0) * 100 > u.overallScore).length;
+      findings.push({
+        patternId: "confidence_capability_misalignment_pattern",
+        observation: `${misalignedPct}% of your function shows significant divergence between stated confidence and measured capability. ${overconfident} are overconfident; ${misaligned.length - overconfident} are underconfident.`,
+        supportingData: `${misaligned.length} of ${totalAssessed} individuals with >15 point divergence.`,
+        strategicImplication: "Overconfidence is a governance risk — people who believe they are more capable than they are may make unsupervised AI decisions they shouldn't. Consider whether to address this through awareness sessions or adjusted supervision levels.",
+        priority: "medium",
+        drillDownTarget: null,
+      });
+    }
+
+    // Pattern 7: strongest_capability_concentration (Low)
+    for (const dk of DOMAIN_KEYS) {
+      const domainScores = userData.map(u => ({ id: u.id, score: u.domainScores[dk], rf: u.roleFamily }));
+      const sorted = [...domainScores].sort((a, b) => b.score - a.score);
+      const top20pct = sorted.slice(0, Math.max(1, Math.floor(sorted.length * 0.2)));
+      if (top20pct.length >= 2) {
+        const rfCounts: Record<string, number> = {};
+        for (const t of top20pct) {
+          rfCounts[t.rf] = (rfCounts[t.rf] ?? 0) + 1;
+        }
+        const dominant = Object.entries(rfCounts).sort(([, a], [, b]) => b - a)[0];
+        if (dominant && dominant[1] / top20pct.length > 0.6) {
+          findings.push({
+            patternId: "strongest_capability_concentration",
+            observation: `Your function's strongest performers on ${DOMAIN_LABELS[dk]} are concentrated in the ${ROLE_FAMILY_LABELS[dominant[0] as RoleFamilyKey] ?? dominant[0]} role family. This is a strategic resource for upcoming initiatives requiring this capability.`,
+            supportingData: `${dominant[1]} of ${top20pct.length} top performers in ${ROLE_FAMILY_LABELS[dominant[0] as RoleFamilyKey] ?? dominant[0]}.`,
+            strategicImplication: "Consider whether these individuals could support cross-functional capability building or serve as mentors for role families with lower scores in this domain.",
+            priority: "low",
+            drillDownTarget: dk,
+          });
+          break; // Only one of these
+        }
+      }
+    }
+
+    // Sort by priority
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    findings.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    return { findings: findings.slice(0, 5) };
+  }),
+
+  /** Teams view */
+  teams: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Find all managers (users who have team members)
+    const allLinks = await db.select().from(managerTeamMembers);
+    const managerIds = Array.from(new Set(allLinks.map(l => l.managerId)));
+
+    const teams: Array<{
+      managerId: string;
+      managerName: string;
+      teamSize: number;
+      avgScore: number | null;
+      ratingDistribution: Record<RatingKey, number>;
+    }> = [];
+
+    for (const managerId of managerIds) {
+      const managerRow = await db.select().from(users).where(eq(users.id, managerId)).limit(1);
+      if (!managerRow[0]) continue;
+
+      const memberLinks = allLinks.filter(l => l.managerId === managerId);
+      const memberIds = memberLinks.map(l => l.memberId);
+
+      let totalScore = 0;
+      let assessedCount = 0;
+      const ratingDist: Record<RatingKey, number> = {
+        ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0,
+      };
+
+      for (const memberId of memberIds) {
+        const scoreData = await getLatestScoreData(db, memberId);
+        if (scoreData) {
+          totalScore += scoreData.overallScore;
+          assessedCount++;
+          const state = extractReadinessState(scoreData.scoreBreakdownJson);
+          ratingDist[stateToRating(state)]++;
+        } else {
+          ratingDist.insufficient_evidence++;
+        }
+      }
+
+      teams.push({
+        managerId,
+        managerName: `${managerRow[0].firstName} ${managerRow[0].lastName}`,
+        teamSize: memberIds.length,
+        avgScore: assessedCount > 0 ? Math.round(totalScore / assessedCount) : null,
+        ratingDistribution: ratingDist,
+      });
+    }
+
+    return { teams };
+  }),
+});
+
+// ─── Export combined router ──────────────────────────────────────────────────
+
+export const dashboardV2Router = router({
+  individual: individualRouter,
+  manager: managerRouter,
+  leader: leaderRouter,
+});

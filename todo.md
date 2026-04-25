@@ -1428,3 +1428,52 @@
 
 ## Bug Fixes (UX Deep Dive Follow-up)
 - [x] BF-01: Fix sessionId undefined error on Learner Dashboard — CompetenceConfidenceWidget queries assessment.results with undefined sessionId when user has no completed assessment
+
+## Dashboard Rebuild v1.1 (World-Class Standard — Lattice/CultureAmp Quality)
+### Backend — tRPC Procedures
+- [x] DB-01: Individual Dashboard procedure (trpc.dashboard.individual) — overall score/rating, confidence, score history, domain scores/ratings, gap heatmap, rating explanation
+- [x] DB-02: Domain Detail procedure (trpc.dashboard.domainDetail) — Light (narrative) + Medium (signal breakdown) drill-down
+- [x] DB-03: Domain Evidence procedure (trpc.dashboard.domainEvidence) — Deep drill-down with scenario evidence (or placeholder if selectionIndication not ready)
+- [x] DB-04: getCurrentPlanSummary procedure — module count, estimated time, completion percentage for link-to-learning card
+- [x] DB-05: Manager Dashboard procedure (trpc.dashboard.manager) — header, team rating distribution, team domain heatmap
+- [x] DB-06: Manager Conversation Prompts procedure — 10 deterministic patterns with priority ordering
+- [x] DB-07: Manager Development Overview procedure — active modules, completion rate, on track/slipping/stalled counts
+- [x] DB-08: Leader Hero Finding procedure — 5 patterns (on_track, at_risk, mixed, partial, not_configured)
+- [x] DB-09: Leader Function Position + Rating Distribution + Domain Distribution procedures
+- [x] DB-10: Leader Development Heatmap procedure — 6 domains × 7 role families
+- [x] DB-11: Leader Domain Trajectory procedure — 6 time series (NEW v1.1)
+- [x] DB-12: Leader Strategic Findings procedure — 8 deterministic patterns with priority ordering
+- [x] DB-13: Leader Teams procedure + people search
+### Routing & Navigation
+- [x] DB-14: Update App.tsx routing — /dashboard (role-aware), /dashboard/personal (all roles), /dashboard/domain/:domainKey
+- [x] DB-15: Update AppShell — "Your own journey" entry point for all authenticated users, breadcrumb support
+### Frontend — Individual Dashboard
+- [x] DB-16: Individual Dashboard — Component 1 (Header: name, role, last assessment, next reassessment, CTA)
+- [x] DB-17: Individual Dashboard — Component 2 (Overall score + rating hero with confidence indicator)
+- [x] DB-18: Individual Dashboard — Component 3 (Score progress line chart with target line)
+- [x] DB-19: Individual Dashboard — Component 4 (Per-domain score cards, 6 cards fixed order)
+- [x] DB-20: Individual Dashboard — Component 5 (Gap analysis heatmap: current vs target vs gap)
+- [x] DB-21: Individual Dashboard — Component 6 (Link to learning CTA card)
+- [x] DB-22: Individual Dashboard — Domain drill-down slide-over (Light + Medium + Deep + Development)
+### Frontend — Manager Dashboard
+- [x] DB-23: Manager Dashboard — Component 1 (Header: name, team, size, last activity)
+- [x] DB-24: Manager Dashboard — Component 2 (Team rating distribution bars, clickable filter)
+- [x] DB-25: Manager Dashboard — Component 3 (Team domain heatmap: rows=people, cols=domains)
+- [x] DB-26: Manager Dashboard — Component 4 (Conversation prompts, up to 5, priority-ordered)
+- [x] DB-27: Manager Dashboard — Component 5 (Team development overview: on track/slipping/stalled)
+- [x] DB-28: Manager Dashboard — Filter controls (by rating, domain, plan status, assessment recency)
+- [x] DB-29: Manager Dashboard — Drill-down to individual with breadcrumb
+### Frontend — Leader Dashboard
+- [x] DB-30: Leader Dashboard — Component 1 (Hero finding with 5 patterns)
+- [x] DB-31: Leader Dashboard — Component 2 (Function position summary)
+- [x] DB-32: Leader Dashboard — Component 3 (Headcount distribution by rating)
+- [x] DB-33: Leader Dashboard — Component 4 (Per-domain function distribution)
+- [x] DB-34: Leader Dashboard — Component 5 (Function-wide development heatmap 6×7)
+- [x] DB-35: Leader Dashboard — Component 6 (Per-domain function trajectory, 6 small charts)
+- [x] DB-36: Leader Dashboard — Component 7 (Strategic findings, up to 5)
+- [x] DB-37: Leader Dashboard — Filter controls (role family, rating, manager, recency, initiative)
+- [x] DB-38: Leader Dashboard — Teams view + search people + drill-down with audit logging
+### Cross-Dashboard
+- [x] DB-39: Design system compliance — Inter typography, JetBrains Mono for numbers, navy palette, custom charts, 8pt grid
+- [x] DB-40: Skeleton loaders, progressive loading, WCAG 2.2 AA compliance
+- [x] DB-41: Responsive behaviour per spec (Individual: all viewports, Manager: lg+, Leader: xl+)

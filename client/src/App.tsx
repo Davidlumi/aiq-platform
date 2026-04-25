@@ -16,10 +16,11 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 // App shell / dashboard
 import AppShell from "./components/AppShell";
 
-// Role-specific dashboards
-import LearnerDashboard from "./pages/dashboard/LearnerDashboard";
-import ManagerDashboard from "./pages/dashboard/ManagerDashboard";
-import HRDashboard from "./pages/dashboard/HRDashboard";
+// Role-specific dashboards (v2)
+import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
+import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
+import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
+// Legacy dashboards (admin/auditor fallback)
 import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 
@@ -97,6 +98,9 @@ function Router() {
       <Route path="/onboarding" component={OnboardingWizard} />
 
       {/* Protected routes */}
+      <Route path="/dashboard/personal">
+        <ProtectedRoute component={PersonalDashboard} />
+      </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={RoleDashboard} />
       </Route>
@@ -191,24 +195,26 @@ function RootRedirect() {
   return <Redirect to="/dashboard" />;
 }
 
+function PersonalDashboard() {
+  return <IndividualDashboardV2 />;
+}
 function RoleDashboard() {
   const { user } = useAuth();
   if (!user) return null;
   const roles = (user as any).roles as string[] ?? [];
-
   if (roles.includes("platform_super_admin") || roles.includes("tenant_admin")) {
     return <AdminDashboard />;
   }
   if (roles.includes("hr_leader")) {
-    return <HRDashboard />;
+    return <LeaderDashboardV2 />;
   }
   if (roles.includes("manager")) {
-    return <ManagerDashboard />;
+    return <ManagerDashboardV2 />;
   }
   if (roles.includes("auditor")) {
     return <AuditorDashboard />;
   }
-  return <LearnerDashboard />;
+  return <IndividualDashboardV2 />;
 }
 
 function App() {
