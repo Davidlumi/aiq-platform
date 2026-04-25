@@ -271,18 +271,20 @@ function Hero() {
           </div>
         </div>
 
-        {/* Beta partners strip */}
+        {/* Trusted by strip */}
         <div className="mt-16 pt-10 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
           <p className="text-center text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: C.muted }}>
-            Beta partners revealed on announcement
+            Trusted by forward-thinking HR teams
           </p>
-          <div className="flex items-center justify-center gap-8 flex-wrap">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="h-8 rounded"
-                style={{ background: "rgba(255,255,255,0.08)", width: `${80 + i * 12}px` }}
-              />
+          <div className="flex items-center justify-center gap-10 flex-wrap">
+            {["Financial Services", "Healthcare", "Technology", "Manufacturing", "Professional Services"].map((sector) => (
+              <span
+                key={sector}
+                className="text-xs font-medium px-4 py-2 rounded-full"
+                style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                {sector}
+              </span>
             ))}
           </div>
         </div>

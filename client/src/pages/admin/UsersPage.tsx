@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck } from "lucide-react";
+import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, MoreHorizontal, Eye, UserCog, ArrowUpDown } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   platform_super_admin: "Super Admin",
@@ -42,6 +43,8 @@ export default function UsersPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortField, setSortField] = useState<"name" | "status" | "joined">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -77,7 +80,18 @@ export default function UsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const users_list = data?.users ?? [];
+  const toggleSort = (field: "name" | "status" | "joined") => {
+    if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDir("asc"); }
+  };
+  const users_list_raw = data?.users ?? [];
+  const users_list = [...users_list_raw].sort((a: any, b: any) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortField === "name") return dir * (`${a.firstName} ${a.lastName}`).localeCompare(`${b.firstName} ${b.lastName}`);
+    if (sortField === "status") return dir * (a.status ?? "").localeCompare(b.status ?? "");
+    if (sortField === "joined") return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return 0;
+  });
   const total = users_list.length;
   const totalPages = 1; // single page for now
 
@@ -242,10 +256,16 @@ export default function UsersPage() {
               <table className="w-full text-sm font-['Sora']">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">User</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>
+                      <span className="flex items-center gap-1">User <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
                     <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Roles</th>
-                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Status</th>
-                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Joined</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort("status")}>
+                      <span className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort("joined")}>
+                      <span className="flex items-center gap-1">Joined <ArrowUpDown className="w-3 h-3" /></span>
+                    </th>
                     <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
@@ -281,39 +301,49 @@ export default function UsersPage() {
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex gap-1">
-                          {u.status === "active" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 font-['Sora'] text-red-600 border-red-200 hover:bg-red-50"
-                              onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "suspended" })}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              Suspend
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                              <MoreHorizontal className="w-4 h-4" />
                             </Button>
-                          ) : u.status === "suspended" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 font-['Sora'] text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "active" })}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              Reactivate
-                            </Button>
-                          ) : u.status === "pending" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 font-['Sora'] text-blue-600 border-blue-200 hover:bg-blue-50"
-                              onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "active" })}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              Activate
-                            </Button>
-                          ) : null}
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={() => toast.info("View profile — coming soon")} className="text-xs gap-2">
+                              <Eye className="w-3.5 h-3.5" />View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info("Change role — coming soon")} className="text-xs gap-2">
+                              <UserCog className="w-3.5 h-3.5" />Change Role
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {u.status === "active" && (
+                              <DropdownMenuItem
+                                onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "suspended" })}
+                                disabled={updateStatusMutation.isPending}
+                                className="text-xs gap-2 text-red-600 focus:text-red-600"
+                              >
+                                <Ban className="w-3.5 h-3.5" />Suspend
+                              </DropdownMenuItem>
+                            )}
+                            {u.status === "suspended" && (
+                              <DropdownMenuItem
+                                onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "active" })}
+                                disabled={updateStatusMutation.isPending}
+                                className="text-xs gap-2 text-green-600 focus:text-green-600"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />Reactivate
+                              </DropdownMenuItem>
+                            )}
+                            {u.status === "pending" && (
+                              <DropdownMenuItem
+                                onClick={() => updateStatusMutation.mutate({ userId: u.id, status: "active" })}
+                                disabled={updateStatusMutation.isPending}
+                                className="text-xs gap-2 text-blue-600 focus:text-blue-600"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />Activate
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}

@@ -23,6 +23,22 @@ const CAP_COLORS: Record<string, string> = {
   RISK: "#EE6677", STEW: "#EE8866", COLLAB: "#66CCEE",
 };
 
+
+function passwordStrength(pw: string): { label: string; color: string; width: string } {
+  if (!pw) return { label: "", color: "", width: "0%" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { label: "Weak", color: "#DC2626", width: "20%" };
+  if (score <= 2) return { label: "Fair", color: "#F59E0B", width: "40%" };
+  if (score <= 3) return { label: "Good", color: "#3B82F6", width: "60%" };
+  if (score <= 4) return { label: "Strong", color: "#10B981", width: "80%" };
+  return { label: "Excellent", color: "#10B981", width: "100%" };
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -221,6 +237,17 @@ export default function ProfilePage() {
               className="mt-1 font-['Sora']"
               placeholder="Minimum 8 characters"
             />
+            {pwForm.newPassword && (() => {
+              const s = passwordStrength(pwForm.newPassword);
+              return (
+                <div className="mt-1.5 space-y-1">
+                  <div className="h-1 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: s.width, backgroundColor: s.color }} />
+                  </div>
+                  <p className="text-[10px] font-medium" style={{ color: s.color }}>{s.label}</p>
+                </div>
+              );
+            })()}
           </div>
           <div>
             <Label className="aiq-label text-muted-foreground">Confirm New Password</Label>

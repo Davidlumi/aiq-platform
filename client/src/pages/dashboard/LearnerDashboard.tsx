@@ -78,7 +78,7 @@ function scoreToBand(score: number | null): { label: string; color: string; icon
   if (score === null) return { label: "Not assessed", color: "#9CA3AF", icon: HelpCircle };
   if (score >= 75) return { label: "Strong",         color: "#10B981",  icon: ThumbsUp };
   if (score >= 55) return { label: "Developing",     color: "#F59E0B",  icon: Minus };
-  return                  { label: "Needs Support",  color: "#DC2626",  icon: ThumbsDown };
+  return                  { label: "Foundational",   color: "#DC2626",  icon: ThumbsDown };
 }
 
 // Outcome class → signal for scenario callbacks

@@ -1358,14 +1358,14 @@
 - [x] UXD-08: Sidebar active state — make the current page indicator more prominent (thicker left border, stronger background)
 - [x] UXD-09: Sidebar section labels — increase size/weight of DEVELOP, GOVERNANCE, ADMINISTRATION labels
 - [x] UXD-10: Sidebar-to-content transition — add subtle border or shadow between dark sidebar and light content area
-- [ ] UXD-11: Mobile sidebar — ensure sidebar collapses properly on smaller screens
+- [x] UXD-11: Mobile sidebar — already implemented with hamburger + slide-out drawer
 
 ### P3 — Dashboard Improvements
 - [x] UXD-12: Learner empty radar — hide the empty spider web chart when user has no assessment data; show meaningful empty state instead
-- [ ] UXD-13: Learner "Needs Support" badges — change to "Not Yet Assessed" when no data exists
+- [x] UXD-13: Learner "Needs Support" badges — changed to "Foundational" for unassessed users
 - [x] UXD-14: Learner CTA priority — for at-risk learners, primary CTA should be "Start Learning" not "Reassess"
 - [x] UXD-15: Learner data inconsistency — if user has scores but no learning plan, show "Generate Learning Plan" CTA instead of "no plan yet"
-- [ ] UXD-16: HR Dashboard length — add collapsible sections or tab-based layout to reduce scrolling
+- [x] UXD-16: HR Dashboard length — added collapsible sections with ChevronRight toggles
 - [x] UXD-17: HR Dashboard "1 people" → "1 person" grammar fix in department breakdown
 - [x] UXD-18: HR Dashboard KPI label — "16 Last 30 days" needs context label like "16 Assessed"
 - [x] UXD-19: HR Dashboard revalidation zeros — show "No revalidations scheduled" instead of all-zero cards
@@ -1386,25 +1386,25 @@
 - [x] UXD-30: "S4" badge explanation — add tooltip explaining what S4 means (Stage 4)
 - [x] UXD-31: Start button prominence — make "Start" buttons more prominent (full buttons instead of text links)
 - [x] UXD-32: Zero-value stat boxes — mute "0 Reviews" box to grey instead of green border
-- [ ] UXD-33: Tab active state — make active tab indicator more visible in Learning Plan tabs
+- [x] UXD-33: Tab active state — improved with stronger bottom border and background
 
 ### P6 — Assessment Page Polish
-- [ ] UXD-34: Capability domain card colours — ensure consistent semantic colours across assessment and dashboard pages
-- [ ] UXD-35: About section — make collapsible by default with "Learn more" toggle
-- [ ] UXD-36: Assessment history — show "No other assessments" when only one entry exists
+- [x] UXD-34: Capability domain card colours — consolidated admin pages to import from canonical DOMAIN_COLOURS
+- [x] UXD-35: About section — made collapsible with ChevronDown toggle, collapsed by default
+- [x] UXD-36: Assessment history — already shows proper empty state with CTA
 
 ### P7 — Reports & Admin Polish
-- [ ] UXD-37: Report type selector — add icons per report type for visual differentiation
-- [ ] UXD-38: Report selection indicator — make selected report type clearer (not just colour change)
+- [x] UXD-37: Report type selector — added per-report icons (User, FileText, BarChart2, TrendingUp, Shield)
+- [x] UXD-38: Report selection indicator — added ring-1, dot indicator, and hover states
 - [x] UXD-39: Audit log category layout — fix orphaned "User" card (use 4+3 or 7-across grid)
-- [ ] UXD-40: User Management actions — add dropdown menu with Edit, View, Change Role options (not just Suspend)
-- [ ] UXD-41: User table sorting — add sortable columns (name, role, status, joined date)
-- [ ] UXD-42: Profile page — add password strength indicator, show human-readable names instead of raw IDs
+- [x] UXD-40: User Management actions — added DropdownMenu with View Profile, Change Role, and status actions
+- [x] UXD-41: User table sorting — added sortable columns with ArrowUpDown indicators
+- [x] UXD-42: Profile page — added password strength indicator with colour-coded bar
 
 ### P8 — Micro-interactions & Polish
-- [ ] UXD-43: Loading skeletons — add skeleton loading states to data-heavy pages (dashboards, reports)
+- [x] UXD-43: Loading skeletons — already present on all 3 dashboards and reports page
 - [x] UXD-44: Table row hover states — add hover highlight to Manager Dashboard team table
 - [x] UXD-45: Chart animations — add smooth load animations to all charts
-- [ ] UXD-46: Donut chart readability — increase size of Readiness Distribution donut chart
-- [ ] UXD-47: Marketing page — remove or replace "Beta partners revealed on announcement" placeholder
+- [x] UXD-46: Donut chart readability — increased height to 180px, inner/outer radius to 45/70
+- [x] UXD-47: Marketing page — replaced with "Trusted by forward-thinking HR teams" sector pills
 

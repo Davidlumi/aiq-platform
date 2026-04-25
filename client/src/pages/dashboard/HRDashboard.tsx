@@ -367,6 +367,10 @@ export default function HRDashboard() {
   const { data: mismatchData } = trpc.dashboard.orgStrategicMismatch.useQuery();
   const [activeCapTab, setActiveCapTab] = useState<"heatmap" | "bar">("heatmap");
   const [showPeople, setShowPeople] = useState(false);
+  const [showCapIntel, setShowCapIntel] = useState(true);
+  const [showTrajectory, setShowTrajectory] = useState(true);
+  const [showDeptBreakdown, setShowDeptBreakdown] = useState(true);
+  const [showRegulatory, setShowRegulatory] = useState(true);
 
   const handleExportCaps = useCallback(() => {
     const caps = data?.capabilityBreakdown ?? [];
@@ -620,11 +624,14 @@ export default function HRDashboard() {
       {/* ── Capability Intelligence ── */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Capability Intelligence</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Average scores across 6 AI capability domains</p>
-          </div>
-          <div className="flex items-center gap-2">
+          <button onClick={() => setShowCapIntel(!showCapIntel)} className="flex items-center gap-2 group text-left">
+            <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showCapIntel && "rotate-90")} />
+            <div>
+              <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors">Capability Intelligence</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Average scores across 6 AI capability domains</p>
+            </div>
+          </button>
+          {showCapIntel && <div className="flex items-center gap-2">
             <button onClick={handleExportCaps} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
               <Download className="w-3 h-3" />CSV
             </button>
@@ -636,7 +643,7 @@ export default function HRDashboard() {
                 className={cn("px-3 py-1.5 transition-colors", activeCapTab === "bar" ? "bg-[#10B981] text-white" : "text-muted-foreground hover:bg-muted/50")}
                 onClick={() => setActiveCapTab("bar")}>Bar</button>
             </div>
-          </div>
+          </div>}
         </div>
 
         {activeCapTab === "heatmap" ? (
@@ -809,8 +816,11 @@ export default function HRDashboard() {
       {/* ── Department breakdown ── */}
       {deptBreakdown.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Department Breakdown</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <button onClick={() => setShowDeptBreakdown(!showDeptBreakdown)} className="flex items-center gap-2 mb-3 group">
+            <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showDeptBreakdown && "rotate-90")} />
+            <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors">Department Breakdown</h2>
+          </button>
+          {showDeptBreakdown && <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {deptBreakdown.map((dept: any) => {
               const deptTotal = (dept.safe ?? 0) + (dept.atRisk ?? 0) + (dept.unsafe ?? 0);
               const deptSafePct = deptTotal > 0 ? Math.round((dept.safe / deptTotal) * 100) : 0;
@@ -831,7 +841,7 @@ export default function HRDashboard() {
                 </Card>
               );
             })}
-          </div>
+          </div>}
         </div>
       )}
 
@@ -851,11 +861,14 @@ export default function HRDashboard() {
 
       {/* ── Regulatory Zone ── */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-[#06B6D4]" />
-          Regulatory Zone
-        </h2>
-        <div className="grid lg:grid-cols-3 gap-4">
+        <button onClick={() => setShowRegulatory(!showRegulatory)} className="flex items-center gap-2 mb-4 group">
+          <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showRegulatory && "rotate-90")} />
+          <h2 className="text-sm font-semibold text-foreground group-hover:text-[#10B981] transition-colors flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[#06B6D4]" />
+            Regulatory Zone
+          </h2>
+        </button>
+        {showRegulatory && <div className="grid lg:grid-cols-3 gap-4">
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
@@ -866,9 +879,9 @@ export default function HRDashboard() {
               {readinessPie.length === 0 ? (
                 <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">No data</div>
               ) : (
-                <ResponsiveContainer width="100%" height={140}>
+                <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
-                    <Pie data={readinessPie} cx="50%" cy="50%" innerRadius={35} outerRadius={55}
+                    <Pie data={readinessPie} cx="50%" cy="50%" innerRadius={45} outerRadius={70}
                       dataKey="value" paddingAngle={2}>
                       {readinessPie.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
@@ -941,7 +954,7 @@ export default function HRDashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </div>}
       </div>
 
     </div>

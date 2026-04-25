@@ -456,7 +456,7 @@ export default function LearningPlanPage() {
         {tabs.map(tab => (
           <button key={tab.id}
             className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-all",
-              activeTab === tab.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              activeTab === tab.id ? "bg-card text-foreground shadow-sm ring-1 ring-[#10B981]/30 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
             onClick={() => setActiveTab(tab.id)}>
             {tab.label}
             {tab.count > 0 && (

@@ -9,6 +9,7 @@
  * - Brand-compliant design
  */
 import { useState } from "react";
+import { DOMAIN_COLOURS } from "@/lib/domains";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,14 +43,8 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   worked_example:    BookOpen,
 };
 
-const CAPABILITY_COLOURS: Record<string, string> = {
-  "ai-foundations":    "#4477AA",
-  "ai-work-design":   "#AA3377",
-  "ai-ethics":        "#228833",
-  "ai-risk":          "#EE6677",
-  "ai-strategy":      "#EE8866",
-  "ai-data-literacy": "#66CCEE",
-};
+// Capability colours imported from @/lib/domains
+const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS as Record<string, string>;
 
 function ContentRow({ item, onRefresh }: { item: any; onRefresh: () => void }) {
   const meta = typeof item.metadataJson === "object" ? item.metadataJson as Record<string, any> : {};

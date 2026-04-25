@@ -8,6 +8,7 @@
  * - View blueprint details with item list
  */
 import { useState } from "react";
+import { DOMAIN_COLOURS } from "@/lib/domains";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,14 +27,8 @@ const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React
   archived:  { label: "Archived",  colour: "#9CA3AF", icon: Archive },
 };
 
-const CAPABILITY_COLOURS: Record<string, string> = {
-  "ai-foundations":    "#4477AA",
-  "ai-work-design":   "#AA3377",
-  "ai-ethics":        "#228833",
-  "ai-risk":          "#EE6677",
-  "ai-strategy":      "#EE8866",
-  "ai-data-literacy": "#66CCEE",
-};
+// Capability colours imported from @/lib/domains
+const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS as Record<string, string>;
 
 function BlueprintCard({ blueprint }: { blueprint: any }) {
   const [expanded, setExpanded] = useState(false);

@@ -13,6 +13,7 @@ import {
   FileText, Download, Plus, CheckCircle2, Clock,
   TrendingUp, TrendingDown, Minus, Users,
   BarChart3, User, Briefcase, Building2, AlertTriangle, Info,
+  BarChart2, Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -294,26 +295,26 @@ const REPORT_CATEGORIES = [
     category: "Individual",
     icon: User,
     reports: [
-      { value: "learner_report", label: "Learner Report", desc: "Capability and progress summary" },
-      { value: "dual_audience_narrative", label: "Dual-Audience Narrative", desc: "Individual, manager, and board views" },
-      { value: "capability_requirement_fit", label: "Capability–Requirement Fit", desc: "Score vs. minimum threshold per domain" },
-      { value: "trajectory_report", label: "Trajectory Report", desc: "Score progression over time" },
+      { value: "learner_report", label: "Learner Report", desc: "Capability and progress summary", icon: User },
+      { value: "dual_audience_narrative", label: "Dual-Audience Narrative", desc: "Individual, manager, and board views", icon: FileText },
+      { value: "capability_requirement_fit", label: "Capability–Requirement Fit", desc: "Score vs. minimum threshold per domain", icon: BarChart2 },
+      { value: "trajectory_report", label: "Trajectory Report", desc: "Score progression over time", icon: TrendingUp },
     ],
   },
   {
     category: "Team & Organisation",
     icon: Users,
     reports: [
-      { value: "manager_team_report", label: "Manager Team Report", desc: "Team readiness and risk overview" },
-      { value: "org_readiness_report", label: "Org Readiness Report", desc: "Organisation-wide capability distribution" },
-      { value: "small_function_report", label: "Small HR Function Report", desc: "Simplified team summary" },
+      { value: "manager_team_report", label: "Manager Team Report", desc: "Team readiness and risk overview", icon: Users },
+      { value: "org_readiness_report", label: "Org Readiness Report", desc: "Organisation-wide capability distribution", icon: BarChart2 },
+      { value: "small_function_report", label: "Small HR Function Report", desc: "Simplified team summary", icon: FileText },
     ],
   },
   {
     category: "Compliance & Audit",
     icon: FileText,
     reports: [
-      { value: "audit_evidence_pack", label: "Audit Evidence Pack", desc: "Audit trail and policy compliance evidence" },
+      { value: "audit_evidence_pack", label: "Audit Evidence Pack", desc: "Audit trail and policy compliance evidence", icon: Shield },
     ],
   },
 ];
@@ -363,11 +364,15 @@ export default function ReportsPage() {
                   <div className="space-y-1">
                     {cat.reports.map(r => (
                       <button key={r.value} onClick={() => setSelectedType(r.value)}
-                        className={cn("w-full text-left rounded-lg border px-3 py-2.5 transition-all",
-                          selectedType === r.value ? "border-[#10B981] bg-[#10B981]/5" : "border-border hover:border-[#10B981]/40"
+                        className={cn("w-full text-left rounded-lg border px-3 py-2.5 transition-all flex items-start gap-2.5",
+                          selectedType === r.value ? "border-[#10B981] bg-[#10B981]/8 ring-1 ring-[#10B981]/20" : "border-border hover:border-[#10B981]/40 hover:bg-muted/30"
                         )}>
-                        <p className={cn("text-xs font-semibold", selectedType === r.value ? "text-[#10B981]" : "text-foreground")}>{r.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{r.desc}</p>
+                        {r.icon && <r.icon className={cn("w-3.5 h-3.5 mt-0.5 shrink-0", selectedType === r.value ? "text-[#10B981]" : "text-muted-foreground")} />}
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("text-xs font-semibold", selectedType === r.value ? "text-[#10B981]" : "text-foreground")}>{r.label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{r.desc}</p>
+                        </div>
+                        {selectedType === r.value && <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-1.5 shrink-0" />}
                       </button>
                     ))}
                   </div>

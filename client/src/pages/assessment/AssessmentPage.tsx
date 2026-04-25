@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   ShieldAlert,
   HelpCircle,
+  ChevronDown,
 } from "lucide-react";
 import { ProfilingModal, type ProfilingData } from "@/components/ProfilingModal";
 import { Progress } from "@/components/ui/progress";
@@ -100,6 +101,7 @@ export default function AssessmentPage() {
 
   // P12: derive prior capability scores from last completed session
   const lastCompletedSession = sessions?.find((s: any) => s.state === "completed");
+  const [showAbout, setShowAbout] = useState(false);
   const lastCapabilityScores: Record<string, number> = lastCompletedSession?.score?.capabilityScores ?? {};
   const hasCompletedBefore = !!lastCompletedSession;
 
@@ -234,13 +236,17 @@ export default function AssessmentPage() {
 
       {/* ── Purpose Panel ── */}
       <Card className="border-border">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-[#10B981]" />
-            <CardTitle className="text-base font-semibold">About the AIQ V9.2 Standard Assessment</CardTitle>
+        <CardHeader className="pb-3 cursor-pointer" onClick={() => setShowAbout(!showAbout)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-[#10B981]" />
+              <CardTitle className="text-base font-semibold">About the AIQ V9.2 Standard Assessment</CardTitle>
+            </div>
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showAbout && "rotate-180")} />
           </div>
+          {!showAbout && <p className="text-xs text-muted-foreground mt-1">Click to learn about the assessment methodology and capability domains</p>}
         </CardHeader>
-        <CardContent className="space-y-4">
+        {showAbout && <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
             The AIQ V9.2 Standard Assessment measures your practical AI capability across six domains using
             50 scenario-based interactions. Each interaction presents a realistic workplace situation involving
@@ -306,7 +312,7 @@ export default function AssessmentPage() {
               </div>
             ))}
           </div>
-        </CardContent>
+        </CardContent>}
       </Card>
 
       {/* ── Assessment History ── */}
