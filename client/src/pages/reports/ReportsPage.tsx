@@ -269,7 +269,13 @@ function SmallFunctionView({ data }: { data: any }) {
 
 function ReportDataView({ job }: { job: any }) {
   const data = job.dataJson;
-  if (!data) return <p className="text-sm text-muted-foreground">No data available.</p>;
+  if (!data) return (
+    <div className="text-center py-12">
+      <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+      <p className="text-sm font-medium text-foreground mb-1">Report data not yet available</p>
+      <p className="text-xs text-muted-foreground max-w-sm mx-auto">This report requires assessment data to generate. Ensure team members have completed their assessments, then regenerate the report.</p>
+    </div>
+  );
   switch (job.reportType) {
     case "dual_audience_narrative": return <DualAudienceNarrativeView data={data} />;
     case "capability_requirement_fit": return <CapabilityFitView data={data} />;

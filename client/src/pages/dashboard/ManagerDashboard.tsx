@@ -603,13 +603,13 @@ function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; cap
 
   return (
     <div className="rounded-xl border p-5 flex items-start gap-4"
-      style={{ borderColor: `${color}30`, backgroundColor: `${color}08` }}>
+      style={{ borderColor: `${color}40`, backgroundColor: `${color}0A` }}>
       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${color}20` }}>
         <BarChart3 className="w-5 h-5" style={{ color }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground leading-snug">{headline}</p>
+        <p className="text-sm font-semibold leading-snug" style={{ color }}>{headline}</p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{subtext}</p>
       </div>
     </div>
@@ -755,10 +755,10 @@ export default function ManagerDashboard() {
               {capGaps.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
-                    layout="vertical" margin={{ top: 0, right: 16, left: 80, bottom: 0 }}>
+                    layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={78} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={120} />
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                       formatter={(v: number) => [`${v}`, "Avg Band Score"]} />
                     <Bar dataKey="score" radius={[0, 4, 4, 0]}>

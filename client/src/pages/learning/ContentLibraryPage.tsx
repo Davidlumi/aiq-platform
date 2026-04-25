@@ -277,7 +277,7 @@ export default function ContentLibraryPage() {
         <div className="text-center py-16 border-2 border-dashed border-border rounded-xl bg-muted/10">
           <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-base font-semibold text-foreground mb-1">No modules found</p>
-          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+          <p className="text-sm text-muted-foreground">{search || typeFilter !== "all" || capabilityFilter !== "all" ? "Try adjusting your search or filters" : "No content has been published yet. Modules will appear here once your admin publishes them."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

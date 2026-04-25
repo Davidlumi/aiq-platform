@@ -58,8 +58,8 @@ export default function PolicyPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="aiq-h1 text-[#0E1726]">Policy Rules Engine</h1>
-          <p className="aiq-caption text-[#6B7280] mt-1">
+          <h1 className="aiq-h1 text-foreground">Policy Rules Engine</h1>
+          <p className="aiq-caption text-muted-foreground mt-1">
             Runtime policy evaluation — hard blocks, warnings, remediation triggers, escalations, and revalidations
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function PolicyPage() {
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Policy Name</Label>
+                  <Label className="aiq-label text-muted-foreground">Policy Name</Label>
                   <Input
                     value={newPolicy.name}
                     onChange={e => setNewPolicy(p => ({ ...p, name: e.target.value }))}
@@ -85,7 +85,7 @@ export default function PolicyPage() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Description</Label>
+                  <Label className="aiq-label text-muted-foreground">Description</Label>
                   <Input
                     value={newPolicy.description}
                     onChange={e => setNewPolicy(p => ({ ...p, description: e.target.value }))}
@@ -94,7 +94,7 @@ export default function PolicyPage() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Enforcement Action</Label>
+                  <Label className="aiq-label text-muted-foreground">Enforcement Action</Label>
                   <Select
                     value={newPolicy.action}
                     onValueChange={v => setNewPolicy(p => ({ ...p, action: v }))}
@@ -112,7 +112,7 @@ export default function PolicyPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Priority (1–100)</Label>
+                  <Label className="aiq-label text-muted-foreground">Priority (1–100)</Label>
                   <Input
                     type="number"
                     min={1}
@@ -139,15 +139,15 @@ export default function PolicyPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Policies", value: stats.total, icon: <FileText className="h-5 w-5 text-[#10B981]" />, color: "text-[#10B981]" },
-          { label: "Active Policies", value: stats.active, icon: <CheckCircle2 className="h-5 w-5 text-blue-500" />, color: "text-blue-600" },
-          { label: "Hard Blocks", value: stats.hardBlocks, icon: <Ban className="h-5 w-5 text-red-500" />, color: "text-red-600" },
+          { label: "Total Policies", value: stats.total, icon: <FileText className="h-5 w-5 text-[#10B981]" />, color: stats.total > 0 ? "text-[#10B981]" : "text-muted-foreground" },
+          { label: "Active Policies", value: stats.active, icon: <CheckCircle2 className="h-5 w-5 text-blue-500" />, color: stats.active > 0 ? "text-blue-600" : "text-muted-foreground" },
+          { label: "Hard Blocks", value: stats.hardBlocks, icon: <Ban className={`h-5 w-5 ${stats.hardBlocks > 0 ? "text-red-500" : "text-muted-foreground/50"}`} />, color: stats.hardBlocks > 0 ? "text-red-600" : "text-muted-foreground" },
         ].map(s => (
           <Card key={s.label} className="aiq-card">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gray-50">{s.icon}</div>
+              <div className="p-2 rounded-lg bg-muted/30">{s.icon}</div>
               <div>
-                <p className="aiq-caption text-[#6B7280]">{s.label}</p>
+                <p className="aiq-caption text-muted-foreground">{s.label}</p>
                 <p className={`text-2xl font-bold font-['Sora'] ${s.color}`}>{s.value}</p>
               </div>
             </CardContent>
@@ -158,7 +158,7 @@ export default function PolicyPage() {
       {/* Policy List */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
             <Shield className="h-5 w-5 text-[#10B981]" />
             Policy Rules
           </CardTitle>
@@ -171,18 +171,18 @@ export default function PolicyPage() {
           ) : !policies?.length ? (
             <div className="text-center py-12">
               <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="aiq-body text-[#6B7280]">No policies defined yet</p>
-              {canManage && <p className="aiq-caption text-[#9CA3AF] mt-1">Create your first policy rule above</p>}
+              <p className="aiq-body text-muted-foreground">No policies defined yet</p>
+              {canManage && <p className="aiq-caption text-muted-foreground mt-1">Click <strong>+ New Policy</strong> to get started</p>}
             </div>
           ) : (
-            <div className="divide-y divide-[#E5E7EB]">
+            <div className="divide-y divide-border">
               {(policies as any[]).map((policy: any) => {
                 const isActive = policy.status === "published";
                 return (
                   <div key={policy.id} className="py-4 flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-['Sora'] font-semibold text-[#0E1726]">{policy.name}</span>
+                        <span className="font-['Sora'] font-semibold text-foreground">{policy.name}</span>
                         <ActionBadge action={policy.actionType} />
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                           isActive
@@ -193,7 +193,7 @@ export default function PolicyPage() {
                           {isActive ? "Active" : policy.status}
                         </span>
                       </div>
-                      <p className="aiq-caption text-[#9CA3AF] mt-1 font-['DM_Mono']">
+                      <p className="aiq-caption text-muted-foreground mt-1 font-['DM_Mono']">
                         Severity: {policy.severity} · v{policy.version} · ID: {policy.id.slice(0, 8)}…
                       </p>
                     </div>
@@ -217,7 +217,7 @@ function PolicyEvaluationsLog() {
   return (
     <Card className="aiq-card">
       <CardHeader className="pb-3">
-        <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+        <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
           <Bell className="h-5 w-5 text-[#F59E0B]" />
           Recent Policy Evaluations
         </CardTitle>
@@ -230,26 +230,26 @@ function PolicyEvaluationsLog() {
         ) : !evals?.length ? (
           <div className="text-center py-8">
             <Bell className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="aiq-caption text-[#6B7280]">No policy evaluations recorded yet</p>
+            <p className="aiq-caption text-muted-foreground">No policy evaluations recorded yet</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-['Sora']">
               <thead>
-                <tr className="border-b border-[#E5E7EB]">
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Policy Rule ID</th>
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Context</th>
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Result</th>
-                  <th className="text-left py-2 px-3 aiq-label text-[#6B7280]">Time</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 aiq-label text-muted-foreground">Policy Rule ID</th>
+                  <th className="text-left py-2 px-3 aiq-label text-muted-foreground">Context</th>
+                  <th className="text-left py-2 px-3 aiq-label text-muted-foreground">Result</th>
+                  <th className="text-left py-2 px-3 aiq-label text-muted-foreground">Time</th>
                 </tr>
               </thead>
               <tbody>
                 {(evals as any[]).map((ev: any) => (
-                  <tr key={ev.id} className="border-b border-[#F3F4F6] hover:bg-[#F7F8FA]">
-                    <td className="py-2 px-3 text-[#0E1726] font-medium font-['DM_Mono'] text-xs">
+                  <tr key={ev.id} className="border-b border-[#F3F4F6] hover:bg-muted/50">
+                    <td className="py-2 px-3 text-foreground font-medium font-['DM_Mono'] text-xs">
                       {ev.policyRuleId?.slice(0, 12) ?? "—"}…
                     </td>
-                    <td className="py-2 px-3 text-[#6B7280] text-xs">{ev.contextType}</td>
+                    <td className="py-2 px-3 text-muted-foreground text-xs">{ev.contextType}</td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         ev.result === "triggered" ? "bg-red-100 text-red-700" :
@@ -258,7 +258,7 @@ function PolicyEvaluationsLog() {
                         "bg-blue-100 text-blue-700"
                       }`}>{ev.result}</span>
                     </td>
-                    <td className="py-2 px-3 text-[#9CA3AF] aiq-mono text-xs">
+                    <td className="py-2 px-3 text-muted-foreground aiq-mono text-xs">
                       {new Date(ev.createdAt).toLocaleString()}
                     </td>
                   </tr>

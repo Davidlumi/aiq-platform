@@ -150,7 +150,14 @@ export default function OnboardingWizard() {
           </div>
           <span className="text-lg font-bold text-foreground">AiQ</span>
         </div>
-        <Progress value={progress} className="h-1.5 mb-6" />
+        <div className="flex items-center gap-2 mb-6">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div key={i} className={cn(
+              "h-1.5 flex-1 rounded-full transition-all duration-300",
+              i < step ? "bg-[#10B981]" : "bg-muted"
+            )} />
+          ))}
+        </div>
         <p className="text-xs text-muted-foreground">Step {step} of {totalSteps}</p>
       </div>
 

@@ -1,6 +1,6 @@
 /**
- * ForgotPasswordPage — AiQ Design System v2.2 auth surface
- * Centered card layout on #F7F8FA canvas (simpler than login — no brand panel needed).
+ * ForgotPasswordPage — AiQ Platform
+ * Centered card layout on light canvas.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -11,7 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -22,11 +22,11 @@ type FormData = z.infer<typeof schema>;
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="var(--#10B981)" />
-      <text x="100" y="122" fontFamily="Inter, system-ui, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
-        A<tspan fill="var(--navy-300)">i</tspan>Q
+      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <text x="100" y="122" fontFamily="system-ui, -apple-system, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
+        A<tspan fill="#10B981">i</tspan>Q
       </text>
-      <path d="M 58 140 Q 100 158 142 140" stroke="var(--navy-300)" strokeWidth="6" strokeLinecap="round" fill="none" />
+      <path d="M 58 140 Q 100 158 142 140" stroke="#10B981" strokeWidth="6" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
@@ -35,7 +35,11 @@ export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -53,46 +57,51 @@ export default function ForgotPasswordPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}
+      style={{ background: "#F7F8FA" }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <AiQLogoMark size={36} />
-        <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--#0F172A)" }}>
-          Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
+        <span style={{ fontSize: "18px", fontWeight: 600, color: "#0F172A" }}>
+          Ai<span style={{ color: "#10B981" }}>Q</span>
         </span>
       </div>
 
       {/* Card */}
       <div
-        className="w-full max-w-[420px] rounded-lg border p-8"
+        className="w-full max-w-[420px] rounded-xl p-8"
         style={{
-          background: "var(--neutral-0)",
-          borderColor: "var(--#E2E8F0)",
-          boxShadow: "var(--elevation-sm)",
+          background: "#ffffff",
+          border: "1px solid #E2E8F0",
+          boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
         }}
       >
         {submitted ? (
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <CheckCircle2 className="w-10 h-10" style={{ color: "var(--green-700)" }} />
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ background: "#ECFDF5" }}
+              >
+                <CheckCircle2 className="w-6 h-6" style={{ color: "#10B981" }} />
+              </div>
             </div>
-            <h1 style={{ fontSize: "20px", fontWeight: 500, color: "var(--#0F172A)" }}>
+            <h1 style={{ fontSize: "20px", fontWeight: 600, color: "#0F172A" }}>
               Check your inbox
             </h1>
-            <p style={{ fontSize: "14px", color: "var(--neutral-600)", lineHeight: 1.6 }}>
+            <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.6 }}>
               If an account exists for that email address, a password reset link has been sent.
             </p>
 
             {devToken && (
               <div
-                className="p-3 rounded text-left"
-                style={{ background: "var(--#F8FAFC)", border: "1px solid var(--#E2E8F0)" }}
+                className="p-3 rounded-lg text-left"
+                style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
               >
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--neutral-600)" }}>
+                <p className="text-xs font-medium mb-1" style={{ color: "#64748B" }}>
                   Dev mode — reset token:
                 </p>
-                <code className="text-xs break-all" style={{ color: "var(--#0F172A)", fontFamily: "var(--font-mono)" }}>
+                <code className="text-xs break-all" style={{ color: "#0F172A", fontFamily: "monospace" }}>
                   {devToken}
                 </code>
                 <Link href={`/reset-password?token=${devToken}`}>
@@ -104,7 +113,8 @@ export default function ForgotPasswordPage() {
             )}
 
             <Link href="/login">
-              <Button variant="secondary" className="w-full mt-2">
+              <Button variant="outline" className="w-full mt-2">
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to sign in
               </Button>
             </Link>
@@ -112,41 +122,45 @@ export default function ForgotPasswordPage() {
         ) : (
           <>
             <div className="mb-6">
-              <h1 style={{ fontSize: "22px", fontWeight: 500, color: "var(--#0F172A)", marginBottom: "6px" }}>
+              <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#0F172A", marginBottom: "6px" }}>
                 Reset your password
               </h1>
-              <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>
-                Enter your email and we will send you a reset link.
+              <p style={{ fontSize: "14px", color: "#64748B" }}>
+                Enter your email and we'll send you a reset link.
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                  Email address
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@company.com"
                   autoComplete="email"
+                  className="h-11"
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-xs" style={{ color: "var(--red-700)" }}>{errors.email.message}</p>
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full"
-                loading={resetMutation.isPending}
+                className="w-full h-11 font-semibold text-sm"
+                disabled={resetMutation.isPending}
               >
-                Send reset link
+                {resetMutation.isPending ? "Sending…" : "Send reset link"}
               </Button>
             </form>
 
             <div className="mt-5 text-center">
               <Link href="/login">
-                <span className="text-sm cursor-pointer" style={{ color: "var(--#10B981)" }}>
+                <span className="text-sm cursor-pointer hover:underline" style={{ color: "#10B981", fontWeight: 500 }}>
+                  <ArrowLeft className="w-3 h-3 inline mr-1" />
                   Back to sign in
                 </span>
               </Link>

@@ -216,7 +216,7 @@ export default function AssessmentBlueprintsPage() {
       ) : (blueprints?.length ?? 0) === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
           <Layers className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm font-medium text-foreground">No blueprints found</p>
+          <p className="text-sm font-medium text-foreground">No assessment blueprints yet</p>
           <p className="text-xs text-muted-foreground mt-1">Create your first assessment blueprint</p>
         </div>
       ) : (

@@ -542,7 +542,7 @@ export default function HRDashboard() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{data?.assessmentsLast30Days ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Last 30 days</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Assessed (30d)</p>
               <div className="w-2 h-2 rounded-full mx-auto mt-1" style={{ backgroundColor: BLUE }} />
             </div>
           </div>
@@ -826,7 +826,7 @@ export default function HRDashboard() {
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${deptSafePct}%`, backgroundColor: color }} />
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">{deptTotal} people</p>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">{deptTotal} {deptTotal === 1 ? "person" : "people"}</p>
                   </CardContent>
                 </Card>
               );
@@ -843,7 +843,7 @@ export default function HRDashboard() {
         >
           <Users className="w-4 h-4" />
           People Readiness
-          <span className="text-xs text-muted-foreground font-normal ml-1">({userList.length} people)</span>
+          <span className="text-xs text-muted-foreground font-normal ml-1">({userList.length} {userList.length === 1 ? "person" : "people"})</span>
           <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform group-hover:text-[#10B981]", showPeople && "rotate-90")} />
         </button>
         {showPeople && <PeopleTable users={userList} />}
@@ -917,20 +917,28 @@ export default function HRDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {[
-                  { label: "Overdue",            value: reval?.overdue ?? 0,  color: RED },
-                  { label: "Due within 14 days", value: reval?.dueSoon ?? 0,  color: AMBER },
-                  { label: "Scheduled total",    value: reval?.total ?? 0,    color: BLUE },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30">
-                    <span className="text-xs text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-bold" style={{ color: item.value > 0 ? item.color : "hsl(var(--muted-foreground))" }}>
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {(reval?.overdue ?? 0) === 0 && (reval?.dueSoon ?? 0) === 0 && (reval?.total ?? 0) === 0 ? (
+                <div className="text-center py-4">
+                  <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">No revalidations scheduled yet</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Revalidation cycles begin after first assessments.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {[
+                    { label: "Overdue",            value: reval?.overdue ?? 0,  color: RED },
+                    { label: "Due within 14 days", value: reval?.dueSoon ?? 0,  color: AMBER },
+                    { label: "Scheduled total",    value: reval?.total ?? 0,    color: BLUE },
+                  ].map(item => (
+                    <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30">
+                      <span className="text-xs text-muted-foreground">{item.label}</span>
+                      <span className="text-sm font-bold" style={{ color: item.value > 0 ? item.color : "hsl(var(--muted-foreground))" }}>
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

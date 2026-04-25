@@ -169,7 +169,7 @@ export default function AuditLogPage() {
       </div>
 
       {/* Category stats */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
         {Object.entries(EVENT_CONFIG).map(([key, cfg]) => {
           const Icon = cfg.icon;
           return (
@@ -235,7 +235,7 @@ export default function AuditLogPage() {
           <Shield className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm font-medium text-foreground">No audit records found</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {search || categoryFilter !== "all" ? "Try adjusting your filters" : "Platform actions will appear here"}
+            {search || categoryFilter !== "all" ? "Try adjusting your filters" : "No audit events recorded yet. Actions like assessments, logins, and policy evaluations will be logged here automatically."}
           </p>
         </div>
       ) : (

@@ -28,8 +28,8 @@ export default function TenantsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="aiq-h1 text-[#0E1726]">Tenant Management</h1>
-          <p className="aiq-caption text-[#6B7280] mt-1">
+          <h1 className="aiq-h1 text-foreground">Tenant Management</h1>
+          <p className="aiq-caption text-muted-foreground mt-1">
             {isSuperAdmin
               ? "Manage all tenants on the AiQ platform"
               : "View and manage your organisation's tenant settings"}
@@ -48,7 +48,7 @@ export default function TenantsPage() {
               </DialogHeader>
               <div className="space-y-3 pt-2">
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Organisation Name</Label>
+                  <Label className="aiq-label text-muted-foreground">Organisation Name</Label>
                   <Input
                     value={newTenant.name}
                     onChange={e => setNewTenant(t => ({ ...t, name: e.target.value }))}
@@ -57,7 +57,7 @@ export default function TenantsPage() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Slug (URL identifier)</Label>
+                  <Label className="aiq-label text-muted-foreground">Slug (URL identifier)</Label>
                   <Input
                     value={newTenant.slug}
                     onChange={e => setNewTenant(t => ({ ...t, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))}
@@ -89,7 +89,7 @@ export default function TenantsPage() {
       ) : currentTenant ? (
         <Card className="aiq-card">
           <CardHeader className="pb-3">
-            <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+            <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
               <Building2 className="h-5 w-5 text-[#10B981]" />
               Your Organisation
             </CardTitle>
@@ -100,8 +100,8 @@ export default function TenantsPage() {
                 {(currentTenant.name ?? "?")[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
-                <h2 className="font-['Sora'] font-bold text-xl text-[#0E1726]">{currentTenant.name}</h2>
-                <p className="aiq-caption text-[#6B7280] font-['DM_Mono']">/{currentTenant.slug}</p>
+                <h2 className="font-['Sora'] font-bold text-xl text-foreground">{currentTenant.name}</h2>
+                <p className="aiq-caption text-muted-foreground font-['DM_Mono']">/{currentTenant.slug}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="secondary" className="font-['Sora'] text-xs">
                     {"Enterprise"}
@@ -126,9 +126,9 @@ export default function TenantsPage() {
                 { label: "Created", value: currentTenant.createdAt ? new Date(currentTenant.createdAt).toLocaleDateString() : "—" },
                 { label: "Status", value: currentTenant.status ?? "Active" },
               ].map(item => (
-                <div key={item.label} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
-                  <dt className="aiq-label text-[#9CA3AF] text-xs">{item.label}</dt>
-                  <dd className={`mt-0.5 text-[#0E1726] font-medium text-sm ${item.mono ? "font-['DM_Mono'] text-xs" : "font-['Sora']"}`}>
+                <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
+                  <dt className="aiq-label text-muted-foreground text-xs">{item.label}</dt>
+                  <dd className={`mt-0.5 text-foreground font-medium text-sm ${item.mono ? "font-['DM_Mono'] text-xs" : "font-['Sora']"}`}>
                     {item.value}
                   </dd>
                 </div>
@@ -162,7 +162,7 @@ function TenantSettingsCard() {
   return (
     <Card className="aiq-card">
       <CardHeader className="pb-3">
-        <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+        <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
           <Globe className="h-5 w-5 text-[#10B981]" />
           Tenant Settings
         </CardTitle>
@@ -173,7 +173,7 @@ function TenantSettingsCard() {
             {editing ? (
               <div className="space-y-3">
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Credibility Threshold (%)</Label>
+                  <Label className="aiq-label text-muted-foreground">Credibility Threshold (%)</Label>
                   <Input
                     type="number"
                     value={form.credibilityThreshold}
@@ -182,7 +182,7 @@ function TenantSettingsCard() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Revalidation Days (Low)</Label>
+                  <Label className="aiq-label text-muted-foreground">Revalidation Days (Low)</Label>
                   <Input
                     type="number"
                     value={form.revalidationDaysLow}
@@ -216,9 +216,9 @@ function TenantSettingsCard() {
                     { key: "defaultRiskModelVersion", label: "Risk Model Version" },
                     { key: "defaultLearningModelVersion", label: "Learning Model Version" },
                   ] as const).map(({ key, label }) => (
-                    <div key={key} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
-                      <dt className="aiq-label text-[#9CA3AF] text-xs">{label}</dt>
-                      <dd className="mt-0.5 text-[#0E1726] font-medium text-sm font-['Sora']">
+                    <div key={key} className="p-3 rounded-lg bg-muted/50 border border-border">
+                      <dt className="aiq-label text-muted-foreground text-xs">{label}</dt>
+                      <dd className="mt-0.5 text-foreground font-medium text-sm font-['Sora']">
                         {String((settings as any)[key] ?? "—")}
                       </dd>
                     </div>
@@ -239,7 +239,7 @@ function TenantSettingsCard() {
             )}
           </div>
         ) : (
-          <p className="aiq-caption text-[#6B7280]">No settings configured</p>
+          <p className="aiq-caption text-muted-foreground">No settings configured</p>
         )}
       </CardContent>
     </Card>

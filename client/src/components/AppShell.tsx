@@ -272,14 +272,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
               <div
-                className="px-4 py-1.5 text-[10px] font-semibold tracking-widest uppercase"
-                style={{ color: "#475569" }}
+                className="px-4 py-2 text-[11px] font-bold tracking-widest uppercase"
+                style={{ color: "#64748B" }}
                 aria-hidden="true"
               >
                 {section.label}
               </div>
             )}
-            <ul className="space-y-px px-2" role="list">
+            <ul className="space-y-0.5 px-2" role="list">
               {section.items.map((item) => {
                 const active = isActive(item.path);
                 const Icon = item.icon;
@@ -289,15 +289,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       <span
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 py-2.5 rounded text-sm transition-all cursor-pointer select-none",
+                          "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                           collapsed ? "justify-center px-2" : "px-3",
                         )}
                         style={{
-                          background: active ? "rgba(16,185,129,0.12)" : "transparent",
+                          background: active ? "rgba(16,185,129,0.14)" : "transparent",
                           color: active ? "#10B981" : "#94A3B8",
-                          fontWeight: active ? 500 : 400,
+                          fontWeight: active ? 600 : 400,
                           borderLeft: active && !collapsed ? "3px solid #10B981" : "3px solid transparent",
-                          borderRadius: "6px",
+                          borderRadius: "8px",
                         }}
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
@@ -437,6 +437,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             height: "56px",
             background: "#FFFFFF",
             borderBottom: "1px solid #E2E8F0",
+            boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.03)",
           }}
         >
           {/* Mobile menu button */}

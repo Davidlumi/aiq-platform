@@ -78,14 +78,14 @@ export default function ProfilePage() {
     <div className="p-6 space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="aiq-h1 text-[#0E1726]">My Profile</h1>
-        <p className="aiq-caption text-[#6B7280] mt-1">Manage your account details and security settings</p>
+        <h1 className="aiq-h1 text-foreground">My Profile</h1>
+        <p className="aiq-caption text-muted-foreground mt-1">Manage your account details and security settings</p>
       </div>
 
       {/* Identity Card */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
             <User className="h-5 w-5 text-[#10B981]" />
             Identity
           </CardTitle>
@@ -96,10 +96,10 @@ export default function ProfilePage() {
               {initials}
             </div>
             <div>
-              <p className="font-['Sora'] font-semibold text-[#0E1726] text-lg">
+              <p className="font-['Sora'] font-semibold text-foreground text-lg">
                 {profile?.firstName} {profile?.lastName}
               </p>
-              <p className="aiq-caption text-[#6B7280]">{profile?.email}</p>
+              <p className="aiq-caption text-muted-foreground">{profile?.email}</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {roles.map((r) => (
                   <Badge key={r} variant="secondary" className="text-xs font-['Sora']">
@@ -111,10 +111,10 @@ export default function ProfilePage() {
           </div>
 
           {editingName ? (
-            <div className="space-y-3 pt-2 border-t border-[#E5E7EB]">
+            <div className="space-y-3 pt-2 border-t border-border">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">First Name</Label>
+                  <Label className="aiq-label text-muted-foreground">First Name</Label>
                   <Input
                     value={nameForm.firstName}
                     onChange={e => setNameForm(f => ({ ...f, firstName: e.target.value }))}
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Last Name</Label>
+                  <Label className="aiq-label text-muted-foreground">Last Name</Label>
                   <Input
                     value={nameForm.lastName}
                     onChange={e => setNameForm(f => ({ ...f, lastName: e.target.value }))}
@@ -167,7 +167,7 @@ export default function ProfilePage() {
       {false && (
         <Card className="aiq-card">
           <CardHeader className="pb-3">
-            <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+            <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
               Capability Snapshot
             </CardTitle>
@@ -175,13 +175,13 @@ export default function ProfilePage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Object.entries({} as Record<string, number>).map(([cap, score]) => (
-                <div key={cap} className="p-3 rounded-lg border border-[#E5E7EB] bg-[#F7F8FA]">
+                <div key={cap} className="p-3 rounded-lg border border-border bg-muted/50">
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: CAP_COLORS[cap] ?? "#6B7280" }}
                     />
-                    <span className="aiq-label text-[#6B7280]">{cap}</span>
+                    <span className="aiq-label text-muted-foreground">{cap}</span>
                   </div>
                   <p className="font-['Sora'] font-bold text-xl" style={{ color: CAP_COLORS[cap] ?? "#6B7280" }}>
                     {score}
@@ -196,14 +196,14 @@ export default function ProfilePage() {
       {/* Security */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
             <Lock className="h-5 w-5 text-[#10B981]" />
             Change Password
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label className="aiq-label text-[#6B7280]">Current Password</Label>
+            <Label className="aiq-label text-muted-foreground">Current Password</Label>
             <Input
               type="password"
               value={pwForm.currentPassword}
@@ -213,7 +213,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <Label className="aiq-label text-[#6B7280]">New Password</Label>
+            <Label className="aiq-label text-muted-foreground">New Password</Label>
             <Input
               type="password"
               value={pwForm.newPassword}
@@ -223,7 +223,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <Label className="aiq-label text-[#6B7280]">Confirm New Password</Label>
+            <Label className="aiq-label text-muted-foreground">Confirm New Password</Label>
             <Input
               type="password"
               value={pwForm.confirmPassword}
@@ -246,7 +246,7 @@ export default function ProfilePage() {
       {/* Account Info */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
             <Shield className="h-5 w-5 text-[#10B981]" />
             Account Information
           </CardTitle>
@@ -259,9 +259,9 @@ export default function ProfilePage() {
               { label: "Member Since", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "—" },
               { label: "Last Sign In", value: profile?.lastSignedIn ? new Date(profile.lastSignedIn).toLocaleString() : "—" },
             ].map(item => (
-              <div key={item.label} className="p-3 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB]">
-                <dt className="aiq-label text-[#9CA3AF]">{item.label}</dt>
-                <dd className={`mt-0.5 text-[#0E1726] font-medium ${item.mono ? "font-['DM_Mono'] text-xs" : ""}`}>
+              <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
+                <dt className="aiq-label text-muted-foreground">{item.label}</dt>
+                <dd className={`mt-0.5 text-foreground font-medium ${item.mono ? "font-['DM_Mono'] text-xs" : ""}`}>
                   {item.value ?? "—"}
                 </dd>
               </div>

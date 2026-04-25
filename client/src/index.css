@@ -298,3 +298,61 @@
     transition: width 300ms ease;
   }
 }
+
+
+
+/* AiQ utility typography classes */
+.aiq-h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: hsl(var(--foreground));
+}
+.aiq-body {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+}
+.aiq-caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+.aiq-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+
+/* UX Deep Dive: Global polish */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better focus rings for accessibility */
+:focus-visible {
+  outline: 2px solid oklch(0.7 0.15 160);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions on interactive elements */
+button, a, input, select, textarea, [role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improve table row hover consistency */
+tr {
+  transition: background-color 150ms ease;
+}
+
+/* Card hover lift effect */
+.aiq-card {
+  transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+.aiq-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}

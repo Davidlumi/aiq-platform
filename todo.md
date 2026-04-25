@@ -1340,3 +1340,71 @@
 - [x] DL-3: Colour restraint — capability chart uses two colours max
 - [x] DL-4: Chart type discipline — replace radar chart with horizontal bar chart on results page
 - [x] DL-5: Micro-interactions — hover tooltips on all chart elements, 300ms transitions
+
+## UX/UI Deep Dive — Best-in-Class Improvements (Apr 25 2026)
+
+### P0 — Critical Bugs
+- [x] UXD-01: Fix Content Library sidebar link — goes to /content (404) instead of /library in AppShell.tsx
+- [x] UXD-02: Fix "1 people" grammar — should be "1 person" in HRDashboard department breakdown
+
+### P1 — Login & Auth Pages
+- [x] UXD-03: Rewrite LoginPage.tsx — fix broken CSS variables (var(--#10B981) etc), fix invisible left panel (white text on white bg), fix orphaned stats "6 3 90d", fix demo credentials org code mismatch (says "demo" but autofills "lumi"), add proper brand colour to left panel background
+- [x] UXD-04: Fix RegisterPage.tsx — same broken CSS variable pattern as login, fix default tenant slug
+- [x] UXD-05: Fix ForgotPasswordPage.tsx — broken CSS variables, undefined tokens (--neutral-0, --green-700, --elevation-sm)
+- [x] UXD-06: Fix ResetPasswordPage.tsx — same broken CSS variable pattern
+
+### P2 — App Shell & Navigation
+- [x] UXD-07: Sidebar nav spacing — increase vertical padding between nav items (currently too cramped)
+- [x] UXD-08: Sidebar active state — make the current page indicator more prominent (thicker left border, stronger background)
+- [x] UXD-09: Sidebar section labels — increase size/weight of DEVELOP, GOVERNANCE, ADMINISTRATION labels
+- [x] UXD-10: Sidebar-to-content transition — add subtle border or shadow between dark sidebar and light content area
+- [ ] UXD-11: Mobile sidebar — ensure sidebar collapses properly on smaller screens
+
+### P3 — Dashboard Improvements
+- [x] UXD-12: Learner empty radar — hide the empty spider web chart when user has no assessment data; show meaningful empty state instead
+- [ ] UXD-13: Learner "Needs Support" badges — change to "Not Yet Assessed" when no data exists
+- [x] UXD-14: Learner CTA priority — for at-risk learners, primary CTA should be "Start Learning" not "Reassess"
+- [x] UXD-15: Learner data inconsistency — if user has scores but no learning plan, show "Generate Learning Plan" CTA instead of "no plan yet"
+- [ ] UXD-16: HR Dashboard length — add collapsible sections or tab-based layout to reduce scrolling
+- [x] UXD-17: HR Dashboard "1 people" → "1 person" grammar fix in department breakdown
+- [x] UXD-18: HR Dashboard KPI label — "16 Last 30 days" needs context label like "16 Assessed"
+- [x] UXD-19: HR Dashboard revalidation zeros — show "No revalidations scheduled" instead of all-zero cards
+- [x] UXD-20: Manager alert banner contrast — yellow/amber background text is hard to read
+- [x] UXD-21: Manager bar chart labels — prevent truncation of capability domain names
+
+### P4 — Empty States & Zero Values
+- [x] UXD-22: KPI cards zero-value styling — mute 0-value counts to grey/neutral instead of semantic colours (red/green/blue)
+- [x] UXD-23: Audit Log empty state — add "No audit events recorded yet" message with contextual guidance
+- [x] UXD-24: Policy page empty state — fix "Create your first policy rule above" to "Click + New Policy to get started"
+- [x] UXD-25: Policy KPI zero colours — red "0" for Hard Blocks looks alarming; use grey when 0
+- [x] UXD-26: Content Library empty state — improve message when genuinely no modules exist
+- [x] UXD-27: Reports empty state — "No data available" needs better explanation of what data is needed
+
+### P5 — Learning Plan Polish
+- [x] UXD-28: Module card icons — differentiate by modality (different icons for coaching vs quiz vs scenario)
+- [x] UXD-29: Level badges — "L4", "L3" badges are grey and hard to read; increase contrast
+- [x] UXD-30: "S4" badge explanation — add tooltip explaining what S4 means (Stage 4)
+- [x] UXD-31: Start button prominence — make "Start" buttons more prominent (full buttons instead of text links)
+- [x] UXD-32: Zero-value stat boxes — mute "0 Reviews" box to grey instead of green border
+- [ ] UXD-33: Tab active state — make active tab indicator more visible in Learning Plan tabs
+
+### P6 — Assessment Page Polish
+- [ ] UXD-34: Capability domain card colours — ensure consistent semantic colours across assessment and dashboard pages
+- [ ] UXD-35: About section — make collapsible by default with "Learn more" toggle
+- [ ] UXD-36: Assessment history — show "No other assessments" when only one entry exists
+
+### P7 — Reports & Admin Polish
+- [ ] UXD-37: Report type selector — add icons per report type for visual differentiation
+- [ ] UXD-38: Report selection indicator — make selected report type clearer (not just colour change)
+- [x] UXD-39: Audit log category layout — fix orphaned "User" card (use 4+3 or 7-across grid)
+- [ ] UXD-40: User Management actions — add dropdown menu with Edit, View, Change Role options (not just Suspend)
+- [ ] UXD-41: User table sorting — add sortable columns (name, role, status, joined date)
+- [ ] UXD-42: Profile page — add password strength indicator, show human-readable names instead of raw IDs
+
+### P8 — Micro-interactions & Polish
+- [ ] UXD-43: Loading skeletons — add skeleton loading states to data-heavy pages (dashboards, reports)
+- [x] UXD-44: Table row hover states — add hover highlight to Manager Dashboard team table
+- [x] UXD-45: Chart animations — add smooth load animations to all charts
+- [ ] UXD-46: Donut chart readability — increase size of Readiness Distribution donut chart
+- [ ] UXD-47: Marketing page — remove or replace "Beta partners revealed on announcement" placeholder
+

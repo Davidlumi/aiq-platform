@@ -27,6 +27,17 @@ const STATUS_STYLES: Record<string, string> = {
   deactivated: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
+
+const AVATAR_COLORS = [
+  "#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE",
+  "#AA3377", "#EE8866", "#10B981", "#6366F1", "#EC4899",
+];
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 export default function UsersPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
@@ -75,8 +86,8 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="aiq-h1 text-[#0E1726]">User Management</h1>
-          <p className="aiq-caption text-[#6B7280] mt-1">
+          <h1 className="aiq-h1 text-foreground">User Management</h1>
+          <p className="aiq-caption text-muted-foreground mt-1">
             Manage users, roles, and access within your tenant
           </p>
         </div>
@@ -93,7 +104,7 @@ export default function UsersPage() {
             <div className="space-y-3 pt-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">First Name</Label>
+                  <Label className="aiq-label text-muted-foreground">First Name</Label>
                   <Input
                     value={newUser.firstName}
                     onChange={e => setNewUser(u => ({ ...u, firstName: e.target.value }))}
@@ -102,7 +113,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div>
-                  <Label className="aiq-label text-[#6B7280]">Last Name</Label>
+                  <Label className="aiq-label text-muted-foreground">Last Name</Label>
                   <Input
                     value={newUser.lastName}
                     onChange={e => setNewUser(u => ({ ...u, lastName: e.target.value }))}
@@ -112,7 +123,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <div>
-                <Label className="aiq-label text-[#6B7280]">Email</Label>
+                <Label className="aiq-label text-muted-foreground">Email</Label>
                 <Input
                   type="email"
                   value={newUser.email}
@@ -122,7 +133,7 @@ export default function UsersPage() {
                 />
               </div>
               <div>
-                <Label className="aiq-label text-[#6B7280]">Temporary Password</Label>
+                <Label className="aiq-label text-muted-foreground">Temporary Password</Label>
                 <Input
                   type="password"
                   value={newUser.password}
@@ -132,7 +143,7 @@ export default function UsersPage() {
                 />
               </div>
               <div>
-                <Label className="aiq-label text-[#6B7280]">Role</Label>
+                <Label className="aiq-label text-muted-foreground">Role</Label>
                 <Select value={newUser.roleKey} onValueChange={v => setNewUser(u => ({ ...u, roleKey: v }))}>
                   <SelectTrigger className="mt-1 font-['Sora']">
                     <SelectValue defaultValue={newUser.roleKey} />
@@ -166,7 +177,7 @@ export default function UsersPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -200,8 +211,8 @@ export default function UsersPage() {
             <CardContent className="p-3 flex items-center gap-2">
               {s.icon}
               <div>
-                <p className="aiq-caption text-[#6B7280] text-xs">{s.label}</p>
-                <p className="font-['Sora'] font-bold text-lg text-[#0E1726]">{s.value}</p>
+                <p className="aiq-caption text-muted-foreground text-xs">{s.label}</p>
+                <p className="font-['Sora'] font-bold text-lg text-foreground">{s.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -211,7 +222,7 @@ export default function UsersPage() {
       {/* User Table */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-[#0E1726] flex items-center gap-2">
+          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-[#10B981]" />
             Users ({total})
           </CardTitle>
@@ -224,31 +235,31 @@ export default function UsersPage() {
           ) : !users_list.length ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="aiq-body text-[#6B7280]">No users found</p>
+              <p className="aiq-body text-muted-foreground">No users found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm font-['Sora']">
                 <thead>
-                  <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA]">
-                    <th className="text-left py-3 px-4 aiq-label text-[#6B7280]">User</th>
-                    <th className="text-left py-3 px-4 aiq-label text-[#6B7280]">Roles</th>
-                    <th className="text-left py-3 px-4 aiq-label text-[#6B7280]">Status</th>
-                    <th className="text-left py-3 px-4 aiq-label text-[#6B7280]">Joined</th>
-                    <th className="text-left py-3 px-4 aiq-label text-[#6B7280]">Actions</th>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">User</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Roles</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Status</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Joined</th>
+                    <th className="text-left py-3 px-4 aiq-label text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users_list.map((u: any) => (
-                    <tr key={u.id} className="border-b border-[#F3F4F6] hover:bg-[#F7F8FA] transition-colors">
+                    <tr key={u.id} className="border-b border-[#F3F4F6] hover:bg-muted/50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-[#1E293B] flex items-center justify-center text-white text-xs font-semibold">
+                          <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-semibold" style={{ backgroundColor: avatarColor(`${u.firstName}${u.lastName}`) }}>
                             {(u.firstName?.[0] ?? "")[0]}{(u.lastName?.[0] ?? "")[0]}
                           </div>
                           <div>
-                            <p className="font-medium text-[#0E1726]">{u.firstName} {u.lastName}</p>
-                            <p className="text-xs text-[#9CA3AF]">{u.email}</p>
+                            <p className="font-medium text-foreground">{u.firstName} {u.lastName}</p>
+                            <p className="text-xs text-muted-foreground">{u.email}</p>
                           </div>
                         </div>
                       </td>
@@ -266,7 +277,7 @@ export default function UsersPage() {
                           {u.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-[#9CA3AF] text-xs font-['DM_Mono']">
+                      <td className="py-3 px-4 text-muted-foreground text-xs font-['DM_Mono']">
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4">
@@ -313,8 +324,8 @@ export default function UsersPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-[#E5E7EB]">
-              <p className="aiq-caption text-[#6B7280]">
+            <div className="flex items-center justify-between p-4 border-t border-border">
+              <p className="aiq-caption text-muted-foreground">
                 Page {page} of {totalPages} · {total} total
               </p>
               <div className="flex gap-2">

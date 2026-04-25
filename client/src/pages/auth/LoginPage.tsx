@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle, Shield, Brain, BookOpen } from "lucide-react";
 
 const schema = z.object({
   tenantSlug: z.string().min(1, "Organisation code is required"),
@@ -18,13 +18,9 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-/**
- * HR AiQ Logo Mark — Brand Guidelines v3.0
- * Midnight circle, white A+Q, Teal-600 'i', Teal-600 arc
- * On dark (hero) surfaces, arc and 'i' use Sage (#5ee8b0)
- */
+/** AiQ logo mark — dark slate circle, white A+Q, green i dot */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "var(--navy-300)" : "var(--#10B981)";
+  const accent = variant === "hero" ? "#5ee8b0" : "#10B981";
   return (
     <svg
       width={size}
@@ -32,37 +28,55 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
       viewBox="0 0 200 200"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="HR AiQ logo"
+      aria-label="AiQ logo"
     >
-      <circle cx="100" cy="100" r="100" fill="var(--#10B981)" />
-      <text x="42" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">A</text>
-      <text x="105" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill={accent} letterSpacing="-2">i</text>
-      <text x="122" y="128" fontFamily="Sora, system-ui, sans-serif" fontSize="76" fontWeight="800" fill="#ffffff" letterSpacing="-2">Q</text>
-      <path d="M 52 152 Q 100 178 148 152" stroke={accent} strokeWidth="6" strokeLinecap="round" fill="none" />
+      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <text
+        x="100"
+        y="122"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fontSize="72"
+        fontWeight="700"
+        fill="white"
+        textAnchor="middle"
+        letterSpacing="-3"
+      >
+        A<tspan fill={accent}>i</tspan>Q
+      </text>
+      <path
+        d="M 58 140 Q 100 158 142 140"
+        stroke={accent}
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
+      />
     </svg>
   );
 }
 
 const DEMO_CREDENTIALS = [
-  { role: "Admin",     email: "admin@demo.aiq.com",   password: "Admin1234!" },
-  { role: "HR Leader", email: "hr@demo.aiq.com",       password: "HRLeader1234!" },
-  { role: "Manager",   email: "manager@demo.aiq.com",  password: "Manager1234!" },
-  { role: "Learner",   email: "learner@demo.aiq.com",  password: "Learner1234!" },
-  { role: "Auditor",   email: "auditor@demo.aiq.com",  password: "Auditor1234!" },
+  { role: "HR Leader (CPO)", email: "sarah.thornton@acme.co.uk", org: "acme" },
+  { role: "Manager",         email: "priya.sharma@acme.co.uk",   org: "acme" },
+  { role: "Learner",         email: "zoe.patel@acme.co.uk",      org: "acme" },
+  { role: "Admin",           email: "admin@demo.aiq.com",        org: "lumi" },
+  { role: "Auditor",         email: "auditor@demo.aiq.com",      org: "lumi" },
 ];
 
 const FEATURES = [
   {
     label: "Adaptive Assessment Engine",
     desc: "Credibility-weighted scoring across 6 capability dimensions with full audit trail",
+    icon: Brain,
   },
   {
     label: "Dynamic Learning Plans",
     desc: "Modality-matched content assigned based on your verified capability profile",
+    icon: BookOpen,
   },
   {
     label: "Policy & Compliance",
     desc: "Automated enforcement with restriction workflows and explainability",
+    icon: Shield,
   },
 ];
 
@@ -80,16 +94,12 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tenantSlug: "lumi" },
+    defaultValues: { tenantSlug: "" },
   });
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
-      // Fetch the full auth.me profile (which includes onboardingCompleted, status, etc.)
-      // and wait for it to resolve before navigating so ProtectedRoute sees the user
-      // immediately and doesn't redirect back to /login.
       await utils.auth.me.fetch();
-      // Super admins go directly to back office
       if (data.roles?.includes("super_admin")) {
         navigate("/backoffice");
       } else {
@@ -108,31 +118,29 @@ export default function LoginPage() {
 
   function fillDemo(cred: (typeof DEMO_CREDENTIALS)[0]) {
     setValue("email", cred.email);
-    setValue("password", cred.password);
-    setValue("tenantSlug", "lumi");
+    setValue("password", "manutd99");
+    setValue("tenantSlug", cred.org);
     setServerError(null);
   }
 
   return (
-    <div
-      className="min-h-screen flex"
-      style={{ background: "var(--#F7F8FA)", fontFamily: "var(--font-sans)" }}
-    >
-      {/* ── Left brand panel (Midnight) ── */}
+    <div className="min-h-screen flex" style={{ background: "#F7F8FA" }}>
+      {/* ── Left brand panel ── */}
       <div
         className="hidden lg:flex flex-col justify-between w-[440px] shrink-0 p-10"
-        style={{ background: "var(--#10B981)" }}
+        style={{
+          background: "linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)",
+        }}
       >
         {/* Logo + wordmark */}
         <div className="flex items-center gap-3">
-          <AiQLogoMark size={44} variant="hero" />
+          <AiQLogoMark size={40} variant="hero" />
           <div className="flex flex-col leading-none">
             <span
               style={{
-                fontFamily: "'Sora', sans-serif",
                 fontSize: "10px",
-                fontWeight: 400,
-                letterSpacing: "0.18em",
+                fontWeight: 500,
+                letterSpacing: "0.14em",
                 textTransform: "uppercase",
                 color: "rgba(255,255,255,0.45)",
                 lineHeight: 1,
@@ -143,15 +151,14 @@ export default function LoginPage() {
             </span>
             <span
               style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: "22px",
+                fontSize: "20px",
                 fontWeight: 700,
                 letterSpacing: "-0.01em",
                 lineHeight: 1,
-                   color: "var(--neutral-0)",
-            }}
-          >
-              Ai<span style={{ color: "var(--navy-300)" }}>Q</span>
+                color: "#F8FAFC",
+              }}
+            >
+              Ai<span style={{ color: "#5ee8b0" }}>Q</span>
             </span>
           </div>
         </div>
@@ -160,53 +167,59 @@ export default function LoginPage() {
         <div>
           <h2
             style={{
-              fontFamily: "'Sora', sans-serif",
-              fontSize: "28px",
+              fontSize: "26px",
               fontWeight: 600,
-              color: "var(--neutral-0)",
-              lineHeight: 1.3,
-              marginBottom: "16px",
+              color: "#F8FAFC",
+              lineHeight: 1.35,
+              marginBottom: "14px",
             }}
           >
-            The AI capability standard<br />for HR professionals
+            The AI capability standard
+            <br />
+            for HR professionals
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", lineHeight: 1.7 }}>
-            HR AiQ doesn't ask you to define hallucination. It puts you in realistic
+          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
+            AiQ doesn't ask you to define hallucination. It puts you in realistic
             work situations — under time pressure, with incomplete information — and
             reads how you actually behave.
           </p>
 
-          <div className="mt-10 space-y-5">
-            {FEATURES.map((f) => (
-              <div key={f.label} className="flex items-start gap-3">
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
-                >
-                  <div className="w-2 h-2 rounded-full" style={{ background: "var(--navy-300)" }} />
-                </div>
-                <div>
-                  <p
-                    style={{
-                      fontFamily: "'Sora', sans-serif",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "var(--neutral-0)",
-                      marginBottom: "2px",
-                    }}
+          <div className="mt-10 space-y-6">
+            {FEATURES.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div key={f.label} className="flex items-start gap-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: "rgba(94,232,176,0.12)" }}
                   >
-                    {f.label}
-                  </p>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
-                    {f.desc}
-                  </p>
+                    <Icon className="w-4 h-4" style={{ color: "#5ee8b0" }} />
+                  </div>
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: "#F8FAFC",
+                        marginBottom: "3px",
+                      }}
+                    >
+                      {f.label}
+                    </p>
+                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                      {f.desc}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Stat strip */}
-          <div className="mt-10 grid grid-cols-3 gap-4">
+          <div
+            className="mt-10 grid grid-cols-3 gap-4 pt-6"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+          >
             {[
               { value: "6", label: "Capabilities" },
               { value: "3", label: "Verified tiers" },
@@ -215,16 +228,16 @@ export default function LoginPage() {
               <div key={s.label}>
                 <p
                   style={{
-                    fontFamily: "'DM Mono', monospace",
+                    fontFamily: "monospace",
                     fontSize: "22px",
-                    fontWeight: 500,
-                    color: "var(--navy-300)",
+                    fontWeight: 600,
+                    color: "#5ee8b0",
                     lineHeight: 1,
                   }}
                 >
                   {s.value}
                 </p>
-                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
                   {s.label}
                 </p>
               </div>
@@ -233,7 +246,7 @@ export default function LoginPage() {
         </div>
 
         <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
-          &copy; {new Date().getFullYear()} HR AiQ. Enterprise Capability Intelligence Platform.
+          &copy; {new Date().getFullYear()} AiQ. Enterprise Capability Intelligence Platform.
         </p>
       </div>
 
@@ -241,50 +254,25 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
-          <AiQLogoMark size={40} />
-          <div className="flex flex-col leading-none">
-            <span
-              style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: "10px",
-                fontWeight: 400,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--#F8FAFC0)",
-                lineHeight: 1,
-                marginBottom: "3px",
-              }}
-            >
-              HR
-            </span>
-            <span
-              style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: "20px",
-                fontWeight: 700,
-              color: "var(--#0F172A)",
-              lineHeight: 1,
-            }}
-          >
-              Ai<span style={{ color: "var(--#10B981)" }}>Q</span>
-            </span>
-          </div>
+          <AiQLogoMark size={36} />
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "#0F172A" }}>
+            Ai<span style={{ color: "#10B981" }}>Q</span>
+          </span>
         </div>
 
         <div className="w-full max-w-[420px]">
           <div className="mb-8">
             <h1
               style={{
-                fontFamily: "'Sora', sans-serif",
                 fontSize: "24px",
                 fontWeight: 600,
-              color: "var(--#0F172A)",
-              marginBottom: "6px",
+                color: "#0F172A",
+                marginBottom: "6px",
               }}
             >
               Welcome back
             </h1>
-            <p style={{ fontSize: "14px", color: "var(--neutral-600)" }}>Sign in to your AiQ account</p>
+            <p style={{ fontSize: "14px", color: "#64748B" }}>Sign in to your AiQ account</p>
           </div>
 
           {serverError && (
@@ -297,33 +285,28 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Organisation code */}
             <div className="space-y-1.5">
-              <Label
-                htmlFor="tenantSlug"
-                style={{ fontFamily: "'Sora', sans-serif", fontSize: "13px", fontWeight: 500, color: "#374151" }}
-              >
-                Organisation Code
+              <Label htmlFor="tenantSlug" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
+                Organisation code
               </Label>
               <Input
                 id="tenantSlug"
                 {...register("tenantSlug")}
-                placeholder="e.g. hr-datahub"
-                className="h-10 bg-white border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-[#0F6E56]/20"
+                placeholder="e.g. acme"
+                className="h-11"
+                autoComplete="organization"
               />
               {errors.tenantSlug ? (
-                <p className="text-xs text-red-600">{errors.tenantSlug.message}</p>
+                <p className="text-xs text-destructive">{errors.tenantSlug.message}</p>
               ) : (
                 <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                  Use the short code provided by your administrator (e.g. <span style={{ fontFamily: "'DM Mono', monospace", color: "#6B7280" }}>hr-datahub</span>), not the organisation display name.
+                  The short code provided by your administrator
                 </p>
               )}
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                style={{ fontFamily: "'Sora', sans-serif", fontSize: "13px", fontWeight: 500, color: "#374151" }}
-              >
+              <Label htmlFor="email" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
                 Email address
               </Label>
               <Input
@@ -331,27 +314,24 @@ export default function LoginPage() {
                 type="email"
                 {...register("email")}
                 placeholder="you@company.com"
-                className="h-10 bg-white border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-[#0F6E56]/20"
+                className="h-11"
                 autoComplete="email"
               />
               {errors.email && (
-                <p className="text-xs text-red-600">{errors.email.message}</p>
+                <p className="text-xs text-destructive">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="password"
-                  style={{ fontFamily: "'Sora', sans-serif", fontSize: "13px", fontWeight: 500, color: "#374151" }}
-                >
+                <Label htmlFor="password" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
                   Password
                 </Label>
                 <Link href="/forgot-password">
                   <span
                     className="text-xs hover:underline cursor-pointer"
-                    style={{ color: "#0F6E56", fontFamily: "'Sora', sans-serif" }}
+                    style={{ color: "#10B981", fontWeight: 500 }}
                   >
                     Forgot password?
                   </span>
@@ -362,33 +342,29 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  placeholder="••••••••"
-                  className="h-10 bg-white border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-[#0F6E56]/20 pr-10"
+                  placeholder="Enter your password"
+                  className="h-11 pr-10"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: "#9CA3AF" }}
                   tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-red-600">{errors.password.message}</p>
+                <p className="text-xs text-destructive">{errors.password.message}</p>
               )}
             </div>
 
             <Button
               type="submit"
-              className="w-full h-10 font-semibold transition-colors"
-              style={{
-                background: "#0F6E56",
-                color: "#ffffff",
-                fontFamily: "'Sora', sans-serif",
-                fontSize: "14px",
-              }}
+              className="w-full h-11 font-semibold text-sm"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (
@@ -407,7 +383,7 @@ export default function LoginPage() {
             <Link href="/register">
               <span
                 className="hover:underline cursor-pointer"
-                style={{ fontSize: "13px", color: "#0F6E56", fontWeight: 500, fontFamily: "'Sora', sans-serif" }}
+                style={{ fontSize: "13px", color: "#10B981", fontWeight: 500 }}
               >
                 Create account
               </span>
@@ -417,54 +393,61 @@ export default function LoginPage() {
           {/* Demo credentials */}
           <div
             className="mt-8 rounded-xl p-4"
-            style={{ border: "1px solid #E5E7EB", background: "#ffffff" }}
+            style={{ border: "1px solid #E2E8F0", background: "#ffffff" }}
           >
             <p
               className="uppercase tracking-wider mb-3"
               style={{
-                fontFamily: "'Sora', sans-serif",
                 fontSize: "11px",
                 fontWeight: 700,
                 color: "#6B7280",
                 letterSpacing: "0.08em",
               }}
             >
-              Demo Credentials — Org code:{" "}
+              Demo credentials — password:{" "}
               <span
                 style={{
-                  fontFamily: "'DM Mono', monospace",
-                  color: "#0F6E56",
+                  fontFamily: "monospace",
+                  color: "#10B981",
                   fontWeight: 500,
                   textTransform: "none",
                   letterSpacing: "0.02em",
                 }}
               >
-                demo
+                manutd99
               </span>
             </p>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {DEMO_CREDENTIALS.map((cred) => (
                 <button
-                  key={cred.role}
+                  key={cred.email}
                   type="button"
                   onClick={() => fillDemo(cred)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group"
-                  style={{ background: "#F7F8FA" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "#e6f4f0")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "#F7F8FA")}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all group"
+                  style={{ background: "#F8FAFC" }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "#ECFDF5";
+                    (e.currentTarget as HTMLElement).style.transform = "translateX(2px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
+                    (e.currentTarget as HTMLElement).style.transform = "translateX(0)";
+                  }}
                 >
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ fontFamily: "'Sora', sans-serif", color: "#374151" }}
-                  >
+                  <span className="text-xs font-semibold" style={{ color: "#374151" }}>
                     {cred.role}
                   </span>
-                  <span
-                    className="text-xs"
-                    style={{ fontFamily: "'DM Mono', monospace", color: "#9CA3AF" }}
-                  >
-                    {cred.email}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded"
+                      style={{ fontFamily: "monospace", color: "#64748B", background: "#E2E8F0", fontSize: "10px" }}
+                    >
+                      {cred.org}
+                    </span>
+                    <span className="text-xs" style={{ fontFamily: "monospace", color: "#9CA3AF" }}>
+                      {cred.email}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

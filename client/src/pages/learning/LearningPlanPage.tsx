@@ -97,8 +97,8 @@ function ModuleCard({
       isNoTransfer && "border-red-700/30 bg-red-950/10",
     )}>
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}15` }}>
-          {isLocked ? <Lock className="h-5 w-5 text-muted-foreground" /> : <CapIcon className="h-5 w-5" style={{ color: cap.color }} />}
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${modal.color}15` }}>
+          {isLocked ? <Lock className="h-5 w-5 text-muted-foreground" /> : <ModalIcon className="h-5 w-5" style={{ color: modal.color }} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap gap-1.5 mb-1.5">
@@ -115,10 +115,10 @@ function ModuleCard({
                 <CheckCircle2 className="h-2.5 w-2.5 mr-1" />Done
               </Badge>
             )}
-            <Badge variant="outline" className="text-[10px] text-muted-foreground">L{mod.difficulty}</Badge>
+            <Badge variant="outline" className="text-[10px] font-semibold" style={{ color: "#4477AA", borderColor: "#4477AA40" }}>L{mod.difficulty}</Badge>
             <Badge variant="outline" className="text-[10px] text-muted-foreground capitalize">{item.phase}</Badge>
             {stageMeta && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5" style={{ background: `${stageMeta.color}15`, color: stageMeta.color }}>
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 cursor-help" style={{ background: `${stageMeta.color}15`, color: stageMeta.color }} title={stageMeta.label + " — " + stageMeta.desc}>
                 S{prescriptionStage}
               </Badge>
             )}
@@ -135,7 +135,7 @@ function ModuleCard({
               <Clock className="h-3 w-3" />{mod.durationMins} min
             </span>
             {!isLocked && !isCompleted && (
-              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-primary hover:text-primary"
+              <Button size="sm" className="h-7 text-xs gap-1 bg-[#10B981] hover:bg-[#059669] text-white"
                 onClick={() => onStart(item.moduleId, item.id)}>
                 {isReview ? <><RotateCcw className="h-3 w-3" />Review</> : <><Play className="h-3 w-3" />Start</>}
                 <ChevronRight className="h-3 w-3" />
@@ -578,7 +578,7 @@ export default function LearningPlanPage() {
                   { label: "Done",      value: completedItems.length,color: "#6b7280" },
                 ].map(s => (
                   <div key={s.label} className="p-3 rounded-xl border border-border bg-card text-center">
-                    <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
+                    <p className="text-xl font-bold" style={{ color: s.value > 0 ? s.color : "hsl(var(--muted-foreground))" }}>{s.value}</p>
                     <p className="text-[11px] text-muted-foreground">{s.label}</p>
                   </div>
                 ))}

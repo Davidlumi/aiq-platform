@@ -154,6 +154,8 @@ function ReadinessHeroCard({
 }
 
 function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
+  // Don't render the radar chart if all scores are 0 or missing
+  const hasAnyScore = Object.values(scores).some(s => s > 0);
   const data = Object.entries(CAP_META).map(([key, meta]) => ({
     subject: meta.shortLabel,
     score: scores[key] ?? 0,
@@ -168,28 +170,38 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
         <p className="text-xs text-muted-foreground">Your relative strengths across 6 AI capability domains</p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={220}>
-          <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-            <PolarGrid stroke="hsl(var(--border))" />
-            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-            <Radar name="Score" dataKey="score" stroke="#10B981" fill="#10B981" fillOpacity={0.18} strokeWidth={2} />
-          </RadarChart>
-        </ResponsiveContainer>
-        <div className="grid grid-cols-3 gap-1.5 mt-2">
-          {Object.entries(CAP_META).map(([key, meta]) => {
-            const score = scores[key] ?? null;
-            const band = scoreToBand(score);
-            return (
-              <div key={key} className="flex items-center gap-1.5 p-1.5 rounded-lg bg-muted/20">
-                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
-                <div className="min-w-0">
-                  <p className="text-[9px] text-muted-foreground truncate">{meta.shortLabel}</p>
-                  <p className="text-[10px] font-semibold" style={{ color: band.color }}>{band.label}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {hasAnyScore ? (
+          <>
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <Radar name="Score" dataKey="score" stroke="#10B981" fill="#10B981" fillOpacity={0.18} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-3 gap-1.5 mt-2">
+              {Object.entries(CAP_META).map(([key, meta]) => {
+                const score = scores[key] ?? null;
+                const band = scoreToBand(score);
+                return (
+                  <div key={key} className="flex items-center gap-1.5 p-1.5 rounded-lg bg-muted/20">
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-muted-foreground truncate">{meta.shortLabel}</p>
+                      <p className="text-[10px] font-semibold" style={{ color: band.color }}>{band.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <BarChart3 className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-medium">Profile not yet generated</p>
+            <p className="text-xs text-muted-foreground mt-1">Complete your assessment to see your capability shape.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -371,12 +383,27 @@ export default function LearnerDashboard() {
           <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => refetch()}>
             <RefreshCw className="w-3 h-3" />Refresh
           </Button>
-          <Link href="/assessment">
-            <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white text-xs">
-              <ClipboardList className="w-3.5 h-3.5" />
-              {hasAssessment ? "Reassess" : "Take Assessment"}
-            </Button>
-          </Link>
+          {hasAssessment && data?.latestReadiness && data.latestReadiness !== "safe" ? (
+            <>
+              <Link href="/learning">
+                <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white text-xs">
+                  <BookOpen className="w-3.5 h-3.5" />Start Learning
+                </Button>
+              </Link>
+              <Link href="/assessment">
+                <Button size="sm" variant="outline" className="gap-2 text-xs">
+                  <ClipboardList className="w-3.5 h-3.5" />Reassess
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <Link href="/assessment">
+              <Button size="sm" className="gap-2 bg-[#10B981] hover:bg-[#059669] text-white text-xs">
+                <ClipboardList className="w-3.5 h-3.5" />
+                {hasAssessment ? "Reassess" : "Take Assessment"}
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -454,8 +481,21 @@ export default function LearnerDashboard() {
               ) : (
                 <div className="text-center py-4">
                   <BookOpen className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-3">No active learning plan yet</p>
-                  <p className="text-xs text-muted-foreground">Your plan will be generated after your first assessment.</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {hasAssessment ? "Your learning plan is being generated" : "No active learning plan yet"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasAssessment
+                      ? "Based on your assessment results, a personalised plan will appear here shortly."
+                      : "Your plan will be generated after your first assessment."}
+                  </p>
+                  {hasAssessment && (
+                    <Link href="/learning">
+                      <Button size="sm" variant="outline" className="mt-3 text-xs gap-1.5">
+                        <BookOpen className="w-3 h-3" />Check Learning Plan
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               )}
             </CardContent>
