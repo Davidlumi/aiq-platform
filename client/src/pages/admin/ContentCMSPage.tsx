@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   Search, FolderOpen, CheckCircle2, Clock, Archive, Eye,
@@ -240,9 +241,7 @@ export default function ContentCMSPage() {
 
       {/* Content list */}
       {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
-        </div>
+        <ListSkeleton items={8} />
       ) : items.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
           <FolderOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

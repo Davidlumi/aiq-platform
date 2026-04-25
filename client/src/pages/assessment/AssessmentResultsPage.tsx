@@ -18,6 +18,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AssessmentResultsSkeleton } from "@/components/ui/loading";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -599,14 +600,7 @@ export default function AssessmentResultsPage() {
   }, [data?.score, hasRevealed]);
 
   if (isLoading) {
-    return (
-      <div className="p-6 space-y-4 max-w-3xl">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 rounded-2xl" />
-        <Skeleton className="h-64 rounded-2xl" />
-        <Skeleton className="h-48 rounded-2xl" />
-      </div>
-    );
+    return <AssessmentResultsSkeleton />;
   }
 
   if (error || !data?.score) {

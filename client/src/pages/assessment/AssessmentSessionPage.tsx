@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AssessmentSessionSkeleton } from "@/components/ui/loading";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
@@ -803,13 +804,7 @@ export default function AssessmentSessionPage() {
   }, [sessionData?.nextItem, rationaleData, selectedValue, handleSubmit]);
 
   if (isLoading) {
-    return (
-      <div className="p-6 space-y-4 max-w-2xl">
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-64 rounded-2xl" />
-      </div>
-    );
+    return <AssessmentSessionSkeleton />;
   }
 
   if (!sessionData || sessionError) {

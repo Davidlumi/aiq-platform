@@ -526,7 +526,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          {children}
+          <div key={location} className="aiq-fade-in" style={{ animationDuration: '0.2s' }}>
+            {children}
+          </div>
         </main>
       </div>
     </div>

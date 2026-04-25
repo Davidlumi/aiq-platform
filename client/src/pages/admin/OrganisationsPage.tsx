@@ -5,6 +5,7 @@
  * and set capability threshold overrides (S10.3).
  */
 import { useState } from "react";
+import { CardSkeleton, ListSkeleton } from "@/components/ui/loading";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,9 +163,7 @@ function OrgDetailPanel({ orgId, onBack }: { orgId: string; onBack: () => void }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-        Loading…
-      </div>
+      <CardSkeleton rows={4} />
     );
   }
 
@@ -372,9 +371,7 @@ export default function OrganisationsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-          Loading…
-        </div>
+        <ListSkeleton items={3} />
       ) : !orgs || orgs.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 gap-3">

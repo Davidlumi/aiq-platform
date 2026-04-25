@@ -16,11 +16,11 @@ import {
   HeatmapCell,
   DomainDot,
   PriorityBadge,
-  DashboardSkeleton,
   EmptyState,
   DeltaIndicator,
   CapabilityBar,
 } from "@/components/dashboard/DashboardUI";
+import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -106,7 +106,7 @@ export default function LeaderDashboardV2() {
 
   const isLoading = heroLoading || mainLoading;
 
-  if (isLoading) return <div className="p-6 max-w-7xl mx-auto"><DashboardSkeleton /></div>;
+  if (isLoading) return <LeaderDashboardSkeleton />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

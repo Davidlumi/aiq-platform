@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatSkeleton, CardSkeleton, ChartSkeleton } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   FileText, AlertTriangle, CheckCircle, Search,

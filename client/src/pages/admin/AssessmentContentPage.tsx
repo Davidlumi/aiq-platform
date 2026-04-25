@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CardSkeleton, TableSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   Search,
@@ -103,7 +104,7 @@ function ScenarioDetailDialog({
     return (
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Loading...</DialogTitle></DialogHeader>
-        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
+        <CardSkeleton rows={4} />
       </DialogContent>
     );
   }
@@ -468,7 +469,7 @@ export default function AssessmentContentPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}</div>
+          <TableSkeleton columns={5} rows={8} />
         ) : items.length === 0 ? (
           <Card className="border-border">
             <CardContent className="p-12 text-center">

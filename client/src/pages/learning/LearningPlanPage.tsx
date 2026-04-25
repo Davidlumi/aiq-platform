@@ -13,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton, CardSkeleton, ShimmerBlock } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   BookOpen, Zap, FileText, HelpCircle, Layers, Video,
@@ -651,9 +652,7 @@ export default function LearningPlanPage() {
       {activeTab === "plan" && (
         <div className="space-y-6">
           {planLoading && (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
-            </div>
+            <ListSkeleton items={4} />
           )}
 
           {!planLoading && !planData && (
@@ -869,7 +868,7 @@ export default function LearningPlanPage() {
               <h2 className="font-semibold">Your Standing</h2>
             </div>
             {!peerData ? (
-              <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+              <ListSkeleton items={3} hasIcon={false} />
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {[
@@ -980,14 +979,14 @@ export default function LearningPlanPage() {
       {/* ── Gap Analysis Tab ──────────────────────────────────────────── */}
       {activeTab === "gaps" && (
         gapLoading
-          ? <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}</div>
+          ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3, 4].map(i => <CardSkeleton key={i} rows={3} />)}</div>
           : <GapAnalysisTab gapRow={gapData} />
       )}
 
       {/* ── Progress Tab ──────────────────────────────────────────────────── */}
       {activeTab === "progress" && (
         progressLoading
-          ? <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
+          ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3, 4, 5, 6].map(i => <CardSkeleton key={i} rows={2} />)}</div>
           : <ProgressTab capProgress={capProgress} />
       )}
       {/* ── Digest Tab ──────────────────────────────────────────────────── */}

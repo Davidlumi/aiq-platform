@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   Layers, CheckCircle2, Clock, Archive, ChevronDown, ChevronRight,
@@ -205,9 +206,7 @@ export default function AssessmentBlueprintsPage() {
 
       {/* Blueprint list */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
-        </div>
+        <ListSkeleton items={3} />
       ) : (blueprints?.length ?? 0) === 0 ? (
         <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
           <Layers className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

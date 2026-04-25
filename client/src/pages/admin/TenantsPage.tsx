@@ -83,8 +83,17 @@ export default function TenantsPage() {
 
       {/* Current Tenant Card */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-[#10B981]" />
+        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-xl aiq-shimmer-brand" />
+            <div className="space-y-2 flex-1">
+              <div className="h-5 w-40 rounded-md aiq-shimmer" />
+              <div className="h-3 w-24 rounded-md aiq-shimmer" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-12 rounded-lg aiq-shimmer" style={{ animationDelay: `${i * 60}ms` }} />)}
+          </div>
         </div>
       ) : currentTenant ? (
         <Card className="aiq-card">

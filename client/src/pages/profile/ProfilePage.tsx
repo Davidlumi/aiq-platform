@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { User, Shield, Lock, Loader2, CheckCircle2, Clock } from "lucide-react";
+import { ProfileHeaderSkeleton, CardSkeleton } from "@/components/ui/loading";
 
 const ROLE_LABELS: Record<string, string> = {
   platform_super_admin: "Platform Super Admin",
@@ -79,8 +80,10 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#10B981]" />
+      <div className="p-6 space-y-6 max-w-3xl mx-auto">
+        <ProfileHeaderSkeleton />
+        <CardSkeleton rows={3} />
+        <CardSkeleton rows={4} />
       </div>
     );
   }

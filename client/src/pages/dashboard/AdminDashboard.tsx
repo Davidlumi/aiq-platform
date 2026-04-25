@@ -12,6 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatSkeleton, CardSkeleton, ChartSkeleton } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   Users, Settings, Activity, ClipboardList, AlertTriangle,

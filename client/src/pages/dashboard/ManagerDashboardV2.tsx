@@ -14,11 +14,11 @@ import {
   HeatmapCell,
   DomainDot,
   PriorityBadge,
-  DashboardSkeleton,
   EmptyState,
   DrillChevron,
   CapabilityBar,
 } from "@/components/dashboard/DashboardUI";
+import { ManagerDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -78,7 +78,7 @@ export default function ManagerDashboardV2() {
   const { data: prompts, isLoading: promptsLoading } = trpc.dashboardV2.manager.conversationPrompts.useQuery();
   const { data: devOverview, isLoading: devLoading } = trpc.dashboardV2.manager.developmentOverview.useQuery();
 
-  if (isLoading) return <div className="p-6 max-w-7xl mx-auto"><DashboardSkeleton /></div>;
+  if (isLoading) return <ManagerDashboardSkeleton />;
   if (!data) return <div className="p-6 max-w-7xl mx-auto"><EmptyState title="No team data" description="You don't have any team members assigned yet." /></div>;
 
   const filteredHeatmap = ratingFilter
@@ -320,7 +320,14 @@ function MemberDrillDown({ userId, onClose }: { userId: string; onClose: () => v
   if (isLoading) {
     return (
       <div className="space-y-4 p-2">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-16 rounded-lg bg-neutral-100 animate-pulse" />)}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full aiq-shimmer-brand shrink-0" />
+          <div className="space-y-2 flex-1">
+            <div className="h-4 w-32 rounded-md aiq-shimmer" />
+            <div className="h-3 w-24 rounded-md aiq-shimmer" />
+          </div>
+        </div>
+        {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg aiq-shimmer" style={{ animationDelay: `${i * 80}ms` }} />)}
       </div>
     );
   }

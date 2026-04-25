@@ -18,6 +18,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ModulePlayerSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   ArrowLeft, BookOpen, Zap, FileText, HelpCircle, Layers,
@@ -1034,13 +1035,7 @@ export default function ModulePlayerPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <ModulePlayerSkeleton />;
   }
 
   if (!mod) {

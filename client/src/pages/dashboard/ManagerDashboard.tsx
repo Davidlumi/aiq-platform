@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatSkeleton, CardSkeleton, ChartSkeleton, ListSkeleton } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
@@ -1077,7 +1078,7 @@ function LearningOverviewSection() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+          <ListSkeleton items={3} hasIcon={false} />
         ) : members.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">No team members yet</div>
         ) : (

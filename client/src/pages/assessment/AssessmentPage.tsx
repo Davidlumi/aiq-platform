@@ -16,6 +16,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@/components/ui/loading";
 import {
   ClipboardList,
   Play,
@@ -319,9 +320,7 @@ export default function AssessmentPage() {
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Assessment History</h2>
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
-          </div>
+          <ListSkeleton items={2} />
         ) : !sessions || sessions.length === 0 ? (
           <Card className="border-border border-dashed">
             <CardContent className="p-8 text-center">

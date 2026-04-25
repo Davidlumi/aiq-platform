@@ -16,12 +16,12 @@ import {
   CapabilityBar,
   DomainDot,
   InfoTip,
-  DashboardSkeleton,
   EmptyState,
   DrillChevron,
   HeatmapCell,
   PriorityBadge,
 } from "@/components/dashboard/DashboardUI";
+import { IndividualDashboardSkeleton } from "@/components/ui/loading";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -75,7 +75,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     userId ? { userId } : undefined,
   );
 
-  if (isLoading) return <div className="p-6 max-w-6xl mx-auto"><DashboardSkeleton /></div>;
+  if (isLoading) return <IndividualDashboardSkeleton />;
   if (!data) return <div className="p-6 max-w-6xl mx-auto"><EmptyState title="No data available" description="Complete an assessment to see your capability dashboard." action={<Link href="/assessment"><Button>Start Assessment</Button></Link>} /></div>;
 
   const isOwnDashboard = !userId || userId === (user as any)?.id;

@@ -1509,3 +1509,11 @@
 - [x] BF-OV-01: ProfilingModal — ROOT CAUSE was bg-popover/bg-background not generating CSS rules in TW4. Fixed by adding --color-* prefixed semantic tokens to @theme block. Dialog overlay also made more opaque (bg-black/80 + backdrop-blur)
 - [x] BF-OV-02: Leader Dashboard dropdown — ROOT CAUSE same as above. bg-popover now resolves to solid white. Added relative z-10 to header for extra safety
 - [x] BF-CSS-ROOT: Tailwind 4 @theme requires --color-* prefix for utility class generation. Added --color-background, --color-foreground, --color-card, --color-popover, --color-primary, --color-secondary, --color-muted, --color-accent, --color-destructive, --color-border, --color-input, --color-ring, plus chart and sidebar tokens. All 1951 references to bg-background, bg-card, bg-popover, text-foreground, text-muted-foreground, border-border etc. now resolve to actual CSS rules with solid colours
+
+## Loading Animations & Skeleton Screens
+- [x] LOAD-01: Create shared loading components — AiQ-branded skeleton shimmer, page-level spinner, section skeleton, card skeleton, table skeleton
+- [x] LOAD-02: Dashboard pages (Individual, Manager, Leader) — skeleton cards, shimmer charts, animated stat counters
+- [x] LOAD-03: Assessment pages (AssessmentPage, AssessmentSessionPage, AssessmentResultsPage) — skeleton question cards, progress shimmer
+- [x] LOAD-04: Learning pages (LearningPlanPage, ModulePlayerPage) — skeleton module cards, journey map shimmer
+- [x] LOAD-05: Admin pages (BackOffice, OrgContext, ContentCMS) — table skeletons, form shimmer
+- [x] LOAD-06: AppShell and navigation — route transition fade-in animation on page mount
