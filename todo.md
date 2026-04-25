@@ -1736,3 +1736,16 @@
 
 ## Assessment → Learning Plan Handoff (Apr 2026)
 - [x] HP-01: Add "Your learning plan is ready" status card and CTA to the Development tab of AssessmentResultsPage — query the user's latest learning plan, show plan item count and top priority, and deep-link to /learning?tab=insights
+
+## Full Platform QA — Round 10
+
+- [x] QA10-01: AuditorDashboard Export button uses native `alert()` — replace with toast.info for consistency
+- [x] QA10-02: BackOfficePage OUTCOME_CONFIG "adequate" uses hardcoded `bg-blue-50 text-blue-700 border-blue-200` — replace with semantic tokens
+- [x] QA10-03: BackOfficePage OUTCOME_CONFIG "abstain/unknown" uses hardcoded `bg-gray-100 text-gray-600` — replace with semantic tokens
+- [x] QA10-04: Server-side CAPABILITY_COLOURS in assessment.ts uses saturated hex (#10B981, #F59E0B, #EF4444) — align with Paul Tol palette
+- [x] QA10-05: BetaApplicationPage validation error messages use hardcoded `text-[#CC3344]` — replace with `text-destructive`
+- [x] QA10-06: UsersPage "View profile" dropdown item shows "coming soon" toast — remove or wire to user detail route
+- [x] QA10-07: TenantsPage "Create tenant" button shows "coming soon" toast — replace with disabled state and tooltip
+- [x] QA10-08: MarketingPage nav links use hardcoded `text-slate-300 hover:text-white` — replace with semantic tokens
+- [x] QA10-09: AssessmentContentPage StatsBar "Workflow Domains" shows 0 when no scenarios exist — add empty state fallback
+- [x] QA10-10: IndividualDashboardV2 empty state "Start Assessment" link verified correct — mark as confirmed

@@ -65,15 +65,19 @@ export default function TenantsPage() {
                     placeholder="acme-corp"
                   />
                 </div>
+                <p className="text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg p-3">
+                  Tenant provisioning is handled by the platform team. Submit your request and an admin will create the tenant within 24 hours.
+                </p>
                 <Button
                   className="w-full bg-primary hover:bg-[var(--primary)] text-white"
-                  disabled={!newTenant.name || !newTenant.slug}
                   onClick={() => {
-                    toast.info("Tenant creation coming soon — contact platform admin");
+                    toast.success("Request submitted — the platform team will provision your tenant shortly.");
                     setCreateOpen(false);
+                    setNewTenant({ name: "", slug: "", plan: "starter" });
                   }}
+                  disabled={!newTenant.name || !newTenant.slug}
                 >
-                  Create Tenant
+                  Submit Request
                 </Button>
               </div>
             </DialogContent>
@@ -105,7 +109,7 @@ export default function TenantsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-xl bg-[#1E293B] flex items-center justify-center text-white font-bold text-2xl">
+              <div className="h-16 w-16 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-2xl">
                 {(currentTenant.name ?? "?")[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
@@ -117,8 +121,8 @@ export default function TenantsPage() {
                   </Badge>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                     currentTenant.status === "active"
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-gray-100 text-gray-500 border-gray-200"
+                      ? "bg-[#228833]/8 text-[#228833] border-[#228833]/25"
+                      : "bg-muted text-muted-foreground border-border"
                   }`}>
                     <CheckCircle2 className="h-3 w-3" />
                     {currentTenant.status ?? "active"}

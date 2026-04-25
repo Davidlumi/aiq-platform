@@ -24,10 +24,10 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  active: "bg-green-50 text-green-700 border-green-200",
-  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  active: "bg-[#228833]/8 text-[#228833] border-[#228833]/25",
+  pending: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25",
   suspended: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",
-  deactivated: "bg-gray-100 text-gray-500 border-gray-200",
+  deactivated: "bg-muted text-muted-foreground border-border",
 };
 
 
@@ -282,7 +282,7 @@ export default function UsersPage() {
                 </thead>
                 <tbody>
                   {users_list.map((u: any) => (
-                    <tr key={u.id} className="border-b border-[#F3F4F6] hover:bg-muted/50 transition-colors">
+                    <tr key={u.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-semibold" style={{ backgroundColor: avatarColor(`${u.firstName}${u.lastName}`) }}>
@@ -319,9 +319,6 @@ export default function UsersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem onClick={() => toast.info("View profile — coming soon")} className="text-xs gap-2">
-                              <Eye className="w-3.5 h-3.5" />View Profile
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
                                 setSelectedRole((u.roles ?? [])[0] ?? "learner");

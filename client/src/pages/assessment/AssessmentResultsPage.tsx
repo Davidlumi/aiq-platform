@@ -118,7 +118,7 @@ const READINESS_CONFIG = {
     label: "Insufficient Data",
     description: "Not enough evidence to classify readiness. Complete more assessment interactions.",
     color: "text-gray-600",
-    bg: "border-gray-200 bg-gray-50",
+    bg: "border-border bg-muted/50",
     barColor: "#888888",
     icon: HelpCircle,
     dotColor: "#888888",
@@ -136,7 +136,7 @@ const READINESS_CONFIG = {
     label: "Result Unavailable",
     description: "The assessment could not produce a reliable classification due to low confidence. This may be due to inconsistent responses or limited interaction variety.",
     color: "text-gray-600",
-    bg: "border-gray-200 bg-gray-50",
+    bg: "border-border bg-muted/50",
     barColor: "#888888",
     icon: HelpCircle,
     dotColor: "#888888",
@@ -1042,14 +1042,14 @@ export default function AssessmentResultsPage() {
                   Ethics & Trust Profile
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="bg-muted/50 rounded-lg p-3 border border-border">
                     <p className="text-xs text-muted-foreground mb-1">Ethics Score</p>
                     <p className="text-xl font-bold  text-foreground">
                       {Math.round((breakdown.governanceProfile as any).score ?? 0)}
                       <span className="text-sm font-normal text-muted-foreground">/100</span>
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border">
                     <p className="text-xs text-muted-foreground mb-1">Ethics Band</p>
                     <p className="text-sm font-bold  text-foreground capitalize">
                       {(breakdown.governanceProfile as any).band ?? "Not assessed"}

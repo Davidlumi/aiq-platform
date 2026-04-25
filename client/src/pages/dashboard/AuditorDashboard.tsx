@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 /**
  * Auditor Dashboard — AiQ Platform
  *
@@ -77,7 +78,7 @@ export default function AuditorDashboard() {
           <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
             <RefreshCw className="w-3 h-3" />Refresh
           </Button>
-          <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => alert("Export coming soon")}>
+          <Button size="sm" variant="outline" className="gap-2 text-xs opacity-50" disabled title="Export is not yet available">
             <Download className="w-3 h-3" />Export
           </Button>
         </div>

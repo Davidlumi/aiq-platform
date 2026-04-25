@@ -209,7 +209,7 @@ export default function ManagerDashboardV2() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                   isActive
                     ? "border-transparent text-white"
-                    : "border-neutral-200 bg-white text-muted-foreground hover:border-neutral-300"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/30"
                 }`}
                 style={isActive ? { backgroundColor: RATING_COLOURS[key] } : {}}
               >
@@ -225,7 +225,7 @@ export default function ManagerDashboardV2() {
           {ratingFilter && (
             <button
               onClick={() => setRatingFilter(null)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium border border-neutral-200 bg-white text-muted-foreground hover:border-neutral-300 transition-all"
+              className="px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:border-primary/30 transition-all"
             >
               Clear filter
             </button>

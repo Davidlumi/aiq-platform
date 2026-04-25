@@ -370,7 +370,7 @@ export default function LeaderDashboardV2() {
                   </div>
                   {f.strategicImplication && (
                     <div className="px-3 pb-3 pt-0 ml-9">
-                      <div className="text-xs text-muted-foreground leading-relaxed bg-blue-50/50 border border-blue-100 rounded-md px-3 py-2">
+                      <div className="text-xs text-muted-foreground leading-relaxed bg-primary/5 border border-primary/15 rounded-md px-3 py-2">
                         <span className="font-semibold text-blue-700">Strategic implication:</span>{" "}
                         {f.strategicImplication}
                       </div>
@@ -518,7 +518,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
     return (
       <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
             <Target className="w-6 h-6 text-blue-500" />
           </div>
           <p className="text-sm font-semibold text-foreground mb-1">Strategic context not configured</p>
@@ -540,7 +540,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
     return (
       <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
             <Target className="w-6 h-6 text-blue-500" />
           </div>
           <p className="text-sm font-semibold text-foreground mb-1">No strategic priorities defined</p>

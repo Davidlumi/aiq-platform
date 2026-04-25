@@ -93,9 +93,9 @@ function AppStatusBadge({ status }: { status: string }) {
     pending:    { label: "Pending",    className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25",       icon: Clock },
     approved:   { label: "Approved",   className: "bg-primary/8 text-primary border-primary/25", icon: CheckCircle2 },
     rejected:   { label: "Rejected",   className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",             icon: XCircle },
-    waitlisted: { label: "Waitlisted", className: "bg-blue-50 text-blue-700 border-blue-200",          icon: Clock },
+    waitlisted: { label: "Waitlisted", className: "bg-primary/8 text-primary border-primary/25",          icon: Clock },
   };
-  const c = config[status] ?? { label: status, className: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock };
+  const c = config[status] ?? { label: status, className: "bg-muted text-muted-foreground border-border", icon: Clock };
   const Icon = c.icon;
   return (
     <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border", c.className)}>
@@ -345,13 +345,13 @@ function BetaApplicationsTab() {
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     active:      { label: "Active",      className: "bg-primary/8 text-primary border-primary/25" },
-    trial:       { label: "Trial",       className: "bg-blue-50 text-blue-700 border-blue-200" },
+    trial:       { label: "Trial",       className: "bg-primary/8 text-primary border-primary/25" },
     suspended:   { label: "Suspended",   className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
-    archived:    { label: "Archived",    className: "bg-gray-100 text-gray-500 border-gray-200" },
+    archived:    { label: "Archived",    className: "bg-muted text-muted-foreground border-border" },
     pending:     { label: "Pending",     className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
     deactivated: { label: "Deactivated", className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
   };
-  const c = config[status] ?? { label: status, className: "bg-gray-100 text-gray-600 border-gray-200" };
+  const c = config[status] ?? { label: status, className: "bg-muted text-muted-foreground border-border" };
   return (
     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border", c.className)}>
       {c.label}
@@ -1130,11 +1130,11 @@ const CAPABILITY_LABELS: Record<string, string> = {
 
 const OUTCOME_CONFIG: Record<string, { label: string; className: string }> = {
   strong:      { label: "Strong",      className: "bg-primary/8 text-primary border-primary/25" },
-  adequate:    { label: "Adequate",    className: "bg-blue-50 text-blue-700 border-blue-200" },
+  adequate:    { label: "Adequate",    className: "bg-primary/8 text-primary border-primary/25" },
   partial:     { label: "Partial",     className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
   failure:     { label: "Failure",     className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
-  abstain:     { label: "Abstain",     className: "bg-gray-100 text-gray-600 border-gray-200" },
-  unknown:     { label: "Unknown",     className: "bg-gray-100 text-gray-500 border-gray-200" },
+  abstain:     { label: "Abstain",     className: "bg-muted text-muted-foreground border-border" },
+  unknown:     { label: "Unknown",     className: "bg-muted text-muted-foreground border-border" },
 };
 
 const INTERACTION_LABELS: Record<string, string> = {

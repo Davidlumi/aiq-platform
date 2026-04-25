@@ -170,7 +170,7 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
       label: "AI-Generated Output",
       sublabel: "Identify improvements",
       borderColor: "border-yellow-200",
-      bgColor: "bg-yellow-50",
+      bgColor: "bg-[#CCBB44]/8",
       labelColor: "text-yellow-700",
       iconColor: "text-yellow-600",
     },
@@ -238,9 +238,9 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
       label: "Email Thread",
       sublabel: "Review the conversation",
       borderColor: "border-blue-200",
-      bgColor: "bg-blue-50",
+      bgColor: "bg-primary/8",
       labelColor: "text-blue-600",
-      headerBg: "bg-blue-100",
+      headerBg: "bg-primary/15",
     },
     cv_extract: {
       label: "CV Extract",
@@ -385,10 +385,10 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
 function NarrativeWrapper({ context }: { context: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+    <div className="rounded-xl border border-primary/20 bg-primary/5 overflow-hidden">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-blue-100 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left"
       >
         <Layers className="w-4 h-4 text-blue-600 shrink-0" />
         <div className="flex-1 min-w-0">

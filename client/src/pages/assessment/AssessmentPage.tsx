@@ -278,7 +278,7 @@ export default function AssessmentPage() {
               return (
                 <div
                   key={domain.key}
-                  className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-white hover:shadow-sm transition-shadow"
+                  className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-card hover:shadow-sm transition-shadow"
                 >
                   <div
                     className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
@@ -292,7 +292,7 @@ export default function AssessmentPage() {
                     {/* P12: Show prior score if available */}
                     {lastCapabilityScores[domain.key] !== undefined && (
                       <div className="mt-1.5 flex items-center gap-1.5">
-                        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{ width: `${lastCapabilityScores[domain.key]}%`, backgroundColor: scoreToColor(lastCapabilityScores[domain.key] / 10).bg }}

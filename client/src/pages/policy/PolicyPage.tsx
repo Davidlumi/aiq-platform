@@ -16,14 +16,14 @@ import {
 
 const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   hard_block: { label: "Hard Block", color: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25", icon: <Ban className="h-3 w-3" /> },
-  warning: { label: "Warning", color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: <AlertTriangle className="h-3 w-3" /> },
-  remediation_trigger: { label: "Remediation", color: "bg-blue-100 text-blue-700 border-blue-200", icon: <RefreshCw className="h-3 w-3" /> },
+  warning: { label: "Warning", color: "bg-[#CCBB44]/10 text-[#99882A] border-[#CCBB44]/30", icon: <AlertTriangle className="h-3 w-3" /> },
+  remediation_trigger: { label: "Remediation", color: "bg-primary/10 text-primary border-primary/30", icon: <RefreshCw className="h-3 w-3" /> },
   escalate: { label: "Escalate", color: "bg-purple-100 text-purple-700 border-purple-200", icon: <ArrowUpRight className="h-3 w-3" /> },
   force_revalidation: { label: "Force Revalidation", color: "bg-orange-100 text-orange-700 border-orange-200", icon: <RefreshCw className="h-3 w-3" /> },
 };
 
 function ActionBadge({ action }: { action: string }) {
-  const meta = ACTION_LABELS[action] ?? { label: action ?? "—", color: "bg-gray-100 text-gray-700 border-gray-200", icon: null };
+  const meta = ACTION_LABELS[action] ?? { label: action ?? "—", color: "bg-muted text-muted-foreground border-border", icon: null };
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${meta.color}`}>
       {meta.icon}{meta.label}
@@ -193,8 +193,8 @@ export default function PolicyPage() {
                         <ActionBadge action={policy.actionType} />
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                           isActive
-                            ? "bg-green-50 text-green-700 border-green-200"
-                            : "bg-gray-100 text-gray-500 border-gray-200"
+                            ? "bg-[#228833]/8 text-[#228833] border-[#228833]/25"
+                            : "bg-muted text-muted-foreground border-border"
                         }`}>
                           {isActive ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                           {isActive ? "Active" : policy.status}
@@ -260,7 +260,7 @@ function PolicyEvaluationsLog() {
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         ev.result === "triggered" ? "bg-[#EE6677]/12 text-[#CC3344]" :
-                        ev.result === "passed" ? "bg-green-100 text-green-700" :
+                        ev.result === "passed" ? "bg-[#228833]/10 text-[#228833]" :
                         ev.result === "no_action" ? "bg-gray-100 text-gray-600" :
                         "bg-blue-100 text-blue-700"
                       }`}>{ev.result}</span>

@@ -369,7 +369,7 @@ export default function BetaApplicationPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="contactFirstName">
-                    First name <span className="text-[#CC3344]">*</span>
+                    First name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="contactFirstName"
@@ -378,12 +378,12 @@ export default function BetaApplicationPage() {
                     className={errors.contactFirstName ? "border-destructive" : ""}
                   />
                   {errors.contactFirstName && (
-                    <p className="text-[#CC3344] text-xs">{errors.contactFirstName.message}</p>
+                    <p className="text-destructive text-xs">{errors.contactFirstName.message}</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="contactLastName">
-                    Last name <span className="text-[#CC3344]">*</span>
+                    Last name <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="contactLastName"
@@ -392,13 +392,13 @@ export default function BetaApplicationPage() {
                     className={errors.contactLastName ? "border-destructive" : ""}
                   />
                   {errors.contactLastName && (
-                    <p className="text-[#CC3344] text-xs">{errors.contactLastName.message}</p>
+                    <p className="text-destructive text-xs">{errors.contactLastName.message}</p>
                   )}
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="contactEmail">
-                  Work email <span className="text-[#CC3344]">*</span>
+                  Work email <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="contactEmail"
@@ -408,12 +408,12 @@ export default function BetaApplicationPage() {
                   className={errors.contactEmail ? "border-destructive" : ""}
                 />
                 {errors.contactEmail && (
-                  <p className="text-[#CC3344] text-xs">{errors.contactEmail.message}</p>
+                  <p className="text-destructive text-xs">{errors.contactEmail.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="contactTitle">
-                  Job title <span className="text-[#CC3344]">*</span>
+                  Job title <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="contactTitle"
@@ -422,7 +422,7 @@ export default function BetaApplicationPage() {
                   className={errors.contactTitle ? "border-destructive" : ""}
                 />
                 {errors.contactTitle && (
-                  <p className="text-[#CC3344] text-xs">{errors.contactTitle.message}</p>
+                  <p className="text-destructive text-xs">{errors.contactTitle.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -438,7 +438,7 @@ export default function BetaApplicationPage() {
                   className={errors.linkedinUrl ? "border-destructive" : ""}
                 />
                 {errors.linkedinUrl && (
-                  <p className="text-[#CC3344] text-xs">{errors.linkedinUrl.message}</p>
+                  <p className="text-destructive text-xs">{errors.linkedinUrl.message}</p>
                 )}
               </div>
             </CardContent>
@@ -455,7 +455,7 @@ export default function BetaApplicationPage() {
               </h2>
               <div className="space-y-1.5">
                 <Label htmlFor="companyName">
-                  Organisation name <span className="text-[#CC3344]">*</span>
+                  Organisation name <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="companyName"
@@ -464,12 +464,12 @@ export default function BetaApplicationPage() {
                   className={errors.companyName ? "border-destructive" : ""}
                 />
                 {errors.companyName && (
-                  <p className="text-[#CC3344] text-xs">{errors.companyName.message}</p>
+                  <p className="text-destructive text-xs">{errors.companyName.message}</p>
                 )}
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Sector <span className="text-[#CC3344]">*</span></Label>
+                  <Label>Sector <span className="text-destructive">*</span></Label>
                   <Select onValueChange={(v) => setValue("sector", v as typeof SECTORS[number])}>
                     <SelectTrigger className={errors.sector ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select sector" />
@@ -481,11 +481,11 @@ export default function BetaApplicationPage() {
                     </SelectContent>
                   </Select>
                   {errors.sector && (
-                    <p className="text-[#CC3344] text-xs">{errors.sector.message}</p>
+                    <p className="text-destructive text-xs">{errors.sector.message}</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Total company size <span className="text-[#CC3344]">*</span></Label>
+                  <Label>Total company size <span className="text-destructive">*</span></Label>
                   <Select onValueChange={(v) => setValue("companySize", v as typeof COMPANY_SIZES[number])}>
                     <SelectTrigger className={errors.companySize ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select size" />
@@ -497,13 +497,13 @@ export default function BetaApplicationPage() {
                     </SelectContent>
                   </Select>
                   {errors.companySize && (
-                    <p className="text-[#CC3344] text-xs">{errors.companySize.message}</p>
+                    <p className="text-destructive text-xs">{errors.companySize.message}</p>
                   )}
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="hrTeamSize">
-                  Number of HR professionals in your team <span className="text-[#CC3344]">*</span>
+                  Number of HR professionals in your team <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="hrTeamSize"
@@ -514,7 +514,7 @@ export default function BetaApplicationPage() {
                   className={errors.hrTeamSize ? "border-destructive" : ""}
                 />
                 {errors.hrTeamSize && (
-                  <p className="text-[#CC3344] text-xs">{errors.hrTeamSize.message}</p>
+                  <p className="text-destructive text-xs">{errors.hrTeamSize.message}</p>
                 )}
                 {hrTeamSize > 0 && hrTeamSize < 10 && !errors.hrTeamSize && (
                   <div
@@ -544,7 +544,7 @@ export default function BetaApplicationPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="useCase">
                   How is your HR team currently using AI tools?{" "}
-                  <span className="text-[#CC3344]">*</span>
+                  <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-slate-500 text-xs">
                   Describe the specific workflows, tools, or processes where AI is involved. Be as specific as possible.
@@ -557,7 +557,7 @@ export default function BetaApplicationPage() {
                   className={errors.useCase ? "border-destructive" : ""}
                 />
                 {errors.useCase && (
-                  <p className="text-[#CC3344] text-xs">{errors.useCase.message}</p>
+                  <p className="text-destructive text-xs">{errors.useCase.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -574,7 +574,7 @@ export default function BetaApplicationPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="motivation">
                   Why do you want to join the AiQ beta?{" "}
-                  <span className="text-[#CC3344]">*</span>
+                  <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-slate-500 text-xs">
                   What specific problem are you trying to solve? What would a successful outcome look like for your team?
@@ -587,7 +587,7 @@ export default function BetaApplicationPage() {
                   className={errors.motivation ? "border-destructive" : ""}
                 />
                 {errors.motivation && (
-                  <p className="text-[#CC3344] text-xs">{errors.motivation.message}</p>
+                  <p className="text-destructive text-xs">{errors.motivation.message}</p>
                 )}
               </div>
             </CardContent>

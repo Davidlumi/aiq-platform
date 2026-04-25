@@ -109,12 +109,12 @@ const CAPABILITY_DISPLAY: Record<string, string> = {
 };
 
 const CAPABILITY_COLOURS: Record<string, string> = {
-  ai_interaction:         "#3B82F6",
-  ai_output_evaluation:   "#8B5CF6",
-  ai_workflow_design:     "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust:        "#EF4444",
-  ai_change_leadership:   "#06B6D4",
+  ai_interaction:         "#4477AA",
+  ai_output_evaluation:   "#EE6677",
+  ai_workflow_design:     "#228833",
+  workforce_ai_readiness: "#CCBB44",
+  ai_ethics_trust:        "#AA3377",
+  ai_change_leadership:   "#66CCEE",
 };
 
 // ─── NextItem type ────────────────────────────────────────────────────────────

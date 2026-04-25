@@ -20,7 +20,7 @@ const BAND_COLOURS: Record<string, { text: string; bg: string; border: string }>
   critical:   { text: "text-[#CC3344]",     bg: "bg-[#EE6677]/8",     border: "border-[#EE6677]/25" },
   developing: { text: "text-[#99882A]",   bg: "bg-[#CCBB44]/8",   border: "border-[#CCBB44]/25" },
   proficient: { text: "text-primary", bg: "bg-primary/8", border: "border-primary/25" },
-  advanced:   { text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200" },
+  advanced:   { text: "text-[#228833]", bg: "bg-[#228833]/8", border: "border-[#228833]/25" },
 };
 
 function NudgeDialog({
