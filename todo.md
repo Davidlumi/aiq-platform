@@ -1571,8 +1571,15 @@
 - [x] AL-STRESS-03: Fix module player renderers — all 8 modality types now handle generic seeded schema via normaliseSection fallbacks (coaching→reflectionPrompts, quiz→self-assessment, scenario→reflectionPrompts, tutorial→title/content, practical→sections-as-steps, case_study→questions fallback)
 
 ## Learning System Redesign (World-Class LMS Standards)
-- [ ] LMS-01: Research world-class LMS design patterns (Workday Learning, LinkedIn Learning, Degreed, 360Learning)
-- [ ] LMS-02: Redesign Learning Plan page — clear journey stages, rich module cards, progress tracking, next action CTA
-- [ ] LMS-03: Redesign Module Player — consistent formatting across all 6 modality types, rich content rendering
-- [ ] LMS-04: Fix module content — ensure all modules render real content not generic fallback placeholders
-- [ ] LMS-05: Module state system — locked/available/in-progress/completed with clear visual distinction
+- [x] LMS-01: Research world-class LMS design patterns (Workday Learning, LinkedIn Learning, Degreed, 360Learning)
+- [x] LMS-02: Redesign Learning Plan page — clear journey stages, rich module cards, progress tracking, next action CTA
+- [x] LMS-03: Redesign Module Player — consistent formatting across all 6 modality types, rich content rendering
+- [x] LMS-04: Fix module content — ensure all modules render real content not generic fallback placeholders
+- [x] LMS-05: Module state system — locked/available/in-progress/completed with clear visual distinction
+
+## Rich Module Content Rebuild (Apr 2026)
+- [x] MOD-01: Research best-in-class LMS module structure (Coursera, LinkedIn Learning, Degreed, Workday Learning)
+- [x] MOD-02: Redesign module body_json schema to support rich multi-tool 10+ min modules
+- [x] MOD-03: Rebuild LLM module generation prompts to produce rich content (reading + scenario + quiz + reflection + coaching + case study)
+- [x] MOD-04: Regenerate all existing module content using new rich schema
+- [x] MOD-05: Update Module Player to render all new content sections (reading blocks, key concepts, evidence, quiz, reflection, coaching, further reading)

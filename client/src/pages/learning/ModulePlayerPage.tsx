@@ -1,47 +1,53 @@
 /**
  * Module Player Page — AiQ Adaptive Learning Engine
  *
- * Renders all 8 modality types:
- *   tutorial   — structured lesson with sections, examples, key points
- *   practical  — step-by-step exercise with workspace
- *   case_study — narrative scenario with analysis questions
- *   quiz       — multiple-choice questions with explanations
- *   scenario   — branching decision scenario
+ * Renders all 8 modality types with rich, best-in-class content rendering:
+ *   tutorial   — structured lesson with sections, key points, worked example, quiz
+ *   practical  — step-by-step exercise with workspace and success criteria
+ *   case_study — narrative scenario with decision points and analysis
+ *   quiz       — multiple-choice questions with explanations and scoring
+ *   scenario   — branching decision scenario with outcomes
  *   video      — video with transcript and reflection
- *   reflection — guided journalling prompts
- *   coaching   — structured coaching conversation framework
+ *   reflection — guided journalling prompts with coaching guidance
+ *   coaching   — structured coaching framework (GROW model)
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ModulePlayerSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   ArrowLeft, BookOpen, Zap, FileText, HelpCircle, Layers,
   Video, MessageSquare, Users, Clock, CheckCircle2, ChevronRight,
   ChevronLeft, Target, Brain, Lightbulb, BarChart3, Star,
-  AlertCircle, ThumbsUp, RefreshCw, Send, Sparkles,
+  AlertCircle, ThumbsUp, RefreshCw, Sparkles, BookMarked,
+  ListChecks, FlaskConical, Quote, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  ai_interaction:      { label: "AI Interaction",       color: "#4477AA", icon: Zap },
-  ai_output_evaluation:{ label: "AI Output Evaluation", color: "#228833", icon: Brain },
-  ai_ethics_trust:     { label: "AI Ethics & Trust",    color: "#AA3377", icon: Target },
-  ai_change_leadership:{ label: "AI Change Leadership", color: "#D97706", icon: Lightbulb },
-  workflow:            { label: "Workflow Integration", color: "#3b82f6", icon: Layers },
-  data_interpretation: { label: "Data Interpretation",  color: "#8b5cf6", icon: BarChart3 },
+  ai_interaction:       { label: "AI Interaction",         color: "#4477AA", icon: Zap },
+  ai_output_evaluation: { label: "AI Output Evaluation",   color: "#228833", icon: Brain },
+  ai_ethics_trust:      { label: "AI Ethics & Trust",      color: "#AA3377", icon: Target },
+  ai_change_leadership: { label: "AI Change Leadership",   color: "#D97706", icon: Lightbulb },
+  ai_workflow_design:   { label: "AI Workflow Design",     color: "#3b82f6", icon: Layers },
+  workflow:             { label: "Workflow Integration",   color: "#3b82f6", icon: Layers },
+  data_interpretation:  { label: "Data Interpretation",    color: "#8b5cf6", icon: BarChart3 },
+  appropriateness:      { label: "AI Appropriateness",     color: "#059669", icon: Target },
+  execution:            { label: "AI Execution",           color: "#dc2626", icon: Zap },
+  judgement:            { label: "AI Judgement",           color: "#7c3aed", icon: Brain },
+  governance:           { label: "AI Governance",          color: "#0891b2", icon: ListChecks },
+  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#b45309", icon: Users },
 };
 
 const MODALITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   tutorial:   { label: "Tutorial",   color: "#6366f1", icon: BookOpen },
-  practical:  { label: "Practical",  color: "#10b981", icon: Zap },
+  practical:  { label: "Practical",  color: "#10b981", icon: FlaskConical },
   case_study: { label: "Case Study", color: "#f59e0b", icon: FileText },
   quiz:       { label: "Quiz",       color: "#ec4899", icon: HelpCircle },
   scenario:   { label: "Scenario",   color: "#8b5cf6", icon: Layers },
@@ -50,27 +56,235 @@ const MODALITY_META: Record<string, { label: string; color: string; icon: React.
   coaching:   { label: "Coaching",   color: "#84cc16", icon: Users },
 };
 
-// ─── Tutorial Renderer ────────────────────────────────────────────────────────
+// ─── Shared sub-components ────────────────────────────────────────────────────
 
-// Normalise a section from either the typed schema (heading/body) or the generic seeded schema (title/content)
-function normaliseSection(s: any): { heading: string; body: string; examples: any[]; tips: string[] } {
-  return {
-    heading: s?.heading ?? s?.title ?? "Content",
-    body: s?.body ?? s?.content ?? "",
-    examples: s?.examples ?? [],
-    tips: s?.tips ?? [],
-  };
+function IntroductionPanel({ intro }: { intro: any }) {
+  if (!intro) return null;
+  return (
+    <div className="space-y-4">
+      {intro.hook && (
+        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+          <p className="text-sm leading-relaxed font-medium text-foreground">{intro.hook}</p>
+        </div>
+      )}
+      {intro.whyItMatters && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border">
+          <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Why This Matters</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{intro.whyItMatters}</p>
+          </div>
+        </div>
+      )}
+      {intro.learningObjectives && intro.learningObjectives.length > 0 && (
+        <div className="p-4 rounded-xl bg-muted/20 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Learning Objectives</p>
+          <ul className="space-y-2">
+            {intro.learningObjectives.map((obj: string, i: number) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-slate-700">{obj}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
-function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const [sectionIdx, setSectionIdx] = useState(0);
-  const rawSections: any[] = body?.sections ?? [];
-  const sections = rawSections.map(normaliseSection);
-  const keyPoints: string[] = body?.keyPoints ?? body?.keyTakeaways ?? [];
-  const learningObjectives: string[] = body?.learningObjectives ?? body?.objectives ?? [];
-  const citations: string[] = body?.citations ?? [];
+function ConceptSection({ section, index, total }: { section: any; index: number; total: number }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          Section {index + 1} of {total}
+        </span>
+      </div>
+      <h3 className="text-lg font-bold text-foreground">{section.heading}</h3>
+      {section.body && (
+        <div className="space-y-3">
+          {String(section.body).split("\n\n").map((para: string, i: number) => (
+            <p key={i} className="text-sm leading-relaxed text-slate-700">{para}</p>
+          ))}
+        </div>
+      )}
+      {section.keyPoints && section.keyPoints.length > 0 && (
+        <div className="p-4 rounded-xl bg-slate-50 border border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Key Points</p>
+          <ul className="space-y-2">
+            {section.keyPoints.map((kp: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                <span className="text-slate-700">{kp}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {section.example && (
+        <div className="p-4 rounded-xl bg-slate-50 border-l-4 border-primary/60">
+          <p className="text-xs font-semibold text-primary mb-1.5">Real-World Example</p>
+          <p className="text-sm text-slate-700 leading-relaxed">{section.example}</p>
+        </div>
+      )}
+      {section.researchNote && (
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/20 border border-border">
+          <Quote className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground italic leading-relaxed">{section.researchNote}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
-  if (sections.length === 0) {
+function WorkedExamplePanel({ example }: { example: any }) {
+  if (!example) return null;
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded-xl border border-[#C8B07A]/30 bg-[#C8B07A]/5 overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between p-4 text-left"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="flex items-center gap-2.5">
+          <BookMarked className="h-4 w-4 text-[#8E7848]" />
+          <div>
+            <p className="text-xs font-semibold text-[#8E7848] uppercase tracking-wide">Worked Example</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">{example.title}</p>
+          </div>
+        </div>
+        <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-90")} />
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 space-y-4 border-t border-[#C8B07A]/20">
+          <div className="pt-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">The Scenario</p>
+            {String(example.scenario ?? "").split("\n\n").map((p: string, i: number) => (
+              <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+            ))}
+          </div>
+          {example.analysis && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expert Analysis</p>
+              {String(example.analysis).split("\n\n").map((p: string, i: number) => (
+                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+              ))}
+            </div>
+          )}
+          {example.outcome && (
+            <div className="p-3 rounded-lg bg-[#7A9E8E]/10 border border-[#7A9E8E]/20">
+              <p className="text-xs font-semibold text-[#4A6E5E] mb-1">Outcome</p>
+              <p className="text-sm text-slate-700">{example.outcome}</p>
+            </div>
+          )}
+          {example.lessonLearned && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-xs font-semibold text-primary mb-1">Lesson Learned</p>
+              <p className="text-sm text-slate-700 font-medium">{example.lessonLearned}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
+  if (!takeaways || takeaways.length === 0) return null;
+  return (
+    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+      <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3">Key Takeaways</p>
+      <ul className="space-y-2.5">
+        {takeaways.map((t: string, i: number) => (
+          <li key={i} className="flex items-start gap-2.5 text-sm">
+            <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+            <span className="text-slate-700 font-medium">{t}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function FurtherReadingPanel({ items }: { items: any[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="p-4 rounded-xl bg-slate-50/70 border border-border">
+      <div className="flex items-center gap-2 mb-3">
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Further Reading</p>
+      </div>
+      <ul className="space-y-3">
+        {items.map((item: any, i: number) => (
+          <li key={i} className="space-y-0.5">
+            <p className="text-xs font-semibold text-foreground">{item.title}</p>
+            <p className="text-xs text-muted-foreground">{item.author} · {item.source} · {item.year}</p>
+            {item.relevance && <p className="text-xs text-slate-600 italic">{item.relevance}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ─── Tutorial Renderer ────────────────────────────────────────────────────────
+
+function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"intro" | "learn" | "quiz">("intro");
+  const [sectionIdx, setSectionIdx] = useState(0);
+  const [quizIdx, setQuizIdx] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [answered, setAnswered] = useState(false);
+  const [scores, setScores] = useState<boolean[]>([]);
+
+  // New rich schema
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const workedExample = body?.workedExample;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? body?.keyPoints ?? [];
+  const furtherReading: any[] = body?.furtherReading ?? [];
+  const quizQuestions: any[] = body?.quizQuestions ?? body?.questions ?? [];
+
+  // Normalise legacy sections
+  const normalisedSections = sections.map((s: any) => ({
+    heading: s?.heading ?? s?.title ?? "Content",
+    body: s?.body ?? s?.content ?? "",
+    keyPoints: s?.keyPoints ?? s?.tips ?? [],
+    example: s?.example ?? (s?.examples?.[0]?.scenario ?? s?.examples?.[0] ?? null),
+    researchNote: s?.researchNote ?? null,
+  }));
+
+  const currentSection = normalisedSections[sectionIdx];
+  const isLastSection = sectionIdx === normalisedSections.length - 1;
+  const hasQuiz = quizQuestions.length > 0;
+
+  // Quiz state
+  const currentQ = quizQuestions[quizIdx];
+  const isLastQ = quizIdx === quizQuestions.length - 1;
+  const correctIdx: number = typeof currentQ?.correctIndex === "number" ? currentQ.correctIndex : 0;
+  const isCorrect = answered && selectedIdx === correctIdx;
+
+  const handleAnswer = (idx: number) => {
+    if (answered) return;
+    setSelectedIdx(idx);
+    setAnswered(true);
+    setScores(s => [...s, idx === correctIdx]);
+  };
+
+  const handleNextQ = () => {
+    if (isLastQ) {
+      const correct = scores.filter(Boolean).length;
+      const score = Math.round((correct / quizQuestions.length) * 100);
+      onComplete(score);
+    } else {
+      setQuizIdx(i => i + 1);
+      setSelectedIdx(null);
+      setAnswered(false);
+    }
+  };
+
+  if (normalisedSections.length === 0 && !intro) {
     return (
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-slate-50 border border-border">
@@ -83,127 +297,154 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
     );
   }
 
-  const section = sections[sectionIdx];
-  const isLast = sectionIdx === sections.length - 1;
-
   return (
-    <div className="space-y-5">
-      {/* Learning objectives */}
-      {sectionIdx === 0 && learningObjectives.length > 0 && (
-        <div className="p-4 rounded-xl bg-muted/30 border border-border">
-          <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Learning Objectives</p>
-          <ul className="space-y-1.5">
-            {learningObjectives.map((obj, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                <span>{obj}</span>
-              </li>
-            ))}
-          </ul>
+    <div className="space-y-6">
+      {/* Phase tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
+        {([
+          { id: "intro", label: "Overview" },
+          { id: "learn", label: "Learn" },
+          ...(hasQuiz ? [{ id: "quiz", label: "Check" }] : []),
+        ] as const).map(tab => (
+          <button
+            key={tab.id}
+            className={cn("flex-1 py-1.5 px-2 rounded-lg text-xs font-medium capitalize transition-all",
+              phase === tab.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
+            onClick={() => setPhase(tab.id as any)}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {normalisedSections.length > 0 && (
+            <div className="p-3 rounded-xl bg-slate-50 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">In this module</p>
+              <ul className="space-y-1">
+                {normalisedSections.map((s, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                    {s.heading}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("learn")}>
+            Start Learning<ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
-      {/* Section progress */}
-      <div className="flex items-center gap-2">
-        {sections.map((_, i) => (
-          <div key={i} className={cn("h-1.5 flex-1 rounded-full transition-all",
-            i < sectionIdx ? "bg-primary" : i === sectionIdx ? "bg-primary/60" : "bg-muted")} />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">Section {sectionIdx + 1} of {sections.length}</p>
-
-      {/* Section content */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold">{section.heading}</h3>
-        {section.body && (
-          <div className="prose prose-sm prose-slate max-w-none">
-            {String(section.body).split("\n\n").map((para: string, i: number) => (
-              <p key={i} className="text-sm leading-relaxed text-slate-700 mb-3">{para}</p>
+      {phase === "learn" && (
+        <div className="space-y-6">
+          {/* Section progress */}
+          <div className="flex items-center gap-1.5">
+            {normalisedSections.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full transition-all",
+                i < sectionIdx ? "bg-primary" : i === sectionIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
-        )}
 
-        {/* Examples */}
-        {section.examples && section.examples.length > 0 && (
-          <div className="space-y-3">
-            {section.examples.map((ex: any, i: number) => (
-              <div key={i} className="p-4 rounded-xl bg-slate-50 border-l-4 border-primary/60">
-                <p className="text-xs font-semibold text-primary mb-1.5">Example {i + 1}</p>
-                <p className="text-sm">{ex.scenario ?? ex}</p>
-                {ex.prompt && (
-                  <div className="mt-2 p-2 rounded bg-slate-50">
-                    <p className="text-xs font-mono text-muted-foreground">{ex.prompt}</p>
-                  </div>
-                )}
-                {ex.output && (
-                  <div className="mt-2 p-2 rounded bg-[#7A9E8E]/10 border border-[#7A9E8E]/30">
-                    <p className="text-xs text-[#4A6E5E] font-semibold mb-1">Output</p>
-                    <p className="text-xs text-slate-600">{ex.output}</p>
-                  </div>
-                )}
+          {currentSection && (
+            <ConceptSection section={currentSection} index={sectionIdx} total={normalisedSections.length} />
+          )}
+
+          {/* Worked example on last section */}
+          {isLastSection && workedExample && (
+            <WorkedExamplePanel example={workedExample} />
+          )}
+
+          {/* Key takeaways on last section */}
+          {isLastSection && <KeyTakeawaysPanel takeaways={keyTakeaways} />}
+
+          {/* Further reading on last section */}
+          {isLastSection && <FurtherReadingPanel items={furtherReading} />}
+
+          {/* Navigation */}
+          <div className="flex gap-3">
+            {sectionIdx > 0 && (
+              <Button variant="outline" onClick={() => setSectionIdx(i => i - 1)} className="gap-1.5">
+                <ChevronLeft className="h-4 w-4" />Previous
+              </Button>
+            )}
+            {!isLastSection && (
+              <Button className="flex-1 gap-1.5" onClick={() => setSectionIdx(i => i + 1)}>
+                Next Section<ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            {isLastSection && hasQuiz && (
+              <Button className="flex-1 gap-1.5" onClick={() => setPhase("quiz")}>
+                Knowledge Check<ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            {isLastSection && !hasQuiz && (
+              <Button className="flex-1 gap-1.5" onClick={() => onComplete(85)}>
+                <CheckCircle2 className="h-4 w-4" />Complete Module
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {phase === "quiz" && hasQuiz && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Knowledge Check</p>
+            <span className="text-xs text-muted-foreground ml-auto">{quizIdx + 1} / {quizQuestions.length}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {quizQuestions.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                i < quizIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === quizIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
+          </div>
+          <div className="p-4 rounded-xl bg-slate-50 border border-border">
+            <p className="font-semibold text-sm leading-relaxed">{currentQ?.question}</p>
+          </div>
+          <div className="space-y-2">
+            {(currentQ?.options ?? []).map((opt: string, i: number) => (
+              <button key={i}
+                className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
+                  !answered && "hover:border-primary/50 hover:bg-muted/20",
+                  answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
+                  answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
+                  !answered && "border-border bg-card")}
+                onClick={() => handleAnswer(i)}>
+                <div className="flex items-start gap-2.5">
+                  <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
+                    answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
+                    answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
+                    "border-muted-foreground text-muted-foreground")}>
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span>{opt}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          {answered && currentQ?.explanation && (
+            <div className={cn("p-4 rounded-xl border text-sm",
+              isCorrect ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30 text-[#4A6E5E]" : "bg-[#C8B07A]/10 border-[#C8B07A]/30 text-[#8E7848]")}>
+              <div className="flex items-start gap-2">
+                {isCorrect ? <ThumbsUp className="h-4 w-4 flex-shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />}
+                <div>
+                  <p className="font-semibold mb-1">{isCorrect ? "Correct!" : "Not quite"}</p>
+                  <p className="text-xs opacity-90">{currentQ.explanation}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Tips from generic seeded schema */}
-        {section.tips && section.tips.length > 0 && (
-          <div className="space-y-1.5">
-            {section.tips.map((tip: string, i: number) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <span className="text-primary mt-0.5">›</span><span>{tip}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {/* Key points (on last section) */}
-        {isLast && keyPoints.length > 0 && (
-          <div className="p-4 rounded-xl bg-muted/20 border border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Takeaways</p>
-            <ul className="space-y-1.5">
-              {keyPoints.map((kp, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>{kp}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Research citations (on last section) */}
-        {isLast && citations.length > 0 && (
-          <div className="p-4 rounded-xl bg-slate-50/50 border border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Further Reading</p>
-            <ul className="space-y-1">
-              {citations.map((c, i) => (
-                <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                  <span className="text-primary mt-0.5">›</span>{c}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <div className="flex gap-3 pt-2">
-        {sectionIdx > 0 && (
-          <Button variant="outline" onClick={() => setSectionIdx(i => i - 1)} className="gap-1.5">
-            <ChevronLeft className="h-4 w-4" />Previous
-          </Button>
-        )}
-        {!isLast && (
-          <Button className="flex-1 gap-1.5" onClick={() => setSectionIdx(i => i + 1)}>
-            Next Section<ChevronRight className="h-4 w-4" />
-          </Button>
-        )}
-        {isLast && (
-          <Button className="flex-1 gap-1.5 " onClick={() => onComplete(85)}>
-            <CheckCircle2 className="h-4 w-4" />Complete Module
-          </Button>
-        )}
-      </div>
+            </div>
+          )}
+          {answered && (
+            <Button className="w-full gap-1.5" onClick={handleNextQ}>
+              {isLastQ ? <><CheckCircle2 className="h-4 w-4" />See Results</> : <>Next Question<ChevronRight className="h-4 w-4" /></>}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -211,103 +452,33 @@ function TutorialRenderer({ body, onComplete }: { body: any; onComplete: (score:
 // ─── Quiz Renderer ────────────────────────────────────────────────────────────
 
 function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const questions: any[] = body?.questions ?? body?.formativeQuizJson ?? [];
+  const [phase, setPhase] = useState<"intro" | "questions">("intro");
   const [qIdx, setQIdx] = useState(0);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [scores, setScores] = useState<boolean[]>([]);
-  const [selfAssessScore, setSelfAssessScore] = useState<number | null>(null);
 
-  // Generic fallback: show content sections + self-assessment when no structured questions
-  if (questions.length === 0) {
-    const sections = (body?.sections ?? []).map(normaliseSection);
-    const keyTakeaways: string[] = body?.keyTakeaways ?? body?.keyPoints ?? [];
-    return (
-      <div className="space-y-5">
-        {sections.length > 0 && (
-          <div className="space-y-4">
-            {sections.map((s: any, i: number) => (
-              <div key={i} className="space-y-2">
-                <h3 className="font-semibold text-sm">{s.heading}</h3>
-                {s.body && <p className="text-sm leading-relaxed text-slate-700">{s.body}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-        {keyTakeaways.length > 0 && (
-          <div className="p-4 rounded-xl bg-muted/20 border border-border">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Key Takeaways</p>
-            <ul className="space-y-1.5">
-              {keyTakeaways.map((kp: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>{kp}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <div className="p-4 rounded-xl bg-slate-50 border border-border">
-          <p className="text-xs font-semibold text-muted-foreground mb-3">How well do you feel you understand this topic?</p>
-          <div className="grid grid-cols-3 gap-2">
-            {[{label: "Still learning", score: 60}, {label: "Mostly clear", score: 75}, {label: "Confident", score: 90}].map(opt => (
-              <button key={opt.score}
-                className={cn("p-3 rounded-xl border text-xs font-medium transition-all",
-                  selfAssessScore === opt.score ? "border-primary bg-primary/10 text-primary" : "border-border bg-card hover:border-primary/40")}
-                onClick={() => setSelfAssessScore(opt.score)}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <Button className="w-full gap-1.5" disabled={selfAssessScore === null} onClick={() => onComplete(selfAssessScore ?? 75)}>
-          <CheckCircle2 className="h-4 w-4" />Complete Knowledge Check
-        </Button>
-      </div>
-    );
-  }
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const questions: any[] = body?.quizQuestions ?? body?.questions ?? [];
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
 
   const q = questions[qIdx];
   const isLast = qIdx === questions.length - 1;
-
-  // Normalise options to plain strings
-  const rawOptions: any[] = q.options ?? [];
-  const optionTexts: string[] = rawOptions.map((o: any) =>
-    typeof o === "string" ? o : (o.text ?? String(o))
-  );
-  const optionIds: string[] = rawOptions.map((o: any, i: number) =>
-    typeof o === "string" ? String(i) : (o.id ?? String(i))
-  );
-
-  // Resolve correct index — supports numeric correctIndex OR letter/id correctAnswer
-  const correctIdx: number = (() => {
-    if (typeof q.correctIndex === "number") return q.correctIndex;
-    const ca = q.correctAnswer ?? q.correct_answer;
-    if (ca !== undefined) {
-      const byId = optionIds.indexOf(String(ca));
-      if (byId !== -1) return byId;
-      // Try letter A/B/C/D → 0/1/2/3
-      const letter = String(ca).toLowerCase();
-      const letterIdx = "abcdefghij".indexOf(letter);
-      if (letterIdx !== -1) return letterIdx;
-    }
-    return 0;
-  })();
-
+  const correctIdx: number = typeof q?.correctIndex === "number" ? q.correctIndex : 0;
   const isCorrect = answered && selectedIdx === correctIdx;
 
   const handleAnswer = (idx: number) => {
     if (answered) return;
     setSelectedIdx(idx);
     setAnswered(true);
-    setScores(s => { const n = [...s]; n.push(idx === correctIdx); return n; });
+    setScores(s => [...s, idx === correctIdx]);
   };
 
   const handleNext = () => {
     if (isLast) {
       const correct = scores.filter(Boolean).length;
-      const score = Math.round((correct / questions.length) * 100);
-      onComplete(score);
+      onComplete(Math.round((correct / questions.length) * 100));
     } else {
       setQIdx(i => i + 1);
       setSelectedIdx(null);
@@ -315,66 +486,104 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
     }
   };
 
-  return (
-    <div className="space-y-5">
-      {/* Progress */}
-      <div className="flex items-center gap-2">
-        {questions.map((_, i) => (
-          <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">Question {qIdx + 1} of {questions.length}</p>
-
-      {/* Question */}
-      <div className="p-4 rounded-xl bg-slate-50 border border-border">
-        <p className="font-semibold text-sm leading-relaxed">{q.question}</p>
-        {q.context && <p className="text-xs text-muted-foreground mt-2">{q.context}</p>}
-      </div>
-
-      {/* Options */}
-      <div className="space-y-2">
-        {optionTexts.map((optText: string, i: number) => (
-          <button key={i}
-            className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
-              !answered && "hover:border-primary/50 hover:bg-muted/20",
-              answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
-              answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
-              !answered && selectedIdx === i && "border-primary bg-muted/20",
-              !answered && selectedIdx !== i && "border-border bg-card",
-            )}
-            onClick={() => handleAnswer(i)}>
-            <div className="flex items-start gap-2.5">
-              <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
-                answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
-                answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
-                "border-muted-foreground text-muted-foreground")}>
-                {String.fromCharCode(65 + i)}
-              </span>
-              <span>{optText}</span>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Explanation */}
-      {answered && q.explanation && (
-        <div className={cn("p-4 rounded-xl border text-sm",
-          isCorrect ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30 text-[#4A6E5E]" : "bg-[#C8B07A]/10 border-[#C8B07A]/30 text-[#8E7848]")}>
-          <div className="flex items-start gap-2">
-            {isCorrect ? <ThumbsUp className="h-4 w-4 flex-shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />}
-            <div>
-              <p className="font-semibold mb-1">{isCorrect ? "Correct!" : "Not quite"}</p>
-              <p className="text-xs opacity-90">{q.explanation}</p>
-            </div>
+  if (questions.length === 0) {
+    return (
+      <div className="space-y-5">
+        {sections.map((s: any, i: number) => (
+          <div key={i} className="space-y-2">
+            <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+            <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
           </div>
+        ))}
+        <KeyTakeawaysPanel takeaways={keyTakeaways} />
+        <Button className="w-full gap-1.5" onClick={() => onComplete(80)}>
+          <CheckCircle2 className="h-4 w-4" />Complete Knowledge Check
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pre-reading</p>
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  {(s.keyPoints ?? []).map((kp: string, j: number) => (
+                    <div key={j} className="flex items-start gap-2 text-xs text-muted-foreground ml-3">
+                      <span className="text-primary mt-0.5">›</span><span>{kp}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("questions")}>
+            Start Quiz ({questions.length} questions)<ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
-      {answered && (
-        <Button className="w-full gap-1.5" onClick={handleNext}>
-          {isLast ? <><CheckCircle2 className="h-4 w-4" />See Results</> : <>Next Question<ChevronRight className="h-4 w-4" /></>}
-        </Button>
+      {phase === "questions" && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold">Question {qIdx + 1} of {questions.length}</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {questions.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
+          </div>
+          <div className="p-4 rounded-xl bg-slate-50 border border-border">
+            <p className="font-semibold text-sm leading-relaxed">{q?.question}</p>
+          </div>
+          <div className="space-y-2">
+            {(q?.options ?? []).map((opt: string, i: number) => (
+              <button key={i}
+                className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
+                  !answered && "hover:border-primary/50 hover:bg-muted/20",
+                  answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
+                  answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
+                  !answered && "border-border bg-card")}
+                onClick={() => handleAnswer(i)}>
+                <div className="flex items-start gap-2.5">
+                  <span className={cn("w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5",
+                    answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
+                    answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
+                    "border-muted-foreground text-muted-foreground")}>
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span>{opt}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          {answered && q?.explanation && (
+            <div className={cn("p-4 rounded-xl border text-sm",
+              isCorrect ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30 text-[#4A6E5E]" : "bg-[#C8B07A]/10 border-[#C8B07A]/30 text-[#8E7848]")}>
+              <div className="flex items-start gap-2">
+                {isCorrect ? <ThumbsUp className="h-4 w-4 flex-shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />}
+                <div>
+                  <p className="font-semibold mb-1">{isCorrect ? "Correct!" : "Not quite"}</p>
+                  <p className="text-xs opacity-90">{q.explanation}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {answered && (
+            <Button className="w-full gap-1.5" onClick={handleNext}>
+              {isLast ? <><CheckCircle2 className="h-4 w-4" />See Results</> : <>Next Question<ChevronRight className="h-4 w-4" /></>}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -383,18 +592,23 @@ function QuizRenderer({ body, onComplete }: { body: any; onComplete: (score: num
 // ─── Practical Renderer ───────────────────────────────────────────────────────
 
 function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  // Support steps (typed schema) or sections (generic seeded schema) as fallback
-  const rawSteps: any[] = body?.steps ?? (body?.sections ?? []).map((s: any) => ({
-    title: s?.title ?? s?.heading ?? "Step",
-    instruction: s?.content ?? s?.body ?? "",
-    context: undefined,
-    prompt: (s?.tips ?? [])[0] ?? undefined,
-    requiresInput: true,
-  }));
-  const steps: any[] = rawSteps;
+  const [phase, setPhase] = useState<"intro" | "exercise">("intro");
   const [stepIdx, setStepIdx] = useState(0);
-  const [workspaceText, setWorkspaceText] = useState("");
+  const [responses, setResponses] = useState<Record<number, string>>({});
   const [stepsDone, setStepsDone] = useState<Set<number>>(new Set());
+
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const exercise = body?.practicalExercise;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
+
+  // Support both new schema (practicalExercise.steps) and legacy schema (body.steps / body.sections)
+  const steps: any[] = exercise?.steps ?? body?.steps ?? sections.map((s: any, i: number) => ({
+    stepNumber: i + 1,
+    instruction: s?.body ?? s?.content ?? s?.instruction ?? "",
+    tip: (s?.tips ?? [])[0] ?? s?.tip ?? null,
+    title: s?.heading ?? s?.title ?? `Step ${i + 1}`,
+  }));
 
   const step = steps[stepIdx];
   const isLast = stepIdx === steps.length - 1;
@@ -403,81 +617,133 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
     setStepsDone(s => { const next = new Set(s); next.add(stepIdx); return next; });
     if (!isLast) {
       setStepIdx(i => i + 1);
-      setWorkspaceText("");
     } else {
       onComplete(90);
     }
   };
 
-  if (steps.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground text-sm mb-4">Practical steps are being prepared.</p>
-        <Button onClick={() => onComplete(80)}>Mark Complete</Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-5">
-      {/* Step progress */}
-      <div className="flex items-center gap-1.5">
-        {steps.map((_, i) => (
-          <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            stepsDone.has(i) ? "bg-primary" : i === stepIdx ? "bg-primary/60" : "bg-muted")} />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">Step {stepIdx + 1} of {steps.length}</p>
+    <div className="space-y-6">
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && !exercise && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Background</p>
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {exercise && (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Exercise</p>
+              <p className="text-sm font-semibold">{exercise.title}</p>
+              {exercise.context && <p className="text-sm text-slate-700">{exercise.context}</p>}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-muted-foreground">{steps.length} steps</span>
+                {exercise.successCriteria && (
+                  <span className="text-xs text-muted-foreground">· {exercise.successCriteria.length} success criteria</span>
+                )}
+              </div>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("exercise")}>
+            Start Exercise<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
-      {/* Step content */}
-      <div className="space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
-            {stepIdx + 1}
+      {phase === "exercise" && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-1.5">
+            {steps.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                stepsDone.has(i) ? "bg-primary" : i === stepIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
           </div>
-          <div>
-            <h3 className="font-semibold text-sm">{step.title ?? `Step ${stepIdx + 1}`}</h3>
-            {step.instruction && <p className="text-sm text-slate-600 mt-1">{step.instruction}</p>}
+          <p className="text-xs text-muted-foreground">Step {stepIdx + 1} of {steps.length}</p>
+
+          {step && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-sm font-bold text-primary">
+                  {step.stepNumber ?? stepIdx + 1}
+                </div>
+                <div className="flex-1">
+                  {step.title && step.title !== `Step ${stepIdx + 1}` && (
+                    <h3 className="font-semibold text-sm mb-1">{step.title}</h3>
+                  )}
+                  <p className="text-sm leading-relaxed text-slate-700">{step.instruction}</p>
+                </div>
+              </div>
+
+              {step.tip && (
+                <div className="p-3 rounded-xl bg-[#C8B07A]/10 border border-[#C8B07A]/30">
+                  <p className="text-xs font-semibold text-[#8E7848] mb-1">Expert Tip</p>
+                  <p className="text-xs text-slate-700">{step.tip}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Your Response</p>
+                <textarea
+                  className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50 transition-colors"
+                  placeholder="Type your response here…"
+                  value={responses[stepIdx] ?? ""}
+                  onChange={e => setResponses(r => ({ ...r, [stepIdx]: e.target.value }))}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Success criteria on last step */}
+          {isLast && exercise?.successCriteria && exercise.successCriteria.length > 0 && (
+            <div className="p-4 rounded-xl bg-[#7A9E8E]/10 border border-[#7A9E8E]/30">
+              <p className="text-xs font-semibold text-[#4A6E5E] mb-2">Success Criteria</p>
+              <ul className="space-y-1.5">
+                {exercise.successCriteria.map((c: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#4A6E5E] mt-0.5 flex-shrink-0" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {isLast && exercise?.commonMistakes && exercise.commonMistakes.length > 0 && (
+            <div className="p-4 rounded-xl bg-[#C8B07A]/10 border border-[#C8B07A]/30">
+              <p className="text-xs font-semibold text-[#8E7848] mb-2">Common Mistakes to Avoid</p>
+              <ul className="space-y-1.5">
+                {exercise.commonMistakes.map((m: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                    <AlertCircle className="h-3.5 w-3.5 text-[#8E7848] mt-0.5 flex-shrink-0" />
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {isLast && <KeyTakeawaysPanel takeaways={keyTakeaways} />}
+
+          <div className="flex gap-3">
+            {stepIdx > 0 && (
+              <Button variant="outline" onClick={() => setStepIdx(i => i - 1)} className="gap-1.5">
+                <ChevronLeft className="h-4 w-4" />Back
+              </Button>
+            )}
+            <Button className="flex-1 gap-1.5" onClick={handleStepComplete}
+              disabled={(responses[stepIdx] ?? "").trim().length < 10}>
+              {isLast ? <><CheckCircle2 className="h-4 w-4" />Complete Practical</> : <>Next Step<ChevronRight className="h-4 w-4" /></>}
+            </Button>
           </div>
         </div>
-
-        {step.context && (
-          <div className="p-3 rounded-xl bg-slate-50 border border-border text-sm text-muted-foreground">
-            {step.context}
-          </div>
-        )}
-
-        {step.prompt && (
-          <div className="p-3 rounded-xl bg-muted/20 border border-border">
-            <p className="text-xs font-semibold text-primary mb-1">Your Task</p>
-            <p className="text-sm">{step.prompt}</p>
-          </div>
-        )}
-
-        {/* Workspace */}
-        {step.requiresInput !== false && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-1.5">Your Response</p>
-            <textarea
-              className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50 transition-colors"
-              placeholder="Type your response here…"
-              value={workspaceText}
-              onChange={e => setWorkspaceText(e.target.value)}
-            />
-          </div>
-        )}
-
-        {step.tip && (
-          <div className="p-3 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground">
-            <span className="font-semibold">Tip: </span>{step.tip}
-          </div>
-        )}
-      </div>
-
-      <Button className="w-full gap-1.5" onClick={handleStepComplete}
-        disabled={step.requiresInput !== false && workspaceText.trim().length < 10}>
-        {isLast ? <><CheckCircle2 className="h-4 w-4" />Complete Practical</> : <>Next Step<ChevronRight className="h-4 w-4" /></>}
-      </Button>
+      )}
     </div>
   );
 }
@@ -485,219 +751,123 @@ function PracticalRenderer({ body, onComplete }: { body: any; onComplete: (score
 // ─── Case Study Renderer ──────────────────────────────────────────────────────
 
 function CaseStudyRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const [phase, setPhase] = useState<"read" | "analyse" | "reflect">("read");
+  const [phase, setPhase] = useState<"intro" | "case" | "decision" | "insights">("intro");
+  const [chosen, setChosen] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  // Support both analysisQuestions (typed schema) and questions (generic seeded schema)
-  const questions: any[] = body?.analysisQuestions ?? body?.questions ?? [];
 
-  const allAnswered = questions.every((_, i) => (answers[i] ?? "").trim().length > 20);
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const scenario = body?.decisionScenario;
+  const workedExample = body?.workedExample;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
+  const furtherReading: any[] = body?.furtherReading ?? [];
+
+  // Legacy case study support
+  const legacyNarrative = body?.narrative ?? body?.overview;
+  const legacyQuestions: any[] = body?.analysisQuestions ?? body?.questions ?? [];
+  const allAnswered = legacyQuestions.every((_, i) => (answers[i] ?? "").trim().length > 20);
+
+  const choices: any[] = scenario?.choices ?? body?.choices ?? body?.decisionPoints ?? [];
+  const choice = chosen !== null ? choices[chosen] : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Phase tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
-        {(["read", "analyse", "reflect"] as const).map(p => (
+        {(["intro", "case", ...(choices.length > 0 ? ["decision"] : []), "insights"] as const).map(p => (
           <button key={p} className={cn("flex-1 py-1.5 px-2 rounded-lg text-xs font-medium capitalize transition-all",
             phase === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
-            onClick={() => setPhase(p)}>
-            {p}
+            onClick={() => setPhase(p as any)}>
+            {p === "intro" ? "Overview" : p === "case" ? "Case" : p === "decision" ? "Decision" : "Insights"}
           </button>
         ))}
       </div>
 
-      {phase === "read" && (
-        <div className="space-y-4">
-          {/* Generic seeded schema: show sections as narrative */}
-          {!body?.narrative && (body?.sections ?? []).length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm">The Scenario</h3>
-              {(body.sections as any[]).map(normaliseSection).map((s: any, i: number) => (
-                <div key={i} className="space-y-1">
-                  {s.heading && s.heading !== "Content" && <p className="text-xs font-semibold text-muted-foreground">{s.heading}</p>}
-                  <p className="text-sm leading-relaxed text-slate-700">{s.body}</p>
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Context</p>
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
                 </div>
               ))}
             </div>
           )}
-          {body?.narrative && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm">The Scenario</h3>
-              {String(body.narrative).split("\n\n").map((para: string, i: number) => (
-                <p key={i} className="text-sm leading-relaxed text-slate-700">{para}</p>
-              ))}
-            </div>
-          )}
-          {body?.challenge && (
-            <div className="p-4 rounded-xl bg-[#C08878]/10 border border-[#C08878]/30">
-              <p className="text-xs font-semibold text-[#8E5848] mb-1">The Challenge</p>
-              <p className="text-sm">{body.challenge}</p>
-            </div>
-          )}
-          <Button className="w-full gap-1.5" onClick={() => setPhase("analyse")}>
-            Analyse the Case<ChevronRight className="h-4 w-4" />
+          <Button className="w-full gap-1.5" onClick={() => setPhase("case")}>
+            Read the Case<ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       )}
 
-      {phase === "analyse" && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-sm">Analysis Questions</h3>
-          {questions.map((q: any, i: number) => (
-            <div key={i} className="space-y-2">
-              <p className="text-sm font-medium">{i + 1}. {q.question ?? q}</p>
-              <textarea
-                className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
-                placeholder="Your analysis…"
-                value={answers[i] ?? ""}
-                onChange={e => setAnswers(a => ({ ...a, [i]: e.target.value }))}
-              />
-            </div>
-          ))}
-          <Button className="w-full gap-1.5" disabled={!allAnswered} onClick={() => setPhase("reflect")}>
-            Review Insights<ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
-      {phase === "reflect" && (
-        <div className="space-y-4">
-          {body?.keyInsights && (
-            <div className="p-4 rounded-xl bg-[#7A9E8E]/10 border border-[#7A9E8E]/30">
-              <p className="text-xs font-semibold text-[#4A6E5E] mb-2">Key Insights</p>
-              <ul className="space-y-1.5">
-                {(body.keyInsights as string[]).map((insight: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <ThumbsUp className="h-3.5 w-3.5 text-[#4A6E5E] mt-0.5 flex-shrink-0" />
-                    <span>{insight}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {body?.lessonsLearned && (
-            <div className="p-4 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Lessons Learned</p>
-              <p className="text-sm">{body.lessonsLearned}</p>
-            </div>
-          )}
-          <Button className="w-full gap-1.5 " onClick={() => onComplete(85)}>
-            <CheckCircle2 className="h-4 w-4" />Complete Case Study
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Reflection Renderer ──────────────────────────────────────────────────────
-
-function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const prompts: string[] = body?.prompts ?? body?.reflectionPrompts ?? [];
-  const [responses, setResponses] = useState<Record<number, string>>({});
-  const allAnswered = prompts.every((_, i) => (responses[i] ?? "").trim().length > 30);
-
-  return (
-    <div className="space-y-5">
-      {body?.intro && (
-        <div className="p-4 rounded-xl bg-muted/30 border border-border">
-          <p className="text-sm text-muted-foreground">{body.intro}</p>
-        </div>
-      )}
-      <h3 className="font-semibold text-sm">Reflection Prompts</h3>
-      <p className="text-xs text-muted-foreground">Take your time with each prompt. There are no right or wrong answers.</p>
-      {prompts.map((prompt: string, i: number) => (
-        <div key={i} className="space-y-2">
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
-              {i + 1}
-            </span>
-            <p className="text-sm font-medium leading-relaxed">{prompt}</p>
-          </div>
-          <textarea
-            className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
-            placeholder="Reflect here…"
-            value={responses[i] ?? ""}
-            onChange={e => setResponses(r => ({ ...r, [i]: e.target.value }))}
-          />
-        </div>
-      ))}
-      {body?.closingThought && (
-        <div className="p-3 rounded-xl bg-slate-50/50 border border-border text-xs text-muted-foreground italic">
-          {body.closingThought}
-        </div>
-      )}
-      <Button className="w-full gap-1.5 " disabled={!allAnswered} onClick={() => onComplete(90)}>
-        <CheckCircle2 className="h-4 w-4" />Complete Reflection
-      </Button>
-    </div>
-  );
-}
-
-// ─── Scenario Renderer ────────────────────────────────────────────────────────
-
-function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  const [step, setStep] = useState<"setup" | "decision" | "outcome">("setup");
-  const [chosen, setChosen] = useState<number | null>(null);
-  const choices: any[] = body?.choices ?? body?.decisionPoints ?? [];
-
-  // Generic fallback: no choices → show content + reflection
-  const hasChoices = choices.length > 0;
-  const hasSituation = !!(body?.situation ?? body?.overview ?? (body?.sections ?? []).length > 0);
-  // Build situation text from generic schema
-  const situationText = body?.situation ?? body?.overview ?? 
-    (body?.sections ?? []).map(normaliseSection).map((s: any) => s.body).filter(Boolean).join("\n\n");
-
-  const choice = chosen !== null ? choices[chosen] : null;
-
-  return (
-    <div className="space-y-5">
-      {step === "setup" && (
-        <>
-          {situationText && (
-            <div className="space-y-3">
+      {phase === "case" && (
+        <div className="space-y-5">
+          {scenario && (
+            <div className="space-y-4">
               <h3 className="font-semibold text-sm">The Situation</h3>
-              {String(situationText).split("\n\n").map((p: string, i: number) => (
+              {String(scenario.situation ?? "").split("\n\n").map((p: string, i: number) => (
+                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+              ))}
+              {scenario.yourRole && (
+                <div className="p-4 rounded-xl bg-muted/20 border border-border">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Your Role</p>
+                  <p className="text-sm">{scenario.yourRole}</p>
+                </div>
+              )}
+              {scenario.stakeholders && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-border">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Key Stakeholders</p>
+                  <p className="text-sm text-slate-700">{scenario.stakeholders}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {!scenario && legacyNarrative && (
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">The Case</h3>
+              {String(legacyNarrative).split("\n\n").map((p: string, i: number) => (
                 <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
               ))}
             </div>
           )}
-          {body?.yourRole && (
-            <div className="p-4 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground mb-1">Your Role</p>
-              <p className="text-sm">{body.yourRole}</p>
-            </div>
+          {workedExample && !scenario && (
+            <WorkedExamplePanel example={workedExample} />
           )}
-          {hasChoices ? (
-            <Button className="w-full gap-1.5" onClick={() => setStep("decision")}>
-              Make Your Decision<ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            // No choices: show reflection prompts from generic schema
+          {legacyQuestions.length > 0 && (
             <div className="space-y-4">
-              {(body?.reflectionPrompts ?? []).length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold text-muted-foreground">Reflection Prompts</p>
-                  {(body.reflectionPrompts as string[]).map((prompt: string, i: number) => (
-                    <div key={i} className="p-3 rounded-xl bg-muted/20 border border-border">
-                      <p className="text-sm">{prompt}</p>
-                    </div>
-                  ))}
+              <h3 className="font-semibold text-sm">Analysis Questions</h3>
+              {legacyQuestions.map((q: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <p className="text-sm font-medium">{i + 1}. {q.question ?? q}</p>
+                  <textarea
+                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    placeholder="Your analysis…"
+                    value={answers[i] ?? ""}
+                    onChange={e => setAnswers(a => ({ ...a, [i]: e.target.value }))}
+                  />
                 </div>
-              )}
-              <Button className="w-full gap-1.5 " onClick={() => onComplete(80)}>
-                <CheckCircle2 className="h-4 w-4" />Complete Scenario
-              </Button>
+              ))}
             </div>
           )}
-        </>
+          <Button className="w-full gap-1.5"
+            disabled={legacyQuestions.length > 0 && !allAnswered}
+            onClick={() => setPhase(choices.length > 0 ? "decision" : "insights")}>
+            {choices.length > 0 ? <>Make Your Decision<ChevronRight className="h-4 w-4" /></> : <>View Insights<ChevronRight className="h-4 w-4" /></>}
+          </Button>
+        </div>
       )}
 
-      {step === "decision" && (
-        <>
-          <div className="p-4 rounded-xl bg-muted/20 border border-border">
-            <p className="text-xs font-semibold text-muted-foreground mb-1">Decision Point</p>
-            <p className="text-sm font-medium">{body?.decisionQuestion ?? "What would you do?"}</p>
-          </div>
+      {phase === "decision" && choices.length > 0 && (
+        <div className="space-y-5">
+          {scenario?.decisionQuestion && (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Decision Point</p>
+              <p className="text-sm font-semibold">{scenario.decisionQuestion}</p>
+            </div>
+          )}
           <div className="space-y-2">
             {choices.map((c: any, i: number) => (
               <button key={i}
@@ -713,37 +883,284 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
               </button>
             ))}
           </div>
-          <Button className="w-full gap-1.5" disabled={chosen === null} onClick={() => setStep("outcome")}>
-            See Outcome<ChevronRight className="h-4 w-4" />
+          {choice && (
+            <div className={cn("p-4 rounded-xl border",
+              choice.isOptimal ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30" : "bg-[#C8B07A]/10 border-[#C8B07A]/30")}>
+              <p className={cn("text-xs font-semibold mb-1.5", choice.isOptimal ? "text-[#4A6E5E]" : "text-[#8E7848]")}>
+                {choice.isOptimal ? "Strong Choice" : "Consider This"}
+              </p>
+              <p className="text-sm">{choice.outcome ?? choice.feedback}</p>
+              {choice.reasoning && (
+                <p className="text-xs text-muted-foreground mt-2 italic">{choice.reasoning}</p>
+              )}
+            </div>
+          )}
+          {scenario?.bestPractice && chosen !== null && (
+            <div className="p-4 rounded-xl bg-slate-50 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
+              <p className="text-sm">{scenario.bestPractice}</p>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" disabled={chosen === null} onClick={() => setPhase("insights")}>
+            View Insights<ChevronRight className="h-4 w-4" />
           </Button>
-        </>
+        </div>
       )}
 
-      {step === "outcome" && choice && (
-        <>
-          <div className={cn("p-4 rounded-xl border",
-            choice.isOptimal ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30" : "bg-[#C8B07A]/10 border-[#C8B07A]/30")}>
-            <p className={cn("text-xs font-semibold mb-1", choice.isOptimal ? "text-[#4A6E5E]" : "text-[#8E7848]")}>
-              {choice.isOptimal ? "Strong Choice" : "Consider This"}
-            </p>
-            <p className="text-sm">{choice.outcome ?? choice.feedback ?? "Good thinking — here's what typically happens."}</p>
-          </div>
-          {body?.bestPractice && (
+      {phase === "insights" && (
+        <div className="space-y-5">
+          {workedExample && scenario && <WorkedExamplePanel example={workedExample} />}
+          <KeyTakeawaysPanel takeaways={keyTakeaways} />
+          <FurtherReadingPanel items={furtherReading} />
+          <Button className="w-full gap-1.5" onClick={() => onComplete(choice?.isOptimal ? 90 : chosen !== null ? 75 : 80)}>
+            <CheckCircle2 className="h-4 w-4" />Complete Case Study
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Scenario Renderer ────────────────────────────────────────────────────────
+
+function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"intro" | "situation" | "decision" | "outcome">("intro");
+  const [chosen, setChosen] = useState<number | null>(null);
+
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const scenario = body?.decisionScenario;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
+  const furtherReading: any[] = body?.furtherReading ?? [];
+
+  // Legacy scenario support
+  const legacySituation = body?.situation ?? body?.overview;
+  const legacyChoices: any[] = body?.choices ?? body?.decisionPoints ?? [];
+  const choices: any[] = scenario?.choices ?? legacyChoices;
+  const choice = chosen !== null ? choices[chosen] : null;
+
+  return (
+    <div className="space-y-6">
+      {/* Phase tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-border/50">
+        {(["intro", "situation", "decision", "outcome"] as const).map(p => (
+          <button key={p} className={cn("flex-1 py-1.5 px-2 rounded-lg text-xs font-medium capitalize transition-all",
+            phase === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}
+            onClick={() => setPhase(p)}>
+            {p === "intro" ? "Context" : p === "situation" ? "Scenario" : p === "decision" ? "Decide" : "Outcome"}
+          </button>
+        ))}
+      </div>
+
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && (
+            <div className="space-y-4">
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("situation")}>
+            Enter Scenario<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {phase === "situation" && (
+        <div className="space-y-5">
+          {(scenario?.situation || legacySituation) && (
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">The Situation</h3>
+              {String(scenario?.situation ?? legacySituation ?? "").split("\n\n").map((p: string, i: number) => (
+                <p key={i} className="text-sm leading-relaxed text-slate-700">{p}</p>
+              ))}
+            </div>
+          )}
+          {(scenario?.yourRole ?? body?.yourRole) && (
             <div className="p-4 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
-              <p className="text-sm">{body.bestPractice}</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Your Role</p>
+              <p className="text-sm">{scenario?.yourRole ?? body?.yourRole}</p>
             </div>
           )}
-          {body?.learningPoint && (
+          {scenario?.stakeholders && (
+            <div className="p-3 rounded-xl bg-slate-50 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Key Stakeholders</p>
+              <p className="text-sm text-slate-700">{scenario.stakeholders}</p>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("decision")}>
+            Make Your Decision<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {phase === "decision" && (
+        <div className="space-y-5">
+          {(scenario?.decisionQuestion ?? body?.decisionQuestion) && (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Decision Point</p>
+              <p className="text-sm font-semibold">{scenario?.decisionQuestion ?? body?.decisionQuestion}</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            {choices.map((c: any, i: number) => (
+              <button key={i}
+                className={cn("w-full text-left p-4 rounded-xl border text-sm transition-all",
+                  chosen === i ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}
+                onClick={() => setChosen(i)}>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full border border-muted-foreground text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span>{c.text ?? c.option ?? c}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <Button className="w-full gap-1.5" disabled={chosen === null} onClick={() => setPhase("outcome")}>
+            See Outcome<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {phase === "outcome" && (
+        <div className="space-y-5">
+          {choice && (
+            <div className={cn("p-4 rounded-xl border",
+              choice.isOptimal ? "bg-[#7A9E8E]/10 border-[#7A9E8E]/30" : "bg-[#C8B07A]/10 border-[#C8B07A]/30")}>
+              <p className={cn("text-xs font-semibold mb-1.5", choice.isOptimal ? "text-[#4A6E5E]" : "text-[#8E7848]")}>
+                {choice.isOptimal ? "Strong Choice" : "Consider This"}
+              </p>
+              <p className="text-sm">{choice.outcome ?? choice.feedback}</p>
+              {choice.reasoning && (
+                <p className="text-xs text-muted-foreground mt-2 italic">{choice.reasoning}</p>
+              )}
+            </div>
+          )}
+          {(scenario?.bestPractice ?? body?.bestPractice) && (
             <div className="p-4 rounded-xl bg-slate-50 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground mb-1">Learning Point</p>
-              <p className="text-sm">{body.learningPoint}</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
+              <p className="text-sm">{scenario?.bestPractice ?? body?.bestPractice}</p>
             </div>
           )}
-          <Button className="w-full gap-1.5" onClick={() => onComplete(choice.isOptimal ? 90 : 70)}>
+          <KeyTakeawaysPanel takeaways={keyTakeaways} />
+          <FurtherReadingPanel items={furtherReading} />
+          <Button className="w-full gap-1.5" onClick={() => onComplete(choice?.isOptimal ? 90 : 70)}>
             <CheckCircle2 className="h-4 w-4" />Complete Scenario
           </Button>
-        </>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Reflection Renderer ──────────────────────────────────────────────────────
+
+function ReflectionRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"intro" | "reflect">("intro");
+  const [responses, setResponses] = useState<Record<number, string>>({});
+  const [promptIdx, setPromptIdx] = useState(0);
+
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+
+  // New schema: reflectionPrompts is array of {prompt, guidance}
+  // Legacy schema: reflectionPrompts is array of strings
+  const rawPrompts: any[] = body?.reflectionPrompts ?? body?.prompts ?? [];
+  const prompts = rawPrompts.map((p: any) =>
+    typeof p === "string" ? { prompt: p, guidance: null } : p
+  );
+
+  const currentPrompt = prompts[promptIdx];
+  const isLast = promptIdx === prompts.length - 1;
+  const allAnswered = prompts.every((_, i) => (responses[i] ?? "").trim().length > 30);
+
+  return (
+    <div className="space-y-6">
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priming Your Thinking</p>
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {prompts.length > 0 && (
+            <div className="p-3 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs text-muted-foreground">{prompts.length} reflection prompts · Take your time with each one</p>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase("reflect")}>
+            Begin Reflection<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {phase === "reflect" && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-1.5">
+            {prompts.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                (responses[i] ?? "").trim().length > 30 ? "bg-primary" : i === promptIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Prompt {promptIdx + 1} of {prompts.length}</p>
+
+          {currentPrompt && (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
+                  {promptIdx + 1}
+                </span>
+                <p className="text-sm font-semibold leading-relaxed">{currentPrompt.prompt}</p>
+              </div>
+              {currentPrompt.guidance && (
+                <div className="ml-8 p-3 rounded-lg bg-slate-50 border border-border">
+                  <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
+                </div>
+              )}
+              <textarea
+                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                placeholder="Reflect here — there are no right or wrong answers…"
+                value={responses[promptIdx] ?? ""}
+                onChange={e => setResponses(r => ({ ...r, [promptIdx]: e.target.value }))}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            {promptIdx > 0 && (
+              <Button variant="outline" onClick={() => setPromptIdx(i => i - 1)} className="gap-1.5">
+                <ChevronLeft className="h-4 w-4" />Back
+              </Button>
+            )}
+            {!isLast && (
+              <Button className="flex-1 gap-1.5"
+                disabled={(responses[promptIdx] ?? "").trim().length < 30}
+                onClick={() => setPromptIdx(i => i + 1)}>
+                Next Prompt<ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            {isLast && (
+              <Button className="flex-1 gap-1.5"
+                disabled={(responses[promptIdx] ?? "").trim().length < 30}
+                onClick={() => onComplete(90)}>
+                <CheckCircle2 className="h-4 w-4" />Complete Reflection
+              </Button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -752,68 +1169,172 @@ function ScenarioRenderer({ body, onComplete }: { body: any; onComplete: (score:
 // ─── Coaching Renderer ────────────────────────────────────────────────────────
 
 function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
-  // Support coachingQuestions (typed), questions (generic), or reflectionPrompts (seeded fallback)
-  const questions: string[] = body?.coachingQuestions ?? body?.questions ?? body?.reflectionPrompts ?? [];
-  const [responses, setResponses] = useState<Record<number, string>>({});
-  const [qIdx, setQIdx] = useState(0);
-  const allAnswered = questions.every((_, i) => (responses[i] ?? "").trim().length > 20);
+  const [phase, setPhase] = useState<"intro" | "framework" | "questions">("intro");
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const [questionIdx, setQuestionIdx] = useState(0);
+  const [responses, setResponses] = useState<Record<string, string>>({});
 
-  const q = questions[qIdx];
-  const isLast = qIdx === questions.length - 1;
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const framework = body?.coachingFramework;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
+
+  // New schema: reflectionPrompts as array of {prompt, guidance}
+  // Legacy schema: coachingQuestions as string array
+  const rawPrompts: any[] = body?.reflectionPrompts ?? body?.coachingQuestions ?? body?.questions ?? [];
+  const prompts = rawPrompts.map((p: any) =>
+    typeof p === "string" ? { prompt: p, guidance: null } : p
+  );
+
+  const currentPrompt = prompts[questionIdx];
+  const isLastQ = questionIdx === prompts.length - 1;
+  const allAnswered = prompts.every((_, i) => (responses[`q_${i}`] ?? "").trim().length > 20);
+
+  // If we have a coaching framework, use phase-based navigation
+  const frameworkPhases: any[] = framework?.phases ?? [];
+  const currentFrameworkPhase = frameworkPhases[phaseIdx];
+  const isLastPhase = phaseIdx === frameworkPhases.length - 1;
 
   return (
-    <div className="space-y-5">
-      {body?.intro && (
-        <div className="p-4 rounded-xl bg-muted/30 border border-border">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">Coaching Framework</p>
-          <p className="text-sm text-slate-700">{body.intro}</p>
+    <div className="space-y-6">
+      {phase === "intro" && (
+        <div className="space-y-5">
+          <IntroductionPanel intro={intro} />
+          {sections.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Coaching Context</p>
+              {sections.map((s: any, i: number) => (
+                <div key={i} className="space-y-2">
+                  <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {framework && (
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <p className="text-xs font-semibold text-primary mb-2">Coaching Framework: {framework.model}</p>
+              <div className="flex gap-2 flex-wrap">
+                {frameworkPhases.map((fp: any, i: number) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                    {fp.phase}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <Button className="w-full gap-1.5" onClick={() => setPhase(frameworkPhases.length > 0 ? "framework" : "questions")}>
+            Begin Coaching<ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
-      {/* Progress */}
-      <div className="flex items-center gap-1.5">
-        {questions.map((_, i) => (
-          <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-            (responses[i] ?? "").trim().length > 20 ? "bg-primary" : i === qIdx ? "bg-primary/60" : "bg-muted")} />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">Question {qIdx + 1} of {questions.length}</p>
-
-      {/* Coaching question */}
-      <div className="p-4 rounded-xl bg-muted/30 border border-border">
-        <div className="flex items-start gap-2.5">
-          <Users className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-          <p className="text-sm font-medium leading-relaxed">{q}</p>
+      {phase === "framework" && frameworkPhases.length > 0 && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-1.5">
+            {frameworkPhases.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                i < phaseIdx ? "bg-primary" : i === phaseIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
+          </div>
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
+              {framework.model} — {currentFrameworkPhase?.phase}
+            </p>
+            <p className="text-sm text-slate-700">{currentFrameworkPhase?.purpose}</p>
+          </div>
+          {currentFrameworkPhase?.questions && (
+            <div className="space-y-3">
+              {currentFrameworkPhase.questions.map((q: string, i: number) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-start gap-2.5">
+                    <Users className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium">{q}</p>
+                  </div>
+                  <textarea
+                    className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    placeholder="Your response…"
+                    value={responses[`p${phaseIdx}_q${i}`] ?? ""}
+                    onChange={e => setResponses(r => ({ ...r, [`p${phaseIdx}_q${i}`]: e.target.value }))}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-3">
+            {phaseIdx > 0 && (
+              <Button variant="outline" onClick={() => setPhaseIdx(i => i - 1)} className="gap-1.5">
+                <ChevronLeft className="h-4 w-4" />Back
+              </Button>
+            )}
+            {!isLastPhase && (
+              <Button className="flex-1 gap-1.5" onClick={() => setPhaseIdx(i => i + 1)}>
+                Next Phase<ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            {isLastPhase && (
+              <Button className="flex-1 gap-1.5" onClick={() => prompts.length > 0 ? setPhase("questions") : onComplete(90)}>
+                {prompts.length > 0 ? <>Reflection Prompts<ChevronRight className="h-4 w-4" /></> : <><CheckCircle2 className="h-4 w-4" />Complete Coaching</>}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <textarea
-        className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
-        placeholder="Your response…"
-        value={responses[qIdx] ?? ""}
-        onChange={e => setResponses(r => ({ ...r, [qIdx]: e.target.value }))}
-      />
+      {phase === "questions" && prompts.length > 0 && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-1.5">
+            {prompts.map((_, i) => (
+              <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                (responses[`q_${i}`] ?? "").trim().length > 20 ? "bg-primary" : i === questionIdx ? "bg-primary/60" : "bg-muted")} />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Reflection {questionIdx + 1} of {prompts.length}</p>
 
-      <div className="flex gap-3">
-        {qIdx > 0 && (
-          <Button variant="outline" onClick={() => setQIdx(i => i - 1)} className="gap-1.5">
-            <ChevronLeft className="h-4 w-4" />Back
-          </Button>
-        )}
-        {!isLast && (
-          <Button className="flex-1 gap-1.5" disabled={(responses[qIdx] ?? "").trim().length < 20}
-            onClick={() => setQIdx(i => i + 1)}>
-            Next<ChevronRight className="h-4 w-4" />
-          </Button>
-        )}
-        {isLast && (
-          <Button className="flex-1 gap-1.5 "
-            disabled={(responses[qIdx] ?? "").trim().length < 20}
-            onClick={() => onComplete(90)}>
-            <CheckCircle2 className="h-4 w-4" />Complete Coaching
-          </Button>
-        )}
-      </div>
+          {currentPrompt && (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5">
+                <Users className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-semibold leading-relaxed">{currentPrompt.prompt}</p>
+              </div>
+              {currentPrompt.guidance && (
+                <div className="ml-6 p-3 rounded-lg bg-slate-50 border border-border">
+                  <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
+                </div>
+              )}
+              <textarea
+                className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                placeholder="Your response…"
+                value={responses[`q_${questionIdx}`] ?? ""}
+                onChange={e => setResponses(r => ({ ...r, [`q_${questionIdx}`]: e.target.value }))}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            {questionIdx > 0 && (
+              <Button variant="outline" onClick={() => setQuestionIdx(i => i - 1)} className="gap-1.5">
+                <ChevronLeft className="h-4 w-4" />Back
+              </Button>
+            )}
+            {!isLastQ && (
+              <Button className="flex-1 gap-1.5"
+                disabled={(responses[`q_${questionIdx}`] ?? "").trim().length < 20}
+                onClick={() => setQuestionIdx(i => i + 1)}>
+                Next<ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            {isLastQ && (
+              <Button className="flex-1 gap-1.5"
+                disabled={(responses[`q_${questionIdx}`] ?? "").trim().length < 20}
+                onClick={() => onComplete(90)}>
+                <CheckCircle2 className="h-4 w-4" />Complete Coaching
+              </Button>
+            )}
+          </div>
+          <KeyTakeawaysPanel takeaways={keyTakeaways} />
+        </div>
+      )}
     </div>
   );
 }
@@ -821,54 +1342,153 @@ function CoachingRenderer({ body, onComplete }: { body: any; onComplete: (score:
 // ─── Video Renderer ───────────────────────────────────────────────────────────
 
 function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: number) => void }) {
+  const [phase, setPhase] = useState<"watch" | "reflect">("watch");
   const [watched, setWatched] = useState(false);
-  const [reflectionText, setReflectionText] = useState("");
+  const [reflectionIdx, setReflectionIdx] = useState(0);
+  const [responses, setResponses] = useState<Record<number, string>>({});
+
+  const intro = body?.introduction;
+  const sections: any[] = body?.conceptSections ?? body?.sections ?? [];
+  const workedExample = body?.workedExample;
+  const keyTakeaways: string[] = body?.keyTakeaways ?? [];
+  const furtherReading: any[] = body?.furtherReading ?? [];
+
+  const rawPrompts: any[] = body?.reflectionPrompts ?? [];
+  const prompts = rawPrompts.map((p: any) =>
+    typeof p === "string" ? { prompt: p, guidance: null } : p
+  );
+
+  const currentPrompt = prompts[reflectionIdx];
+  const isLastPrompt = reflectionIdx === prompts.length - 1;
 
   return (
-    <div className="space-y-5">
-      {/* Video placeholder */}
-      <div className="rounded-xl overflow-hidden bg-slate-50 border border-border aspect-video flex items-center justify-center">
-        {body?.videoUrl ? (
-          <iframe src={body.videoUrl} className="w-full h-full" allowFullScreen
-            onLoad={() => setWatched(true)} />
-        ) : (
-          <div className="text-center p-8">
-            <Video className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-40" />
-            <p className="text-sm text-muted-foreground mb-2">Video content</p>
-            <p className="text-xs text-muted-foreground">{body?.videoDescription ?? "Watch the video then complete the reflection below."}</p>
-            <Button variant="outline" size="sm" className="mt-4" onClick={() => setWatched(true)}>
-              Mark as Watched
-            </Button>
+    <div className="space-y-6">
+      {phase === "watch" && (
+        <div className="space-y-5">
+          {/* Video placeholder */}
+          <div className="rounded-xl overflow-hidden bg-slate-50 border border-border aspect-video flex items-center justify-center">
+            {body?.videoUrl ? (
+              <iframe src={body.videoUrl} className="w-full h-full" allowFullScreen onLoad={() => setWatched(true)} />
+            ) : (
+              <div className="text-center p-8">
+                <Video className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-40" />
+                <p className="text-sm font-medium text-foreground mb-1">Video Content</p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {intro?.hook ?? body?.videoDescription ?? "Watch this module then complete the reflection below."}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setWatched(true)}>
+                  Mark as Watched
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Transcript */}
-      {body?.transcript && (
-        <details className="group">
-          <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-            View Transcript
-          </summary>
-          <div className="mt-2 p-3 rounded-xl bg-slate-50/50 border border-border text-xs text-muted-foreground leading-relaxed">
-            {body.transcript}
-          </div>
-        </details>
+          {/* Learning objectives */}
+          {intro?.learningObjectives && intro.learningObjectives.length > 0 && (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Learning Objectives</p>
+              <ul className="space-y-1.5">
+                {intro.learningObjectives.map((obj: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-700">{obj}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Transcript / reading content */}
+          {sections.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                Reading Notes
+              </summary>
+              <div className="mt-3 space-y-4">
+                {sections.map((s: any, i: number) => (
+                  <div key={i} className="space-y-2 pl-4 border-l-2 border-border">
+                    <h4 className="font-semibold text-sm">{s.heading ?? s.title}</h4>
+                    <p className="text-sm leading-relaxed text-slate-700">{s.body ?? s.content}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {workedExample && <WorkedExamplePanel example={workedExample} />}
+
+          {watched && (
+            <Button className="w-full gap-1.5" onClick={() => setPhase("reflect")}>
+              Continue to Reflection<ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       )}
 
-      {/* Reflection */}
-      {watched && (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold">Reflection</p>
-          <p className="text-sm text-muted-foreground">{body?.reflectionPrompt ?? "What was your key takeaway from this video? How will you apply it?"}</p>
-          <textarea
-            className="w-full min-h-[100px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
-            placeholder="Your reflection…"
-            value={reflectionText}
-            onChange={e => setReflectionText(e.target.value)}
-          />
-          <Button className="w-full gap-1.5" disabled={reflectionText.trim().length < 20} onClick={() => onComplete(80)}>
-            <CheckCircle2 className="h-4 w-4" />Complete Module
-          </Button>
+      {phase === "reflect" && (
+        <div className="space-y-5">
+          {prompts.length > 0 ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                {prompts.map((_, i) => (
+                  <div key={i} className={cn("h-1.5 flex-1 rounded-full",
+                    (responses[i] ?? "").trim().length > 30 ? "bg-primary" : i === reflectionIdx ? "bg-primary/60" : "bg-muted")} />
+                ))}
+              </div>
+              {currentPrompt && (
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">{currentPrompt.prompt}</p>
+                  {currentPrompt.guidance && (
+                    <p className="text-xs text-muted-foreground italic">{currentPrompt.guidance}</p>
+                  )}
+                  <textarea
+                    className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                    placeholder="Your reflection…"
+                    value={responses[reflectionIdx] ?? ""}
+                    onChange={e => setResponses(r => ({ ...r, [reflectionIdx]: e.target.value }))}
+                  />
+                </div>
+              )}
+              <div className="flex gap-3">
+                {reflectionIdx > 0 && (
+                  <Button variant="outline" onClick={() => setReflectionIdx(i => i - 1)} className="gap-1.5">
+                    <ChevronLeft className="h-4 w-4" />Back
+                  </Button>
+                )}
+                {!isLastPrompt && (
+                  <Button className="flex-1 gap-1.5"
+                    disabled={(responses[reflectionIdx] ?? "").trim().length < 30}
+                    onClick={() => setReflectionIdx(i => i + 1)}>
+                    Next<ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+                {isLastPrompt && (
+                  <Button className="flex-1 gap-1.5"
+                    disabled={(responses[reflectionIdx] ?? "").trim().length < 30}
+                    onClick={() => onComplete(80)}>
+                    <CheckCircle2 className="h-4 w-4" />Complete Module
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold">Reflection</p>
+              <p className="text-sm text-muted-foreground">{body?.reflectionPrompt ?? "What was your key takeaway? How will you apply it?"}</p>
+              <textarea
+                className="w-full min-h-[120px] p-3 rounded-xl border border-border bg-slate-50 text-sm resize-none focus:outline-none focus:border-primary/50"
+                placeholder="Your reflection…"
+                value={responses[0] ?? ""}
+                onChange={e => setResponses(r => ({ ...r, [0]: e.target.value }))}
+              />
+              <Button className="w-full gap-1.5" disabled={(responses[0] ?? "").trim().length < 20} onClick={() => onComplete(80)}>
+                <CheckCircle2 className="h-4 w-4" />Complete Module
+              </Button>
+            </>
+          )}
+          <KeyTakeawaysPanel takeaways={keyTakeaways} />
+          <FurtherReadingPanel items={furtherReading} />
         </div>
       )}
     </div>
@@ -902,15 +1522,14 @@ function CompletionScreen({
   const isGateBlocked = masteryGateResult?.blocked ?? false;
   const xpEarned = score >= 80 ? 100 : score >= 60 ? 70 : 40;
   const reviewDays = score >= 80 ? 7 : score >= 60 ? 3 : 1;
+
   return (
     <div className="py-6 space-y-5 max-w-lg mx-auto">
       {/* Hero completion banner */}
       <div className="text-center space-y-3">
         <div className={cn(
           "w-20 h-20 rounded-full border-2 flex items-center justify-center mx-auto",
-          isGateBlocked
-            ? "bg-[#C8B07A]/15 border-[#C8B07A]/30"
-            : "bg-[#7A9E8E]/15 border-[#7A9E8E]/30"
+          isGateBlocked ? "bg-[#C8B07A]/15 border-[#C8B07A]/30" : "bg-[#7A9E8E]/15 border-[#7A9E8E]/30"
         )}>
           {isGateBlocked
             ? <AlertCircle className="h-10 w-10 text-[#C8B07A]" />
@@ -925,40 +1544,30 @@ function CompletionScreen({
         </div>
       </div>
 
-      {/* AL-07: Mastery Gate Blocked Banner */}
+      {/* Mastery Gate Blocked Banner */}
       {isGateBlocked && masteryGateResult && (
         <div className="rounded-xl border border-[#C8B07A]/30 bg-[#C8B07A]/10 p-4 space-y-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-[#8E7848]" />
             <span className="text-sm font-semibold text-[#8E7848]">Below Mastery Threshold</span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {masteryGateResult.message}
-          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{masteryGateResult.message}</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${masteryGateResult.score}%`,
-                  background: masteryGateResult.score >= masteryGateResult.threshold ? "#7A9E8E" : "#C8B07A",
-                }}
-              />
+              <div className="h-full rounded-full transition-all"
+                style={{ width: `${masteryGateResult.score}%`, background: masteryGateResult.score >= masteryGateResult.threshold ? "#7A9E8E" : "#C8B07A" }} />
             </div>
             <span className="text-xs font-semibold text-[#8E7848]">{masteryGateResult.score}%</span>
             <span className="text-[10px] text-muted-foreground">/ {masteryGateResult.threshold}% required</span>
           </div>
           {onRetake && (
-            <Button
-              size="sm"
-              className="w-full gap-1.5 bg-[#C8B07A] hover:bg-[#B89A6A] text-white"
-              onClick={onRetake}
-            >
+            <Button size="sm" className="w-full gap-1.5 bg-[#C8B07A] hover:bg-[#B89A6A] text-white" onClick={onRetake}>
               <RefreshCw className="h-3.5 w-3.5" />Retake Module
             </Button>
           )}
         </div>
       )}
+
       {/* Score + XP + review row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-slate-50 p-3 text-center">
@@ -974,6 +1583,7 @@ function CompletionScreen({
           <p className="text-[11px] text-muted-foreground mt-0.5">Next review</p>
         </div>
       </div>
+
       {/* Capability context */}
       <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-slate-50/50">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
@@ -988,9 +1598,10 @@ function CompletionScreen({
           <p className="text-xs font-medium text-[#7A9E8E]">Scheduled ✓</p>
         </div>
       </div>
+
       {/* Next module suggestion */}
       {nextModule && (
-            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Up next in your plan</p>
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1009,11 +1620,7 @@ function CompletionScreen({
               </div>
             </div>
           </div>
-          <Button
-            size="sm"
-            className="w-full gap-1.5"
-            onClick={() => setLocation(`/learning/module/${nextModule.moduleId}`)}
-          >
+          <Button size="sm" className="w-full gap-1.5" onClick={() => setLocation(`/learning/module/${nextModule.moduleId}`)}>
             Start Next Module<ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -1034,9 +1641,8 @@ function CompletionScreen({
       ) : !showNoTransferPrompt ? (
         <button
           className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-          onClick={() => setShowNoTransferPrompt(true)}
-        >
-          Didn’t feel like this translated to practice?
+          onClick={() => setShowNoTransferPrompt(true)}>
+          Didn't feel like this translated to practice?
         </button>
       ) : (
         <div className="rounded-xl border border-border bg-slate-50 p-4 text-left space-y-3">
@@ -1044,16 +1650,14 @@ function CompletionScreen({
           <p className="text-xs text-muted-foreground">This helps us find a better approach for you.</p>
           <div className="grid grid-cols-1 gap-2">
             {([
-              ["no_engagement", "I didn’t really engage with it"],
-              ["partial_engagement", "I started but didn’t finish properly"],
+              ["no_engagement", "I didn't really engage with it"],
+              ["partial_engagement", "I started but didn't finish properly"],
               ["completed_no_change", "I completed it but nothing changed for me"],
               ["regression", "I feel less confident than before"],
             ] as const).map(([reason, label]) => (
-              <button
-                key={reason}
+              <button key={reason}
                 className="text-left text-xs px-3 py-2 rounded-lg border border-border hover:border-[#C8B07A]/50 hover:bg-[#C8B07A]/10 transition-colors"
-                onClick={() => { onReportNoTransfer?.(reason); setShowNoTransferPrompt(false); }}
-              >
+                onClick={() => { onReportNoTransfer?.(reason); setShowNoTransferPrompt(false); }}>
                 {label}
               </button>
             ))}
@@ -1077,7 +1681,6 @@ export default function ModulePlayerPage() {
   const [completed, setCompleted] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
 
-  // Extract planItemId from query string
   const planItemId = (() => {
     if (typeof window === "undefined") return undefined;
     return new URLSearchParams(window.location.search).get("planItemId") ?? undefined;
@@ -1087,11 +1690,12 @@ export default function ModulePlayerPage() {
     { moduleId: params.moduleId ?? "" },
     { enabled: !!params.moduleId, retry: 1 }
   );
-  // LLM-personalised context (cached per user+module)
+
   const { data: personalised, isLoading: personalisedLoading } = trpc.adaptiveLearning.getPersonalisedModuleContext.useQuery(
     { moduleId: params.moduleId ?? "" },
     { enabled: !!params.moduleId && !!mod, retry: 1, staleTime: 1000 * 60 * 60 }
   );
+
   const [noTransferResult, setNoTransferResult] = useState<{ alternativeTitle: string | null; alternativeModality: string | null; message: string } | null>(null);
   const [masteryGateResult, setMasteryGateResult] = useState<{ blocked: boolean; message: string | null; threshold: number; score: number } | null>(null);
 
@@ -1105,9 +1709,7 @@ export default function ModulePlayerPage() {
         setMasteryGateResult(data.score !== undefined ? { blocked: false, message: null, threshold: data.masteryGateThreshold, score: data.score } : null);
       }
     },
-    onError: err => {
-      toast.error(err.message);
-    },
+    onError: err => toast.error(err.message),
   });
 
   const recordNoTransfer = trpc.adaptiveLearning.recordNoTransfer.useMutation({
@@ -1121,32 +1723,17 @@ export default function ModulePlayerPage() {
   const handleComplete = (score: number) => {
     setFinalScore(score);
     setCompleted(true);
-    markComplete.mutate({
-      moduleId: params.moduleId ?? "",
-      planItemId,
-      score,
-      timeSpentMins: 0,
-    });
+    markComplete.mutate({ moduleId: params.moduleId ?? "", planItemId, score, timeSpentMins: 0 });
   };
 
   const handleNoTransfer = (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => {
     if (!planItemId || !mod) return;
-    recordNoTransfer.mutate({
-      planItemId,
-      moduleId: params.moduleId ?? "",
-      capability: mod.capability,
-      noTransferReason: reason,
-      attemptCount: 1,
-    });
+    recordNoTransfer.mutate({ planItemId, moduleId: params.moduleId ?? "", capability: mod.capability, noTransferReason: reason, attemptCount: 1 });
   };
 
-  const handleBack = () => {
-    setLocation("/learning");
-  };
+  const handleBack = () => setLocation("/learning");
 
-  if (isLoading) {
-    return <ModulePlayerSkeleton />;
-  }
+  if (isLoading) return <ModulePlayerSkeleton />;
 
   if (!mod) {
     return (
@@ -1165,7 +1752,6 @@ export default function ModulePlayerPage() {
   const CapIcon = cap.icon;
   const ModalIcon = modal.icon;
 
-  // Parse body JSON
   const body = (() => {
     try {
       return typeof mod.bodyJson === "string" ? JSON.parse(mod.bodyJson as string) : (mod.bodyJson ?? {});
@@ -1174,7 +1760,6 @@ export default function ModulePlayerPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
-      {/* Back button */}
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />Learning Plan
       </Button>
@@ -1237,16 +1822,17 @@ export default function ModulePlayerPage() {
               )}
             </div>
           )}
+
           {/* Module content */}
           <div className="p-5 rounded-2xl border border-border bg-card">
-            {mod.modality === "tutorial"   && <TutorialRenderer  body={body} onComplete={handleComplete} />}
-            {mod.modality === "quiz"       && <QuizRenderer       body={body} onComplete={handleComplete} />}
-            {mod.modality === "practical"  && <PracticalRenderer  body={body} onComplete={handleComplete} />}
-            {mod.modality === "case_study" && <CaseStudyRenderer  body={body} onComplete={handleComplete} />}
-            {mod.modality === "reflection" && <ReflectionRenderer body={body} onComplete={handleComplete} />}
-            {mod.modality === "scenario"   && <ScenarioRenderer   body={body} onComplete={handleComplete} />}
-            {mod.modality === "coaching"   && <CoachingRenderer   body={body} onComplete={handleComplete} />}
-            {mod.modality === "video"      && <VideoRenderer      body={body} onComplete={handleComplete} />}
+            {mod.modality === "tutorial"   && <TutorialRenderer   body={body} onComplete={handleComplete} />}
+            {mod.modality === "quiz"       && <QuizRenderer        body={body} onComplete={handleComplete} />}
+            {mod.modality === "practical"  && <PracticalRenderer   body={body} onComplete={handleComplete} />}
+            {mod.modality === "case_study" && <CaseStudyRenderer   body={body} onComplete={handleComplete} />}
+            {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} />}
+            {mod.modality === "scenario"   && <ScenarioRenderer    body={body} onComplete={handleComplete} />}
+            {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} />}
+            {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} />}
           </div>
         </>
       ) : (
