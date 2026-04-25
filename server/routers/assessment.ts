@@ -1917,25 +1917,42 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
 
   // ── Get full results for a completed session ───────────────────────────────
   results: protectedProcedure
-    .input(z.object({ sessionId: z.string() }))
+    .input(z.object({ sessionId: z.string().optional() }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const session = await db
-        .select()
-        .from(assessmentSessions)
-        .where(
-          and(
-            eq(assessmentSessions.id, input.sessionId),
-            eq(assessmentSessions.userId, ctx.user.id)
+      let session;
+      if (input.sessionId) {
+        session = await db
+          .select()
+          .from(assessmentSessions)
+          .where(
+            and(
+              eq(assessmentSessions.id, input.sessionId),
+              eq(assessmentSessions.userId, ctx.user.id)
+            )
           )
-        )
-        .limit(1);
+          .limit(1);
+      } else {
+        // No sessionId provided — fetch the latest completed session for this user
+        session = await db
+          .select()
+          .from(assessmentSessions)
+          .where(
+            and(
+              eq(assessmentSessions.userId, ctx.user.id),
+              eq(assessmentSessions.state, "completed")
+            )
+          )
+          .orderBy(desc(assessmentSessions.completedAt))
+          .limit(1);
+      }
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      const resolvedSessionId = session[0].id;
       const score = await db
         .select()
         .from(assessmentScores)
-        .where(eq(assessmentScores.sessionId, input.sessionId))
+        .where(eq(assessmentScores.sessionId, resolvedSessionId))
         .limit(1);
       if (!score[0]) return { session: session[0], score: null };
 
@@ -1999,7 +2016,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       const allAnswers = await db
         .select()
         .from(assessmentAnswers)
-        .where(eq(assessmentAnswers.sessionId, input.sessionId))
+        .where(eq(assessmentAnswers.sessionId, resolvedSessionId))
         .orderBy(assessmentAnswers.submittedAt);
 
       const OUTCOME_REVEAL: Record<string, string> = {

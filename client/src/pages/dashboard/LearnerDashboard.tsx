@@ -338,13 +338,14 @@ function TransferFindingsPanel() {
 
 // ─── Competence-Confidence Matrix Widget ────────────────────────────────────
 function CompetenceConfidenceWidget() {
-  const { data: results, isLoading } = trpc.assessment.results.useQuery(
-    { sessionId: undefined as any },
+  const { data: results, isLoading, isError } = trpc.assessment.results.useQuery(
+    {},
     { retry: 1, staleTime: 5 * 60_000 }
   );
   if (isLoading) return (
     <Card className="border-border"><CardContent className="pt-5"><Skeleton className="h-24 w-full" /></CardContent></Card>
   );
+  if (isError) return null; // No completed assessment — hide the widget
   const matrix = results?.competenceConfidenceMatrix;
   const blindSpots = results?.blindSpots;
   if (!matrix || matrix.length === 0) return null;

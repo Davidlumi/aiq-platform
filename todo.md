@@ -1425,3 +1425,6 @@
 - [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework)
 - [ ] AL-09: Social/Collaborative Learning — "Share with team" action on completed modules that creates a nudge with reflection/takeaway
 - [ ] AL-10: Content Freshness / Auto-Generation — flag modules older than 6 months, LLM-generate new scenario variations
+
+## Bug Fixes (UX Deep Dive Follow-up)
+- [x] BF-01: Fix sessionId undefined error on Learner Dashboard — CompetenceConfidenceWidget queries assessment.results with undefined sessionId when user has no completed assessment
