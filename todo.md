@@ -1557,3 +1557,11 @@
 
 ## Strategic Alignment Fix
 - [x] SA-01: Fix strategic priorities not loading on Leader Dashboard — seeded 5 strategic priorities and 5 current challenges for Acme tenant, org context row was missing strategic_priorities_json data
+
+## Peakon-Style Full Dashboard Rebuild
+- [x] PK-01: Build Peakon design system primitives — HeroScore, GradientCell, Sparkline, DistributionBar, PillFilter, AIInsightCard, StatTile, ScoreTrendCard, TrendArrow, BenchmarkChip, SegmentRow
+- [x] PK-02: Rebuild Individual Dashboard — HeroScore, ReadinessDistributionBar, AIInsightCard, ScoreTrendCard, domain sparklines, benchmark comparison
+- [x] PK-03: Rebuild Manager Dashboard — HeroScore, StatTile, ReadinessDistributionBar, AIInsightCard, team heatmap with gradient cells, pill segment filters, member drill-down
+- [x] PK-04: Rebuild Leader Dashboard — HeroScore, StatTile, ReadinessDistributionBar, AIInsightCard, ScoreTrendCard domain trajectory, domain distribution, strategic alignment
+- [x] PK-05: Assessment Results already uses scoreToColor/formatPeakonScore throughout — ScoreRing, CapabilityBar, gradient badges all aligned
+- [x] PK-06: Learning Plan already uses scoreToColor/formatPeakonScore throughout — gap analysis, progress tab, module cards all aligned

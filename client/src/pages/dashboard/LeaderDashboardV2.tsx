@@ -1,26 +1,31 @@
 /**
- * Leader Dashboard — AiQ Dashboard Specification v1.1
+ * Leader Dashboard — Peakon Visual Language v2.0
  *
- * 7 components: Hero Finding, Function Position, Rating Distribution,
- * Domain Distribution, Role-Family Heatmap, Domain Trajectory, Strategic Findings.
- *
- * Department (role-family) filter applied to all queries.
+ * Rebuilt with PeakonPrimitives: HeroScore, StatTile, AIInsightCard,
+ * ReadinessDistributionBar, ScoreTrendCard. Clean light theme.
  */
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
-  RatingBadge,
-  ScoreDisplay,
-  PeakonScoreBadge,
   DashboardCard,
   DomainDot,
   PriorityBadge,
   EmptyState,
+  PeakonScoreBadge,
+  RatingBadge,
   DeltaIndicator,
-  CapabilityBar,
 } from "@/components/dashboard/DashboardUI";
-import { formatPeakonScore } from "@/lib/peakon-colors";
+import {
+  HeroScore,
+  StatTile,
+  AIInsightCard,
+  ReadinessDistributionBar,
+  ScoreTrendCard,
+  PillFilter,
+  Sparkline,
+} from "@/components/dashboard/PeakonPrimitives";
+import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -32,15 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-} from "recharts";
-import {
   AlertTriangle,
   TrendingUp,
   Users,
@@ -51,6 +47,7 @@ import {
   Lightbulb,
   ArrowRight,
   Filter,
+  CheckCircle2,
 } from "lucide-react";
 import { PeakonHeatmap } from "@/components/dashboard/PeakonHeatmap";
 
@@ -61,6 +58,15 @@ const DOMAIN_LABELS: Record<string, string> = {
   workforce_ai_readiness: "Workforce AI Readiness",
   ai_ethics_trust: "AI Ethics & Trust",
   ai_change_leadership: "AI Change Leadership",
+};
+
+const DOMAIN_COLOURS: Record<string, string> = {
+  ai_interaction: "#3B82F6",
+  ai_output_evaluation: "#8B5CF6",
+  ai_workflow_design: "#10B981",
+  workforce_ai_readiness: "#F59E0B",
+  ai_ethics_trust: "#EF4444",
+  ai_change_leadership: "#06B6D4",
 };
 
 const RATING_LABELS: Record<string, string> = {
@@ -94,8 +100,6 @@ const ROLE_FAMILY_OPTIONS = [
 export default function LeaderDashboardV2() {
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
 
-
-  // Stabilise the query input to avoid infinite re-renders
   const queryInput = useMemo(
     () => (roleFamily ? { roleFamily } : undefined),
     [roleFamily],
@@ -112,6 +116,24 @@ export default function LeaderDashboardV2() {
 
   if (isLoading) return <LeaderDashboardSkeleton />;
 
+  // AI insights for the function
+  const functionInsights = useMemo(() => {
+    if (!main) return [];
+    const ins: string[] = [];
+    const aiReadyPct = main.totalHeadcount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.totalHeadcount) * 100) : 0;
+    ins.push(`${aiReadyPct}% of the function is AI Ready (${main.ratingCounts.ai_ready ?? 0} of ${main.totalHeadcount})`);
+    if ((main.ratingCounts.foundation_gap ?? 0) > 0) {
+      ins.push(`${main.ratingCounts.foundation_gap} employees have a foundation gap — urgent intervention needed`);
+    }
+    if (main.functionScore !== null) {
+      ins.push(`Function average: ${formatPeakonScore(main.functionScore)} — ${scoreToReadinessLabel(main.functionScore)}`);
+    }
+    if (main.trajectory90d !== null && main.trajectory90d !== 0) {
+      ins.push(`90-day trajectory: ${main.trajectory90d > 0 ? "+" : ""}${(main.trajectory90d / 10).toFixed(1)} pts — ${main.trajectory90d > 0 ? "improving" : "declining"}`);
+    }
+    return ins;
+  }, [main]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* ── Header ── */}
@@ -123,7 +145,6 @@ export default function LeaderDashboardV2() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Department Filter */}
           <div className="flex items-center gap-2">
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
             <Select
@@ -154,14 +175,14 @@ export default function LeaderDashboardV2() {
 
       {/* Active filter indicator */}
       {roleFamily && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
-          <Filter className="w-3.5 h-3.5 text-primary" />
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
+          <Filter className="w-3.5 h-3.5 text-indigo-500" />
           <span className="text-xs text-foreground">
             Filtered to <strong>{ROLE_FAMILY_OPTIONS.find(o => o.value === roleFamily)?.label ?? roleFamily}</strong>
           </span>
           <button
             onClick={() => setRoleFamily(undefined)}
-            className="ml-auto text-xs text-primary hover:underline font-medium"
+            className="ml-auto text-xs text-indigo-600 hover:underline font-medium"
           >
             Clear filter
           </button>
@@ -180,62 +201,69 @@ export default function LeaderDashboardV2() {
         />
       )}
 
-      {/* ── 2. Function Position + 3. Rating Distribution ── */}
+      {/* ── 2. Function Overview Stats ── */}
       {main && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Function Position */}
-          <DashboardCard title="Function position" className="lg:col-span-1">
-            <div className="flex flex-col items-center text-center py-2">
-              <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Function Score</p>
-              <ScoreDisplay score={main.functionScore} size="lg" peakon />
-              <div className="mt-3">
-                <RatingBadge rating={main.functionRating} size="lg" />
-              </div>
-              {main.trajectory90d !== null && (
-                <div className="mt-3">
-                  <DeltaIndicator value={main.trajectory90d} suffix="pts (90d)" />
-                </div>
-              )}
-              <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5" />
-                  {main.assessedCount}/{main.totalHeadcount} assessed
-                </span>
-              </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardCard className="col-span-2 lg:col-span-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Function Score</p>
+            <HeroScore
+              score={main.functionScore}
+              label={main.functionScore !== null ? scoreToReadinessLabel(main.functionScore) : undefined}
+              delta={main.trajectory90d}
+              size="xl"
+            />
+            <div className="mt-3">
+              <RatingBadge rating={main.functionRating} size="sm" />
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {main.assessedCount}/{main.totalHeadcount} assessed
+            </p>
           </DashboardCard>
-
-          {/* Rating Distribution */}
-          <DashboardCard title="Headcount by readiness" subtitle="Distribution across all assessed employees" className="lg:col-span-2">
-            <div className="space-y-3 mt-2">
-              {RATING_KEYS.map(key => {
-                const count = main.ratingCounts[key] ?? 0;
-                const total = main.totalHeadcount || 1;
-                const pct = Math.round((count / total) * 100);
-                return (
-                  <div key={key} className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-foreground w-36 shrink-0">{RATING_LABELS[key]}</span>
-                    <div className="flex-1 h-5 rounded bg-neutral-100 overflow-hidden relative">
-                      <div
-                        className="h-full rounded transition-all duration-500"
-                        style={{ width: `${pct}%`, backgroundColor: RATING_COLOURS[key] }}
-                      />
-                      {count > 0 && (
-                        <span className="absolute inset-y-0 flex items-center text-[10px] font-semibold font-mono tabular-nums" style={{ left: `${Math.min(pct, 90)}%`, paddingLeft: 6, color: pct > 40 ? "#fff" : "#1E293B" }}>
-                          {count}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-mono text-xs tabular-nums text-muted-foreground w-10 text-right">{pct}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </DashboardCard>
+          <StatTile
+            label="AI Ready"
+            value={main.ratingCounts.ai_ready ?? 0}
+            sub={`${main.totalHeadcount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.totalHeadcount) * 100) : 0}% of function`}
+            colour="#10B981"
+            icon={<CheckCircle2 className="w-4 h-4" />}
+          />
+          <StatTile
+            label="Developing"
+            value={main.ratingCounts.developing ?? 0}
+            sub="need targeted support"
+            colour="#F59E0B"
+            icon={<TrendingUp className="w-4 h-4" />}
+          />
+          <StatTile
+            label="At Risk"
+            value={(main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0)}
+            sub="not ready / foundation gap"
+            colour="#EF4444"
+            icon={<AlertTriangle className="w-4 h-4" />}
+          />
         </div>
       )}
 
-      {/* ── 4. Per-Domain Distribution ── */}
+      {/* ── 3. Readiness Distribution ── */}
+      {main && (
+        <DashboardCard title="Function readiness distribution" subtitle="Headcount breakdown across all assessed employees">
+          <div className="mt-2">
+            <ReadinessDistributionBar
+              aiReady={main.ratingCounts.ai_ready ?? 0}
+              developing={main.ratingCounts.developing ?? 0}
+              notYetReady={main.ratingCounts.not_yet_ready ?? 0}
+              foundationGap={main.ratingCounts.foundation_gap ?? 0}
+              total={main.totalHeadcount}
+            />
+          </div>
+        </DashboardCard>
+      )}
+
+      {/* ── 4. AI Insights ── */}
+      {functionInsights.length > 0 && (
+        <AIInsightCard title="Function capability insights" insights={functionInsights} />
+      )}
+
+      {/* ── 5. Domain Distribution ── */}
       {main && main.domainDistribution && (
         <DashboardCard title="Domain capability distribution" subtitle="Rating breakdown per capability domain">
           <div className="space-y-3 mt-2">
@@ -247,7 +275,7 @@ export default function LeaderDashboardV2() {
                     <DomainDot domain={dd.domain} />
                     <span className="text-xs font-medium text-foreground truncate">{dd.domainName}</span>
                   </div>
-                  <div className="flex-1 h-5 rounded bg-neutral-100 overflow-hidden flex">
+                  <div className="flex-1 h-6 rounded-full bg-neutral-100 overflow-hidden flex">
                     {RATING_KEYS.map(rk => {
                       const count = dd.ratingCounts?.[rk] ?? 0;
                       const pct = Math.round((count / total) * 100);
@@ -262,8 +290,17 @@ export default function LeaderDashboardV2() {
                       );
                     })}
                   </div>
-                  <span className="shrink-0">
-                    <PeakonScoreBadge score={dd.avgScore ?? null} />
+                  <span className="shrink-0 w-12 text-right">
+                    {dd.avgScore !== null ? (
+                      <span
+                        className="font-mono font-bold text-xs tabular-nums"
+                        style={{ color: scoreToColor(dd.avgScore).bg }}
+                      >
+                        {formatPeakonScore(dd.avgScore)}
+                      </span>
+                    ) : (
+                      <span className="text-neutral-300 text-xs">—</span>
+                    )}
                   </span>
                 </div>
               );
@@ -280,7 +317,7 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
-      {/* ── 5. Peakon-Style Capability Heatmap ── */}
+      {/* ── 6. Peakon-Style Capability Heatmap ── */}
       {main && main.heatmap && (
         <DashboardCard
           title="Capability heatmap"
@@ -294,57 +331,33 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
-      {/* ── 6. Domain Trajectory ── */}
+      {/* ── 7. Domain Trajectory ── */}
       {!trajLoading && trajectory && trajectory.domains && (
         <DashboardCard title="Domain trajectory" subtitle="Function-wide average score over time per domain">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-            {trajectory.domains.map((d: any) => (
-              <div key={d.domain} className="p-3 rounded-lg border border-neutral-200">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <DomainDot domain={d.domain} />
-                    <span className="text-xs font-semibold text-foreground">{d.domainName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <PeakonScoreBadge score={d.currentValue} />
-                    {d.delta90d !== null && <DeltaIndicator value={d.delta90d} />}
-                  </div>
-                </div>
-                {d.timeSeries.length >= 2 ? (
-                  <div className="h-24">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={d.timeSeries} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94A3B8" }} tickLine={false} axisLine={false} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "#94A3B8" }} tickLine={false} axisLine={false} />
-                        <Line
-                          type="monotone"
-                          dataKey="avgScore"
-                          stroke={d.colour}
-                          strokeWidth={2}
-                          dot={{ r: 2, fill: d.colour }}
-                          connectNulls
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-24 flex items-center justify-center text-[10px] text-muted-foreground">
-                    Insufficient data for trend
-                  </div>
-                )}
-              </div>
-            ))}
+            {trajectory.domains.map((d: any) => {
+              const history = d.timeSeries.map((ts: any) => ts.avgScore).filter((v: any) => v != null);
+              return (
+                <ScoreTrendCard
+                  key={d.domain}
+                  label={d.domainName}
+                  colour={DOMAIN_COLOURS[d.domain] ?? d.colour ?? "#94A3B8"}
+                  currentScore={d.currentValue ?? 0}
+                  delta={d.delta90d}
+                  history={history.length >= 2 ? history : (d.currentValue ? [d.currentValue] : [])}
+                />
+              );
+            })}
           </div>
         </DashboardCard>
       )}
 
-      {/* ── 6b. Strategic Alignment ── */}
+      {/* ── 8. Strategic Alignment ── */}
       {!alignmentLoading && alignment && (
         <StrategicAlignmentSection alignment={alignment} />
       )}
 
-      {/* ── 7. Strategic Findings ── */}
+      {/* ── 9. Strategic Findings ── */}
       {!findingsLoading && findings && (
         <DashboardCard title="Strategic findings" subtitle="Priority-ordered insights for your function">
           {findings.findings.length === 0 ? (
@@ -354,7 +367,7 @@ export default function LeaderDashboardV2() {
               {findings.findings.map((f: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-lg border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all overflow-hidden"
+                  className="rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all overflow-hidden"
                 >
                   <div className="flex items-start gap-3 p-3">
                     <div className="mt-0.5 shrink-0">
@@ -385,14 +398,14 @@ export default function LeaderDashboardV2() {
         </DashboardCard>
       )}
 
-      {/* ── Teams Overview ── */}
+      {/* ── 10. Teams Overview ── */}
       {!teamsLoading && teams && teams.teams.length > 0 && (
         <DashboardCard title="Teams" subtitle="Overview of manager teams in your function">
           <div className="space-y-2 mt-1">
             {teams.teams.map((team: any) => (
-              <div key={team.managerId} className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-all">
+              <div key={team.managerId} className="flex items-center justify-between p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-semibold text-neutral-600">
+                  <div className="w-8 h-8 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-600">
                     {team.managerName?.split(" ").map((n: string) => n[0]).join("")}
                   </div>
                   <div>
@@ -402,7 +415,12 @@ export default function LeaderDashboardV2() {
                 </div>
                 <div className="flex items-center gap-3">
                   {team.avgScore !== null && (
-                    <PeakonScoreBadge score={team.avgScore} />
+                    <span
+                      className="font-mono font-bold text-sm tabular-nums"
+                      style={{ color: scoreToColor(team.avgScore).bg }}
+                    >
+                      {formatPeakonScore(team.avgScore)}
+                    </span>
                   )}
                   <div className="flex gap-0.5">
                     {RATING_KEYS.map(rk => {
@@ -445,12 +463,12 @@ function HeroFindingCard({
   assessedCount: number;
   totalHeadcount: number;
 }) {
-  const statusStyles: Record<string, { bg: string; border: string; icon: typeof TrendingUp }> = {
-    on_track: { bg: "#ECFDF5", border: "#A7F3D0", icon: TrendingUp },
-    at_risk: { bg: "#FEF2F2", border: "#FECACA", icon: AlertTriangle },
-    mixed: { bg: "#FFF7ED", border: "#FED7AA", icon: BarChart3 },
-    partial: { bg: "#F8FAFC", border: "#CBD5E1", icon: Target },
-    not_configured: { bg: "#F8FAFC", border: "#CBD5E1", icon: Target },
+  const statusStyles: Record<string, { bg: string; border: string; iconColour: string; icon: typeof TrendingUp }> = {
+    on_track: { bg: "#ECFDF5", border: "#A7F3D0", iconColour: "#059669", icon: TrendingUp },
+    at_risk: { bg: "#FEF2F2", border: "#FECACA", iconColour: "#DC2626", icon: AlertTriangle },
+    mixed: { bg: "#FFF7ED", border: "#FED7AA", iconColour: "#D97706", icon: BarChart3 },
+    partial: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
+    not_configured: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
   };
   const style = statusStyles[status] ?? statusStyles.not_configured;
   const Icon = style.icon;
@@ -461,15 +479,15 @@ function HeroFindingCard({
       style={{ backgroundColor: style.bg, borderColor: style.border }}
     >
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${style.border}80` }}>
-          <Icon className="w-5 h-5" style={{ color: style.border === "#A7F3D0" ? "#059669" : style.border === "#FECACA" ? "#DC2626" : style.border === "#FED7AA" ? "#D97706" : "#64748B" }} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${style.border}80` }}>
+          <Icon className="w-5 h-5" style={{ color: style.iconColour }} />
         </div>
         <div className="flex-1">
           <p className="text-sm text-foreground leading-relaxed">{statement}</p>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
             {functionScore !== null && (
               <span className="text-xs text-muted-foreground">
-                Function score: <strong className="font-mono">{functionScore}</strong>
+                Function score: <strong className="font-mono" style={{ color: scoreToColor(functionScore).bg }}>{formatPeakonScore(functionScore)}</strong>
               </span>
             )}
             <span className="text-xs text-muted-foreground">
@@ -542,7 +560,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
           </div>
           <p className="text-sm font-semibold text-foreground mb-1">No strategic priorities defined</p>
           <p className="text-xs text-muted-foreground max-w-md mb-4">
-            Add your AI strategic priorities to see alignment analysis. This shows whether your HR function has the capability to support each business objective.
+            Add your AI strategic priorities to see alignment analysis.
           </p>
           <Link href="/admin/org-context">
             <Button variant="outline" size="sm" className="text-xs gap-1.5">
@@ -560,10 +578,9 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
 
   return (
     <DashboardCard title="Strategic alignment" subtitle="How well HR capability supports your business AI strategy">
-      {/* Overall alignment signal */}
       {overallStyle && (
         <div
-          className="p-4 rounded-lg border mb-4"
+          className="p-4 rounded-xl border mb-4"
           style={{ backgroundColor: overallStyle.bg, borderColor: overallStyle.border }}
         >
           <div className="flex items-center gap-3">
@@ -580,12 +597,11 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
         </div>
       )}
 
-      {/* Priority-by-priority alignment */}
       <div className="space-y-3">
         {alignment.priorities.map((p: any) => {
           const style = ALIGNMENT_STYLES[p.alignmentStatus as keyof typeof ALIGNMENT_STYLES] ?? ALIGNMENT_STYLES.unknown;
           return (
-            <div key={p.index} className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 transition-all">
+            <div key={p.index} className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all">
               <div className="flex items-start gap-3">
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
@@ -625,20 +641,16 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
         })}
       </div>
 
-      {/* Governance & context signals */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-neutral-100">
-        {/* Governance readiness */}
         {govStyle && (
-          <div className="p-3 rounded-lg" style={{ backgroundColor: govStyle.bg }}>
+          <div className="p-3 rounded-xl" style={{ backgroundColor: govStyle.bg }}>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">Governance</p>
             <p className="text-xs font-semibold" style={{ color: govStyle.text }}>{govStyle.label}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{govStyle.desc}</p>
           </div>
         )}
-
-        {/* HR Influence */}
         {alignment.hrInfluence && (
-          <div className="p-3 rounded-lg bg-neutral-50">
+          <div className="p-3 rounded-xl bg-neutral-50">
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">HR Influence</p>
             <p className="text-xs font-semibold text-foreground capitalize">{alignment.hrInfluence.replace(/_/g, " ")}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -648,10 +660,8 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
             </p>
           </div>
         )}
-
-        {/* AI Maturity */}
         {alignment.aiMaturity && (
-          <div className="p-3 rounded-lg bg-neutral-50">
+          <div className="p-3 rounded-xl bg-neutral-50">
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-1">AI Maturity</p>
             <p className="text-xs font-semibold text-foreground capitalize">{alignment.aiMaturity.replace(/_/g, " ")}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -664,7 +674,6 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
         )}
       </div>
 
-      {/* Current challenges */}
       {alignment.challenges.length > 0 && (
         <div className="mt-4 pt-4 border-t border-neutral-100">
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Active Business Challenges</p>
