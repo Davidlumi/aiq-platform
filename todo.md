@@ -1313,3 +1313,30 @@
 - [x] ACME-3: Seed completed assessment sessions with realistic score distributions for all 50 users
 - [x] ACME-4: Verified — CPO/HR Leader dashboard: 50 users, 14 safe/29 at-risk/7 unsafe, 6 capability breakdowns; Manager: full team list with state; Individual: score, readiness, capability scores all correct
 - [x] ACME-5: Verified — admin board queries by tenant_id, Acme Ltd (tenant-acme-ltd) has 50 users visible
+
+## Competitive Benchmark Improvements (All 14 Items)
+
+### Quick Wins
+- [x] QW-1: Hero KPI pattern on HR Leader, Manager, and Learner dashboards
+- [x] QW-2: Rename dashboard nav items — "My Readiness", "My Team", "Org Capability"
+- [x] QW-3: Improve empty state quality on Learner dashboard — onboarding card with CTA
+- [x] QW-4: Strengths / Development priorities two-column split on HR Leader capability breakdown
+- [x] QW-5: Conversation starters on Manager dashboard for ALL team members
+
+### Strategic Upgrades
+- [x] SU-1: Department / role / manager filter bar on HR Leader dashboard
+- [x] SU-2: Progressive disclosure drill-down on capability domain cards
+- [x] SU-3: Action recommendations panel on HR Leader dashboard (LLM-generated)
+- [x] SU-4: Card-level export/share on dashboard cards (three-dot menu)
+- [x] SU-5: Signal transparency on assessment results page
+
+### Differentiating Investments
+- [x] DI-1: LLM-generated narrative layer on all three main dashboards
+- [x] DI-2: Longitudinal trend view on HR Leader dashboard
+
+### Design Language Pass
+- [x] DL-1: Typography hierarchy — hero number, section label, body
+- [x] DL-2: Whitespace — increase card gap to 24-32px, internal padding to 24px
+- [x] DL-3: Colour restraint — capability chart uses two colours max
+- [x] DL-4: Chart type discipline — replace radar chart with horizontal bar chart on results page
+- [x] DL-5: Micro-interactions — hover tooltips on all chart elements, 300ms transitions

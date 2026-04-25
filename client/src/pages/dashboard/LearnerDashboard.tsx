@@ -95,11 +95,12 @@ function outcomeToSignal(oc: string | null): { label: string; color: string; ico
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ReadinessHeroCard({
-  readiness, daysToRevalidation, revalidationDue,
+  readiness, daysToRevalidation, revalidationDue, firstName,
 }: {
   readiness: string | null;
   daysToRevalidation: number | null;
   revalidationDue: Date | null;
+  firstName?: string;
 }) {
   const meta = READINESS_META[readiness ?? "unknown"] ?? READINESS_META.unknown;
   const Icon = meta.icon;
@@ -108,39 +109,39 @@ function ReadinessHeroCard({
 
   return (
     <Card className="border-border overflow-hidden">
-      <div className="h-1.5 w-full" style={{ backgroundColor: meta.color }} />
-      <CardContent className="pt-5 pb-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: meta.bg }}>
-                <Icon className="w-4 h-4" style={{ color: meta.color }} />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Your AI Readiness</p>
-                <h2 className="text-xl font-bold text-foreground" style={{ color: meta.color }}>
-                  {meta.label}
-                </h2>
-              </div>
+      <div className="h-1 w-full" style={{ backgroundColor: meta.color }} />
+      <CardContent className="pt-6 pb-6">
+        <div className="flex items-center justify-between gap-6">
+          {/* Left: hero readiness state */}
+          <div className="flex items-center gap-5 flex-1 min-w-0">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: meta.bg }}>
+              <Icon className="w-7 h-7" style={{ color: meta.color }} />
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{meta.description}</p>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-0.5">AI Readiness Status</p>
+              <h2 className="text-3xl font-bold leading-none" style={{ color: meta.color }}>
+                {meta.label}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-md">{meta.description}</p>
+            </div>
           </div>
 
+          {/* Right: revalidation countdown */}
           {daysToRevalidation !== null && (
             <div className={cn(
-              "shrink-0 text-center p-3 rounded-xl border",
-              urgency === "critical" ? "border-[#EE6677]/30 bg-[#EE6677]/8" :
-              urgency === "soon"     ? "border-[#EE8866]/30 bg-[#EE8866]/8" :
+              "shrink-0 text-center px-5 py-4 rounded-2xl border",
+              urgency === "critical" ? "border-[#DC2626]/30 bg-[#DC2626]/6" :
+              urgency === "soon"     ? "border-[#F59E0B]/30 bg-[#F59E0B]/6" :
               "border-border bg-muted/20"
             )}>
               <p className={cn(
-                "text-3xl font-bold",
-                urgency === "critical" ? "text-[#EE6677]" :
-                urgency === "soon"     ? "text-[#EE8866]" : "text-foreground"
+                "text-4xl font-bold leading-none",
+                urgency === "critical" ? "text-[#DC2626]" :
+                urgency === "soon"     ? "text-[#F59E0B]" : "text-foreground"
               )}>{daysToRevalidation}</p>
-              <p className="text-[10px] text-muted-foreground">days to<br />revalidation</p>
+              <p className="text-[11px] text-muted-foreground mt-1">days to<br />revalidation</p>
               {revalidationDue && (
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">
                   {new Date(revalidationDue).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </p>
               )}
@@ -384,6 +385,7 @@ export default function LearnerDashboard() {
         readiness={data?.latestReadiness ?? null}
         daysToRevalidation={daysToRevalidation}
         revalidationDue={data?.revalidation?.dueAt ?? null}
+        firstName={user?.firstName ?? undefined}
       />
 
       {/* ── No assessment CTA ── */}

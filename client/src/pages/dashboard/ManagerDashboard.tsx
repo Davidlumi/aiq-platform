@@ -4,6 +4,13 @@
  * Team readiness overview with individual detail panel.
  * Anti-comparison design: no ranked lists, no raw score league tables.
  * Primary frame: each team member against their own development trajectory.
+ *
+ * Competitive improvements (CB-8 through CB-12):
+ * - CB-8:  Hero KPI row — larger primary stat (5xl), hero summary statement
+ * - CB-9:  Team Insights card — progressive disclosure, most important signal first
+ * - CB-10: Action Recommendations panel — Lattice-style suggested next actions
+ * - CB-11: Conversation starters for ALL members (not just at-risk)
+ * - CB-12: Design language pass — consistent brand tokens throughout
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -20,6 +27,7 @@ import {
   BarChart3, ShieldAlert, Award, MessageSquare, TrendingUp,
   Layers, Zap, Info, ArrowUpRight, ArrowDownRight, Minus,
   BookOpen, Flame, X, ChevronLeft, Activity, Target, Clock,
+  Lightbulb, ArrowRight, Star, UserCheck,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -86,6 +94,43 @@ function getDelegationGuidance(m: any): string[] {
   ];
 }
 
+/** CB-11: Conversation starters for ALL members — tailored by readiness state */
+function getConversationStarters(m: any): string[] {
+  const tier = getDelegationTier(m);
+  const firstName = m.firstName ?? "them";
+  const weakDomain = m.capabilityShape
+    ? Object.entries(m.capabilityShape as Record<string, number>)
+        .sort(([, a], [, b]) => a - b)[0]?.[0]
+    : null;
+  const weakLabel = weakDomain ? (CAP_LABELS[weakDomain] ?? weakDomain) : "their development area";
+
+  if (m.latestReadiness === "safe") return [
+    `"${firstName}, you're in a strong position with AI capability — are there areas where you'd like to go deeper or take on more complex AI tasks?"`,
+    `"What's the most useful AI workflow you've used recently? I'd love to share that with the team."`,
+    `"Are there any AI tools or approaches you'd like to explore that we haven't given you access to yet?"`,
+  ];
+  if (m.latestReadiness === "at_risk") return [
+    `"${firstName}, your assessment shows you're building capability — what's feeling most challenging right now?"`,
+    `"Your ${weakLabel} score has room to grow. What would help you feel more confident there?"`,
+    `"I want to make sure you have the right support — is there anything blocking you from completing your learning modules?"`,
+  ];
+  if (m.latestReadiness === "unsafe") return [
+    `"${firstName}, I want to have a supportive conversation about your AI capability development — this isn't about performance, it's about making sure you have the right tools."`,
+    `"Your assessment flagged ${weakLabel} as a priority area. What's your current understanding of that domain?"`,
+    `"I'd like to set up a structured development plan together — what would feel most useful as a starting point?"`,
+  ];
+  if (tier.key === "unassessed") return [
+    `"${firstName}, we haven't got your AI capability assessment on file yet — I'd like to understand where you're at."`,
+    `"The assessment takes about 20 minutes and gives you a personalised development plan. When could you fit that in?"`,
+    `"Is there anything about the assessment process I can clarify before you get started?"`,
+  ];
+  return [
+    `"${firstName}, how are you finding the AI tools we're using as a team?"`,
+    `"What would help you feel more confident using AI in your day-to-day work?"`,
+    `"Are there any AI-related questions or concerns you'd like to talk through?"`,
+  ];
+}
+
 function ReadinessBadge({ readiness }: { readiness: string | null }) {
   const meta = READINESS_META[readiness ?? "unknown"] ?? READINESS_META.unknown;
   const Icon = meta.icon;
@@ -145,8 +190,10 @@ function DistributionRing({ distribution }: { distribution: { safe: number; atRi
 
 // ─── Individual Member Detail Panel ──────────────────────────────────────────
 function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => void }) {
+  const [showStarters, setShowStarters] = useState(false);
   const tier = getDelegationTier(member);
   const guidance = getDelegationGuidance(member);
+  const starters = getConversationStarters(member);
   const history = ((member.scoreHistory ?? []) as Array<{ sessionId: string; completedAt: Date | null; overallScore: number; readiness: string | null }>).slice().reverse();
   const first = history[0]?.overallScore;
   const last = history[history.length - 1]?.overallScore;
@@ -178,7 +225,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
 
         <div className="p-5 space-y-6 flex-1">
           {/* Readiness + conversation-due */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <ReadinessBadge readiness={member.latestReadiness} />
             {member.conversationDue && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EE8866]/10 text-[#EE8866] border border-[#EE8866]/30">
@@ -191,6 +238,32 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                 <Calendar className="w-3 h-3" />
                 {revalDays <= 0 ? "Revalidation overdue" : `Revalidation in ${revalDays}d`}
               </span>
+            )}
+          </div>
+
+          {/* CB-11: Conversation Starters — for ALL members */}
+          <div>
+            <button
+              className="w-full flex items-center justify-between text-left group"
+              onClick={() => setShowStarters(v => !v)}
+            >
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-[#10B981]" />
+                Conversation Starters
+              </h3>
+              <ChevronRight className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", showStarters && "rotate-90")} />
+            </button>
+            {showStarters && (
+              <div className="mt-3 space-y-2">
+                {starters.map((s, i) => (
+                  <div key={i} className="rounded-lg border border-[#10B981]/20 bg-[#10B981]/5 p-3">
+                    <p className="text-xs text-foreground leading-relaxed italic">{s}</p>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground mt-1">
+                  These are suggested starting points — adapt them to your own style and relationship.
+                </p>
+              </div>
             )}
           </div>
 
@@ -350,6 +423,199 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
   );
 }
 
+// ─── CB-10: Action Recommendations Panel ─────────────────────────────────────
+function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers, capGaps, onSelectMember }: {
+  team: any[];
+  revalDueSoon: any[];
+  conversationDueMembers: any[];
+  capGaps: any[];
+  onSelectMember: (m: any) => void;
+}) {
+  const actions: Array<{ priority: "high" | "medium" | "low"; icon: any; label: string; detail: string; cta?: string; member?: any }> = [];
+
+  // High-priority: urgent conversations
+  const urgentConversation = conversationDueMembers[0];
+  if (urgentConversation) {
+    actions.push({
+      priority: "high",
+      icon: MessageSquare,
+      label: `Schedule a conversation with ${urgentConversation.firstName} ${urgentConversation.lastName}`,
+      detail: `Readiness: ${urgentConversation.latestReadiness ?? "unknown"} — a check-in is recommended.`,
+      cta: "Open profile",
+      member: urgentConversation,
+    });
+  }
+
+  // High-priority: revalidation overdue
+  const overdueReval = team.filter(m => m.revalidationDue && new Date(m.revalidationDue) < new Date());
+  if (overdueReval.length > 0) {
+    actions.push({
+      priority: "high",
+      icon: Calendar,
+      label: `${overdueReval.length} revalidation${overdueReval.length > 1 ? "s" : ""} overdue`,
+      detail: `${overdueReval.map((m: any) => m.firstName).slice(0, 3).join(", ")}${overdueReval.length > 3 ? ` +${overdueReval.length - 3} more` : ""} — capability profiles may be stale.`,
+    });
+  }
+
+  // Medium-priority: revalidations due soon
+  if (revalDueSoon.length > 0 && overdueReval.length === 0) {
+    actions.push({
+      priority: "medium",
+      icon: Clock,
+      label: `${revalDueSoon.length} revalidation${revalDueSoon.length > 1 ? "s" : ""} due in the next 14 days`,
+      detail: `${revalDueSoon.map((m: any) => m.firstName).slice(0, 3).join(", ")}${revalDueSoon.length > 3 ? ` +${revalDueSoon.length - 3} more` : ""} — plan ahead to avoid gaps.`,
+    });
+  }
+
+  // Medium-priority: weakest capability domain
+  const weakestDomain = capGaps.length > 0 ? capGaps[0] : null;
+  if (weakestDomain) {
+    actions.push({
+      priority: "medium",
+      icon: Target,
+      label: `Team's weakest domain: ${CAP_LABELS[weakestDomain.capability] ?? weakestDomain.capability}`,
+      detail: `Average band score ${Math.round(weakestDomain.avgScore ?? 0)} — consider a group learning session or shared resource.`,
+    });
+  }
+
+  // Low-priority: unassessed members
+  const unassessed = team.filter(m => !m.latestReadiness || m.latestReadiness === null);
+  if (unassessed.length > 0) {
+    actions.push({
+      priority: "low",
+      icon: UserCheck,
+      label: `${unassessed.length} team member${unassessed.length > 1 ? "s" : ""} yet to complete an assessment`,
+      detail: `No capability tier can be assigned without assessment data.`,
+    });
+  }
+
+  if (actions.length === 0) {
+    return (
+      <Card className="border-border">
+        <CardContent className="py-6 text-center">
+          <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+          <p className="text-sm font-medium text-foreground">All clear</p>
+          <p className="text-xs text-muted-foreground mt-1">No recommended actions at this time.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const priorityMeta = {
+    high:   { label: "Urgent",   color: "#EE6677", bg: "#EE667710", border: "#EE667730" },
+    medium: { label: "This week", color: "#EE8866", bg: "#EE886610", border: "#EE886630" },
+    low:    { label: "When ready", color: "#4477AA", bg: "#4477AA10", border: "#4477AA30" },
+  };
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-[#10B981]" />Recommended Actions
+        </CardTitle>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Suggested next steps based on your team's current readiness profile.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2.5">
+          {actions.map((action, i) => {
+            const pm = priorityMeta[action.priority];
+            const Icon = action.icon;
+            return (
+              <div key={i} className="flex items-start gap-3 rounded-lg border p-3"
+                style={{ borderColor: pm.border, backgroundColor: pm.bg }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ backgroundColor: `${pm.color}20` }}>
+                  <Icon className="w-3.5 h-3.5" style={{ color: pm.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground leading-snug">{action.label}</p>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      style={{ color: pm.color, backgroundColor: `${pm.color}20` }}>
+                      {pm.label}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{action.detail}</p>
+                  {action.cta && action.member && (
+                    <button
+                      onClick={() => onSelectMember(action.member)}
+                      className="mt-1.5 text-xs font-medium flex items-center gap-1 hover:underline"
+                      style={{ color: pm.color }}>
+                      {action.cta} <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── CB-9: Team Insights Card (progressive disclosure) ────────────────────────
+function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; capGaps: any[] }) {
+  const total = dist?.total ?? 0;
+  const safe = dist?.safe ?? 0;
+  const atRisk = (dist?.atRisk ?? 0) + (dist?.unsafe ?? 0);
+  const unassessed = team.filter(m => !m.latestReadiness).length;
+  const improving = team.filter(m => {
+    const history = (m.scoreHistory ?? []) as Array<{ overallScore: number }>;
+    if (history.length < 2) return false;
+    const first = history[0]?.overallScore;
+    const last = history[history.length - 1]?.overallScore;
+    return last != null && first != null && last - first > 3;
+  }).length;
+
+  // Pick the single most important insight
+  let headline = "";
+  let subtext = "";
+  let color = "#4477AA";
+
+  if (total === 0) {
+    headline = "No team data yet";
+    subtext = "Encourage your team to complete their AI capability assessment.";
+    color = "#9CA3AF";
+  } else if (unassessed > 0 && unassessed === total) {
+    headline = "No assessments completed";
+    subtext = "Your team hasn't completed any assessments yet — capability tiers cannot be assigned.";
+    color = "#9CA3AF";
+  } else if (atRisk > 0 && atRisk / total >= 0.5) {
+    headline = `${atRisk} of ${total} team members need attention`;
+    subtext = "More than half your team is at-risk or unsafe. Consider a group development session.";
+    color = "#EE6677";
+  } else if (safe > 0 && safe / total >= 0.7) {
+    headline = `${safe} of ${total} team members are AI-ready`;
+    subtext = improving > 0 ? `${improving} members are actively improving. Your team is in a strong position.` : "Your team is in a strong position for AI-assisted work.";
+    color = "#228833";
+  } else if (improving > 0) {
+    headline = `${improving} team member${improving > 1 ? "s are" : " is"} on an improving trajectory`;
+    subtext = "Development is progressing. Keep the momentum going with regular check-ins.";
+    color = "#10B981";
+  } else {
+    headline = `${safe} of ${total} team members are AI-ready`;
+    subtext = atRisk > 0 ? `${atRisk} member${atRisk > 1 ? "s" : ""} need support to reach readiness.` : "Continue monitoring as assessments are completed.";
+    color = safe > 0 ? "#228833" : "#9CA3AF";
+  }
+
+  return (
+    <div className="rounded-xl border p-5 flex items-start gap-4"
+      style={{ borderColor: `${color}30`, backgroundColor: `${color}08` }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `${color}20` }}>
+        <BarChart3 className="w-5 h-5" style={{ color }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground leading-snug">{headline}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{subtext}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function ManagerDashboard() {
   const { data, isLoading } = trpc.dashboard.manager.useQuery();
@@ -360,6 +626,7 @@ export default function ManagerDashboard() {
     return (
       <div className="p-6 space-y-6 max-w-7xl">
         <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-20 w-full" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
@@ -394,6 +661,10 @@ export default function ManagerDashboard() {
 
   const conversationDueMembers = team.filter(m => (m as any).conversationDue);
 
+  const total = dist?.total ?? 0;
+  const safe = dist?.safe ?? 0;
+  const atRisk = (dist?.atRisk ?? 0) + (dist?.unsafe ?? 0);
+
   return (
     <>
       {selectedMember && (
@@ -401,9 +672,10 @@ export default function ManagerDashboard() {
       )}
 
       <div className="p-6 space-y-6 max-w-7xl">
+        {/* Page header */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Team Readiness</h1>
+            <h1 className="text-2xl font-bold text-foreground">My Team</h1>
             <p className="text-muted-foreground mt-1 text-sm">AI capability intelligence across your team</p>
           </div>
           <Button size="sm" variant="outline" className="gap-2 text-xs" onClick={() => window.location.reload()}>
@@ -411,30 +683,50 @@ export default function ManagerDashboard() {
           </Button>
         </div>
 
-        {/* KPI row */}
+        {/* CB-9: Team Insights — progressive disclosure, most important signal first */}
+        {total > 0 && (
+          <TeamInsightsCard team={team} dist={dist} capGaps={capGaps} />
+        )}
+
+        {/* CB-8: Hero KPI row — larger primary stat, hero summary statement */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Total Members",       value: dist?.total ?? 0,                icon: Users,        color: "#4477AA" },
-            { label: "Safe",                value: dist?.safe ?? 0,                 icon: CheckCircle,  color: "#228833" },
-            { label: "At Risk / Unsafe",    value: (dist?.atRisk ?? 0) + (dist?.unsafe ?? 0), icon: AlertTriangle, color: "#EE6677" },
-            { label: "Conversations Due",   value: conversationDueMembers.length,   icon: MessageSquare, color: "#EE8866" },
+            { label: "Team Members",        value: total,                                                      icon: Users,         color: "#4477AA" },
+            { label: "AI-Ready",            value: safe,                                                       icon: CheckCircle,   color: "#228833" },
+            { label: "Need Support",        value: atRisk,                                                     icon: AlertTriangle, color: "#EE6677" },
+            { label: "Conversations Due",   value: conversationDueMembers.length,                              icon: MessageSquare, color: "#EE8866" },
           ].map(kpi => {
             const Icon = kpi.icon;
             return (
               <Card key={kpi.label} className="border-border">
                 <CardContent className="pt-5">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}15` }}>
                       <Icon className="w-4 h-4" style={{ color: kpi.color }} />
                     </div>
                     <span className="text-xs text-muted-foreground">{kpi.label}</span>
                   </div>
-                  <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
+                  {/* CB-8: 5xl primary stat */}
+                  <p className="text-5xl font-bold text-foreground leading-none">{kpi.value}</p>
+                  {total > 0 && kpi.label !== "Team Members" && kpi.label !== "Conversations Due" && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {Math.round((kpi.value / total) * 100)}% of team
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {/* CB-10: Action Recommendations */}
+        <ActionRecommendationsPanel
+          team={team}
+          revalDueSoon={revalDueSoon}
+          conversationDueMembers={conversationDueMembers}
+          capGaps={capGaps}
+          onSelectMember={setSelectedMember}
+        />
 
         {/* Distribution + Capability gaps */}
         <div className="grid lg:grid-cols-2 gap-4">
@@ -772,7 +1064,7 @@ function LearningOverviewSection() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-blue-500" />
+            <BookOpen className="h-4 w-4 text-[#4477AA]" />
             Team Learning Overview
           </CardTitle>
           <Link href="/manager/team-learning">
@@ -796,11 +1088,11 @@ function LearningOverviewSection() {
                 <div className="text-xs text-muted-foreground">Avg completion</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-lg font-bold text-orange-600">{activeStreaks}</div>
+                <div className="text-lg font-bold text-[#D97706]">{activeStreaks}</div>
                 <div className="text-xs text-muted-foreground">Active streaks</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-lg font-bold text-amber-600">{noActivity}</div>
+                <div className="text-lg font-bold text-[#EE8866]">{noActivity}</div>
                 <div className="text-xs text-muted-foreground">No activity</div>
               </div>
             </div>
@@ -811,7 +1103,7 @@ function LearningOverviewSection() {
                   <Progress value={m.plan?.progressPct ?? 0} className="flex-1 h-1.5" />
                   <div className="text-xs tabular-nums w-8 text-right">{m.plan?.progressPct ?? 0}%</div>
                   {(m.streak?.currentStreak ?? 0) > 0 && (
-                    <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                    <Flame className="h-3 w-3 text-[#D97706] shrink-0" />
                   )}
                 </div>
               ))}

@@ -10,6 +10,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
+import { invokeLLM } from "../_core/llm";
 import { getDb, getUserRoleKeys, getTenantPlan, planAtLeast } from "../db";
 import { notifyOwner } from "../_core/notification";
 import {
@@ -471,7 +472,7 @@ export const dashboardRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
     const allUsers = await db
-      .select({ id: users.id })
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
       .from(users)
       .where(eq(users.tenantId, ctx.user.tenantId));
 
@@ -534,6 +535,66 @@ export const dashboardRouter = router({
       assessedCount: capabilityTotals[key].count,
     }));
 
+    // Per-department readiness breakdown + full user list for filtering
+    const deptMap: Record<string, { safe: number; at_risk: number; unsafe: number; unknown: number; total: number }> = {};
+    const userReadinessList: Array<{ id: string; firstName: string; lastName: string; roleFamily: string | null; jobFunction: string | null; readiness: string | null }> = [];
+    for (const u of allUsers) {
+      const latestSess = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(1);
+      let readiness: string | null = null;
+      if (latestSess[0]) {
+        const sc = await db
+          .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+          .from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, latestSess[0].id))
+          .limit(1);
+        if (sc[0]) readiness = extractReadiness(sc[0].scoreBreakdownJson);
+      }
+      userReadinessList.push({ id: u.id, firstName: u.firstName, lastName: u.lastName, roleFamily: u.roleFamily, jobFunction: u.jobFunction, readiness });
+      const dept = u.roleFamily ?? "Unknown";
+      if (!deptMap[dept]) deptMap[dept] = { safe: 0, at_risk: 0, unsafe: 0, unknown: 0, total: 0 };
+      deptMap[dept].total++;
+      if (readiness === "safe") deptMap[dept].safe++;
+      else if (readiness === "at_risk") deptMap[dept].at_risk++;
+      else if (readiness === "unsafe") deptMap[dept].unsafe++;
+      else deptMap[dept].unknown++;
+    }
+    const departmentBreakdown = Object.entries(deptMap)
+      .map(([dept, counts]) => ({ department: dept, ...counts }))
+      .sort((a, b) => b.total - a.total);
+
+    // LLM org narrative — non-blocking, returns null on failure
+    let orgNarrative: { headline: string; insight: string; action: string } | null = null;
+    try {
+      const safeCount = readinessCounts.safe;
+      const atRiskCount = readinessCounts.at_risk;
+      const unsafeCount = readinessCounts.unsafe;
+      const totalAssessed = safeCount + atRiskCount + unsafeCount;
+      const sortedCaps = [...capabilityBreakdown].sort((a, b) => (a.avgScore ?? 100) - (b.avgScore ?? 100));
+      const weakestCap = sortedCaps[0];
+      const CAP_LABELS_MAP: Record<string, string> = {
+        ai_interaction: "AI Interaction", ai_output_evaluation: "Output Evaluation",
+        ai_workflow_design: "Workflow Design", workforce_ai_readiness: "Workforce Readiness",
+        ai_ethics_trust: "Ethics & Trust", ai_change_leadership: "Change Leadership",
+      };
+      const narrativeResp = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are an expert HR analytics narrator. Write concise, actionable insights for an HR leader dashboard. No jargon. Return JSON only." },
+          { role: "user", content: `Organisation has ${allUsers.length} HR staff. ${totalAssessed} have been assessed: ${safeCount} AI Ready, ${atRiskCount} Developing, ${unsafeCount} Not Yet Ready. Weakest capability: ${CAP_LABELS_MAP[weakestCap?.capability ?? ""] ?? weakestCap?.capability} (avg score ${weakestCap?.avgScore ?? "n/a"}). Write a JSON object with exactly three fields: headline (10 words max, summarise the org readiness state), insight (25 words max, the most important pattern in the data), action (25 words max, the single most important action the HR leader should take now).` },
+        ],
+        response_format: { type: "json_schema", json_schema: { name: "org_narrative", strict: true, schema: { type: "object", properties: { headline: { type: "string" }, insight: { type: "string" }, action: { type: "string" } }, required: ["headline", "insight", "action"], additionalProperties: false } } },
+      });
+      const rawContent = narrativeResp?.choices?.[0]?.message?.content;
+      if (rawContent) {
+        const parsed = typeof rawContent === "string" ? JSON.parse(rawContent) : rawContent;
+        if (parsed?.headline && parsed?.insight && parsed?.action) orgNarrative = parsed;
+      }
+    } catch { /* narrative is non-blocking — never fail the dashboard */ }
+
     const complianceDistribution = {
       compliant: validStates.filter(s => s.complianceState === "compliant").length,
       atRisk: validStates.filter(s => s.complianceState === "at_risk").length,
@@ -591,12 +652,15 @@ export const dashboardRouter = router({
       totalUsers: allUsers.length,
       readinessDistribution: { ...readinessCounts, total: allUsers.length },
       capabilityBreakdown,
+      departmentBreakdown,
+      userReadinessList,
       complianceDistribution,
       riskDistribution,
       revalidationStats,
       recentIncidents: triggeredIncidents,
       recentAudit,
       assessmentsLast30Days: Number(recentAssessments[0]?.count ?? 0),
+      orgNarrative,
     };
   }),
 
@@ -700,7 +764,7 @@ export const dashboardRouter = router({
       ai_change_leadership: "Change Leadership",
     };
     const allUsers = await db
-      .select({ id: users.id })
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
       .from(users)
       .where(eq(users.tenantId, ctx.user.tenantId));
     const capTotals: Record<string, { total: number; count: number }> = {};
