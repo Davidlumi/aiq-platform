@@ -768,6 +768,7 @@ function VideoRenderer({ body, onComplete }: { body: any; onComplete: (score: nu
 
 function CompletionScreen({
   score, title, capability, moduleId, onContinue, onReportNoTransfer, noTransferResult,
+  masteryGateResult, onRetake,
 }: {
   score: number;
   title: string;
@@ -776,6 +777,8 @@ function CompletionScreen({
   onContinue: () => void;
   onReportNoTransfer?: (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => void;
   noTransferResult?: { alternativeTitle: string | null; alternativeModality: string | null; message: string } | null;
+  masteryGateResult?: { blocked: boolean; message: string | null; threshold: number; score: number } | null;
+  onRetake?: () => void;
 }) {
   const [showNoTransferPrompt, setShowNoTransferPrompt] = useState(false);
   const [, setLocation] = useLocation();
@@ -785,20 +788,66 @@ function CompletionScreen({
   );
   const cap = CAPABILITY_META[capability] ?? { label: capability, color: "#888", icon: BookOpen };
   const CapIcon = cap.icon;
+  const isGateBlocked = masteryGateResult?.blocked ?? false;
   const xpEarned = score >= 80 ? 100 : score >= 60 ? 70 : 40;
   const reviewDays = score >= 80 ? 7 : score >= 60 ? 3 : 1;
   return (
     <div className="py-6 space-y-5 max-w-lg mx-auto">
       {/* Hero completion banner */}
       <div className="text-center space-y-3">
-        <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center mx-auto">
-          <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+        <div className={cn(
+          "w-20 h-20 rounded-full border-2 flex items-center justify-center mx-auto",
+          isGateBlocked
+            ? "bg-amber-500/20 border-amber-500/30"
+            : "bg-emerald-500/20 border-emerald-500/30"
+        )}>
+          {isGateBlocked
+            ? <AlertCircle className="h-10 w-10 text-amber-400" />
+            : <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+          }
         </div>
         <div>
-          <h2 className="text-2xl font-bold mb-1">Module Complete!</h2>
+          <h2 className="text-2xl font-bold mb-1">
+            {isGateBlocked ? "Mastery Gate — Retake Required" : "Module Complete!"}
+          </h2>
           <p className="text-sm text-muted-foreground">{title}</p>
         </div>
       </div>
+
+      {/* AL-07: Mastery Gate Blocked Banner */}
+      {isGateBlocked && masteryGateResult && (
+        <div className="rounded-xl border border-amber-700/30 bg-amber-950/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-400" />
+            <span className="text-sm font-semibold text-amber-400">Below Mastery Threshold</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {masteryGateResult.message}
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${masteryGateResult.score}%`,
+                  background: masteryGateResult.score >= masteryGateResult.threshold ? "#10B981" : "#F59E0B",
+                }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-amber-400">{masteryGateResult.score}%</span>
+            <span className="text-[10px] text-muted-foreground">/ {masteryGateResult.threshold}% required</span>
+          </div>
+          {onRetake && (
+            <Button
+              size="sm"
+              className="w-full gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
+              onClick={onRetake}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />Retake Module
+            </Button>
+          )}
+        </div>
+      )}
       {/* Score + XP + review row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-muted/20 p-3 text-center">
@@ -933,10 +982,17 @@ export default function ModulePlayerPage() {
     { enabled: !!params.moduleId && !!mod, retry: 1, staleTime: 1000 * 60 * 60 }
   );
   const [noTransferResult, setNoTransferResult] = useState<{ alternativeTitle: string | null; alternativeModality: string | null; message: string } | null>(null);
+  const [masteryGateResult, setMasteryGateResult] = useState<{ blocked: boolean; message: string | null; threshold: number; score: number } | null>(null);
 
   const markComplete = trpc.adaptiveLearning.markModuleComplete.useMutation({
-    onSuccess: () => {
-      toast.success("Module completed! Spaced repetition scheduled.");
+    onSuccess: (data) => {
+      if (data.masteryGateBlocked) {
+        toast.error(`Score ${data.score}% — below ${data.masteryGateThreshold}% mastery threshold. Retake required.`);
+        setMasteryGateResult({ blocked: true, message: data.masteryGateMessage, threshold: data.masteryGateThreshold, score: data.score });
+      } else {
+        toast.success("Module completed! Spaced repetition scheduled.");
+        setMasteryGateResult(data.score !== undefined ? { blocked: false, message: null, threshold: data.masteryGateThreshold, score: data.score } : null);
+      }
     },
     onError: err => {
       toast.error(err.message);
@@ -1098,6 +1154,8 @@ export default function ModulePlayerPage() {
             onContinue={handleBack}
             onReportNoTransfer={planItemId ? handleNoTransfer : undefined}
             noTransferResult={noTransferResult}
+            masteryGateResult={masteryGateResult}
+            onRetake={() => { setCompleted(false); setFinalScore(0); setMasteryGateResult(null); }}
           />
         </div>
       )}

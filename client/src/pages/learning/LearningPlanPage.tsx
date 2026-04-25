@@ -21,6 +21,7 @@ import {
   CheckCircle2, AlertTriangle, Award, RefreshCw, Flame,
   ArrowRight, Play, RotateCcw, Lock, Trophy, Star, Sparkles, Bell,
   BarChart2, UserCheck, XCircle, Info, ShieldAlert,
+  Map, ShieldCheck, GraduationCap, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,163 @@ const PRIORITY_COLOURS = {
   advanced:   { bg: "bg-blue-950/20",   border: "border-blue-700/40",   text: "text-blue-400",   badge: "bg-blue-900/30 text-blue-400" },
 };
 
+// ─── Stage Icons ─────────────────────────────────────────────────────────────
+const STAGE_ICONS: Record<number, React.ElementType> = {
+  1: ShieldAlert,   // Block Resolution
+  2: BookOpen,      // Foundation
+  3: ShieldCheck,   // Regulatory
+  4: Rocket,        // Strategic
+};
+
+// ─── Journey Map Section ─────────────────────────────────────────────────────
+
+function JourneyMapSection({
+  planItems,
+  onStageClick,
+}: {
+  planItems: any[];
+  onStageClick?: (stage: number) => void;
+}) {
+  // Group items by prescription stage
+  const stageGroups: Record<number, { total: number; completed: number; inProgress: number; available: number; locked: number }> = {};
+  for (const stage of [1, 2, 3, 4]) {
+    stageGroups[stage] = { total: 0, completed: 0, inProgress: 0, available: 0, locked: 0 };
+  }
+
+  for (const item of planItems) {
+    const reasonJson = (() => {
+      try { return typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {}); }
+      catch { return {}; }
+    })() as any;
+    const stage: number = reasonJson?.prescriptionStage ?? 1;
+    const group = stageGroups[stage] ?? stageGroups[1];
+    group.total++;
+    if (item.status === "completed") group.completed++;
+    else if (item.status === "in_progress") group.inProgress++;
+    else if (item.status === "available") group.available++;
+    else group.locked++;
+  }
+
+  // Determine active stage: lowest stage with available/in_progress items
+  const activeStage = [1, 2, 3, 4].find(s => {
+    const g = stageGroups[s];
+    return g.available > 0 || g.inProgress > 0;
+  }) ?? 0;
+
+  // Check if all items in a stage are complete
+  const isStageComplete = (stage: number) => {
+    const g = stageGroups[stage];
+    return g.total > 0 && g.completed === g.total;
+  };
+
+  const totalItems = planItems.length;
+  const totalCompleted = planItems.filter((i: any) => i.status === "completed").length;
+  const overallPct = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+
+  if (totalItems === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Map className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm">Learning Journey</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{totalCompleted}/{totalItems} modules</span>
+          <span className="text-xs font-semibold text-primary">{overallPct}%</span>
+        </div>
+      </div>
+
+      {/* Overall progress bar */}
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${overallPct}%` }} />
+      </div>
+
+      {/* Stage pipeline */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {([1, 2, 3, 4] as const).map((stage, idx) => {
+          const meta = PRESCRIPTION_STAGE_META[stage];
+          const group = stageGroups[stage];
+          const Icon = STAGE_ICONS[stage];
+          const isActive = stage === activeStage;
+          const isComplete = isStageComplete(stage);
+          const pct = group.total > 0 ? Math.round((group.completed / group.total) * 100) : 0;
+          const hasItems = group.total > 0;
+
+          return (
+            <button
+              key={stage}
+              onClick={() => hasItems && onStageClick?.(stage)}
+              disabled={!hasItems}
+              className={cn(
+                "relative rounded-xl border p-3 text-left transition-all",
+                isActive && "ring-2 ring-offset-1 ring-offset-background",
+                isComplete && "border-emerald-700/40 bg-emerald-950/10",
+                !isComplete && isActive && "bg-card",
+                !isComplete && !isActive && hasItems && "bg-card/50 hover:bg-card",
+                !hasItems && "opacity-40 cursor-default",
+              )}
+              style={{
+                borderColor: isActive ? meta.color : undefined,
+                ...(isActive ? { '--tw-ring-color': `${meta.color}40` } as any : {}),
+              }}
+            >
+              {/* Active indicator */}
+              {isActive && (
+                <div className="absolute -top-1.5 left-3 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider" style={{ background: meta.color, color: "#fff" }}>
+                  Active
+                </div>
+              )}
+              {isComplete && (
+                <div className="absolute -top-1.5 right-3 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-600 text-white">
+                  Done
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mb-2 mt-1">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${meta.color}15` }}>
+                  {isComplete
+                    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    : <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold leading-tight truncate" style={{ color: isActive ? meta.color : undefined }}>
+                    Stage {stage}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-tight truncate">
+                    {meta.label.replace(`Stage ${stage} — `, "")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Module count + progress */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-muted-foreground">{group.completed}/{group.total} modules</span>
+                  <span className="font-semibold" style={{ color: pct === 100 ? "#10B981" : meta.color }}>{pct}%</span>
+                </div>
+                <div className="h-1 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? "#10B981" : meta.color }} />
+                </div>
+              </div>
+
+              {/* Connector arrow between stages (not on last) */}
+              {idx < 3 && (
+                <div className="hidden md:block absolute -right-2.5 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Module Card ──────────────────────────────────────────────────────────────
 
 function ModuleCard({
@@ -88,6 +246,11 @@ function ModuleCard({
   })() as any;
   const prescriptionStage: number | undefined = reasonJson?.prescriptionStage;
   const stageMeta = prescriptionStage ? PRESCRIPTION_STAGE_META[prescriptionStage] : undefined;
+
+  // AL-07: Check if this locked item is blocked by a mastery gate
+  // The unlockAfterModuleId item's scoreJson will contain masteryGateBlocked flag
+  const isMasteryGateBlocked = isLocked && (item as any).unlockAfterModuleId;
+
   return (
     <div className={cn(
       "rounded-xl border p-4 transition-all group bg-card",
@@ -125,6 +288,11 @@ function ModuleCard({
             {isNoTransfer && (
               <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-red-900/30 text-red-400">
                 <XCircle className="h-2.5 w-2.5 mr-1" />No transfer
+              </Badge>
+            )}
+            {isMasteryGateBlocked && (
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-900/30 text-amber-400" title="Prerequisite module score below 70% mastery threshold">
+                <AlertTriangle className="h-2.5 w-2.5 mr-1" />Retake required
               </Badge>
             )}
           </div>
@@ -345,6 +513,7 @@ export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"plan" | "gaps" | "progress" | "peers" | "digest">("plan");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [stageFilter, setStageFilter] = useState<number | null>(null);
 
   // Fetch adaptive plan (auto-generates if none exists)
   const { data: planData, isLoading: planLoading, refetch: refetchPlan } = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
@@ -409,9 +578,18 @@ export default function LearningPlanPage() {
     spacedRepetition: r,
   }));
 
-  const availableItems = planItems.filter(i => i.status === "available" || i.status === "in_progress");
-  const completedItems = planItems.filter(i => i.status === "completed");
-  const lockedItems = planItems.filter(i => i.status === "locked");
+  // Stage filter helper
+  const getItemStage = (item: any): number => {
+    try {
+      const rj = typeof item.reasonJson === "string" ? JSON.parse(item.reasonJson as string) : (item.reasonJson ?? {});
+      return rj?.prescriptionStage ?? 1;
+    } catch { return 1; }
+  };
+  const matchesStageFilter = (item: any) => stageFilter === null || getItemStage(item) === stageFilter;
+
+  const availableItems = planItems.filter(i => (i.status === "available" || i.status === "in_progress") && matchesStageFilter(i));
+  const completedItems = planItems.filter(i => i.status === "completed" && matchesStageFilter(i));
+  const lockedItems = planItems.filter(i => i.status === "locked" && matchesStageFilter(i));
 
   // Today's items = first 3 available
   const todayItems = availableItems.slice(0, 3);
@@ -566,6 +744,23 @@ export default function LearningPlanPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* AL-06: Journey Map */}
+              <JourneyMapSection
+                planItems={planItems}
+                onStageClick={(stage) => setStageFilter(prev => prev === stage ? null : stage)}
+              />
+
+              {/* Stage filter indicator */}
+              {stageFilter !== null && (
+                <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-muted/20">
+                  <span className="text-xs text-muted-foreground">Filtered to</span>
+                  <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5" style={{ background: `${PRESCRIPTION_STAGE_META[stageFilter]?.color ?? '#888'}15`, color: PRESCRIPTION_STAGE_META[stageFilter]?.color ?? '#888' }}>
+                    Stage {stageFilter} — {PRESCRIPTION_STAGE_META[stageFilter]?.label.replace(`Stage ${stageFilter} — `, "")}
+                  </Badge>
+                  <button className="text-xs text-muted-foreground hover:text-foreground ml-auto" onClick={() => setStageFilter(null)}>Clear</button>
                 </div>
               )}
 

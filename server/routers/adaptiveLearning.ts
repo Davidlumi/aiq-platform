@@ -336,8 +336,9 @@ export const adaptiveLearningRouter = router({
         generatedAt: Date.now(),
       });
 
-      // Insert plan items
+      // Insert plan items — items with unlockAfterModuleId start as 'locked'
       for (const item of planItems) {
+        const hasUnlockDependency = !!item.unlockAfterModuleId;
         await db.insert(adaptivePlanItems).values({
           id: nanoid(),
           planId,
@@ -346,7 +347,7 @@ export const adaptiveLearningRouter = router({
           phase: item.phase,
           required: item.required,
           unlockAfterModuleId: item.unlockAfterModuleId ?? null,
-          status: "available",
+          status: hasUnlockDependency ? "locked" : "available",
           reasonJson: JSON.stringify(item.reasonJson) as any,
           assignedAt: Date.now(),
         });
@@ -408,34 +409,66 @@ export const adaptiveLearningRouter = router({
         completionState = "opened"; // barely engaged
       }
 
+      // AL-07: Mastery gate threshold — score must meet 70% to unlock next-stage items
+      const MASTERY_GATE_THRESHOLD = 70;
+      let masteryGateBlocked = false;
+      let masteryGateMessage: string | null = null;
+
       // Update plan item
       if (input.planItemId) {
+        // Retrieve current item's prescription stage from reasonJson
+        const currentItemRow = await db.select({
+          reasonJson: adaptivePlanItems.reasonJson,
+          planId: adaptivePlanItems.planId,
+        }).from(adaptivePlanItems).where(eq(adaptivePlanItems.id, input.planItemId)).limit(1);
+
+        const currentReasonJson = (() => {
+          try {
+            const rj = currentItemRow[0]?.reasonJson;
+            return typeof rj === "string" ? JSON.parse(rj) : (rj ?? {});
+          } catch { return {}; }
+        })() as Record<string, unknown>;
+        const currentStage = (currentReasonJson.prescriptionStage as number) ?? 1;
+
         await db.update(adaptivePlanItems)
           .set({
             status: "completed",
             completedAt: now,
             completionState: completionState as any,
-            scoreJson: JSON.stringify({ score: input.score, timeSpentMins: input.timeSpentMins, reflectionText: input.reflectionText, completionState, timeRatio: Math.round(timeRatio * 100) }) as any,
+            scoreJson: JSON.stringify({
+              score: input.score,
+              timeSpentMins: input.timeSpentMins,
+              reflectionText: input.reflectionText,
+              completionState,
+              timeRatio: Math.round(timeRatio * 100),
+              masteryGateBlocked: input.score < MASTERY_GATE_THRESHOLD,
+            }) as any,
           })
           .where(eq(adaptivePlanItems.id, input.planItemId));
 
-        // Unlock next items in the plan
-        const planItem = await db.select({ planId: adaptivePlanItems.planId })
-          .from(adaptivePlanItems).where(eq(adaptivePlanItems.id, input.planItemId)).limit(1);
+        // Unlock next items in the plan — but only if mastery gate passes
+        const planId = currentItemRow[0]?.planId ?? null;
 
-        if (planItem[0]) {
-          // Unlock items that were waiting for this module
-          await db.update(adaptivePlanItems)
-            .set({ status: "available" })
-            .where(and(
-              eq(adaptivePlanItems.planId, planItem[0].planId),
-              eq(adaptivePlanItems.unlockAfterModuleId, input.moduleId),
-              eq(adaptivePlanItems.status, "locked"),
-            ));
+        if (planId) {
+          if (input.score >= MASTERY_GATE_THRESHOLD) {
+            // Score meets threshold — unlock dependent items
+            await db.update(adaptivePlanItems)
+              .set({ status: "available" })
+              .where(and(
+                eq(adaptivePlanItems.planId, planId),
+                eq(adaptivePlanItems.unlockAfterModuleId, input.moduleId),
+                eq(adaptivePlanItems.status, "locked"),
+              ));
+          } else {
+            // Score below threshold — keep dependent items locked (mastery gate blocked)
+            masteryGateBlocked = true;
+            masteryGateMessage = `Your score of ${input.score}% is below the ${MASTERY_GATE_THRESHOLD}% mastery threshold. ` +
+              `Retake this module to unlock the next stage. Focus on areas where you scored lowest.`;
+          }
 
           // Update plan completion count
           const allItems = await db.select({ status: adaptivePlanItems.status })
-            .from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, planItem[0].planId));
+            .from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, planId));
           const completedCount = allItems.filter(i => i.status === "completed").length;
           const allComplete = allItems.every(i => ["completed", "skipped"].includes(i.status));
 
@@ -445,7 +478,7 @@ export const adaptiveLearningRouter = router({
               state: allComplete ? "completed" : "active",
               completedAt: allComplete ? now : null,
             })
-            .where(eq(adaptiveLearningPlans.id, planItem[0].planId));
+            .where(eq(adaptiveLearningPlans.id, planId));
         }
       }
 
@@ -542,7 +575,13 @@ export const adaptiveLearningRouter = router({
         });
       }
 
-      return { success: true };
+      return {
+        success: true,
+        masteryGateBlocked,
+        masteryGateMessage,
+        masteryGateThreshold: MASTERY_GATE_THRESHOLD,
+        score: input.score,
+      };
     }),
   // ─── Get due reviews ────────────────────────────────────────────────────────
   getDueReviews: protectedProcedure

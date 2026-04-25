@@ -1418,8 +1418,8 @@
 - [x] AL-05: Adaptive Revalidation Cadence — already fully implemented (risk-based 30/60/90 day intervals) — make revalidation per-domain (critical: 3mo, overconfident: 4mo, proficient: 6mo), surface per-domain schedule on learner dashboard
 
 ### Batch 2 — Medium Impact
-- [ ] AL-06: Learning Path Journey Map (deferred — needs design work) — visual pipeline on LearningPlanPage showing 4 prescription stages as connected nodes with current position, dependencies, and estimated time
-- [ ] AL-07: Mastery-Based Progression Gates (deferred — needs formative quiz integration) — gate Stage 3 on formative quiz score >= 70% in foundation domains, show mastery progress bars per stage
+- [x] AL-06: Learning Path Journey Map — visual 4-stage pipeline on LearningPlanPage My Plan tab showing prescription stages as colour-coded cards with completion progress, active stage highlight, and click-to-filter
+- [x] AL-07: Mastery-Based Progression Gates — markModuleComplete enforces 70% mastery threshold before unlocking dependent items; CompletionScreen shows gate-blocked banner with retake button; locked items show 'Retake required' badge; plan item insertion bug fixed (items with unlockAfterModuleId now start as 'locked')
 
 ### Deferred
 - [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework)
