@@ -1105,13 +1105,14 @@ const managerRouter = router({
 
 const leaderRouter = router({
   /** Hero finding — 5 patterns */
-  heroFinding: protectedProcedure.query(async ({ ctx }) => {
+  heroFinding: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
 
     // Check if org context (strategic business input / AI roadmap) has been configured
     const orgCtxRows = await db.select().from(ailOrgContext)
@@ -1119,10 +1120,13 @@ const leaderRouter = router({
       .limit(1);
     const orgCtx = orgCtxRows[0] ?? null;
 
-    const allUsers = await db
-      .select({ id: users.id })
+    let allUsers = await db
+      .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
       .from(users)
       .where(eq(users.tenantId, ctx.user.tenantId));
+    if (rfFilter) {
+      allUsers = allUsers.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter);
+    }
 
     let totalScore = 0;
     let assessedCount = 0;
@@ -1219,18 +1223,27 @@ const leaderRouter = router({
   }),
 
   /** Function position summary */
-  main: protectedProcedure.query(async ({ ctx }) => {
+  main: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
 
-    const allUsers = await db
+    let allUsers = await db
       .select({ id: users.id })
       .from(users)
       .where(eq(users.tenantId, ctx.user.tenantId));
+    // Apply role family filter if set
+    if (rfFilter) {
+      const allUsersWithRf = await db
+        .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+      allUsers = allUsersWithRf.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter);
+    }
 
     let totalScore = 0;
     let assessedCount = 0;
@@ -1359,17 +1372,28 @@ const leaderRouter = router({
   }),
 
   /** Per-domain function-wide trajectory (6 time series) */
-  domainTrajectory: protectedProcedure.query(async ({ ctx }) => {
+  domainTrajectory: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
+
+    // Build a set of user IDs matching the filter for session lookup
+    let filteredUserIds: Set<string> | null = null;
+    if (rfFilter) {
+      const allUsersRf = await db
+        .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+      filteredUserIds = new Set(allUsersRf.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter).map(u => u.id));
+    }
 
     const twelveMonthsAgo = new Date(Date.now() - 365 * 86400000);
     const sessions = await db
-      .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+      .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt, userId: assessmentSessions.userId })
       .from(assessmentSessions)
       .where(and(
         eq(assessmentSessions.tenantId, ctx.user.tenantId),
@@ -1383,6 +1407,8 @@ const leaderRouter = router({
 
     for (const sess of sessions) {
       if (!sess.completedAt) continue;
+      // Filter by role family if set
+      if (filteredUserIds && !filteredUserIds.has(sess.userId)) continue;
       const score = await db
         .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
         .from(assessmentScores)
@@ -1437,18 +1463,22 @@ const leaderRouter = router({
   }),
 
   /** Strategic findings — 8 deterministic patterns */
-  strategicFindings: protectedProcedure.query(async ({ ctx }) => {
+  strategicFindings: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
 
-    const allUsers = await db
+    let allUsers = await db
       .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
       .from(users)
       .where(eq(users.tenantId, ctx.user.tenantId));
+    if (rfFilter) {
+      allUsers = allUsers.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter);
+    }
 
     // Collect per-user data
     const userData: Array<{
@@ -1606,13 +1636,24 @@ const leaderRouter = router({
   }),
 
   /** Teams view */
-  teams: protectedProcedure.query(async ({ ctx }) => {
+  teams: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
     if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
+
+    // Build set of filtered user IDs for member filtering
+    let filteredUserIds: Set<string> | null = null;
+    if (rfFilter) {
+      const allUsersRf = await db
+        .select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+      filteredUserIds = new Set(allUsersRf.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter).map(u => u.id));
+    }
 
     // Find all managers (users who have team members)
     const allLinks = await db.select().from(managerTeamMembers);
@@ -1631,7 +1672,12 @@ const leaderRouter = router({
       if (!managerRow[0]) continue;
 
       const memberLinks = allLinks.filter(l => l.managerId === managerId);
-      const memberIds = memberLinks.map(l => l.memberId);
+      let memberIds = memberLinks.map(l => l.memberId);
+      // Filter members by role family if set
+      if (filteredUserIds) {
+        memberIds = memberIds.filter(id => filteredUserIds!.has(id));
+        if (memberIds.length === 0) continue; // Skip teams with no matching members
+      }
 
       let totalScore = 0;
       let assessedCount = 0;

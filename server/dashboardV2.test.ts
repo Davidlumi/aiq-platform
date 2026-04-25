@@ -242,3 +242,80 @@ describe("colour accessibility", () => {
     }
   });
 });
+
+// ─── Department (role family) filter logic ─────────────────────────────────
+
+describe("department filter — roleFamilyFromUserField coverage", () => {
+  it("maps all 7 role family keys correctly", () => {
+    expect(roleFamilyFromUserField("business_partnering")).toBe("business_partnering");
+    expect(roleFamilyFromUserField("talent_acquisition")).toBe("talent_acquisition");
+    expect(roleFamilyFromUserField("learning_development")).toBe("learning_development");
+    expect(roleFamilyFromUserField("reward_analytics")).toBe("reward_analytics");
+    expect(roleFamilyFromUserField("er_specialists")).toBe("er_specialists");
+    expect(roleFamilyFromUserField("operations_tech")).toBe("operations_tech");
+    expect(roleFamilyFromUserField("hr_leadership")).toBe("hr_leadership");
+  });
+
+  it("maps display labels to keys (case-sensitive)", () => {
+    expect(roleFamilyFromUserField("Business Partnering")).toBe("business_partnering");
+    expect(roleFamilyFromUserField("Talent Acquisition")).toBe("talent_acquisition");
+    expect(roleFamilyFromUserField("Learning & Development")).toBe("learning_development");
+    expect(roleFamilyFromUserField("Reward & Analytics")).toBe("reward_analytics");
+    expect(roleFamilyFromUserField("ER & Specialists")).toBe("er_specialists");
+    expect(roleFamilyFromUserField("Operations & Tech")).toBe("operations_tech");
+    expect(roleFamilyFromUserField("HR Leadership")).toBe("hr_leadership");
+  });
+
+  it("defaults unrecognised values to business_partnering", () => {
+    expect(roleFamilyFromUserField("Unknown Department")).toBe("business_partnering");
+    expect(roleFamilyFromUserField("")).toBe("business_partnering");
+    expect(roleFamilyFromUserField(null)).toBe("business_partnering");
+    expect(roleFamilyFromUserField(undefined)).toBe("business_partnering");
+  });
+});
+
+describe("department filter — ROLE_FAMILY_KEYS completeness", () => {
+  it("has exactly 7 role families", () => {
+    expect(ROLE_FAMILY_KEYS).toHaveLength(7);
+  });
+
+  it("every role family key has a label", () => {
+    for (const rfk of ROLE_FAMILY_KEYS) {
+      expect(ROLE_FAMILY_LABELS[rfk]).toBeDefined();
+      expect(typeof ROLE_FAMILY_LABELS[rfk]).toBe("string");
+      expect(ROLE_FAMILY_LABELS[rfk].length).toBeGreaterThan(0);
+    }
+  });
+
+  it("role family keys are all lowercase snake_case", () => {
+    for (const rfk of ROLE_FAMILY_KEYS) {
+      expect(rfk).toMatch(/^[a-z_]+$/);
+    }
+  });
+});
+
+describe("department filter — archetypeToRoleFamily for filter matching", () => {
+  // These must match the actual ARCHETYPE_TO_FAMILY mapping in shared/dashboard.ts
+  const archetypeMap: Record<string, string> = {
+    hrbp: "business_partnering",
+    hr_generalist: "business_partnering",
+    hr_advisor: "business_partnering",
+    hr_professional: "business_partnering",
+    talent_acquisition: "talent_acquisition",
+    ld_specialist: "learning_development",
+    reward: "reward_analytics",
+    people_analytics: "reward_analytics",
+    er_specialist: "er_specialists",
+    od_specialist: "er_specialists",
+    hr_ops: "operations_tech",
+    shared_services: "operations_tech",
+    hris_hr_tech: "operations_tech",
+    hr_leader: "hr_leadership",
+  };
+
+  for (const [archetype, expectedFamily] of Object.entries(archetypeMap)) {
+    it(`maps archetype "${archetype}" → ${expectedFamily}`, () => {
+      expect(archetypeToRoleFamily(archetype)).toBe(expectedFamily);
+    });
+  }
+});

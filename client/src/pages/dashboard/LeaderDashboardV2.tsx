@@ -3,8 +3,10 @@
  *
  * 7 components: Hero Finding, Function Position, Rating Distribution,
  * Domain Distribution, Role-Family Heatmap, Domain Trajectory, Strategic Findings.
+ *
+ * Department (role-family) filter applied to all queries.
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
@@ -21,6 +23,13 @@ import {
 } from "@/components/dashboard/DashboardUI";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   LineChart,
   Line,
@@ -40,6 +49,7 @@ import {
   BarChart3,
   Lightbulb,
   ArrowRight,
+  Filter,
 } from "lucide-react";
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -69,12 +79,30 @@ const RATING_COLOURS: Record<string, string> = {
 
 const RATING_KEYS = ["ai_ready", "developing", "not_yet_ready", "foundation_gap", "insufficient_evidence"] as const;
 
+const ROLE_FAMILY_OPTIONS = [
+  { value: "business_partnering", label: "Business Partnering" },
+  { value: "talent_acquisition", label: "Talent Acquisition" },
+  { value: "learning_development", label: "Learning & Development" },
+  { value: "reward_analytics", label: "Reward & Analytics" },
+  { value: "er_specialists", label: "ER & Specialists" },
+  { value: "operations_tech", label: "Operations & Tech" },
+  { value: "hr_leadership", label: "HR Leadership" },
+];
+
 export default function LeaderDashboardV2() {
-  const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery();
-  const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery();
-  const { data: trajectory, isLoading: trajLoading } = trpc.dashboardV2.leader.domainTrajectory.useQuery();
-  const { data: findings, isLoading: findingsLoading } = trpc.dashboardV2.leader.strategicFindings.useQuery();
-  const { data: teams, isLoading: teamsLoading } = trpc.dashboardV2.leader.teams.useQuery();
+  const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
+
+  // Stabilise the query input to avoid infinite re-renders
+  const queryInput = useMemo(
+    () => (roleFamily ? { roleFamily } : undefined),
+    [roleFamily],
+  );
+
+  const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
+  const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
+  const { data: trajectory, isLoading: trajLoading } = trpc.dashboardV2.leader.domainTrajectory.useQuery(queryInput);
+  const { data: findings, isLoading: findingsLoading } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
+  const { data: teams, isLoading: teamsLoading } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
 
@@ -90,13 +118,51 @@ export default function LeaderDashboardV2() {
             AI capability intelligence across your entire HR function
           </p>
         </div>
-        <Link href="/dashboard/personal">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <UserCircle className="w-3.5 h-3.5" />
-            Your own journey
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          {/* Department Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select
+              value={roleFamily ?? "__all__"}
+              onValueChange={(v) => setRoleFamily(v === "__all__" ? undefined : v)}
+            >
+              <SelectTrigger className="w-[200px] h-8 text-xs">
+                <SelectValue placeholder="All departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All departments</SelectItem>
+                {ROLE_FAMILY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Link href="/dashboard/personal">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <UserCircle className="w-3.5 h-3.5" />
+              Your own journey
+            </Button>
+          </Link>
+        </div>
       </header>
+
+      {/* Active filter indicator */}
+      {roleFamily && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
+          <Filter className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs text-foreground">
+            Filtered to <strong>{ROLE_FAMILY_OPTIONS.find(o => o.value === roleFamily)?.label ?? roleFamily}</strong>
+          </span>
+          <button
+            onClick={() => setRoleFamily(undefined)}
+            className="ml-auto text-xs text-primary hover:underline font-medium"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* ── 1. Hero Finding ── */}
       {hero && (

@@ -1480,3 +1480,11 @@
 
 ## Bug Fixes — Dashboard v1.1
 - [x] BF-DB-01: Leader Dashboard hero finding shows "Strategic context not yet captured" even after completing AI roadmap configuration — fixed heroFinding to query ailOrgContext table, now shows correct hero pattern (on_track/at_risk/mixed/partial) when strategic input is configured
+
+## Department Filter — Leader Dashboard
+- [x] DF-01: Investigate department data model — no departments table, using roleFamily (7 structured values) as department proxy
+- [x] DF-02: All 5 leader procedures updated to accept optional roleFamily filter input
+- [x] DF-03: heroFinding, main, domainTrajectory, strategicFindings, teams all filter by roleFamily
+- [x] DF-04: Department filter dropdown added to Leader Dashboard header with 7 role family options + 'All departments'
+- [x] DF-05: All 5 queries wired to useMemo-stabilised queryInput; active filter indicator with clear button shown when filtering
+- [x] DF-06: Vitest tests for department filtering logic (707 tests, all passing)
