@@ -1546,3 +1546,11 @@
 - [x] PV-06: Assessment Results Page — ScoreRing with Peakon gradient, CapabilityBar scores with gradient badges
 - [x] PV-07: Learning Plan Page — gap analysis scores with Peakon gradient badges, overall readiness score with gradient
 - [x] PV-08: ExplanationDrawer ScoreBreakdown — overall score and factor scores with Peakon gradient badges
+
+## Learning & Assessment Peakon Visual Overhaul
+- [x] LP-01: Learning Plan page — unified global font to Sora, removed hardcoded font references across all files, light-theme priority colours
+- [x] LP-02: Learning Plan Gap Analysis tab — Peakon gradient score badges, light-theme capability cards
+- [x] LP-03: Learning Plan Progress tab — light-theme module cards, journey map stage cards, benchmarks tab
+- [x] LP-04: Assessment landing page — Peakon gradient score cells, light-theme domain cards and session history
+- [x] LP-05: Assessment session page — all 44 dark-theme patterns replaced with light-theme equivalents, Peakon completion screen
+- [x] LP-06: Assessment results page — light-theme readiness/credibility/risk configs, Peakon gradient score badges throughout

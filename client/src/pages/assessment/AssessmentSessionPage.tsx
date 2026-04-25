@@ -62,6 +62,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ─── Capability colours ───────────────────────────────────────────────────────
@@ -73,9 +74,9 @@ import type { CapabilityKey, InteractionType } from "@/lib/domains";
 const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS;
 
 const RISK_CONFIG = {
-  High:   { color: "text-[#DC2626] bg-[#DC2626]/8 border-[#DC2626]/30", icon: AlertTriangle },
-  Medium: { color: "text-[#F59E0B] bg-[#F59E0B]/8 border-[#F59E0B]/30", icon: AlertTriangle },
-  Low:    { color: "text-[#10B981] bg-[#10B981]/8 border-[#10B981]/30", icon: Target },
+  High:   { color: "text-red-600 bg-red-50 border-red-200", icon: AlertTriangle },
+  Medium: { color: "text-amber-600 bg-amber-50 border-amber-200", icon: AlertTriangle },
+  Low:    { color: "text-emerald-600 bg-emerald-50 border-emerald-200", icon: Target },
 } as const;
 
 // ─── Interaction type config ──────────────────────────────────────────────────
@@ -160,26 +161,26 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
     critique: {
       label: "AI-Generated Output",
       sublabel: "Evaluate this output",
-      borderColor: "border-[#8B5CF6]/30",
-      bgColor: "bg-[#8B5CF6]/4",
-      labelColor: "text-[#8B5CF6]",
-      iconColor: "text-[#8B5CF6]",
+      borderColor: "border-violet-200",
+      bgColor: "bg-violet-50",
+      labelColor: "text-violet-700",
+      iconColor: "text-violet-600",
     },
     improvement: {
       label: "AI-Generated Output",
       sublabel: "Identify improvements",
-      borderColor: "border-[#CCBB44]/30",
-      bgColor: "bg-[#CCBB44]/4",
-      labelColor: "text-[#CCBB44]",
-      iconColor: "text-[#CCBB44]",
+      borderColor: "border-yellow-200",
+      bgColor: "bg-yellow-50",
+      labelColor: "text-yellow-700",
+      iconColor: "text-yellow-600",
     },
     error: {
       label: "AI-Generated Output",
       sublabel: "Find the error",
-      borderColor: "border-[#DC2626]/30",
-      bgColor: "bg-[#DC2626]/4",
-      labelColor: "text-[#DC2626]",
-      iconColor: "text-[#DC2626]",
+      borderColor: "border-red-200",
+      bgColor: "bg-red-50",
+      labelColor: "text-red-700",
+      iconColor: "text-red-600",
     },
   };
   const cfg = configs[mode];
@@ -208,11 +209,11 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
 
 function DataContextBlock({ content }: { content: string }) {
   return (
-    <div className="rounded-xl border-2 border-[#66CCEE]/30 bg-[#66CCEE]/4 p-4">
+    <div className="rounded-xl border-2 border-cyan-200 bg-cyan-50 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 className="w-4 h-4 text-[#66CCEE]" />
+        <BarChart3 className="w-4 h-4 text-cyan-600" />
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[#66CCEE]">
+          <p className="text-xs font-bold uppercase tracking-wider text-cyan-700">
             Data / AI Insight
           </p>
           <p className="text-xs text-muted-foreground">Interpret this output</p>
@@ -236,82 +237,82 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     email_thread: {
       label: "Email Thread",
       sublabel: "Review the conversation",
-      borderColor: "border-blue-500/30",
-      bgColor: "bg-blue-500/4",
-      labelColor: "text-blue-400",
-      headerBg: "bg-blue-500/10",
+      borderColor: "border-blue-200",
+      bgColor: "bg-blue-50",
+      labelColor: "text-blue-600",
+      headerBg: "bg-blue-100",
     },
     cv_extract: {
       label: "CV Extract",
       sublabel: "Review the candidate profile",
-      borderColor: "border-emerald-500/30",
-      bgColor: "bg-emerald-500/4",
-      labelColor: "text-emerald-400",
-      headerBg: "bg-emerald-500/10",
+      borderColor: "border-emerald-200",
+      bgColor: "bg-emerald-50",
+      labelColor: "text-emerald-600",
+      headerBg: "bg-emerald-100",
     },
     policy_doc: {
       label: "Policy Document",
       sublabel: "Review the policy extract",
-      borderColor: "border-amber-500/30",
-      bgColor: "bg-amber-500/4",
-      labelColor: "text-amber-400",
-      headerBg: "bg-amber-500/10",
+      borderColor: "border-amber-200",
+      bgColor: "bg-amber-50",
+      labelColor: "text-amber-600",
+      headerBg: "bg-amber-100",
     },
     meeting_notes: {
       label: "Meeting Notes",
       sublabel: "Review the discussion record",
-      borderColor: "border-purple-500/30",
-      bgColor: "bg-purple-500/4",
-      labelColor: "text-purple-400",
-      headerBg: "bg-purple-500/10",
+      borderColor: "border-purple-200",
+      bgColor: "bg-purple-50",
+      labelColor: "text-purple-600",
+      headerBg: "bg-purple-100",
     },
     chat_log: {
       label: "Chat Log",
       sublabel: "Review the conversation",
-      borderColor: "border-cyan-500/30",
-      bgColor: "bg-cyan-500/4",
-      labelColor: "text-cyan-400",
-      headerBg: "bg-cyan-500/10",
+      borderColor: "border-cyan-200",
+      bgColor: "bg-cyan-50",
+      labelColor: "text-cyan-600",
+      headerBg: "bg-cyan-100",
     },
     data_table: {
       label: "Data Extract",
       sublabel: "Review the data",
-      borderColor: "border-rose-500/30",
-      bgColor: "bg-rose-500/4",
-      labelColor: "text-rose-400",
-      headerBg: "bg-rose-500/10",
+      borderColor: "border-rose-200",
+      bgColor: "bg-rose-50",
+      labelColor: "text-rose-600",
+      headerBg: "bg-rose-100",
     },
     dashboard_card: {
       label: "Analytics Dashboard",
       sublabel: "Review the AI-generated insight",
-      borderColor: "border-indigo-500/30",
-      bgColor: "bg-indigo-500/4",
-      labelColor: "text-indigo-400",
-      headerBg: "bg-indigo-500/10",
+      borderColor: "border-indigo-200",
+      bgColor: "bg-indigo-50",
+      labelColor: "text-indigo-600",
+      headerBg: "bg-indigo-100",
     },
     screening_output: {
       label: "AI Screening Output",
       sublabel: "Review the automated screening result",
-      borderColor: "border-orange-500/30",
-      bgColor: "bg-orange-500/4",
-      labelColor: "text-orange-400",
-      headerBg: "bg-orange-500/10",
+      borderColor: "border-orange-200",
+      bgColor: "bg-orange-50",
+      labelColor: "text-orange-600",
+      headerBg: "bg-orange-100",
     },
     alert: {
       label: "System Alert",
       sublabel: "Review the automated alert",
-      borderColor: "border-red-500/30",
-      bgColor: "bg-red-500/4",
-      labelColor: "text-red-400",
-      headerBg: "bg-red-500/10",
+      borderColor: "border-red-200",
+      bgColor: "bg-red-50",
+      labelColor: "text-red-600",
+      headerBg: "bg-red-100",
     },
     document_excerpt: {
       label: "Document Excerpt",
       sublabel: "Review the extract",
-      borderColor: "border-slate-500/30",
-      bgColor: "bg-slate-500/4",
-      labelColor: "text-slate-400",
-      headerBg: "bg-slate-500/10",
+      borderColor: "border-slate-200",
+      bgColor: "bg-slate-50",
+      labelColor: "text-slate-600",
+      headerBg: "bg-slate-100",
     },
     none: {
       label: "Context",
@@ -361,7 +362,7 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
                 return (
                   <div key={li} className={cn("flex gap-2 text-xs", isSystem ? "opacity-70" : "")}>
                     <span className="text-muted-foreground shrink-0 w-14">{time}</span>
-                    <span className={cn("font-semibold shrink-0", isSystem ? "text-cyan-400" : "text-foreground")}>{sender}:</span>
+                    <span className={cn("font-semibold shrink-0", isSystem ? "text-cyan-600" : "text-foreground")}>{sender}:</span>
                     <span className="text-foreground">{msg}</span>
                   </div>
                 );
@@ -384,14 +385,14 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
 function NarrativeWrapper({ context }: { context: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/5 overflow-hidden">
+    <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-[#3B82F6]/8 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-blue-100 transition-colors text-left"
       >
-        <Layers className="w-4 h-4 text-[#3B82F6] shrink-0" />
+        <Layers className="w-4 h-4 text-blue-600 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#3B82F6]">Your Scenario Context</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Your Scenario Context</p>
           {!expanded && (
             <p className="text-xs text-muted-foreground truncate mt-0.5">{context.slice(0, 80)}{context.length > 80 ? "…" : ""}</p>
           )}
@@ -399,7 +400,7 @@ function NarrativeWrapper({ context }: { context: string }) {
         <span className="text-xs text-muted-foreground shrink-0">{expanded ? "▲ Hide" : "▼ Show"}</span>
       </button>
       {expanded && (
-        <div className="px-4 pb-3 pt-1 border-t border-[#3B82F6]/20">
+        <div className="px-4 pb-3 pt-1 border-t border-blue-200">
           <p className="text-sm text-foreground leading-relaxed">{context}</p>
         </div>
       )}
@@ -551,22 +552,29 @@ function CompletionScreen({
       {result && Object.keys(capabilityScores).length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground">Capability Breakdown</h3>
-          {Object.entries(capabilityScores).map(([key, score]) => (
-            <div key={key} className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-40 truncate capitalize">
-                {key.replace(/_/g, " ")}
-              </span>
-              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${score}%`, backgroundColor: CAPABILITY_COLOURS[key] ?? "#3B82F6" }}
-                />
+          {Object.entries(capabilityScores).map(([key, score]) => {
+            const peakonScore = (score as number) / 10;
+            const colors = scoreToColor(peakonScore);
+            return (
+              <div key={key} className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-40 truncate capitalize">
+                  {key.replace(/_/g, " ")}
+                </span>
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${score}%`, backgroundColor: colors.bg }}
+                  />
+                </div>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-md min-w-[2.5rem] text-center"
+                  style={{ backgroundColor: colors.bg, color: colors.text }}
+                >
+                  {formatPeakonScore(peakonScore)}
+                </span>
               </div>
-              <span className="text-xs font-bold w-8 text-right" style={{ color: CAPABILITY_COLOURS[key] ?? "#3B82F6" }}>
-                {score as number}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -881,7 +889,7 @@ export default function AssessmentSessionPage() {
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-              style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
+              style={{ color: "#059669", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -957,7 +965,7 @@ export default function AssessmentSessionPage() {
             <button
               onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-              style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
+              style={{ color: "#059669", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               Save &amp; Exit
@@ -1109,7 +1117,7 @@ export default function AssessmentSessionPage() {
           <button
             onClick={() => setShowLeaveDialog(true)}
             className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-            style={{ color: "#10B981", borderColor: "#D1FAE5", background: "#F8FAFC" }}
+            style={{ color: "#059669", borderColor: "#D1FAE5", background: "#F8FAFC" }}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Save &amp; Exit
@@ -1241,8 +1249,8 @@ export default function AssessmentSessionPage() {
 
           {/* Constraint — only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
-            <div className="bg-[#F59E0B]/6 rounded-xl p-3 border border-[#F59E0B]/20">
-              <p className="text-xs font-semibold text-[#F59E0B] uppercase tracking-wider mb-1">
+            <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
+              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
                 Constraint
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1251,8 +1259,8 @@ export default function AssessmentSessionPage() {
 
           {/* Risk framing for pressure_test */}
           {interactionType === "pressure_test" && (nextItem as any).constraint && (
-            <div className="bg-[#DC2626]/6 rounded-xl p-3 border border-[#DC2626]/20">
-              <p className="text-xs font-semibold text-[#DC2626] uppercase tracking-wider mb-1">
+            <div className="bg-red-50 rounded-xl p-3 border border-red-200">
+              <p className="text-xs font-semibold text-red-700 uppercase tracking-wider mb-1">
                 Risk Factor
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1261,8 +1269,8 @@ export default function AssessmentSessionPage() {
 
           {/* Governance framing */}
           {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
-            <div className="bg-[#10B981]/6 rounded-xl p-3 border border-[#10B981]/20">
-              <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1">
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1">
                 Policy Context
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1322,7 +1330,7 @@ export default function AssessmentSessionPage() {
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value
-                      ? "border-[#10B981] bg-[#F0FDF4] ring-1 ring-[#10B981]/20"
+                      ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200"
                       : "border-border hover:border-[var(--navy-400)] hover:bg-muted/30"
                   )}
                 >
@@ -1330,7 +1338,7 @@ export default function AssessmentSessionPage() {
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-[#10B981] bg-[#10B981] text-white"
+                        ? "border-emerald-500 bg-emerald-500 text-white"
                         : "border-border text-muted-foreground"
                     )}
                   >
@@ -1357,7 +1365,7 @@ export default function AssessmentSessionPage() {
                 </Label>
                 <span className={cn(
                   "text-xs tabular-nums",
-                  reasoningText.length > 1800 ? "text-amber-500" : nextItem.reasoningRequired && reasoningText.trim().length < 40 ? "text-red-400" : "text-muted-foreground"
+                  reasoningText.length > 1800 ? "text-amber-500" : nextItem.reasoningRequired && reasoningText.trim().length < 40 ? "text-red-600" : "text-muted-foreground"
                 )}>
                   {nextItem.reasoningRequired ? `${reasoningText.trim().length}/40 min` : `${reasoningText.length}/2000`}
                 </span>
@@ -1371,7 +1379,7 @@ export default function AssessmentSessionPage() {
                 className={cn("text-sm resize-none", nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 ? "border-red-400" : "")}
               />
               {nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 && (
-                <p className="text-xs text-red-400">{40 - reasoningText.trim().length} more characters needed</p>
+                <p className="text-xs text-red-600">{40 - reasoningText.trim().length} more characters needed</p>
               )}
             </div>
           )}
@@ -1386,8 +1394,8 @@ export default function AssessmentSessionPage() {
                 const isSelected = confidenceStake === stake;
                 const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
                   guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#DC2626" },
-                  fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#F59E0B" },
-                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--color-green-700)" },
+                  fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#D97706" },
+                  certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "#059669" },
                 };
                 const { label, desc, weight, color } = labels[stake];
                 return (

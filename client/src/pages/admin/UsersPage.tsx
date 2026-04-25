@@ -109,13 +109,13 @@ export default function UsersPage() {
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2 font-['Sora']">
+            <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
               <Plus className="h-4 w-4" /> Add User
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-['Sora'] font-semibold">Create New User</DialogTitle>
+              <DialogTitle className="font-semibold">Create New User</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 pt-2">
               <div className="grid grid-cols-2 gap-3">
@@ -124,7 +124,7 @@ export default function UsersPage() {
                   <Input
                     value={newUser.firstName}
                     onChange={e => setNewUser(u => ({ ...u, firstName: e.target.value }))}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                     placeholder="Jane"
                   />
                 </div>
@@ -133,7 +133,7 @@ export default function UsersPage() {
                   <Input
                     value={newUser.lastName}
                     onChange={e => setNewUser(u => ({ ...u, lastName: e.target.value }))}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                     placeholder="Smith"
                   />
                 </div>
@@ -144,7 +144,7 @@ export default function UsersPage() {
                   type="email"
                   value={newUser.email}
                   onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))}
-                  className="mt-1 font-['Sora']"
+                  className="mt-1"
                   placeholder="jane@company.com"
                 />
               </div>
@@ -154,14 +154,14 @@ export default function UsersPage() {
                   type="password"
                   value={newUser.password}
                   onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
-                  className="mt-1 font-['Sora']"
+                  className="mt-1"
                   placeholder="Min 8 characters"
                 />
               </div>
               <div>
                 <Label className="aiq-label text-muted-foreground">Role</Label>
                 <Select value={newUser.roleKey} onValueChange={v => setNewUser(u => ({ ...u, roleKey: v }))}>
-                  <SelectTrigger className="mt-1 font-['Sora']">
+                  <SelectTrigger className="mt-1">
                     <SelectValue defaultValue={newUser.roleKey} />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,7 +178,7 @@ export default function UsersPage() {
                 </Select>
               </div>
               <Button
-                className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
                 disabled={!newUser.email || !newUser.firstName || !newUser.password || createMutation.isPending}
                 onClick={() => createMutation.mutate({ email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName, password: newUser.password, roleKey: newUser.roleKey })}
               >
@@ -198,11 +198,11 @@ export default function UsersPage() {
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by name or email..."
-            className="pl-9 font-['Sora']"
+            className="pl-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-40 font-['Sora']">
+          <SelectTrigger className="w-40">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -228,7 +228,7 @@ export default function UsersPage() {
               {s.icon}
               <div>
                 <p className="aiq-caption text-muted-foreground text-xs">{s.label}</p>
-                <p className="font-['Sora'] font-bold text-lg text-foreground">{s.value}</p>
+                <p className="font-bold text-lg text-foreground">{s.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -238,7 +238,7 @@ export default function UsersPage() {
       {/* User Table */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-[#10B981]" />
             Users ({total})
           </CardTitle>
@@ -253,7 +253,7 @@ export default function UsersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm font-['Sora']">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left py-3 px-4 aiq-label text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>
@@ -362,7 +362,7 @@ export default function UsersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="font-['Sora']"
+                  className=""
                   disabled={page <= 1}
                   onClick={() => setPage(p => p - 1)}
                 >
@@ -371,7 +371,7 @@ export default function UsersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="font-['Sora']"
+                  className=""
                   disabled={page >= totalPages}
                   onClick={() => setPage(p => p + 1)}
                 >

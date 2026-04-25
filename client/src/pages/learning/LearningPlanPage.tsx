@@ -58,10 +58,10 @@ const PRESCRIPTION_STAGE_META: Record<number, { label: string; color: string; de
 };
 
 const PRIORITY_COLOURS = {
-  critical:   { bg: "bg-red-950/20",    border: "border-red-700/40",    text: "text-red-400",    badge: "bg-red-900/30 text-red-400" },
-  developing: { bg: "bg-amber-950/20",  border: "border-amber-700/40",  text: "text-amber-400",  badge: "bg-amber-900/30 text-amber-400" },
-  proficient: { bg: "bg-emerald-950/20",border: "border-emerald-700/40",text: "text-emerald-400",badge: "bg-emerald-900/30 text-emerald-400" },
-  advanced:   { bg: "bg-blue-950/20",   border: "border-blue-700/40",   text: "text-blue-400",   badge: "bg-blue-900/30 text-blue-400" },
+  critical:   { bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     badge: "bg-red-100 text-red-700" },
+  developing: { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   badge: "bg-amber-100 text-amber-700" },
+  proficient: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700" },
+  advanced:   { bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    badge: "bg-blue-100 text-blue-700" },
 };
 
 // ─── Stage Icons ─────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ function JourneyMapSection({
               className={cn(
                 "relative rounded-xl border p-3 text-left transition-all",
                 isActive && "ring-2 ring-offset-1 ring-offset-background",
-                isComplete && "border-emerald-700/40 bg-emerald-950/10",
+                isComplete && "border-emerald-200 bg-emerald-50",
                 !isComplete && isActive && "bg-card",
                 !isComplete && !isActive && hasItems && "bg-card/50 hover:bg-card",
                 !hasItems && "opacity-40 cursor-default",
@@ -182,7 +182,7 @@ function JourneyMapSection({
               <div className="flex items-center gap-2 mb-2 mt-1">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${meta.color}15` }}>
                   {isComplete
-                    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     : <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
                   }
                 </div>
@@ -255,11 +255,11 @@ function ModuleCard({
 
   return (
     <div className={cn(
-      "rounded-xl border p-4 transition-all group bg-card",
-      isLocked ? "opacity-50 cursor-not-allowed" : "hover:border-primary/40 cursor-pointer",
-      isReview && "border-amber-700/30 bg-amber-950/10",
-      isCompleted && !isNoTransfer && "border-emerald-700/30 bg-emerald-950/10",
-      isNoTransfer && "border-red-700/30 bg-red-950/10",
+      "rounded-xl border p-4 transition-all group bg-white",
+      isLocked ? "opacity-50 cursor-not-allowed" : "hover:border-primary/40 hover:shadow-sm cursor-pointer",
+      isReview && "border-amber-200 bg-amber-50",
+      isCompleted && !isNoTransfer && "border-emerald-200 bg-emerald-50",
+      isNoTransfer && "border-red-200 bg-red-50",
     )}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${modal.color}15` }}>
@@ -271,12 +271,12 @@ function ModuleCard({
               <ModalIcon className="h-2.5 w-2.5 mr-1" />{modal.label}
             </Badge>
             {isReview && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-900/30 text-amber-400">
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-100 text-amber-700">
                 <RotateCcw className="h-2.5 w-2.5 mr-1" />Review due
               </Badge>
             )}
             {isCompleted && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-emerald-900/30 text-emerald-400">
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-emerald-100 text-emerald-700">
                 <CheckCircle2 className="h-2.5 w-2.5 mr-1" />Done
               </Badge>
             )}
@@ -288,12 +288,12 @@ function ModuleCard({
               </Badge>
             )}
             {isNoTransfer && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-red-900/30 text-red-400">
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-red-100 text-red-700">
                 <XCircle className="h-2.5 w-2.5 mr-1" />No transfer
               </Badge>
             )}
             {isMasteryGateBlocked && (
-              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-900/30 text-amber-400" title="Prerequisite module score below 70% mastery threshold">
+              <Badge variant="outline" className="text-[10px] border-0 px-1.5 py-0.5 bg-amber-100 text-amber-700" title="Prerequisite module score below 70% mastery threshold">
                 <AlertTriangle className="h-2.5 w-2.5 mr-1" />Retake required
               </Badge>
             )}
@@ -679,12 +679,12 @@ export default function LearningPlanPage() {
             <>
               {/* Auto-regeneration "plan updated" banner */}
               {(planData as any).autoRegeneratedAt && (
-                <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-blue-400" />
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-blue-400 mb-0.5">Your learning plan has been updated</p>
+                    <p className="text-sm font-semibold text-blue-700 mb-0.5">Your learning plan has been updated</p>
                     <p className="text-xs text-muted-foreground">
                       Your plan was automatically refreshed after your latest assessment to reflect your current capability gaps.
                       Updated {new Date((planData as any).autoRegeneratedAt).toLocaleDateString()}.
@@ -695,25 +695,25 @@ export default function LearningPlanPage() {
 
               {/* P3-LL-6: Learning-Aware Reassessment Banner */}
               {learningAwareCtx?.learningAwareMode && (
-                <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 p-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#10B981]/15 flex items-center justify-center flex-shrink-0">
-                    <Brain className="h-4 w-4 text-[#10B981]" />
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <Brain className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#10B981] mb-0.5">Learning-Aware Reassessment Available</p>
+                    <p className="text-sm font-semibold text-emerald-700 mb-0.5">Learning-Aware Reassessment Available</p>
                     <p className="text-xs text-muted-foreground">
                       You've completed {learningAwareCtx.recentlyLearnedSignals.length} learning module{learningAwareCtx.recentlyLearnedSignals.length !== 1 ? "s" : ""} since your last assessment.
                       Your next assessment will be calibrated to test whether this learning has translated to behaviour change.
                     </p>
                     {learningAwareCtx.noTransferModules.length > 0 && (
-                      <p className="text-xs text-amber-400 mt-1">
+                      <p className="text-xs text-amber-600 mt-1">
                         {learningAwareCtx.noTransferModules.length} module{learningAwareCtx.noTransferModules.length !== 1 ? "s" : ""} previously showed no transfer — these will be prioritised in your reassessment.
                       </p>
                     )}
                   </div>
                   <button
                     onClick={() => setLocation("/assessment")}
-                    className="text-xs font-semibold text-[#10B981] hover:underline flex-shrink-0"
+                    className="text-xs font-semibold text-emerald-600 hover:underline flex-shrink-0"
                   >
                     Take reassessment
                   </button>
@@ -722,11 +722,11 @@ export default function LearningPlanPage() {
 
               {/* P3-LL-5: No-Transfer Findings Panel */}
               {transferFindings?.summary && (transferFindings.summary.noTransferModules ?? 0) > 0 && (
-                <div className="rounded-xl border border-red-700/30 bg-red-950/10 p-4">
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <ShieldAlert className="h-4 w-4 text-red-400" />
-                    <h3 className="text-sm font-semibold text-red-400">No-Transfer Findings</h3>
-                    <Badge variant="outline" className="text-[10px] bg-red-900/20 text-red-400 border-0">{transferFindings.summary.noTransferModules} module{transferFindings.summary.noTransferModules !== 1 ? "s" : ""}</Badge>
+                    <ShieldAlert className="h-4 w-4 text-red-600" />
+                    <h3 className="text-sm font-semibold text-red-700">No-Transfer Findings</h3>
+                    <Badge variant="outline" className="text-[10px] bg-red-100 text-red-700 border-0">{transferFindings.summary.noTransferModules} module{transferFindings.summary.noTransferModules !== 1 ? "s" : ""}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">
                     These modules were completed but did not produce measurable behaviour change in your subsequent assessment.
@@ -785,7 +785,7 @@ export default function LearningPlanPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <RotateCcw className="h-4 w-4 text-amber-400" />
                     <h3 className="font-semibold text-sm">Due for Review</h3>
-                    <Badge variant="outline" className="text-[10px] bg-amber-900/20 text-amber-400 border-0">{reviewItems.length}</Badge>
+                    <Badge variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-0">{reviewItems.length}</Badge>
                   </div>
                   <div className="space-y-2">
                     {reviewItems.map((item: any) => (
@@ -877,7 +877,7 @@ export default function LearningPlanPage() {
                   { label: "Mins Learned", mine: peerData.myStats.minsLearned, avg: peerData.platformAverages.avgMinsLearned, pct: null, icon: Clock, color: "#10b981" },
                   { label: "Readiness Score", mine: Math.round(peerData.myStats.readinessScore), avg: peerData.platformAverages.avgReadinessScore, pct: peerData.percentiles.readinessScore, icon: Target, color: "#f59e0b" },
                 ].map(stat => (
-                  <div key={stat.label} className="rounded-xl border border-border bg-muted/20 p-4">
+                  <div key={stat.label} className="rounded-xl border border-border bg-white p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
                       <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -941,7 +941,7 @@ export default function LearningPlanPage() {
                   { label: "Modules Done", value: streakData.totalModulesCompleted, icon: CheckCircle2, color: "#10b981" },
                   { label: "Mins Learned", value: streakData.totalMinsLearned, icon: Clock, color: "#6366f1" },
                 ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+                  <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
                     <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
                     <p className="text-xl font-bold">{s.value}</p>
                     <p className="text-[11px] text-muted-foreground">{s.label}</p>
@@ -950,7 +950,7 @@ export default function LearningPlanPage() {
               </div>
               {/* Next milestone */}
               {streakData.nextMilestone && (
-                <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border">
+                <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-amber-400" />
@@ -967,7 +967,7 @@ export default function LearningPlanPage() {
               {streakData.milestones.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {streakData.milestones.map((m: string) => (
-                    <Badge key={m} variant="outline" className="text-[10px] bg-amber-900/20 text-amber-400 border-amber-700/30">
+                    <Badge key={m} variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">
                       <Trophy className="h-2.5 w-2.5 mr-1" />{m.replace("modules_", "") + " modules"}
                     </Badge>
                   ))}
@@ -1032,7 +1032,7 @@ export default function LearningPlanPage() {
                   { label: "Current Streak", value: `${(weeklyDigest as any).currentStreak}d`, icon: Flame, color: "#f97316" },
                   { label: "Reviews Due", value: ((weeklyDigest as any).dueReviews ?? []).length, icon: RotateCcw, color: "#f59e0b" },
                 ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-border bg-muted/20 p-3 text-center">
+                  <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
                     <s.icon className="h-5 w-5 mx-auto mb-1" style={{ color: s.color }} />
                     <p className="text-xl font-bold">{s.value}</p>
                     <p className="text-[11px] text-muted-foreground">{s.label}</p>

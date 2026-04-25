@@ -16,10 +16,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const BAND_COLOURS: Record<string, { text: string; bg: string; border: string }> = {
-  critical:   { text: "text-red-400",    bg: "bg-red-950/20",    border: "border-red-700/40" },
-  developing: { text: "text-amber-400",  bg: "bg-amber-950/20",  border: "border-amber-700/40" },
-  proficient: { text: "text-emerald-400",bg: "bg-emerald-950/20",border: "border-emerald-700/40" },
-  advanced:   { text: "text-blue-400",   bg: "bg-blue-950/20",   border: "border-blue-700/40" },
+  critical:   { text: "text-red-700",     bg: "bg-red-50",     border: "border-red-200" },
+  developing: { text: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200" },
+  proficient: { text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
+  advanced:   { text: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200" },
 };
 
 function NudgeDialog({

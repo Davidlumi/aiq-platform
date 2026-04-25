@@ -72,7 +72,7 @@ export default function PolicyPage() {
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle className="font-['Sora'] font-semibold">Create Policy Rule</DialogTitle>
+                <DialogTitle className="font-semibold">Create Policy Rule</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div>
@@ -81,7 +81,7 @@ export default function PolicyPage() {
                     value={newPolicy.name}
                     onChange={e => setNewPolicy(p => ({ ...p, name: e.target.value }))}
                     placeholder="e.g. AI Usage Compliance Policy"
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -90,7 +90,7 @@ export default function PolicyPage() {
                     value={newPolicy.description}
                     onChange={e => setNewPolicy(p => ({ ...p, description: e.target.value }))}
                     placeholder="Describe when this policy triggers"
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -99,7 +99,7 @@ export default function PolicyPage() {
                     value={newPolicy.action}
                     onValueChange={v => setNewPolicy(p => ({ ...p, action: v }))}
                   >
-                    <SelectTrigger className="mt-1 font-['Sora']">
+                    <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -119,7 +119,7 @@ export default function PolicyPage() {
                     max={100}
                     value={newPolicy.priority}
                     onChange={e => setNewPolicy(p => ({ ...p, priority: parseInt(e.target.value) || 50 }))}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                   />
                 </div>
                 <Button
@@ -148,7 +148,7 @@ export default function PolicyPage() {
               <div className="p-2 rounded-lg bg-muted/30">{s.icon}</div>
               <div>
                 <p className="aiq-caption text-muted-foreground">{s.label}</p>
-                <p className={`text-2xl font-bold font-['Sora'] ${s.color}`}>{s.value}</p>
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -158,7 +158,7 @@ export default function PolicyPage() {
       {/* Policy List */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
             <Shield className="h-5 w-5 text-[#10B981]" />
             Policy Rules
           </CardTitle>
@@ -182,7 +182,7 @@ export default function PolicyPage() {
                   <div key={policy.id} className="py-4 flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-['Sora'] font-semibold text-foreground">{policy.name}</span>
+                        <span className="font-semibold text-foreground">{policy.name}</span>
                         <ActionBadge action={policy.actionType} />
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                           isActive
@@ -217,7 +217,7 @@ function PolicyEvaluationsLog() {
   return (
     <Card className="aiq-card">
       <CardHeader className="pb-3">
-        <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+        <CardTitle className="font-semibold text-foreground flex items-center gap-2">
           <Bell className="h-5 w-5 text-[#F59E0B]" />
           Recent Policy Evaluations
         </CardTitle>
@@ -234,7 +234,7 @@ function PolicyEvaluationsLog() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm font-['Sora']">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-2 px-3 aiq-label text-muted-foreground">Policy Rule ID</th>

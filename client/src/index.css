@@ -111,7 +111,7 @@
   --color-cap-ethics:         oklch(70.4% 0.165 162);
 
   /* ── TYPOGRAPHY ── */
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', 'Consolas', 'Monaco', monospace;
 
   /* ── RADIUS ── */

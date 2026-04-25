@@ -104,24 +104,24 @@ export default function ProfilePage() {
       {/* Identity Card */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
             <User className="h-5 w-5 text-[#10B981]" />
             Identity
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-[#1E293B] flex items-center justify-center text-white font-['Sora'] font-bold text-xl">
+            <div className="h-16 w-16 rounded-full bg-[#1E293B] flex items-center justify-center text-white font-bold text-xl">
               {initials}
             </div>
             <div>
-              <p className="font-['Sora'] font-semibold text-foreground text-lg">
+              <p className="font-semibold text-foreground text-lg">
                 {profile?.firstName} {profile?.lastName}
               </p>
               <p className="aiq-caption text-muted-foreground">{profile?.email}</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {roles.map((r) => (
-                  <Badge key={r} variant="secondary" className="text-xs font-['Sora']">
+                  <Badge key={r} variant="secondary" className="text-xs">
                     {ROLE_LABELS[r] ?? r}
                   </Badge>
                 ))}
@@ -138,7 +138,7 @@ export default function ProfilePage() {
                     value={nameForm.firstName}
                     onChange={e => setNameForm(f => ({ ...f, firstName: e.target.value }))}
                     placeholder={profile?.firstName ?? ""}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -147,21 +147,21 @@ export default function ProfilePage() {
                     value={nameForm.lastName}
                     onChange={e => setNameForm(f => ({ ...f, lastName: e.target.value }))}
                     placeholder={profile?.lastName ?? ""}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                   />
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                  className="bg-[#10B981] hover:bg-[#059669] text-white"
                   disabled={updateNameMutation.isPending}
                   onClick={() => updateNameMutation.mutate({ firstName: nameForm.firstName, lastName: nameForm.lastName })}
                 >
                   {updateNameMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                   Save
                 </Button>
-                <Button size="sm" variant="outline" className="font-['Sora']" onClick={() => setEditingName(false)}>
+                <Button size="sm" variant="outline" className="" onClick={() => setEditingName(false)}>
                   Cancel
                 </Button>
               </div>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
             <Button
               variant="outline"
               size="sm"
-              className="font-['Sora']"
+              className=""
               onClick={() => {
                 setNameForm({ firstName: profile?.firstName ?? "", lastName: profile?.lastName ?? "" });
                 setEditingName(true);
@@ -186,7 +186,7 @@ export default function ProfilePage() {
       {false && (
         <Card className="aiq-card">
           <CardHeader className="pb-3">
-            <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+            <CardTitle className="font-semibold text-foreground flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
               Capability Snapshot
             </CardTitle>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                     />
                     <span className="aiq-label text-muted-foreground">{cap}</span>
                   </div>
-                  <p className="font-['Sora'] font-bold text-xl" style={{ color: CAP_COLORS[cap] ?? "#6B7280" }}>
+                  <p className="font-bold text-xl" style={{ color: CAP_COLORS[cap] ?? "#6B7280" }}>
                     {score}
                   </p>
                 </div>
@@ -215,7 +215,7 @@ export default function ProfilePage() {
       {/* Security */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
             <Lock className="h-5 w-5 text-[#10B981]" />
             Change Password
           </CardTitle>
@@ -227,7 +227,7 @@ export default function ProfilePage() {
               type="password"
               value={pwForm.currentPassword}
               onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
-              className="mt-1 font-['Sora']"
+              className="mt-1"
               placeholder="Enter current password"
             />
           </div>
@@ -237,7 +237,7 @@ export default function ProfilePage() {
               type="password"
               value={pwForm.newPassword}
               onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))}
-              className="mt-1 font-['Sora']"
+              className="mt-1"
               placeholder="Minimum 8 characters"
             />
             {pwForm.newPassword && (() => {
@@ -258,12 +258,12 @@ export default function ProfilePage() {
               type="password"
               value={pwForm.confirmPassword}
               onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))}
-              className="mt-1 font-['Sora']"
+              className="mt-1"
               placeholder="Repeat new password"
             />
           </div>
           <Button
-            className="bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+            className="bg-[#10B981] hover:bg-[#059669] text-white"
             disabled={!pwForm.currentPassword || !pwForm.newPassword || changePasswordMutation.isPending}
             onClick={handlePasswordChange}
           >
@@ -276,13 +276,13 @@ export default function ProfilePage() {
       {/* Account Info */}
       <Card className="aiq-card">
         <CardHeader className="pb-3">
-          <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="font-semibold text-foreground flex items-center gap-2">
             <Shield className="h-5 w-5 text-[#10B981]" />
             Account Information
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-['Sora']">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             {[
               { label: "User ID", value: profile?.id, mono: true },
               { label: "Tenant", value: profile?.tenantId ?? "—" },

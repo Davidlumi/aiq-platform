@@ -38,13 +38,13 @@ export default function TenantsPage() {
         {isSuperAdmin && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2 font-['Sora']">
+              <Button className="bg-[#10B981] hover:bg-[#059669] text-white gap-2">
                 <Plus className="h-4 w-4" /> New Tenant
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle className="font-['Sora'] font-semibold">Create New Tenant</DialogTitle>
+                <DialogTitle className="font-semibold">Create New Tenant</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 pt-2">
                 <div>
@@ -52,7 +52,7 @@ export default function TenantsPage() {
                   <Input
                     value={newTenant.name}
                     onChange={e => setNewTenant(t => ({ ...t, name: e.target.value }))}
-                    className="mt-1 font-['Sora']"
+                    className="mt-1"
                     placeholder="Acme Corporation"
                   />
                 </div>
@@ -61,12 +61,12 @@ export default function TenantsPage() {
                   <Input
                     value={newTenant.slug}
                     onChange={e => setNewTenant(t => ({ ...t, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))}
-                    className="mt-1 font-['Sora'] font-['DM_Mono']"
+                    className="mt-1 font-['DM_Mono']"
                     placeholder="acme-corp"
                   />
                 </div>
                 <Button
-                  className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                  className="w-full bg-[#10B981] hover:bg-[#059669] text-white"
                   disabled={!newTenant.name || !newTenant.slug}
                   onClick={() => {
                     toast.info("Tenant creation coming soon — contact platform admin");
@@ -98,21 +98,21 @@ export default function TenantsPage() {
       ) : currentTenant ? (
         <Card className="aiq-card">
           <CardHeader className="pb-3">
-            <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+            <CardTitle className="font-semibold text-foreground flex items-center gap-2">
               <Building2 className="h-5 w-5 text-[#10B981]" />
               Your Organisation
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-xl bg-[#1E293B] flex items-center justify-center text-white font-['Sora'] font-bold text-2xl">
+              <div className="h-16 w-16 rounded-xl bg-[#1E293B] flex items-center justify-center text-white font-bold text-2xl">
                 {(currentTenant.name ?? "?")[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
-                <h2 className="font-['Sora'] font-bold text-xl text-foreground">{currentTenant.name}</h2>
+                <h2 className="font-bold text-xl text-foreground">{currentTenant.name}</h2>
                 <p className="aiq-caption text-muted-foreground font-['DM_Mono']">/{currentTenant.slug}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="secondary" className="font-['Sora'] text-xs">
+                  <Badge variant="secondary" className="text-xs">
                     {"Enterprise"}
                   </Badge>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
@@ -137,7 +137,7 @@ export default function TenantsPage() {
               ].map(item => (
                 <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
                   <dt className="aiq-label text-muted-foreground text-xs">{item.label}</dt>
-                  <dd className={`mt-0.5 text-foreground font-medium text-sm ${item.mono ? "font-['DM_Mono'] text-xs" : "font-['Sora']"}`}>
+                  <dd className={`mt-0.5 text-foreground font-medium text-sm ${item.mono ? "font-['DM_Mono'] text-xs" : ""}`}>
                     {item.value}
                   </dd>
                 </div>
@@ -171,7 +171,7 @@ function TenantSettingsCard() {
   return (
     <Card className="aiq-card">
       <CardHeader className="pb-3">
-        <CardTitle className="font-['Sora'] font-semibold text-foreground flex items-center gap-2">
+        <CardTitle className="font-semibold text-foreground flex items-center gap-2">
           <Globe className="h-5 w-5 text-[#10B981]" />
           Tenant Settings
         </CardTitle>
@@ -187,7 +187,7 @@ function TenantSettingsCard() {
                     type="number"
                     value={form.credibilityThreshold}
                     onChange={e => setForm(f => ({ ...f, credibilityThreshold: parseInt(e.target.value) || 70 }))}
-                    className="mt-1 font-['Sora'] max-w-xs"
+                    className="mt-1 max-w-xs"
                   />
                 </div>
                 <div>
@@ -196,20 +196,20 @@ function TenantSettingsCard() {
                     type="number"
                     value={form.revalidationDaysLow}
                     onChange={e => setForm(f => ({ ...f, revalidationDaysLow: parseInt(e.target.value) || 30 }))}
-                    className="mt-1 font-['Sora'] max-w-xs"
+                    className="mt-1 max-w-xs"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    className="bg-[#10B981] hover:bg-[#059669] text-white font-['Sora']"
+                    className="bg-[#10B981] hover:bg-[#059669] text-white"
                     disabled={updateMutation.isPending}
                     onClick={() => updateMutation.mutate({ credibilityThreshold: form.credibilityThreshold })}
                   >
                     {updateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                     Save
                   </Button>
-                  <Button size="sm" variant="outline" className="font-['Sora']" onClick={() => setEditing(false)}>
+                  <Button size="sm" variant="outline" className="" onClick={() => setEditing(false)}>
                     Cancel
                   </Button>
                 </div>
@@ -227,7 +227,7 @@ function TenantSettingsCard() {
                   ] as const).map(({ key, label }) => (
                     <div key={key} className="p-3 rounded-lg bg-muted/50 border border-border">
                       <dt className="aiq-label text-muted-foreground text-xs">{label}</dt>
-                      <dd className="mt-0.5 text-foreground font-medium text-sm font-['Sora']">
+                      <dd className="mt-0.5 text-foreground font-medium text-sm">
                         {String((settings as any)[key] ?? "—")}
                       </dd>
                     </div>
@@ -236,7 +236,7 @@ function TenantSettingsCard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="font-['Sora']"
+                  className=""
                   onClick={() => {
                     setForm({ credibilityThreshold: (settings as any).credibilityThreshold ?? 70, revalidationDaysLow: (settings as any).revalidationDaysLow ?? 30, revalidationDaysMedium: (settings as any).revalidationDaysMedium ?? 90, revalidationDaysHigh: (settings as any).revalidationDaysHigh ?? 180 });
                     setEditing(true);

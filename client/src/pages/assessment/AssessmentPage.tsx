@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListSkeleton } from "@/components/ui/loading";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import {
   ClipboardList,
   Play,
@@ -54,20 +55,20 @@ const CAPABILITY_DOMAINS = [
 
 // ─── Readiness State Config ───────────────────────────────────────────────────
 
-const READINESS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  safe:    { label: "Safe to Deploy", color: "text-[#228833]",        icon: CheckCircle2 },
-  at_risk: { label: "At Risk",        color: "text-[#EE8866]",        icon: AlertTriangle },
-  unsafe:  { label: "Unsafe",         color: "text-[#EE6677]",        icon: ShieldAlert },
-  unknown: { label: "Not Assessed",   color: "text-muted-foreground", icon: HelpCircle },
+const READINESS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  safe:    { label: "Safe to Deploy", color: "text-emerald-700",  bg: "bg-emerald-50 border-emerald-200", icon: CheckCircle2 },
+  at_risk: { label: "At Risk",        color: "text-amber-700",    bg: "bg-amber-50 border-amber-200",     icon: AlertTriangle },
+  unsafe:  { label: "Unsafe",         color: "text-red-700",      bg: "bg-red-50 border-red-200",         icon: ShieldAlert },
+  unknown: { label: "Not Assessed",   color: "text-muted-foreground", bg: "bg-muted/20 border-border", icon: HelpCircle },
 };
 
 // ─── Session State Badge ──────────────────────────────────────────────────────
 
 function SessionStateBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
-    completed:   "bg-[#228833]/10 text-[#228833] border-[#228833]/20",
-    in_progress: "bg-[#EE8866]/10 text-[#EE8866] border-[#EE8866]/20",
-    abandoned:   "bg-muted text-muted-foreground border-border",
+    completed:   "bg-emerald-100 text-emerald-700 border-emerald-200",
+    in_progress: "bg-amber-100 text-amber-700 border-amber-200",
+    abandoned:   "bg-gray-100 text-gray-600 border-gray-200",
   };
   const labels: Record<string, string> = {
     completed:   "Completed",
@@ -190,12 +191,12 @@ export default function AssessmentPage() {
 
       {/* ── Active Session Resume Card ── */}
       {activeSession && (
-        <Card className="border-2 border-[#EE8866]/30 bg-[#EE8866]/4">
+        <Card className="border-2 border-amber-200 bg-amber-50">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#EE8866]/15 flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 text-[#EE8866]" />
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
@@ -208,7 +209,7 @@ export default function AssessmentPage() {
               </div>
               <Button
                 onClick={() => navigate(`/assessment/${activeSession.id}`)}
-                className="bg-[#EE8866] hover:bg-[#EE8866]/90 text-white gap-2 shrink-0"
+                className="bg-amber-500 hover:bg-amber-600 text-white gap-2 shrink-0"
               >
                 <RotateCcw className="w-4 h-4" />
                 Resume
@@ -221,7 +222,7 @@ export default function AssessmentPage() {
                   <span className="text-xs text-muted-foreground">
                     {(activeSession as any).answeredCount} of {(activeSession as any).totalTarget ?? 49} questions answered
                   </span>
-                  <span className="text-xs font-semibold text-[#EE8866]">
+                  <span className="text-xs font-semibold text-amber-700">
                     {Math.round(((activeSession as any).answeredCount / ((activeSession as any).totalTarget ?? 49)) * 100)}% complete
                   </span>
                 </div>
@@ -268,7 +269,7 @@ export default function AssessmentPage() {
               return (
                 <div
                   key={domain.key}
-                  className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-muted/20"
+                  className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-white hover:shadow-sm transition-shadow"
                 >
                   <div
                     className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
@@ -281,15 +282,18 @@ export default function AssessmentPage() {
                     <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{domain.description}</p>
                     {/* P12: Show prior score if available */}
                     {lastCapabilityScores[domain.key] !== undefined && (
-                      <div className="mt-1.5 flex items-center gap-1">
-                        <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
-                            style={{ width: `${lastCapabilityScores[domain.key]}%`, backgroundColor: domain.colour }}
+                            style={{ width: `${lastCapabilityScores[domain.key]}%`, backgroundColor: scoreToColor(lastCapabilityScores[domain.key] / 10).bg }}
                           />
                         </div>
-                        <span className="text-[10px] font-bold shrink-0" style={{ color: domain.colour }}>
-                          {Math.round(lastCapabilityScores[domain.key])}
+                        <span
+                          className="text-[10px] font-bold shrink-0 px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: scoreToColor(lastCapabilityScores[domain.key] / 10).bg, color: "white" }}
+                        >
+                          {formatPeakonScore(lastCapabilityScores[domain.key] / 10)}
                         </span>
                       </div>
                     )}
@@ -356,7 +360,7 @@ export default function AssessmentPage() {
                   key={session.id}
                   className={cn(
                     "border-border hover:border-[#10B981]/30 transition-colors cursor-pointer",
-                    session.state === "in_progress" && "border-[#EE8866]/30"
+                    session.state === "in_progress" && "border-amber-200"
                   )}
                   onClick={() => {
                     if (session.state === "completed") navigate(`/assessment/${session.id}/results`);
@@ -370,7 +374,7 @@ export default function AssessmentPage() {
                           {session.state === "completed" ? (
                             <StateIcon className={cn("w-4 h-4", stateConfig.color)} />
                           ) : session.state === "in_progress" ? (
-                            <Clock className="w-4 h-4 text-[#EE8866]" />
+                            <Clock className="w-4 h-4 text-amber-600" />
                           ) : (
                             <AlertCircle className="w-4 h-4 text-muted-foreground" />
                           )}
@@ -392,10 +396,13 @@ export default function AssessmentPage() {
                       <div className="flex items-center gap-3 shrink-0">
                         {session.state === "completed" && overallScore !== undefined && (
                           <div className="text-right">
-                            <p className={cn("text-lg font-bold", stateConfig.color)}>
-                              {Math.round(overallScore)}
-                            </p>
-                            <p className={cn("text-xs font-medium", stateConfig.color)}>
+                            <span
+                              className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold text-white"
+                              style={{ backgroundColor: scoreToColor(overallScore / 10).bg }}
+                            >
+                              {formatPeakonScore(overallScore / 10)}
+                            </span>
+                            <p className={cn("text-[10px] font-medium mt-0.5 text-center", stateConfig.color)}>
                               {stateConfig.label}
                             </p>
                           </div>

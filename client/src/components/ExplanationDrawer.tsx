@@ -78,7 +78,7 @@ export function ExplanationDrawer({
             <div>
               <h2
                 className="font-semibold text-base"
-                style={{ fontFamily: "'Sora', sans-serif", color: "#0E1726" }}
+                style={{ color: "#0E1726" }}
               >
                 {title}
               </h2>
@@ -182,7 +182,7 @@ export function ScoreBreakdown({
       <div>
         <h4
           className="text-xs font-bold uppercase tracking-wider mb-3"
-          style={{ color: "#9CA3AF", fontFamily: "'Sora', sans-serif" }}
+          style={{ color: "#9CA3AF"}}
         >
           Contributing Factors
         </h4>
@@ -193,7 +193,7 @@ export function ScoreBreakdown({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: factor.color }} />
-                    <span className="text-sm font-semibold" style={{ color: "#0E1726", fontFamily: "'Sora', sans-serif" }}>
+                    <span className="text-sm font-semibold" style={{ color: "#0E1726"}}>
                       {factor.name}
                     </span>
                     <span className="text-xs" style={{ color: "#9CA3AF" }}>
@@ -263,7 +263,7 @@ export function PolicyDecisionExplanation({
         <div className="flex items-center gap-2.5">
           <Icon className="w-5 h-5" style={{ color: config.color }} />
           <div>
-            <p className="font-semibold text-sm" style={{ color: config.color, fontFamily: "'Sora', sans-serif" }}>
+            <p className="font-semibold text-sm" style={{ color: config.color}}>
               {config.label} — {policyName}
             </p>
             <p className="text-xs mt-0.5" style={{ color: config.color, opacity: 0.8 }}>
@@ -386,7 +386,7 @@ export function WhyAssigned({ itemTitle, reasons }: WhyAssignedProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium" style={{ color: "#0E1726", fontFamily: "'Sora', sans-serif" }}>
+      <p className="text-sm font-medium" style={{ color: "#0E1726"}}>
         Why <span className="font-semibold">"{itemTitle}"</span> is in your plan:
       </p>
       <div className="space-y-2">

@@ -84,30 +84,27 @@ import {
 const READINESS_CONFIG = {
   safe: {
     label: "AI-Ready",
-    // S6: softened - no "governance" or "deploy" language
     description: "Demonstrates consistent, appropriate application of AI tools with strong awareness of risks and limitations.",
-    color: "text-[#10B981]",
-    bg: "border-[#10B981]/30 bg-[#10B981]/5",
+    color: "text-emerald-700",
+    bg: "border-emerald-200 bg-emerald-50",
     barColor: "#10B981",
     icon: CheckCircle2,
     dotColor: "#10B981",
   },
   at_risk: {
     label: "Developing",
-    // S6: softened - no "mandatory remediation" or "restricted use"
     description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
-    color: "text-[#F59E0B]",
-    bg: "border-[#F59E0B]/30 bg-[#F59E0B]/5",
+    color: "text-amber-700",
+    bg: "border-amber-200 bg-amber-50",
     barColor: "#F59E0B",
     icon: AlertTriangle,
     dotColor: "#F59E0B",
   },
   unsafe: {
     label: "Not Yet Ready",
-    // S6: softened - no "governance hold" or "unsafe to deploy"
     description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
-    color: "text-[#DC2626]",
-    bg: "border-[#DC2626]/30 bg-[#DC2626]/5",
+    color: "text-red-700",
+    bg: "border-red-200 bg-red-50",
     barColor: "#DC2626",
     icon: ShieldAlert,
     dotColor: "#DC2626",
@@ -115,28 +112,26 @@ const READINESS_CONFIG = {
   unknown: {
     label: "Insufficient Data",
     description: "Not enough evidence to classify readiness. Complete more assessment interactions.",
-    color: "text-muted-foreground",
-    bg: "border-border",
+    color: "text-gray-600",
+    bg: "border-gray-200 bg-gray-50",
     barColor: "#888888",
     icon: HelpCircle,
     dotColor: "#888888",
   },
-  // v10: foundation gap state
   foundation_gap: {
     label: "Foundation Gap",
     description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
-    color: "text-[#8B5CF6]",
-    bg: "border-[#8B5CF6]/30 bg-[#8B5CF6]/5",
+    color: "text-violet-700",
+    bg: "border-violet-200 bg-violet-50",
     barColor: "#8B5CF6",
     icon: ShieldAlert,
     dotColor: "#8B5CF6",
   },
-  // S2: new state for low-confidence results
   unknown_insufficient_evidence: {
     label: "Result Unavailable",
     description: "The assessment could not produce a reliable classification due to low confidence. This may be due to inconsistent responses or limited interaction variety.",
-    color: "text-muted-foreground",
-    bg: "border-border",
+    color: "text-gray-600",
+    bg: "border-gray-200 bg-gray-50",
     barColor: "#888888",
     icon: HelpCircle,
     dotColor: "#888888",
@@ -144,15 +139,15 @@ const READINESS_CONFIG = {
 } as const;
 
 const CREDIBILITY_CONFIG = {
-  high: { label: "High Credibility", color: "text-[#10B981]", bg: "bg-[#10B981]/10" },
-  medium: { label: "Medium Credibility", color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/10" },
-  low: { label: "Low Credibility", color: "text-[#DC2626]", bg: "bg-[#DC2626]/10" },
+  high: { label: "High Credibility", color: "text-emerald-700", bg: "bg-emerald-50" },
+  medium: { label: "Medium Credibility", color: "text-amber-700", bg: "bg-amber-50" },
+  low: { label: "Low Credibility", color: "text-red-700", bg: "bg-red-50" },
 } as const;
 
 const RISK_CONFIG = {
-  low: { label: "Low Risk", color: "text-[#10B981]", bg: "bg-[#10B981]/10" },
-  medium: { label: "Medium Risk", color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/10" },
-  high: { label: "High Risk", color: "text-[#DC2626]", bg: "bg-[#DC2626]/10" },
+  low: { label: "Low Risk", color: "text-emerald-700", bg: "bg-emerald-50" },
+  medium: { label: "Medium Risk", color: "text-amber-700", bg: "bg-amber-50" },
+  high: { label: "High Risk", color: "text-red-700", bg: "bg-red-50" },
 } as const;
 
 // ─── Radar Chart Component ────────────────────────────────────────────────────
@@ -524,15 +519,15 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
     <div className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
       <div className="flex items-center gap-2 min-w-0">
         {isPositive ? (
-          <TrendingUp className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+          <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
         ) : (
-          <TrendingDown className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
+          <TrendingDown className="w-3.5 h-3.5 text-red-600 shrink-0" />
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-foreground">{displayName}</span>
             {isRisk && (
-              <span className="text-xs text-[#F59E0B] bg-[#F59E0B]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
+              <span className="text-xs text-amber-600 bg-[#F59E0B]/10 px-1.5 py-0.5 rounded text-[10px]">risk signal</span>
             )}
           </div>
           {glossaryEntry && (
@@ -540,7 +535,7 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
           )}
         </div>
       </div>
-      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-[#10B981]" : "text-[#DC2626]")}>
+      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-emerald-600" : "text-red-600")}>
         {isPositive ? "+" : ""}{delta.toFixed(1)}
       </span>
     </div>
@@ -832,12 +827,12 @@ export default function AssessmentResultsPage() {
 
           {/* P3: Classification confidence gate caveat */}
           {classificationConfidence?.caveat && (
-            <Card className="border-[#F59E0B]/40 bg-[#F59E0B]/5">
+            <Card className="border-amber-200 bg-amber-50">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-[#F59E0B] uppercase tracking-wider mb-1">
+                    <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
                       About This Result
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{classificationConfidence.caveat}</p>
@@ -852,9 +847,9 @@ export default function AssessmentResultsPage() {
             <Card className="border-border">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Info className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
+                  <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1.5">
+                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">
                       Your Results Narrative
                     </p>
                     <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
@@ -911,8 +906,8 @@ export default function AssessmentResultsPage() {
                 </div>
                 {/* S5: Provisional percentile band disclosure */}
                 {normGroupVersion && (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 px-3 py-2 mt-1">
-                    <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 mt-1">
+                    <p className="text-xs text-amber-700 flex items-center gap-1.5">
                       <Info className="w-3 h-3 shrink-0" />
                       <span>
                         <strong>Provisional benchmark:</strong> Relative standing is shown as broad quartile bands rather than precise percentiles. These benchmarks are based on synthetic baseline distributions ({normGroupVersion}) and will be recalibrated once sufficient real-world assessment data is available.
@@ -954,10 +949,10 @@ export default function AssessmentResultsPage() {
 
           {/* Contradiction Profile */}
           {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
-            <Card className="border-[#DC2626]/30 bg-[#DC2626]/5">
+            <Card className="border-red-200 bg-red-50">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-foreground  mb-1">Contradiction Profile</h3>
                     <p className="text-xs text-muted-foreground mb-3">
@@ -967,8 +962,8 @@ export default function AssessmentResultsPage() {
                     {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
                       <div className="space-y-2">
                         {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
-                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#DC2626]/20">
-                            <span className="font-medium text-[#DC2626]">Inconsistency {i + 1}:</span>{" "}
+                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-red-200">
+                            <span className="font-medium text-red-600">Inconsistency {i + 1}:</span>{" "}
                             {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
                           </div>
                         ))}
@@ -985,18 +980,18 @@ export default function AssessmentResultsPage() {
             <Card className="border-border">
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground  mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#8B5CF6]" />
+                  <Shield className="w-4 h-4 text-violet-600" />
                   Ethics & Trust Profile
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p className="text-xs text-muted-foreground mb-1">Ethics Score</p>
                     <p className="text-xl font-bold  text-foreground">
                       {Math.round((breakdown.governanceProfile as any).score ?? 0)}
                       <span className="text-sm font-normal text-muted-foreground">/100</span>
                     </p>
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p className="text-xs text-muted-foreground mb-1">Ethics Band</p>
                     <p className="text-sm font-bold  text-foreground capitalize">
                       {(breakdown.governanceProfile as any).band ?? "Not assessed"}
@@ -1004,7 +999,7 @@ export default function AssessmentResultsPage() {
                   </div>
                 </div>
                 {(breakdown.governanceProfile as any).bypasses > 0 && (
-                  <p className="text-xs text-[#DC2626] mt-3 flex items-center gap-1.5">
+                  <p className="text-xs text-red-600 mt-3 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     {(breakdown.governanceProfile as any).bypasses} ethical concern{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 's'} flagged.
                     These are highlighted for review by your ethics and trust team.
@@ -1016,10 +1011,10 @@ export default function AssessmentResultsPage() {
 
           {/* A4: Development Action Banner (v10) */}
           {governanceAction && (
-            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EF4444] bg-[#EF4444]/5" : "border-l-[#F59E0B] bg-[#F59E0B]/5"}`}>
+            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-red-400 bg-red-50" : "border-l-amber-400 bg-amber-50"}`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#EF4444]" : "text-[#F59E0B]"}`} />
+                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-red-600" : "text-amber-600"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground  mb-1">
                       {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supported AI Use Recommended"}
@@ -1052,8 +1047,8 @@ export default function AssessmentResultsPage() {
                   </p>
                   {isEarlyCompletion && (
                     <div className="flex items-center justify-center gap-1 mt-1">
-                      <Zap className="w-3 h-3 text-[#10B981]" />
-                      <span className="text-[10px] text-[#10B981] font-semibold">Early completion</span>
+                      <Zap className="w-3 h-3 text-emerald-600" />
+                      <span className="text-[10px] text-emerald-600 font-semibold">Early completion</span>
                     </div>
                   )}
                 </div>
@@ -1089,10 +1084,10 @@ export default function AssessmentResultsPage() {
             href="/methodology"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#0F6E56]/20 bg-[#0F6E56]/5 hover:bg-[#0F6E56]/10 transition-colors cursor-pointer no-underline"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer no-underline"
           >
-            <Shield className="w-3.5 h-3.5 text-[#0F6E56]" />
-            <span className="text-xs text-[#0F6E56] font-medium">SJT-based adaptive assessment</span>
+            <Shield className="w-3.5 h-3.5 text-emerald-700" />
+            <span className="text-xs text-emerald-700 font-medium">SJT-based adaptive assessment</span>
             <span className="text-[10px] text-muted-foreground ml-auto">View methodology</span>
           </a>
 
@@ -1118,8 +1113,8 @@ export default function AssessmentResultsPage() {
                 {explanationData && (
                   <>
                     {(explanationData as any).isProvisional && (
-                      <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20 px-3 py-2">
-                        <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                        <p className="text-xs text-amber-700 flex items-center gap-1.5">
                           <Info className="w-3 h-3 shrink-0" />
                           This classification is provisional due to limited evidence or low assessment confidence.
                         </p>
@@ -1129,9 +1124,9 @@ export default function AssessmentResultsPage() {
                       {((explanationData as any).factors ?? []).map((f: any, i: number) => (
                         <div key={i} className="flex items-start gap-2.5 text-sm">
                           {f.direction === "positive" ? (
-                            <ThumbsUp className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
+                            <ThumbsUp className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                           ) : f.direction === "negative" ? (
-                            <ThumbsDown className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                            <ThumbsDown className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                           ) : (
                             <Minus className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                           )}
@@ -1143,14 +1138,14 @@ export default function AssessmentResultsPage() {
                       ))}
                     </div>
                     {((explanationData as any).topStrengths ?? []).length > 0 && (
-                      <div className="rounded-md bg-[#10B981]/5 border border-[#10B981]/20 px-3 py-2">
-                        <p className="text-xs font-semibold text-[#10B981] mb-1">Top strengths</p>
+                      <div className="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+                        <p className="text-xs font-semibold text-emerald-600 mb-1">Top strengths</p>
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topStrengths.join(" · ")}</p>
                       </div>
                     )}
                     {((explanationData as any).topGaps ?? []).length > 0 && (
-                      <div className="rounded-md bg-[#DC2626]/5 border border-[#DC2626]/20 px-3 py-2">
-                        <p className="text-xs font-semibold text-[#DC2626] mb-1">Development priorities</p>
+                      <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2">
+                        <p className="text-xs font-semibold text-red-600 mb-1">Development priorities</p>
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
                       </div>
                     )}
@@ -1163,8 +1158,8 @@ export default function AssessmentResultsPage() {
                             .map((c, i) => (
                               <div key={i} className="flex items-start gap-2 text-xs">
                                 <span className={`shrink-0 mt-0.5 font-mono text-[10px] px-1 rounded ${
-                                  c.outcomeClass === "strong" ? "bg-[#10B981]/10 text-[#10B981]" :
-                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#DC2626]/10 text-[#DC2626]" :
+                                  c.outcomeClass === "strong" ? "bg-[#10B981]/10 text-emerald-600" :
+                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#DC2626]/10 text-red-600" :
                                   "bg-muted text-muted-foreground"
                                 }`}>{c.outcomeClass ?? "?"}</span>
                                 <div className="min-w-0">
@@ -1259,10 +1254,10 @@ export default function AssessmentResultsPage() {
 
           {/* LLM Development Narrative (also shown in Development tab) */}
           {llmNarrative && (
-            <Card className="border-[#10B981]/30 bg-[#10B981]/5">
+            <Card className="border-[#10B981]/30 bg-emerald-50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#10B981]" />
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
                   Your Development Narrative
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -1271,15 +1266,15 @@ export default function AssessmentResultsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">Strengths</h4>
+                  <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Strengths</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-[#F59E0B] uppercase tracking-wide">Development Areas</h4>
+                  <h4 className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Development Areas</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">Priorities</h4>
+                  <h4 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Priorities</h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
                 </div>
               </CardContent>
@@ -1302,7 +1297,7 @@ export default function AssessmentResultsPage() {
                 {/* Positive signals */}
                 {sortedSignals.filter(([, v]) => (v as number) > 0).length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
                       Positive Signals ({sortedSignals.filter(([, v]) => (v as number) > 0).length})
                     </p>
@@ -1318,7 +1313,7 @@ export default function AssessmentResultsPage() {
                 {/* Risk signals */}
                 {sortedSignals.filter(([, v]) => (v as number) <= 0).length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-[#DC2626] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <TrendingDown className="w-3.5 h-3.5" />
                       Risk Signals ({sortedSignals.filter(([, v]) => (v as number) <= 0).length})
                     </p>
@@ -1376,10 +1371,10 @@ export default function AssessmentResultsPage() {
 
           {/* UX-2: LLM narrative as primary content */}
           {llmNarrative ? (
-            <Card className="border-[#10B981]/30 bg-[#10B981]/5">
+            <Card className="border-[#10B981]/30 bg-emerald-50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#10B981]" />
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
                   Personalised Development Report
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -1387,22 +1382,22 @@ export default function AssessmentResultsPage() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-[#10B981]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#10B981] uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-emerald-200 space-y-1.5">
+                  <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Your Strengths
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#F59E0B]/8 border border-[#F59E0B]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#F59E0B] uppercase tracking-wide flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wide flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Development Areas
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-[#10B981]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#10B981] uppercase tracking-wide flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-[#10B981]/8 border border-emerald-200 space-y-1.5">
+                  <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5" />
                     Immediate Priorities
                   </h4>
@@ -1417,9 +1412,9 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3">
-                      <FileText className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
+                      <FileText className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-[#10B981] uppercase tracking-wider mb-1.5">Your Results Narrative</p>
+                        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">Your Results Narrative</p>
                         <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
                       </div>
                     </div>
@@ -1430,7 +1425,7 @@ export default function AssessmentResultsPage() {
                 <Card className="border-border">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-[#10B981]" />
+                      <Lightbulb className="w-4 h-4 text-emerald-600" />
                       Development Focus Areas
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">
@@ -1587,7 +1582,7 @@ export default function AssessmentResultsPage() {
                       <thead>
                         <tr className="border-b border-border">
                           <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Capability</th>
-                          <th className="text-center px-3 py-2.5 text-[#10B981] font-medium">Your Score</th>
+                          <th className="text-center px-3 py-2.5 text-emerald-600 font-medium">Your Score</th>
                           <th className="text-center px-3 py-2.5 text-[#3B82F6] font-medium">Role Avg</th>
                           <th className="text-center px-3 py-2.5 text-[#CCBB44] font-medium">Platform Avg</th>
                           <th className="text-center px-3 py-2.5 text-muted-foreground font-medium">vs Role</th>
@@ -1612,7 +1607,7 @@ export default function AssessmentResultsPage() {
                               <td className="text-center px-3 py-2.5">
                                 <span className={cn(
                                   "inline-flex items-center gap-0.5 font-medium",
-                                  isAbove ? "text-[#10B981]" : isBelow ? "text-[#DC2626]" : "text-muted-foreground"
+                                  isAbove ? "text-emerald-600" : isBelow ? "text-red-600" : "text-muted-foreground"
                                 )}>
                                   {isAbove ? <TrendingUp className="w-3 h-3" /> : isBelow ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                                   {isAbove ? `+${diff}` : diff}
@@ -1703,9 +1698,9 @@ export default function AssessmentResultsPage() {
                 signalDeltas: Record<string, number>;
               }>).map((cb, idx) => {
                 const OUTCOME_COLORS: Record<string, { bg: string; border: string; badge: string; text: string; label: string }> = {
-                  strong:     { bg: "bg-[#10B981]/8",  border: "border-[#10B981]/30", badge: "bg-[#10B981]/15 text-[#10B981]",  text: "text-[#10B981]",  label: "Strong" },
+                  strong:     { bg: "bg-[#10B981]/8",  border: "border-[#10B981]/30", badge: "bg-[#10B981]/15 text-emerald-600",  text: "text-emerald-600",  label: "Strong" },
                   acceptable: { bg: "bg-[#44bb99]/8",  border: "border-[#44bb99]/30", badge: "bg-[#44bb99]/15 text-[#44bb99]",  text: "text-[#44bb99]",  label: "Acceptable" },
-                  weak:       { bg: "bg-[#F59E0B]/8",  border: "border-[#F59E0B]/30", badge: "bg-[#F59E0B]/15 text-[#F59E0B]",  text: "text-[#F59E0B]",  label: "Needs Work" },
+                  weak:       { bg: "bg-[#F59E0B]/8",  border: "border-[#F59E0B]/30", badge: "bg-[#F59E0B]/15 text-amber-600",  text: "text-amber-600",  label: "Needs Work" },
                   poor:       { bg: "bg-[#CC3311]/8",  border: "border-[#CC3311]/30", badge: "bg-[#CC3311]/15 text-[#CC3311]",  text: "text-[#CC3311]",  label: "Critical Gap" },
                 };
                 const oc = cb.outcomeClass ?? "weak";
@@ -1741,7 +1736,7 @@ export default function AssessmentResultsPage() {
                           {topSignals.map(([sig, delta]) => (
                             <span key={sig} className={cn(
                               "text-[10px] font-medium px-2 py-0.5 rounded-full border",
-                              (delta as number) >= 0 ? "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
+                              (delta as number) >= 0 ? "bg-[#10B981]/10 text-emerald-600 border-emerald-200" : "bg-[#CC3311]/10 text-[#CC3311] border-[#CC3311]/20"
                             )}>
                               {sig.replace(/_/g, " ")} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
                             </span>
@@ -1801,17 +1796,17 @@ export default function AssessmentResultsPage() {
                 </Card>
                 {/* Three-bucket breakdown */}
                 <div className="grid grid-cols-3 gap-3">
-                  <Card className="border-[#10B981]/30 bg-[#10B981]/5">
+                  <Card className="border-[#10B981]/30 bg-emerald-50">
                     <CardContent className="p-4 text-center">
-                      <ThumbsUp className="w-5 h-5 text-[#10B981] mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-[#10B981]">{cal.wellCalibratedCount}</div>
+                      <ThumbsUp className="w-5 h-5 text-emerald-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-emerald-600">{cal.wellCalibratedCount}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">Well calibrated</div>
                     </CardContent>
                   </Card>
                   <Card className="border-[#F59E0B]/30 bg-[#F59E0B]/5">
                     <CardContent className="p-4 text-center">
-                      <ThumbsDown className="w-5 h-5 text-[#F59E0B] mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-[#F59E0B]">{cal.overconfidentCount}</div>
+                      <ThumbsDown className="w-5 h-5 text-amber-600 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-amber-600">{cal.overconfidentCount}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">Overconfident</div>
                     </CardContent>
                   </Card>

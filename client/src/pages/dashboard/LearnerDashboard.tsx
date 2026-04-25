@@ -383,7 +383,7 @@ function CompetenceConfidenceWidget() {
           })}
         </div>
         {blindSpots && blindSpots.length > 0 && (
-          <div className="rounded-lg border border-red-700/30 bg-red-950/20 p-3 flex items-start gap-2">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex items-start gap-2">
             <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-red-400">Blind spot detected</p>
