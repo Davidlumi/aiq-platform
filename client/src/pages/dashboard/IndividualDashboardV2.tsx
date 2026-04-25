@@ -69,6 +69,45 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     userId ? { userId } : undefined,
   );
 
+  const isOwnDashboard = !userId || userId === (user as any)?.id;
+
+  const readinessDistribution = useMemo(() => {
+    const domains = (data?.domains ?? []).filter(d => d.score !== null);
+    let aiReady = 0, developing = 0, notYetReady = 0, foundationGap = 0;
+    for (const d of domains) {
+      const s = d.score!;
+      if (s >= 70) aiReady++;
+      else if (s >= 50) developing++;
+      else if (s >= 30) notYetReady++;
+      else foundationGap++;
+    }
+    return { aiReady, developing, notYetReady, foundationGap, total: domains.length };
+  }, [data?.domains]);
+
+  const scoreHistory = useMemo(
+    () => (data?.assessmentHistory ?? []).map(h => h.overallScore),
+    [data?.assessmentHistory],
+  );
+
+  const scoreDelta = useMemo(() => {
+    if (!data || data.assessmentHistory.length < 2) return null;
+    const sorted = [...data.assessmentHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return sorted[sorted.length - 1].overallScore - sorted[sorted.length - 2].overallScore;
+  }, [data]);
+
+  const insights = useMemo(() => {
+    if (!data) return [];
+    const ins: string[] = [];
+    const scored = data.domains.filter(d => d.score !== null);
+    const topDomain = [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+    const weakDomain = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
+    if (topDomain) ins.push(`Strongest capability: ${topDomain.name} (${formatPeakonScore(topDomain.score!)})`);
+    if (weakDomain && weakDomain.key !== topDomain?.key) ins.push(`Priority development area: ${weakDomain.name} (${formatPeakonScore(weakDomain.score!)})`);
+    if (data.overallScore !== null) ins.push(`Overall readiness: ${scoreToReadinessLabel(data.overallScore)}`);
+    if (scoreDelta !== null && scoreDelta !== 0) ins.push(`Score ${scoreDelta > 0 ? "improved" : "declined"} by ${Math.abs(scoreDelta / 10).toFixed(1)} points since last assessment`);
+    return ins;
+  }, [data, scoreDelta]);
+
   if (isLoading) return <IndividualDashboardSkeleton />;
   if (!data) return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -79,44 +118,6 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       />
     </div>
   );
-
-  const isOwnDashboard = !userId || userId === (user as any)?.id;
-
-  const readinessDistribution = useMemo(() => {
-    const domains = data.domains.filter(d => d.score !== null);
-    let aiReady = 0, developing = 0, notYetReady = 0, foundationGap = 0;
-    for (const d of domains) {
-      const s = d.score!;
-      if (s >= 70) aiReady++;
-      else if (s >= 50) developing++;
-      else if (s >= 30) notYetReady++;
-      else foundationGap++;
-    }
-    return { aiReady, developing, notYetReady, foundationGap, total: domains.length };
-  }, [data.domains]);
-
-  const scoreHistory = useMemo(
-    () => data.assessmentHistory.map(h => h.overallScore),
-    [data.assessmentHistory],
-  );
-
-  const scoreDelta = useMemo(() => {
-    if (data.assessmentHistory.length < 2) return null;
-    const sorted = [...data.assessmentHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return sorted[sorted.length - 1].overallScore - sorted[sorted.length - 2].overallScore;
-  }, [data.assessmentHistory]);
-
-  const insights = useMemo(() => {
-    const ins: string[] = [];
-    const scored = data.domains.filter(d => d.score !== null);
-    const topDomain = [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
-    const weakDomain = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
-    if (topDomain) ins.push(`Strongest capability: ${topDomain.name} (${formatPeakonScore(topDomain.score!)})`);
-    if (weakDomain && weakDomain.key !== topDomain?.key) ins.push(`Priority development area: ${weakDomain.name} (${formatPeakonScore(weakDomain.score!)})`);
-    if (data.overallScore !== null) ins.push(`Overall readiness: ${scoreToReadinessLabel(data.overallScore)}`);
-    if (scoreDelta !== null && scoreDelta !== 0) ins.push(`Score ${scoreDelta > 0 ? "improved" : "declined"} by ${Math.abs(scoreDelta / 10).toFixed(1)} points since last assessment`);
-    return ins;
-  }, [data.domains, data.overallScore, scoreDelta]);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">

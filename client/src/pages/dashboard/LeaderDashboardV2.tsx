@@ -114,9 +114,7 @@ export default function LeaderDashboardV2() {
 
   const isLoading = heroLoading || mainLoading;
 
-  if (isLoading) return <LeaderDashboardSkeleton />;
-
-  // AI insights for the function
+  // AI insights for the function — declared before early return to satisfy Rules of Hooks
   const functionInsights = useMemo(() => {
     if (!main) return [];
     const ins: string[] = [];
@@ -133,6 +131,8 @@ export default function LeaderDashboardV2() {
     }
     return ins;
   }, [main]);
+
+  if (isLoading) return <LeaderDashboardSkeleton />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

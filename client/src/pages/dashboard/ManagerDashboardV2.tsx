@@ -84,35 +84,25 @@ export default function ManagerDashboardV2() {
   const { data: prompts, isLoading: promptsLoading } = trpc.dashboardV2.manager.conversationPrompts.useQuery();
   const { data: devOverview, isLoading: devLoading } = trpc.dashboardV2.manager.developmentOverview.useQuery();
 
-  if (isLoading) return <ManagerDashboardSkeleton />;
-  if (!data) return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <EmptyState title="No team data" description="You don't have any team members assigned yet." />
-    </div>
-  );
-
-  const filteredHeatmap = ratingFilter
-    ? data.heatmapData.filter(m => m.rating === ratingFilter)
-    : data.heatmapData;
-
   // Team average score
   const teamAvgScore = useMemo(() => {
-    const scored = data.heatmapData.filter(m => m.overallScore != null);
+    const scored = (data?.heatmapData ?? []).filter(m => m.overallScore != null);
     if (!scored.length) return null;
     return Math.round(scored.reduce((sum, m) => sum + (m.overallScore ?? 0), 0) / scored.length);
-  }, [data.heatmapData]);
+  }, [data?.heatmapData]);
 
   // Readiness distribution
   const readinessDistribution = useMemo(() => {
-    const aiReady = data.ratingCounts.ai_ready ?? 0;
-    const developing = data.ratingCounts.developing ?? 0;
-    const notYetReady = data.ratingCounts.not_yet_ready ?? 0;
-    const foundationGap = data.ratingCounts.foundation_gap ?? 0;
-    return { aiReady, developing, notYetReady, foundationGap, total: data.teamSize };
-  }, [data.ratingCounts, data.teamSize]);
+    const aiReady = data?.ratingCounts.ai_ready ?? 0;
+    const developing = data?.ratingCounts.developing ?? 0;
+    const notYetReady = data?.ratingCounts.not_yet_ready ?? 0;
+    const foundationGap = data?.ratingCounts.foundation_gap ?? 0;
+    return { aiReady, developing, notYetReady, foundationGap, total: data?.teamSize ?? 0 };
+  }, [data?.ratingCounts, data?.teamSize]);
 
   // AI insights from team data
   const teamInsights = useMemo(() => {
+    if (!data) return [];
     const ins: string[] = [];
     const aiReadyPct = data.teamSize > 0 ? Math.round(((data.ratingCounts.ai_ready ?? 0) / data.teamSize) * 100) : 0;
     ins.push(`${aiReadyPct}% of your team is AI Ready (${data.ratingCounts.ai_ready ?? 0} of ${data.teamSize} members)`);
@@ -123,7 +113,18 @@ export default function ManagerDashboardV2() {
       ins.push(`Team average: ${formatPeakonScore(teamAvgScore)} — ${scoreToReadinessLabel(teamAvgScore)}`);
     }
     return ins;
-  }, [data.ratingCounts, data.teamSize, teamAvgScore]);
+  }, [data, teamAvgScore]);
+
+  const filteredHeatmap = useMemo(() => ratingFilter
+    ? (data?.heatmapData ?? []).filter(m => m.rating === ratingFilter)
+    : (data?.heatmapData ?? []), [data?.heatmapData, ratingFilter]);
+
+  if (isLoading) return <ManagerDashboardSkeleton />;
+  if (!data) return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <EmptyState title="No team data" description="You don't have any team members assigned yet." />
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
