@@ -53,6 +53,8 @@ import BackOfficePage from "./pages/backoffice/BackOfficePage";
 import MarketingPage from "./pages/marketing/MarketingPage";
 import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
 import MethodologyPage from "./pages/methodology/MethodologyPage";
+import PeopleReportsPage from "./pages/people/PeopleReportsPage";
+import MemberReportPage from "./pages/people/MemberReportPage";
 
 function ProtectedRoute({
   component: Component,
@@ -173,6 +175,12 @@ function Router() {
       </Route>
       <Route path="/backoffice">
         <ProtectedRoute component={BackOfficePage} />
+      </Route>
+      <Route path="/people/:userId">
+        <ProtectedRoute component={MemberReportPage} />
+      </Route>
+      <Route path="/people">
+        <ProtectedRoute component={PeopleReportsPage} />
       </Route>
       {/* Marketing pages — public */}
       <Route path="/about" component={MarketingPage} />

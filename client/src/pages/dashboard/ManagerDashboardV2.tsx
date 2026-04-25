@@ -569,11 +569,18 @@ function MemberDrillDown({ userId, onClose }: { userId: string; onClose: () => v
 
       <Separator className="my-4" />
 
-      <Link href={`/dashboard/personal?userId=${userId}`}>
-        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
-          View full profile <ChevronRight className="w-3 h-3" />
-        </Button>
-      </Link>
+      <div className="flex flex-col gap-2">
+        <Link href={`/people/${userId}`}>
+          <Button size="sm" className="w-full gap-1.5 text-xs">
+            View full report <ChevronRight className="w-3 h-3" />
+          </Button>
+        </Link>
+        <Link href={`/dashboard/personal?userId=${userId}`}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
+            View full profile <ChevronRight className="w-3 h-3" />
+          </Button>
+        </Link>
+      </div>
     </>
   );
 }

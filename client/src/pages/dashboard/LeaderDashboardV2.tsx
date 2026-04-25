@@ -430,6 +430,14 @@ export default function LeaderDashboardV2() {
               </div>
             ))}
           </div>
+          <div className="mt-4 pt-4 border-t border-border">
+            <Link href="/people">
+              <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
+                <Users className="w-3.5 h-3.5" />
+                View all individual reports
+              </Button>
+            </Link>
+          </div>
         </DashboardCard>
       )}
     </div>

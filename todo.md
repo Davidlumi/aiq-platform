@@ -1761,3 +1761,29 @@
 - [x] BA-08: ManagerDashboardV2 — "Team Ambition Gap" card: show the team's aggregate readiness score vs the org ambition target, with a count of team members who are above/below target and a recommended action
 - [x] BA-09: AssessmentResultsPage — "Strategic Fit Score" in the Summary tab: a single computed score (0–10) showing how well the user's capability profile matches the org's stated strategic priorities, with a brief explanation of which priorities they are most/least aligned to
 - [x] BA-10: AppShell sidebar — add "AI Strategy" nav item (under "govern" section) linking to a new AiStrategyPage that shows the org's ambition target, current readiness, gap by domain, and a 3-step action plan generated from the data
+
+## People Reports — Leader & Manager Individual Report Access
+
+- [x] PR-01: Backend — `people.listOrgMembers` procedure (leader/admin): returns all org users with latest assessment score, readiness state, capability gaps, and last assessed date
+- [x] PR-02: Backend — `people.listTeamMembers` procedure (manager): returns manager's direct reports with same score/readiness data
+- [x] PR-03: Backend — `people.getMemberReport` procedure: returns full individual assessment results for a given userId, gated so leaders see all org users and managers see only their direct reports
+- [x] PR-04: Backend — extend `assessment.results` to accept a `targetUserId` param, gated by role
+- [x] PR-05: Frontend — new `/people` page (PeopleReportsPage): searchable, filterable table of all org members with readiness badge, score, last assessed date; visible to leaders and admins
+- [x] PR-06: Frontend — new `/people/:userId` page (MemberReportPage): renders the full individual assessment report for any org member; accessible to leaders and managers (with scope guard)
+- [x] PR-07: Frontend — Manager Dashboard: add "View full report" link on each team member card navigating to `/people/:userId`
+- [x] PR-08: Frontend — Leader Dashboard: link from team breakdown cards to `/people/:userId`
+- [x] PR-09: Frontend — AppShell: add "People" nav item in Governance section for leaders and admins
+- [ ] PR-10: Frontend — scope guard on MemberReportPage so managers can only view their direct reports
+
+## People Reports — Leader & Manager Individual Report Access
+
+- [x] PR-01: Backend — people.listOrgMembers procedure (leader/admin)
+- [x] PR-02: Backend — people.listTeamMembers procedure (manager)
+- [x] PR-03: Backend — people.getMemberReport procedure with role-scoped access
+- [x] PR-04: Backend — extend assessment.results to accept targetUserId param
+- [x] PR-05: Frontend — /people page: searchable org member table with readiness badges
+- [x] PR-06: Frontend — /people/:userId page: full individual report for leaders/managers
+- [x] PR-07: Frontend — Manager Dashboard: View full report links on team member cards
+- [x] PR-08: Frontend — Leader Dashboard: links from team breakdown to /people/:userId
+- [x] PR-09: Frontend — AppShell: People nav item for leaders and admins
+- [ ] PR-10: Frontend — scope guard on MemberReportPage for manager access

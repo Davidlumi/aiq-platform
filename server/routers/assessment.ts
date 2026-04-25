@@ -1917,10 +1917,44 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
 
   // ── Get full results for a completed session ───────────────────────────────
   results: protectedProcedure
-    .input(z.object({ sessionId: z.string().optional() }))
+    .input(z.object({ sessionId: z.string().optional(), targetUserId: z.string().optional() }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // PR-04: If targetUserId is provided, verify the caller has access to that user's data
+      const effectiveUserId = input.targetUserId ?? ctx.user.id;
+      if (input.targetUserId && input.targetUserId !== ctx.user.id) {
+        const { getUserRoleKeys: getRoles } = await import("../db");
+        const roles = await getRoles(ctx.user.id, ctx.user.tenantId);
+        const isLeader = roles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r));
+        const isManager = roles.includes("manager");
+        if (!isLeader && !isManager) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to view this user's assessment results." });
+        }
+        if (isManager && !isLeader) {
+          // Check direct report relationship
+          const { managerTeamMembers } = await import("../../drizzle/schema");
+          const { eq: eqFn, and: andFn } = await import("drizzle-orm");
+          const membership = await db
+            .select({ memberId: managerTeamMembers.memberId })
+            .from(managerTeamMembers)
+            .where(andFn(
+              eqFn(managerTeamMembers.managerId, ctx.user.id),
+              eqFn(managerTeamMembers.memberId, input.targetUserId),
+            ))
+            .limit(1);
+          if (!membership[0]) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "This person is not in your team." });
+          }
+        }
+        // Verify user is in same tenant
+        const targetUser = await db.select({ tenantId: users.tenantId }).from(users).where(eq(users.id, input.targetUserId)).limit(1);
+        if (!targetUser[0] || targetUser[0].tenantId !== ctx.user.tenantId) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+      }
+
       let session;
       if (input.sessionId) {
         session = await db
@@ -1929,18 +1963,18 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           .where(
             and(
               eq(assessmentSessions.id, input.sessionId),
-              eq(assessmentSessions.userId, ctx.user.id)
+              eq(assessmentSessions.userId, effectiveUserId)
             )
           )
           .limit(1);
       } else {
-        // No sessionId provided — fetch the latest completed session for this user
+        // No sessionId provided — fetch the latest completed session for the effective user
         session = await db
           .select()
           .from(assessmentSessions)
           .where(
             and(
-              eq(assessmentSessions.userId, ctx.user.id),
+              eq(assessmentSessions.userId, effectiveUserId),
               eq(assessmentSessions.state, "completed")
             )
           )

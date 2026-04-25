@@ -35,6 +35,7 @@ import {
   BookMarked,
   ShieldCheck,
   Target,
+  UserSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,13 @@ const NAV_ITEMS: NavItem[] = [
     path: "/ai-strategy",
     icon: Target,
     roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
+    section: "govern",
+  },
+  {
+    label: "People",
+    path: "/people",
+    icon: UserSearch,
+    roles: ["platform_super_admin", "tenant_admin", "hr_leader", "manager"],
     section: "govern",
   },
   {
