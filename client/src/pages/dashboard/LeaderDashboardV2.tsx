@@ -111,7 +111,7 @@ export default function LeaderDashboardV2() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* ── Header ── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div>
           <h1 className="text-xl font-semibold text-foreground">HR Function Overview</h1>
           <p className="text-xs text-muted-foreground mt-1">

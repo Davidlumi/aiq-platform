@@ -134,7 +134,28 @@
   --duration-slow:   300ms;
   --ease-default:    cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── SHADCN COMPATIBILITY ── */
+  /* ── SHADCN SEMANTIC COLOURS (--color-* for TW4 utility generation) ── */
+  --color-background:              oklch(98.2% 0.004 240);
+  --color-foreground:              oklch(8.2% 0.025 240);
+  --color-card:                    oklch(100% 0 0);
+  --color-card-foreground:         oklch(8.2% 0.025 240);
+  --color-popover:                 oklch(100% 0 0);
+  --color-popover-foreground:      oklch(8.2% 0.025 240);
+  --color-primary:                 oklch(70.4% 0.165 162);
+  --color-primary-foreground:      oklch(100% 0 0);
+  --color-secondary:               oklch(96.1% 0.006 240);
+  --color-secondary-foreground:    oklch(25.1% 0.040 240);
+  --color-muted:                   oklch(96.1% 0.006 240);
+  --color-muted-foreground:        oklch(61.8% 0.022 240);
+  --color-accent:                  oklch(97.2% 0.025 162);
+  --color-accent-foreground:       oklch(38.2% 0.130 162);
+  --color-destructive:             oklch(53.5% 0.200 27);
+  --color-destructive-foreground:  oklch(100% 0 0);
+  --color-border:                  oklch(91.8% 0.009 240);
+  --color-input:                   oklch(91.8% 0.009 240);
+  --color-ring:                    oklch(70.4% 0.165 162);
+
+  /* ── SHADCN COMPATIBILITY (bare vars for var(--xxx) references) ── */
   --background:              oklch(98.2% 0.004 240);
   --foreground:              oklch(8.2% 0.025 240);
   --card:                    oklch(100% 0 0);
@@ -155,7 +176,13 @@
   --input:                   oklch(91.8% 0.009 240);
   --ring:                    oklch(70.4% 0.165 162);
 
-  /* ── CHART COLOURS ── */
+  /* ── CHART COLOURS (--color-* for TW4 + bare for var() refs) ── */
+  --color-chart-1: oklch(60.5% 0.200 250);
+  --color-chart-2: oklch(55.0% 0.230 295);
+  --color-chart-3: oklch(70.4% 0.165 162);
+  --color-chart-4: oklch(74.8% 0.155 68);
+  --color-chart-5: oklch(53.5% 0.200 27);
+  --color-chart-6: oklch(70.0% 0.155 195);
   --chart-1: oklch(60.5% 0.200 250);
   --chart-2: oklch(55.0% 0.230 295);
   --chart-3: oklch(70.4% 0.165 162);
@@ -163,7 +190,15 @@
   --chart-5: oklch(53.5% 0.200 27);
   --chart-6: oklch(70.0% 0.155 195);
 
-  /* ── SIDEBAR TOKENS ── */
+  /* ── SIDEBAR TOKENS (--color-* for TW4 + bare for var() refs) ── */
+  --color-sidebar:                  oklch(25.1% 0.040 240);
+  --color-sidebar-foreground:       oklch(85.0% 0.012 240);
+  --color-sidebar-primary:          oklch(70.4% 0.165 162);
+  --color-sidebar-primary-foreground: oklch(100% 0 0);
+  --color-sidebar-accent:           oklch(30.5% 0.038 240);
+  --color-sidebar-accent-foreground: oklch(100% 0 0);
+  --color-sidebar-border:           oklch(30.5% 0.038 240);
+  --color-sidebar-ring:             oklch(70.4% 0.165 162);
   --sidebar:                  oklch(25.1% 0.040 240);
   --sidebar-foreground:       oklch(85.0% 0.012 240);
   --sidebar-primary:          oklch(70.4% 0.165 162);

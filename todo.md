@@ -1504,3 +1504,8 @@
 - [x] POLISH-12: Fixed AppShell sidebar — fixed hsl(var(--sidebar-border/accent)) in sidebar.tsx
 - [x] POLISH-13: Home/Landing page — verified clean after global fixes
 - [x] POLISH-14: Fixed shared UI components — badge.tsx, button.tsx, card.tsx, input.tsx, tabs.tsx all fixed (var(--neutral-xxx) → var(--color-neutral-xxx), added missing state badge CSS variables)
+
+## Bug Fixes — Overlay/Z-Index Issues (Round 2)
+- [x] BF-OV-01: ProfilingModal — ROOT CAUSE was bg-popover/bg-background not generating CSS rules in TW4. Fixed by adding --color-* prefixed semantic tokens to @theme block. Dialog overlay also made more opaque (bg-black/80 + backdrop-blur)
+- [x] BF-OV-02: Leader Dashboard dropdown — ROOT CAUSE same as above. bg-popover now resolves to solid white. Added relative z-10 to header for extra safety
+- [x] BF-CSS-ROOT: Tailwind 4 @theme requires --color-* prefix for utility class generation. Added --color-background, --color-foreground, --color-card, --color-popover, --color-primary, --color-secondary, --color-muted, --color-accent, --color-destructive, --color-border, --color-input, --color-ring, plus chart and sidebar tokens. All 1951 references to bg-background, bg-card, bg-popover, text-foreground, text-muted-foreground, border-border etc. now resolve to actual CSS rules with solid colours
