@@ -1733,3 +1733,6 @@
 - [x] S9-08: PeakonPrimitives PillFilter uses bg-white (light-mode only) — replace with bg-card; also AIInsightCard uses violet-50/indigo-50 hardcoded — replace with bg-primary/5 border-primary/20
 - [x] S9-09: Gap between dashboard section cards is space-y-6 on some pages and space-y-5 on others — standardise to space-y-6 across all dashboard pages
 - [x] S9-10: AppShell sidebar header height h-16 vs top bar h-14 — misaligned by 8px creating visual jump — align both to h-14 (56px)
+
+## Assessment → Learning Plan Handoff (Apr 2026)
+- [x] HP-01: Add "Your learning plan is ready" status card and CTA to the Development tab of AssessmentResultsPage — query the user's latest learning plan, show plan item count and top priority, and deep-link to /learning?tab=insights

@@ -434,7 +434,14 @@ function ActivityTab({ items }: { items: any[] }) {
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<"path" | "insights" | "activity">("path");
+  // HP-01: Read ?tab= query param so deep-links from the results page work
+  const initialTab = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    if (t === "insights" || t === "activity") return t;
+    return "path";
+  })();
+  const [activeTab, setActiveTab] = useState<"path" | "insights" | "activity">(initialTab);
 
   const { data: plan, isLoading } = trpc.adaptiveLearning.getAdaptivePlan.useQuery({}, {
     staleTime: 1000 * 60 * 2,

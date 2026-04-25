@@ -52,6 +52,9 @@ import {
   Users,
   Globe,
   Link2,
+  ArrowRight,
+  GraduationCap,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
@@ -585,6 +588,12 @@ export default function AssessmentResultsPage() {
       { sessionId: sessionId! },
       { enabled: !!sessionId, refetchOnWindowFocus: false }
     );
+
+  // HP-01: Query the user's active learning plan to surface handoff status
+  const { data: learningPlan, isLoading: planLoading } = trpc.learning.activePlan.useQuery(
+    {},
+    { enabled: !!sessionId, refetchOnWindowFocus: false }
+  );
 
   // WS4.3: Flag for review
   const flagMutation = trpc.assessment.flagForReview.useMutation({
@@ -1256,7 +1265,7 @@ export default function AssessmentResultsPage() {
           >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
-              onClick={() => navigate("/learning")}
+              onClick={() => navigate("/learning?tab=insights")}
               className="bg-primary hover:bg-primary/90 text-white gap-2"
             >
               <BookOpen className="w-4 h-4" />
@@ -1503,9 +1512,69 @@ export default function AssessmentResultsPage() {
             </>
           )}
 
+          {/* HP-01: Learning plan ready card */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-semibold text-foreground">Your personalised learning plan is ready</p>
+                    {!planLoading && learningPlan && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25 text-xs font-semibold text-primary">
+                        <ListChecks className="w-3 h-3" />
+                        {learningPlan.items?.length ?? 0} modules
+                      </span>
+                    )}
+                  </div>
+                  {planLoading ? (
+                    <p className="text-xs text-muted-foreground">Generating your plan based on this assessment…</p>
+                  ) : learningPlan ? (
+                    <>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Based on your results, we’ve built a capability-mapped plan targeting your development areas.
+                        {(() => {
+                          const summary = typeof learningPlan.summaryJson === "string"
+                            ? JSON.parse(learningPlan.summaryJson as string)
+                            : (learningPlan.summaryJson as any);
+                          const weak = (summary?.weakestCapabilities as string[] | undefined) ?? [];
+                          if (weak.length === 0) return null;
+                          const labels = weak.map((k: string) => DOMAIN_LABELS[k as keyof typeof DOMAIN_LABELS] ?? k.replace(/_/g, " "));
+                          return <> Starting with: <span className="font-medium text-foreground">{labels.join(", ")}</span>.</>;
+                        })()}
+                      </p>
+                      <button
+                        onClick={() => navigate("/learning?tab=insights")}
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Open your learning plan
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Your learning plan will be generated automatically based on these results. It may take a moment to appear.
+                      </p>
+                      <button
+                        onClick={() => navigate("/learning")}
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Go to learning
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button onClick={() => navigate("/learning")} className="bg-primary hover:bg-primary/90 text-white gap-2">
+            <Button onClick={() => navigate("/learning?tab=insights")} className="bg-primary hover:bg-primary/90 text-white gap-2">
               <BookOpen className="w-4 h-4" />
               View Learning Plan
             </Button>
