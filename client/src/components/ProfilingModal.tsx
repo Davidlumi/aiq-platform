@@ -13,12 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import {
+import { 
   Users, Briefcase, BarChart3, Shield, BookOpen, Settings2,
   ChevronRight, ChevronLeft, Check, Zap, Brain, AlertTriangle,
   Building2, Layers, Globe, Factory, HeartPulse, GraduationCap,
-  HelpCircle, ChevronDown,
-} from "lucide-react";
+  HelpCircle, ChevronDown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,8 +54,7 @@ const ROLE_FAMILIES = [
       "Head of Talent",
       "Employer Brand Manager",
       "Talent Operations Analyst",
-    ],
-  },
+    ]},
   {
     id: "learning",
     label: "Learning & Development",
@@ -69,8 +67,7 @@ const ROLE_FAMILIES = [
       "Head of L&D",
       "Training Coordinator",
       "Capability Development Lead",
-    ],
-  },
+    ]},
   {
     id: "hrbp",
     label: "HR Business Partner",
@@ -83,8 +80,7 @@ const ROLE_FAMILIES = [
       "Head of HR",
       "HR Generalist",
       "People Partner",
-    ],
-  },
+    ]},
   {
     id: "analytics",
     label: "People Analytics & Data",
@@ -97,8 +93,7 @@ const ROLE_FAMILIES = [
       "Workforce Planning Analyst",
       "HRIS Manager",
       "Insights & Reporting Lead",
-    ],
-  },
+    ]},
   {
     id: "reward",
     label: "Reward & Benefits",
@@ -111,8 +106,7 @@ const ROLE_FAMILIES = [
       "Head of Reward",
       "Total Reward Specialist",
       "Pay & Grading Analyst",
-    ],
-  },
+    ]},
   {
     id: "governance",
     label: "HR Governance & Compliance",
@@ -125,8 +119,7 @@ const ROLE_FAMILIES = [
       "HR Policy Manager",
       "Risk & Governance Lead",
       "HR Audit Specialist",
-    ],
-  },
+    ]},
   {
     id: "operations",
     label: "HR Operations & Shared Services",
@@ -139,8 +132,7 @@ const ROLE_FAMILIES = [
       "Payroll Manager",
       "HR Service Delivery Manager",
       "HR Operations Analyst",
-    ],
-  },
+    ]},
   {
     id: "other",
     label: "Other / General HR",
@@ -153,8 +145,7 @@ const ROLE_FAMILIES = [
       "Chief People Officer",
       "HR Coordinator",
       "HR Advisor",
-    ],
-  },
+    ]},
 ];
 
 const SENIORITY_LEVELS = [
@@ -172,32 +163,28 @@ const AI_EXPERIENCE_LEVELS = [
     description: "I haven't used AI tools in my work yet",
     usageLevel: "none" as const,
     colour: "#6B7280",
-    icon: "○",
-  },
+    icon: "○"},
   {
     id: "occasional",
     label: "Occasional user",
     description: "I've tried tools like ChatGPT a few times",
     usageLevel: "occasional" as const,
     colour: "#CCBB44",
-    icon: "◔",
-  },
+    icon: "◔"},
   {
     id: "regular",
     label: "Regular user",
     description: "I use AI tools weekly as part of my workflow",
     usageLevel: "regular" as const,
     colour: "var(--primary)",
-    icon: "◑",
-  },
+    icon: "◑"},
   {
     id: "advanced",
     label: "Advanced practitioner",
     description: "I integrate AI into most tasks and evaluate outputs critically",
     usageLevel: "advanced" as const,
     colour: "var(--primary)",
-    icon: "●",
-  },
+    icon: "●"},
 ];
 
 const AI_TOOLS = [
@@ -241,8 +228,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
     1: "Role family determines which capability domains matter most for your assessment. An HRBP faces different AI risks than a People Analyst.",
     2: "Your specific role and seniority calibrates question difficulty. A Coordinator and a Director face different expectations.",
     3: "AI experience level sets your starting difficulty. Honest answers lead to a more accurate score — there's no penalty for low experience.",
-    4: "Sector context lets us weight scenarios towards your industry's specific regulatory and ethical landscape.",
-  };
+    4: "Sector context lets us weight scenarios towards your industry's specific regulatory and ethical landscape."};
 
   // Form state
   const [selectedFamily, setSelectedFamily] = useState<string>("");
@@ -282,8 +268,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
       experienceLevel: seniority.expLevel,
       aiUsageLevel: aiExp.usageLevel,
       aiToolsUsed: selectedTools.join(", "),
-      sector: selectedSector,
-    });
+      sector: selectedSector});
   };
 
   const toggleTool = (tool: string) => {
@@ -512,8 +497,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                         className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg font-bold"
                         style={{
                           backgroundColor: `${level.colour}18`,
-                          color: level.colour,
-                        }}
+                          color: level.colour}}
                       >
                         {level.icon}
                       </div>
@@ -645,17 +629,35 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-2 space-y-1.5">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="mt-3 space-y-2">
+                    {/* AP-01: Estimated time + difficulty level badges */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary/12 text-primary border border-primary/25 text-xs font-medium">
+                        <Clock className="w-3 h-3 mr-1" />
+                        8–12 minutes
+                      </Badge>
+                      <Badge className="bg-[#CCBB44]/12 text-[#99882A] border border-[#CCBB44]/25 text-xs font-medium">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Adaptive difficulty
+                      </Badge>
+                    </div>
+                    {/* AP-02: Domain coverage preview */}
+                    <div className="pt-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                        Domains you'll be assessed on
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge variant="outline" className="text-xs">AI Interaction</Badge>
+                        <Badge variant="outline" className="text-xs">AI Output Evaluation</Badge>
+                        <Badge variant="outline" className="text-xs">AI Ethics &amp; Trust</Badge>
+                        <Badge variant="outline" className="text-xs">AI Change Leadership</Badge>
+                        <Badge variant="outline" className="text-xs">AI Workflow Design</Badge>
+                        <Badge variant="outline" className="text-xs">Workforce AI Readiness</Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground pt-1">
                       <Zap className="w-3 h-3 inline mr-1 text-primary" />
                       Your assessment will be calibrated to your role and experience level from question 1.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground">~35 minutes</span>
-                      {" "}· 50 adaptive interactions · 6 capability domains
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      We measure: AI Execution, AI Judgement, AI Risk &amp; Governance, AI Appropriateness, AI Workflow Application, and AI Data &amp; Insight.
                     </p>
                   </div>
                 </div>

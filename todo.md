@@ -1786,3 +1786,16 @@
 - [x] PR-07: Frontend — Manager Dashboard: View full report links on team member cards
 - [x] PR-08: Frontend — Leader Dashboard: links from team breakdown to /people/:userId
 - [x] PR-09: Frontend — AppShell: People nav item for leaders and admins
+
+## Assessment Process — Top 10 Improvements
+
+- [x] AP-01: Session creation — add "Estimated time" (8-12 min) and "Difficulty level" badges to the session start dialog
+- [x] AP-02: Session creation — show domain coverage preview (which domains will be assessed) before starting
+- [ ] AP-03: Session page — add live domain progress tracker in the sidebar showing % answered per domain
+- [x] AP-04: Session page — add "Flag for review" button per question for ambiguous/problematic items
+- [x] AP-05: Session page — add keyboard shortcut hints (1-4 to select, Enter to submit) in the question card footer
+- [ ] AP-06: Results page — add "Score vs previous session" delta card in the summary tab (e.g., "+1.2 points since last assessment")
+- [ ] AP-07: Results page — add "Time to target" projection card showing estimated weeks to reach org ambition target
+- [ ] AP-08: Results page — add "Recommended focus area" callout highlighting the lowest-scoring domain with development path
+- [ ] AP-09: Results page — add "Assessment confidence" transparency showing # of questions answered vs target and confidence band
+- [ ] AP-10: Results page — add "Next steps" action panel with links to learning plan, manager 1:1 discussion prompt, and peer comparison
