@@ -141,40 +141,90 @@ export function MarketingFooter() {
 // ─── Illustration components ──────────────────────────────────────────────────
 
 /** Continuous loop diagram: Assess → Diagnose → Develop → Reassess */
+/**
+ * Loop diagram — pure CSS/HTML, no SVG text wrapping issues.
+ * Four nodes positioned absolutely around a central circle.
+ * The orbiting dot uses a CSS keyframe rotate trick so it always works.
+ */
 function LoopDiagram() {
-  const size = 460;
-  const r = 160;
-  const cx = size / 2; const cy = size / 2;
-  const steps = [
-    { label: "Assess",   sub: "Adaptive scenarios", angle: -90 },
-    { label: "Diagnose", sub: "Gap identification",  angle: 0   },
-    { label: "Develop",  sub: "Personalised plan",   angle: 90  },
-    { label: "Reassess", sub: "Measure change",      angle: 180 },
+  // Each node: position as % offset from centre of the 400px container
+  // top/left are the centre of the node circle (80px diameter)
+  const nodes = [
+    { label: "Assess",   sub: "Adaptive scenarios", top: "0%",   left: "50%"  },
+    { label: "Diagnose", sub: "Gap identification",  top: "50%",  left: "100%" },
+    { label: "Develop",  sub: "Personalised plan",   top: "100%", left: "50%"  },
+    { label: "Reassess", sub: "Measure change",      top: "50%",  left: "0%"   },
   ];
   return (
-    <div className="relative flex items-center justify-center w-full" aria-hidden="true">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: "100%" }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(34,197,94,0.2)" strokeWidth="2" strokeDasharray="8 5" />
-        <circle r="7" fill={greenHex} opacity="0.95">
-          <animateMotion dur="6s" repeatCount="indefinite"
-            path={`M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r}`} />
-        </circle>
-        <circle cx={cx} cy={cy} r="60" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)" strokeWidth="1.5" />
-        <text x={cx} y={cy - 8} textAnchor="middle" fill={greenHex} fontSize="16" fontWeight="800" fontFamily="system-ui,sans-serif">Continuous</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill={greenHex} fontSize="16" fontWeight="800" fontFamily="system-ui,sans-serif">Loop</text>
-        {steps.map(({ label, sub, angle }) => {
-          const rad = (angle * Math.PI) / 180;
-          const nx = cx + r * Math.cos(rad);
-          const ny = cy + r * Math.sin(rad);
-          return (
-            <g key={label}>
-              <circle cx={nx} cy={ny} r="40" fill={slate} stroke="rgba(34,197,94,0.5)" strokeWidth="2" />
-              <text x={nx} y={ny - 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui,sans-serif">{label}</text>
-              <text x={nx} y={ny + 13} textAnchor="middle" fill="rgba(148,163,184,0.9)" fontSize="10.5" fontFamily="system-ui,sans-serif">{sub}</text>
-            </g>
-          );
-        })}
-      </svg>
+    <div className="flex flex-col items-center w-full" aria-hidden="true">
+      {/* Inject keyframes once */}
+      <style>{`
+        @keyframes aiq-orbit {
+          from { transform: rotate(0deg) translateX(160px) rotate(0deg); }
+          to   { transform: rotate(360deg) translateX(160px) rotate(-360deg); }
+        }
+        .aiq-orbit-dot {
+          animation: aiq-orbit 6s linear infinite;
+          transform-origin: center center;
+        }
+      `}</style>
+
+      {/* Diagram container — 400×400, nodes positioned at compass points */}
+      <div className="relative" style={{ width: 400, height: 400 }}>
+
+        {/* Dashed orbit ring */}
+        <div className="absolute inset-0 rounded-full"
+          style={{
+            border: "2px dashed rgba(34,197,94,0.25)",
+            margin: "40px", // ring inset so nodes sit on it
+          }} />
+
+        {/* Orbiting dot — CSS keyframe, always works */}
+        <div className="absolute aiq-orbit-dot"
+          style={{
+            top: "50%", left: "50%",
+            width: 14, height: 14,
+            marginTop: -7, marginLeft: -7,
+            borderRadius: "50%",
+            background: greenHex,
+            boxShadow: `0 0 8px ${greenHex}`,
+          }} />
+
+        {/* Centre circle */}
+        <div className="absolute flex flex-col items-center justify-center rounded-full"
+          style={{
+            top: "50%", left: "50%",
+            width: 120, height: 120,
+            transform: "translate(-50%, -50%)",
+            background: "rgba(34,197,94,0.08)",
+            border: "1.5px solid rgba(34,197,94,0.3)",
+          }}>
+          <span className="font-black text-sm leading-tight text-center" style={{ color: greenHex }}>
+            Continuous<br />Loop
+          </span>
+        </div>
+
+        {/* Four nodes at compass points */}
+        {nodes.map(({ label, sub, top, left }) => (
+          <div key={label}
+            className="absolute flex flex-col items-center justify-center rounded-full text-center"
+            style={{
+              width: 96, height: 96,
+              top, left,
+              transform: "translate(-50%, -50%)",
+              background: slate,
+              border: "2px solid rgba(34,197,94,0.45)",
+              padding: "8px",
+            }}>
+            <span className="font-bold text-white leading-tight" style={{ fontSize: 13 }}>{label}</span>
+            <span className="leading-tight mt-0.5" style={{ fontSize: 10, color: "rgba(148,163,184,0.9)" }}>{sub}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-slate-400 text-xs text-center mt-6 max-w-xs">
+        AiQ is a continuous loop, not a one-off diagnostic. Each cycle produces more precise measurement.
+      </p>
     </div>
   );
 }
