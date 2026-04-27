@@ -23,8 +23,9 @@ import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
 import { getDb } from "../db";
-import { auditLogs } from "../../drizzle/schema";
+import { auditLogs, ailOrgContext } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
+import { eq } from "drizzle-orm";
 
 import {
   generateCapabilityReport,
@@ -232,6 +233,45 @@ export const intelligenceRouter = router({
         tenantId: ctx.user.tenantId,
         ...input,
       });
+      return { success: true };
+    }),
+
+  /**
+   * Dedicated procedure to save the ambition target independently.
+   * Allows HR leaders to set/update the target without touching other org context fields.
+   */
+  setAmbitionTarget: protectedProcedure
+    .input(z.object({
+      ambitionTargetScore: z.number().int().min(0).max(100).nullable(),
+      ambitionTargetDate: z.string().max(10).nullable().optional(),
+      ambitionTargetLabel: z.string().max(200).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Check if org context row exists
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (existing.length > 0) {
+        await db.update(ailOrgContext)
+          .set({
+            ambitionTargetScore: input.ambitionTargetScore,
+            ambitionTargetDate: input.ambitionTargetDate ?? null,
+            ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+            updatedAt: new Date(),
+          })
+          .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      } else {
+        await db.insert(ailOrgContext).values({
+          id: nanoid(),
+          tenantId: ctx.user.tenantId,
+          ambitionTargetScore: input.ambitionTargetScore,
+          ambitionTargetDate: input.ambitionTargetDate ?? null,
+          ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+        });
+      }
       return { success: true };
     }),
 

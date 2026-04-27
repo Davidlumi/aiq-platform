@@ -8,10 +8,12 @@
  * - Recommended actions per priority
  * - CTA to set/edit ambition target
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Target,
@@ -60,10 +62,38 @@ const PRIORITY_ACTIONS: Record<string, string[]> = {
 };
 
 export default function AIStrategyPage() {
+  const utils = trpc.useUtils();
+  const [showTargetDialog, setShowTargetDialog] = useState(false);
+  const [targetScore, setTargetScore] = useState("");
+  const [targetDate, setTargetDate] = useState("");
+  const [targetLabel, setTargetLabel] = useState("");
   const { data: ambitionGap, isLoading } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
     retry: false,
   } as any);
   const { data: trajectory } = trpc.dashboardV2.leader.domainTrajectory.useQuery(undefined);
+  const setAmbitionTarget = trpc.intelligence.setAmbitionTarget.useMutation({
+    onSuccess: () => {
+      toast.success("Ambition target saved — dashboard updated.");
+      setShowTargetDialog(false);
+      utils.dashboardV2.leader.ambitionGap.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  function openTargetDialog() {
+    if (ambitionGap?.ambitionTargetScore != null) setTargetScore(String((ambitionGap.ambitionTargetScore / 10).toFixed(1)));
+    if (ambitionGap?.ambitionTargetDate) setTargetDate(ambitionGap.ambitionTargetDate);
+    if (ambitionGap?.ambitionTargetLabel) setTargetLabel(ambitionGap.ambitionTargetLabel);
+    setShowTargetDialog(true);
+  }
+  function handleSaveTarget() {
+    const score = parseFloat(targetScore);
+    if (isNaN(score) || score < 0 || score > 10) { toast.error("Score must be between 0 and 10"); return; }
+    setAmbitionTarget.mutate({
+      ambitionTargetScore: Math.round(score * 10),
+      ambitionTargetDate: targetDate || null,
+      ambitionTargetLabel: targetLabel || null,
+    });
+  }
 
   // Estimate months to target based on 90-day trajectory
   const monthsToTarget = useMemo(() => {
@@ -103,12 +133,13 @@ export default function AIStrategyPage() {
               Set a readiness target score and date to unlock the AI Strategy view — including gap analysis, per-priority alignment, and time-to-target projections.
             </p>
           </div>
-          <Link href="/admin/org-context">
-            <Button className="gap-2 bg-[#228833] hover:bg-[#1a6626] text-white">
-              <Target className="w-4 h-4" />
-              Set Ambition Target
-            </Button>
-          </Link>
+          <Button
+            className="gap-2 bg-[#228833] hover:bg-[#1a6626] text-white"
+            onClick={openTargetDialog}
+          >
+            <Target className="w-4 h-4" />
+            Set Ambition Target
+          </Button>
         </div>
       </div>
     );
@@ -132,11 +163,9 @@ export default function AIStrategyPage() {
             Readiness vs ambition — how your HR function's capability maps to your AI strategy
           </p>
         </div>
-        <Link href="/admin/org-context">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            Edit ambition target <ArrowRight className="w-3 h-3" />
-          </Button>
-        </Link>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={openTargetDialog}>
+          Edit ambition target <ArrowRight className="w-3 h-3" />
+        </Button>
       </header>
 
       {/* ── Hero: Readiness vs Ambition ── */}
@@ -307,6 +336,75 @@ export default function AIStrategyPage() {
         </div>
       )}
 
+
+      {/* ── Ambition Target Dialog ── */}
+      <Dialog open={showTargetDialog} onOpenChange={setShowTargetDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="w-4 h-4 text-[#228833]" />
+              Set AI Readiness Ambition Target
+            </DialogTitle>
+            <DialogDescription>
+              Define the readiness score your HR function is aiming for and when you want to reach it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Readiness Score (0–10)</label>
+              <p className="text-xs text-muted-foreground mb-2">7.5 = AI Ready · 9.0 = Advanced</p>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value={targetScore}
+                onChange={(e) => setTargetScore(e.target.value)}
+                placeholder="e.g. 7.5"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Date (optional)</label>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Ambition Statement (optional)</label>
+              <input
+                type="text"
+                value={targetLabel}
+                onChange={(e) => setTargetLabel(e.target.value)}
+                placeholder="e.g. HR function fully capable of deploying AI tools"
+                maxLength={200}
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              />
+            </div>
+            {targetScore && parseFloat(targetScore) >= 0 && parseFloat(targetScore) <= 10 && (
+              <div className="p-3 rounded-xl bg-[#228833]/5 border border-[#228833]/15 text-xs text-muted-foreground">
+                Target: <strong className="text-foreground">{parseFloat(targetScore).toFixed(1)}</strong> / 10
+                {targetDate && <> by <strong className="text-foreground">{new Date(targetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
+                {targetLabel && <> — {targetLabel}</>}
+              </div>
+            )}
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => setShowTargetDialog(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                className="bg-[#228833] hover:bg-[#1a6626] text-white"
+                onClick={handleSaveTarget}
+                disabled={setAmbitionTarget.isPending || !targetScore}
+              >
+                {setAmbitionTarget.isPending ? "Saving…" : "Save Target"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* ── Summary Actions ── */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center gap-2 mb-4">
@@ -320,12 +418,10 @@ export default function AIStrategyPage() {
               View full function dashboard
             </Button>
           </Link>
-          <Link href="/admin/org-context">
-            <Button variant="outline" className="w-full gap-2 text-xs justify-start">
-              <Target className="w-3.5 h-3.5" />
-              Update ambition target
-            </Button>
-          </Link>
+          <Button variant="outline" className="w-full gap-2 text-xs justify-start" onClick={openTargetDialog}>
+            <Target className="w-3.5 h-3.5" />
+            Update ambition target
+          </Button>
           <Link href="/admin/learning">
             <Button variant="outline" className="w-full gap-2 text-xs justify-start">
               <TrendingUp className="w-3.5 h-3.5" />
