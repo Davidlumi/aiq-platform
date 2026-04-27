@@ -146,89 +146,82 @@ export function MarketingFooter() {
  * Four nodes positioned absolutely around a central circle.
  * The orbiting dot uses a CSS keyframe rotate trick so it always works.
  */
+/**
+ * Loop diagram — pure CSS/HTML.
+ * Container: 480×480px. Orbit radius: 160px. Node size: 100px.
+ * All nodes fully inside the container (no overflow).
+ * Orbiting dot uses CSS keyframe rotate+translateX (reliable cross-browser).
+ */
 function LoopDiagram() {
-  // Each node: position as % offset from centre of the 400px container
-  // top/left are the centre of the node circle (80px diameter)
-  const nodes = [
-    { label: "Assess",   sub: "Adaptive scenarios", top: "0%",   left: "50%"  },
-    { label: "Diagnose", sub: "Gap identification",  top: "50%",  left: "100%" },
-    { label: "Develop",  sub: "Personalised plan",   top: "100%", left: "50%"  },
-    { label: "Reassess", sub: "Measure change",      top: "50%",  left: "0%"   },
+  // [label, sub, topPx, leftPx] — node top-left corner in 480px container
+  // Centre = (240,240), orbit radius = 160px, node size = 100px
+  // Node centre positions: top=(240,80), right=(400,240), bottom=(240,400), left=(80,240)
+  // top-left = centre - 50 → (190,30), (350,190), (190,350), (30,190)
+  const nodes: [string, string, number, number][] = [
+    ["Assess",   "Adaptive scenarios", 30,  190],
+    ["Diagnose", "Gap identification",  190, 350],
+    ["Develop",  "Personalised plan",   350, 190],
+    ["Reassess", "Measure change",      190,  30],
   ];
   return (
     <div className="flex flex-col items-center w-full" aria-hidden="true">
-      {/* Inject keyframes once */}
       <style>{`
         @keyframes aiq-orbit {
-          from { transform: rotate(0deg) translateX(160px) rotate(0deg); }
+          from { transform: rotate(0deg)   translateX(160px) rotate(0deg); }
           to   { transform: rotate(360deg) translateX(160px) rotate(-360deg); }
         }
-        .aiq-orbit-dot {
-          animation: aiq-orbit 6s linear infinite;
-          transform-origin: center center;
-        }
+        .aiq-orbit-dot { animation: aiq-orbit 6s linear infinite; }
       `}</style>
 
-      {/* Diagram container — 400×400, nodes positioned at compass points */}
-      <div className="relative" style={{ width: 400, height: 400 }}>
+      {/* Fixed 480×480 container */}
+      <div className="relative mx-auto" style={{ width: 480, height: 480 }}>
 
-        {/* Dashed orbit ring */}
-        <div className="absolute inset-0 rounded-full"
+        {/* Dashed orbit ring — centred at 240,240, radius 160 */}
+        <div className="absolute rounded-full pointer-events-none"
           style={{
-            border: "2px dashed rgba(34,197,94,0.25)",
-            margin: "40px", // ring inset so nodes sit on it
+            top: 80, left: 80, width: 320, height: 320,
+            border: "2px dashed rgba(34,197,94,0.3)",
           }} />
 
-        {/* Orbiting dot — CSS keyframe, always works */}
-        <div className="absolute aiq-orbit-dot"
+        {/* Orbiting dot anchored at centre (240,240) */}
+        <div className="absolute aiq-orbit-dot rounded-full pointer-events-none"
           style={{
-            top: "50%", left: "50%",
+            top: 240, left: 240,
             width: 14, height: 14,
             marginTop: -7, marginLeft: -7,
-            borderRadius: "50%",
             background: greenHex,
-            boxShadow: `0 0 8px ${greenHex}`,
+            boxShadow: `0 0 10px ${greenHex}, 0 0 20px ${greenHex}55`,
           }} />
 
-        {/* Centre circle */}
+        {/* Centre label circle */}
         <div className="absolute flex flex-col items-center justify-center rounded-full"
           style={{
-            top: "50%", left: "50%",
-            width: 120, height: 120,
-            transform: "translate(-50%, -50%)",
+            top: 180, left: 180, width: 120, height: 120,
             background: "rgba(34,197,94,0.08)",
-            border: "1.5px solid rgba(34,197,94,0.3)",
+            border: "1.5px solid rgba(34,197,94,0.35)",
           }}>
           <span className="font-black text-sm leading-tight text-center" style={{ color: greenHex }}>
             Continuous<br />Loop
           </span>
         </div>
 
-        {/* Four nodes at compass points */}
-        {nodes.map(({ label, sub, top, left }) => (
+        {/* Four step nodes */}
+        {nodes.map(([label, sub, top, left]) => (
           <div key={label}
             className="absolute flex flex-col items-center justify-center rounded-full text-center"
             style={{
-              width: 96, height: 96,
-              top, left,
-              transform: "translate(-50%, -50%)",
+              top, left, width: 100, height: 100,
               background: slate,
-              border: "2px solid rgba(34,197,94,0.45)",
-              padding: "8px",
+              border: "2px solid rgba(34,197,94,0.5)",
             }}>
-            <span className="font-bold text-white leading-tight" style={{ fontSize: 13 }}>{label}</span>
-            <span className="leading-tight mt-0.5" style={{ fontSize: 10, color: "rgba(148,163,184,0.9)" }}>{sub}</span>
+            <span className="font-bold text-white" style={{ fontSize: 13, lineHeight: 1.2 }}>{label}</span>
+            <span className="mt-1 px-2" style={{ fontSize: 10, lineHeight: 1.3, color: "rgba(148,163,184,0.85)" }}>{sub}</span>
           </div>
         ))}
       </div>
-
-      <p className="text-slate-400 text-xs text-center mt-6 max-w-xs">
-        AiQ is a continuous loop, not a one-off diagnostic. Each cycle produces more precise measurement.
-      </p>
     </div>
   );
 }
-
 /** Dashboard mockup for StrategicLayer */
 function DashboardMockup() {
   const domains = ["AI Interaction", "AI Output Eval", "Workflow Design", "Workforce Ready", "Ethics & Trust", "Change Leadership"];
@@ -500,7 +493,7 @@ function MeasureDiagnoseClose() {
           {/* Loop diagram */}
           <div className="flex flex-col items-center">
             <LoopDiagram />
-            <p className="text-slate-400 text-xs text-center mt-4 max-w-xs">
+            <p className="text-slate-400 text-sm text-center mt-6 max-w-sm">
               AiQ is a continuous loop, not a one-off diagnostic. Each cycle produces more precise measurement.
             </p>
           </div>
