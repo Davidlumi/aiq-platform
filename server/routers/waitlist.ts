@@ -11,6 +11,11 @@
  */
 
 import { TRPCError } from "@trpc/server";
+import {
+  sendApplicationConfirmation,
+  sendOwnerApplicationAlert,
+  sendStatusChangeEmail,
+} from "../email";
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
@@ -153,6 +158,27 @@ export const waitlistRouter = router({
         // Non-critical — don't fail the application if notification fails
       });
 
+      // Send confirmation email to applicant (non-critical)
+      sendApplicationConfirmation({
+        to:          input.contactEmail.toLowerCase().trim(),
+        firstName:   input.contactFirstName.trim(),
+        companyName: input.companyName.trim(),
+      }).catch(() => {});
+
+      // Send owner alert email (non-critical)
+      sendOwnerApplicationAlert({
+        firstName:    input.contactFirstName.trim(),
+        lastName:     input.contactLastName.trim(),
+        title:        input.contactTitle.trim(),
+        companyName:  input.companyName.trim(),
+        sector:       input.sector,
+        companySize:  input.companySize,
+        hrTeamSize:   input.hrTeamSize,
+        contactEmail: input.contactEmail.toLowerCase().trim(),
+        useCase:      input.useCase.trim(),
+        linkedinUrl:  input.linkedinUrl?.trim() || null,
+      }).catch(() => {});
+
       return {
         eligible: true,
         duplicate: false,
@@ -227,6 +253,25 @@ export const waitlistRouter = router({
         .update(betaApplications)
         .set(updates)
         .where(eq(betaApplications.id, input.id));
+
+      // Send status change email if status changed to a terminal state
+      if (input.status === "approved" || input.status === "rejected" || input.status === "waitlisted") {
+        const apps = await db
+          .select()
+          .from(betaApplications)
+          .where(eq(betaApplications.id, input.id))
+          .limit(1);
+        if (apps.length > 0) {
+          const app = apps[0];
+          sendStatusChangeEmail({
+            to:          app.contactEmail,
+            firstName:   app.contactFirstName,
+            companyName: app.companyName,
+            status:      input.status as "approved" | "rejected" | "waitlisted",
+            notes:       input.notes ?? app.notes,
+          }).catch(() => {});
+        }
+      }
 
       return { success: true };
     }),
