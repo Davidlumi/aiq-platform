@@ -1,22 +1,23 @@
 /**
- * AiQ Marketing Home Page — v3.0
- * Copy: AiQ_Marketing_Site_Copy_v3.docx
+ * AiQ Marketing Home Page — v3.1 (Sprint 1 visual improvements)
+ * Adds: loop diagram, dashboard mockup, hex grid, mid-page CTAs, hero pill + social proof, enhanced footer
  */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, ChevronRight, Target, TrendingUp, BarChart3,
-  Users, Shield, Zap, BookOpen, CheckCircle2, AlertCircle, Clock,
+  Users, CheckCircle2, AlertCircle, Clock,
 } from "lucide-react";
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
-const navy   = "#0F172A";
-const slate  = "#1E293B";
-const chalk  = "#F8FAFC";
-const muted  = "#64748B";
-const border = "rgba(255,255,255,0.08)";
+const navy    = "#0F172A";
+const slate   = "#1E293B";
+const chalk   = "#F8FAFC";
+const muted   = "#64748B";
+const border  = "rgba(255,255,255,0.08)";
 const borderL = "#E2E8F0";
-const green  = "var(--primary)";
+const green   = "var(--primary)";
+const greenHex = "#22C55E";
 
 // ─── Shared components ────────────────────────────────────────────────────────
 function AiQLogo({ size = 32 }: { size?: number }) {
@@ -25,9 +26,9 @@ function AiQLogo({ size = 32 }: { size?: number }) {
       <circle cx="100" cy="100" r="90" fill={slate} />
       <text x="100" y="120" fontFamily="system-ui,-apple-system,sans-serif"
         fontSize="64" fontWeight="800" fill="white" textAnchor="middle" letterSpacing="-3">
-        A<tspan fill={green}>i</tspan>Q
+        A<tspan fill={greenHex}>i</tspan>Q
       </text>
-      <path d="M 60 135 Q 100 150 140 135" stroke={green} strokeWidth="5"
+      <path d="M 60 135 Q 100 150 140 135" stroke={greenHex} strokeWidth="5"
         fill="none" strokeLinecap="round" />
     </svg>
   );
@@ -43,7 +44,7 @@ export function MarketingNav() {
             <AiQLogo size={30} />
             <span className="font-bold text-white text-lg tracking-tight">AiQ</span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(34,197,94,0.15)", color: green, border: "1px solid rgba(34,197,94,0.3)" }}>
+              style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
               Beta
             </span>
           </div>
@@ -65,7 +66,7 @@ export function MarketingNav() {
             <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10">Sign in</Button>
           </Link>
           <Link href="/beta">
-            <Button size="sm" className="font-semibold" style={{ background: green, color: "white" }}>Apply for beta</Button>
+            <Button size="sm" className="font-semibold" style={{ background: greenHex, color: "white" }}>Apply for beta</Button>
           </Link>
         </div>
       </div>
@@ -77,13 +78,27 @@ export function MarketingFooter() {
   return (
     <footer style={{ background: navy, borderTop: `1px solid ${border}` }} className="pt-16 pb-8 px-6">
       <div className="max-w-6xl mx-auto">
+        {/* Footer CTA strip */}
+        <div className="rounded-2xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6"
+          style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <div>
+            <p className="text-white font-semibold text-lg mb-1">Ready to lead the conversation with evidence?</p>
+            <p className="text-slate-400 text-sm">Join the first cohort of UK CPOs building board-grade AI capability intelligence.</p>
+          </div>
+          <Link href="/beta">
+            <Button className="font-semibold shrink-0 px-6" style={{ background: greenHex, color: "white" }}>
+              Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <AiQLogo size={28} />
               <span className="font-bold text-white text-lg">AiQ</span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed">AI capability intelligence for HR functions delivering transformation.</p>
+            <p className="text-slate-400 text-sm leading-relaxed mb-4">AI capability intelligence for HR functions delivering transformation.</p>
+            <p className="text-xs text-slate-500">Built for UK GDPR · ICO guidance · FCA Consumer Duty</p>
           </div>
           <div>
             <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Product</h4>
@@ -119,21 +134,194 @@ export function MarketingFooter() {
   );
 }
 
+// ─── Illustration components ──────────────────────────────────────────────────
+
+/** Continuous loop diagram: Assess → Diagnose → Develop → Reassess */
+function LoopDiagram() {
+  const r = 110;
+  const cx = 160; const cy = 160;
+  const steps = [
+    { label: "Assess",   sub: "Adaptive scenarios", angle: -90 },
+    { label: "Diagnose", sub: "Gap identification",  angle: 0   },
+    { label: "Develop",  sub: "Personalised plan",   angle: 90  },
+    { label: "Reassess", sub: "Measure change",      angle: 180 },
+  ];
+  return (
+    <div className="relative flex items-center justify-center" aria-hidden="true">
+      <svg width="320" height="320" viewBox="0 0 320 320">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(34,197,94,0.15)" strokeWidth="1.5" strokeDasharray="6 4" />
+        <circle r="5" fill={greenHex} opacity="0.9">
+          <animateMotion dur="6s" repeatCount="indefinite"
+            path={`M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r}`} />
+        </circle>
+        <circle cx={cx} cy={cy} r="42" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.25)" strokeWidth="1" />
+        <text x={cx} y={cy - 6} textAnchor="middle" fill={greenHex} fontSize="11" fontWeight="700" fontFamily="system-ui,sans-serif">Continuous</text>
+        <text x={cx} y={cy + 9} textAnchor="middle" fill={greenHex} fontSize="11" fontWeight="700" fontFamily="system-ui,sans-serif">Loop</text>
+        {steps.map(({ label, sub, angle }) => {
+          const rad = (angle * Math.PI) / 180;
+          const nx = cx + r * Math.cos(rad);
+          const ny = cy + r * Math.sin(rad);
+          return (
+            <g key={label}>
+              <circle cx={nx} cy={ny} r="26" fill={slate} stroke="rgba(34,197,94,0.4)" strokeWidth="1.5" />
+              <text x={nx} y={ny - 3} textAnchor="middle" fill="white" fontSize="9.5" fontWeight="700" fontFamily="system-ui,sans-serif">{label}</text>
+              <text x={nx} y={ny + 9} textAnchor="middle" fill="rgba(148,163,184,0.9)" fontSize="7.5" fontFamily="system-ui,sans-serif">{sub}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/** Hexagonal grid for six domains */
+function HexGrid({ domains }: { domains: { name: string; tier: string; color: string }[] }) {
+  const hexW = 88; const hexH = 96;
+  const totalW = hexW * 3 + hexW * 0.5 + 16;
+  const totalH = hexH * 1.5 + 24;
+
+  function hexPath(hx: number, hy: number, size: number) {
+    const pts = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 180) * (60 * i - 30);
+      return `${hx + size * Math.cos(a)},${hy + size * Math.sin(a)}`;
+    });
+    return `M ${pts.join(" L ")} Z`;
+  }
+
+  return (
+    <div className="flex justify-center" aria-hidden="true">
+      <svg width={totalW} height={totalH} viewBox={`0 0 ${totalW} ${totalH}`} style={{ overflow: "visible" }}>
+        {domains.map((d, di) => {
+          const ri = di < 3 ? 0 : 1;
+          const ci = di % 3;
+          const x = ci * hexW + (ri === 1 ? hexW * 0.5 : 0) + hexW / 2 + 8;
+          const y = ri * (hexH * 0.75) + hexH / 2 + 8;
+          const words = d.name.split(" ");
+          return (
+            <g key={d.name}>
+              <path d={hexPath(x, y, 40)} fill={`${d.color}18`} stroke={d.color} strokeWidth="1.5" strokeOpacity="0.5" />
+              <text x={x} y={y - 8} textAnchor="middle" fill={d.color} fontSize="8" fontWeight="700"
+                fontFamily="system-ui,sans-serif">{d.tier}</text>
+              {words.map((word, wi) => (
+                <text key={wi} x={x} y={y + 6 + (wi - (words.length - 1) / 2) * 12}
+                  textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui,sans-serif">{word}</text>
+              ))}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/** Dashboard mockup for StrategicLayer */
+function DashboardMockup() {
+  const domains = ["AI Interaction", "AI Output Eval", "Workflow Design", "Workforce Ready", "Ethics & Trust", "Change Leadership"];
+  const scores  = [7.2, 6.8, 5.9, 6.4, 7.0, 6.1];
+  const target  = 8.0;
+  const barW    = 180;
+  return (
+    <div className="rounded-2xl border overflow-hidden"
+      style={{ background: "rgba(15,23,42,0.9)", borderColor: "rgba(34,197,94,0.2)" }} aria-hidden="true">
+      <div className="flex items-center justify-between px-5 py-3 border-b"
+        style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(30,41,59,0.8)" }}>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: greenHex }} />
+          <span className="text-white text-xs font-semibold">CPO Strategic View</span>
+        </div>
+        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+          style={{ background: "rgba(34,197,94,0.15)", color: greenHex }}>Live</span>
+      </div>
+      <div className="px-5 py-4 border-b grid grid-cols-3 gap-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        {[
+          { label: "Current readiness",  value: "67%",       sub: "of target",      color: "#CCBB44" },
+          { label: "Projected closure",  value: "Q2 2027",   sub: "3 months early", color: greenHex  },
+          { label: "Risk concentration", value: "Sr. HRBPs", sub: "Workflow design", color: "#EE6677" },
+        ].map(({ label, value, sub, color }) => (
+          <div key={label} className="text-center">
+            <p className="text-xs mb-1" style={{ color: "rgba(148,163,184,0.7)" }}>{label}</p>
+            <p className="font-bold text-sm text-white">{value}</p>
+            <p className="text-xs mt-0.5" style={{ color }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+      <div className="px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "rgba(148,163,184,0.6)" }}>
+          Domain capability vs. target
+        </p>
+        <div className="flex flex-col gap-2.5">
+          {domains.map((d, i) => {
+            const pct  = (scores[i] / 10) * 100;
+            const tpct = (target / 10) * 100;
+            const color = scores[i] >= target ? greenHex : scores[i] >= 6.5 ? "#CCBB44" : "#EE6677";
+            return (
+              <div key={d}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-400">{d}</span>
+                  <span className="text-xs font-semibold" style={{ color }}>{scores[i].toFixed(1)}</span>
+                </div>
+                <div className="relative h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.06)", width: barW }}>
+                  <div className="absolute h-full rounded-full" style={{ width: `${pct}%`, background: color, opacity: 0.85 }} />
+                  <div className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 rounded-full"
+                    style={{ left: `${tpct}%`, background: "rgba(255,255,255,0.4)" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="w-0.5 h-3 rounded-full" style={{ background: "rgba(255,255,255,0.4)" }} />
+          <span className="text-xs" style={{ color: "rgba(148,163,184,0.6)" }}>Target: {target.toFixed(1)}</span>
+        </div>
+      </div>
+      <div className="px-5 pb-4">
+        <div className="rounded-xl p-3 border-l-2" style={{ background: "rgba(34,197,94,0.06)", borderColor: greenHex }}>
+          <p className="text-xs italic leading-relaxed" style={{ color: "rgba(226,232,240,0.85)" }}>
+            "Gap will close by Q2 2027 — 3 months before launch. Remaining risk concentrated in workflow design among Senior HRBPs."
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Floating score card overlay for hero */
+function FloatingScoreCard() {
+  return (
+    <div className="absolute -bottom-4 -left-6 rounded-xl border px-4 py-3 shadow-xl hidden lg:block"
+      style={{ background: slate, borderColor: "rgba(34,197,94,0.3)", minWidth: 180 }} aria-hidden="true">
+      <p className="text-xs text-slate-400 mb-1">AI Output Evaluation</p>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-black" style={{ color: greenHex }}>7.2</span>
+        <span className="text-xs text-slate-400">/ 10</span>
+      </div>
+      <div className="flex items-center gap-1.5 mt-1">
+        <TrendingUp className="w-3 h-3" style={{ color: greenHex }} />
+        <span className="text-xs" style={{ color: greenHex }}>+1.4 pts since last assessment</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page sections ────────────────────────────────────────────────────────────
 
 function Hero() {
   return (
-    <section style={{ background: navy }} className="pt-24 pb-20 px-6">
+    <section style={{ background: navy }} className="pt-20 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
+        {/* Centred pill badge */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
+            style={{ background: "rgba(34,197,94,0.12)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: greenHex }} />
+            Now in beta — first cohort of UK CPOs open now
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-8"
-              style={{ background: "rgba(34,197,94,0.12)", color: green, border: "1px solid rgba(34,197,94,0.25)" }}>
-              Free beta programme — small cohort of UK CPOs
-            </div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6" style={{ letterSpacing: "-0.02em" }}>
+            <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6" style={{ letterSpacing: "-0.03em" }}>
               Your CEO keeps asking if HR is ready for AI.{" "}
-              <span style={{ color: green }}>You keep saying yes.</span>
+              <span style={{ color: greenHex }}>You keep saying yes.</span>
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed mb-4">
               AiQ is the evidence behind an honest answer — and the platform that closes the gap when the answer is no.
@@ -143,9 +331,9 @@ function Hero() {
               identifies the specific gaps at individual, team, and function level, and closes them through
               personalised development. So the next time your CEO asks, you have evidence — not estimates.
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 mb-8">
               <Link href="/beta">
-                <Button size="lg" className="font-semibold px-8" style={{ background: green, color: "white" }}>
+                <Button size="lg" className="font-semibold px-8" style={{ background: greenHex, color: "white" }}>
                   Apply for the beta <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -155,17 +343,21 @@ function Hero() {
                 </Button>
               </Link>
             </div>
+            {/* Social proof */}
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Built with input from 40+ UK CPOs and HR Directors</p>
           </div>
-          {/* Product mockup */}
-          <div className="hidden lg:block">
-            <div className="rounded-2xl border p-6 shadow-2xl" style={{ background: slate, borderColor: "rgba(255,255,255,0.1)" }}>
+          {/* Product mockup with floating score card */}
+          <div className="hidden lg:block relative">
+            <FloatingScoreCard />
+            <div className="rounded-2xl border p-6 shadow-2xl"
+              style={{ background: slate, borderColor: "rgba(255,255,255,0.1)", boxShadow: "0 0 60px rgba(34,197,94,0.08)" }}>
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: green }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: greenHex }} />
                   <span className="text-white text-sm font-semibold">Scenario 3 of 12</span>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                  style={{ background: "rgba(34,197,94,0.15)", color: green }}>
+                  style={{ background: "rgba(34,197,94,0.15)", color: greenHex }}>
                   AI Output Evaluation
                 </span>
               </div>
@@ -182,15 +374,15 @@ function Hero() {
                 <div className="flex flex-col gap-2">
                   {[
                     { key: "A", label: "Act on the flag immediately — schedule a retention conversation", sel: false },
-                    { key: "B", label: "Validate the model output before taking action", sel: true },
-                    { key: "C", label: "Escalate to HR leadership to decide", sel: false },
-                    { key: "D", label: "Dismiss the flag — AI tools are often wrong", sel: false },
+                    { key: "B", label: "Validate the model output before taking action",                 sel: true  },
+                    { key: "C", label: "Escalate to HR leadership to decide",                            sel: false },
+                    { key: "D", label: "Dismiss the flag — AI tools are often wrong",                    sel: false },
                   ].map(opt => (
                     <div key={opt.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
                       style={{
                         background: opt.sel ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)",
-                        border: opt.sel ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                        color: opt.sel ? green : "#CBD5E1",
+                        border:     opt.sel ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                        color:      opt.sel ? greenHex : "#CBD5E1",
                       }}>
                       <span className="font-bold text-xs w-5 shrink-0">{opt.key}</span>
                       <span>{opt.label}</span>
@@ -201,10 +393,10 @@ function Hero() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-slate-400">Confidence</span>
-                  <span className="text-xs font-semibold" style={{ color: green }}>Fairly sure</span>
+                  <span className="text-xs font-semibold" style={{ color: greenHex }}>Fairly sure</span>
                 </div>
                 <div className="h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <div className="h-full rounded-full w-3/4" style={{ background: green }} />
+                  <div className="h-full rounded-full w-3/4" style={{ background: greenHex }} />
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-xs text-slate-500">Guessing</span>
@@ -241,9 +433,9 @@ function BoardQuestions() {
     <section style={{ background: chalk }} className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-16">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
             Three things the board is going to ask.{" "}
-            <span style={{ color: green }}>You need defensible answers to all three.</span>
+            <span style={{ color: greenHex }}>You need defensible answers to all three.</span>
           </h2>
           <p className="text-slate-600 leading-relaxed">
             Most CPOs can answer the first question with a survey, the second with a consulting engagement,
@@ -255,9 +447,10 @@ function BoardQuestions() {
           {questions.map(({ num, q, body, icon: Icon }) => (
             <div key={num} className="rounded-2xl p-8 border" style={{ background: "white", borderColor: borderL }}>
               <div className="flex items-start gap-4 mb-5">
-                <span className="text-3xl font-black" style={{ color: green, lineHeight: 1 }}>{num}</span>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(34,197,94,0.1)" }}>
-                  <Icon className="w-5 h-5" style={{ color: green }} />
+                <span className="text-3xl font-black" style={{ color: greenHex, lineHeight: 1 }}>{num}</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(34,197,94,0.1)" }}>
+                  <Icon className="w-5 h-5" style={{ color: greenHex }} />
                 </div>
               </div>
               <h3 className="font-bold text-lg mb-3" style={{ color: navy }}>{q}</h3>
@@ -288,34 +481,48 @@ function MeasureDiagnoseClose() {
   return (
     <section style={{ background: navy }} className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Loop diagram */}
+          <div className="flex flex-col items-center">
+            <LoopDiagram />
+            <p className="text-slate-400 text-xs text-center mt-4 max-w-xs">
+              AiQ is a continuous loop, not a one-off diagnostic. Each cycle produces more precise measurement.
+            </p>
+          </div>
           <div>
-            <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
-              Measure. <span style={{ color: green }}>Diagnose.</span> Close.
+            <h2 className="text-4xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+              Measure. <span style={{ color: greenHex }}>Diagnose.</span> Close.
             </h2>
             <p className="text-slate-300 leading-relaxed mb-6">
-              AiQ is a continuous loop, not a one-off diagnostic. Every HR person in your function takes
-              an adaptive assessment that probes their actual AI capability across six domains. The system
-              diagnoses their specific gaps. They receive a personalised development plan that closes those
-              gaps. They reassess. The system measures whether each intervention worked.
+              Every HR person in your function takes an adaptive assessment that probes their actual AI capability
+              across six domains. The system diagnoses their specific gaps. They receive a personalised development
+              plan that closes those gaps. They reassess. The system measures whether each intervention worked.
             </p>
             <p className="text-slate-400 text-sm leading-relaxed mb-8">Three things make this different from anything else in the market.</p>
-            <Link href="/how-it-works">
-              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
-                See how the loop works <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="flex flex-col gap-6">
-            {differentiators.map(({ title, body }, i) => (
-              <div key={i} className="rounded-xl p-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: border }}>
-                <div className="flex items-start gap-3 mb-3">
-                  <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: green }} />
-                  <h3 className="font-semibold text-white leading-snug">{title}</h3>
+            <div className="flex flex-col gap-5 mb-10">
+              {differentiators.map(({ title, body }, i) => (
+                <div key={i} className="rounded-xl p-5 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: border }}>
+                  <div className="flex items-start gap-3 mb-2">
+                    <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: greenHex }} />
+                    <h3 className="font-semibold text-white leading-snug">{title}</h3>
+                  </div>
+                  <p className="text-slate-400 text-sm leading-relaxed pl-8">{body}</p>
                 </div>
-                <p className="text-slate-400 text-sm leading-relaxed pl-8">{body}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Mid-page CTA */}
+            <div className="flex flex-wrap gap-3">
+              <Link href="/beta">
+                <Button className="font-semibold" style={{ background: greenHex, color: "white" }}>
+                  Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/how-it-works">
+                <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
+                  See how the loop works <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -334,7 +541,7 @@ function ThreeAltitudes() {
       body: "Who's where, who's progressing, who's stalled, and what's worth discussing in next week's 1:1s. Specific conversation prompts surface the development context that matters. Not a heatmap. A briefing.",
     },
     {
-      audience: "You", subtitle: "see the function against your business AI roadmap", icon: Target, color: green,
+      audience: "You", subtitle: "see the function against your business AI roadmap", icon: Target, color: greenHex,
       body: "Where your HR function is now. Where it needs to be by your business's AI initiative timelines. The specific gap. How fast it's closing. Which development investment is producing measurable return. The strategic intelligence your CEO is asking for, defensible to the General Counsel.",
     },
   ];
@@ -342,9 +549,9 @@ function ThreeAltitudes() {
     <section style={{ background: chalk }} className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-16">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
             Three views of the same loop,{" "}
-            <span style={{ color: green }}>each answering a different question.</span>
+            <span style={{ color: greenHex }}>each answering a different question.</span>
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -371,12 +578,12 @@ function StrategicLayer() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6"
-              style={{ background: "rgba(34,197,94,0.15)", color: green, border: "1px solid rgba(34,197,94,0.3)" }}>
+              style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
               The strategic intelligence layer
             </div>
-            <h2 className="text-3xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
+            <h2 className="text-4xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
               AiQ overlays your function's capability{" "}
-              <span style={{ color: green }}>against your business AI roadmap.</span>
+              <span style={{ color: greenHex }}>against your business AI roadmap.</span>
             </h2>
             <p className="text-slate-300 leading-relaxed mb-4">This is what makes AiQ board-grade rather than diagnostic-grade.</p>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">
@@ -390,37 +597,20 @@ function StrategicLayer() {
               shows you the gap between current state and target state, the rate at which the gap is closing,
               and the projected closure date for each business commitment.
             </p>
-            <Link href="/product">
-              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
-                See the product <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="rounded-2xl border p-8" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)" }}>
-            <div className="flex items-center gap-2 mb-6">
-              <Shield className="w-4 h-4" style={{ color: green }} />
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: green }}>Example board finding</span>
-            </div>
-            <blockquote className="text-slate-200 text-sm leading-relaxed italic mb-6 border-l-2 pl-4" style={{ borderColor: green }}>
-              "Currently 67% of target across affected role families. At current development pace, the gap
-              will close by Q2 2027 — three months before launch. The remaining risk is concentrated in
-              workflow design among Senior HRBPs."
-            </blockquote>
-            <p className="text-slate-400 text-xs mb-6">That's the conversation the board wants to be in. AiQ gives you the evidence to lead it.</p>
-            <div className="pt-6 border-t grid grid-cols-3 gap-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-              {[
-                { label: "Current readiness", value: "67%", sub: "of target" },
-                { label: "Projected closure", value: "Q2 2027", sub: "3 months early" },
-                { label: "Risk concentration", value: "Senior HRBPs", sub: "Workflow design" },
-              ].map(({ label, value, sub }) => (
-                <div key={label}>
-                  <p className="text-xs text-slate-500 mb-1">{label}</p>
-                  <p className="font-bold text-white text-sm">{value}</p>
-                  <p className="text-xs" style={{ color: green }}>{sub}</p>
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-3">
+              <Link href="/beta">
+                <Button className="font-semibold" style={{ background: greenHex, color: "white" }}>
+                  Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/product">
+                <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
+                  See the product <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
+          <DashboardMockup />
         </div>
       </div>
     </section>
@@ -429,27 +619,32 @@ function StrategicLayer() {
 
 function SixDomains() {
   const domains = [
-    { name: "AI Interaction", tier: "Foundation", color: "#4477AA" },
-    { name: "AI Output Evaluation", tier: "Foundation", color: "#AA3377" },
-    { name: "AI Workflow Design", tier: "Operational", color: "#228833" },
-    { name: "Workforce AI Readiness", tier: "Strategic", color: "#CCBB44" },
-    { name: "AI Ethics & Employee Trust", tier: "Strategic", color: "#EE6677" },
-    { name: "AI Change Leadership", tier: "Strategic", color: "#EE8866" },
+    { name: "AI Interaction",              tier: "Foundation",  color: "#4477AA" },
+    { name: "AI Output Evaluation",        tier: "Foundation",  color: "#AA3377" },
+    { name: "AI Workflow Design",          tier: "Operational", color: "#228833" },
+    { name: "Workforce AI Readiness",      tier: "Strategic",   color: "#CCBB44" },
+    { name: "AI Ethics & Employee Trust",  tier: "Strategic",   color: "#EE6677" },
+    { name: "AI Change Leadership",        tier: "Strategic",   color: "#EE8866" },
   ];
   return (
-    <section style={{ background: chalk, borderTop: `1px solid ${borderL}`, borderBottom: `1px solid ${borderL}` }} className="py-16 px-6">
+    <section style={{ background: chalk, borderTop: `1px solid ${borderL}`, borderBottom: `1px solid ${borderL}` }} className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
-        <p className="text-center text-sm font-semibold uppercase tracking-wider mb-8" style={{ color: muted }}>
+        <p className="text-center text-sm font-semibold uppercase tracking-wider mb-10" style={{ color: muted }}>
           Six capability domains — foundation, operational, and strategic
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {domains.map(({ name, tier, color }) => (
-            <div key={name} className="rounded-xl p-4 border text-center" style={{ background: "white", borderColor: borderL }}>
-              <div className="w-8 h-8 rounded-lg mx-auto mb-3 flex items-center justify-center" style={{ background: `${color}18` }}>
-                <Zap className="w-4 h-4" style={{ color }} />
+        <HexGrid domains={domains} />
+        <div className="flex flex-wrap justify-center gap-6 mt-10">
+          {[
+            { tier: "Foundation",  color: "#4477AA", desc: "Core AI literacy and interaction skills" },
+            { tier: "Operational", color: "#228833", desc: "Applying AI in day-to-day HR workflows" },
+            { tier: "Strategic",   color: "#CCBB44", desc: "Governing AI at function and enterprise level" },
+          ].map(({ tier, color, desc }) => (
+            <div key={tier} className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: color, opacity: 0.8 }} />
+              <div>
+                <span className="text-xs font-semibold" style={{ color: navy }}>{tier}</span>
+                <span className="text-xs text-slate-500 ml-1.5">{desc}</span>
               </div>
-              <p className="font-semibold text-xs mb-1" style={{ color: navy }}>{name}</p>
-              <p className="text-xs" style={{ color }}>{tier}</p>
             </div>
           ))}
         </div>
@@ -470,9 +665,9 @@ function WhoItsFor() {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           <div>
-            <h2 className="text-3xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
+            <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
               UK enterprise CPOs{" "}
-              <span style={{ color: green }}>whose business has committed to AI.</span>
+              <span style={{ color: greenHex }}>whose business has committed to AI.</span>
             </h2>
             <p className="text-slate-600 leading-relaxed mb-8">
               AiQ is built for Chief People Officers and HR Directors leading functions of 25+ HR people,
@@ -482,7 +677,7 @@ function WhoItsFor() {
             <div className="flex flex-col gap-4">
               {fits.map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: green }} />
+                  <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: greenHex }} />
                   <p className="text-slate-600 text-sm leading-relaxed">{text}</p>
                 </div>
               ))}
@@ -521,14 +716,41 @@ function WhyNow() {
       <div className="max-w-6xl mx-auto">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8"
-            style={{ background: "rgba(34,197,94,0.15)", color: green, border: "1px solid rgba(34,197,94,0.3)" }}>
+            style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
             <Clock className="w-3 h-3" /> Why now
           </div>
-          <h2 className="text-3xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
+          <h2 className="text-4xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
             The conversation about AI is moving from{" "}
-            <span style={{ color: green }}>'are we adopting it'</span>{" "}
+            <span style={{ color: greenHex }}>'are we adopting it'</span>{" "}
             to 'is HR ready to govern it.'
           </h2>
+          {/* Wave timeline illustration */}
+          <div className="my-10 rounded-2xl border p-6 text-left" style={{ background: "rgba(255,255,255,0.04)", borderColor: border }}>
+            <div className="flex flex-col sm:flex-row items-stretch gap-0">
+              {[
+                { wave: "Wave 1", label: "Productivity tools",      desc: "AI assistants, automation, copilots",  color: "#4477AA", done: true,  current: false },
+                { wave: "Wave 2", label: "Governance & capability", desc: "Is HR ready to govern AI decisions?",  color: greenHex,  done: false, current: true  },
+              ].map(({ wave, label, desc, color, done, current }, i) => (
+                <div key={wave} className="flex-1 flex items-start gap-3 p-4 rounded-xl"
+                  style={{
+                    background: current ? "rgba(34,197,94,0.08)" : "transparent",
+                    border: current ? "1px solid rgba(34,197,94,0.2)" : "1px solid transparent",
+                  }}>
+                  <div className="mt-1">
+                    <div className="w-3 h-3 rounded-full border-2"
+                      style={{ borderColor: color, background: done ? color : "transparent" }} />
+                    {i === 0 && <div className="w-0.5 h-8 mx-auto mt-1" style={{ background: `${color}40` }} />}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color }}>{wave}</p>
+                    <p className="font-semibold text-white text-sm mb-1">{label}</p>
+                    <p className="text-xs text-slate-400">{desc}</p>
+                    {current && <p className="text-xs mt-2 font-semibold" style={{ color: greenHex }}>← You are here</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           <p className="text-slate-300 leading-relaxed mb-6">
             The first wave of HR AI adoption was about productivity tools. The second wave is about
             governance — whether HR is capable of evaluating AI-informed decisions, designing safe
@@ -548,7 +770,7 @@ function WhyNow() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/beta">
-              <Button size="lg" className="font-semibold px-8" style={{ background: green, color: "white" }}>
+              <Button size="lg" className="font-semibold px-8" style={{ background: greenHex, color: "white" }}>
                 Apply for beta access <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -566,9 +788,20 @@ function WhyNow() {
 
 function FinalCTA() {
   return (
-    <section style={{ background: slate }} className="py-24 px-6">
-      <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+    <section className="py-28 px-6 relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #0a2e1a 0%, #0F172A 40%, #0a2e1a 100%)" }}>
+      {/* Background glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
+        <div className="w-96 h-96 rounded-full opacity-20"
+          style={{ background: "radial-gradient(circle, #22C55E 0%, transparent 70%)" }} />
+      </div>
+      <div className="max-w-3xl mx-auto text-center relative z-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8"
+          style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: greenHex }} />
+          First cohort — limited places
+        </div>
+        <h2 className="text-4xl font-black text-white mb-4" style={{ letterSpacing: "-0.03em" }}>
           Apply for the AiQ Beta Programme
         </h2>
         <p className="text-slate-300 leading-relaxed mb-4">
@@ -579,7 +812,7 @@ function FinalCTA() {
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
           <Link href="/beta">
-            <Button size="lg" className="font-semibold px-10" style={{ background: green, color: "white" }}>
+            <Button size="lg" className="font-semibold px-10" style={{ background: greenHex, color: "white" }}>
               Apply for beta access <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
