@@ -40,10 +40,14 @@ export function MarketingNav() {
       style={{ background: navy, borderColor: border }}>
       <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
         <Link href="/">
-          <div className="flex items-center gap-3 cursor-pointer">
-            <AiQLogo size={30} />
-            <span className="font-bold text-white text-lg tracking-tight">AiQ</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+          <div className="flex items-center gap-2 cursor-pointer select-none">
+            <span
+              className="font-black leading-none"
+              style={{ fontSize: "2rem", letterSpacing: "-0.04em", fontFamily: "system-ui,-apple-system,sans-serif", color: "white" }}
+            >
+              A<span style={{ color: greenHex }}>i</span>Q
+            </span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full ml-1"
               style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
               Beta
             </span>
@@ -138,8 +142,9 @@ export function MarketingFooter() {
 
 /** Continuous loop diagram: Assess → Diagnose → Develop → Reassess */
 function LoopDiagram() {
-  const r = 110;
-  const cx = 160; const cy = 160;
+  const size = 460;
+  const r = 160;
+  const cx = size / 2; const cy = size / 2;
   const steps = [
     { label: "Assess",   sub: "Adaptive scenarios", angle: -90 },
     { label: "Diagnose", sub: "Gap identification",  angle: 0   },
@@ -147,65 +152,25 @@ function LoopDiagram() {
     { label: "Reassess", sub: "Measure change",      angle: 180 },
   ];
   return (
-    <div className="relative flex items-center justify-center" aria-hidden="true">
-      <svg width="320" height="320" viewBox="0 0 320 320">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(34,197,94,0.15)" strokeWidth="1.5" strokeDasharray="6 4" />
-        <circle r="5" fill={greenHex} opacity="0.9">
+    <div className="relative flex items-center justify-center w-full" aria-hidden="true">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: "100%" }}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(34,197,94,0.2)" strokeWidth="2" strokeDasharray="8 5" />
+        <circle r="7" fill={greenHex} opacity="0.95">
           <animateMotion dur="6s" repeatCount="indefinite"
             path={`M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r}`} />
         </circle>
-        <circle cx={cx} cy={cy} r="42" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.25)" strokeWidth="1" />
-        <text x={cx} y={cy - 6} textAnchor="middle" fill={greenHex} fontSize="11" fontWeight="700" fontFamily="system-ui,sans-serif">Continuous</text>
-        <text x={cx} y={cy + 9} textAnchor="middle" fill={greenHex} fontSize="11" fontWeight="700" fontFamily="system-ui,sans-serif">Loop</text>
+        <circle cx={cx} cy={cy} r="60" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)" strokeWidth="1.5" />
+        <text x={cx} y={cy - 8} textAnchor="middle" fill={greenHex} fontSize="16" fontWeight="800" fontFamily="system-ui,sans-serif">Continuous</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fill={greenHex} fontSize="16" fontWeight="800" fontFamily="system-ui,sans-serif">Loop</text>
         {steps.map(({ label, sub, angle }) => {
           const rad = (angle * Math.PI) / 180;
           const nx = cx + r * Math.cos(rad);
           const ny = cy + r * Math.sin(rad);
           return (
             <g key={label}>
-              <circle cx={nx} cy={ny} r="26" fill={slate} stroke="rgba(34,197,94,0.4)" strokeWidth="1.5" />
-              <text x={nx} y={ny - 3} textAnchor="middle" fill="white" fontSize="9.5" fontWeight="700" fontFamily="system-ui,sans-serif">{label}</text>
-              <text x={nx} y={ny + 9} textAnchor="middle" fill="rgba(148,163,184,0.9)" fontSize="7.5" fontFamily="system-ui,sans-serif">{sub}</text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-/** Hexagonal grid for six domains */
-function HexGrid({ domains }: { domains: { name: string; tier: string; color: string }[] }) {
-  const hexW = 88; const hexH = 96;
-  const totalW = hexW * 3 + hexW * 0.5 + 16;
-  const totalH = hexH * 1.5 + 24;
-
-  function hexPath(hx: number, hy: number, size: number) {
-    const pts = Array.from({ length: 6 }, (_, i) => {
-      const a = (Math.PI / 180) * (60 * i - 30);
-      return `${hx + size * Math.cos(a)},${hy + size * Math.sin(a)}`;
-    });
-    return `M ${pts.join(" L ")} Z`;
-  }
-
-  return (
-    <div className="flex justify-center" aria-hidden="true">
-      <svg width={totalW} height={totalH} viewBox={`0 0 ${totalW} ${totalH}`} style={{ overflow: "visible" }}>
-        {domains.map((d, di) => {
-          const ri = di < 3 ? 0 : 1;
-          const ci = di % 3;
-          const x = ci * hexW + (ri === 1 ? hexW * 0.5 : 0) + hexW / 2 + 8;
-          const y = ri * (hexH * 0.75) + hexH / 2 + 8;
-          const words = d.name.split(" ");
-          return (
-            <g key={d.name}>
-              <path d={hexPath(x, y, 40)} fill={`${d.color}18`} stroke={d.color} strokeWidth="1.5" strokeOpacity="0.5" />
-              <text x={x} y={y - 8} textAnchor="middle" fill={d.color} fontSize="8" fontWeight="700"
-                fontFamily="system-ui,sans-serif">{d.tier}</text>
-              {words.map((word, wi) => (
-                <text key={wi} x={x} y={y + 6 + (wi - (words.length - 1) / 2) * 12}
-                  textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="system-ui,sans-serif">{word}</text>
-              ))}
+              <circle cx={nx} cy={ny} r="40" fill={slate} stroke="rgba(34,197,94,0.5)" strokeWidth="2" />
+              <text x={nx} y={ny - 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui,sans-serif">{label}</text>
+              <text x={nx} y={ny + 13} textAnchor="middle" fill="rgba(148,163,184,0.9)" fontSize="10.5" fontFamily="system-ui,sans-serif">{sub}</text>
             </g>
           );
         })}
@@ -619,32 +584,97 @@ function StrategicLayer() {
 
 function SixDomains() {
   const domains = [
-    { name: "AI Interaction",              tier: "Foundation",  color: "#4477AA" },
-    { name: "AI Output Evaluation",        tier: "Foundation",  color: "#AA3377" },
-    { name: "AI Workflow Design",          tier: "Operational", color: "#228833" },
-    { name: "Workforce AI Readiness",      tier: "Strategic",   color: "#CCBB44" },
-    { name: "AI Ethics & Employee Trust",  tier: "Strategic",   color: "#EE6677" },
-    { name: "AI Change Leadership",        tier: "Strategic",   color: "#EE8866" },
+    {
+      name: "AI Interaction",
+      tier: "Foundation",
+      color: "#60A5FA",
+      desc: "Prompting, context-setting, and iterative dialogue with AI systems to get reliable, useful outputs in HR workflows.",
+      icon: "💬",
+    },
+    {
+      name: "AI Output Evaluation",
+      tier: "Foundation",
+      color: "#C084FC",
+      desc: "Critically assessing AI-generated content for accuracy, bias, and fitness for purpose before acting on it.",
+      icon: "🔍",
+    },
+    {
+      name: "AI Workflow Design",
+      tier: "Operational",
+      color: "#34D399",
+      desc: "Redesigning HR processes to integrate AI tools safely, with appropriate human oversight at each decision point.",
+      icon: "⚙️",
+    },
+    {
+      name: "Workforce AI Readiness",
+      tier: "Strategic",
+      color: "#FBBF24",
+      desc: "Assessing and developing the AI capability of the wider workforce — not just HR — as a strategic people priority.",
+      icon: "👥",
+    },
+    {
+      name: "AI Ethics & Employee Trust",
+      tier: "Strategic",
+      color: "#F87171",
+      desc: "Governing AI deployment in ways that protect employee rights, maintain trust, and satisfy regulatory obligations.",
+      icon: "⚖️",
+    },
+    {
+      name: "AI Change Leadership",
+      tier: "Strategic",
+      color: "#FB923C",
+      desc: "Leading the human side of AI transformation — managing resistance, building confidence, and sustaining adoption.",
+      icon: "🚀",
+    },
   ];
+  const tierColors: Record<string, string> = {
+    Foundation:  "#60A5FA",
+    Operational: "#34D399",
+    Strategic:   "#FBBF24",
+  };
   return (
-    <section style={{ background: chalk, borderTop: `1px solid ${borderL}`, borderBottom: `1px solid ${borderL}` }} className="py-20 px-6">
+    <section style={{ background: navy }} className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <p className="text-center text-sm font-semibold uppercase tracking-wider mb-10" style={{ color: muted }}>
-          Six capability domains — foundation, operational, and strategic
-        </p>
-        <HexGrid domains={domains} />
-        <div className="flex flex-wrap justify-center gap-6 mt-10">
-          {[
-            { tier: "Foundation",  color: "#4477AA", desc: "Core AI literacy and interaction skills" },
-            { tier: "Operational", color: "#228833", desc: "Applying AI in day-to-day HR workflows" },
-            { tier: "Strategic",   color: "#CCBB44", desc: "Governing AI at function and enterprise level" },
-          ].map(({ tier, color, desc }) => (
-            <div key={tier} className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-sm" style={{ background: color, opacity: 0.8 }} />
-              <div>
-                <span className="text-xs font-semibold" style={{ color: navy }}>{tier}</span>
-                <span className="text-xs text-slate-500 ml-1.5">{desc}</span>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6"
+            style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
+            The measurement framework
+          </div>
+          <h2 className="text-4xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+            Six capability domains.{" "}
+            <span style={{ color: greenHex }}>Every HR role. Every seniority level.</span>
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            AiQ's framework covers the full spectrum of AI capability your HR function needs — from foundation literacy through to strategic governance.
+          </p>
+        </div>
+        {/* Tier legend */}
+        <div className="flex flex-wrap justify-center gap-8 mb-10">
+          {Object.entries(tierColors).map(([tier, color]) => (
+            <div key={tier} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ background: color }} />
+              <span className="text-sm font-semibold" style={{ color }}>{tier}</span>
+            </div>
+          ))}
+        </div>
+        {/* Domain cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {domains.map((d) => (
+            <div key={d.name} className="rounded-2xl p-6 border flex flex-col gap-4"
+              style={{
+                background: `${d.color}0F`,
+                border: `1px solid ${d.color}35`,
+              }}>
+              <div className="flex items-start justify-between">
+                <span className="text-2xl" role="img" aria-hidden="true">{d.icon}</span>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ background: `${tierColors[d.tier]}20`, color: tierColors[d.tier] }}>
+                  {d.tier}
+                </span>
               </div>
+              <h3 className="font-bold text-white text-base leading-snug">{d.name}</h3>
+              <p className="text-slate-300 text-sm leading-relaxed flex-1">{d.desc}</p>
+              <div className="h-0.5 w-10 rounded-full" style={{ background: d.color }} />
             </div>
           ))}
         </div>
