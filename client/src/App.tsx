@@ -51,6 +51,9 @@ import OrganisationsPage from "./pages/admin/OrganisationsPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
+import HowItWorksPage from "./pages/marketing/HowItWorksPage";
+import ProductPage from "./pages/marketing/ProductPage";
+import AboutPage from "./pages/marketing/AboutPage";
 import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
 import MethodologyPage from "./pages/methodology/MethodologyPage";
 import PeopleReportsPage from "./pages/people/PeopleReportsPage";
@@ -183,7 +186,9 @@ function Router() {
         <ProtectedRoute component={PeopleReportsPage} />
       </Route>
       {/* Marketing pages — public */}
-      <Route path="/about" component={MarketingPage} />
+      <Route path="/how-it-works" component={HowItWorksPage} />
+      <Route path="/product" component={ProductPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/beta" component={BetaApplicationPage} />
       <Route path="/methodology" component={MethodologyPage} />
       {/* 404 */}

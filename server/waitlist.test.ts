@@ -1,8 +1,8 @@
 /**
  * Vitest tests for the waitlist tRPC router.
  * Tests cover:
- *  - submit: eligible company (hrTeamSize >= 10)
- *  - submit: ineligible company (hrTeamSize < 10)
+ *  - submit: eligible company (hrTeamSize >= 25)
+ *  - submit: ineligible company (hrTeamSize < 25)
  *  - submit: duplicate email
  *  - list: requires admin role
  */
@@ -58,7 +58,7 @@ const validPayload = {
   companyName:      "TestCorp Ltd",
   sector:           "Financial Services" as const,
   companySize:      "1001-5000" as const,
-  hrTeamSize:       15,
+  hrTeamSize:       30,
   useCase:          "We want to assess our HR team readiness before rolling out AI tools across the function.",
   motivation:       "We need a structured way to identify capability gaps before we scale AI adoption.",
   currentAiTools:   "ChatGPT",
@@ -71,18 +71,18 @@ describe("waitlist.submit", () => {
     vi.clearAllMocks();
   });
 
-  it("returns ineligible when hrTeamSize < 10", async () => {
+  it("returns ineligible when hrTeamSize < 25", async () => {
     const caller = appRouter.createCaller(createPublicContext());
     const result = await caller.waitlist.submit({
       ...validPayload,
-      hrTeamSize: 5,
+      hrTeamSize: 10,
       contactEmail: "small@example.com",
     });
     expect(result.eligible).toBe(false);
-    expect((result as { eligible: false; message: string }).message).toMatch(/at least 10/i);
+    expect((result as { eligible: false; message: string }).message).toMatch(/at least 25/i);
   });
 
-  it("returns eligible and inserts when hrTeamSize >= 10 and email is new", async () => {
+  it("returns eligible and inserts when hrTeamSize >= 25 and email is new", async () => {
     const mockInsert = vi.fn().mockResolvedValue([]);
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({

@@ -2,7 +2,7 @@
  * AiQ Beta Programme — Waitlist / Application Router
  *
  * Public:
- *   waitlist.apply   — submit a company beta application (validates hrTeamSize >= 10)
+ *   waitlist.apply   — submit a company beta application (validates hrTeamSize >= 25)
  *
  * Admin-only:
  *   waitlist.list    — list all applications with optional status filter
@@ -76,7 +76,7 @@ const applySchema = z.object({
 export const waitlistRouter = router({
   /**
    * Submit a company beta application.
-   * Returns { eligible: false } when hrTeamSize < 10 — does NOT throw,
+   * Returns { eligible: false } when hrTeamSize < 25 — does NOT throw,
    * so the frontend can show a friendly ineligibility message.
    */
   submit: publicProcedure
@@ -85,11 +85,11 @@ export const waitlistRouter = router({
       const now = Math.floor(Date.now() / 1000);
 
       // Eligibility gate
-      if (input.hrTeamSize < 10) {
+      if (input.hrTeamSize < 25) {
         return {
           eligible: false,
           message:
-            "The free beta programme is open to organisations with at least 10 HR professionals. " +
+            "The AiQ beta programme is open to organisations with at least 25 HR professionals. " +
             "We will be launching a self-serve tier for smaller teams later this year — " +
             "we have noted your interest.",
         };

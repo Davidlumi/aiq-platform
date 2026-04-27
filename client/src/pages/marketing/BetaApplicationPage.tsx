@@ -1,13 +1,10 @@
 /**
- * AiQ Beta Application Page
+ * AiQ Beta Programme Page — v3.0
+ * Copy: AiQ_Marketing_Site_Copy_v3.docx
  *
  * Public page — no authentication required.
  * Route: /beta
- *
- * Brand: Dark Slate (#1E293B) nav/header, Primary Green (#10B981) CTAs,
- *        Mint Accent (var(--primary)) highlights, AiQ logo with smile.
  */
-
 import { useState } from "react";
 import { Link } from "wouter";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -31,42 +28,22 @@ import {
   AlertCircle,
   Users,
   Building2,
-  FlaskConical,
   Loader2,
+  Star,
+  MessageSquare,
+  Zap,
+  BarChart3,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { MarketingNav, MarketingFooter } from "./MarketingPage";
 
-// ─── AiQ Logo SVG ─────────────────────────────────────────────────────────────
-
-function AiQLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" aria-label="AiQ logo">
-      <circle cx="100" cy="100" r="90" fill="#1E293B" />
-      <text
-        x="100"
-        y="120"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        fontSize="64"
-        fontWeight="800"
-        fill="white"
-        textAnchor="middle"
-        letterSpacing="-3"
-      >
-        A<tspan fill="var(--primary)">i</tspan>Q
-      </text>
-      <path
-        d="M 60 135 Q 100 150 140 135"
-        stroke="var(--primary)"
-        strokeWidth="5"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+// ─── Brand tokens ─────────────────────────────────────────────────────────────
+const navy   = "#0F172A";
+const slate  = "#1E293B";
+const border = "rgba(255,255,255,0.08)";
+const green  = "var(--primary)";
 
 // ─── Schema (mirrors server-side) ─────────────────────────────────────────────
-
 const SECTORS = [
   "Financial Services",
   "Healthcare",
@@ -110,138 +87,142 @@ const formSchema = z.object({
   motivation:       z.string().min(20, "Please tell us more (at least 20 characters)").max(2000),
   linkedinUrl:      z.string().max(500).optional(),
 });
-
 type FormData = z.infer<typeof formSchema>;
 
 // ─── Success screen ───────────────────────────────────────────────────────────
-
 function SuccessScreen({ companyName }: { companyName: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#F7F8FA" }}>
-      <div className="max-w-lg w-full text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
-        >
-          <CheckCircle2 className="w-8 h-8" style={{ color: "var(--primary)" }} />
-        </div>
-        <h1 className="text-2xl font-bold mb-3" style={{ color: "#0E1726" }}>
-          Application received
-        </h1>
-        <p className="text-slate-600 mb-2">
-          Thank you — we have received the beta application for{" "}
-          <span className="font-semibold" style={{ color: "#0E1726" }}>{companyName}</span>.
-        </p>
-        <p className="text-slate-600 mb-8">
-          We review applications within 3 business days and will be in touch by email with a
-          decision and, if approved, onboarding details.
-        </p>
-        <div
-          className="rounded-xl border p-6 text-left mb-8"
-          style={{ background: "#FFFFFF", borderColor: "#E5E7EB" }}
-        >
-          <h3 className="font-semibold text-sm mb-3" style={{ color: "#0E1726" }}>
-            What happens next
-          </h3>
-          <div className="space-y-3">
-            {[
-              { step: "1", text: "We review your application against our beta criteria" },
-              { step: "2", text: "You receive an email decision within 3 business days" },
-              { step: "3", text: "If approved, we schedule a 30-minute onboarding call" },
-              { step: "4", text: "Your team gets full platform access — no per-seat limit" },
-            ].map((item) => (
-              <div key={item.step} className="flex items-start gap-3">
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
-                >
-                  <span className="text-xs font-bold" style={{ color: "var(--primary)" }}>
-                    {item.step}
-                  </span>
-                </div>
-                <p className="text-slate-600 text-sm">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <Link href="/">
-          <Button
-            variant="outline"
-            style={{ borderColor: "#E5E7EB", color: "#1E293B" }}
+    <div className="min-h-screen" style={{ background: navy }}>
+      <MarketingNav />
+      <div className="flex items-center justify-center px-6 py-24">
+        <div className="max-w-lg w-full text-center">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "rgba(34,197,94,0.12)" }}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </Button>
-        </Link>
+            <CheckCircle2 className="w-8 h-8" style={{ color: green }} />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">
+            Application received
+          </h1>
+          <p className="text-slate-300 mb-2">
+            Thank you — we have received the application for{" "}
+            <span className="font-semibold text-white">{companyName}</span>.
+          </p>
+          <p className="text-slate-400 mb-8">
+            We respond to every application within five business days, even if the answer is no.
+            If you look like a fit, we will be in touch to arrange a one-hour conversation.
+          </p>
+          <div
+            className="rounded-xl border p-6 text-left mb-8"
+            style={{ background: slate, borderColor: border }}
+          >
+            <h3 className="font-semibold text-white mb-4">What happens next</h3>
+            <div className="space-y-4">
+              {[
+                { step: "01", label: "Apply", text: "We review your application against our beta criteria" },
+                { step: "02", label: "Conversation", text: "If you look like a fit, we schedule a one-hour call to learn about your specific situation" },
+                { step: "03", label: "Pilot", text: "If we both want to proceed, we agree the commercial structure and begin onboarding" },
+                { step: "04", label: "Loop", text: "The loop runs — quarterly reviews, roadmap input, and close collaboration throughout" },
+              ].map((item) => (
+                <div key={item.step} className="flex items-start gap-3">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold"
+                    style={{ background: "rgba(34,197,94,0.12)", color: green }}
+                  >
+                    {item.step}
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">{item.label}</p>
+                    <p className="text-slate-400 text-sm">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Link href="/">
+            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to home
+            </Button>
+          </Link>
+        </div>
       </div>
+      <MarketingFooter />
     </div>
   );
 }
 
 // ─── Ineligible screen ────────────────────────────────────────────────────────
-
 function IneligibleScreen({ hrTeamSize }: { hrTeamSize: number }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#F7F8FA" }}>
-      <div className="max-w-lg w-full text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: "rgba(204,187,68,0.12)" }}
-        >
-          <Users className="w-8 h-8" style={{ color: "#CCBB44" }} />
+    <div className="min-h-screen" style={{ background: navy }}>
+      <MarketingNav />
+      <div className="flex items-center justify-center px-6 py-24">
+        <div className="max-w-lg w-full text-center">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "rgba(204,187,68,0.12)" }}
+          >
+            <Users className="w-8 h-8" style={{ color: "#CCBB44" }} />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">
+            Not a fit for this cohort
+          </h1>
+          <p className="text-slate-300 mb-4">
+            The AiQ beta programme is currently open to organisations with at least{" "}
+            <span className="font-semibold text-white">25 HR professionals</span>. Your team of{" "}
+            <span className="font-semibold text-white">{hrTeamSize}</span> is below that threshold.
+          </p>
+          <p className="text-slate-400 mb-8">
+            The unit economics do not work yet for smaller functions, and we would rather tell you
+            that than waste your time. We are building a self-serve tier for smaller HR teams and
+            will be in touch when it is available.
+          </p>
+          <Link href="/">
+            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to home
+            </Button>
+          </Link>
         </div>
-        <h1 className="text-2xl font-bold mb-3" style={{ color: "#0E1726" }}>
-          Not eligible for this cohort
-        </h1>
-        <p className="text-slate-600 mb-4">
-          The free beta programme is currently open to organisations with at least{" "}
-          <span className="font-semibold">10 HR professionals</span>. Your team of{" "}
-          <span className="font-semibold">{hrTeamSize}</span> does not meet this threshold.
-        </p>
-        <p className="text-slate-600 mb-8">
-          We are building a self-serve tier for smaller HR teams and will be launching later this
-          year. We have noted your interest and will be in touch when it is available.
-        </p>
-        <Link href="/">
-          <Button variant="outline" style={{ borderColor: "#E5E7EB", color: "#1E293B" }}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </Button>
-        </Link>
       </div>
+      <MarketingFooter />
     </div>
   );
 }
 
 // ─── Duplicate screen ─────────────────────────────────────────────────────────
-
 function DuplicateScreen({ message }: { message: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#F7F8FA" }}>
-      <div className="max-w-lg w-full text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: "rgba(68,119,170,0.12)" }}
-        >
-          <AlertCircle className="w-8 h-8" style={{ color: "#4477AA" }} />
+    <div className="min-h-screen" style={{ background: navy }}>
+      <MarketingNav />
+      <div className="flex items-center justify-center px-6 py-24">
+        <div className="max-w-lg w-full text-center">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "rgba(68,119,170,0.12)" }}
+          >
+            <AlertCircle className="w-8 h-8" style={{ color: "#4477AA" }} />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">
+            Already on file
+          </h1>
+          <p className="text-slate-300 mb-8">{message}</p>
+          <Link href="/">
+            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to home
+            </Button>
+          </Link>
         </div>
-        <h1 className="text-2xl font-bold mb-3" style={{ color: "#0E1726" }}>
-          Already on file
-        </h1>
-        <p className="text-slate-600 mb-8">{message}</p>
-        <Link href="/">
-          <Button variant="outline" style={{ borderColor: "#E5E7EB", color: "#1E293B" }}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </Button>
-        </Link>
       </div>
+      <MarketingFooter />
     </div>
   );
 }
 
-// ─── Main form ────────────────────────────────────────────────────────────────
-
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function BetaApplicationPage() {
   const [result, setResult] = useState<{
     type: "success" | "ineligible" | "duplicate";
@@ -277,7 +258,6 @@ export default function BetaApplicationPage() {
     submitMutation.mutate(data);
   };
 
-  // ── Result screens ──────────────────────────────────────────────────────────
   if (result?.type === "success") {
     return <SuccessScreen companyName={result.companyName!} />;
   }
@@ -288,353 +268,475 @@ export default function BetaApplicationPage() {
     return <DuplicateScreen message={result.message!} />;
   }
 
-  // ── Form ────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: "#F7F8FA" }}>
-      {/* Nav */}
-      <nav
-        className="border-b px-6 h-16 flex items-center"
-        style={{ background: "#1E293B", borderColor: "rgba(255,255,255,0.1)" }}
-      >
-        <div className="max-w-3xl mx-auto w-full flex items-center justify-between">
-          <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <AiQLogo size={32} />
-              <span className="font-bold text-white">HR AiQ</span>
-            </div>
-          </Link>
-          <Link href="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Back
-            </Button>
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen" style={{ background: navy }}>
+      <MarketingNav />
 
-      {/* Header */}
-      <div
-        className="border-b py-10 px-6"
-        style={{ background: "#1E293B", borderColor: "rgba(255,255,255,0.08)" }}
-      >
-        <div className="max-w-3xl mx-auto">
+      {/* Hero */}
+      <section className="pt-24 pb-16 px-6" style={{ background: navy, borderBottom: `1px solid ${border}` }}>
+        <div className="max-w-4xl mx-auto">
           <div
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium mb-4"
-            style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)", color: "var(--primary)", border: "1px solid color-mix(in srgb, var(--primary) 25%, transparent)" }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-8"
+            style={{ background: "rgba(34,197,94,0.12)", color: green, border: "1px solid rgba(34,197,94,0.25)" }}
           >
-            <FlaskConical className="w-3 h-3" />
-            Free beta programme
+            Beta Programme
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">
-            Apply for the AiQ beta programme
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
+            Apply to join the AiQ Beta cohort.
           </h1>
-          <p className="text-slate-300 text-lg max-w-xl">
-            Complete this form to apply for a free place in our founding cohort. We review
-            all applications within 3 business days.
+          <p className="text-xl text-slate-300 max-w-2xl leading-relaxed">
+            We work with a small number of CPOs to refine AiQ with real customer signal before
+            general availability.
           </p>
-          <div className="flex flex-wrap gap-4 mt-5">
+          <div className="flex flex-wrap gap-6 mt-8">
             <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Users className="w-4 h-4" style={{ color: "var(--primary)" }} />
-              Requires 10+ HR professionals
+              <Users className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
+              25+ HR professionals required
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Building2 className="w-4 h-4" style={{ color: "var(--primary)" }} />
-              Company-level application
+              <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
+              UK enterprise organisations
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-300">
-              <CheckCircle2 className="w-4 h-4" style={{ color: "var(--primary)" }} />
-              No commitment required
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
+              Response within five business days
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Form */}
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-
-          {/* Contact details */}
-          <Card style={{ borderColor: "#E5E7EB", background: "#FFFFFF" }}>
-            <CardContent className="p-6 space-y-5">
-              <h2
-                className="font-semibold text-lg border-b pb-3"
-                style={{ color: "#0E1726", borderColor: "#F3F4F6" }}
-              >
-                Your contact details
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="contactFirstName">
-                    First name <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="contactFirstName"
-                    placeholder="Sarah"
-                    {...register("contactFirstName")}
-                    className={errors.contactFirstName ? "border-destructive" : ""}
-                  />
-                  {errors.contactFirstName && (
-                    <p className="text-destructive text-xs">{errors.contactFirstName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="contactLastName">
-                    Last name <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="contactLastName"
-                    placeholder="Thornton"
-                    {...register("contactLastName")}
-                    className={errors.contactLastName ? "border-destructive" : ""}
-                  />
-                  {errors.contactLastName && (
-                    <p className="text-destructive text-xs">{errors.contactLastName.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="contactEmail">
-                  Work email <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  placeholder="sarah.thornton@company.com"
-                  {...register("contactEmail")}
-                  className={errors.contactEmail ? "border-destructive" : ""}
-                />
-                {errors.contactEmail && (
-                  <p className="text-destructive text-xs">{errors.contactEmail.message}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="contactTitle">
-                  Job title <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="contactTitle"
-                  placeholder="Chief People Officer"
-                  {...register("contactTitle")}
-                  className={errors.contactTitle ? "border-destructive" : ""}
-                />
-                {errors.contactTitle && (
-                  <p className="text-destructive text-xs">{errors.contactTitle.message}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="linkedinUrl">
-                  LinkedIn profile URL{" "}
-                  <span className="text-slate-400 text-xs">(optional)</span>
-                </Label>
-                <Input
-                  id="linkedinUrl"
-                  type="url"
-                  placeholder="https://linkedin.com/in/sarahthornton"
-                  {...register("linkedinUrl")}
-                  className={errors.linkedinUrl ? "border-destructive" : ""}
-                />
-                {errors.linkedinUrl && (
-                  <p className="text-destructive text-xs">{errors.linkedinUrl.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Organisation details */}
-          <Card style={{ borderColor: "#E5E7EB", background: "#FFFFFF" }}>
-            <CardContent className="p-6 space-y-5">
-              <h2
-                className="font-semibold text-lg border-b pb-3"
-                style={{ color: "#0E1726", borderColor: "#F3F4F6" }}
-              >
-                Your organisation
-              </h2>
-              <div className="space-y-1.5">
-                <Label htmlFor="companyName">
-                  Organisation name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="companyName"
-                  placeholder="Meridian Group"
-                  {...register("companyName")}
-                  className={errors.companyName ? "border-destructive" : ""}
-                />
-                {errors.companyName && (
-                  <p className="text-destructive text-xs">{errors.companyName.message}</p>
-                )}
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Sector <span className="text-destructive">*</span></Label>
-                  <Select onValueChange={(v) => setValue("sector", v as typeof SECTORS[number])}>
-                    <SelectTrigger className={errors.sector ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Select sector" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SECTORS.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.sector && (
-                    <p className="text-destructive text-xs">{errors.sector.message}</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Total company size <span className="text-destructive">*</span></Label>
-                  <Select onValueChange={(v) => setValue("companySize", v as typeof COMPANY_SIZES[number])}>
-                    <SelectTrigger className={errors.companySize ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMPANY_SIZES.map((s) => (
-                        <SelectItem key={s} value={s}>{s} employees</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.companySize && (
-                    <p className="text-destructive text-xs">{errors.companySize.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="hrTeamSize">
-                  Number of HR professionals in your team <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="hrTeamSize"
-                  type="number"
-                  min={1}
-                  placeholder="e.g. 42"
-                  {...register("hrTeamSize")}
-                  className={errors.hrTeamSize ? "border-destructive" : ""}
-                />
-                {errors.hrTeamSize && (
-                  <p className="text-destructive text-xs">{errors.hrTeamSize.message}</p>
-                )}
-                {hrTeamSize > 0 && hrTeamSize < 10 && !errors.hrTeamSize && (
-                  <div
-                    className="flex items-start gap-2 mt-2 p-3 rounded-lg"
-                    style={{ background: "rgba(204,187,68,0.06)", border: "1px solid rgba(204,187,68,0.25)" }}
-                  >
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#CCBB44" }} />
-                    <p className="text-xs leading-relaxed" style={{ color: "#92400E" }}>
-                      The free beta programme requires at least 10 HR professionals. You can still
-                      submit — we will note your interest for our upcoming self-serve tier.
-                    </p>
+      {/* What you get / What we need */}
+      <section className="py-16 px-6" style={{ background: slate }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-6">What you get</h2>
+              <div className="space-y-4">
+                {[
+                  { icon: BarChart3, text: "Full platform access for your HR function — assessment, diagnosis, personalised development, three-altitude dashboards, board-ready exports, the full strategic capability layer" },
+                  { icon: MessageSquare, text: "Direct access to the founders during the beta period — for product feedback, customer success support, and roadmap input" },
+                  { icon: Star, text: "Beta pricing — meaningfully below general availability pricing, structured to reflect that you are shaping the product, not just consuming it" },
+                  { icon: Zap, text: "Onboarding designed to fit your function — including your AI roadmap capture, role mapping, and policy configuration" },
+                  { icon: CheckCircle2, text: "Quarterly business review with the team to review impact, surface issues, and discuss roadmap priorities" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <item.icon className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: green }} />
+                    <p className="text-slate-300 text-sm leading-relaxed">{item.text}</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Use case */}
-          <Card style={{ borderColor: "#E5E7EB", background: "#FFFFFF" }}>
-            <CardContent className="p-6 space-y-5">
-              <h2
-                className="font-semibold text-lg border-b pb-3"
-                style={{ color: "#0E1726", borderColor: "#F3F4F6" }}
-              >
-                Your context
-              </h2>
-              <div className="space-y-1.5">
-                <Label htmlFor="useCase">
-                  How is your HR team currently using AI tools?{" "}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-slate-500 text-xs">
-                  Describe the specific workflows, tools, or processes where AI is involved. Be as specific as possible.
-                </p>
-                <Textarea
-                  id="useCase"
-                  rows={4}
-                  placeholder="e.g. We use Copilot for drafting job descriptions and policy summaries, and are piloting an AI-assisted CV screening tool for our talent acquisition team..."
-                  {...register("useCase")}
-                  className={errors.useCase ? "border-destructive" : ""}
-                />
-                {errors.useCase && (
-                  <p className="text-destructive text-xs">{errors.useCase.message}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="currentAiTools">
-                  Which AI tools does your team use?{" "}
-                  <span className="text-slate-400 text-xs">(optional)</span>
-                </Label>
-                <Input
-                  id="currentAiTools"
-                  placeholder="e.g. Microsoft Copilot, ChatGPT, Workday AI, Beamery..."
-                  {...register("currentAiTools")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="motivation">
-                  Why do you want to join the AiQ beta?{" "}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-slate-500 text-xs">
-                  What specific problem are you trying to solve? What would a successful outcome look like for your team?
-                </p>
-                <Textarea
-                  id="motivation"
-                  rows={4}
-                  placeholder="e.g. We are rolling out Copilot to our entire HR function in Q3 and need to understand where our capability gaps are before we do..."
-                  {...register("motivation")}
-                  className={errors.motivation ? "border-destructive" : ""}
-                />
-                {errors.motivation && (
-                  <p className="text-destructive text-xs">{errors.motivation.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit */}
-          {submitMutation.isError && (
-            <div
-              className="flex items-start gap-3 p-4 rounded-xl"
-              style={{ background: "rgba(238,102,119,0.06)", border: "1px solid rgba(238,102,119,0.25)" }}
-            >
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#EE6677" }} />
-              <div>
-                <p className="font-medium text-sm" style={{ color: "#991B1B" }}>
-                  Submission failed
-                </p>
-                <p className="text-sm mt-0.5" style={{ color: "#EE6677" }}>
-                  {submitMutation.error?.message ?? "An unexpected error occurred. Please try again."}
-                </p>
+                ))}
               </div>
             </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-            <p className="text-slate-500 text-xs max-w-sm">
-              By submitting this form you agree to be contacted about the AiQ beta programme.
-              We will not share your details with third parties.
-            </p>
-            <Button
-              type="submit"
-              size="lg"
-              disabled={submitMutation.isPending}
-              className="px-8 h-12 font-bold flex-shrink-0 hover:opacity-90"
-              style={{ background: "var(--primary)", color: "white" }}
-            >
-              {submitMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting…
-                </>
-              ) : (
-                "Submit application"
-              )}
-            </Button>
+            <div>
+              <h2 className="text-xl font-bold text-white mb-6">What we need from you</h2>
+              <div className="space-y-4">
+                {[
+                  "Active engagement during onboarding — the first 30 days set the trajectory of the engagement, and that requires CPO time, not just delegation to L&D",
+                  "Honest feedback as the platform evolves — what is working, what is not, what is missing, what is wrong",
+                  "Willingness to be a reference at some point — not initially, but eventually, once we have delivered enough value that referencing AiQ is reciprocal",
+                  "Realistic expectations — the platform works and the methodology is rigorous, but visual craft and certain features are still maturing",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: green }} />
+                    <p className="text-slate-300 text-sm leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+        </div>
+      </section>
+
+      {/* Who we are looking for */}
+      <section className="py-16 px-6" style={{ background: navy }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-3">Who we are looking for</h2>
+          <p className="text-slate-300 mb-8">
+            UK enterprise CPOs and HR Directors with functions of 25+ HR people, in organisations
+            that have made specific AI commitments their HR function is responsible for delivering against.
+          </p>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div
+              className="rounded-xl p-6 border"
+              style={{ background: slate, borderColor: "rgba(34,197,94,0.2)" }}
+            >
+              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" style={{ color: green }} />
+                You are a strong fit if:
+              </h3>
+              <div className="space-y-3">
+                {[
+                  "Your business has AI initiatives with specific timelines and your function has been told to support them",
+                  "You are answering specific questions from your CEO, your General Counsel, or your board about HR's AI capability state",
+                  "You believe measurement and rigour matter for capability work — even when the measurement is uncomfortable",
+                  "You want to influence how this category gets built, not just consume what someone else builds",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: green }} />
+                    <p className="text-slate-300 text-sm">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div
+              className="rounded-xl p-6 border"
+              style={{ background: slate, borderColor: border }}
+            >
+              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-slate-400" />
+                You are probably not a fit if:
+              </h3>
+              <div className="space-y-3">
+                {[
+                  "You need a finished product with proven case studies — we are earlier than that",
+                  "Your function is under 25 HR people — the unit economics do not work yet, and we would rather tell you that than waste your time",
+                  "You are looking primarily for content — there are larger learning libraries available; AiQ's value is the diagnostic and strategic intelligence layer",
+                  "You are shopping for the cheapest option — beta pricing is reduced but the full proposition is sized for enterprise budget",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2 bg-slate-500" />
+                    <p className="text-slate-400 text-sm">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-16 px-6" style={{ background: slate }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-10">How it works</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                num: "01",
+                label: "Apply",
+                text: "Tell us about your function, your business AI commitments, and what you are hoping to get from AiQ. The application is brief — we do not need a thesis.",
+              },
+              {
+                num: "02",
+                label: "Conversation",
+                text: "If you look like a fit, we will have a one-hour conversation. You learn more about AiQ; we learn about your specific situation.",
+              },
+              {
+                num: "03",
+                label: "Pilot",
+                text: "If we both want to proceed, we agree the commercial structure and start the onboarding — approximately four weeks.",
+              },
+              {
+                num: "04",
+                label: "Loop",
+                text: "From there, the loop runs. Quarterly business reviews surface what is working and what needs to change.",
+              },
+            ].map((step) => (
+              <div key={step.num} className="flex flex-col gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ background: "rgba(34,197,94,0.12)", color: green }}
+                >
+                  {step.num}
+                </div>
+                <h3 className="font-semibold text-white">{step.label}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Application form */}
+      <section className="py-16 px-6" style={{ background: navy }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-white mb-3">Application form</h2>
+            <p className="text-slate-400">
+              We respond to every application within five business days, even if the answer is no.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Contact details */}
+            <Card style={{ borderColor: border, background: slate }}>
+              <CardContent className="p-6 space-y-5">
+                <h3 className="font-semibold text-white border-b pb-3" style={{ borderColor: border }}>
+                  Your contact details
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300">
+                      First name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      placeholder="Sarah"
+                      {...register("contactFirstName")}
+                      className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.contactFirstName ? "border-destructive" : ""}`}
+                      style={{ background: navy }}
+                    />
+                    {errors.contactFirstName && (
+                      <p className="text-destructive text-xs">{errors.contactFirstName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300">
+                      Last name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      placeholder="Thornton"
+                      {...register("contactLastName")}
+                      className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.contactLastName ? "border-destructive" : ""}`}
+                      style={{ background: navy }}
+                    />
+                    {errors.contactLastName && (
+                      <p className="text-destructive text-xs">{errors.contactLastName.message}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    Work email <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="email"
+                    placeholder="sarah.thornton@company.com"
+                    {...register("contactEmail")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.contactEmail ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.contactEmail && (
+                    <p className="text-destructive text-xs">{errors.contactEmail.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    Job title <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    placeholder="Chief People Officer"
+                    {...register("contactTitle")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.contactTitle ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.contactTitle && (
+                    <p className="text-destructive text-xs">{errors.contactTitle.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    LinkedIn profile URL{" "}
+                    <span className="text-slate-500 text-xs">(optional)</span>
+                  </Label>
+                  <Input
+                    type="url"
+                    placeholder="https://linkedin.com/in/sarahthornton"
+                    {...register("linkedinUrl")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.linkedinUrl ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.linkedinUrl && (
+                    <p className="text-destructive text-xs">{errors.linkedinUrl.message}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Organisation details */}
+            <Card style={{ borderColor: border, background: slate }}>
+              <CardContent className="p-6 space-y-5">
+                <h3 className="font-semibold text-white border-b pb-3" style={{ borderColor: border }}>
+                  Your organisation
+                </h3>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    Organisation name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    placeholder="Meridian Group"
+                    {...register("companyName")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.companyName ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.companyName && (
+                    <p className="text-destructive text-xs">{errors.companyName.message}</p>
+                  )}
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300">
+                      Sector <span className="text-destructive">*</span>
+                    </Label>
+                    <Select onValueChange={(v) => setValue("sector", v as typeof SECTORS[number])}>
+                      <SelectTrigger
+                        className={`border-slate-600 text-white ${errors.sector ? "border-destructive" : ""}`}
+                        style={{ background: navy }}
+                      >
+                        <SelectValue placeholder="Select sector" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SECTORS.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.sector && (
+                      <p className="text-destructive text-xs">{errors.sector.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300">
+                      Total company size <span className="text-destructive">*</span>
+                    </Label>
+                    <Select onValueChange={(v) => setValue("companySize", v as typeof COMPANY_SIZES[number])}>
+                      <SelectTrigger
+                        className={`border-slate-600 text-white ${errors.companySize ? "border-destructive" : ""}`}
+                        style={{ background: navy }}
+                      >
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COMPANY_SIZES.map((s) => (
+                          <SelectItem key={s} value={s}>{s} employees</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.companySize && (
+                      <p className="text-destructive text-xs">{errors.companySize.message}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    Number of HR professionals in your team <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="e.g. 42"
+                    {...register("hrTeamSize")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 ${errors.hrTeamSize ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.hrTeamSize && (
+                    <p className="text-destructive text-xs">{errors.hrTeamSize.message}</p>
+                  )}
+                  {hrTeamSize > 0 && hrTeamSize < 25 && !errors.hrTeamSize && (
+                    <div
+                      className="flex items-start gap-2 mt-2 p-3 rounded-lg"
+                      style={{ background: "rgba(204,187,68,0.06)", border: "1px solid rgba(204,187,68,0.25)" }}
+                    >
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#CCBB44" }} />
+                      <p className="text-xs leading-relaxed text-slate-300">
+                        The AiQ beta programme requires at least 25 HR professionals. You can still
+                        submit — we will note your interest for our upcoming self-serve tier.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Your context */}
+            <Card style={{ borderColor: border, background: slate }}>
+              <CardContent className="p-6 space-y-5">
+                <h3 className="font-semibold text-white border-b pb-3" style={{ borderColor: border }}>
+                  Your context
+                </h3>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    Your business's named AI initiatives and approximate timelines{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-slate-500 text-xs">
+                    Be specific — which initiatives, what timelines, what your function has been asked to deliver.
+                  </p>
+                  <Textarea
+                    rows={4}
+                    placeholder="e.g. We are rolling out Copilot to 3,000 employees by Q3 2025. HR has been asked to ensure our people can govern AI-informed decisions and support the transition..."
+                    {...register("useCase")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 resize-none ${errors.useCase ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.useCase && (
+                    <p className="text-destructive text-xs">{errors.useCase.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    AI tools your HR team currently uses{" "}
+                    <span className="text-slate-500 text-xs">(optional)</span>
+                  </Label>
+                  <Input
+                    placeholder="e.g. Microsoft Copilot, ChatGPT, Workday AI, Beamery..."
+                    {...register("currentAiTools")}
+                    className="border-slate-600 text-white placeholder:text-slate-500"
+                    style={{ background: navy }}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300">
+                    What you are hoping AiQ would help you do{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-slate-500 text-xs">
+                    What would a successful outcome look like for your function?
+                  </p>
+                  <Textarea
+                    rows={4}
+                    placeholder="e.g. We want to know where our capability gaps are before we deploy AI tools at scale, and to have a credible answer when the board asks whether HR is ready to govern AI responsibly..."
+                    {...register("motivation")}
+                    className={`border-slate-600 text-white placeholder:text-slate-500 resize-none ${errors.motivation ? "border-destructive" : ""}`}
+                    style={{ background: navy }}
+                  />
+                  {errors.motivation && (
+                    <p className="text-destructive text-xs">{errors.motivation.message}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit */}
+            {submitMutation.isError && (
+              <div
+                className="flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: "rgba(238,102,119,0.06)", border: "1px solid rgba(238,102,119,0.25)" }}
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#EE6677" }} />
+                <div>
+                  <p className="font-medium text-sm text-white">Submission failed</p>
+                  <p className="text-sm mt-0.5 text-slate-300">
+                    {submitMutation.error?.message ?? "An unexpected error occurred. Please try again."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+              <p className="text-slate-500 text-xs max-w-sm">
+                By submitting this form you agree to be contacted about the AiQ beta programme.
+                We will not share your details with third parties.
+              </p>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={submitMutation.isPending}
+                className="px-8 h-12 font-bold flex-shrink-0 hover:opacity-90"
+                style={{ background: green, color: "white" }}
+              >
+                {submitMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting…
+                  </>
+                ) : (
+                  "Submit application"
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <MarketingFooter />
     </div>
   );
 }

@@ -29,7 +29,9 @@ import {
   FileText,
   ExternalLink,
   Info,
+  ArrowRight,
 } from "lucide-react";
+import { MarketingNav, MarketingFooter } from "../marketing/MarketingPage";
 
 const BRAND = {
   midnight: "#0d1821",
@@ -157,45 +159,35 @@ const REFERENCES = [
 ];
 
 export default function MethodologyPage() {
+  const navy = "#0F172A";
+  const green = "var(--primary)";
   return (
-    <div className="min-h-screen bg-background">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="border-b border-border bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/about">
-            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Back to AiQ
-            </button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[#0F6E56]" />
-            <span className="text-sm font-semibold text-foreground">Assessment Methodology</span>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ background: navy }}>
+      <MarketingNav />
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-        {/* ── Hero ──────────────────────────────────────────────────────── */}
-        <section className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0F6E56]/10 text-[#0F6E56] text-xs font-semibold">
+      {/* Hero */}
+      <section style={{ background: navy }} className="pt-24 pb-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-8"
+            style={{ background: "rgba(34,197,94,0.12)", color: green, border: "1px solid rgba(34,197,94,0.25)" }}>
             <Shield className="w-3.5 h-3.5" />
             Methodology Disclosure
           </div>
-          <h1 className="text-3xl font-bold text-foreground leading-tight">
-            How AiQ Measures AI Capability
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
+            How AiQ measures AI capability.
           </h1>
-          <p className="text-base text-muted-foreground leading-relaxed max-w-3xl">
-            This page provides a transparent explanation of the assessment methodology used by AiQ,
-            including what we measure, how we measure it, the quality assurance processes that protect
-            the integrity of results, and the known limitations of the current system.
+          <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mb-4">
+            Built for HR functions delivering AI transformation. Designed to survive General Counsel scrutiny.
           </p>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-            We believe that assessment credibility is built through transparency, not concealment.
-            If you have questions about any aspect of our methodology, please contact us.
+          <p className="text-slate-400 leading-relaxed max-w-2xl">
+            This page provides a transparent explanation of the assessment methodology used by AiQ —
+            what we measure, how we measure it, the quality assurance processes that protect the
+            integrity of results, and the known limitations of the current system.
           </p>
-        </section>
+        </div>
+      </section>
 
+      <main className="max-w-4xl mx-auto px-6 py-10 space-y-12" style={{ color: "white" }}>
         {/* ── Section 1: What We Measure ───────────────────────────────── */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
@@ -584,22 +576,50 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Footer ───────────────────────────────────────────────────── */}
-        <div className="border-t border-border pt-8 pb-4">
-          <div className="rounded-lg bg-muted/50 border border-border px-5 py-4 flex items-start gap-3">
-            <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+        {/* ── Footer note ─────────────────────────────────────────────────────── */}
+        <div className="border-t pt-8 pb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+          <div className="rounded-lg px-5 py-4 flex items-start gap-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 This methodology disclosure is current as of April 2026. It will be updated as
                 the validation programme progresses and empirical evidence is collected.
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500">
                 Assessment model version: adaptive-v2 · Scoring engine: V9.2
               </p>
             </div>
           </div>
         </div>
       </main>
+
+      {/* CTA */}
+      <section className="py-20 px-6" style={{ background: "#1E293B" }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+            The methodology document goes deeper.
+          </h2>
+          <p className="text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto">
+            The full methodology document covers item bank design, signal taxonomy, scoring architecture,
+            audit log design, and the data processing implications. It is the document your General Counsel
+            will want to read.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/beta">
+              <Button size="lg" className="font-semibold px-10" style={{ background: green, color: "white" }}>
+                Apply for beta access <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <a href="mailto:hello@hraiq.co.uk">
+              <Button size="lg" variant="outline" className="text-white border-white/20 hover:bg-white/10 px-8">
+                Request methodology document
+              </Button>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <MarketingFooter />
     </div>
   );
 }
