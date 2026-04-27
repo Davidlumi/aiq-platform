@@ -901,11 +901,45 @@ function FinalCTA() {
   );
 }
 
+/** Explainer video section — sits between Hero and BoardQuestions */
+function ExplainerVideo() {
+  return (
+    <section style={{ background: navy }} className="py-16 px-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Section label */}
+        <p className="text-center text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: greenHex }}>
+          See how it works
+        </p>
+        {/* Video container with green glow border */}
+        <div
+          className="relative rounded-2xl overflow-hidden"
+          style={{ boxShadow: "0 0 0 1px rgba(34,197,94,0.25), 0 0 40px rgba(34,197,94,0.08)" }}
+        >
+          <video
+            className="w-full block"
+            controls
+            preload="metadata"
+            style={{ background: "#0F172A" }}
+          >
+            <source src="/manus-storage/aiq_explainer_4609af64.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        {/* Caption */}
+        <p className="text-center text-slate-400 text-sm mt-4">
+          30 seconds. What AiQ measures, why it matters, and how it works.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default function MarketingPage() {
   return (
     <div className="min-h-screen" style={{ background: navy }}>
       <MarketingNav />
       <Hero />
+      <ExplainerVideo />
       <BoardQuestions />
       <MeasureDiagnoseClose />
       <ThreeAltitudes />
