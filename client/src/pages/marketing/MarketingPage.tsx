@@ -21,16 +21,15 @@ const greenHex = "#22C55E";
 
 // ─── Shared components ────────────────────────────────────────────────────────
 function AiQLogo({ size = 32 }: { size?: number }) {
+  // Official AiQ logo — uses the uploaded PNG asset for pixel-perfect rendering
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" aria-label="AiQ">
-      <circle cx="100" cy="100" r="90" fill={slate} />
-      <text x="100" y="120" fontFamily="system-ui,-apple-system,sans-serif"
-        fontSize="64" fontWeight="800" fill="white" textAnchor="middle" letterSpacing="-3">
-        A<tspan fill={greenHex}>i</tspan>Q
-      </text>
-      <path d="M 60 135 Q 100 150 140 135" stroke={greenHex} strokeWidth="5"
-        fill="none" strokeLinecap="round" />
-    </svg>
+    <img
+      src="/manus-storage/aiq-logo-nav_dd4a0931.png"
+      alt="AiQ"
+      width={size}
+      height={size}
+      style={{ width: size, height: size, objectFit: "contain" }}
+    />
   );
 }
 
@@ -41,13 +40,12 @@ export function MarketingNav() {
       <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer select-none">
-            <span
-              className="font-black leading-none"
-              style={{ fontSize: "2rem", letterSpacing: "-0.04em", fontFamily: "system-ui,-apple-system,sans-serif", color: "white" }}
-            >
-              A<span style={{ color: greenHex }}>i</span>Q
-            </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full ml-1"
+            <img
+              src="/manus-storage/aiq-logo-nav_dd4a0931.png"
+              alt="AiQ"
+              className="h-10 w-10 object-contain"
+            />
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
               Beta
             </span>
@@ -98,8 +96,7 @@ export function MarketingFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <AiQLogo size={28} />
-              <span className="font-bold text-white text-lg">AiQ</span>
+              <img src="/manus-storage/aiq-logo-nav_dd4a0931.png" alt="AiQ" className="h-9 w-9 object-contain" />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">AI capability intelligence for HR functions delivering transformation.</p>
             <p className="text-xs text-slate-500">Built for UK GDPR · ICO guidance · FCA Consumer Duty</p>
