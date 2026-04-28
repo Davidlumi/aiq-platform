@@ -934,13 +934,13 @@ function ExplainerVideo() {
             preload="metadata"
             style={{ background: "#0F172A" }}
           >
-            <source src="/manus-storage/aiq_explainer_v3_d7341e7f.mp4" type="video/mp4" />
+            <source src="/manus-storage/aiq_explainer_v4_626f0ba9.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>
         {/* Caption */}
         <p className="text-center text-slate-400 text-sm mt-4">
-          30 seconds. What AiQ measures, why it matters, and how it works.
+          60 seconds. What AiQ measures, why it matters, and how it works.
         </p>
       </div>
     </section>
