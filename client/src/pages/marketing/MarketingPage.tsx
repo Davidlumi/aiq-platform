@@ -934,7 +934,7 @@ function ExplainerVideo() {
             preload="metadata"
             style={{ background: "#0F172A" }}
           >
-            <source src="/manus-storage/aiq_explainer_v2_1964cbcf.mp4" type="video/mp4" />
+            <source src="/manus-storage/aiq_explainer_v3_d7341e7f.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>
