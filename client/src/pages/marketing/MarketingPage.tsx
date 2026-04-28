@@ -319,22 +319,19 @@ function Hero() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
             style={{ background: "rgba(34,197,94,0.12)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
             <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: greenHex }} />
-            Now in beta — first cohort of UK CPOs open now
+            Now in beta — first cohort of UK HR leaders open now
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6" style={{ letterSpacing: "-0.03em" }}>
-              Your business has committed to AI.{" "}
-              <span style={{ color: greenHex }}>No one can tell you whether HR is actually ready to deliver it.</span>
+              HR AiQ measures how good your HR people actually are at AI.
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed mb-4">
-              AiQ is the evidence behind an honest answer — and the platform that closes the gap when the answer is no.
+              <span style={{ color: greenHex, fontWeight: 700 }}>Built for HR. Nothing else like it exists.</span>
             </p>
             <p className="text-slate-400 leading-relaxed mb-10">
-              AiQ measures whether your HR function can deliver the AI capability your business has committed to,
-              identifies the specific gaps at individual, team, and function level, and closes them through
-              personalised development. So the next time your board asks, you have evidence — not estimates.
+              HR AiQ measures your HR people's actual AI capability across six domains. It identifies the specific gaps at individual, team, and function level. It closes them through personalised development. And it measures whether the development worked. So the next time your board asks, you have evidence — not estimates.
             </p>
             <div className="flex flex-wrap gap-4 mb-8">
               <Link href="/beta">
@@ -349,7 +346,7 @@ function Hero() {
               </Link>
             </div>
             {/* Social proof */}
-            <p className="text-xs text-slate-500 uppercase tracking-wider">Built with input from 40+ UK CPOs and HR Directors</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Built with input from 40+ UK HR leaders</p>
           </div>
           {/* Product mockup with floating score card */}
           <div className="hidden lg:block relative">
@@ -416,22 +413,56 @@ function Hero() {
   );
 }
 
+
+function WhatItIs() {
+  return (
+    <section style={{ background: chalk }} className="py-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold mb-6" style={{ color: navy, letterSpacing: "-0.02em" }}>
+          What HR AiQ is —{" "}
+          <span style={{ color: greenHex }}>and what it isn't.</span>
+        </h2>
+        <p className="text-slate-600 leading-relaxed mb-5 text-lg">
+          HR AiQ is a capability intelligence platform built specifically for HR functions. It measures
+          your HR people's actual AI capability — not their self-reported confidence, not their training
+          completion, not their job title. What they can actually do, under realistic conditions, on
+          scenarios that match their role and seniority.
+        </p>
+        <p className="text-slate-600 leading-relaxed mb-5">
+          If you lead a specialist HR area — reward, talent acquisition, L&D, employee relations — HR AiQ
+          measures the AI capability that matters for your specific domain. Not generic digital literacy.
+          Not a broad AI awareness score. The capability your function needs to govern AI-informed decisions
+          in your area of HR, with the rigour your General Counsel and your regulators will expect.
+        </p>
+        <p className="text-slate-600 leading-relaxed mb-5">
+          It is not a learning platform. It is not a survey tool. It is not a consulting engagement.
+          It is not an AI tool that assesses your whole organisation. It is not a replacement for your
+          existing HR systems. It is the thing that tells you whether your HR function is actually capable
+          of doing what your business has committed to — and closes the gap when the answer is no.
+        </p>
+        <p className="text-slate-700 font-semibold leading-relaxed">
+          No other platform does what HR AiQ does. We checked carefully before building it.
+        </p>
+      </div>
+    </section>
+  );
+}
 function BoardQuestions() {
   const questions = [
     {
       num: "01", icon: BarChart3,
-      q: "Where is HR now on AI capability?",
-      body: "Not what people say in surveys. Not what your LMS reports. What your HR people actually demonstrate when probed — under realistic pressure, on scenarios that match their roles, with diagnoses calibrated to their seniority.",
+      q: "Where is HR right now?",
+      body: "Not what people say in surveys. Not what your learning system reports. What your HR people can actually do — tested through real scenarios that match their roles and their seniority.",
     },
     {
       num: "02", icon: Target,
-      q: "Where does HR need to be to deliver the AI strategy?",
-      body: "The capability levels Project Aurora actually requires by Q3 2027. The capabilities Project Phoenix will need across customer-facing roles. The translation between the business's AI commitments and what HR specifically has to be capable of, with timelines and role-level specificity.",
+      q: "Where does HR need to be?",
+      body: "The skill levels Project Aurora actually needs by Q3 2027. The capabilities Project Phoenix will need across customer-facing roles. The link between what your business has committed to and what HR specifically needs to be good at — with deadlines and role-by-role detail.",
     },
     {
       num: "03", icon: TrendingUp,
       q: "How fast is the gap closing?",
-      body: "Whether the development your function is investing in is producing measurable capability change. Which interventions are working and which aren't. When the gap will close at current pace, and what would be required to close it faster if the timeline matters.",
+      body: "Whether the development you're paying for is actually working. Which programmes are moving the needle and which aren't. When you'll get there at current pace — and what would be needed to get there faster if the timeline matters.",
     },
   ];
   return (
@@ -439,13 +470,11 @@ function BoardQuestions() {
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-16">
           <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
-            Your board has three questions about HR's AI readiness.{" "}
-            <span style={{ color: greenHex }}>Each one needs an evidenced answer.</span>
+            Your board will ask three things about HR and AI.{" "}
+            <span style={{ color: greenHex }}>Each needs a real answer.</span>
           </h2>
           <p className="text-slate-600 leading-relaxed">
-            Most CPOs can answer the first question with a survey, the second with a consulting engagement,
-            and the third only after the fact. AiQ answers all three continuously, with rigour,
-            in evidence your General Counsel will defend.
+            Most HR leaders can answer the first question with a survey, the second with consultants, and the third only after the fact. HR AiQ answers all three continuously — with evidence solid enough to share with your General Counsel.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -547,7 +576,7 @@ function ThreeAltitudes() {
     },
     {
       audience: "You", subtitle: "see the function against your business AI roadmap", icon: Target, color: greenHex,
-      body: "Where your HR function is now. Where it needs to be by your business's AI initiative timelines. The specific gap. How fast it's closing. Which development investment is producing measurable return. Which domains are at risk of falling behind the pace of your business's AI deployment. The answer to the board question you couldn't answer last quarter. The strategic intelligence your CEO is asking for, in a form your General Counsel will defend.",
+      body: "Where your HR function is now. Where it needs to be by your business's AI initiative deadlines. The specific gap, how fast it's closing, when each business commitment will be met. Which development is actually working and which isn't. The findings that matter, in language your board will understand. Solid enough to share with your General Counsel. Structured for the board.",
     },
   ];
   return (
@@ -736,12 +765,11 @@ function WhoItsFor() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           <div>
             <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
-              UK enterprise CPOs{" "}
+              UK enterprise HR leaders{" "}
               <span style={{ color: greenHex }}>whose business has committed to AI.</span>
             </h2>
             <p className="text-slate-600 leading-relaxed mb-8">
-              AiQ is built for Chief People Officers and HR Directors leading functions of 25+ HR people,
-              in UK enterprises that have made specific AI commitments their HR function is responsible for delivering against.
+              HR AiQ is built for CPOs, Heads of HR, and Heads of specialist HR areas — reward, talent, L&D, and employee relations — leading functions of 25+ HR people in UK enterprises that have made specific AI commitments their HR function is responsible for delivering against.
             </p>
             <p className="font-semibold mb-5" style={{ color: navy }}>You'll recognise yourself if:</p>
             <div className="flex flex-col gap-4">
@@ -925,6 +953,7 @@ export default function MarketingPage() {
       <MarketingNav />
       <Hero />
       <ExplainerVideo />
+      <WhatItIs />
       <BoardQuestions />
       <MeasureDiagnoseClose />
       <ThreeAltitudes />
