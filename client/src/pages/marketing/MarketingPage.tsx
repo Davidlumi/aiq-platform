@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight, ChevronRight, Target, TrendingUp, BarChart3,
   Users, CheckCircle2, AlertCircle, Clock,
-} from "lucide-react";
+  MessagesSquare, ScanSearch, Workflow, ShieldCheck, Compass } from "lucide-react";
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
 const navy    = "#0F172A";
@@ -325,16 +325,16 @@ function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6" style={{ letterSpacing: "-0.03em" }}>
-              Your CEO keeps asking if HR is ready for AI.{" "}
-              <span style={{ color: greenHex }}>You keep saying yes.</span>
+              Your business has committed to AI.{" "}
+              <span style={{ color: greenHex }}>No one can tell you whether HR is actually ready to deliver it.</span>
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed mb-4">
               AiQ is the evidence behind an honest answer — and the platform that closes the gap when the answer is no.
             </p>
             <p className="text-slate-400 leading-relaxed mb-10">
-              AiQ measures whether your HR function can deliver the AI capability your business is committing to,
+              AiQ measures whether your HR function can deliver the AI capability your business has committed to,
               identifies the specific gaps at individual, team, and function level, and closes them through
-              personalised development. So the next time your CEO asks, you have evidence — not estimates.
+              personalised development. So the next time your board asks, you have evidence — not estimates.
             </p>
             <div className="flex flex-wrap gap-4 mb-8">
               <Link href="/beta">
@@ -439,8 +439,8 @@ function BoardQuestions() {
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-16">
           <h2 className="text-4xl font-bold mb-4" style={{ color: navy, letterSpacing: "-0.02em" }}>
-            Three things the board is going to ask.{" "}
-            <span style={{ color: greenHex }}>You need defensible answers to all three.</span>
+            Your board has three questions about HR's AI readiness.{" "}
+            <span style={{ color: greenHex }}>Each one needs an evidenced answer.</span>
           </h2>
           <p className="text-slate-600 leading-relaxed">
             Most CPOs can answer the first question with a survey, the second with a consulting engagement,
@@ -547,7 +547,7 @@ function ThreeAltitudes() {
     },
     {
       audience: "You", subtitle: "see the function against your business AI roadmap", icon: Target, color: greenHex,
-      body: "Where your HR function is now. Where it needs to be by your business's AI initiative timelines. The specific gap. How fast it's closing. Which development investment is producing measurable return. The strategic intelligence your CEO is asking for, defensible to the General Counsel.",
+      body: "Where your HR function is now. Where it needs to be by your business's AI initiative timelines. The specific gap. How fast it's closing. Which development investment is producing measurable return. Which domains are at risk of falling behind the pace of your business's AI deployment. The answer to the board question you couldn't answer last quarter. The strategic intelligence your CEO is asking for, in a form your General Counsel will defend.",
     },
   ];
   return (
@@ -629,42 +629,42 @@ function SixDomains() {
       tier: "Foundation",
       color: "#60A5FA",
       desc: "Prompting, context-setting, and iterative dialogue with AI systems to get reliable, useful outputs in HR workflows.",
-      icon: "💬",
+      Icon: MessagesSquare,
     },
     {
       name: "AI Output Evaluation",
       tier: "Foundation",
       color: "#C084FC",
       desc: "Critically assessing AI-generated content for accuracy, bias, and fitness for purpose before acting on it.",
-      icon: "🔍",
+      Icon: ScanSearch,
     },
     {
       name: "AI Workflow Design",
       tier: "Operational",
       color: "#34D399",
       desc: "Redesigning HR processes to integrate AI tools safely, with appropriate human oversight at each decision point.",
-      icon: "⚙️",
+      Icon: Workflow,
     },
     {
       name: "Workforce AI Readiness",
       tier: "Strategic",
       color: "#FBBF24",
       desc: "Assessing and developing the AI capability of the wider workforce — not just HR — as a strategic people priority.",
-      icon: "👥",
+      Icon: Users,
     },
     {
       name: "AI Ethics & Employee Trust",
       tier: "Strategic",
       color: "#F87171",
       desc: "Governing AI deployment in ways that protect employee rights, maintain trust, and satisfy regulatory obligations.",
-      icon: "⚖️",
+      Icon: ShieldCheck,
     },
     {
       name: "AI Change Leadership",
       tier: "Strategic",
       color: "#FB923C",
       desc: "Leading the human side of AI transformation — managing resistance, building confidence, and sustaining adoption.",
-      icon: "🚀",
+      Icon: Compass,
     },
   ];
   const tierColors: Record<string, string> = {
@@ -706,7 +706,7 @@ function SixDomains() {
                 border: `1px solid ${d.color}35`,
               }}>
               <div className="flex items-start justify-between">
-                <span className="text-2xl" role="img" aria-hidden="true">{d.icon}</span>
+                <d.Icon className="w-6 h-6" style={{ color: d.color, strokeWidth: 1.5 }} />
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{ background: `${tierColors[d.tier]}20`, color: tierColors[d.tier] }}>
                   {d.tier}
@@ -762,17 +762,7 @@ function WhoItsFor() {
                 <p><strong className="text-slate-800">HR people's AI capability specifically.</strong>{" "}If you need to measure AI capability across your whole organisation, AiQ is not the right tool for that — but the methodology and design principles transfer.</p>
               </div>
             </div>
-            <div className="rounded-2xl p-7 border" style={{ background: "white", borderColor: borderL }}>
-              <div className="flex items-start gap-3 mb-3">
-                <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "#EE6677" }} />
-                <h3 className="font-bold" style={{ color: navy }}>Honest about limitations</h3>
-              </div>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                AiQ's methodology is rigorous in its design. It is not yet empirically validated against real customer data at scale.
-                Beta partners are buying into a methodology that is sound but still maturing — meaningful discount, direct influence
-                on the platform's evolution, and the trust that comes from working with a vendor that doesn't pretend to certainty it doesn't yet have.
-              </p>
-            </div>
+
           </div>
         </div>
       </div>
@@ -780,6 +770,31 @@ function WhoItsFor() {
   );
 }
 
+function HonestySection() {
+  return (
+    <section style={{ background: chalk }} className="py-20 px-6">
+      <div className="max-w-3xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8"
+          style={{ background: "rgba(238,102,119,0.12)", color: "#EE6677", border: "1px solid rgba(238,102,119,0.3)" }}>
+          <AlertCircle className="w-3 h-3" /> Honest about limitations
+        </div>
+        <h2 className="text-3xl font-bold mb-6" style={{ color: navy, letterSpacing: "-0.02em" }}>
+          The methodology is rigorous.{" "}
+          <span style={{ color: "#EE6677" }}>It is not yet empirically validated at scale.</span>
+        </h2>
+        <p className="text-slate-600 leading-relaxed mb-6 text-lg">
+          AiQ's methodology is rigorous in its design. It is not yet empirically validated against real customer data at scale.
+          Beta partners are buying into a methodology that is sound but still maturing — meaningful discount, direct influence
+          on the platform's evolution, and the trust that comes from working with a vendor that doesn't pretend to certainty it doesn't yet have.
+        </p>
+        <p className="text-slate-500 leading-relaxed text-sm">
+          We say this upfront because the CPOs and HR Directors we're building for are senior enough to see through
+          overclaiming. We'd rather earn trust through honesty than lose it through hype.
+        </p>
+      </div>
+    </section>
+  );
+}
 function WhyNow() {
   return (
     <section style={{ background: navy }} className="py-24 px-6">
@@ -794,33 +809,6 @@ function WhyNow() {
             <span style={{ color: greenHex }}>'are we adopting it'</span>{" "}
             to 'is HR ready to govern it.'
           </h2>
-          {/* Wave timeline illustration */}
-          <div className="my-10 rounded-2xl border p-6 text-left" style={{ background: "rgba(255,255,255,0.04)", borderColor: border }}>
-            <div className="flex flex-col sm:flex-row items-stretch gap-0">
-              {[
-                { wave: "Wave 1", label: "Productivity tools",      desc: "AI assistants, automation, copilots",  color: "#4477AA", done: true,  current: false },
-                { wave: "Wave 2", label: "Governance & capability", desc: "Is HR ready to govern AI decisions?",  color: greenHex,  done: false, current: true  },
-              ].map(({ wave, label, desc, color, done, current }, i) => (
-                <div key={wave} className="flex-1 flex items-start gap-3 p-4 rounded-xl"
-                  style={{
-                    background: current ? "rgba(34,197,94,0.08)" : "transparent",
-                    border: current ? "1px solid rgba(34,197,94,0.2)" : "1px solid transparent",
-                  }}>
-                  <div className="mt-1">
-                    <div className="w-3 h-3 rounded-full border-2"
-                      style={{ borderColor: color, background: done ? color : "transparent" }} />
-                    {i === 0 && <div className="w-0.5 h-8 mx-auto mt-1" style={{ background: `${color}40` }} />}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color }}>{wave}</p>
-                    <p className="font-semibold text-white text-sm mb-1">{label}</p>
-                    <p className="text-xs text-slate-400">{desc}</p>
-                    {current && <p className="text-xs mt-2 font-semibold" style={{ color: greenHex }}>← You are here</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
           <p className="text-slate-300 leading-relaxed mb-6">
             The first wave of HR AI adoption was about productivity tools. The second wave is about
             governance — whether HR is capable of evaluating AI-informed decisions, designing safe
@@ -944,6 +932,7 @@ export default function MarketingPage() {
       <SixDomains />
       <WhoItsFor />
       <WhyNow />
+      <HonestySection />
       <FinalCTA />
       <MarketingFooter />
     </div>
