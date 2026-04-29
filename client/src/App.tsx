@@ -60,6 +60,8 @@ import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
 import MethodologyPage from "./pages/methodology/MethodologyPage";
 import PeopleReportsPage from "./pages/people/PeopleReportsPage";
 import MemberReportPage from "./pages/people/MemberReportPage";
+import ConversationPromptsPage from "./pages/manager/ConversationPromptsPage";
+import TeamProgressPage from "./pages/manager/TeamProgressPage";
 
 function ProtectedRoute({
   component: Component,
@@ -138,6 +140,12 @@ function Router() {
       </Route>
       <Route path="/manager/team-learning">
         <ProtectedRoute component={TeamLearningPage} />
+      </Route>
+      <Route path="/manager/conversation-prompts">
+        <ProtectedRoute component={ConversationPromptsPage} />
+      </Route>
+      <Route path="/manager/team-progress">
+        <ProtectedRoute component={TeamProgressPage} />
       </Route>
       <Route path="/simulations">
         <ProtectedRoute component={SimulationListPage} />

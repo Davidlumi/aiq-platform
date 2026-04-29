@@ -1,35 +1,18 @@
 /**
- * Leader Dashboard — Peakon Visual Language v2.0
+ * CPO / Leader Dashboard — Wireframe C1 visual language
  *
- * Rebuilt with PeakonPrimitives: HeroScore, StatTile, AIInsightCard,
- * ReadinessDistributionBar, ScoreTrendCard. Clean light theme.
+ * Hero narrative · 4 KPI tiles · Level distribution donut + legend ·
+ * Segment comparison bars · "Worth your attention" insight cards ·
+ * Domain distribution table · Teams overview
  */
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import {
-  DashboardCard,
-  DomainDot,
-  PriorityBadge,
-  EmptyState,
-  PeakonScoreBadge,
-  RatingBadge,
-  DeltaIndicator,
-} from "@/components/dashboard/DashboardUI";
-import {
-  HeroScore,
-  StatTile,
-  AIInsightCard,
-  ReadinessDistributionBar,
-  ScoreTrendCard,
-  PillFilter,
-  Sparkline,
-} from "@/components/dashboard/PeakonPrimitives";
-import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
-import { DOMAIN_LABELS, DOMAIN_COLOURS } from "@/lib/domains";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { EmptyState } from "@/components/dashboard/DashboardUI";
+import { getLevelFromScore, getLevelChipStyle, getLevelLabel } from "@/lib/level-utils";
+import { Users, UserCircle, ChevronRight, Filter, Target } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -37,40 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertTriangle,
-  TrendingUp,
-  Users,
-  UserCircle,
-  ChevronRight,
-  Target,
-  BarChart3,
-  Lightbulb,
-  ArrowRight,
-  Filter,
-  CheckCircle2,
-} from "lucide-react";
-import { PeakonHeatmap } from "@/components/dashboard/PeakonHeatmap";
-
-// DOMAIN_LABELS and DOMAIN_COLOURS imported from @/lib/domains (canonical Paul Tol palette)
-
-const RATING_LABELS: Record<string, string> = {
-  ai_ready: "AI Ready",
-  developing: "Developing",
-  not_yet_ready: "Not Yet Ready",
-  foundation_gap: "Foundation Gap",
-  insufficient_evidence: "Insufficient Evidence",
-};
-
-const RATING_COLOURS: Record<string, string> = {
-  ai_ready: "#047857",
-  developing: "#2563EB",
-  not_yet_ready: "#D97706",
-  foundation_gap: "#DC2626",
-  insufficient_evidence: "#6B7280",
-};
-
-const RATING_KEYS = ["ai_ready", "developing", "not_yet_ready", "foundation_gap", "insufficient_evidence"] as const;
 
 const ROLE_FAMILY_OPTIONS = [
   { value: "business_partnering", label: "Business Partnering" },
@@ -82,716 +31,341 @@ const ROLE_FAMILY_OPTIONS = [
   { value: "hr_leadership", label: "HR Leadership" },
 ];
 
+function KpiTile({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-5">
+      <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>{label}</p>
+      <p className="text-3xl font-medium mb-1" style={{ color: "#0F2547" }}>{value}</p>
+      {sub && <p className="text-xs" style={{ color: "#6B7280" }}>{sub}</p>}
+    </div>
+  );
+}
+
+function LevelDistributionDonut({ distribution, avgScore }: { distribution: Array<{ level: number; count: number; pct: number }>; avgScore: number | null }) {
+  const size = 200; const cx = 100; const cy = 100; const r = 72; const sw = 28;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const segments = distribution.map(d => { const arc = (d.pct / 100) * circ; const seg = { level: d.level, arc, offset }; offset += arc; return seg; });
+  const preciseAvg = avgScore !== null ? (avgScore / 10).toFixed(1) : "—";
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F3F4F6" strokeWidth={sw} />
+      {segments.map(seg => { if (seg.arc <= 0) return null; const s = getLevelChipStyle(seg.level); return (<circle key={seg.level} cx={cx} cy={cy} r={r} fill="none" stroke={s.bg} strokeWidth={sw} strokeDasharray={`${seg.arc} ${circ}`} strokeDashoffset={-seg.offset} transform={`rotate(-90 ${cx} ${cy})`} />); })}
+      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "#0F2547", fontFamily: "Inter, system-ui, sans-serif" }}>{preciseAvg}</text>
+      <text x={cx} y={cy + 10} textAnchor="middle" style={{ fontSize: 10, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "0.06em" }}>FUNCTION AVG</text>
+    </svg>
+  );
+}
+
+function SegmentBar({ label, score, count, maxScore, isHighlighted }: { label: string; score: number | null; count: number; maxScore: number; isHighlighted?: boolean }) {
+  if (score === null) {
+    return (
+      <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "0.5px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ width: 160, flexShrink: 0 }}><p className="text-sm" style={{ color: "#4B5563" }}>{label}</p><p className="text-xs" style={{ color: "#9CA3AF" }}>{count} people · no data</p></div>
+        <div className="flex-1 h-6 rounded" style={{ background: "#F3F4F6" }} />
+        <span className="text-sm" style={{ color: "#9CA3AF", width: 36, textAlign: "right" }}>—</span>
+      </div>
+    );
+  }
+  const level = getLevelFromScore(score);
+  const chipStyle = getLevelChipStyle(level);
+  const barWidth = maxScore > 0 ? (score / maxScore) * 100 : 0;
+  return (
+    <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "0.5px solid rgba(0,0,0,0.06)" }}>
+      <div style={{ width: 160, flexShrink: 0 }}><p className="text-sm font-medium" style={{ color: "#0F2547" }}>{label}</p><p className="text-xs" style={{ color: "#6B7280" }}>{count} people · Level {(score / 10).toFixed(1)}</p></div>
+      <div className="flex-1 relative h-7 rounded overflow-hidden" style={{ background: "#F3F4F6" }}>
+        <div className="h-full rounded transition-all duration-700" style={{ width: `${barWidth}%`, background: chipStyle.bg }} />
+        {isHighlighted && <div className="absolute inset-0 flex items-center pl-2"><span className="text-xs font-semibold" style={{ color: "#1F3A5F" }}>Highest</span></div>}
+      </div>
+      <span className="text-sm font-medium tabular-nums" style={{ color: "#0F2547", width: 36, textAlign: "right" }}>{(score / 10).toFixed(1)}</span>
+    </div>
+  );
+}
+
 export default function LeaderDashboardV2() {
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
-
-  const queryInput = useMemo(
-    () => (roleFamily ? { roleFamily } : undefined),
-    [roleFamily],
-  );
+  const queryInput = useMemo(() => (roleFamily ? { roleFamily } : undefined), [roleFamily]);
 
   const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
   const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
-  const { data: trajectory, isLoading: trajLoading } = trpc.dashboardV2.leader.domainTrajectory.useQuery(queryInput);
-  const { data: findings, isLoading: findingsLoading } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
-  const { data: teams, isLoading: teamsLoading } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
-  const { data: alignment, isLoading: alignmentLoading } = trpc.dashboardV2.leader.strategicAlignment.useQuery(queryInput);
+  const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
+  const { data: teams } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
 
-  // AI insights for the function — declared before early return to satisfy Rules of Hooks
-  const functionInsights = useMemo(() => {
+  const levelDistribution = useMemo(() => {
     if (!main) return [];
-    const ins: string[] = [];
-    const aiReadyPct = main.totalHeadcount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.totalHeadcount) * 100) : 0;
-    ins.push(`${aiReadyPct}% of the function is AI Ready (${main.ratingCounts.ai_ready ?? 0} of ${main.totalHeadcount})`);
-    if ((main.ratingCounts.foundation_gap ?? 0) > 0) {
-      ins.push(`${main.ratingCounts.foundation_gap} employees have a foundation gap — urgent intervention needed`);
-    }
-    if (main.functionScore !== null) {
-      ins.push(`Function average: ${formatPeakonScore(main.functionScore)} — ${scoreToReadinessLabel(main.functionScore)}`);
-    }
-    if (main.trajectory90d !== null && main.trajectory90d !== 0) {
-      ins.push(`90-day trajectory: ${main.trajectory90d > 0 ? "+" : ""}${(main.trajectory90d / 10).toFixed(1)} pts — ${main.trajectory90d > 0 ? "improving" : "declining"}`);
-    }
-    return ins;
+    const total = main.assessedCount || 1;
+    const level5 = main.ratingCounts.ai_ready ?? 0;
+    const level3 = main.ratingCounts.developing ?? 0;
+    const level2 = main.ratingCounts.not_yet_ready ?? 0;
+    const level1 = main.ratingCounts.foundation_gap ?? 0;
+    const level4 = Math.max(0, total - level5 - level3 - level2 - level1);
+    return [
+      { level: 5, count: level5, pct: Math.round((level5 / total) * 100) },
+      { level: 4, count: level4, pct: Math.round((level4 / total) * 100) },
+      { level: 3, count: level3, pct: Math.round((level3 / total) * 100) },
+      { level: 2, count: level2, pct: Math.round((level2 / total) * 100) },
+      { level: 1, count: level1, pct: Math.round((level1 / total) * 100) },
+    ];
   }, [main]);
 
+  const segmentComparison = useMemo(() => {
+    if (!teams?.teams || teams.teams.length === 0) return [];
+    return [...teams.teams].filter(t => t.avgScore !== null).sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0));
+  }, [teams]);
+
+  const maxSegmentScore = useMemo(() => Math.max(...segmentComparison.map(s => s.avgScore ?? 0), 100), [segmentComparison]);
+
+  const heroNarrative = useMemo(() => {
+    if (!main || !hero) return null;
+    const preciseAvg = main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—";
+    const aiReadyPct = main.assessedCount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.assessedCount) * 100) : 0;
+    const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
+    return {
+      text: hero.statement ?? `Your function averages Level ${preciseAvg}. ${aiReadyPct}% are AI Ready.${atRiskCount > 0 ? ` ${atRiskCount} employees have a foundation gap or are not yet ready.` : ""}`,
+      cta: hero.cta,
+    };
+  }, [main, hero]);
+
+  const worthAttention = useMemo(() => {
+    if (!main) return [];
+    const result: Array<{ priority: string; title: string; body: string; linkLabel: string; linkHref: string }> = [];
+    const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
+    if (atRiskCount > 0) {
+      result.push({ priority: "High priority · function-wide", title: `${atRiskCount} employees have a capability gap that needs urgent attention`, body: `${main.ratingCounts.foundation_gap ?? 0} have a foundation gap and ${main.ratingCounts.not_yet_ready ?? 0} are not yet ready. These employees need targeted development to reach minimum capability threshold.`, linkLabel: "View at-risk employees", linkHref: "/people" });
+    }
+    const weakestDomain = (main.domainDistribution ?? []).filter((d: any) => d.avgScore !== null).sort((a: any, b: any) => (a.avgScore ?? 0) - (b.avgScore ?? 0))[0];
+    if (weakestDomain) {
+      result.push({ priority: "Medium priority · domain pattern", title: `${weakestDomain.domainName} is the weakest domain across your function`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} in ${weakestDomain.domainName}. ${weakestDomain.totalAssessed} employees assessed. Consider a function-wide learning sprint.`, linkLabel: "View domain breakdown", linkHref: "/admin/org-context" });
+    }
+    if (ambitionGap?.configured && ambitionGap.gapRaw !== null && ambitionGap.gapRaw > 0) {
+      result.push({ priority: "Strategic · ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} levels below your AI ambition target`, body: `Current average ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}.${ambitionGap.ambitionTargetLabel ? ` Goal: "${ambitionGap.ambitionTargetLabel}".` : ""}`, linkLabel: "View strategic roadmap", linkHref: "/dashboard/strategic" });
+    }
+    if (findings?.findings?.length) {
+      const top = findings.findings[0];
+      result.push({ priority: `${top.priority} priority · strategic finding`, title: top.observation, body: top.strategicImplication ?? top.supportingData ?? "", linkLabel: "View all strategic findings", linkHref: "/dashboard/strategic" });
+    }
+    return result.slice(0, 4);
+  }, [main, ambitionGap, findings]);
+
   if (isLoading) return <LeaderDashboardSkeleton />;
+  if (!main) return <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto"><EmptyState title="No function data" description="No assessment data available for your function yet." /></div>;
+
+  const aiReadyPct = main.assessedCount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.assessedCount) * 100) : 0;
+  const assessedPct = main.totalHeadcount > 0 ? Math.round((main.assessedCount / main.totalHeadcount) * 100) : 0;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
-      {/* ── Header ── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-5">
+
+      {/* Page header */}
+      <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">HR Function Overview</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            AI capability intelligence across your entire HR function
-          </p>
+          <p className="text-xs font-medium uppercase tracking-widest text-neutral-400 mb-0.5">CPO dashboard</p>
+          <h1 className="text-lg font-semibold" style={{ color: "#0F2547" }}>HR Function Overview</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs" style={{ color: "#6B7280" }}>
+              <Users className="w-3.5 h-3.5" />
+              {main.totalHeadcount} employees · {main.assessedCount} assessed ({assessedPct}%)
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-            <Select
-              value={roleFamily ?? "__all__"}
-              onValueChange={(v) => setRoleFamily(v === "__all__" ? undefined : v)}
-            >
-              <SelectTrigger className="w-[200px] h-8 text-xs">
-                <SelectValue placeholder="All departments" />
-              </SelectTrigger>
+            <Filter className="w-3.5 h-3.5" style={{ color: "#6B7280" }} />
+            <Select value={roleFamily ?? "__all__"} onValueChange={(v) => setRoleFamily(v === "__all__" ? undefined : v)}>
+              <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="All departments" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">All departments</SelectItem>
-                {ROLE_FAMILY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
+                {ROLE_FAMILY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <Link href="/dashboard/personal">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-              <UserCircle className="w-3.5 h-3.5" />
-              My Capability Profile
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+              <UserCircle className="w-3.5 h-3.5" />My profile
             </Button>
           </Link>
         </div>
-      </header>
+      </div>
 
-      {/* Active filter indicator */}
+      {/* Active filter */}
       {roleFamily && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100">
-          <Filter className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="text-xs text-foreground">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#EFF6FF", border: "0.5px solid #BFDBFE" }}>
+          <Filter className="w-3.5 h-3.5" style={{ color: "#3B82F6" }} />
+          <span className="text-xs" style={{ color: "#1D4ED8" }}>
             Filtered to <strong>{ROLE_FAMILY_OPTIONS.find(o => o.value === roleFamily)?.label ?? roleFamily}</strong>
           </span>
-          <button
-            onClick={() => setRoleFamily(undefined)}
-            className="ml-auto text-xs text-indigo-600 hover:underline font-medium"
-          >
-            Clear filter
-          </button>
+          <button onClick={() => setRoleFamily(undefined)} className="ml-auto text-xs font-medium" style={{ color: "#1D4ED8" }}>Clear filter</button>
         </div>
       )}
 
-      {/* ── 1. Hero Finding ── */}
-      {hero && (
-        <HeroFindingCard
-          status={hero.readinessStatus}
-          statement={hero.statement}
-          cta={hero.cta}
-          functionScore={hero.functionScore}
-          assessedCount={hero.assessedCount}
-          totalHeadcount={hero.totalHeadcount}
-        />
-      )}
-
-      {/* ── 2. Function Overview Stats ── */}
-      {main && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <DashboardCard className="col-span-2 lg:col-span-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Function Score</p>
-            <HeroScore
-              score={main.functionScore}
-              label={main.functionScore !== null ? scoreToReadinessLabel(main.functionScore) : undefined}
-              delta={main.trajectory90d}
-              size="xl"
-            />
-            <div className="mt-3">
-              <RatingBadge rating={main.functionRating} size="sm" />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {main.assessedCount}/{main.totalHeadcount} assessed
-            </p>
-          </DashboardCard>
-          <StatTile
-            label="AI Ready"
-            value={main.ratingCounts.ai_ready ?? 0}
-            sub={`${main.totalHeadcount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.totalHeadcount) * 100) : 0}% of function`}
-            colour="#047857"
-            icon={<CheckCircle2 className="w-4 h-4" />}
-          />
-          <StatTile
-            label="Developing"
-            value={main.ratingCounts.developing ?? 0}
-            sub="need targeted support"
-            colour="#2563EB"
-            icon={<TrendingUp className="w-4 h-4" />}
-          />
-          <StatTile
-            label="At Risk"
-            value={(main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0)}
-            sub="not ready / foundation gap"
-            colour="#DC2626"
-            icon={<AlertTriangle className="w-4 h-4" />}
-          />
-        </div>
-      )}
-
-      {/* ── 3. Readiness Distribution ── */}
-      {main && (
-        <DashboardCard title="Function readiness distribution" subtitle="Headcount breakdown across all assessed employees">
-          <div className="mt-2">
-            <ReadinessDistributionBar
-              aiReady={main.ratingCounts.ai_ready ?? 0}
-              developing={main.ratingCounts.developing ?? 0}
-              notYetReady={main.ratingCounts.not_yet_ready ?? 0}
-              foundationGap={main.ratingCounts.foundation_gap ?? 0}
-              total={main.totalHeadcount}
-            />
+      {/* Hero narrative */}
+      {heroNarrative && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>Where the function is</p>
+          <p className="text-lg font-medium leading-snug mb-4" style={{ color: "#0F2547" }}>{heroNarrative.text}</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link href="/dashboard/strategic">
+              <Button size="sm" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>View strategic roadmap</Button>
+            </Link>
+            {heroNarrative.cta && (
+              <Link href={heroNarrative.cta.route}>
+                <Button size="sm" variant="outline">{heroNarrative.cta.label}</Button>
+              </Link>
+            )}
           </div>
-        </DashboardCard>
+        </div>
       )}
 
-      {/* ── 4. AI Insights ── */}
-      {functionInsights.length > 0 && (
-        <AIInsightCard title="Function capability insights" insights={functionInsights} />
-      )}
+      {/* 4 KPI tiles */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiTile label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"} sub="Capability level" />
+        <KpiTile label="AI Ready" value={`${aiReadyPct}%`} sub={`${main.ratingCounts.ai_ready ?? 0} of ${main.assessedCount} assessed`} />
+        <KpiTile label="Foundation gap" value={main.ratingCounts.foundation_gap ?? 0} sub="Need urgent support" />
+        <KpiTile label="Assessment coverage" value={`${assessedPct}%`} sub={`${main.assessedCount} of ${main.totalHeadcount} assessed`} />
+      </div>
 
-      {/* ── 5. Domain Distribution ── */}
-      {main && main.domainDistribution && (
-        <DashboardCard title="Domain capability distribution" subtitle="Rating breakdown per capability domain">
-          <div className="space-y-3 mt-2">
-            {main.domainDistribution.map((dd: any) => {
-              const total = dd.totalAssessed || 1;
+      {/* Level distribution */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Where the function is on the journey</p>
+          <Link href="/dashboard/strategic">
+            <span className="text-xs" style={{ color: "#1F3A5F" }}>Strategic view →</span>
+          </Link>
+        </div>
+        <div className="grid gap-8 items-center" style={{ gridTemplateColumns: "200px 1fr" }}>
+          <div style={{ position: "relative", width: 200, height: 200 }}>
+            <LevelDistributionDonut distribution={levelDistribution} avgScore={main.functionScore} />
+          </div>
+          <div className="flex flex-col gap-2">
+            {[5, 4, 3, 2, 1].map(lv => {
+              const d = levelDistribution.find(x => x.level === lv);
+              const s = getLevelChipStyle(lv);
               return (
-                <div key={dd.domain} className="flex items-center gap-3 pl-2 border-l-4 rounded-sm" style={dd.avgScore !== null ? { borderLeftColor: scoreToColor(dd.avgScore).bg } : { borderLeftColor: '#e5e7eb' }}>
-                  <div className="flex items-center gap-2 w-40 shrink-0">
-                    <DomainDot domain={dd.domain} />
-                    <span className="text-xs font-medium text-foreground truncate">{dd.domainName}</span>
+                <div key={lv} className="flex items-center justify-between py-1.5" style={{ borderBottom: lv > 1 ? "0.5px solid rgba(0,0,0,0.06)" : undefined }}>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{lv}</span>
+                    <span className="text-sm font-medium" style={{ color: "#0F2547" }}>{getLevelLabel(lv)}</span>
                   </div>
-                  <div className="flex-1 h-6 rounded-full bg-neutral-100 overflow-hidden flex">
-                    {RATING_KEYS.map(rk => {
-                      const count = dd.ratingCounts?.[rk] ?? 0;
-                      const pct = Math.round((count / total) * 100);
-                      if (pct === 0) return null;
-                      return (
-                        <div
-                          key={rk}
-                          className="h-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: RATING_COLOURS[rk] }}
-                          title={`${RATING_LABELS[rk]}: ${count} (${pct}%)`}
-                        />
-                      );
-                    })}
-                  </div>
-                  <span className="shrink-0 w-12 text-right">
-                    {dd.avgScore !== null ? (
-                      <span
-                        className="font-mono font-bold text-xs tabular-nums"
-                        style={{ color: scoreToColor(dd.avgScore).bg }}
-                      >
-                        {formatPeakonScore(dd.avgScore)}
-                      </span>
-                    ) : (
-                      <span className="text-neutral-300 text-xs">—</span>
-                    )}
+                  <span className="text-sm" style={{ color: (d?.count ?? 0) > 0 ? "#0F2547" : "#9CA3AF" }}>
+                    {(d?.count ?? 0) > 0 ? `${d!.count} · ${d!.pct}%` : "0"}
                   </span>
                 </div>
               );
             })}
           </div>
-          <div className="flex items-center gap-4 mt-4 flex-wrap">
-            {RATING_KEYS.map(rk => (
-              <div key={rk} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: RATING_COLOURS[rk] }} />
-                <span className="text-xs text-muted-foreground">{RATING_LABELS[rk]}</span>
-              </div>
-            ))}
+        </div>
+      </div>
+
+      {/* Segment comparison bars */}
+      {segmentComparison.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Team comparison</p>
+            <span className="text-xs" style={{ color: "#6B7280" }}>Sorted by capability level</span>
           </div>
-        </DashboardCard>
+          {segmentComparison.map((seg, i) => (
+            <SegmentBar key={seg.managerId} label={seg.managerName} score={seg.avgScore} count={seg.teamSize} maxScore={maxSegmentScore} isHighlighted={i === 0} />
+          ))}
+        </div>
       )}
 
-      {/* ── 6. Peakon-Style Capability Heatmap ── */}
-      {main && main.heatmap && (
-        <DashboardCard
-          title="Capability heatmap"
-          subtitle="Average score by segment and domain — colour intensity indicates capability level"
-        >
-          <PeakonHeatmap
-            heatmap={main.heatmap}
-            domainLabels={DOMAIN_LABELS}
-            departmentOptions={ROLE_FAMILY_OPTIONS}
-          />
-        </DashboardCard>
+      {/* Domain comparison bars */}
+      {main.domainDistribution && main.domainDistribution.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Domain comparison</p>
+            <span className="text-xs" style={{ color: "#6B7280" }}>Sorted by capability level</span>
+          </div>
+          {[...main.domainDistribution].sort((a: any, b: any) => (b.avgScore ?? 0) - (a.avgScore ?? 0)).map((d: any, i: number) => (
+            <SegmentBar key={d.domain} label={d.domainName} score={d.avgScore} count={d.totalAssessed} maxScore={100} isHighlighted={i === 0} />
+          ))}
+        </div>
       )}
 
-      {/* ── 7. Domain Trajectory ── */}
-      {!trajLoading && trajectory && trajectory.domains && (
-        <DashboardCard title="Domain trajectory" subtitle="Function-wide average score over time per domain">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-            {trajectory.domains.map((d: any) => {
-              const history = d.timeSeries.map((ts: any) => ts.avgScore).filter((v: any) => v != null);
+      {/* Worth your attention */}
+      {worthAttention.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-1" style={{ color: "#0F2547" }}>Worth your attention</p>
+          {worthAttention.map((ins, i) => (
+            <div key={i} style={{ padding: "14px 0", borderBottom: i < worthAttention.length - 1 ? "0.5px solid rgba(0,0,0,0.06)" : undefined }}>
+              <p className="text-xs font-medium uppercase tracking-widest mb-1.5" style={{ color: "#1F3A5F" }}>{ins.priority}</p>
+              <p className="text-sm font-medium mb-1.5" style={{ color: "#0F2547" }}>{ins.title}</p>
+              <p className="text-xs leading-relaxed mb-2" style={{ color: "#4B5563" }}>{ins.body}</p>
+              <Link href={ins.linkHref}>
+                <span className="text-xs font-medium" style={{ color: "#1F3A5F" }}>{ins.linkLabel} →</span>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Ambition gap banner */}
+      {ambitionGap?.configured && ambitionGap.gapRaw !== null && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
+              <Target className="w-5 h-5" style={{ color: "#1F3A5F" }} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#1F3A5F" }}>AI ambition gap</p>
+              <p className="text-sm font-medium mb-1" style={{ color: "#0F2547" }}>
+                Current Level {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} vs target Level {ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}
+              </p>
+              {ambitionGap.ambitionTargetLabel && (
+                <p className="text-xs" style={{ color: "#6B7280" }}>Goal: "{ambitionGap.ambitionTargetLabel}"</p>
+              )}
+              <Link href="/dashboard/strategic">
+                <span className="text-xs font-medium mt-2 inline-block" style={{ color: "#1F3A5F" }}>View strategic roadmap →</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Teams overview */}
+      {teams && teams.teams.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Teams</p>
+            <span className="text-xs" style={{ color: "#6B7280" }}>{teams.teams.length} teams</span>
+          </div>
+          <div className="space-y-2">
+            {teams.teams.map((team: any) => {
+              const level = team.avgScore !== null ? getLevelFromScore(team.avgScore) : null;
+              const chipStyle = level !== null ? getLevelChipStyle(level) : null;
               return (
-                <ScoreTrendCard
-                  key={d.domain}
-                  label={d.domainName}
-                  colour={(DOMAIN_COLOURS as Record<string, string>)[d.domain] ?? d.colour ?? "#94A3B8"}
-                  currentScore={d.currentValue ?? 0}
-                  delta={d.delta90d}
-                  history={history.length >= 2 ? history : (d.currentValue ? [d.currentValue] : [])}
-                />
+                <div key={team.managerId} className="flex items-center justify-between p-3 rounded-xl" style={{ border: "0.5px solid #E5E7EB" }}>
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style={{ background: "#E0E7EF", color: "#1F3A5F" }}>
+                      {team.managerName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#0F2547" }}>{team.managerName}</p>
+                      <p className="text-xs" style={{ color: "#6B7280" }}>{team.teamSize} people</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {chipStyle && (
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-medium" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>
+                        {level}
+                      </span>
+                    )}
+                    {team.avgScore !== null && (
+                      <span className="text-sm font-medium tabular-nums" style={{ color: "#0F2547" }}>
+                        {(team.avgScore / 10).toFixed(1)}
+                      </span>
+                    )}
+                    <ChevronRight className="w-3.5 h-3.5" style={{ color: "#9CA3AF" }} />
+                  </div>
+                </div>
               );
             })}
           </div>
-        </DashboardCard>
-      )}
-
-      {/* ── 7b. Readiness vs Ambition Banner (BA-01) ── */}
-      {ambitionGap && ambitionGap.configured && (
-        <AmbitionGapBanner gap={ambitionGap} />
-      )}
-      {/* ── 8. Strategic Alignment ── */}
-      {!alignmentLoading && alignment && (
-        <StrategicAlignmentSection alignment={alignment} />
-      )}
-
-      {/* ── 9. Strategic Findings ── */}
-      {!findingsLoading && findings && (
-        <DashboardCard title="Strategic findings" subtitle="Priority-ordered insights for your function">
-          {findings.findings.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4">No strategic findings at this time. Findings are generated once assessment data is available.</p>
-          ) : (
-            <div className="space-y-3 mt-1">
-              {findings.findings.map((f: any, i: number) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all overflow-hidden"
-                >
-                  <div className="flex items-start gap-3 p-3">
-                    <div className="mt-0.5 shrink-0">
-                      <PriorityBadge priority={f.priority} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-foreground leading-relaxed">{f.observation}</p>
-                      {f.supportingData && (
-                        <p className="text-xs text-muted-foreground mt-1.5 font-mono bg-neutral-50 rounded px-2 py-1 inline-block">
-                          {f.supportingData}
-                        </p>
-                      )}
-                    </div>
-                    <Lightbulb className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
-                  </div>
-                  {f.strategicImplication && (
-                    <div className="px-3 pb-3 pt-0 ml-9">
-                      <div className="text-xs text-muted-foreground leading-relaxed bg-primary/5 border border-primary/15 rounded-md px-3 py-2">
-                        <span className="font-semibold text-blue-700">Strategic implication:</span>{" "}
-                        {f.strategicImplication}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </DashboardCard>
-      )}
-
-      {/* ── 10. Teams Overview ── */}
-      {!teamsLoading && teams && teams.teams.length > 0 && (
-        <DashboardCard title="Teams" subtitle="Overview of manager teams in your function">
-          <div className="space-y-2 mt-1">
-            {teams.teams.map((team: any) => (
-              <div key={team.managerId} className="flex items-center justify-between p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-600">
-                    {team.managerName?.split(" ").map((n: string) => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{team.managerName}</p>
-                    <p className="text-xs text-muted-foreground">{team.teamSize} members</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {team.avgScore !== null && (
-                    <span
-                      className="font-mono font-bold text-sm tabular-nums"
-                      style={{ color: scoreToColor(team.avgScore).bg }}
-                    >
-                      {formatPeakonScore(team.avgScore)}
-                    </span>
-                  )}
-                  <div className="flex gap-0.5">
-                    {RATING_KEYS.map(rk => {
-                      const count = team.ratingDistribution?.[rk] ?? 0;
-                      if (count === 0) return null;
-                      return (
-                        <div
-                          key={rk}
-                          className="h-4 rounded-sm min-w-[4px]"
-                          style={{ width: Math.max(4, count * 8), backgroundColor: RATING_COLOURS[rk] }}
-                          title={`${RATING_LABELS[rk]}: ${count}`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-border">
-            <Link href="/people">
-              <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
-                <Users className="w-3.5 h-3.5" />
-                View all individual reports
-              </Button>
-            </Link>
-          </div>
-        </DashboardCard>
+        </div>
       )}
     </div>
-  );
-}
-
-// ─── Hero Finding Card ───────────────────────────────────────────────────────
-
-function HeroFindingCard({
-  status,
-  statement,
-  cta,
-  functionScore,
-  assessedCount,
-  totalHeadcount,
-}: {
-  status: string;
-  statement: string;
-  cta: { label: string; route: string } | null;
-  functionScore: number | null;
-  assessedCount: number;
-  totalHeadcount: number;
-}) {
-  const statusStyles: Record<string, { bg: string; border: string; iconColour: string; icon: typeof TrendingUp }> = {
-    on_track: { bg: "#f0fdf4", border: "#bbf7d0", iconColour: "#047857", icon: TrendingUp },
-    at_risk: { bg: "#fef2f2", border: "#fde68a", iconColour: "#DC2626", icon: AlertTriangle },
-    mixed: { bg: "#fffbeb", border: "#fde68a", iconColour: "#D97706", icon: BarChart3 },
-    partial: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
-    not_configured: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
-  };
-  const style = statusStyles[status] ?? statusStyles.not_configured;
-  const Icon = style.icon;
-
-  return (
-    <div
-      className="p-5 rounded-xl border"
-      style={{ backgroundColor: style.bg, borderColor: style.border }}
-    >
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${style.border}80` }}>
-          <Icon className="w-5 h-5" style={{ color: style.iconColour }} />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm text-foreground leading-relaxed">{statement}</p>
-          <div className="flex items-center gap-4 mt-3 flex-wrap">
-            {functionScore !== null && (
-              <span className="text-xs text-muted-foreground">
-                Function score: <strong className="font-mono" style={{ color: scoreToColor(functionScore).bg }}>{formatPeakonScore(functionScore)}</strong>
-              </span>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {assessedCount}/{totalHeadcount} assessed
-            </span>
-            {cta && (
-              <Link href={cta.route}>
-                <Button variant="outline" size="sm" className="text-xs gap-1 h-7">
-                  {cta.label} <ArrowRight className="w-3 h-3" />
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Strategic Alignment Section ────────────────────────────────────────────
-
-const ALIGNMENT_STYLES = {
-  aligned: { bg: "#f0fdf4", border: "#bbf7d0", text: "#065F46", label: "Aligned", icon: "✓" },
-  partial: { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8", label: "Partial", icon: "◐" },
-  gap: { bg: "#fef2f2", border: "#fde68a", text: "#991B1B", label: "Gap", icon: "✗" },
-  unknown: { bg: "#F1F5F9", border: "#CBD5E1", text: "#475569", label: "Unknown", icon: "?" },
-};
-
-const OVERALL_ALIGNMENT_STYLES = {
-  aligned: { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "HR capability is aligned with business strategy" },
-  partial: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Partial alignment — some strategic priorities have capability gaps" },
-  misaligned: { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant misalignment — HR capability does not support business strategy" },
-};
-
-const GOVERNANCE_STYLES = {
-  strong: { bg: "#f0fdf4", text: "#047857", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
-  developing: { bg: "#eff6ff", text: "#1d4ed8", label: "Developing", desc: "Some governance structures exist but gaps remain" },
-  weak: { bg: "#fef2f2", text: "#b91c1c", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
-};
-
-function StrategicAlignmentSection({ alignment }: { alignment: any }) {
-  if (!alignment.configured) {
-    return (
-      <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-            <Target className="w-6 h-6 text-blue-500" />
-          </div>
-          <p className="text-sm font-semibold text-foreground mb-1">Strategic context not configured</p>
-          <p className="text-xs text-muted-foreground max-w-md mb-4">
-            Define your AI strategic priorities in Organisation Context to see how your HR function's capability aligns with business strategy.
-          </p>
-          <Link href="/admin/org-context">
-            <Button variant="outline" size="sm" className="text-xs gap-1.5">
-              <Target className="w-3.5 h-3.5" />
-              Configure strategic priorities
-            </Button>
-          </Link>
-        </div>
-      </DashboardCard>
-    );
-  }
-
-  if (alignment.priorities.length === 0) {
-    return (
-      <DashboardCard title="Strategic alignment" subtitle="HR capability vs. business strategy">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-            <Target className="w-6 h-6 text-blue-500" />
-          </div>
-          <p className="text-sm font-semibold text-foreground mb-1">No strategic priorities defined</p>
-          <p className="text-xs text-muted-foreground max-w-md mb-4">
-            Add your AI strategic priorities to see alignment analysis.
-          </p>
-          <Link href="/admin/org-context">
-            <Button variant="outline" size="sm" className="text-xs gap-1.5">
-              <Target className="w-3.5 h-3.5" />
-              Add strategic priorities
-            </Button>
-          </Link>
-        </div>
-      </DashboardCard>
-    );
-  }
-
-  const overallStyle = alignment.overallAlignment ? OVERALL_ALIGNMENT_STYLES[alignment.overallAlignment as keyof typeof OVERALL_ALIGNMENT_STYLES] : null;
-  const govStyle = alignment.governanceReadiness ? GOVERNANCE_STYLES[alignment.governanceReadiness as keyof typeof GOVERNANCE_STYLES] : null;
-
-  return (
-    <DashboardCard title="Strategic alignment" subtitle="How well HR capability supports your business AI strategy">
-      {overallStyle && (
-        <div
-          className="p-4 rounded-xl border mb-4"
-          style={{ backgroundColor: overallStyle.bg, borderColor: overallStyle.border }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${overallStyle.border}30` }}>
-              <Target className="w-4 h-4" style={{ color: overallStyle.border }} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold" style={{ color: overallStyle.text }}>{overallStyle.label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {alignment.assessedCount}/{alignment.totalHeadcount} assessed · Function avg: {alignment.functionAvg !== null && alignment.functionAvg !== undefined ? formatPeakonScore(alignment.functionAvg) : "—"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {alignment.priorities.map((p: any) => {
-          const style = ALIGNMENT_STYLES[p.alignmentStatus as keyof typeof ALIGNMENT_STYLES] ?? ALIGNMENT_STYLES.unknown;
-          return (
-            <div key={p.index} className="p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 transition-all">
-              <div className="flex items-start gap-3">
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
-                  style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
-                >
-                  {style.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs font-semibold text-foreground">{p.priority}</p>
-                    <span
-                      className="text-xs px-1.5 py-0.5 rounded-full font-medium"
-                      style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
-                    >
-                      {style.label}{p.avgRelevantScore !== null ? ` · ${formatPeakonScore(p.avgRelevantScore)}` : ""}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {p.relevantDomains.map((d: any) => (
-                      <span
-                        key={d.domain}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border"
-                        style={{
-                          borderColor: d.colour + "40",
-                          backgroundColor: d.colour + "08",
-                        }}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.colour }} />
-                        {d.domainName}: <strong className="font-mono">{d.avgScore !== null && d.avgScore !== undefined ? formatPeakonScore(d.avgScore) : "—"}</strong>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-neutral-100">
-        {govStyle && (
-          <div className="p-3 rounded-xl" style={{ backgroundColor: govStyle.bg }}>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">Governance</p>
-            <p className="text-xs font-semibold" style={{ color: govStyle.text }}>{govStyle.label}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{govStyle.desc}</p>
-          </div>
-        )}
-        {alignment.hrInfluence && (
-          <div className="p-3 rounded-xl bg-neutral-50">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">HR Influence</p>
-            <p className="text-xs font-semibold text-foreground capitalize">{alignment.hrInfluence.replace(/_/g, " ")}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {alignment.hrInfluence === "strategic_partner" ? "HR has a seat at the strategy table" :
-               alignment.hrInfluence === "operational" ? "HR focuses on operational delivery" :
-               "HR is primarily administrative"}
-            </p>
-          </div>
-        )}
-        {alignment.aiMaturity && (
-          <div className="p-3 rounded-xl bg-neutral-50">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-1">AI Maturity</p>
-            <p className="text-xs font-semibold text-foreground capitalize">{alignment.aiMaturity.replace(/_/g, " ")}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {alignment.aiMaturity === "mature" ? "Advanced AI integration across the business" :
-               alignment.aiMaturity === "scaling" ? "Expanding AI use cases beyond pilots" :
-               alignment.aiMaturity === "cautious" ? "Careful, measured approach to AI adoption" :
-               "Beginning the AI journey"}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {alignment.challenges.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-neutral-100">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">Active Business Challenges</p>
-          <div className="space-y-1.5">
-            {alignment.challenges.map((c: string, i: number) => (
-              <div key={i} className="flex items-center gap-2 text-xs">
-                <AlertTriangle className="w-3 h-3 text-[#D97706] shrink-0" />
-                <span className="text-muted-foreground">{c}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </DashboardCard>
-  );
-}
-
-// ─── BA-01 / BA-02: Readiness vs Ambition Banner ─────────────────────────────
-
-function AmbitionGapBanner({ gap }: { gap: any }) {
-  const currentPeakon = gap.functionAvgRaw !== null ? (gap.functionAvgRaw / 10).toFixed(1) : null;
-  const targetPeakon = gap.ambitionTargetScore !== null ? (gap.ambitionTargetScore / 10).toFixed(1) : null;
-  const gapPeakon = gap.gapRaw !== null ? Math.abs(gap.gapRaw / 10).toFixed(1) : null;
-
-  const VERDICT_CONFIG: Record<string, { bg: string; border: string; text: string; label: string }> = {
-    exceeds:  { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "Exceeds ambition target" },
-    on_track: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Within reach of target" },
-    gap:      { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant capability gap" },
-    no_target:{ bg: "#F5F5F5", border: "#D0D0D0", text: "#555",    label: "No target set" },
-  };
-  const vc = VERDICT_CONFIG[gap.verdict] ?? VERDICT_CONFIG.no_target;
-
-  return (
-    <DashboardCard
-      title="Readiness vs ambition"
-      subtitle="How your function's current AI capability compares to your strategic target"
-    >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 mb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-3xl font-bold font-mono tabular-nums text-foreground">
-              {currentPeakon ?? "—"}
-            </span>
-            <span className="text-sm text-muted-foreground">current</span>
-            <span className="text-lg text-muted-foreground mx-1">→</span>
-            <span className="text-3xl font-bold font-mono tabular-nums" style={{ color: vc.text }}>
-              {targetPeakon ?? "—"}
-            </span>
-            <span className="text-sm text-muted-foreground">target</span>
-          </div>
-          {gap.ambitionTargetLabel && (
-            <p className="text-xs text-muted-foreground mt-1 italic">"{gap.ambitionTargetLabel}"</p>
-          )}
-          {gap.ambitionTargetDate && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Target date: <strong className="text-foreground">{new Date(gap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong>
-            </p>
-          )}
-        </div>
-        <div
-          className="px-4 py-3 rounded-xl border text-center shrink-0"
-          style={{ backgroundColor: vc.bg, borderColor: vc.border }}
-        >
-          <p className="text-xs font-medium uppercase tracking-widest mb-0.5" style={{ color: vc.text }}>{vc.label}</p>
-          {gapPeakon && gap.verdict !== "exceeds" && (
-            <p className="text-lg font-bold font-mono" style={{ color: vc.text }}>{gapPeakon} pts gap</p>
-          )}
-          {gap.verdict === "exceeds" && (
-            <p className="text-lg font-bold" style={{ color: vc.text }}>On target ✓</p>
-          )}
-        </div>
-      </div>
-
-      {gap.priorityGaps && gap.priorityGaps.length > 0 && (
-        <div className="space-y-3 pt-3 border-t border-neutral-100">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Readiness gap by strategic priority</p>
-          {gap.priorityGaps.map((pg: any, i: number) => {
-            const currentPct = pg.avgCurrentScore !== null ? Math.min(100, Math.round(pg.avgCurrentScore)) : 0;
-            const targetPct = pg.requiredScore !== null ? Math.min(100, Math.round(pg.requiredScore)) : 0;
-            const STATUS_COLOURS: Record<string, string> = { aligned: "#047857", partial: "#2563EB", gap: "#DC2626", unknown: "#9CA3AF" };
-            const barColour = STATUS_COLOURS[pg.status] ?? "#9CA3AF";
-            return (
-              <div key={i} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-foreground truncate max-w-[60%]">{pg.priority}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-mono font-semibold" style={{ color: barColour }}>
-                      {pg.avgCurrentScore !== null ? (pg.avgCurrentScore / 10).toFixed(1) : "—"}
-                    </span>
-                    {pg.requiredScore !== null && (
-                      <span>/ {(pg.requiredScore / 10).toFixed(1)} target</span>
-                    )}
-                  </div>
-                </div>
-                <div className="relative h-2 rounded-full bg-neutral-100 overflow-hidden">
-                  <div className="absolute left-0 top-0 h-full rounded-full transition-all" style={{ width: currentPct + "%", backgroundColor: barColour }} />
-                  {targetPct > 0 && <div className="absolute top-0 h-full w-0.5 bg-neutral-400" style={{ left: Math.min(targetPct, 99) + "%" }} />}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {pg.relevantDomains.slice(0, 3).map((d: any) => (
-                    <span key={d.domain} className="text-xs px-1.5 py-0.5 rounded-full border"
-                      style={{ borderColor: d.colour + "40", backgroundColor: d.colour + "10", color: d.colour }}>
-                      {d.domainName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{gap.assessedCount} employee{gap.assessedCount !== 1 ? "s" : ""} assessed</p>
-        <Link href="/admin/org-context">
-          <Button variant="ghost" size="sm" className="text-xs gap-1">
-            Edit ambition target <ArrowRight className="w-3 h-3" />
-          </Button>
-        </Link>
-      </div>
-    </DashboardCard>
   );
 }

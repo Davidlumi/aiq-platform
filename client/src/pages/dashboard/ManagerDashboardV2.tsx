@@ -1,128 +1,167 @@
 /**
- * Manager Dashboard — Peakon Visual Language v2.0
+ * Manager Dashboard — Wireframe M1 visual language
  *
- * Rebuilt with PeakonPrimitives: HeroScore, ReadinessDistributionBar,
- * AIInsightCard, StatTile, PillFilter. Clean light theme.
+ * Hero narrative · 4 KPI tiles · Level distribution donut + legend ·
+ * "Worth investigating" insight cards · Capability heatmap · Dev overview
  */
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import {
-  DashboardCard,
-  DomainDot,
-  PriorityBadge,
-  EmptyState,
-  PeakonScoreBadge,
-  RatingBadge,
-  CapabilityBar,
-} from "@/components/dashboard/DashboardUI";
-import {
-  HeroScore,
-  ReadinessDistributionBar,
-  AIInsightCard,
-  StatTile,
-  PillFilter,
-  TrendArrow,
-} from "@/components/dashboard/PeakonPrimitives";
-import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 import { ManagerDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Users,
-  CalendarDays,
-  MessageSquareText,
-  TrendingUp,
-  AlertTriangle,
-  Clock,
-  ChevronRight,
-  UserCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { EmptyState } from "@/components/dashboard/DashboardUI";
+import { getLevelFromScore, getLevelChipStyle, getLevelLabel } from "@/lib/level-utils";
+import { DOMAIN_KEYS, DOMAIN_LABELS } from "@/lib/domains";
+import { Users, CalendarDays, UserCircle, ChevronRight, MessageSquareText, TrendingUp, AlertTriangle } from "lucide-react";
 
-const DOMAIN_LABELS: Record<string, string> = {
-  ai_interaction: "AI Interaction",
-  ai_output_evaluation: "AI Output Eval",
-  ai_workflow_design: "AI Workflow",
-  workforce_ai_readiness: "Workforce AI",
-  ai_ethics_trust: "Ethics & Trust",
-  ai_change_leadership: "Change Leadership",
-};
+function KpiTile({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-5">
+      <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>{label}</p>
+      <p className="text-3xl font-medium mb-1" style={{ color: "#0F2547" }}>{value}</p>
+      {sub && <p className="text-xs" style={{ color: "#6B7280" }}>{sub}</p>}
+    </div>
+  );
+}
 
-const DOMAIN_KEYS_ORDERED = [
-  "ai_interaction",
-  "ai_output_evaluation",
-  "ai_workflow_design",
-  "workforce_ai_readiness",
-  "ai_ethics_trust",
-  "ai_change_leadership",
-];
+function LevelDistributionDonut({
+  distribution,
+  avgScore,
+}: {
+  distribution: Array<{ level: number; count: number; pct: number }>;
+  avgScore: number | null;
+}) {
+  const size = 200; const cx = 100; const cy = 100; const r = 72; const sw = 28;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const segments = distribution.map(d => {
+    const arc = (d.pct / 100) * circ;
+    const seg = { level: d.level, arc, offset };
+    offset += arc;
+    return seg;
+  });
+  const preciseAvg = avgScore !== null ? (avgScore / 10).toFixed(1) : "—";
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F3F4F6" strokeWidth={sw} />
+      {segments.map(seg => {
+        if (seg.arc <= 0) return null;
+        const s = getLevelChipStyle(seg.level);
+        return (<circle key={seg.level} cx={cx} cy={cy} r={r} fill="none" stroke={s.bg} strokeWidth={sw} strokeDasharray={`${seg.arc} ${circ}`} strokeDashoffset={-seg.offset} transform={`rotate(-90 ${cx} ${cy})`} />);
+      })}
+      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "#0F2547", fontFamily: "Inter, system-ui, sans-serif" }}>{preciseAvg}</text>
+      <text x={cx} y={cy + 10} textAnchor="middle" style={{ fontSize: 10, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "0.06em" }}>TEAM AVG</text>
+    </svg>
+  );
+}
 
-const RATING_LABELS: Record<string, string> = {
-  ai_ready: "AI Ready",
-  developing: "Developing",
-  not_yet_ready: "Not Yet Ready",
-  foundation_gap: "Foundation Gap",
-  insufficient_evidence: "Insufficient Evidence",
-};
-
-const RATING_COLOURS: Record<string, string> = {
-  ai_ready: "#7A9E8E",
-  developing: "#C8B07A",
-  not_yet_ready: "#b45309",
-  foundation_gap: "#A87868",
-  insufficient_evidence: "#B0B8C4",
-};
+function HeatCell({ score }: { score: number | null }) {
+  if (score === null) {
+    return (
+      <div className="rounded flex items-center justify-center" style={{ padding: "10px 4px", background: "#F9FAFB", border: "0.5px dashed #E5E7EB" }}>
+        <span className="text-xs" style={{ color: "#D1D5DB" }}>—</span>
+      </div>
+    );
+  }
+  const level = getLevelFromScore(score);
+  const s = getLevelChipStyle(level);
+  return (
+    <div className="rounded flex items-center justify-center" style={{ padding: "10px 4px", background: s.bg }}>
+      <span className="text-sm font-medium" style={{ color: s.text }}>{(score / 10).toFixed(1)}</span>
+    </div>
+  );
+}
 
 export default function ManagerDashboardV2() {
-  const [ratingFilter, setRatingFilter] = useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [promptsExpanded, setPromptsExpanded] = useState(false);
 
   const { data, isLoading } = trpc.dashboardV2.manager.main.useQuery();
   const { data: prompts, isLoading: promptsLoading } = trpc.dashboardV2.manager.conversationPrompts.useQuery();
-  const { data: devOverview, isLoading: devLoading } = trpc.dashboardV2.manager.developmentOverview.useQuery();
-  // BA-08: Org ambition gap for team context
-  const { data: ambitionGap } = (trpc.dashboardV2.leader.ambitionGap as any).useQuery(undefined, {
-    retry: false,
-    onError: () => {},
-  });
+  const { data: devOverview } = trpc.dashboardV2.manager.developmentOverview.useQuery();
 
-  // Team average score
   const teamAvgScore = useMemo(() => {
     const scored = (data?.heatmapData ?? []).filter(m => m.overallScore != null);
     if (!scored.length) return null;
     return Math.round(scored.reduce((sum, m) => sum + (m.overallScore ?? 0), 0) / scored.length);
   }, [data?.heatmapData]);
 
-  // Readiness distribution
-  const readinessDistribution = useMemo(() => {
-    const aiReady = data?.ratingCounts.ai_ready ?? 0;
-    const developing = data?.ratingCounts.developing ?? 0;
-    const notYetReady = data?.ratingCounts.not_yet_ready ?? 0;
-    const foundationGap = data?.ratingCounts.foundation_gap ?? 0;
-    return { aiReady, developing, notYetReady, foundationGap, total: data?.teamSize ?? 0 };
-  }, [data?.ratingCounts, data?.teamSize]);
+  const levelDistribution = useMemo(() => {
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const scored = (data?.heatmapData ?? []).filter(m => m.overallScore != null);
+    scored.forEach(m => {
+      const lv = getLevelFromScore(m.overallScore!);
+      counts[lv] = (counts[lv] ?? 0) + 1;
+    });
+    const total = scored.length || 1;
+    return [1, 2, 3, 4, 5].map(lv => ({ level: lv, count: counts[lv], pct: Math.round((counts[lv] / total) * 100) }));
+  }, [data?.heatmapData]);
 
-  // AI insights from team data
-  const teamInsights = useMemo(() => {
-    if (!data) return [];
-    const ins: string[] = [];
-    const aiReadyPct = data.teamSize > 0 ? Math.round(((data.ratingCounts.ai_ready ?? 0) / data.teamSize) * 100) : 0;
-    ins.push(`${aiReadyPct}% of your team is AI Ready (${data.ratingCounts.ai_ready ?? 0} of ${data.teamSize} members)`);
-    if ((data.ratingCounts.foundation_gap ?? 0) > 0) {
-      ins.push(`${data.ratingCounts.foundation_gap} member(s) have a foundation gap — prioritise foundational modules`);
-    }
-    if (teamAvgScore !== null) {
-      ins.push(`Team average: ${formatPeakonScore(teamAvgScore)} — ${scoreToReadinessLabel(teamAvgScore)}`);
-    }
-    return ins;
+  const heroNarrative = useMemo(() => {
+    if (!data || !teamAvgScore) return null;
+    const preciseAvg = (teamAvgScore / 10).toFixed(1);
+    const atLevel3Plus = (data.heatmapData ?? []).filter(m => m.overallScore != null && getLevelFromScore(m.overallScore) >= 3).length;
+    const scored = (data.heatmapData ?? []).filter(m => m.overallScore != null).sort((a, b) => (a.overallScore ?? 0) - (b.overallScore ?? 0));
+    const lowestMember = scored[0];
+    return {
+      text: `Your team averages capability Level ${preciseAvg}. ${atLevel3Plus} of ${data.teamSize} are at Level 3 or above.${lowestMember ? ` ${lowestMember.name} has the largest development gap — Level ${(lowestMember.overallScore! / 10).toFixed(1)}.` : ""}`,
+      lowestMember: lowestMember ? { id: lowestMember.id, name: lowestMember.name } : null,
+    };
   }, [data, teamAvgScore]);
 
-  const filteredHeatmap = useMemo(() => ratingFilter
-    ? (data?.heatmapData ?? []).filter(m => m.rating === ratingFilter)
-    : (data?.heatmapData ?? []), [data?.heatmapData, ratingFilter]);
+  const insights = useMemo(() => {
+    if (!data || !teamAvgScore) return [];
+    const result: Array<{ priority: string; title: string; body: string; linkLabel: string; linkHref: string }> = [];
+    const scored = (data.heatmapData ?? []).filter(m => m.overallScore != null).sort((a, b) => (a.overallScore ?? 0) - (b.overallScore ?? 0));
+    const lowestMember = scored[0];
+    if (lowestMember) {
+      result.push({
+        priority: "High priority · individual",
+        title: `${lowestMember.name} has the largest development gap on your team`,
+        body: `Level ${(lowestMember.overallScore! / 10).toFixed(1)}. ${data.ratingCounts.foundation_gap > 0 ? "Foundation work needed." : "Development plan recommended."}${devOverview ? ` ${devOverview.aggregateCompletionRate}% average team completion.` : ""}`,
+        linkLabel: `Review ${lowestMember.name.split(" ")[0]}'s development`,
+        linkHref: `/people/${lowestMember.id}`,
+      });
+    }
+    const domainAvgs: Record<string, number[]> = {};
+    (data.heatmapData ?? []).forEach(m => {
+      DOMAIN_KEYS.forEach(k => {
+        const s = m.domainScores[k as keyof typeof m.domainScores];
+        if (s != null) { if (!domainAvgs[k]) domainAvgs[k] = []; domainAvgs[k].push(s); }
+      });
+    });
+    const domainMeans = DOMAIN_KEYS.map(k => ({
+      key: k,
+      avg: domainAvgs[k]?.length ? domainAvgs[k].reduce((a, b) => a + b, 0) / domainAvgs[k].length : 0,
+    })).filter(d => d.avg > 0).sort((a, b) => a.avg - b.avg);
+    if (domainMeans.length >= 2) {
+      const weakest = domainMeans[0];
+      const strongest = domainMeans[domainMeans.length - 1];
+      const weakLabel = DOMAIN_LABELS[weakest.key as keyof typeof DOMAIN_LABELS];
+      const strongLabel = DOMAIN_LABELS[strongest.key as keyof typeof DOMAIN_LABELS];
+      const benefitCount = (data.heatmapData ?? []).filter(m => {
+        const s = m.domainScores[weakest.key as keyof typeof m.domainScores];
+        return s != null && getLevelFromScore(s) < 3;
+      }).length;
+      result.push({
+        priority: "Medium priority · team pattern",
+        title: `${weakLabel} is your team's weakest domain`,
+        body: `Team averages ${(weakest.avg / 10).toFixed(1)} in ${weakLabel} vs ${(strongest.avg / 10).toFixed(1)} in ${strongLabel}. ${benefitCount} of ${data.teamSize} would benefit from focused development.`,
+        linkLabel: "View team development options",
+        linkHref: "/manager/team-learning",
+      });
+    }
+    const topMember = scored[scored.length - 1];
+    if (topMember && getLevelFromScore(topMember.overallScore!) >= 4) {
+      result.push({
+        priority: "Recognition · individual",
+        title: `${topMember.name} is now AI Ready in their role`,
+        body: `Level ${(topMember.overallScore! / 10).toFixed(1)}. Worth recognising and considering for stretch assignments.`,
+        linkLabel: "View their profile",
+        linkHref: `/people/${topMember.id}`,
+      });
+    }
+    return result;
+  }, [data, teamAvgScore, devOverview]);
 
   if (isLoading) return <ManagerDashboardSkeleton />;
   if (!data) return (
@@ -131,456 +170,276 @@ export default function ManagerDashboardV2() {
     </div>
   );
 
+  const aiReadyCount = data.ratingCounts.ai_ready ?? 0;
+  const devActiveCount = (data.ratingCounts.developing ?? 0) + (data.ratingCounts.ai_ready ?? 0);
+
   return (
-    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
-      {/* ── 1. Header ── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-5">
+
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{data.manager.teamName}</h1>
-          <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
+          <p className="text-xs font-medium uppercase tracking-widest text-neutral-400 mb-0.5">Manager dashboard</p>
+          <h1 className="text-lg font-semibold" style={{ color: "#0F2547" }}>{data.manager.teamName}</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs" style={{ color: "#6B7280" }}>
               <Users className="w-3.5 h-3.5" />
               {data.teamSize} team member{data.teamSize !== 1 ? "s" : ""}
             </span>
             {data.lastTeamActivity && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-xs" style={{ color: "#6B7280" }}>
                 <CalendarDays className="w-3.5 h-3.5" />
                 Last activity {new Date(data.lastTeamActivity).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
               </span>
             )}
           </div>
         </div>
-        <Link href="/dashboard/personal">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <UserCircle className="w-3.5 h-3.5" />
-            My Capability Profile
-          </Button>
-        </Link>
-      </header>
+        <div className="flex items-center gap-2">
+          <Link href="/manager/team-learning">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs">Team development plans</Button>
+          </Link>
+          <Link href="/dashboard/personal">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+              <UserCircle className="w-3.5 h-3.5" />My profile
+            </Button>
+          </Link>
+        </div>
+      </div>
 
-      {/* ── 2. Hero Stats Row ── */}
+      {/* ── Hero narrative ── */}
+      {heroNarrative && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>Where the team is</p>
+          <p className="text-lg font-medium leading-snug mb-4" style={{ color: "#0F2547" }}>{heroNarrative.text}</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link href="/manager/team-learning">
+              <Button size="sm" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>View team development plans</Button>
+            </Link>
+            {heroNarrative.lowestMember && (
+              <Link href={`/people`}>
+                <Button size="sm" variant="outline">Talk to {heroNarrative.lowestMember.name.split(" ")[0]} about development</Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── 4 KPI tiles ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardCard className="col-span-2 lg:col-span-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Team Average</p>
-          <HeroScore
-            score={teamAvgScore}
-            label={teamAvgScore !== null ? scoreToReadinessLabel(teamAvgScore) : undefined}
-            size="xl"
-          />
-        </DashboardCard>
-        <StatTile
-          label="AI Ready"
-          value={data.ratingCounts.ai_ready ?? 0}
-          sub={`of ${data.teamSize} members`}
-          colour="#7A9E8E"
-          icon={<CheckCircle2 className="w-4 h-4" />}
+        <KpiTile label="Team average" value={teamAvgScore !== null ? (teamAvgScore / 10).toFixed(1) : "—"} sub="Capability level" />
+        <KpiTile
+          label="Vs function"
+          value={teamAvgScore !== null ? (teamAvgScore >= 24 ? `+${((teamAvgScore - 24) / 10).toFixed(1)}` : ((teamAvgScore - 24) / 10).toFixed(1)) : "—"}
+          sub="Function avg 2.4"
         />
-        <StatTile
-          label="Developing"
-          value={data.ratingCounts.developing ?? 0}
-          sub="need coaching support"
-          colour="#C8B07A"
-          icon={<TrendingUp className="w-4 h-4" />}
-        />
-        <StatTile
-          label="At Risk"
-          value={(data.ratingCounts.not_yet_ready ?? 0) + (data.ratingCounts.foundation_gap ?? 0)}
-          sub="not yet ready / gap"
-          colour="#b45309"
-          icon={<AlertTriangle className="w-4 h-4" />}
+        <KpiTile label="Ready for role" value={`${aiReadyCount} / ${data.teamSize}`} sub="AI Ready" />
+        <KpiTile
+          label="Development active"
+          value={`${devActiveCount} / ${data.teamSize}`}
+          sub={devOverview ? `${devOverview.aggregateCompletionRate}% avg completion` : "Plans in progress"}
         />
       </div>
 
-      {/* ── 3. Readiness Distribution ── */}
-      <DashboardCard title="Team readiness distribution" subtitle="Click a segment to filter the heatmap below">
-        <div className="mt-2">
-          <ReadinessDistributionBar
-            aiReady={readinessDistribution.aiReady}
-            developing={readinessDistribution.developing}
-            notYetReady={readinessDistribution.notYetReady}
-            foundationGap={readinessDistribution.foundationGap}
-            total={readinessDistribution.total}
-          />
+      {/* ── Level distribution ── */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Where your team is on the journey</p>
+          <Link href="/manager/team-learning">
+            <span className="text-xs" style={{ color: "#1F3A5F" }}>Detail →</span>
+          </Link>
         </div>
-        {/* Quick filter pills */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {(["ai_ready", "developing", "not_yet_ready", "foundation_gap"] as const).map(key => {
-            const count = data.ratingCounts[key] ?? 0;
-            const isActive = ratingFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setRatingFilter(isActive ? null : key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  isActive
-                    ? "border-transparent text-white"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/30"
-                }`}
-                style={isActive ? { backgroundColor: RATING_COLOURS[key] } : {}}
-              >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: RATING_COLOURS[key] }}
-                />
-                {RATING_LABELS[key]}
-                <span className={`tabular-nums ${isActive ? "text-white/80" : "text-muted-foreground"}`}>({count})</span>
-              </button>
-            );
-          })}
-          {ratingFilter && (
-            <button
-              onClick={() => setRatingFilter(null)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-muted-foreground hover:border-primary/30 transition-all"
-            >
-              Clear filter
-            </button>
-          )}
+        <div className="grid gap-8 items-center" style={{ gridTemplateColumns: "200px 1fr" }}>
+          <div style={{ position: "relative", width: 200, height: 200 }}>
+            <LevelDistributionDonut distribution={levelDistribution} avgScore={teamAvgScore} />
+          </div>
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3, 4, 5].map(lv => {
+              const d = levelDistribution.find(x => x.level === lv)!;
+              const s = getLevelChipStyle(lv);
+              return (
+                <div key={lv} className="flex items-center justify-between py-1.5" style={{ borderBottom: lv < 5 ? "0.5px solid rgba(0,0,0,0.06)" : undefined }}>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{lv}</span>
+                    <span className="text-sm font-medium" style={{ color: "#0F2547" }}>{getLevelLabel(lv)}</span>
+                  </div>
+                  <span className="text-sm" style={{ color: d.count > 0 ? "#0F2547" : "#9CA3AF" }}>{d.count > 0 ? `${d.count} · ${d.pct}%` : "0"}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </DashboardCard>
+      </div>
 
-      {/* ── 4. Team Capability Heatmap ── */}
-      <DashboardCard
-        title="Team capability heatmap"
-        subtitle={ratingFilter ? `Filtered: ${RATING_LABELS[ratingFilter]} · ${filteredHeatmap.length} member${filteredHeatmap.length !== 1 ? "s" : ""}` : `${data.teamSize} team members`}
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-neutral-200">
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground" style={{ minWidth: 160 }}>Name</th>
-                {DOMAIN_KEYS_ORDERED.map(dk => (
-                  <th key={dk} className="text-center py-2 px-1 font-semibold text-muted-foreground" style={{ minWidth: 64 }}>
-                    <div className="flex flex-col items-center gap-1">
-                      <DomainDot domain={dk} size={6} />
-                      <span className="text-xs leading-tight">{DOMAIN_LABELS[dk]}</span>
-                    </div>
-                  </th>
-                ))}
-                <th className="text-center py-2 px-2 font-semibold text-muted-foreground" style={{ minWidth: 64 }}>Overall</th>
-                <th className="w-4" />
+      {/* ── Worth investigating ── */}
+      {insights.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-1" style={{ color: "#0F2547" }}>Worth investigating</p>
+          {insights.map((ins, i) => (
+            <div key={i} style={{ padding: "14px 0", borderBottom: i < insights.length - 1 ? "0.5px solid rgba(0,0,0,0.06)" : undefined }}>
+              <p className="text-xs font-medium uppercase tracking-widest mb-1.5" style={{ color: "#1F3A5F" }}>{ins.priority}</p>
+              <p className="text-sm font-medium mb-1.5" style={{ color: "#0F2547" }}>{ins.title}</p>
+              <p className="text-xs leading-relaxed mb-2" style={{ color: "#4B5563" }}>{ins.body}</p>
+              <Link href={ins.linkHref}>
+                <span className="text-xs font-medium" style={{ color: "#1F3A5F" }}>{ins.linkLabel} →</span>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Capability heatmap ── */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6 overflow-x-auto">
+        <p className="text-sm font-medium mb-5" style={{ color: "#0F2547" }}>Capability heatmap</p>
+        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 4, tableLayout: "fixed" }}>
+          <thead>
+            <tr>
+              <th style={{ width: "26%", textAlign: "left", padding: "8px 10px 12px 0", verticalAlign: "bottom" }}>
+                <p className="text-xs uppercase tracking-widest font-medium" style={{ color: "#6B7280" }}>Team member</p>
+              </th>
+              {DOMAIN_KEYS.map(k => (
+                <th key={k} style={{ textAlign: "center", padding: "8px 4px 12px" }}>
+                  <p className="text-xs font-medium" style={{ color: "#4B5563" }}>{DOMAIN_LABELS[k as keyof typeof DOMAIN_LABELS]}</p>
+                </th>
+              ))}
+              <th style={{ textAlign: "center", padding: "8px 4px 12px" }}>
+                <p className="text-xs font-medium" style={{ color: "#4B5563" }}>Overall</p>
+              </th>
+              <th style={{ width: 24 }} />
+            </tr>
+          </thead>
+          <tbody>
+            {data.heatmapData.length === 0 ? (
+              <tr>
+                <td colSpan={DOMAIN_KEYS.length + 3} className="py-8 text-center text-xs" style={{ color: "#9CA3AF" }}>
+                  No assessment data yet
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredHeatmap.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
-                    No team members match this filter.
-                  </td>
-                </tr>
-              ) : (
-                filteredHeatmap.map(member => {
-                  const hasData = member.overallScore != null;
-                  return (
-                  <tr
-                    key={member.id}
-                    className={`border-b border-neutral-100 last:border-0 hover:bg-neutral-50 cursor-pointer transition-colors ${!hasData ? 'opacity-50' : ''}`}
-                    onClick={() => setSelectedMember(member.id)}
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-bold text-neutral-600 shrink-0">
-                          {member.name?.split(' ')[0]?.[0]}{member.name?.split(' ')[1]?.[0]}
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`font-medium truncate max-w-[130px] ${!hasData ? 'text-muted-foreground italic' : 'text-foreground'}`}>{member.name}</p>
-                          {member.rating ? (
-                            <p className="text-xs text-muted-foreground">{RATING_LABELS[member.rating] ?? member.rating}</p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground/60">Not yet assessed</p>
-                          )}
+            ) : (
+              data.heatmapData.map(member => {
+                const initials = member.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+                const hasLowScore = member.overallScore !== null && getLevelFromScore(member.overallScore) <= 1;
+                return (
+                  <tr key={member.id} className="hover:bg-neutral-50 transition-colors cursor-pointer" onClick={() => window.location.href = `/people/${member.id}`}>
+                    <td style={{ padding: "6px 10px 6px 0" }}>
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0" style={{ background: hasLowScore ? "#FEE2E2" : "#E0E7EF", color: hasLowScore ? "#991B1B" : "#1F3A5F" }}>{initials}</span>
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: "#0F2547" }}>{member.name}</p>
+                          <p className="text-xs" style={{ color: hasLowScore ? "#DC2626" : "#6B7280" }}>{member.role}{member.overallScore !== null && ` · ${(member.overallScore / 10).toFixed(1)}`}</p>
                         </div>
                       </div>
                     </td>
-                    {DOMAIN_KEYS_ORDERED.map(dk => {
-                      const domainScore = member.domainScores?.[dk as keyof typeof member.domainScores] ?? null;
-                      return (
-                        <td key={dk} className="py-2 px-1 text-center">
-                          {domainScore !== null ? (
-                            <div
-                              className="w-14 h-8 rounded mx-auto flex items-center justify-center font-mono font-bold text-xs tabular-nums text-white"
-                              style={{ backgroundColor: scoreToColor(domainScore).bg }}
-                            >
-                              {formatPeakonScore(domainScore)}
-                            </div>
-                          ) : (
-                            <div className="w-14 h-8 rounded mx-auto flex items-center justify-center text-xs text-neutral-300 border border-dashed border-neutral-200">
-                              —
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="py-2 px-2 text-center">
-                      {member.overallScore != null ? (
-                        <span
-                          className="font-mono font-bold text-xs tabular-nums"
-                          style={{ color: scoreToColor(member.overallScore).bg }}
-                        >
-                          {formatPeakonScore(member.overallScore)}
-                        </span>
+                    {DOMAIN_KEYS.map(k => (
+                      <td key={k} style={{ padding: "4px 0" }}>
+                        <HeatCell score={member.domainScores[k as keyof typeof member.domainScores] ?? null} />
+                      </td>
+                    ))}
+                    <td style={{ padding: "4px 0" }}>
+                      {member.overallScore !== null ? (
+                        <div className="rounded flex items-center justify-center font-medium" style={{ padding: "10px 4px", background: getLevelChipStyle(getLevelFromScore(member.overallScore)).bg, color: getLevelChipStyle(getLevelFromScore(member.overallScore)).text }}>
+                          <span className="text-sm">{(member.overallScore / 10).toFixed(1)}</span>
+                        </div>
                       ) : (
-                        <span className="text-neutral-300 text-xs">—</span>
+                        <div className="rounded flex items-center justify-center" style={{ padding: "10px 4px", background: "#F9FAFB" }}>
+                          <span className="text-xs" style={{ color: "#D1D5DB" }}>—</span>
+                        </div>
                       )}
                     </td>
-                    <td className="py-2">
-                      <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                    <td style={{ padding: "4px 0" }}>
+                      <ChevronRight className="w-3.5 h-3.5" style={{ color: "#9CA3AF" }} />
                     </td>
                   </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+        <div className="flex items-center gap-4 mt-5 pt-4 flex-wrap" style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)" }}>
+          <span className="text-xs uppercase tracking-widest font-medium" style={{ color: "#6B7280" }}>Level</span>
+          {[1, 2, 3, 4, 5].map(lv => {
+            const s = getLevelChipStyle(lv);
+            return (
+              <div key={lv} className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: s.bg, display: "inline-block" }} />
+                <span className="text-xs" style={{ color: "#4B5563" }}>{lv} {getLevelLabel(lv)}</span>
+              </div>
+            );
+          })}
         </div>
-      </DashboardCard>
+      </div>
 
-      {/* ── 5. AI Insights ── */}
-      {teamInsights.length > 0 && (
-        <AIInsightCard title="Team capability insights" insights={teamInsights} />
-      )}
-
-      {/* ── 6. Conversation Prompts ── */}
-      <DashboardCard title="Conversation prompts" subtitle="Priority-ordered coaching suggestions for your team">
+      {/* ── Conversation prompts ── */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Conversation prompts</p>
+          <Link href="/manager/conversation-prompts">
+            <span className="text-xs" style={{ color: "#1F3A5F" }}>All prompts →</span>
+          </Link>
+        </div>
         {promptsLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg bg-neutral-100 animate-pulse" />)}
-          </div>
+          <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 rounded-lg bg-neutral-100 animate-pulse" />)}</div>
         ) : !prompts || prompts.prompts.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4">No conversation prompts at this time. Your team is on track.</p>
+          <p className="text-xs py-4" style={{ color: "#9CA3AF" }}>No conversation prompts at this time. Your team is on track.</p>
         ) : (
-          <div className="space-y-3 mt-1">
+          <div className="space-y-3">
             {prompts.prompts.slice(0, promptsExpanded ? undefined : 3).map((prompt, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 p-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all"
-              >
-                <div className="mt-0.5 shrink-0">
-                  <PriorityBadge priority={prompt.priority as "critical" | "high" | "medium" | "low"} />
-                </div>
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ border: "0.5px solid #E5E7EB" }}>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-0.5 shrink-0" style={{ background: prompt.priority === "high" ? "#FEF7ED" : "#F0F4F8", color: prompt.priority === "high" ? "#B45309" : "#1F3A5F" }}>
+                  {prompt.priority}
+                </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-foreground">{prompt.memberName}</span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground">{prompt.patternId.replace(/_/g, ' ')}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{prompt.suggestedAction}</p>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#0F2547" }}>{prompt.memberName}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "#4B5563" }}>{prompt.suggestedAction}</p>
                 </div>
-                <MessageSquareText className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                <MessageSquareText className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#9CA3AF" }} />
               </div>
             ))}
             {prompts.prompts.length > 3 && (
-              <button
-                onClick={() => setPromptsExpanded(!promptsExpanded)}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1 mt-1"
-              >
+              <button onClick={() => setPromptsExpanded(!promptsExpanded)} className="text-xs font-medium flex items-center gap-1 mt-1" style={{ color: "#1F3A5F" }}>
                 {promptsExpanded ? "Show less" : `Show ${prompts.prompts.length - 3} more`}
                 <ChevronRight className={`w-3 h-3 transition-transform ${promptsExpanded ? "rotate-90" : ""}`} />
               </button>
             )}
           </div>
         )}
-      </DashboardCard>
+      </div>
 
-      {/* ── 7. Team Development Overview ── */}
-      <DashboardCard title="Team development" subtitle="Learning plan progress across your team">
-        {devLoading ? (
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-lg bg-neutral-100 animate-pulse" />)}
+      {/* ── Team development overview ── */}
+      {devOverview && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-medium" style={{ color: "#0F2547" }}>Team development</p>
+            <Link href="/manager/team-progress">
+              <span className="text-xs" style={{ color: "#1F3A5F" }}>Detail →</span>
+            </Link>
           </div>
-        ) : !devOverview ? (
-          <p className="text-xs text-muted-foreground py-4">No development data available.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-1">
-              <div className="p-4 rounded-xl bg-[#047857]/8 border border-[#047857]/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-[#047857]" />
-                  <span className="text-xs font-semibold text-[#1A6625]">On track</span>
-                </div>
-                <span className="text-2xl font-bold tabular-nums text-[#047857]">{devOverview.statusCounts.onTrack}</span>
-                <p className="text-xs text-[#047857] mt-1">Progressing as expected</p>
-              </div>
-              <div className="p-4 rounded-xl bg-[#D97706]/8 border border-[#D97706]/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4 text-[#99882A]" />
-                  <span className="text-xs font-semibold text-[#7A6E22]">Slipping</span>
-                </div>
-                <span className="text-2xl font-bold tabular-nums text-[#99882A]">{devOverview.statusCounts.slipping}</span>
-                <p className="text-xs text-[#99882A] mt-1">Behind expected pace</p>
-              </div>
-              <div className="p-4 rounded-xl bg-[#DC2626]/8 border border-[#DC2626]/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-[#CC3344]" />
-                  <span className="text-xs font-semibold text-[#AA2233]">Stalled</span>
-                </div>
-                <span className="text-2xl font-bold tabular-nums text-[#CC3344]">{devOverview.statusCounts.stalled}</span>
-                <p className="text-xs text-[#CC3344] mt-1">No activity in 14+ days</p>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl" style={{ background: "#F0FDF4", border: "0.5px solid #BBF7D0" }}>
+              <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4" style={{ color: "#047857" }} /><span className="text-xs font-semibold" style={{ color: "#1A6625" }}>On track</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "#047857" }}>{devOverview.statusCounts.onTrack}</span>
             </div>
-            <Separator className="my-4" />
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-4">
-                <span className="text-muted-foreground">Active modules: <strong className="text-foreground font-mono">{devOverview.activeModuleCount}</strong></span>
-                <span className="text-muted-foreground">Avg completion: <strong className="text-foreground font-mono">{devOverview.aggregateCompletionRate}%</strong></span>
-              </div>
-              <Link href="/learning/team">
-                <Button variant="ghost" size="sm" className="text-xs gap-1">
-                  View details <ChevronRight className="w-3 h-3" />
-                </Button>
-              </Link>
+            <div className="p-4 rounded-xl" style={{ background: "#FEF7ED", border: "0.5px solid #FED7AA" }}>
+              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#B45309" }} /><span className="text-xs font-semibold" style={{ color: "#B45309" }}>Slipping</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "#B45309" }}>{devOverview.statusCounts.slipping}</span>
             </div>
-          </>
-        )}
-      </DashboardCard>
-
-      {/* BA-08: Team vs Ambition Target */}
-      {ambitionGap && ambitionGap.configured && teamAvgScore !== null && (
-        <DashboardCard
-          title="Team vs ambition target"
-          subtitle="How your team's average readiness compares to the organisation's AI ambition"
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
-                  {(teamAvgScore / 10).toFixed(1)}
-                </span>
-                <span className="text-sm text-muted-foreground">team avg</span>
-                <span className="text-base text-muted-foreground mx-1">→</span>
-                <span className="text-2xl font-bold font-mono tabular-nums"
-                  style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#047857" : "#b45309" }}>
-                  {(ambitionGap.ambitionTargetScore / 10).toFixed(1)}
-                </span>
-                <span className="text-sm text-muted-foreground">target</span>
-              </div>
-              {ambitionGap.ambitionTargetLabel && (
-                <p className="text-xs text-muted-foreground mt-1 italic">"{ambitionGap.ambitionTargetLabel}"</p>
-              )}
-            </div>
-            <div className="px-3 py-2 rounded-xl border text-center shrink-0"
-              style={{
-                backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#f0fdf4" : "#F4EEEC",
-                borderColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#b45309",
-              }}>
-              <p className="text-xs font-medium" style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#2D5A3D" : "#6B3030" }}>
-                {teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0)
-                  ? "Team meets target ✓"
-                  : `${((ambitionGap.ambitionTargetScore - teamAvgScore) / 10).toFixed(1)} pts gap`}
-              </p>
+            <div className="p-4 rounded-xl" style={{ background: "#FEF2F2", border: "0.5px solid #FECACA" }}>
+              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#DC2626" }} /><span className="text-xs font-semibold" style={{ color: "#DC2626" }}>Stalled</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "#DC2626" }}>{devOverview.statusCounts.stalled}</span>
             </div>
           </div>
-          {/* Progress bar */}
-          <div className="mt-3 space-y-1">
-            <div className="relative h-2 rounded-full bg-neutral-100 overflow-hidden">
-              <div className="absolute left-0 top-0 h-full rounded-full transition-all"
-                style={{
-                  width: Math.min(100, teamAvgScore) + "%",
-                  backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#b45309",
-                }} />
-              {ambitionGap.ambitionTargetScore > 0 && (
-                <div className="absolute top-0 h-full w-0.5 bg-neutral-400"
-                  style={{ left: Math.min(ambitionGap.ambitionTargetScore, 99) + "%" }} />
-              )}
+          {devOverview.aggregateCompletionRate > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs" style={{ color: "#6B7280" }}>Team average completion</span>
+                <span className="text-xs font-semibold" style={{ color: "#0F2547" }}>{devOverview.aggregateCompletionRate}%</span>
+              </div>
+              <div style={{ position: "relative", height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${devOverview.aggregateCompletionRate}%`, background: "#557DAE", borderRadius: 3 }} />
+              </div>
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0</span>
-              <span>Org target: {(ambitionGap.ambitionTargetScore / 10).toFixed(1)}</span>
-              <span>10</span>
-            </div>
-          </div>
-        </DashboardCard>
-      )}
-      {/* ── Member Drill-down ── */}
-      <Sheet open={selectedMember !== null} onOpenChange={v => !v && setSelectedMember(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          {selectedMember && <MemberDrillDown userId={selectedMember} onClose={() => setSelectedMember(null)} />}
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-}
-
-// ─── Member Drill-down ───────────────────────────────────────────────────────
-
-function MemberDrillDown({ userId, onClose }: { userId: string; onClose: () => void }) {
-  const { data, isLoading } = trpc.dashboardV2.individual.main.useQuery({ userId });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4 p-2">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full aiq-shimmer-brand shrink-0" />
-          <div className="space-y-2 flex-1">
-            <div className="h-4 w-32 rounded-md aiq-shimmer" />
-            <div className="h-3 w-24 rounded-md aiq-shimmer" />
-          </div>
+          )}
         </div>
-        {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg aiq-shimmer" style={{ animationDelay: `${i * 80}ms` }} />)}
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-muted-foreground">No assessment data for this team member.</p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <SheetHeader className="pb-4">
-        <SheetTitle className="text-base">{data.user.firstName} {data.user.lastName}</SheetTitle>
-        <p className="text-xs text-muted-foreground">{data.user.roleFamily}</p>
-      </SheetHeader>
-
-      <div className="mb-5">
-        <HeroScore
-          score={data.overallScore}
-          label={data.overallScore !== null ? scoreToReadinessLabel(data.overallScore) : undefined}
-          size="lg"
-        />
-      </div>
-
-      <div className="space-y-2">
-        {data.domains.map(d => (
-          <div key={d.key} className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <DomainDot domain={d.key} />
-              <span className="text-xs text-foreground truncate">{d.name}</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {d.score !== null ? (
-                <span
-                  className="font-mono font-bold text-xs tabular-nums"
-                  style={{ color: scoreToColor(d.score).bg }}
-                >
-                  {formatPeakonScore(d.score)}
-                </span>
-              ) : (
-                <span className="text-neutral-300 text-xs">—</span>
-              )}
-              <RatingBadge rating={d.rating} size="sm" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Separator className="my-4" />
-
-      <div className="flex flex-col gap-2">
-        <Link href={`/people/${userId}`}>
-          <Button size="sm" className="w-full gap-1.5 text-xs">
-            View full report <ChevronRight className="w-3 h-3" />
-          </Button>
-        </Link>
-        <Link href={`/dashboard/personal?userId=${userId}`}>
-          <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
-            View full profile <ChevronRight className="w-3 h-3" />
-          </Button>
-        </Link>
-      </div>
-    </>
+      )}
+    </div>
   );
 }

@@ -83,6 +83,20 @@ const NAV_ITEMS: NavItem[] = [
     roles: [...CPO_ROLES, ...MANAGER_ROLES],
     section: "myteam",
   },
+  {
+    label: "Team Progress",
+    path: "/manager/team-progress",
+    icon: BarChart3,
+    roles: MANAGER_ROLES,
+    section: "myteam",
+  },
+  {
+    label: "Conversation Prompts",
+    path: "/manager/conversation-prompts",
+    icon: Bell,
+    roles: MANAGER_ROLES,
+    section: "myteam",
+  },
 
   // ── Admin (CPO only) ─────────────────────────────────────────────────────────
   {

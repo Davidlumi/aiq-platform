@@ -1799,3 +1799,17 @@
 - [ ] AP-08: Results page — add "Recommended focus area" callout highlighting the lowest-scoring domain with development path
 - [ ] AP-09: Results page — add "Assessment confidence" transparency showing # of questions answered vs target and confidence band
 - [ ] AP-10: Results page — add "Next steps" action panel with links to learning plan, manager 1:1 discussion prompt, and peer comparison
+
+## Wireframe Redesign (Apr 2026)
+
+- [x] WF-LIB: Create shared /lib/level-utils.ts with getLevelFromScore, getLevelChipStyle, getLevelLabel, getPreciseLevel helpers used across all wireframe pages
+- [x] WF-P2: Redesign Individual/Practitioner dashboard to match P2 wireframe — level ring (precise score), "Where you are" hero narrative, Continue Learning card, 6-domain capability grid with level chips
+- [x] WF-P4: Redesign Assessment Results summary tab to match P4 wireframe — level ring, 6-domain list with level chips, "Your development plan is ready" CTA card
+- [x] WF-P5: Redesign Learning/Development Plan page to match P5 wireframe — week-by-week module sequence (Week 1/2/3-4/5), level progression widget
+- [x] WF-M1: Redesign Manager Dashboard to match M1 wireframe — hero narrative, 4 KPI tiles, level distribution donut, capability heatmap table, "Worth investigating" insight cards
+- [x] WF-M2: Redesign Team Member Detail page (MemberReportPage) to match M2 wireframe — level ring, 6-domain bars, dev progress, trajectory chart
+- [x] WF-M3: Create Conversation Prompts page to match M3 wireframe — per-person priority/dev/recognition cards with opening scripts; route /manager/conversation-prompts
+- [x] WF-M4: Create Team Progress page to match M4 wireframe — 4 KPI tiles, per-person progress rows with level chip, completion bar, streak indicator, nudge action; route /manager/team-progress
+- [x] WF-C1: Redesign CPO Functional Summary (LeaderDashboardV2) to match C1 wireframe — hero narrative, 4 KPI tiles, level distribution donut, segment comparison bars, "Worth your attention" insight cards
+- [x] WF-C3: Redesign CPO Strategic Dashboard (AIStrategyPage) to match C3 wireframe — strategic finding hero card, capability vs roadmap bars with target markers, trajectory chart (actual + projected), board options
+- [x] WF-NAV: Add Team Progress and Conversation Prompts to AppShell sidebar navigation for manager role

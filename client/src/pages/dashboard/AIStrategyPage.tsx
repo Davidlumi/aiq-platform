@@ -1,76 +1,202 @@
 /**
- * AI Strategy Page (BA-10)
+ * AIStrategyPage — Wireframe C3 visual language
  *
- * Executive-facing view that consolidates:
- * - Readiness vs Ambition hero (current score → target)
- * - Per-priority gap bars with domain breakdown
- * - Time-to-target projection (linear extrapolation from trajectory)
- * - Recommended actions per priority
- * - CTA to set/edit ambition target
+ * Strategic finding hero card · capability vs roadmap bars with target markers
+ * · trajectory chart (actual + projected) · regulatory exposure cards
  */
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Target,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  ArrowRight,
-  Calendar,
-  BarChart3,
-  Lightbulb,
-  Users,
-} from "lucide-react";
-import { formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Target, AlertTriangle, CheckCircle2, TrendingUp, Edit2 } from "lucide-react";
+import { getLevelFromScore, getLevelChipStyle, getLevelLabel, getPreciseLevel } from "@/lib/level-utils";
+import { DOMAIN_KEYS, DOMAIN_LABELS } from "@/lib/domains";
+import type { CapabilityKey } from "@/lib/domains";
 
-const VERDICT_CONFIG: Record<string, { bg: string; border: string; text: string; label: string; icon: React.ReactNode }> = {
-  exceeds:  { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "Exceeds ambition target", icon: <CheckCircle2 className="w-4 h-4" /> },
-  on_track: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Within reach of target",  icon: <TrendingUp className="w-4 h-4" /> },
-  gap:      { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant capability gap", icon: <AlertTriangle className="w-4 h-4" /> },
-  no_target:{ bg: "#F5F5F5", border: "#D0D0D0", text: "#555",    label: "No target configured",    icon: <Target className="w-4 h-4" /> },
-};
+// ─── Roadmap bar ──────────────────────────────────────────────────────────────
+function RoadmapBar({
+  label, sub, currentScore, targetScore, status,
+}: {
+  label: string; sub?: string; currentScore: number | null; targetScore: number | null; status: "aligned" | "partial" | "gap" | "unknown";
+}) {
+  const STATUS_PILL: Record<string, { label: string; bg: string; text: string }> = {
+    aligned: { label: "On track", bg: "#F0FDF4", text: "#047857" },
+    partial:  { label: "Developing", bg: "#EFF6FF", text: "#1D4ED8" },
+    gap:      { label: "Behind", bg: "#FEF7ED", text: "#B45309" },
+    unknown:  { label: "No data", bg: "#F3F4F6", text: "#6B7280" },
+  };
+  const pill = STATUS_PILL[status] ?? STATUS_PILL.unknown;
+  const currentPct = currentScore !== null ? (currentScore / 100) * 100 : 0;
+  const targetPct = targetScore !== null ? (targetScore / 100) * 100 : 80;
+  const chipStyle = currentScore !== null ? getLevelChipStyle(getLevelFromScore(currentScore)) : null;
 
-const STATUS_COLOURS: Record<string, string> = {
-  aligned: "#047857",
-  partial:  "#2563EB",
-  gap:      "#DC2626",
-  unknown:  "#9CA3AF",
-};
+  return (
+    <div>
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <p className="text-sm font-medium" style={{ color: "#0F2547" }}>{label}</p>
+          {sub && <p className="text-xs" style={{ color: "#6B7280" }}>{sub}</p>}
+        </div>
+        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: pill.bg, color: pill.text }}>{pill.label}</span>
+      </div>
+      <div className="relative h-4 rounded" style={{ background: "#F3F4F6" }}>
+        {currentScore !== null && (
+          <div className="absolute top-0 left-0 h-full rounded transition-all duration-700" style={{ width: `${currentPct}%`, background: chipStyle?.bg ?? "#94A3B8" }} />
+        )}
+        {/* Target marker */}
+        <div className="absolute top-[-4px] h-6 w-0.5" style={{ left: `${targetPct}%`, background: "#1F3A5F" }} />
+        <span className="absolute text-xs font-medium whitespace-nowrap" style={{ top: -20, left: `${targetPct}%`, transform: "translateX(-50%)", color: "#1F3A5F" }}>
+          TARGET {targetScore !== null ? getPreciseLevel(targetScore) : "—"}
+        </span>
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-xs" style={{ color: "#6B7280" }}>0</span>
+        <span className="text-xs font-medium" style={{ color: "#0F2547" }}>
+          Currently {currentScore !== null ? getPreciseLevel(currentScore) : "—"}
+        </span>
+        <span className="text-xs" style={{ color: "#6B7280" }}>5</span>
+      </div>
+    </div>
+  );
+}
 
-const PRIORITY_ACTIONS: Record<string, string[]> = {
-  aligned: [
-    "Maintain momentum with advanced AI scenario practice",
-    "Nominate high scorers as AI champions or peer mentors",
-  ],
-  partial: [
-    "Assign targeted learning modules for the relevant capability domains",
-    "Schedule a team workshop to close the identified gaps",
-  ],
-  gap: [
-    "Prioritise this area in the next learning plan cycle",
-    "Consider external training or coaching for the relevant domains",
-    "Review whether current AI tools in use match team capability level",
-  ],
-  unknown: [
-    "Ensure team members complete an assessment to generate data",
-  ],
-};
+// ─── Trajectory chart ─────────────────────────────────────────────────────────
+function TrajectoryChart({
+  domains, targetScore, targetDate,
+}: {
+  domains: Array<{ domain: string; timeSeries: Array<{ date: string; avgScore: number | null }>; currentValue: number | null; delta90d: number | null }>;
+  targetScore: number | null;
+  targetDate: string | null;
+}) {
+  // Aggregate all domains into a function average per month
+  const allMonths = new Set<string>();
+  for (const d of domains) for (const p of d.timeSeries) allMonths.add(p.date);
+  const months = Array.from(allMonths).sort();
+  if (months.length === 0) return null;
 
+  const monthlyAvg = months.map(m => {
+    const vals = domains.map(d => d.timeSeries.find(p => p.date === m)?.avgScore).filter(v => v !== null && v !== undefined) as number[];
+    return { date: m, avg: vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null };
+  });
+
+  const W = 700; const H = 220; const PAD_L = 50; const PAD_R = 20; const PAD_T = 30; const PAD_B = 40;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const maxScore = 100; const minScore = 0;
+
+  function scoreToY(score: number) {
+    return PAD_T + (1 - score / maxScore) * chartH;
+  }
+  function idxToX(i: number, total: number) {
+    return PAD_L + (i / Math.max(total - 1, 1)) * chartW;
+  }
+
+  const validPts = monthlyAvg.filter(m => m.avg !== null);
+  const actualPts = validPts.map((m, i) => ({ x: idxToX(i, validPts.length), y: scoreToY(m.avg!) }));
+  const actualPolyline = actualPts.map(p => `${p.x},${p.y}`).join(" ");
+
+  // Project forward: linear extrapolation from last 3 points
+  let projPts: Array<{ x: number; y: number }> = [];
+  if (validPts.length >= 2 && targetScore !== null) {
+    const lastPt = actualPts[actualPts.length - 1];
+    const prevPt = actualPts[Math.max(0, actualPts.length - 3)];
+    const slopePerStep = (lastPt.y - prevPt.y) / Math.max(actualPts.length - 1, 1);
+    const targetY = scoreToY(targetScore);
+    const stepsNeeded = slopePerStep !== 0 ? Math.abs((targetY - lastPt.y) / slopePerStep) : 12;
+    const steps = Math.min(Math.ceil(stepsNeeded), 24);
+    projPts = [lastPt];
+    for (let i = 1; i <= steps; i++) {
+      const x = lastPt.x + (i / steps) * chartW * 0.5;
+      const y = Math.max(PAD_T, lastPt.y + slopePerStep * i);
+      projPts.push({ x, y });
+    }
+  }
+  const projPolyline = projPts.map(p => `${p.x},${p.y}`).join(" ");
+
+  // Target line
+  const targetY = targetScore !== null ? scoreToY(targetScore) : null;
+
+  // Level labels on Y axis
+  const levelLines = [20, 40, 60, 80, 100].map(score => ({ score, y: scoreToY(score), label: (score / 10).toFixed(0) }));
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: H }}>
+        {/* Grid lines */}
+        {levelLines.map(l => (
+          <g key={l.score}>
+            <line x1={PAD_L} y1={l.y} x2={W - PAD_R} y2={l.y} stroke="#F3F4F6" strokeWidth={0.5} strokeDasharray="2 2" />
+            <text x={PAD_L - 8} y={l.y + 4} textAnchor="end" style={{ fontSize: 10, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif" }}>{l.label}</text>
+          </g>
+        ))}
+        {/* Target threshold line */}
+        {targetY !== null && (
+          <>
+            <line x1={PAD_L} y1={targetY} x2={W - PAD_R} y2={targetY} stroke="#1F3A5F" strokeWidth={1.5} strokeDasharray="6 4" />
+            <text x={W - PAD_R + 4} y={targetY + 4} style={{ fontSize: 10, fill: "#1F3A5F", fontWeight: 500, fontFamily: "Inter, system-ui, sans-serif" }}>
+              {targetScore !== null ? getPreciseLevel(targetScore) : ""}
+            </text>
+          </>
+        )}
+        {/* Actual line */}
+        {actualPts.length >= 2 && (
+          <polyline points={actualPolyline} fill="none" stroke="#1F3A5F" strokeWidth={2.5} strokeLinejoin="round" />
+        )}
+        {/* Actual dots */}
+        {actualPts.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={i === actualPts.length - 1 ? 5 : 4} fill="#1F3A5F" />
+        ))}
+        {/* Projected line */}
+        {projPts.length >= 2 && (
+          <polyline points={projPolyline} fill="none" stroke="#557DAE" strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
+        )}
+        {/* X axis labels */}
+        {validPts.map((m, i) => {
+          const x = idxToX(i, validPts.length);
+          const [year, month] = m.date.split("-");
+          const label = `${["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][parseInt(month)]} ${year.slice(2)}`;
+          if (i % Math.max(1, Math.floor(validPts.length / 6)) !== 0 && i !== validPts.length - 1) return null;
+          return (
+            <text key={i} x={x} y={H - 8} textAnchor="middle" style={{ fontSize: 10, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif" }}>{label}</text>
+          );
+        })}
+      </svg>
+      {/* Legend */}
+      <div className="flex gap-5 mt-3 pt-3" style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)" }}>
+        <div className="flex items-center gap-1.5">
+          <span style={{ width: 18, height: 2.5, background: "#1F3A5F", display: "inline-block" }} />
+          <span className="text-xs" style={{ color: "#4B5563" }}>Actual</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span style={{ width: 18, height: 2, background: "#557DAE", display: "inline-block", borderTop: "1px dashed #557DAE" }} />
+          <span className="text-xs" style={{ color: "#4B5563" }}>Projected at current pace</span>
+        </div>
+        {targetY !== null && (
+          <div className="flex items-center gap-1.5">
+            <span style={{ width: 18, height: 1.5, background: "#1F3A5F", display: "inline-block", borderTop: "1px dashed #1F3A5F" }} />
+            <span className="text-xs" style={{ color: "#4B5563" }}>Target threshold</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AIStrategyPage() {
   const utils = trpc.useUtils();
   const [showTargetDialog, setShowTargetDialog] = useState(false);
   const [targetScore, setTargetScore] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [targetLabel, setTargetLabel] = useState("");
-  const { data: ambitionGap, isLoading } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
-    retry: false,
-  } as any);
+
+  const { data: ambitionGap, isLoading } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, { retry: false } as any);
   const { data: trajectory } = trpc.dashboardV2.leader.domainTrajectory.useQuery(undefined);
+  const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(undefined);
+
   const setAmbitionTarget = trpc.intelligence.setAmbitionTarget.useMutation({
     onSuccess: () => {
       toast.success("Ambition target saved — dashboard updated.");
@@ -79,12 +205,14 @@ export default function AIStrategyPage() {
     },
     onError: (err) => toast.error(err.message),
   });
+
   function openTargetDialog() {
     if (ambitionGap?.ambitionTargetScore != null) setTargetScore(String((ambitionGap.ambitionTargetScore / 10).toFixed(1)));
     if (ambitionGap?.ambitionTargetDate) setTargetDate(ambitionGap.ambitionTargetDate);
     if (ambitionGap?.ambitionTargetLabel) setTargetLabel(ambitionGap.ambitionTargetLabel);
     setShowTargetDialog(true);
   }
+
   function handleSaveTarget() {
     const score = parseFloat(targetScore);
     if (isNaN(score) || score < 0 || score > 10) { toast.error("Score must be between 0 and 10"); return; }
@@ -95,239 +223,209 @@ export default function AIStrategyPage() {
     });
   }
 
-  // Estimate months to target based on 90-day trajectory
+  // Months to target estimate
   const monthsToTarget = useMemo(() => {
-    if (!ambitionGap || !ambitionGap.configured || ambitionGap.functionAvgRaw === null || ambitionGap.gapRaw === null || ambitionGap.gapRaw <= 0) return null;
-    // Use function-level trajectory from domain data
+    if (!ambitionGap?.configured || ambitionGap.functionAvgRaw === null || ambitionGap.gapRaw === null || ambitionGap.gapRaw <= 0) return null;
     if (!trajectory?.domains?.length) return null;
-    const avgDelta90 = trajectory.domains
-      .filter((d: any) => d.delta90d !== null)
-      .reduce((s: number, d: any) => s + (d.delta90d ?? 0), 0) / (trajectory.domains.filter((d: any) => d.delta90d !== null).length || 1);
-    if (avgDelta90 <= 0) return null;
-    // avgDelta90 is raw score points per 90 days
-    const pointsPerMonth = avgDelta90 / 3;
-    const months = Math.ceil(ambitionGap.gapRaw / pointsPerMonth);
-    return months > 0 && months < 120 ? months : null;
+    const deltas = trajectory.domains.map(d => d.delta90d).filter(d => d !== null) as number[];
+    if (deltas.length === 0) return null;
+    const avgDelta90d = deltas.reduce((s, d) => s + d, 0) / deltas.length;
+    if (avgDelta90d <= 0) return null;
+    const monthsPerPoint = 3 / avgDelta90d;
+    return Math.ceil(ambitionGap.gapRaw * monthsPerPoint);
   }, [ambitionGap, trajectory]);
+
+  const currentLevel = ambitionGap?.functionAvgRaw !== null && ambitionGap?.functionAvgRaw !== undefined
+    ? getPreciseLevel(ambitionGap.functionAvgRaw) : null;
+  const targetLevel = ambitionGap?.ambitionTargetScore !== null && ambitionGap?.ambitionTargetScore !== undefined
+    ? getPreciseLevel(ambitionGap.ambitionTargetScore) : null;
+  const gapLevel = ambitionGap?.gapRaw !== null && ambitionGap?.gapRaw !== undefined
+    ? (ambitionGap.gapRaw / 10).toFixed(1) : null;
+
+  // Strategic finding text
+  const strategicFindingText = useMemo(() => {
+    if (!ambitionGap?.configured || currentLevel === null || targetLevel === null) {
+      return "Set an ambition target to generate your strategic finding.";
+    }
+    const targetDateStr = ambitionGap.ambitionTargetDate
+      ? new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+      : "your target date";
+    if (ambitionGap.verdict === "exceeds") {
+      return `HR is at Level ${currentLevel} — already exceeding the Level ${targetLevel} target. The function is ahead of the AI roadmap.`;
+    }
+    if (monthsToTarget !== null) {
+      const closeDate = new Date();
+      closeDate.setMonth(closeDate.getMonth() + monthsToTarget);
+      const closeStr = closeDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      return `HR is at Level ${currentLevel} against a Level ${targetLevel} ${targetDateStr} target. The gap closes ${closeStr} at current pace.`;
+    }
+    return `HR is at Level ${currentLevel} against a Level ${targetLevel} target. Accelerated development is required to meet the AI roadmap.`;
+  }, [ambitionGap, currentLevel, targetLevel, monthsToTarget]);
+
+  // Board options
+  const boardOptions = useMemo(() => {
+    if (!ambitionGap?.configured || ambitionGap.gapRaw === null || ambitionGap.gapRaw <= 0) return [];
+    const targetDateStr = ambitionGap.ambitionTargetDate
+      ? new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+      : "the target date";
+    return [
+      `Invest in accelerated development to meet the ${targetDateStr} target`,
+      monthsToTarget ? `Extend AI roadmap timeline by ${monthsToTarget} months to align with current learning pace` : "Extend AI roadmap timeline to align with current learning pace",
+      "Reduce capability bar for non-customer-facing roles and focus investment on high-impact functions",
+    ];
+  }, [ambitionGap, monthsToTarget]);
+
+  // Regulatory exposure findings
+  const regulatoryFindings = useMemo(() => {
+    if (!findings?.findings) return [];
+    return findings.findings.filter((f: any) => f.type === "governance" || f.type === "risk" || f.patternId?.includes("governance") || f.patternId?.includes("risk"));
+  }, [findings]);
 
   if (isLoading) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-40 rounded-2xl" />
-        <Skeleton className="h-64 rounded-2xl" />
+      <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
   }
-
-  if (!ambitionGap || !ambitionGap.configured) {
-    return (
-      <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto">
-        <div className="text-center py-16 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#047857]/10 flex items-center justify-center mx-auto">
-            <Target className="w-8 h-8 text-[#047857]" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-2">No AI Ambition Target Set</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Set a readiness target score and date to unlock the AI Strategy view — including gap analysis, per-priority alignment, and time-to-target projections.
-            </p>
-          </div>
-          <Button
-            className="gap-2 bg-[#047857] hover:bg-[#1a6626] text-white"
-            onClick={openTargetDialog}
-          >
-            <Target className="w-4 h-4" />
-            Set Ambition Target
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const vc = VERDICT_CONFIG[ambitionGap.verdict] ?? VERDICT_CONFIG.no_target;
-  const currentPeakon = ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—";
-  const targetPeakon = ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—";
-  const gapPeakon = ambitionGap.gapRaw !== null ? Math.abs(ambitionGap.gapRaw / 10).toFixed(1) : null;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-6">
-      {/* ── Header ── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
-          <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Target className="w-5 h-5 text-[#047857]" />
-            AI Strategy
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Readiness vs ambition — how your HR function's capability maps to your AI strategy
-          </p>
+          <p className="text-xs font-medium uppercase tracking-widest text-neutral-400 mb-0.5">Strategic dashboard</p>
+          <h1 className="text-lg font-semibold" style={{ color: "#0F2547" }}>HR capability vs AI roadmap</h1>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={openTargetDialog}>
-          Edit ambition target <ArrowRight className="w-3 h-3" />
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={openTargetDialog}>
+          <Edit2 className="w-3.5 h-3.5" />{ambitionGap?.configured ? "Edit target" : "Set target"}
         </Button>
-      </header>
-
-      {/* ── Hero: Readiness vs Ambition ── */}
-      <div className="rounded-2xl border p-6 space-y-4" style={{ backgroundColor: vc.bg, borderColor: vc.border }}>
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: vc.text + "20", color: vc.text }}>
-            {vc.icon}
-          </div>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: vc.text }}>{vc.label}</p>
-            {ambitionGap.ambitionTargetLabel && (
-              <p className="text-xs mt-0.5 italic" style={{ color: vc.text + "CC" }}>"{ambitionGap.ambitionTargetLabel}"</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Current</p>
-            <p className="text-3xl font-bold font-mono tabular-nums text-foreground">{currentPeakon}</p>
-            <p className="text-xs text-muted-foreground">/ 10</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Target</p>
-            <p className="text-3xl font-bold font-mono tabular-nums" style={{ color: vc.text }}>{targetPeakon}</p>
-            <p className="text-xs text-muted-foreground">/ 10</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Gap</p>
-            <p className="text-3xl font-bold font-mono tabular-nums" style={{ color: ambitionGap.verdict === "exceeds" ? "#047857" : "#DC2626" }}>
-              {ambitionGap.verdict === "exceeds" ? "0.0" : (gapPeakon ?? "—")}
-            </p>
-            <p className="text-xs text-muted-foreground">pts</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Assessed</p>
-            <p className="text-3xl font-bold font-mono tabular-nums text-foreground">{ambitionGap.assessedCount}</p>
-            <p className="text-xs text-muted-foreground">employees</p>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="space-y-1">
-          <div className="relative h-3 rounded-full bg-white/60 overflow-hidden">
-            <div
-              className="absolute left-0 top-0 h-full rounded-full transition-all duration-700"
-              style={{
-                width: ambitionGap.functionAvgRaw !== null ? Math.min(100, ambitionGap.functionAvgRaw) + "%" : "0%",
-                backgroundColor: vc.text,
-              }}
-            />
-            {ambitionGap.ambitionTargetScore !== null && (
-              <div
-                className="absolute top-0 h-full w-0.5"
-                style={{ left: Math.min(ambitionGap.ambitionTargetScore, 99) + "%", backgroundColor: vc.text + "80" }}
-              />
-            )}
-          </div>
-          <div className="flex justify-between text-xs" style={{ color: vc.text + "99" }}>
-            <span>0</span>
-            <span>Target: {targetPeakon}</span>
-            <span>10</span>
-          </div>
-        </div>
-
-        {/* Target date and projection */}
-        <div className="flex flex-wrap gap-4 pt-1">
-          {ambitionGap.ambitionTargetDate && (
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: vc.text }}>
-              <Calendar className="w-3.5 h-3.5" />
-              Target date: <strong>{new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong>
-            </div>
-          )}
-          {monthsToTarget !== null && (
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: vc.text }}>
-              <TrendingUp className="w-3.5 h-3.5" />
-              At current trajectory: <strong>~{monthsToTarget} month{monthsToTarget !== 1 ? "s" : ""} to target</strong>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* ── Per-Priority Gap Analysis ── */}
-      {ambitionGap.priorityGaps && ambitionGap.priorityGaps.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-muted-foreground" />
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Readiness by strategic priority</h2>
-              <p className="text-xs text-muted-foreground">How current capability aligns with each business priority</p>
+      {/* Strategic finding hero */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-7">
+        <p className="text-xs font-medium uppercase tracking-widest mb-3" style={{ color: "#1F3A5F" }}>Strategic finding</p>
+        <h2 className="text-xl font-medium leading-relaxed mb-6" style={{ color: "#0F2547" }}>{strategicFindingText}</h2>
+
+        {/* 3 stat tiles */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="rounded-lg p-4" style={{ background: "#F9FAFB" }}>
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#6B7280" }}>Current</p>
+            <p className="text-2xl font-medium" style={{ color: "#0F2547" }}>Level {currentLevel ?? "—"}</p>
+            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>across {ambitionGap?.assessedCount ?? 0} HR people</p>
+          </div>
+          <div className="rounded-lg p-4" style={{ background: "#F9FAFB" }}>
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#6B7280" }}>{ambitionGap?.ambitionTargetLabel ?? "Target"}</p>
+            <p className="text-2xl font-medium" style={{ color: "#0F2547" }}>Level {targetLevel ?? "—"}</p>
+            <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>from AI roadmap</p>
+          </div>
+          <div className="rounded-lg p-4" style={{ background: ambitionGap?.verdict === "gap" ? "#FEF7ED" : "#F9FAFB", border: ambitionGap?.verdict === "gap" ? "0.5px solid #FED7AA" : undefined }}>
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: ambitionGap?.verdict === "gap" ? "#B45309" : "#6B7280" }}>Gap</p>
+            <p className="text-2xl font-medium" style={{ color: "#0F2547" }}>{gapLevel !== null && parseFloat(gapLevel) > 0 ? `${gapLevel} levels` : "On target"}</p>
+            <p className="text-xs mt-0.5" style={{ color: ambitionGap?.verdict === "gap" ? "#B45309" : "#6B7280" }}>
+              {monthsToTarget ? `closes in ~${monthsToTarget} months` : ambitionGap?.configured ? "at current pace" : "no target set"}
+            </p>
+          </div>
+        </div>
+
+        {/* Board options */}
+        {boardOptions.length > 0 && (
+          <div className="rounded-lg p-5" style={{ background: "#F0F4F8" }}>
+            <p className="text-xs font-medium uppercase tracking-widest mb-3" style={{ color: "#2E4C7A" }}>Three options for the board</p>
+            <div className="flex flex-col gap-2.5">
+              {boardOptions.map((opt, i) => (
+                <div key={i} className="grid gap-2.5 items-start" style={{ gridTemplateColumns: "22px 1fr" }}>
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0" style={{ background: "#1F3A5F", color: "#FFFFFF" }}>{i + 1}</span>
+                  <p className="text-sm leading-relaxed" style={{ color: "#0F2547" }}>{opt}</p>
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          <div className="space-y-6">
-            {ambitionGap.priorityGaps.map((pg: any, i: number) => {
-              const barColour = STATUS_COLOURS[pg.status] ?? "#B0B8C4";
-              const currentPct = pg.avgCurrentScore !== null ? Math.min(100, Math.round(pg.avgCurrentScore)) : 0;
-              const targetPct = pg.requiredScore !== null ? Math.min(100, Math.round(pg.requiredScore)) : 0;
-              const actions = PRIORITY_ACTIONS[pg.status] ?? PRIORITY_ACTIONS.unknown;
+        {/* No target state */}
+        {!ambitionGap?.configured && (
+          <div className="flex items-center gap-3 p-4 rounded-lg" style={{ background: "#F9FAFB", border: "0.5px solid #E5E7EB" }}>
+            <Target className="w-4 h-4 flex-shrink-0" style={{ color: "#9CA3AF" }} />
+            <div>
+              <p className="text-sm font-medium" style={{ color: "#0F2547" }}>No ambition target configured</p>
+              <p className="text-xs" style={{ color: "#6B7280" }}>Set a target level and date to generate your strategic finding and roadmap analysis.</p>
+            </div>
+            <Button size="sm" className="ml-auto flex-shrink-0" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }} onClick={openTargetDialog}>Set target</Button>
+          </div>
+        )}
+      </div>
 
+      {/* Capability vs roadmap bars */}
+      {ambitionGap?.priorityGaps && ambitionGap.priorityGaps.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-5" style={{ color: "#0F2547" }}>Capability against AI roadmap</p>
+          <div className="flex flex-col gap-8">
+            {ambitionGap.priorityGaps.map((pg: any, i: number) => (
+              <RoadmapBar
+                key={i}
+                label={pg.priority}
+                sub={pg.relevantDomains?.map((d: any) => d.domainName).join(" · ")}
+                currentScore={pg.avgCurrentScore}
+                targetScore={pg.requiredScore}
+                status={pg.status}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Domain capability bars (if no priority gaps) */}
+      {(!ambitionGap?.priorityGaps || ambitionGap.priorityGaps.length === 0) && ambitionGap?.configured && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-5" style={{ color: "#0F2547" }}>Capability against AI roadmap</p>
+          <div className="flex flex-col gap-8">
+            {DOMAIN_KEYS.map(key => {
+              const domainData = trajectory?.domains?.find(d => d.domain === key);
               return (
-                <div key={i} className="space-y-3 pb-5 border-b border-border last:border-0 last:pb-0">
-                  {/* Priority header */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-mono text-muted-foreground mt-0.5 shrink-0">P{i + 1}</span>
-                      <p className="text-sm font-medium text-foreground">{pg.priority}</p>
-                    </div>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full border font-medium shrink-0"
-                      style={{ borderColor: barColour + "40", backgroundColor: barColour + "15", color: barColour }}
-                    >
-                      {pg.status === "aligned" ? "Aligned" : pg.status === "partial" ? "Partial" : pg.status === "gap" ? "Gap" : "No data"}
-                    </span>
-                  </div>
+                <RoadmapBar
+                  key={key}
+                  label={DOMAIN_LABELS[key as CapabilityKey]}
+                  currentScore={domainData?.currentValue ?? null}
+                  targetScore={ambitionGap.ambitionTargetScore}
+                  status={domainData?.currentValue !== null && ambitionGap.ambitionTargetScore !== null
+                    ? (domainData!.currentValue! >= ambitionGap.ambitionTargetScore ? "aligned" : domainData!.currentValue! >= ambitionGap.ambitionTargetScore - 15 ? "partial" : "gap")
+                    : "unknown"}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-                  {/* Score bar */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Current: <strong className="text-foreground font-mono">{pg.avgCurrentScore !== null ? (pg.avgCurrentScore / 10).toFixed(1) : "—"}</strong></span>
-                      {pg.requiredScore !== null && (
-                        <span>Target: <strong className="text-foreground font-mono">{(pg.requiredScore / 10).toFixed(1)}</strong></span>
-                      )}
-                    </div>
-                    <div className="relative h-2.5 rounded-full bg-neutral-100 overflow-hidden">
-                      <div
-                        className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-                        style={{ width: currentPct + "%", backgroundColor: barColour }}
-                      />
-                      {targetPct > 0 && (
-                        <div
-                          className="absolute top-0 h-full w-0.5 bg-neutral-400"
-                          style={{ left: Math.min(targetPct, 99) + "%" }}
-                        />
-                      )}
-                    </div>
-                  </div>
+      {/* Trajectory chart */}
+      {trajectory?.domains && trajectory.domains.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-4" style={{ color: "#0F2547" }}>Trajectory · function average</p>
+          <TrajectoryChart
+            domains={trajectory.domains}
+            targetScore={ambitionGap?.ambitionTargetScore ?? null}
+            targetDate={ambitionGap?.ambitionTargetDate ?? null}
+          />
+        </div>
+      )}
 
-                  {/* Relevant domains */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {pg.relevantDomains.map((d: any) => (
-                      <span
-                        key={d.domain}
-                        className="text-xs px-2 py-0.5 rounded-full border"
-                        style={{ borderColor: d.colour + "40", backgroundColor: d.colour + "10", color: d.colour }}
-                      >
-                        {d.domainName}
-                        {d.currentScore !== null && (
-                          <span className="ml-1 font-mono font-semibold">{(d.currentScore / 10).toFixed(1)}</span>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Recommended actions */}
-                  <div className="space-y-1.5">
-                    {actions.map((action, ai) => (
-                      <div key={ai} className="flex items-start gap-2 text-xs">
-                        <Lightbulb className="w-3 h-3 text-[#D97706] shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">{action}</span>
-                      </div>
-                    ))}
+      {/* Regulatory exposure */}
+      {findings?.findings && findings.findings.length > 0 && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <p className="text-sm font-medium mb-4" style={{ color: "#0F2547" }}>Strategic findings</p>
+          <div className="flex flex-col gap-3">
+            {findings.findings.slice(0, 5).map((f: any, i: number) => {
+              const isHighPriority = f.priority === "high" || f.type === "risk" || f.type === "governance";
+              return (
+                <div key={i} className="flex gap-3 p-3 rounded-lg" style={{ background: isHighPriority ? "#FEF7ED" : "#F9FAFB", border: `0.5px solid ${isHighPriority ? "#FED7AA" : "#E5E7EB"}` }}>
+                  <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ background: isHighPriority ? "#B45309" : "#6B7280" }} />
+                  <div>
+                    <p className="text-sm font-medium mb-0.5" style={{ color: "#0F2547" }}>{f.title ?? f.finding ?? "Finding"}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "#4B5563" }}>{f.description ?? f.detail ?? ""}</p>
                   </div>
                 </div>
               );
@@ -336,106 +434,35 @@ export default function AIStrategyPage() {
         </div>
       )}
 
-
-      {/* ── Ambition Target Dialog ── */}
+      {/* Set target dialog */}
       <Dialog open={showTargetDialog} onOpenChange={setShowTargetDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-[#047857]" />
-              Set AI Readiness Ambition Target
-            </DialogTitle>
-            <DialogDescription>
-              Define the readiness score your HR function is aiming for and when you want to reach it.
-            </DialogDescription>
+            <DialogTitle>Set ambition target</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Readiness Score (0–10)</label>
-              <p className="text-xs text-muted-foreground mb-2">7.5 = AI Ready · 9.0 = Advanced</p>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="0.1"
-                value={targetScore}
-                onChange={(e) => setTargetScore(e.target.value)}
-                placeholder="e.g. 7.5"
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
-              />
+              <label className="text-sm font-medium mb-1.5 block">Target level (0–10)</label>
+              <Input placeholder="e.g. 4.0" value={targetScore} onChange={e => setTargetScore(e.target.value)} />
+              <p className="text-xs mt-1" style={{ color: "#6B7280" }}>Level 3 = Capable · Level 4 = Strong · Level 5 = AI Ready</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Date (optional)</label>
-              <input
-                type="date"
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
-              />
+              <label className="text-sm font-medium mb-1.5 block">Target date</label>
+              <Input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Ambition Statement (optional)</label>
-              <input
-                type="text"
-                value={targetLabel}
-                onChange={(e) => setTargetLabel(e.target.value)}
-                placeholder="e.g. HR function fully capable of deploying AI tools"
-                maxLength={200}
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
-              />
+              <label className="text-sm font-medium mb-1.5 block">Label (optional)</label>
+              <Input placeholder="e.g. December 2026" value={targetLabel} onChange={e => setTargetLabel(e.target.value)} />
             </div>
-            {targetScore && parseFloat(targetScore) >= 0 && parseFloat(targetScore) <= 10 && (
-              <div className="p-3 rounded-xl bg-[#047857]/5 border border-[#047857]/15 text-xs text-muted-foreground">
-                Target: <strong className="text-foreground">{parseFloat(targetScore).toFixed(1)}</strong> / 10
-                {targetDate && <> by <strong className="text-foreground">{new Date(targetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
-                {targetLabel && <> — {targetLabel}</>}
-              </div>
-            )}
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" size="sm" onClick={() => setShowTargetDialog(false)}>Cancel</Button>
-              <Button
-                size="sm"
-                className="bg-[#047857] hover:bg-[#1a6626] text-white"
-                onClick={handleSaveTarget}
-                disabled={setAmbitionTarget.isPending || !targetScore}
-              >
-                {setAmbitionTarget.isPending ? "Saving…" : "Save Target"}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setShowTargetDialog(false)}>Cancel</Button>
+            <Button disabled={setAmbitionTarget.isPending} onClick={handleSaveTarget} style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>
+              {setAmbitionTarget.isPending ? "Saving…" : "Save target"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
-      {/* ── Summary Actions ── */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Next steps</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link href="/dashboard/leader">
-            <Button variant="outline" className="w-full gap-2 text-xs justify-start">
-              <BarChart3 className="w-3.5 h-3.5" />
-              View full function dashboard
-            </Button>
-          </Link>
-          <Button variant="outline" className="w-full gap-2 text-xs justify-start" onClick={openTargetDialog}>
-            <Target className="w-3.5 h-3.5" />
-            Update ambition target
-          </Button>
-          <Link href="/admin/learning">
-            <Button variant="outline" className="w-full gap-2 text-xs justify-start">
-              <TrendingUp className="w-3.5 h-3.5" />
-              Review learning content
-            </Button>
-          </Link>
-          <Link href="/reports">
-            <Button variant="outline" className="w-full gap-2 text-xs justify-start">
-              <ArrowRight className="w-3.5 h-3.5" />
-              Export strategy report
-            </Button>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,94 +1,147 @@
 /**
- * Individual Dashboard — Peakon Visual Language v2.0
+ * Individual Dashboard — Wireframe P2 visual language
+ * Level ring · "Where you are" narrative · Continue Learning · 6-domain capability grid
  */
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
-import {
-  DashboardCard,
-  DomainDot,
-  CapabilityBar,
-  EmptyState,
-  PeakonScoreBadge,
-  RatingBadge,
-  ConfidenceIndicator,
-} from "@/components/dashboard/DashboardUI";
-import {
-  HeroScore,
-  Sparkline,
-  ReadinessDistributionBar,
-  ScoreTrendCard,
-  AIInsightCard,
-  PillFilter,
-} from "@/components/dashboard/PeakonPrimitives";
-import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
-import { DOMAIN_COLOURS } from "@/lib/domains";
 import { IndividualDashboardSkeleton } from "@/components/ui/loading";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { DownloadPdfButton } from "@/components/DownloadPdfButton";
-import { Badge } from "@/components/ui/badge";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  ReferenceLine,
-  Tooltip as RechartsTooltip,
-} from "recharts";
-import {
-  CalendarDays,
-  Clock,
-  BookOpen,
-  ArrowRight,
-  Target,
-  ChevronRight,
-  Sparkles,
-  GraduationCap,
-  AlertTriangle,
-  Users,
-} from "lucide-react";
+import { useState } from "react";
+import { BookOpen, ArrowRight, Sparkles, AlertTriangle, Target } from "lucide-react";
+import { DomainDot, CapabilityBar, EmptyState, RatingBadge, PeakonScoreBadge, ConfidenceIndicator } from "@/components/dashboard/DashboardUI";
+import { HeroScore } from "@/components/dashboard/PeakonPrimitives";
+import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { DOMAIN_COLOURS } from "@/lib/domains";
 
-// DOMAIN_COLOURS imported from @/lib/domains (canonical Paul Tol palette)
+// ─── Wireframe colour scale (1→5 levels) ─────────────────────────────────────
+// Level 1 Emerging: #E5E7EB / #4B5563
+// Level 2 Developing: #94A3B8 / #FFFFFF
+// Level 3 Capable: #557DAE / #FFFFFF
+// Level 4 Strong: #2E4C7A / #FFFFFF
+// Level 5 AI Ready: #1F3A5F / #FFFFFF
+
+function getLevelFromScore(score: number): number {
+  // score is 0–100; map to 1–5
+  if (score >= 80) return 5;
+  if (score >= 60) return 4;
+  if (score >= 40) return 3;
+  if (score >= 20) return 2;
+  return 1;
+}
+
+function getLevelLabel(level: number): string {
+  return ["", "Emerging", "Developing", "Capable", "Strong", "AI Ready"][level] ?? "Developing";
+}
+
+function getLevelChipStyle(level: number): { bg: string; text: string } {
+  const styles: Record<number, { bg: string; text: string }> = {
+    1: { bg: "#E5E7EB", text: "#4B5563" },
+    2: { bg: "#94A3B8", text: "#FFFFFF" },
+    3: { bg: "#557DAE", text: "#FFFFFF" },
+    4: { bg: "#2E4C7A", text: "#FFFFFF" },
+    5: { bg: "#1F3A5F", text: "#FFFFFF" },
+  };
+  return styles[level] ?? styles[2];
+}
+
+function LevelChip({ level, size = "sm" }: { level: number; size?: "sm" | "md" | "lg" }) {
+  const style = getLevelChipStyle(level);
+  const sizeClass = size === "lg" ? "w-12 h-12 text-lg" : size === "md" ? "w-8 h-8 text-sm" : "w-7 h-7 text-xs";
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-md font-medium flex-shrink-0 ${sizeClass}`}
+      style={{ backgroundColor: style.bg, color: style.text }}
+    >
+      {level}
+    </span>
+  );
+}
+
+// SVG donut ring showing level progress
+function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
+  const level = getLevelFromScore(score);
+  const levelLabel = getLevelLabel(level);
+  const preciseScore = (score / 10).toFixed(1);
+  const chipStyle = getLevelChipStyle(level);
+
+  // Progress within the current level (0–1)
+  const levelMin = (level - 1) * 20;
+  const levelMax = level * 20;
+  const progressInLevel = Math.min(1, (score - levelMin) / 20);
+  const pctToNextLevel = Math.round(progressInLevel * 100);
+
+  // Circle geometry
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.375; // radius
+  const strokeWidth = size * 0.0875;
+  const circumference = 2 * Math.PI * r;
+  const filled = (score / 100) * circumference;
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
+        <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+          {/* Track */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F3F4F6" strokeWidth={strokeWidth} />
+          {/* Fill */}
+          <circle
+            cx={cx} cy={cy} r={r}
+            fill="none"
+            stroke={chipStyle.bg}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${filled} ${circumference}`}
+            strokeDashoffset={0}
+            transform={`rotate(-90 ${cx} ${cy})`}
+            strokeLinecap="round"
+          />
+          {/* Score text */}
+          <text
+            x={cx} y={cy - size * 0.04}
+            textAnchor="middle"
+            style={{ fontSize: size * 0.2, fontWeight: 500, fill: "#0F2547", fontFamily: "Inter, system-ui, sans-serif" }}
+          >
+            {preciseScore}
+          </text>
+          <text
+            x={cx} y={cy + size * 0.12}
+            textAnchor="middle"
+            style={{ fontSize: size * 0.065, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "0.06em" }}
+          >
+            YOUR LEVEL
+          </text>
+        </svg>
+      </div>
+      <p style={{ fontSize: 11, color: "#6B7280", marginTop: 8 }}>{pctToNextLevel}% of the way to Level {Math.min(5, level + 1)}</p>
+      <span
+        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium mt-2"
+        style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}
+      >
+        Level {level} · {levelLabel}
+      </span>
+    </div>
+  );
+}
 
 export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const { user } = useAuth();
   const [drillDomain, setDrillDomain] = useState<string | null>(null);
-  const [domainView, setDomainView] = useState<string>("cards");
 
   const { data, isLoading } = trpc.dashboardV2.individual.main.useQuery(
     userId ? { userId } : undefined,
   );
 
   const isOwnDashboard = !userId || userId === (user as any)?.id;
-  // BA-03: Fetch org ambition target to show "Your role in the AI strategy"
+
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
     retry: false,
-    // Non-leaders get FORBIDDEN — suppress error, show nothing
     onError: () => {},
   } as any);
-
-  const readinessDistribution = useMemo(() => {
-    const domains = (data?.domains ?? []).filter(d => d.score !== null);
-    let aiReady = 0, developing = 0, notYetReady = 0, foundationGap = 0;
-    for (const d of domains) {
-      const s = d.score!;
-      if (s >= 70) aiReady++;
-      else if (s >= 50) developing++;
-      else if (s >= 30) notYetReady++;
-      else foundationGap++;
-    }
-    return { aiReady, developing, notYetReady, foundationGap, total: domains.length };
-  }, [data?.domains]);
-
-  const scoreHistory = useMemo(
-    () => (data?.assessmentHistory ?? []).map(h => h.overallScore),
-    [data?.assessmentHistory],
-  );
 
   const scoreDelta = useMemo(() => {
     if (!data || data.assessmentHistory.length < 2) return null;
@@ -96,36 +149,9 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     return sorted[sorted.length - 1].overallScore - sorted[sorted.length - 2].overallScore;
   }, [data]);
 
-  // BA-09: Strategic Fit Score — how well this person's domain profile matches priority domains
-  const strategicFitScore = useMemo(() => {
-    if (!ambitionGap || !ambitionGap.configured || !data) return null;
-    const priorityDomains = (ambitionGap.priorityGaps ?? []).flatMap((pg: any) =>
-      pg.relevantDomains.map((d: any) => d.domain)
-    );
-    const uniquePriorityDomains = Array.from(new Set(priorityDomains)) as string[];
-    if (uniquePriorityDomains.length === 0) return null;
-    const scored = data.domains.filter(d => uniquePriorityDomains.includes(d.key) && d.score !== null);
-    if (scored.length === 0) return null;
-    const avg = Math.round(scored.reduce((s, d) => s + (d.score ?? 0), 0) / scored.length);
-    return avg;
-  }, [ambitionGap, data]);
-
-  const insights = useMemo(() => {
-    if (!data) return [];
-    const ins: string[] = [];
-    const scored = data.domains.filter(d => d.score !== null);
-    const topDomain = [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
-    const weakDomain = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
-    if (topDomain) ins.push(`Strongest capability: ${topDomain.name} (${formatPeakonScore(topDomain.score!)})`);
-    if (weakDomain && weakDomain.key !== topDomain?.key) ins.push(`Priority development area: ${weakDomain.name} (${formatPeakonScore(weakDomain.score!)})`);
-    if (data.overallScore !== null) ins.push(`Overall readiness: ${scoreToReadinessLabel(data.overallScore)}`);
-    if (scoreDelta !== null && scoreDelta !== 0) ins.push(`Score ${scoreDelta > 0 ? "improved" : "declined"} by ${Math.abs(scoreDelta / 10).toFixed(1)} points since last assessment`);
-    return ins;
-  }, [data, scoreDelta]);
-
   if (isLoading) return <IndividualDashboardSkeleton />;
   if (!data) return (
-    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto">
+    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto">
       <EmptyState
         title="No data available"
         description="Complete an assessment to see your capability dashboard."
@@ -134,47 +160,44 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     </div>
   );
 
-  // Derive a hero-level finding for the banner
-  const heroStatement = useMemo(() => {
-    if (!data) return null;
-    if (data.overallScore === null) return "Complete your assessment to generate your capability profile.";
-    const scored = data.domains.filter(d => d.score !== null);
-    const topDomain = [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
-    const weakDomain = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
-    const readiness = scoreToReadinessLabel(data.overallScore);
-    if (topDomain && weakDomain && weakDomain.key !== topDomain.key) {
-      return `Your strongest capability is ${topDomain.name} — focus development on ${weakDomain.name} to accelerate your overall readiness.`;
-    }
-    return `Your overall readiness is ${readiness}. ${data.ratingExplanation ?? ""}`;
-  }, [data]);
+  const score = data.overallScore ?? 0;
+  const level = getLevelFromScore(score);
+  const levelLabel = getLevelLabel(level);
+  const preciseScore = (score / 10).toFixed(1);
+
+  // Derive narrative text
+  const sortedDomains = [...data.domains].filter(d => d.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const topDomain = sortedDomains[0];
+  const weakDomain = sortedDomains[sortedDomains.length - 1];
+  const deltaText = scoreDelta !== null && scoreDelta !== 0
+    ? `Up ${Math.abs(scoreDelta / 10).toFixed(1)} levels this cycle. `
+    : "";
+  const narrativeText = data.overallScore !== null
+    ? `You're at Level ${preciseScore} — ${levelLabel.toLowerCase()}. ${deltaText}${topDomain ? `Strongest in ${topDomain.name} (${(topDomain.score! / 10).toFixed(1)}).` : ""} ${weakDomain && weakDomain.key !== topDomain?.key ? `Biggest opportunity is ${weakDomain.name} (${(weakDomain.score! / 10).toFixed(1)}) — your current development focus.` : ""}`
+    : "Complete your assessment to generate your capability profile.";
+
+  const roleTarget = data.roleTarget;
+  const roleTargetText = roleTarget ? `Role target: Level ${(roleTarget / 10).toFixed(1)} by December.` : "";
+
+  // Continue learning — use planSummary if available
+  const plan = data.planSummary;
+
+  const firstName = isOwnDashboard
+    ? ((user as any)?.name?.split(" ")[0] ?? "there")
+    : data.user.firstName;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-4">
+
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">
+          <p className="text-xs font-medium uppercase tracking-widest text-neutral-400 mb-0.5">
             {isOwnDashboard ? "Your capability profile" : `${data.user.firstName} ${data.user.lastName}`}
+          </p>
+          <h1 className="text-lg font-semibold" style={{ color: "#0F2547" }}>
+            Good morning, {firstName}
           </h1>
-          <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
-            {data.user.roleFamily && (
-              <span className="flex items-center gap-1">
-                <GraduationCap className="w-3.5 h-3.5" />
-                {data.user.roleFamily}
-              </span>
-            )}
-            {data.lastAssessmentDate && (
-              <span className="flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-            )}
-            {data.nextReassessmentDate && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                Next reassessment {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-              </span>
-            )}
-          </div>
         </div>
         <div className="flex items-center gap-2">
           {isOwnDashboard && (
@@ -182,311 +205,119 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           )}
           {isOwnDashboard && (
             <Link href="/assessment">
-              <Button variant="default" size="sm" className="gap-1.5">
+              <Button size="sm" className="gap-1.5" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 {data.overallScore !== null ? "Reassess" : "Start assessment"}
               </Button>
             </Link>
           )}
         </div>
-      </header>
+      </div>
 
-      {/* ── Hero finding banner ── */}
-      {heroStatement && (
-        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-border bg-card shadow-sm">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-foreground leading-relaxed">{heroStatement}</p>
-            <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground flex-wrap">
-              {data.overallScore !== null && (
-                <span>Overall score: <strong className="text-foreground" style={{ color: scoreToColor(data.overallScore).bg }}>{(data.overallScore / 10).toFixed(1)}</strong> / 10</span>
-              )}
-              {data.assessmentHistory.length > 0 && (
-                <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
-              )}
-              {isOwnDashboard && (
-                <Link href="/assessment">
-                  <button className="text-primary hover:underline font-medium">View development priorities →</button>
-                </Link>
+      {/* ── Hero card: level ring + "Where you are" narrative ── */}
+      {data.overallScore !== null && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-7">
+          <div className="grid gap-8 items-center" style={{ gridTemplateColumns: "200px 1fr" }}>
+            {/* Level ring */}
+            <LevelRing score={score} size={160} />
+
+            {/* Narrative */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>
+                Where you are
+              </p>
+              <h3 className="text-xl font-medium leading-snug mb-3" style={{ color: "#0F2547" }}>
+                {narrativeText}
+              </h3>
+              {roleTargetText && (
+                <p className="text-sm" style={{ color: "#6B7280" }}>{roleTargetText}</p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── 4-column stat grid (mirrors leader dashboard) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardCard className="col-span-2 lg:col-span-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Overall Score</p>
-          <div className="flex items-start justify-between">
-            <HeroScore
-              score={data.overallScore}
-              label={data.overallScore !== null ? scoreToReadinessLabel(data.overallScore) : undefined}
-              delta={scoreDelta}
-              size="xl"
-            />
-            {scoreHistory.length >= 2 && (
-              <Sparkline
-                data={scoreHistory}
-                width={64}
-                height={40}
-                colour={data.overallScore !== null ? scoreToColor(data.overallScore).bg : undefined}
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-wrap mt-2">
-            <RatingBadge rating={data.overallRating} size="sm" />
-            <ConfidenceIndicator band={data.confidenceBand} />
-          </div>
-        </DashboardCard>
-
-        <DashboardCard>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Domains Ready</p>
-          <p className="text-3xl font-bold tabular-nums" style={{ color: "#7A9E8E" }}>
-            {readinessDistribution.aiReady}
+      {/* ── No assessment state ── */}
+      {data.overallScore === null && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-7 text-center">
+          <p className="text-base font-medium mb-3" style={{ color: "#0F2547" }}>
+            Complete your assessment to see your capability level
           </p>
-          <p className="text-xs text-muted-foreground mt-1">of {readinessDistribution.total} domains AI-ready</p>
-          {readinessDistribution.total > 0 && (
-            <div className="mt-3">
-              <ReadinessDistributionBar
-                aiReady={readinessDistribution.aiReady}
-                developing={readinessDistribution.developing}
-                notYetReady={readinessDistribution.notYetReady}
-                foundationGap={readinessDistribution.foundationGap}
-                total={readinessDistribution.total}
-              />
-            </div>
-          )}
-        </DashboardCard>
+          <Link href="/assessment">
+            <Button style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>Start Assessment →</Button>
+          </Link>
+        </div>
+      )}
 
-        <DashboardCard>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Assessments</p>
-          <p className="text-3xl font-bold tabular-nums text-foreground">
-            {data.assessmentHistory.length}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">completed to date</p>
-          {strategicFitScore !== null && (
-            <div className="mt-3 pt-3 border-t border-neutral-100">
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Strategic fit</p>
-              <span className="text-lg font-bold font-mono tabular-nums"
-                style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#b45309" }}>
-                {(strategicFitScore / 10).toFixed(1)}
-              </span>
-              <span className="text-xs text-muted-foreground ml-1">/ 10</span>
-            </div>
-          )}
-        </DashboardCard>
-
-        <DashboardCard>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Next Reassessment</p>
-          {data.nextReassessmentDate ? (
-            <>
-              <p className="text-sm font-semibold text-foreground">
-                {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+      {/* ── Continue learning card ── */}
+      {plan && (
+        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#1F3A5F" }}>
+                Continue learning
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Scheduled reassessment</p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-semibold text-muted-foreground">Not scheduled</p>
-              <p className="text-xs text-muted-foreground mt-1">Complete your assessment to set a cadence</p>
-            </>
-          )}
-          {data.lastAssessmentDate && (
-            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-neutral-100">
-              Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-            </p>
-          )}
-        </DashboardCard>
-      </div>
-
-      {/* Score history (shown when ≥2 assessments) */}
-      {data.assessmentHistory.length >= 2 && (
-        <DashboardCard title="Score history" subtitle="Your capability trajectory over time">
-          <ScoreProgressChart history={data.assessmentHistory} target={data.roleTarget} />
-        </DashboardCard>
+              <h3 className="text-base font-medium" style={{ color: "#0F2547" }}>
+                Your development plan
+              </h3>
+            </div>
+            <Link href="/learning">
+              <Button size="sm" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>
+                Resume →
+              </Button>
+            </Link>
+          </div>
+          <p className="text-sm mb-3" style={{ color: "#6B7280" }}>
+            {plan.moduleCount} module{plan.moduleCount !== 1 ? "s" : ""} · {plan.completionPercentage}% complete
+            {plan.totalEstimatedMinutes > 0 && ` · ~${Math.round(plan.totalEstimatedMinutes)} minutes remaining`}
+          </p>
+          <div style={{ position: "relative", height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${plan.completionPercentage}%`, background: "#557DAE", borderRadius: 3 }} />
+          </div>
+        </div>
       )}
 
-      {insights.length > 0 && (
-        <AIInsightCard title="Capability insights" insights={insights} />
-      )}
+      {/* ── Six capability areas ── */}
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+        <p className="text-sm font-medium mb-4" style={{ color: "#0F2547" }}>
+          Your six capability areas
+        </p>
 
-      <DashboardCard
-        title="Capability domains"
-        subtitle="Click any domain to see detailed breakdown"
-        action={
-          <PillFilter
-            label="View"
-            value={domainView}
-            options={[
-              { value: "cards", label: "Score cards" },
-              { value: "trend", label: "Trend view" },
-            ]}
-            onChange={v => setDomainView(v)}
-          />
-        }
-      >
-        {domainView === "cards" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-1">
-            {data.domains.map(d => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {data.domains.map(d => {
+            const domainScore = d.score;
+            const domainLevel = domainScore !== null ? getLevelFromScore(domainScore) : 1;
+            const chipStyle = getLevelChipStyle(domainLevel);
+            const preciseLevel = domainScore !== null ? (domainScore / 10).toFixed(1) : null;
+            const isWeakest = weakDomain && d.key === weakDomain.key && d.key !== topDomain?.key;
+            const isStrongest = topDomain && d.key === topDomain.key;
+
+            return (
               <button
                 key={d.key}
                 onClick={() => setDrillDomain(d.key)}
-                className="group text-left p-4 rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all bg-card"
-                style={d.score !== null ? { borderLeftColor: scoreToColor(d.score).bg, borderLeftWidth: '4px' } : {}}
+                className="flex items-center gap-3 p-3 rounded-lg text-left transition-all hover:shadow-sm"
+                style={{
+                  background: isWeakest ? "#FEF7ED" : "#F9FAFB",
+                  border: isWeakest ? "0.5px solid #FED7AA" : "0.5px solid transparent",
+                }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <DomainDot domain={d.key} size={10} />
-                    <span className="text-xs font-semibold text-foreground">{d.name}</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 transition-colors" />
-                </div>
-                <div className="flex items-end justify-between mb-2.5">
-                  {d.score !== null ? (
-                    <span
-                      className="text-3xl font-bold tabular-nums tracking-tight"
-                      style={{ color: scoreToColor(d.score).bg }}
-                    >
-                      {formatPeakonScore(d.score)}
-                    </span>
-                  ) : (
-                    <span className="text-3xl font-bold text-neutral-300">—</span>
-                  )}
-                  <RatingBadge rating={d.rating} size="sm" />
-                </div>
-                <CapabilityBar score={d.score} colour={d.colour} height={5} />
-                {!d.hasEvidence && (
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Limited evidence
+                <LevelChip level={domainLevel} size="sm" />
+                <div style={{ flex: 1 }}>
+                  <p className="text-sm font-medium" style={{ color: "#0F2547" }}>{d.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: isWeakest ? "#B45309" : "#6B7280" }}>
+                    Level {preciseLevel ?? "—"}
+                    {isStrongest && " · Strongest"}
+                    {isWeakest && " · Active development"}
                   </p>
-                )}
+                </div>
               </button>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-1">
-            {data.domains.map(d => (
-              <ScoreTrendCard
-                key={d.key}
-                label={d.name}
-                colour={(DOMAIN_COLOURS as Record<string, string>)[d.key] ?? "#94A3B8"}
-                currentScore={d.score ?? 0}
-                delta={null}
-                history={d.score !== null ? [d.score] : []}
-                onClick={() => setDrillDomain(d.key)}
-              />
-            ))}
-          </div>
-        )}
-      </DashboardCard>
-
-      <DashboardCard title="Gap analysis" subtitle="Current score vs role target">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-neutral-200">
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground w-48">Domain</th>
-                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Current</th>
-                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Target</th>
-                <th className="text-center py-3 px-4 font-semibold text-muted-foreground w-20">Gap</th>
-                <th className="py-2 pl-4 font-semibold text-muted-foreground">Progress</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.gapHeatmap.map(row => {
-                const gapPeakon = row.gapValue !== null ? row.gapValue / 10 : null;
-                const gapColour = gapPeakon === null ? "#94A3B8" : gapPeakon <= 0 ? "#7A9E8E" : gapPeakon <= 0.5 ? "#C8B07A" : "#b45309";
-                return (
-                  <tr key={row.domain} className="border-b border-neutral-100 last:border-0">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <DomainDot domain={row.domain} />
-                        <span className="font-medium text-foreground">{row.domainName}</span>
-                      </div>
-                    </td>
-                    <td className="text-center py-2.5 px-3">
-                      {row.currentScore !== null ? (
-                        <span className="font-mono font-bold tabular-nums text-xs" style={{ color: scoreToColor(row.currentScore).bg }}>
-                          {formatPeakonScore(row.currentScore)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="text-center py-2.5 px-3">
-                      {row.targetScore != null ? (
-                        <span className="font-mono font-semibold tabular-nums text-xs text-muted-foreground">{formatPeakonScore(row.targetScore)}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="text-center py-2.5 px-3">
-                      {row.gapValue !== null ? (
-                        <span className="font-mono font-semibold tabular-nums text-xs" style={{ color: gapColour }}>
-                          {gapPeakon !== null && gapPeakon > 0 ? `+${gapPeakon.toFixed(1)}` : gapPeakon !== null ? gapPeakon.toFixed(1) : "—"}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pl-4">
-                      {row.currentScore !== null && (
-                        <CapabilityBar
-                          score={row.currentScore}
-                          target={row.targetScore}
-                          colour={(DOMAIN_COLOURS as Record<string, string>)[row.domain] ?? "#94A3B8"}
-                          height={6}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            );
+          })}
         </div>
-      </DashboardCard>
+      </div>
 
-      {data.planSummary && (
-        <Link href="/learning?tab=insights">
-          <DashboardCard className="cursor-pointer hover:shadow-md transition-shadow group">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Continue your learning plan</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {data.planSummary.moduleCount} modules · ~{Math.round(data.planSummary.totalEstimatedMinutes / 60)}h estimated · {data.planSummary.completionPercentage}% complete
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-24 h-2 rounded-full bg-neutral-200 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-indigo-500 transition-all duration-500"
-                    style={{ width: `${data.planSummary.completionPercentage}%` }}
-                  />
-                </div>
-                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-indigo-600 transition-colors" />
-              </div>
-            </div>
-          </DashboardCard>
-        </Link>
-      )}
-
-      {/* BA-03: Your role in the AI strategy */}
-      {isOwnDashboard && ambitionGap && ambitionGap.configured && data.overallScore !== null && (
-        <IndividualStrategyPanel
-          overallScore={data.overallScore}
-          ambitionGap={ambitionGap}
-          domains={data.domains}
-        />
-      )}
+      {/* ── Domain drill-down sheet ── */}
       <DomainDrillDown
         open={drillDomain !== null}
         onClose={() => setDrillDomain(null)}
@@ -497,45 +328,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   );
 }
 
-function ScoreProgressChart({ history, target }: {
-  history: Array<{ sessionId: string; date: string; overallScore: number; rating: string }>;
-  target: number | null;
-}) {
-  const chartData = useMemo(() =>
-    history.map(h => ({
-      date: new Date(h.date).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }),
-      score: parseFloat(formatPeakonScore(h.overallScore)),
-    })),
-    [history]
-  );
-
-  return (
-    <div className="h-36">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-          <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#94A3B8" }} tickLine={false} axisLine={false} />
-          <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: "#94A3B8" }} tickLine={false} axisLine={false} />
-          {target && (
-            <ReferenceLine y={parseFloat(formatPeakonScore(target))} stroke="#94A3B8" strokeDasharray="4 4" strokeWidth={1.5} />
-          )}
-          <RechartsTooltip
-            contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 11, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
-            formatter={(value: number) => [`${value}`, "Score"]}
-          />
-          <Line
-            type="monotone"
-            dataKey="score"
-            stroke="#4477AA"
-            strokeWidth={2}
-            dot={{ r: 3.5, fill: "#4477AA", stroke: "#fff", strokeWidth: 2 }}
-            activeDot={{ r: 5, fill: "#4477AA", stroke: "#fff", strokeWidth: 2 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
+// ─── Domain drill-down sheet ─────────────────────────────────────────────────
 
 function DomainDrillDown({ open, onClose, domainKey, userId }: {
   open: boolean;
@@ -580,10 +373,10 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg bg-[#D97706]/8 border border-[#D97706]/25">
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
                   <div className="flex items-start gap-2">
-                    <Target className="w-4 h-4 text-[#99882A] mt-0.5 shrink-0" />
-                    <p className="text-xs text-[#7A6E22]">{data.gapStatement}</p>
+                    <Target className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-700">{data.gapStatement}</p>
                   </div>
                 </div>
               )}
@@ -600,14 +393,11 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                   {data.signals.map(s => (
                     <div key={s.signalKey} className="flex items-center justify-between py-1.5">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#7A9E8E" : s.level === "Developing" ? "#C8B07A" : "#b45309" }} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#047857" : s.level === "Developing" ? "#2563EB" : "#D97706" }} />
                         <span className="text-xs text-foreground truncate">{s.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <PeakonScoreBadge score={s.score} />
-                        <Badge variant="outline" className="text-xs px-1.5 py-0">
-                          {s.level}
-                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -628,9 +418,9 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                           <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-medium text-foreground">{m.title}</span>
                         </div>
-                        <Badge variant={m.status === "completed" ? "default" : "outline"} className="text-xs">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "completed" ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
                           {m.status}
-                        </Badge>
+                        </span>
                       </div>
                     </Link>
                   ))}
@@ -641,108 +431,5 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
         ) : null}
       </SheetContent>
     </Sheet>
-  );
-}
-
-
-// ─── BA-03: Individual "Your role in the AI strategy" panel ──────────────────
-
-function IndividualStrategyPanel({
-  overallScore,
-  ambitionGap,
-  domains,
-}: {
-  overallScore: number;
-  ambitionGap: any;
-  domains: Array<{ key: string; name: string; score: number | null; colour?: string }>;
-}) {
-  const currentPeakon = (overallScore / 10).toFixed(1);
-  const targetPeakon = ambitionGap.ambitionTargetScore !== null
-    ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : null;
-  const gapRaw = ambitionGap.ambitionTargetScore !== null
-    ? ambitionGap.ambitionTargetScore - overallScore : null;
-  const gapPeakon = gapRaw !== null ? Math.abs(gapRaw / 10).toFixed(1) : null;
-  const isAboveOrgAvg = ambitionGap.functionAvgRaw !== null && overallScore > ambitionGap.functionAvgRaw;
-  const isAboveTarget = gapRaw !== null && gapRaw <= 0;
-  const orgGapRaw = ambitionGap.gapRaw ?? null;
-
-  const priorityDomains = (ambitionGap.priorityGaps ?? []).flatMap((pg: any) =>
-    pg.relevantDomains.map((d: any) => d.domain)
-  );
-  const uniquePriorityDomains = Array.from(new Set(priorityDomains)) as string[];
-  const myWeakPriorityDomains = domains
-    .filter(d => uniquePriorityDomains.includes(d.key) && d.score !== null && d.score < 70)
-    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
-    .slice(0, 3);
-
-  return (
-    <DashboardCard
-      title="Your role in the AI strategy"
-      subtitle="How your personal readiness contributes to the organisation's AI ambition"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-        <div className="p-3 rounded-xl bg-muted/40 border border-border text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Your score</p>
-          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{currentPeakon}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">/ 10</p>
-        </div>
-        <div className="p-3 rounded-xl bg-muted/40 border border-border text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Org average</p>
-          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
-            {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: isAboveOrgAvg ? "#7A9E8E" : "#b45309" }}>
-            {isAboveOrgAvg ? "Above org average" : "Below org average"}
-          </p>
-        </div>
-        <div className="p-3 rounded-xl border text-center"
-          style={{ backgroundColor: isAboveTarget ? "#f0fdf4" : "#F4EEEC", borderColor: isAboveTarget ? "#7A9E8E" : "#b45309" }}>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>Org target</p>
-          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>
-            {targetPeakon ?? "—"}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>
-            {isAboveTarget ? "You meet the target ✓" : gapPeakon ? `${gapPeakon} pts to reach target` : ""}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/15">
-        <p className="text-xs font-semibold text-primary mb-1">What this means for you</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {isAboveTarget
-            ? `You are already at or above the organisation's AI readiness target of ${targetPeakon}/10. Your capability is helping drive the function forward — consider mentoring colleagues or taking on AI-led projects.`
-            : orgGapRaw !== null && orgGapRaw > 0
-              ? `The organisation needs to close a ${(orgGapRaw / 10).toFixed(1)}-point gap to reach its AI ambition. Your personal development directly contributes to this goal — focusing on the priority areas below will have the greatest strategic impact.`
-              : `Your development directly contributes to the organisation reaching its AI ambition target of ${targetPeakon}/10.`
-          }
-          {ambitionGap.ambitionTargetLabel ? ` The target: "${ambitionGap.ambitionTargetLabel}".` : ""}
-        </p>
-      </div>
-
-      {myWeakPriorityDomains.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
-            Your highest-impact development areas
-          </p>
-          <div className="space-y-2">
-            {myWeakPriorityDomains.map(d => (
-              <div key={d.key} className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.colour ?? "#94A3B8" }} />
-                <span className="text-xs text-foreground flex-1">{d.name}</span>
-                <span className="text-xs font-mono font-semibold" style={{ color: d.colour ?? "#94A3B8" }}>
-                  {d.score !== null ? (d.score / 10).toFixed(1) : "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3">
-            <a href="/learning?tab=insights" className="text-xs text-primary hover:underline font-medium">
-              View your personalised learning plan →
-            </a>
-          </div>
-        </div>
-      )}
-    </DashboardCard>
   );
 }
