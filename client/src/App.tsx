@@ -31,6 +31,7 @@ import AssessmentSessionPage from "./pages/assessment/AssessmentSessionPage";
 import AssessmentResultsPage from "./pages/assessment/AssessmentResultsPage";
 import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
+import KnowledgeBasePage from "./pages/learning/KnowledgeBasePage";
 import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
 import TeamDashboardPage from "./pages/learning/TeamDashboardPage";
 import TeamLearningPage from "./pages/learning/TeamLearningPage";
@@ -124,6 +125,9 @@ function Router() {
       </Route>
       <Route path="/library">
         <ProtectedRoute component={ContentLibraryPage} />
+      </Route>
+      <Route path="/knowledge-base">
+        <ProtectedRoute component={KnowledgeBasePage} />
       </Route>
       <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />
