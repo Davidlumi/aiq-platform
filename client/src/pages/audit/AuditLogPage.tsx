@@ -26,10 +26,10 @@ import { cn } from "@/lib/utils";
 
 const EVENT_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
   assessment:     { label: "Assessment",  colour: "#4477AA", icon: FileText },
-  policy:         { label: "Policy",      colour: "#EE6677", icon: Shield },
-  simulation:     { label: "Simulation",  colour: "#AA3377", icon: Activity },
+  policy:         { label: "Policy",      colour: "#DC2626", icon: Shield },
+  simulation:     { label: "Simulation",  colour: "#b91c1c", icon: Activity },
   admin:          { label: "Admin",       colour: "#EE8866", icon: Monitor },
-  auth:           { label: "Auth",        colour: "#228833", icon: Lock },
+  auth:           { label: "Auth",        colour: "#047857", icon: Lock },
   learning:       { label: "Learning",    colour: "#66CCEE", icon: CheckCircle2 },
   user:           { label: "User",        colour: "var(--primary)", icon: User },
 };

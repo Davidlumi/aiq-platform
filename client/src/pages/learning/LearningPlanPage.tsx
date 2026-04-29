@@ -27,16 +27,16 @@ import { scoreToColor } from "@/lib/peakon-colors";
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   ai_foundations:       { label: "AI Foundations",       color: "#4477AA", icon: Brain },
   ai_interaction:       { label: "AI Interaction",       color: "#66AADD", icon: MessageSquare },
-  data_literacy:        { label: "Data Literacy",        color: "#228833", icon: BarChart3 },
-  governance:           { label: "AI Governance",        color: "#CCBB44", icon: Target },
-  execution:            { label: "AI Execution",         color: "#EE6677", icon: Zap },
-  strategy:             { label: "AI Strategy",          color: "#AA3377", icon: Lightbulb },
+  data_literacy:        { label: "Data Literacy",        color: "#047857", icon: BarChart3 },
+  governance:           { label: "AI Governance",        color: "#D97706", icon: Target },
+  execution:            { label: "AI Execution",         color: "#DC2626", icon: Zap },
+  strategy:             { label: "AI Strategy",          color: "#b91c1c", icon: Lightbulb },
   // Aliases
   foundations:          { label: "AI Foundations",       color: "#4477AA", icon: Brain },
   interaction:          { label: "AI Interaction",       color: "#66AADD", icon: MessageSquare },
-  workforce_readiness:  { label: "Workforce Readiness",  color: "#228833", icon: Users },
-  change_leadership:    { label: "Change Leadership",    color: "#CCBB44", icon: Target },
-  workflow_design:      { label: "Workflow Design",      color: "#EE6677", icon: Layers },
+  workforce_readiness:  { label: "Workforce Readiness",  color: "#047857", icon: Users },
+  change_leadership:    { label: "Change Leadership",    color: "#D97706", icon: Target },
+  workflow_design:      { label: "Workflow Design",      color: "#DC2626", icon: Layers },
 };
 
 const MODALITY_ICONS: Record<string, React.ElementType> = {
@@ -49,9 +49,9 @@ const MODALITY_ICONS: Record<string, React.ElementType> = {
 };
 
 const READINESS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  ai_ready:           { label: "AI Ready",         color: "#228833", bg: "#22883318" },
+  ai_ready:           { label: "AI Ready",         color: "#047857", bg: "#04785718" },
   developing:         { label: "Developing",        color: "#C8B07A", bg: "#C8B07A18" },
-  foundation_gap:     { label: "Foundation Gap",    color: "#EE6677", bg: "#EE667718" },
+  foundation_gap:     { label: "Foundation Gap",    color: "#DC2626", bg: "#DC262618" },
   insufficient_evidence: { label: "Not yet assessed", color: "#888", bg: "#88888818" },
 };
 
@@ -99,7 +99,7 @@ function ModuleCard({
       {/* Status indicator */}
       <div className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold",
-        isCompleted ? "bg-[#228833]/15 text-[#228833]"
+        isCompleted ? "bg-[#047857]/15 text-[#047857]"
           : isLocked ? "bg-muted text-muted-foreground"
           : isNext ? "bg-primary/15 text-primary"
           : "bg-muted/50 text-muted-foreground"
@@ -389,10 +389,10 @@ export default function LearningPlanPage() {
 
       {/* ── Org ambition banner ── */}
       {ambitionGap && ambitionGap.configured && (
-        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-[#228833]/20 bg-[#228833]/3">
-          <TrendingUp className="h-4 w-4 text-[#228833] mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-[#047857]/20 bg-[#047857]/3">
+          <TrendingUp className="h-4 w-4 text-[#047857] mt-0.5 flex-shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-[#228833]">Aligned to your organisation's AI ambition — </span>
+            <span className="font-semibold text-[#047857]">Aligned to your organisation's AI ambition — </span>
             closing the gap from <strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}/10</strong> to target <strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}/10</strong>.
             {ambitionGap.ambitionTargetLabel && <> Goal: <em>"{ambitionGap.ambitionTargetLabel}"</em>.</>}
           </p>

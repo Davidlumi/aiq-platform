@@ -225,28 +225,28 @@ function ModuleProgressBar({
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   ai_interaction:       { label: "AI Interaction",         color: "#4477AA", icon: Zap },
-  ai_output_evaluation: { label: "AI Output Evaluation",   color: "#228833", icon: Brain },
-  ai_ethics_trust:      { label: "AI Ethics & Trust",      color: "#AA3377", icon: Target },
+  ai_output_evaluation: { label: "AI Output Evaluation",   color: "#047857", icon: Brain },
+  ai_ethics_trust:      { label: "AI Ethics & Trust",      color: "#b91c1c", icon: Target },
   ai_change_leadership: { label: "AI Change Leadership",   color: "#EE8866", icon: Lightbulb },
-  ai_workflow_design:   { label: "AI Workflow Design",     color: "#228833", icon: Layers },
-  workflow:             { label: "Workflow Integration",   color: "#228833", icon: Layers },
+  ai_workflow_design:   { label: "AI Workflow Design",     color: "#047857", icon: Layers },
+  workflow:             { label: "Workflow Integration",   color: "#047857", icon: Layers },
   data_interpretation:  { label: "Data Interpretation",    color: "#BBBBBB", icon: BarChart3 },
-  appropriateness:      { label: "AI Appropriateness",     color: "#228833", icon: Target },
-  execution:            { label: "AI Execution",           color: "#EE6677", icon: Zap },
-  judgement:            { label: "AI Judgement",           color: "#AA3377", icon: Brain },
+  appropriateness:      { label: "AI Appropriateness",     color: "#047857", icon: Target },
+  execution:            { label: "AI Execution",           color: "#DC2626", icon: Zap },
+  judgement:            { label: "AI Judgement",           color: "#b91c1c", icon: Brain },
   governance:           { label: "AI Governance",          color: "#66CCEE", icon: ListChecks },
-  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#CCBB44", icon: Users },
+  workforce_ai_readiness: { label: "Workforce AI Readiness", color: "#D97706", icon: Users },
 };
 
 const MODALITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   tutorial:   { label: "Tutorial",   color: "#4477AA", icon: BookOpen },
-  practical:  { label: "Practical",  color: "#228833", icon: FlaskConical },
-  case_study: { label: "Case Study", color: "#CCBB44", icon: FileText },
-  quiz:       { label: "Quiz",       color: "#AA3377", icon: HelpCircle },
+  practical:  { label: "Practical",  color: "#047857", icon: FlaskConical },
+  case_study: { label: "Case Study", color: "#D97706", icon: FileText },
+  quiz:       { label: "Quiz",       color: "#b91c1c", icon: HelpCircle },
   scenario:   { label: "Scenario",   color: "#EE8866", icon: Layers },
-  video:      { label: "Video",      color: "#EE6677", icon: Video },
+  video:      { label: "Video",      color: "#DC2626", icon: Video },
   reflection: { label: "Reflection", color: "#66CCEE", icon: MessageSquare },
-  coaching:   { label: "Coaching",   color: "#228833", icon: Users },
+  coaching:   { label: "Coaching",   color: "#047857", icon: Users },
 };
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
@@ -600,7 +600,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
           <div className="flex items-center gap-1.5">
             {quizQuestions.map((_, i) => (
               <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-                i < quizIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === quizIdx ? "bg-primary/60" : "bg-muted")} />
+                i < quizIdx ? (scores[i] ? "bg-primary" : "bg-[#b45309]") : i === quizIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
           <div className="p-4 rounded-xl bg-muted border border-border">
@@ -612,13 +612,13 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
                 className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
                   !answered && "hover:border-primary/50 hover:bg-muted/20",
                   answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
-                  answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
+                  answered && i === selectedIdx && i !== correctIdx && "border-[#b45309]/60 bg-[#b45309]/10 text-[#8E5848]",
                   !answered && "border-border bg-card")}
                 onClick={() => handleAnswer(i)}>
                 <div className="flex items-start gap-2.5">
                   <span className={cn("w-5 h-5 rounded-full border text-xs flex items-center justify-center flex-shrink-0 mt-0.5",
                     answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
-                    answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
+                    answered && i === selectedIdx && i !== correctIdx ? "border-[#b45309] bg-[#b45309] text-white" :
                     "border-muted-foreground text-muted-foreground")}>
                     {String.fromCharCode(65 + i)}
                   </span>
@@ -746,7 +746,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
           <div className="flex items-center gap-1.5">
             {questions.map((_, i) => (
               <div key={i} className={cn("h-1.5 flex-1 rounded-full",
-                i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#C08878]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
+                i < qIdx ? (scores[i] ? "bg-primary" : "bg-[#b45309]") : i === qIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
           <div className="p-4 rounded-xl bg-muted border border-border">
@@ -758,13 +758,13 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
                 className={cn("w-full text-left p-3.5 rounded-xl border text-sm transition-all",
                   !answered && "hover:border-primary/50 hover:bg-muted/20",
                   answered && i === correctIdx && "border-[#7A9E8E]/60 bg-[#7A9E8E]/10 text-[#4A6E5E]",
-                  answered && i === selectedIdx && i !== correctIdx && "border-[#C08878]/60 bg-[#C08878]/10 text-[#8E5848]",
+                  answered && i === selectedIdx && i !== correctIdx && "border-[#b45309]/60 bg-[#b45309]/10 text-[#8E5848]",
                   !answered && "border-border bg-card")}
                 onClick={() => handleAnswer(i)}>
                 <div className="flex items-start gap-2.5">
                   <span className={cn("w-5 h-5 rounded-full border text-xs flex items-center justify-center flex-shrink-0 mt-0.5",
                     answered && i === correctIdx ? "border-[#7A9E8E] bg-[#7A9E8E] text-white" :
-                    answered && i === selectedIdx && i !== correctIdx ? "border-[#C08878] bg-[#C08878] text-white" :
+                    answered && i === selectedIdx && i !== correctIdx ? "border-[#b45309] bg-[#b45309] text-white" :
                     "border-muted-foreground text-muted-foreground")}>
                     {String.fromCharCode(65 + i)}
                   </span>

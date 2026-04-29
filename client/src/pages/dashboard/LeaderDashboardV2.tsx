@@ -63,11 +63,11 @@ const RATING_LABELS: Record<string, string> = {
 };
 
 const RATING_COLOURS: Record<string, string> = {
-  ai_ready: "#7A9E8E",
-  developing: "#C8B07A",
-  not_yet_ready: "#C08878",
-  foundation_gap: "#A87868",
-  insufficient_evidence: "#B0B8C4",
+  ai_ready: "#047857",
+  developing: "#2563EB",
+  not_yet_ready: "#D97706",
+  foundation_gap: "#DC2626",
+  insufficient_evidence: "#6B7280",
 };
 
 const RATING_KEYS = ["ai_ready", "developing", "not_yet_ready", "foundation_gap", "insufficient_evidence"] as const;
@@ -209,21 +209,21 @@ export default function LeaderDashboardV2() {
             label="AI Ready"
             value={main.ratingCounts.ai_ready ?? 0}
             sub={`${main.totalHeadcount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.totalHeadcount) * 100) : 0}% of function`}
-            colour="#7A9E8E"
+            colour="#047857"
             icon={<CheckCircle2 className="w-4 h-4" />}
           />
           <StatTile
             label="Developing"
             value={main.ratingCounts.developing ?? 0}
             sub="need targeted support"
-            colour="#C8B07A"
+            colour="#2563EB"
             icon={<TrendingUp className="w-4 h-4" />}
           />
           <StatTile
             label="At Risk"
             value={(main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0)}
             sub="not ready / foundation gap"
-            colour="#C08878"
+            colour="#DC2626"
             icon={<AlertTriangle className="w-4 h-4" />}
           />
         </div>
@@ -371,7 +371,7 @@ export default function LeaderDashboardV2() {
                         </p>
                       )}
                     </div>
-                    <Lightbulb className="w-4 h-4 text-[#CCBB44] shrink-0 mt-0.5" />
+                    <Lightbulb className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
                   </div>
                   {f.strategicImplication && (
                     <div className="px-3 pb-3 pt-0 ml-9">
@@ -462,9 +462,9 @@ function HeroFindingCard({
   totalHeadcount: number;
 }) {
   const statusStyles: Record<string, { bg: string; border: string; iconColour: string; icon: typeof TrendingUp }> = {
-    on_track: { bg: "#F0F4F0", border: "#B8CEB8", iconColour: "#228833", icon: TrendingUp },
-    at_risk: { bg: "#F5EFEE", border: "#D4B0A8", iconColour: "#EE6677", icon: AlertTriangle },
-    mixed: { bg: "#F7F3EC", border: "#D8C89A", iconColour: "#CCBB44", icon: BarChart3 },
+    on_track: { bg: "#f0fdf4", border: "#bbf7d0", iconColour: "#047857", icon: TrendingUp },
+    at_risk: { bg: "#fef2f2", border: "#fde68a", iconColour: "#DC2626", icon: AlertTriangle },
+    mixed: { bg: "#fffbeb", border: "#fde68a", iconColour: "#D97706", icon: BarChart3 },
     partial: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
     not_configured: { bg: "#F8FAFC", border: "#CBD5E1", iconColour: "#64748B", icon: Target },
   };
@@ -508,22 +508,22 @@ function HeroFindingCard({
 // ─── Strategic Alignment Section ────────────────────────────────────────────
 
 const ALIGNMENT_STYLES = {
-  aligned: { bg: "#F0F4F0", border: "#B8CEB8", text: "#065F46", label: "Aligned", icon: "✓" },
-  partial: { bg: "#FFFBEB", border: "#FDE68A", text: "#92400E", label: "Partial", icon: "◐" },
-  gap: { bg: "#F5EFEE", border: "#D4B0A8", text: "#991B1B", label: "Gap", icon: "✗" },
+  aligned: { bg: "#f0fdf4", border: "#bbf7d0", text: "#065F46", label: "Aligned", icon: "✓" },
+  partial: { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8", label: "Partial", icon: "◐" },
+  gap: { bg: "#fef2f2", border: "#fde68a", text: "#991B1B", label: "Gap", icon: "✗" },
   unknown: { bg: "#F1F5F9", border: "#CBD5E1", text: "#475569", label: "Unknown", icon: "?" },
 };
 
 const OVERALL_ALIGNMENT_STYLES = {
-  aligned: { bg: "#F0F4F0", border: "#7A9E8E", text: "#2D5A3D", label: "HR capability is aligned with business strategy" },
-  partial: { bg: "#F7F3EC", border: "#C8B07A", text: "#6B4F1E", label: "Partial alignment — some strategic priorities have capability gaps" },
-  misaligned: { bg: "#F4EEEC", border: "#C08878", text: "#6B3030", label: "Significant misalignment — HR capability does not support business strategy" },
+  aligned: { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "HR capability is aligned with business strategy" },
+  partial: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Partial alignment — some strategic priorities have capability gaps" },
+  misaligned: { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant misalignment — HR capability does not support business strategy" },
 };
 
 const GOVERNANCE_STYLES = {
-  strong: { bg: "#F0F4F0", text: "#2D5A3D", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
-  developing: { bg: "#F7F3EC", text: "#6B4F1E", label: "Developing", desc: "Some governance structures exist but gaps remain" },
-  weak: { bg: "#F4EEEC", text: "#6B3030", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
+  strong: { bg: "#f0fdf4", text: "#047857", label: "Strong", desc: "Governance framework, ethics committee, and policies in place" },
+  developing: { bg: "#eff6ff", text: "#1d4ed8", label: "Developing", desc: "Some governance structures exist but gaps remain" },
+  weak: { bg: "#fef2f2", text: "#b91c1c", label: "Weak", desc: "Limited governance infrastructure for AI oversight" },
 };
 
 function StrategicAlignmentSection({ alignment }: { alignment: any }) {
@@ -678,7 +678,7 @@ function StrategicAlignmentSection({ alignment }: { alignment: any }) {
           <div className="space-y-1.5">
             {alignment.challenges.map((c: string, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
-                <AlertTriangle className="w-3 h-3 text-[#99882A] shrink-0" />
+                <AlertTriangle className="w-3 h-3 text-[#D97706] shrink-0" />
                 <span className="text-muted-foreground">{c}</span>
               </div>
             ))}
@@ -697,9 +697,9 @@ function AmbitionGapBanner({ gap }: { gap: any }) {
   const gapPeakon = gap.gapRaw !== null ? Math.abs(gap.gapRaw / 10).toFixed(1) : null;
 
   const VERDICT_CONFIG: Record<string, { bg: string; border: string; text: string; label: string }> = {
-    exceeds:  { bg: "#F0F4F0", border: "#7A9E8E", text: "#2D5A3D", label: "Exceeds ambition target" },
-    on_track: { bg: "#F7F3EC", border: "#C8B07A", text: "#6B4F1E", label: "Within reach of target" },
-    gap:      { bg: "#F4EEEC", border: "#C08878", text: "#6B3030", label: "Significant capability gap" },
+    exceeds:  { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "Exceeds ambition target" },
+    on_track: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Within reach of target" },
+    gap:      { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant capability gap" },
     no_target:{ bg: "#F5F5F5", border: "#D0D0D0", text: "#555",    label: "No target set" },
   };
   const vc = VERDICT_CONFIG[gap.verdict] ?? VERDICT_CONFIG.no_target;
@@ -751,8 +751,8 @@ function AmbitionGapBanner({ gap }: { gap: any }) {
           {gap.priorityGaps.map((pg: any, i: number) => {
             const currentPct = pg.avgCurrentScore !== null ? Math.min(100, Math.round(pg.avgCurrentScore)) : 0;
             const targetPct = pg.requiredScore !== null ? Math.min(100, Math.round(pg.requiredScore)) : 0;
-            const STATUS_COLOURS: Record<string, string> = { aligned: "#7A9E8E", partial: "#C8B07A", gap: "#C08878", unknown: "#B0B8C4" };
-            const barColour = STATUS_COLOURS[pg.status] ?? "#B0B8C4";
+            const STATUS_COLOURS: Record<string, string> = { aligned: "#047857", partial: "#2563EB", gap: "#DC2626", unknown: "#9CA3AF" };
+            const barColour = STATUS_COLOURS[pg.status] ?? "#9CA3AF";
             return (
               <div key={i} className="space-y-1">
                 <div className="flex items-center justify-between">

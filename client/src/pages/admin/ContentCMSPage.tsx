@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
-  published: { label: "Published", colour: "#228833", icon: CheckCircle2 },
+  published: { label: "Published", colour: "#047857", icon: CheckCircle2 },
   draft:     { label: "Draft",     colour: "#EE8866", icon: Clock },
   archived:  { label: "Archived",  colour: "#9CA3AF", icon: Archive },
 };
@@ -172,7 +172,7 @@ export default function ContentCMSPage() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Total", value: allItems.length, colour: "var(--primary)" },
-          { label: "Published", value: published, colour: "#228833" },
+          { label: "Published", value: published, colour: "#047857" },
           { label: "Draft", value: draft, colour: "#EE8866" },
           { label: "Archived", value: archived, colour: "#9CA3AF" },
         ].map(stat => (

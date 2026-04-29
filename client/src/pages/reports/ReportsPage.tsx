@@ -29,9 +29,9 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
 };
 
 const READINESS_COLORS: Record<string, string> = {
-  safe: "text-[#228833] bg-[#228833]/10 border-[#228833]/20",
-  at_risk: "text-[#CCBB44] bg-[#CCBB44]/10 border-[#CCBB44]/20",
-  foundation_gap: "text-[#EE6677] bg-[#EE6677]/10 border-[#EE6677]/20",
+  safe: "text-[#047857] bg-[#047857]/10 border-[#047857]/20",
+  at_risk: "text-[#D97706] bg-[#D97706]/10 border-[#D97706]/20",
+  foundation_gap: "text-[#DC2626] bg-[#DC2626]/10 border-[#DC2626]/20",
   not_assessed: "text-muted-foreground bg-muted border-border",
   insufficient_evidence: "text-[#6366F1] bg-[#6366F1]/10 border-[#6366F1]/20",
 };
@@ -56,7 +56,7 @@ function ScoreBar({ score, threshold, label }: { score: number; threshold: numbe
   const pct = Math.min(100, score);
   const thresholdPct = Math.min(100, threshold);
   const status = score >= threshold ? "meets" : score >= threshold * 0.8 ? "approaching" : "gap";
-  const barColor = status === "meets" ? "bg-[#228833]" : status === "approaching" ? "bg-[#CCBB44]" : "bg-[#EE6677]";
+  const barColor = status === "meets" ? "bg-[#047857]" : status === "approaching" ? "bg-[#D97706]" : "bg-[#DC2626]";
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
@@ -65,9 +65,9 @@ function ScoreBar({ score, threshold, label }: { score: number; threshold: numbe
           <span className="text-xs font-semibold text-foreground">{score}</span>
           <span className="text-xs text-muted-foreground">/ {threshold} req.</span>
           <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium",
-            status === "meets" ? "text-[#228833] bg-[#228833]/10" :
-            status === "approaching" ? "text-[#CCBB44] bg-[#CCBB44]/10" :
-            "text-[#EE6677] bg-[#EE6677]/10"
+            status === "meets" ? "text-[#047857] bg-[#047857]/10" :
+            status === "approaching" ? "text-[#D97706] bg-[#D97706]/10" :
+            "text-[#DC2626] bg-[#DC2626]/10"
           )}>
             {status === "meets" ? "Meets" : status === "approaching" ? "Approaching" : "Gap"}
           </span>
@@ -126,7 +126,7 @@ function CapabilityFitView({ data }: { data: any }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className={cn("text-2xl font-bold",
-          overallFit >= 0.8 ? "text-[#228833]" : overallFit >= 0.5 ? "text-[#CCBB44]" : "text-[#EE6677]"
+          overallFit >= 0.8 ? "text-[#047857]" : overallFit >= 0.5 ? "text-[#D97706]" : "text-[#DC2626]"
         )}>
           {Math.round(overallFit * 100)}%
         </div>
@@ -139,7 +139,7 @@ function CapabilityFitView({ data }: { data: any }) {
         {fitAnalysis.map((f: any) => <ScoreBar key={f.capability} score={f.score} threshold={f.threshold} label={f.label} />)}
       </div>
       {fitAnalysis.some((f: any) => f.status === "gap") && (
-        <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
+        <div className="flex items-start gap-2 text-xs text-[#D97706] bg-[#D97706]/8 rounded-lg px-3 py-2 border border-[#D97706]/20">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>{fitAnalysis.filter((f: any) => f.status === "gap").length} domain(s) below minimum threshold. A targeted learning plan has been generated.</span>
         </div>
@@ -152,7 +152,7 @@ function TrajectoryView({ data }: { data: any }) {
   const trajectory = data?.trajectory ?? [];
   const trend = data?.trend ?? "insufficient_data";
   const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
-  const trendColor = trend === "improving" ? "text-[#228833]" : trend === "declining" ? "text-[#EE6677]" : "text-muted-foreground";
+  const trendColor = trend === "improving" ? "text-[#047857]" : trend === "declining" ? "text-[#DC2626]" : "text-muted-foreground";
   const validPoints = trajectory.filter((t: any) => t.overallScore !== null);
   const maxScore = Math.max(...validPoints.map((t: any) => t.overallScore ?? 0), 100);
   return (
@@ -211,7 +211,7 @@ function SmallFunctionView({ data }: { data: any }) {
   const dist = data?.readinessDistribution ?? {};
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
+      <div className="flex items-start gap-2 text-xs text-[#D97706] bg-[#D97706]/8 rounded-lg px-3 py-2 border border-[#D97706]/20">
         <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{data?.note}</span>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -230,8 +230,8 @@ function SmallFunctionView({ data }: { data: any }) {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "AI-Ready", value: dist.ready ?? 0, color: "text-[#228833]" },
-          { label: "Developing", value: dist.developing ?? 0, color: "text-[#CCBB44]" },
+          { label: "AI-Ready", value: dist.ready ?? 0, color: "text-[#047857]" },
+          { label: "Developing", value: dist.developing ?? 0, color: "text-[#D97706]" },
           { label: "Not Started", value: dist.notStarted ?? 0, color: "text-muted-foreground" },
         ].map(m => (
           <Card key={m.label} className="border-border">
@@ -278,7 +278,7 @@ function LearnerReportView({ data }: { data: any }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Readiness State", value: state?.readinessState ?? "—", color: "text-foreground" },
-          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#228833]" : "text-[#CCBB44]" },
+          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#047857]" : "text-[#D97706]" },
           { label: "Assessments", value: sessions.length, color: "text-primary" },
         ].map(m => (
           <Card key={m.label} className="border-border">
@@ -344,8 +344,8 @@ function ManagerTeamReportView({ data }: { data: any }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Total Members", value: members.length, color: "text-foreground" },
-          { label: "Compliant", value: members.filter(m => m.state?.complianceState === "compliant").length, color: "text-[#228833]" },
-          { label: "At Risk", value: members.filter(m => m.state?.complianceState === "at_risk").length, color: "text-[#CCBB44]" },
+          { label: "Compliant", value: members.filter(m => m.state?.complianceState === "compliant").length, color: "text-[#047857]" },
+          { label: "At Risk", value: members.filter(m => m.state?.complianceState === "at_risk").length, color: "text-[#D97706]" },
         ].map(m => (
           <Card key={m.label} className="border-border">
             <CardContent className="pt-4 text-center">

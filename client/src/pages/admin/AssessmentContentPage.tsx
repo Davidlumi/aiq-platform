@@ -51,10 +51,10 @@ import { cn } from "@/lib/utils";
 
 const DOMAIN_COLOURS: Record<string, string> = {
   "Candidate Screening & Evaluation":    "#4477AA",
-  "Recruitment & Hiring":                "#AA3377",
-  "Performance Management":              "#228833",
-  "Employee Relations — Grievance, Disciplinary & Investigations": "#EE6677",
-  "DEI-Related Decision-Making":         "#CCBB44",
+  "Recruitment & Hiring":                "#b91c1c",
+  "Performance Management":              "#047857",
+  "Employee Relations — Grievance, Disciplinary & Investigations": "#DC2626",
+  "DEI-Related Decision-Making":         "#D97706",
   "HR Operations & Automation":          "#66CCEE",
   "Learning & Development":              "#BB5566",
   "Talent Reviews & Succession Planning":"#44BB99",
@@ -66,14 +66,14 @@ const DOMAIN_COLOURS: Record<string, string> = {
 };
 
 const RISK_CONFIG: Record<string, { label: string; colour: string }> = {
-  Low:      { label: "Low",      colour: "#228833" },
-  Medium:   { label: "Medium",   colour: "#CCBB44" },
+  Low:      { label: "Low",      colour: "#047857" },
+  Medium:   { label: "Medium",   colour: "#D97706" },
   High:     { label: "High",     colour: "#EE8866" },
-  Critical: { label: "Critical", colour: "#EE6677" },
+  Critical: { label: "Critical", colour: "#DC2626" },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
-  published:    { label: "Published",    colour: "#228833", icon: CheckCircle2 },
+  published:    { label: "Published",    colour: "#047857", icon: CheckCircle2 },
   draft:        { label: "Draft",        colour: "#EE8866", icon: Clock },
   archived:     { label: "Archived",     colour: "#9CA3AF", icon: Archive },
   under_review: { label: "Under Review", colour: "#4477AA", icon: Eye },
@@ -139,7 +139,7 @@ function ScenarioDetailDialog({
           {statusCfg.label}
         </Badge>
         {!!item.ethicsSensitive && (
-          <Badge style={{ background: "#EE667722", color: "#EE6677", border: "1px solid #EE667744" }}>
+          <Badge style={{ background: "#DC262622", color: "#DC2626", border: "1px solid #DC262644" }}>
             <Shield className="h-3 w-3 mr-1" />Governance
           </Badge>
         )}
@@ -215,7 +215,7 @@ function ScenarioDetailDialog({
                   <span className="text-xs font-bold text-muted-foreground">{String.fromCharCode(65 + idx)}.</span>
                   <p className="text-sm flex-1 text-foreground">{opt.label}</p>
                   {opt.isOptimal && (
-                    <Badge className="text-xs shrink-0" style={{ background: "#22883322", color: "#228833", border: "1px solid #22883344" }}>
+                    <Badge className="text-xs shrink-0" style={{ background: "#04785722", color: "#047857", border: "1px solid #04785744" }}>
                       Optimal
                     </Badge>
                   )}
@@ -228,7 +228,7 @@ function ScenarioDetailDialog({
                     {Object.entries(opt.signalDeltasJson as Record<string, number>).map(([k, v]) => (
                       <span key={k} className={cn(
                         "text-xs px-1.5 py-0.5 rounded font-mono",
-                        v > 0 ? "bg-[#228833]/10 text-[#228833]" : "bg-[#EE6677]/80/10 text-[#CC3344]"
+                        v > 0 ? "bg-[#047857]/10 text-[#047857]" : "bg-[#DC2626]/80/10 text-[#CC3344]"
                       )}>
                         {k}: {v > 0 ? "+" : ""}{v}
                       </span>
@@ -288,7 +288,7 @@ function ScenarioDetailDialog({
         <Button size="sm" variant="outline"
           disabled={item.status === "published" || updateStatus.isPending}
           onClick={() => updateStatus.mutate({ id: item.id, status: "published", changeSummary: "Published via CMS" })}
-          className="text-[#228833] border-green-500/40 hover:bg-[#228833]/10"
+          className="text-[#047857] border-green-500/40 hover:bg-[#047857]/10"
         >
           <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Publish
         </Button>
@@ -318,9 +318,9 @@ function StatsBar() {
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[
         { label: "Total Scenarios",  value: stats.total ?? 0,                                                                                       icon: FileText,     colour: "#4477AA" },
-        { label: "Published",        value: (stats.byStatus?.published ?? stats.byStatus?.Published ?? 0),   icon: CheckCircle2, colour: "#228833" },
-        { label: "Ethics Cases",     value: stats.govSensitiveCount ?? 0,                                    icon: Shield,       colour: "#EE6677" },
-        { label: "Workflow Domains", value: Object.keys(stats.byDomain ?? {}).length,                        icon: Layers,       colour: "#AA3377" },
+        { label: "Published",        value: (stats.byStatus?.published ?? stats.byStatus?.Published ?? 0),   icon: CheckCircle2, colour: "#047857" },
+        { label: "Ethics Cases",     value: stats.govSensitiveCount ?? 0,                                    icon: Shield,       colour: "#DC2626" },
+        { label: "Workflow Domains", value: Object.keys(stats.byDomain ?? {}).length,                        icon: Layers,       colour: "#b91c1c" },
       ].map(({ label, value, icon: Icon, colour }) => (
         <Card key={label} className="border-border">
           <CardContent className="p-4 flex items-center gap-3">

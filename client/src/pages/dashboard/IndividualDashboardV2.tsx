@@ -271,7 +271,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             <div className="mt-3 pt-3 border-t border-neutral-100">
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Strategic fit</p>
               <span className="text-lg font-bold font-mono tabular-nums"
-                style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#C08878" }}>
+                style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#b45309" }}>
                 {(strategicFitScore / 10).toFixed(1)}
               </span>
               <span className="text-xs text-muted-foreground ml-1">/ 10</span>
@@ -398,7 +398,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             <tbody>
               {data.gapHeatmap.map(row => {
                 const gapPeakon = row.gapValue !== null ? row.gapValue / 10 : null;
-                const gapColour = gapPeakon === null ? "#94A3B8" : gapPeakon <= 0 ? "#7A9E8E" : gapPeakon <= 0.5 ? "#C8B07A" : "#C08878";
+                const gapColour = gapPeakon === null ? "#94A3B8" : gapPeakon <= 0 ? "#7A9E8E" : gapPeakon <= 0.5 ? "#C8B07A" : "#b45309";
                 return (
                   <tr key={row.domain} className="border-b border-neutral-100 last:border-0">
                     <td className="py-3 px-4">
@@ -580,7 +580,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg bg-[#CCBB44]/8 border border-[#CCBB44]/25">
+                <div className="p-3 rounded-lg bg-[#D97706]/8 border border-[#D97706]/25">
                   <div className="flex items-start gap-2">
                     <Target className="w-4 h-4 text-[#99882A] mt-0.5 shrink-0" />
                     <p className="text-xs text-[#7A6E22]">{data.gapStatement}</p>
@@ -600,7 +600,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                   {data.signals.map(s => (
                     <div key={s.signalKey} className="flex items-center justify-between py-1.5">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#7A9E8E" : s.level === "Developing" ? "#C8B07A" : "#C08878" }} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#7A9E8E" : s.level === "Developing" ? "#C8B07A" : "#b45309" }} />
                         <span className="text-xs text-foreground truncate">{s.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -691,12 +691,12 @@ function IndividualStrategyPanel({
           <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
             {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: isAboveOrgAvg ? "#7A9E8E" : "#C08878" }}>
+          <p className="text-xs mt-0.5" style={{ color: isAboveOrgAvg ? "#7A9E8E" : "#b45309" }}>
             {isAboveOrgAvg ? "Above org average" : "Below org average"}
           </p>
         </div>
         <div className="p-3 rounded-xl border text-center"
-          style={{ backgroundColor: isAboveTarget ? "#F0F4F0" : "#F4EEEC", borderColor: isAboveTarget ? "#7A9E8E" : "#C08878" }}>
+          style={{ backgroundColor: isAboveTarget ? "#f0fdf4" : "#F4EEEC", borderColor: isAboveTarget ? "#7A9E8E" : "#b45309" }}>
           <p className="text-xs uppercase tracking-widest mb-1" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>Org target</p>
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: isAboveTarget ? "#2D5A3D" : "#6B3030" }}>
             {targetPeakon ?? "—"}

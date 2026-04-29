@@ -19,10 +19,10 @@ import { Users, BookOpen, Flame, AlertTriangle, Send, TrendingUp } from "lucide-
 function ReadinessBadge({ band }: { band: string | null }) {
   if (!band) return <Badge variant="outline" className="text-xs">No data</Badge>;
   const map: Record<string, { label: string; className: string }> = {
-    safe: { label: "Safe", className: "bg-[#228833]/12 text-[#228833] border-[#228833]/25" },
-    at_risk: { label: "At Risk", className: "bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25" },
+    safe: { label: "Safe", className: "bg-[#047857]/12 text-[#047857] border-[#047857]/25" },
+    at_risk: { label: "At Risk", className: "bg-[#D97706]/12 text-[#99882A] border-[#D97706]/25" },
     provisional: { label: "Provisional", className: "bg-[#4477AA]/12 text-[#4477AA] border-[#4477AA]/25" },
-    critical: { label: "Critical", className: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25" },
+    critical: { label: "Critical", className: "bg-[#DC2626]/12 text-[#CC3344] border-[#DC2626]/25" },
   };
   const cfg = map[band] ?? { label: band, className: "bg-muted text-muted-foreground" };
   return <Badge variant="outline" className={`text-xs ${cfg.className}`}>{cfg.label}</Badge>;
@@ -112,7 +112,7 @@ export default function TeamLearningPage() {
                           </Badge>
                         )}
                         {(member.streak?.currentStreak ?? 0) === 0 && (
-                          <Badge variant="outline" className="text-xs bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25">
+                          <Badge variant="outline" className="text-xs bg-[#D97706]/12 text-[#99882A] border-[#D97706]/25">
                             <AlertTriangle className="h-3 w-3 mr-1" />No activity
                           </Badge>
                         )}

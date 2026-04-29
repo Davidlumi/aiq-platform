@@ -76,9 +76,9 @@ export default function AdminDashboard() {
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Users</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Users"     value={data?.totalUsers ?? 0}     icon={Users}     color="#4477AA" />
-          <KpiCard label="Active"          value={data?.activeUsers ?? 0}    icon={UserCheck} color="#228833" sub={`${data?.totalUsers ? Math.round(((data.activeUsers ?? 0) / data.totalUsers) * 100) : 0}% of total`} />
+          <KpiCard label="Active"          value={data?.activeUsers ?? 0}    icon={UserCheck} color="#047857" sub={`${data?.totalUsers ? Math.round(((data.activeUsers ?? 0) / data.totalUsers) * 100) : 0}% of total`} />
           <KpiCard label="Pending"         value={data?.pendingUsers ?? 0}   icon={Clock}     color="#EE8866" />
-          <KpiCard label="Suspended"       value={data?.suspendedUsers ?? 0} icon={UserX}     color="#EE6677" />
+          <KpiCard label="Suspended"       value={data?.suspendedUsers ?? 0} icon={UserX}     color="#DC2626" />
         </div>
       </div>
 
@@ -87,9 +87,9 @@ export default function AdminDashboard() {
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Assessment Sessions</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Sessions"     value={data?.totalSessions ?? 0}     icon={ClipboardList} color="#4477AA" />
-          <KpiCard label="Completed"          value={data?.completedSessions ?? 0} icon={CheckCircle}   color="#228833" sub={`${data?.totalSessions ? Math.round(((data.completedSessions ?? 0) / data.totalSessions) * 100) : 0}% completion rate`} />
+          <KpiCard label="Completed"          value={data?.completedSessions ?? 0} icon={CheckCircle}   color="#047857" sub={`${data?.totalSessions ? Math.round(((data.completedSessions ?? 0) / data.totalSessions) * 100) : 0}% completion rate`} />
           <KpiCard label="In Progress"        value={data?.inProgressSessions ?? 0} icon={Loader2}      color="#EE8866" />
-          <KpiCard label="Policy Incidents"   value={data?.policyIncidents ?? 0}   icon={AlertTriangle} color="#EE6677" />
+          <KpiCard label="Policy Incidents"   value={data?.policyIncidents ?? 0}   icon={AlertTriangle} color="#DC2626" />
         </div>
       </div>
 
@@ -104,9 +104,9 @@ export default function AdminDashboard() {
           <CardContent>
             {cfg ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#228833]/5 border border-[#228833]/20">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#047857]/5 border border-[#047857]/20">
                   <span className="text-xs font-semibold text-foreground">Version</span>
-                  <span className="text-xs font-bold text-[#228833] font-mono">v{cfg.version}</span>
+                  <span className="text-xs font-bold text-[#047857] font-mono">v{cfg.version}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Calibration Source</span>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#228833]" />Platform Health Summary
+            <ShieldCheck className="w-4 h-4 text-[#047857]" />Platform Health Summary
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -209,15 +209,15 @@ export default function AdminDashboard() {
             ].map(item => (
               <div key={item.label} className={cn(
                 "p-3 rounded-xl border flex flex-col gap-1",
-                item.ok ? "bg-[#228833]/5 border-[#228833]/20" : "bg-[#EE8866]/5 border-[#EE8866]/20"
+                item.ok ? "bg-[#047857]/5 border-[#047857]/20" : "bg-[#EE8866]/5 border-[#EE8866]/20"
               )}>
                 <div className="flex items-center gap-1.5">
                   {item.ok
-                    ? <CheckCircle className="w-3.5 h-3.5 text-[#228833]" />
+                    ? <CheckCircle className="w-3.5 h-3.5 text-[#047857]" />
                     : <AlertTriangle className="w-3.5 h-3.5 text-[#EE8866]" />}
                   <span className="text-xs font-semibold text-foreground">{item.label}</span>
                 </div>
-                <span className={cn("text-sm font-bold", item.ok ? "text-[#228833]" : "text-[#EE8866]")}>
+                <span className={cn("text-sm font-bold", item.ok ? "text-[#047857]" : "text-[#EE8866]")}>
                   {item.status}
                 </span>
               </div>

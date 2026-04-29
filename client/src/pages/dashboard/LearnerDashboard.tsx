@@ -38,8 +38,8 @@ const CAP_META: Record<string, { label: string; color: string; shortLabel: strin
   ai_interaction:         { label: "AI Interaction",         color: "#4477AA", shortLabel: "Interact" },
   ai_output_evaluation:   { label: "Output Evaluation",      color: "var(--primary)", shortLabel: "Evaluate" },
   ai_workflow_design:     { label: "Workflow Design",        color: "#06B6D4", shortLabel: "Workflow" },
-  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#CCBB44", shortLabel: "Readiness" },
-  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#AA3377", shortLabel: "Ethics" },
+  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#D97706", shortLabel: "Readiness" },
+  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#b91c1c", shortLabel: "Ethics" },
   ai_change_leadership:   { label: "Change Leadership",      color: "#EC4899", shortLabel: "Leadership" },
 };
 
@@ -53,15 +53,15 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
   },
   at_risk: {
     label: "Developing",
-    color: "#CCBB44",
-    bg: "#CCBB4418",
+    color: "#D97706",
+    bg: "#D9770618",
     icon: AlertTriangle,
     description: "You're building your AI capability. Focus on the areas highlighted below to progress.",
   },
   unsafe: {
     label: "Foundational",
-    color: "#EE6677",
-    bg: "#EE667718",
+    color: "#DC2626",
+    bg: "#DC262618",
     icon: XCircle,
     description: "Your assessment indicates foundational gaps. Your learning plan has been tailored to address these.",
   },
@@ -78,8 +78,8 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
 function scoreToBand(score: number | null): { label: string; color: string; icon: any } {
   if (score === null) return { label: "Not assessed", color: "#9CA3AF", icon: HelpCircle };
   if (score >= 75) return { label: "Strong",         color: "var(--primary)",  icon: ThumbsUp };
-  if (score >= 55) return { label: "Developing",     color: "#CCBB44",  icon: Minus };
-  return                  { label: "Foundational",   color: "#EE6677",  icon: ThumbsDown };
+  if (score >= 55) return { label: "Developing",     color: "#D97706",  icon: Minus };
+  return                  { label: "Foundational",   color: "#DC2626",  icon: ThumbsDown };
 }
 
 // Outcome class → signal for scenario callbacks
@@ -87,9 +87,9 @@ function outcomeToSignal(oc: string | null): { label: string; color: string; ico
   if (!oc) return { label: "Answered", color: "#9CA3AF", icon: Minus };
   if (oc === "strong")           return { label: "Handled well",    color: "var(--primary)", icon: ThumbsUp };
   if (oc === "acceptable")       return { label: "Solid approach",  color: "var(--primary)", icon: ThumbsUp };
-  if (oc === "weak")             return { label: "Needs attention", color: "#CCBB44", icon: Minus };
-  if (oc === "failure")          return { label: "Area to develop", color: "#EE6677", icon: ThumbsDown };
-  if (oc === "critical_failure") return { label: "Priority gap",    color: "#EE6677", icon: ThumbsDown };
+  if (oc === "weak")             return { label: "Needs attention", color: "#D97706", icon: Minus };
+  if (oc === "failure")          return { label: "Area to develop", color: "#DC2626", icon: ThumbsDown };
+  if (oc === "critical_failure") return { label: "Priority gap",    color: "#DC2626", icon: ThumbsDown };
   return { label: "Answered", color: "#9CA3AF", icon: Minus };
 }
 
@@ -131,14 +131,14 @@ function ReadinessHeroCard({
           {daysToRevalidation !== null && (
             <div className={cn(
               "shrink-0 text-center px-5 py-4 rounded-2xl border",
-              urgency === "critical" ? "border-[#EE6677]/30 bg-[#EE6677]/6" :
-              urgency === "soon"     ? "border-[#CCBB44]/30 bg-[#CCBB44]/6" :
+              urgency === "critical" ? "border-[#DC2626]/30 bg-[#DC2626]/6" :
+              urgency === "soon"     ? "border-[#D97706]/30 bg-[#D97706]/6" :
               "border-border bg-muted/20"
             )}>
               <p className={cn(
                 "text-4xl font-bold leading-none",
-                urgency === "critical" ? "text-[#EE6677]" :
-                urgency === "soon"     ? "text-[#CCBB44]" : "text-foreground"
+                urgency === "critical" ? "text-[#DC2626]" :
+                urgency === "soon"     ? "text-[#D97706]" : "text-foreground"
               )}>{daysToRevalidation}</p>
               <p className="text-xs text-muted-foreground mt-1">days to<br />revalidation</p>
               {revalidationDue && (
@@ -223,7 +223,7 @@ function ScenarioCallbacksCard({
     <Card className="border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Target className="w-4 h-4 text-[#AA3377]" />Recent Assessment Moments
+          <Target className="w-4 h-4 text-[#b91c1c]" />Recent Assessment Moments
         </CardTitle>
         <p className="text-xs text-muted-foreground">Scenarios from your last assessment — what you handled well and where to focus</p>
       </CardHeader>
@@ -250,13 +250,13 @@ function ScenarioCallbacksCard({
         )}
         {weak.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[#CCBB44] mb-2 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-[#D97706] mb-2 flex items-center gap-1.5">
               <Target className="w-3 h-3" />Areas to develop
             </p>
             <div className="space-y-1.5">
               {weak.map(c => (
-                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-[#CCBB44]/5 border border-[#CCBB44]/15">
-                  <AlertTriangle className="w-3 h-3 text-[#CCBB44] shrink-0 mt-0.5" />
+                <div key={c.itemId} className="flex items-start gap-2 p-2 rounded-lg bg-[#D97706]/5 border border-[#D97706]/15">
+                  <AlertTriangle className="w-3 h-3 text-[#D97706] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-xs text-foreground leading-snug">{c.title}</p>
                     {c.capabilityKey && (
@@ -304,9 +304,9 @@ function TransferFindingsPanel() {
   if (!data || !data.findings || data.findings.length === 0) return null;
   const summary = data.summary;
   return (
-    <Card className="border-[#CCBB44]/30 bg-[#CCBB44]/5">
+    <Card className="border-[#D97706]/30 bg-[#D97706]/5">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2 text-[#CCBB44]">
+        <CardTitle className="text-sm flex items-center gap-2 text-[#D97706]">
           <AlertTriangle className="w-4 h-4" />Learning Transfer Check
         </CardTitle>
       </CardHeader>
@@ -320,7 +320,7 @@ function TransferFindingsPanel() {
           {data.findings.slice(0, 3).map((item: { planItemId: string; moduleTitle: string; capabilityKey?: string; reason: string }) => (
             <div key={item.planItemId} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#CCBB44] shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#D97706] shrink-0" />
                 <span className="text-xs text-foreground">{item.moduleTitle}</span>
               </div>
               <span className="text-xs text-muted-foreground capitalize">{String(item.reason ?? "").replace(/_/g, " ")}</span>
@@ -354,15 +354,15 @@ function CompetenceConfidenceWidget() {
   const QUADRANT_META = {
     competent_confident:     { label: "Competent & Confident",      color: "var(--primary)", bg: "color-mix(in srgb, var(--primary) 8%, transparent)", dot: "bg-primary" },
     competent_underconfident:{ label: "Competent, Underconfident",   color: "#4477AA", bg: "#4477AA15", dot: "bg-blue-500" },
-    incompetent_overconfident:{ label: "Blind Spot",                 color: "#EE6677", bg: "#EE667715", dot: "bg-[#EE6677]/80" },
-    incompetent_unconfident: { label: "Developing",                  color: "#CCBB44", bg: "#CCBB4415", dot: "bg-[#CCBB44]/80" },
+    incompetent_overconfident:{ label: "Blind Spot",                 color: "#DC2626", bg: "#DC262615", dot: "bg-[#DC2626]/80" },
+    incompetent_unconfident: { label: "Developing",                  color: "#D97706", bg: "#D9770615", dot: "bg-[#D97706]/80" },
   } as const;
 
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Target className="w-4 h-4 text-[#AA3377]" />Competence vs. Confidence
+          <Target className="w-4 h-4 text-[#b91c1c]" />Competence vs. Confidence
         </CardTitle>
         <p className="text-xs text-muted-foreground">How your self-assessment aligns with your demonstrated capability</p>
       </CardHeader>
@@ -383,10 +383,10 @@ function CompetenceConfidenceWidget() {
           })}
         </div>
         {blindSpots && blindSpots.length > 0 && (
-          <div className="rounded-lg border border-[#EE6677]/25 bg-[#EE6677]/8 p-3 flex items-start gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-[#EE6677] flex-shrink-0 mt-0.5" />
+          <div className="rounded-lg border border-[#DC2626]/25 bg-[#DC2626]/8 p-3 flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#DC2626] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-[#EE6677]">Blind spot detected</p>
+              <p className="text-xs font-semibold text-[#DC2626]">Blind spot detected</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 You rated yourself highly in {blindSpots.map((b: { domain: string; displayName: string }) => CAP_META[b.domain]?.shortLabel ?? b.displayName).join(", ")} but scored below threshold. Your learning plan has been adjusted.
               </p>
@@ -576,7 +576,7 @@ export default function LearnerDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#CCBB44]" />Revalidation
+                <Calendar className="w-4 h-4 text-[#D97706]" />Revalidation
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -585,8 +585,8 @@ export default function LearnerDashboard() {
                   <div className="flex items-end gap-1">
                     <span className={cn(
                       "text-4xl font-bold",
-                      daysToRevalidation !== null && daysToRevalidation <= 7  ? "text-[#EE6677]" :
-                      daysToRevalidation !== null && daysToRevalidation <= 30 ? "text-[#CCBB44]" : "text-foreground"
+                      daysToRevalidation !== null && daysToRevalidation <= 7  ? "text-[#DC2626]" :
+                      daysToRevalidation !== null && daysToRevalidation <= 30 ? "text-[#D97706]" : "text-foreground"
                     )}>{daysToRevalidation}</span>
                     <span className="text-muted-foreground mb-1 text-sm">days remaining</span>
                   </div>
@@ -598,7 +598,7 @@ export default function LearnerDashboard() {
                   )}
                   {daysToRevalidation !== null && daysToRevalidation <= 14 && (
                     <Link href="/assessment">
-                      <Button size="sm" className="w-full bg-[#EE6677] hover:bg-[#B91C1C] text-white text-xs gap-1.5">
+                      <Button size="sm" className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs gap-1.5">
                         <AlertTriangle className="w-3 h-3" />Start Revalidation Now
                       </Button>
                     </Link>
@@ -635,12 +635,12 @@ export default function LearnerDashboard() {
             <Card className="border-border">
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-[#CCBB44]" />
+                  <AlertTriangle className="w-4 h-4 text-[#D97706]" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Risk Indicator</span>
                 </div>
                 <p className={cn(
                   "text-2xl font-bold capitalize",
-                  data.risk.band === "high" ? "text-[#EE6677]" : data.risk.band === "medium" ? "text-[#CCBB44]" : "text-primary"
+                  data.risk.band === "high" ? "text-[#DC2626]" : data.risk.band === "medium" ? "text-[#D97706]" : "text-primary"
                 )}>{data.risk.band}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Based on governance and ethics signal patterns</p>
               </CardContent>
@@ -659,7 +659,7 @@ export default function LearnerDashboard() {
           {[
             { label: "Take Assessment",  path: "/assessment",  icon: ClipboardList, color: "var(--primary)" },
             { label: "My Learning Plan", path: "/learning",    icon: BookOpen,      color: "#4477AA" },
-            { label: "Content Library",  path: "/library",     icon: Library,       color: "#AA3377" },
+            { label: "Content Library",  path: "/library",     icon: Library,       color: "#b91c1c" },
           ].map(action => {
             const Icon = action.icon;
             return (

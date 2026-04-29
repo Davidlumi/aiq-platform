@@ -306,7 +306,7 @@ export default function OrgContextPage() {
       </div>
 
       {existing && (
-        <div className="flex items-center gap-2 text-xs text-[#228833] bg-[#228833]/8 rounded-lg px-3 py-2 border border-[#228833]/20">
+        <div className="flex items-center gap-2 text-xs text-[#047857] bg-[#047857]/8 rounded-lg px-3 py-2 border border-[#047857]/20">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
           Organisation context is configured. Simulations are personalised for your environment.
         </div>
@@ -466,7 +466,7 @@ export default function OrgContextPage() {
             {currentChallenges.length > 0 ? (
               <div className="space-y-1.5">
                 {currentChallenges.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs bg-[#CCBB44]/8 border border-[#CCBB44]/20 rounded-lg px-3 py-2">
+                  <div key={i} className="flex items-center gap-2 text-xs bg-[#D97706]/8 border border-[#D97706]/20 rounded-lg px-3 py-2">
                     <AlertCircle className="w-3.5 h-3.5 text-[#99882A] shrink-0" />
                     <span className="flex-1 text-foreground">{c}</span>
                     <button
@@ -490,7 +490,7 @@ export default function OrgContextPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#228833]" />
+            <Target className="w-4 h-4 text-[#047857]" />
             AI Readiness Ambition Target
           </CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -514,7 +514,7 @@ export default function OrgContextPage() {
                   else if (e.target.value === "") setAmbitionTargetScore("");
                 }}
                 placeholder="e.g. 7.5"
-                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               />
             </div>
             <div>
@@ -524,7 +524,7 @@ export default function OrgContextPage() {
                 type="date"
                 value={ambitionTargetDate}
                 onChange={(e) => setAmbitionTargetDate(e.target.value)}
-                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+                className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               />
             </div>
           </div>
@@ -536,14 +536,14 @@ export default function OrgContextPage() {
               value={ambitionTargetLabel}
               onChange={(e) => setAmbitionTargetLabel(e.target.value)}
               placeholder="e.g. HR function fully capable of deploying and governing AI tools across all people processes"
-              className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+              className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               maxLength={200}
             />
             <p className="text-xs text-muted-foreground mt-1">{ambitionTargetLabel.length}/200 characters</p>
           </div>
           {ambitionTargetScore && (
-            <div className="p-3 rounded-xl bg-[#228833]/5 border border-[#228833]/15">
-              <p className="text-xs font-semibold text-[#228833] mb-0.5">Ambition preview</p>
+            <div className="p-3 rounded-xl bg-[#047857]/5 border border-[#047857]/15">
+              <p className="text-xs font-semibold text-[#047857] mb-0.5">Ambition preview</p>
               <p className="text-xs text-muted-foreground">
                 Target: <strong className="text-foreground">{(parseFloat(ambitionTargetScore) / 10).toFixed(1)}</strong> / 10
                 {ambitionTargetDate && <> by <strong className="text-foreground">{new Date(ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
@@ -741,13 +741,13 @@ export default function OrgContextPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-all",
                     value
-                      ? "border-[#228833]/40 bg-[#228833]/5"
+                      ? "border-[#047857]/40 bg-[#047857]/5"
                       : "border-border hover:border-border/80"
                   )}
                 >
                   <div className={cn(
                     "w-4 h-4 rounded flex items-center justify-center shrink-0",
-                    value ? "bg-[#228833]" : "bg-muted border border-border"
+                    value ? "bg-[#047857]" : "bg-muted border border-border"
                   )}>
                     {value && <CheckCircle2 className="w-3 h-3 text-white" />}
                   </div>
@@ -861,13 +861,13 @@ export default function OrgContextPage() {
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-4 py-3 text-left transition-all flex-1",
                 smallHRFunctionMode
-                  ? "border-[#CCBB44] bg-[#CCBB44]/5"
-                  : "border-border hover:border-[#CCBB44]/40"
+                  ? "border-[#D97706] bg-[#D97706]/5"
+                  : "border-border hover:border-[#D97706]/40"
               )}
             >
               <div className={cn(
                 "w-4 h-4 rounded flex items-center justify-center shrink-0",
-                smallHRFunctionMode ? "bg-[#CCBB44]" : "bg-muted border border-border"
+                smallHRFunctionMode ? "bg-[#D97706]" : "bg-muted border border-border"
               )}>
                 {smallHRFunctionMode && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
@@ -881,7 +881,7 @@ export default function OrgContextPage() {
           </div>
 
           {smallHRFunctionMode && (
-            <div className="flex items-start gap-2 text-xs text-[#CCBB44] bg-[#CCBB44]/8 rounded-lg px-3 py-2 border border-[#CCBB44]/20">
+            <div className="flex items-start gap-2 text-xs text-[#D97706] bg-[#D97706]/8 rounded-lg px-3 py-2 border border-[#D97706]/20">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>Small HR Function Mode reduces assessment length by ~40% and lowers the minimum evidence threshold. Results are clearly marked as small-function assessments in all reports.</span>
             </div>

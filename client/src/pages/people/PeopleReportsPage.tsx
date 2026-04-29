@@ -29,9 +29,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 type ReadinessState = "safe" | "at_risk" | "unsafe" | "not_assessed" | "unknown";
 
 const READINESS_CONFIG: Record<ReadinessState, { label: string; colour: string; icon: React.ReactNode }> = {
-  safe:         { label: "AI-Ready",     colour: "text-[#228833] bg-[#228833]/10 border-[#228833]/20", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  at_risk:      { label: "Developing",   colour: "text-[#CCBB44] bg-[#CCBB44]/10 border-[#CCBB44]/20", icon: <Clock className="w-3.5 h-3.5" /> },
-  unsafe:       { label: "Foundation Gap", colour: "text-[#EE6677] bg-[#EE6677]/10 border-[#EE6677]/20", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  safe:         { label: "AI-Ready",     colour: "text-[#047857] bg-[#047857]/10 border-[#047857]/20", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+  at_risk:      { label: "Developing",   colour: "text-[#D97706] bg-[#D97706]/10 border-[#D97706]/20", icon: <Clock className="w-3.5 h-3.5" /> },
+  unsafe:       { label: "Foundation Gap", colour: "text-[#DC2626] bg-[#DC2626]/10 border-[#DC2626]/20", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
   not_assessed: { label: "Not Assessed", colour: "text-muted-foreground bg-muted border-border", icon: <UserX className="w-3.5 h-3.5" /> },
   unknown:      { label: "Unknown",      colour: "text-muted-foreground bg-muted border-border", icon: <UserX className="w-3.5 h-3.5" /> },
 };
@@ -48,7 +48,7 @@ function ReadinessBadge({ state }: { state: ReadinessState }) {
 
 function ScoreBar({ score }: { score: number }) {
   const pct = Math.min(100, Math.max(0, score));
-  const colour = pct >= 70 ? "#228833" : pct >= 50 ? "#CCBB44" : "#EE6677";
+  const colour = pct >= 70 ? "#047857" : pct >= 50 ? "#D97706" : "#DC2626";
   return (
     <div className="flex items-center gap-2">
       <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
@@ -88,7 +88,7 @@ export default function PeopleReportsPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <AlertTriangle className="w-10 h-10 text-[#EE6677]" />
+        <AlertTriangle className="w-10 h-10 text-[#DC2626]" />
         <p className="text-lg font-semibold">Access Denied</p>
         <p className="text-sm text-muted-foreground max-w-xs">{error.message}</p>
       </div>
@@ -121,9 +121,9 @@ export default function PeopleReportsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Assessed",      value: assessed, colour: "text-foreground" },
-            { label: "AI-Ready",      value: aiReady,  colour: "text-[#228833]" },
-            { label: "Developing",    value: atRisk,   colour: "text-[#CCBB44]" },
-            { label: "Foundation Gap",value: gap,      colour: "text-[#EE6677]" },
+            { label: "AI-Ready",      value: aiReady,  colour: "text-[#047857]" },
+            { label: "Developing",    value: atRisk,   colour: "text-[#D97706]" },
+            { label: "Foundation Gap",value: gap,      colour: "text-[#DC2626]" },
           ].map(stat => (
             <div key={stat.label} className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs text-muted-foreground">{stat.label}</p>

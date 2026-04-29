@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
-  published: { label: "Published", colour: "#228833", icon: CheckCircle2 },
+  published: { label: "Published", colour: "#047857", icon: CheckCircle2 },
   draft:     { label: "Draft",     colour: "#EE8866", icon: Clock },
   archived:  { label: "Archived",  colour: "#9CA3AF", icon: Archive },
 };
@@ -134,7 +134,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
                   {blueprint.status === "draft" && (
                     <Button
                       size="sm"
-                      className="w-full text-xs gap-1 bg-[#228833] hover:bg-[#228833]/90 text-white"
+                      className="w-full text-xs gap-1 bg-[#047857] hover:bg-[#047857]/90 text-white"
                       onClick={() => toast.info("Blueprint published (demo)")}
                     >
                       <CheckCircle2 className="w-3 h-3" />
@@ -145,7 +145,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full text-xs gap-1 text-[#99882A] border-[#CCBB44]/25"
+                      className="w-full text-xs gap-1 text-[#99882A] border-[#D97706]/25"
                       onClick={() => toast.info("Blueprint archived (demo)")}
                     >
                       <Archive className="w-3 h-3" />
@@ -194,7 +194,7 @@ export default function AssessmentBlueprintsPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Total Blueprints", value: stats.total, colour: "var(--primary)" },
-          { label: "Published", value: stats.published, colour: "#228833" },
+          { label: "Published", value: stats.published, colour: "#047857" },
           { label: "Draft", value: stats.draft, colour: "#EE8866" },
         ].map(stat => (
           <Card key={stat.label} className="text-center p-4">

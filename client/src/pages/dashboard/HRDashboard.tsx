@@ -39,10 +39,10 @@ import { cn } from "@/lib/utils";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const GREEN  = "var(--primary)";
-const AMBER  = "#CCBB44";
-const RED    = "#EE6677";
+const AMBER  = "#D97706";
+const RED    = "#DC2626";
 const BLUE   = "#4477AA";
-const PURPLE = "#AA3377";
+const PURPLE = "#b91c1c";
 const CYAN   = "#06B6D4";
 
 const CAP_COLORS: Record<string, string> = {
@@ -79,9 +79,9 @@ function scoreToHeatClass(score: number | null): string {
   if (score === null) return "bg-muted/40 text-muted-foreground";
   if (score >= 75) return "bg-primary/80/10 text-primary dark:text-primary";
   if (score >= 65) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400";
-  if (score >= 55) return "bg-[#CCBB44]/80/10 text-[#99882A] dark:text-[#CCBB44]";
+  if (score >= 55) return "bg-[#D97706]/80/10 text-[#99882A] dark:text-[#D97706]";
   if (score >= 45) return "bg-orange-500/10 text-orange-600 dark:text-orange-400";
-  return "bg-[#EE6677]/80/10 text-[#CC3344] dark:text-[#EE6677]";
+  return "bg-[#DC2626]/80/10 text-[#CC3344] dark:text-[#DC2626]";
 }
 
 // ─── CSV export ───────────────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ function ActionRecommendations({ data }: { data: any }) {
     <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Zap className="w-4 h-4 text-[#CCBB44]" />
+          <Zap className="w-4 h-4 text-[#D97706]" />
           Suggested Actions
         </CardTitle>
       </CardHeader>
@@ -592,7 +592,7 @@ export default function HRDashboard() {
                 )}
               </div>
               <div>
-                <p className="text-xs font-semibold text-[#CCBB44] uppercase tracking-widest mb-2">Development priorities</p>
+                <p className="text-xs font-semibold text-[#D97706] uppercase tracking-widest mb-2">Development priorities</p>
                 {development.length === 0 ? (
                   <p className="text-xs text-muted-foreground">All domains on track</p>
                 ) : (
@@ -715,8 +715,8 @@ export default function HRDashboard() {
                 <Badge variant="outline" className={cn(
                   "text-xs",
                   projectedMonths === 0 ? "border-primary text-primary"
-                    : projectedMonths <= 3 ? "border-[#CCBB44] text-[#CCBB44]"
-                    : "border-[#EE6677] text-[#EE6677]"
+                    : projectedMonths <= 3 ? "border-[#D97706] text-[#D97706]"
+                    : "border-[#DC2626] text-[#DC2626]"
                 )}>
                   {projectedMonths === 0 ? "Safe now" : `~${projectedMonths}mo to safe`}
                 </Badge>
@@ -763,7 +763,7 @@ export default function HRDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Target className="w-4 h-4 text-[#AA3377]" />
+                <Target className="w-4 h-4 text-[#b91c1c]" />
                 Strategic Mismatch
               </CardTitle>
               {mismatchData && (
@@ -897,7 +897,7 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#CCBB44]" />Risk Distribution
+                <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />Risk Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -927,7 +927,7 @@ export default function HRDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#CCBB44]" />Revalidation Status
+                <Clock className="w-3.5 h-3.5 text-[#D97706]" />Revalidation Status
               </CardTitle>
             </CardHeader>
             <CardContent>

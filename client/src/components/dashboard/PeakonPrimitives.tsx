@@ -220,10 +220,10 @@ export function ReadinessDistributionBar({
   className?: string;
 }) {
   const segments: DistributionSegment[] = [
-    { label: "AI Ready", value: aiReady, colour: "#7A9E8E" },
-    { label: "Developing", value: developing, colour: "#C8B07A" },
-    { label: "Not Yet Ready", value: notYetReady, colour: "#C08878" },
-    { label: "Foundation Gap", value: foundationGap, colour: "#A87868" },
+    { label: "AI Ready", value: aiReady, colour: "#047857" },
+    { label: "Developing", value: developing, colour: "#2563EB" },
+    { label: "Not Yet Ready", value: notYetReady, colour: "#D97706" },
+    { label: "Foundation Gap", value: foundationGap, colour: "#DC2626" },
   ].filter(s => s.value > 0);
 
   return <DistributionBar segments={segments} total={total} className={className} />;
@@ -332,7 +332,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   return (
     <span className={cn(
       "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
-      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#CCBB44]/8 text-[#99882A] border border-[#CCBB44]/25"
+      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#D97706]/8 text-[#99882A] border border-[#D97706]/25"
     )}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{delta.toFixed(1)} {label}

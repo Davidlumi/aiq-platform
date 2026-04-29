@@ -19,10 +19,10 @@ function ConsequencePanel({ consequence, scoreDelta, riskDelta, onContinue }: {
   const isNeg = scoreDelta < 0;
   return (
     <div className={cn("rounded-xl border-2 p-5 space-y-4",
-      isPos ? "border-[#228833] bg-[#22883308]" : isNeg ? "border-[#EE6677] bg-[#EE667708]" : "border-[#EE8866] bg-[#EE886608]")}>
+      isPos ? "border-[#047857] bg-[#04785708]" : isNeg ? "border-[#DC2626] bg-[#DC262608]" : "border-[#EE8866] bg-[#EE886608]")}>
       <div className="flex items-start gap-3">
-        {isPos ? <CheckCircle2 className="w-5 h-5 text-[#228833] mt-0.5 shrink-0" />
-          : isNeg ? <XCircle className="w-5 h-5 text-[#EE6677] mt-0.5 shrink-0" />
+        {isPos ? <CheckCircle2 className="w-5 h-5 text-[#047857] mt-0.5 shrink-0" />
+          : isNeg ? <XCircle className="w-5 h-5 text-[#DC2626] mt-0.5 shrink-0" />
           : <AlertTriangle className="w-5 h-5 text-[#EE8866] mt-0.5 shrink-0" />}
         <div>
           <p className="text-sm font-semibold text-foreground mb-1">
@@ -33,15 +33,15 @@ function ConsequencePanel({ consequence, scoreDelta, riskDelta, onContinue }: {
       </div>
       <div className="flex gap-4 pt-1">
         <div className="flex items-center gap-1.5">
-          {scoreDelta >= 0 ? <TrendingUp className="w-4 h-4 text-[#228833]" /> : <TrendingDown className="w-4 h-4 text-[#EE6677]" />}
-          <span className={cn("text-sm font-semibold", scoreDelta >= 0 ? "text-[#228833]" : "text-[#EE6677]")}>
+          {scoreDelta >= 0 ? <TrendingUp className="w-4 h-4 text-[#047857]" /> : <TrendingDown className="w-4 h-4 text-[#DC2626]" />}
+          <span className={cn("text-sm font-semibold", scoreDelta >= 0 ? "text-[#047857]" : "text-[#DC2626]")}>
             {scoreDelta >= 0 ? "+" : ""}{scoreDelta} score
           </span>
         </div>
         {riskDelta !== 0 && (
           <div className="flex items-center gap-1.5">
-            {riskDelta <= 0 ? <TrendingDown className="w-4 h-4 text-[#228833]" /> : <TrendingUp className="w-4 h-4 text-[#EE6677]" />}
-            <span className={cn("text-sm font-semibold", riskDelta <= 0 ? "text-[#228833]" : "text-[#EE6677]")}>
+            {riskDelta <= 0 ? <TrendingDown className="w-4 h-4 text-[#047857]" /> : <TrendingUp className="w-4 h-4 text-[#DC2626]" />}
+            <span className={cn("text-sm font-semibold", riskDelta <= 0 ? "text-[#047857]" : "text-[#DC2626]")}>
               {riskDelta >= 0 ? "+" : ""}{riskDelta} risk
             </span>
           </div>
@@ -66,8 +66,8 @@ function ScoreTracker({ events }: { events: any[] }) {
         <span className="text-muted-foreground">{choices.length} decisions</span>
       </div>
       <div className="flex items-center gap-1.5">
-        {total >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-[#228833]" /> : <TrendingDown className="w-3.5 h-3.5 text-[#EE6677]" />}
-        <span className={cn("font-semibold", total >= 0 ? "text-[#228833]" : "text-[#EE6677]")}>
+        {total >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-[#047857]" /> : <TrendingDown className="w-3.5 h-3.5 text-[#DC2626]" />}
+        <span className={cn("font-semibold", total >= 0 ? "text-[#047857]" : "text-[#DC2626]")}>
           {total >= 0 ? "+" : ""}{total}
         </span>
       </div>
@@ -86,7 +86,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
   return (
     <div className="p-6 space-y-6 max-w-2xl mx-auto">
       <div className="text-center py-8 space-y-3">
-        {isPassed ? <CheckCircle2 className="w-16 h-16 mx-auto text-[#228833]" /> : <XCircle className="w-16 h-16 mx-auto text-[#EE6677]" />}
+        {isPassed ? <CheckCircle2 className="w-16 h-16 mx-auto text-[#047857]" /> : <XCircle className="w-16 h-16 mx-auto text-[#DC2626]" />}
         <h1 className="text-2xl font-bold text-foreground">{isPassed ? "Simulation Passed" : "Simulation Failed"}</h1>
         <p className="text-muted-foreground">
           {isPassed ? "You demonstrated appropriate reasoning and policy compliance throughout this scenario."
@@ -101,7 +101,7 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
               <p className="text-xs text-muted-foreground mt-1">Decisions Made</p>
             </div>
             <div className="text-center">
-              <p className={cn("text-3xl font-bold", total >= 0 ? "text-[#228833]" : "text-[#EE6677]")}>{total >= 0 ? "+" : ""}{total}</p>
+              <p className={cn("text-3xl font-bold", total >= 0 ? "text-[#047857]" : "text-[#DC2626]")}>{total >= 0 ? "+" : ""}{total}</p>
               <p className="text-xs text-muted-foreground mt-1">Total Score</p>
             </div>
           </div>
@@ -117,11 +117,11 @@ function CompletionScreen({ session, events, onBack, onLearning }: {
               return (
                 <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30">
                   <div className={cn("w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-white",
-                    (meta.scoreDelta ?? 0) >= 0 ? "bg-[#228833]" : "bg-[#EE6677]")}>{i + 1}</div>
+                    (meta.scoreDelta ?? 0) >= 0 ? "bg-[#047857]" : "bg-[#DC2626]")}>{i + 1}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-foreground">{meta.choiceLabel ?? `Decision ${i + 1}`}</p>
                     {meta.scoreDelta !== undefined && (
-                      <p className={cn("text-xs font-semibold mt-0.5", meta.scoreDelta >= 0 ? "text-[#228833]" : "text-[#EE6677]")}>
+                      <p className={cn("text-xs font-semibold mt-0.5", meta.scoreDelta >= 0 ? "text-[#047857]" : "text-[#DC2626]")}>
                         {meta.scoreDelta >= 0 ? "+" : ""}{meta.scoreDelta}
                       </p>
                     )}
@@ -202,7 +202,7 @@ export default function SimulationSessionPage() {
     return (
       <div className="p-6 space-y-6 max-w-3xl">
         <div className="text-center py-8 space-y-3">
-          <CheckCircle2 className="w-12 h-12 text-[#228833] mx-auto" />
+          <CheckCircle2 className="w-12 h-12 text-[#047857] mx-auto" />
           <h2 className="text-xl font-bold">All scenarios complete</h2>
           <p className="text-muted-foreground text-sm">Submit your simulation to receive your score.</p>
           <Button onClick={() => completeMutation.mutate({ sessionId: sessionId! })} disabled={completeMutation.isPending}
@@ -238,7 +238,7 @@ export default function SimulationSessionPage() {
           )}
           {ctx.capability && <Badge variant="outline" className="text-xs capitalize">{ctx.capability}</Badge>}
           {ctx.stakes && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#CCBB44]/8 border border-[#CCBB44]/25 text-xs text-[#99882A]">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D97706]/8 border border-[#D97706]/25 text-xs text-[#99882A]">
               <AlertTriangle className="w-3 h-3" />{ctx.stakes}
             </div>
           )}
@@ -288,7 +288,7 @@ export default function SimulationSessionPage() {
       </Card>
 
       {negativeChoices.length >= 2 && (
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#CCBB44]/8 border border-[#CCBB44]/25">
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#D97706]/8 border border-[#D97706]/25">
           <Lightbulb className="w-4 h-4 text-[#99882A] mt-0.5 shrink-0" />
           <p className="text-xs text-[#99882A]">
             <span className="font-semibold">Guided mode active.</span> Consider the policy implications carefully before making your next decision.

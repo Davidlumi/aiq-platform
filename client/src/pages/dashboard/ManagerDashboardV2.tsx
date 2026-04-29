@@ -70,7 +70,7 @@ const RATING_LABELS: Record<string, string> = {
 const RATING_COLOURS: Record<string, string> = {
   ai_ready: "#7A9E8E",
   developing: "#C8B07A",
-  not_yet_ready: "#C08878",
+  not_yet_ready: "#b45309",
   foundation_gap: "#A87868",
   insufficient_evidence: "#B0B8C4",
 };
@@ -186,7 +186,7 @@ export default function ManagerDashboardV2() {
           label="At Risk"
           value={(data.ratingCounts.not_yet_ready ?? 0) + (data.ratingCounts.foundation_gap ?? 0)}
           sub="not yet ready / gap"
-          colour="#C08878"
+          colour="#b45309"
           icon={<AlertTriangle className="w-4 h-4" />}
         />
       </div>
@@ -392,15 +392,15 @@ export default function ManagerDashboardV2() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-1">
-              <div className="p-4 rounded-xl bg-[#228833]/8 border border-[#228833]/20">
+              <div className="p-4 rounded-xl bg-[#047857]/8 border border-[#047857]/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-[#228833]" />
+                  <TrendingUp className="w-4 h-4 text-[#047857]" />
                   <span className="text-xs font-semibold text-[#1A6625]">On track</span>
                 </div>
-                <span className="text-2xl font-bold tabular-nums text-[#228833]">{devOverview.statusCounts.onTrack}</span>
-                <p className="text-xs text-[#228833] mt-1">Progressing as expected</p>
+                <span className="text-2xl font-bold tabular-nums text-[#047857]">{devOverview.statusCounts.onTrack}</span>
+                <p className="text-xs text-[#047857] mt-1">Progressing as expected</p>
               </div>
-              <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20">
+              <div className="p-4 rounded-xl bg-[#D97706]/8 border border-[#D97706]/20">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="w-4 h-4 text-[#99882A]" />
                   <span className="text-xs font-semibold text-[#7A6E22]">Slipping</span>
@@ -408,7 +408,7 @@ export default function ManagerDashboardV2() {
                 <span className="text-2xl font-bold tabular-nums text-[#99882A]">{devOverview.statusCounts.slipping}</span>
                 <p className="text-xs text-[#99882A] mt-1">Behind expected pace</p>
               </div>
-              <div className="p-4 rounded-xl bg-[#EE6677]/8 border border-[#EE6677]/20">
+              <div className="p-4 rounded-xl bg-[#DC2626]/8 border border-[#DC2626]/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="w-4 h-4 text-[#CC3344]" />
                   <span className="text-xs font-semibold text-[#AA2233]">Stalled</span>
@@ -448,7 +448,7 @@ export default function ManagerDashboardV2() {
                 <span className="text-sm text-muted-foreground">team avg</span>
                 <span className="text-base text-muted-foreground mx-1">→</span>
                 <span className="text-2xl font-bold font-mono tabular-nums"
-                  style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#228833" : "#C08878" }}>
+                  style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#047857" : "#b45309" }}>
                   {(ambitionGap.ambitionTargetScore / 10).toFixed(1)}
                 </span>
                 <span className="text-sm text-muted-foreground">target</span>
@@ -459,8 +459,8 @@ export default function ManagerDashboardV2() {
             </div>
             <div className="px-3 py-2 rounded-xl border text-center shrink-0"
               style={{
-                backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#F0F4F0" : "#F4EEEC",
-                borderColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#C08878",
+                backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#f0fdf4" : "#F4EEEC",
+                borderColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#b45309",
               }}>
               <p className="text-xs font-medium" style={{ color: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#2D5A3D" : "#6B3030" }}>
                 {teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0)
@@ -475,7 +475,7 @@ export default function ManagerDashboardV2() {
               <div className="absolute left-0 top-0 h-full rounded-full transition-all"
                 style={{
                   width: Math.min(100, teamAvgScore) + "%",
-                  backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#C08878",
+                  backgroundColor: teamAvgScore >= (ambitionGap.ambitionTargetScore ?? 0) ? "#7A9E8E" : "#b45309",
                 }} />
               {ambitionGap.ambitionTargetScore > 0 && (
                 <div className="absolute top-0 h-full w-0.5 bg-neutral-400"

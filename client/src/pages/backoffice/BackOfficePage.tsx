@@ -90,9 +90,9 @@ type ApplicationStatus = typeof APPLICATION_STATUSES[number];
 
 function AppStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-    pending:    { label: "Pending",    className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25",       icon: Clock },
+    pending:    { label: "Pending",    className: "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25",       icon: Clock },
     approved:   { label: "Approved",   className: "bg-primary/8 text-primary border-primary/25", icon: CheckCircle2 },
-    rejected:   { label: "Rejected",   className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",             icon: XCircle },
+    rejected:   { label: "Rejected",   className: "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25",             icon: XCircle },
     waitlisted: { label: "Waitlisted", className: "bg-primary/8 text-primary border-primary/25",          icon: Clock },
   };
   const c = config[status] ?? { label: status, className: "bg-muted text-muted-foreground border-border", icon: Clock };
@@ -322,9 +322,9 @@ function BetaApplicationsTab() {
                         className={cn(
                           "h-7 text-xs border",
                           s === "approved"   && "border-primary/30 text-primary hover:bg-primary/8",
-                          s === "rejected"   && "border-[#EE6677]/30 text-[#CC3344] hover:bg-[#EE6677]/8",
+                          s === "rejected"   && "border-[#DC2626]/30 text-[#CC3344] hover:bg-[#DC2626]/8",
                           s === "waitlisted" && "border-blue-300 text-blue-700 hover:bg-blue-50",
-                          s === "pending"    && "border-[#CCBB44]/30 text-[#99882A] hover:bg-[#CCBB44]/8",
+                          s === "pending"    && "border-[#D97706]/30 text-[#99882A] hover:bg-[#D97706]/8",
                         )}
                       >
                         {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -346,10 +346,10 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     active:      { label: "Active",      className: "bg-primary/8 text-primary border-primary/25" },
     trial:       { label: "Trial",       className: "bg-primary/8 text-primary border-primary/25" },
-    suspended:   { label: "Suspended",   className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
+    suspended:   { label: "Suspended",   className: "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25" },
     archived:    { label: "Archived",    className: "bg-muted text-muted-foreground border-border" },
     pending:     { label: "Pending",     className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-    deactivated: { label: "Deactivated", className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
+    deactivated: { label: "Deactivated", className: "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25" },
   };
   const c = config[status] ?? { label: status, className: "bg-muted text-muted-foreground border-border" };
   return (
@@ -366,7 +366,7 @@ function DashboardTab() {
   const statCards = [
     { label: "Total Organisations", value: stats?.totalOrgs ?? 0, sub: `${stats?.activeOrgs ?? 0} active, ${stats?.trialOrgs ?? 0} trial`, icon: Building2, color: "var(--primary)" },
     { label: "Total Users", value: stats?.totalUsers ?? 0, sub: `${stats?.activeUsers ?? 0} active`, icon: Users, color: "var(--primary)" },
-    { label: "New Users (30d)", value: stats?.newUsersLast30Days ?? 0, sub: "registered in last 30 days", icon: TrendingUp, color: "#CCBB44" },
+    { label: "New Users (30d)", value: stats?.newUsersLast30Days ?? 0, sub: "registered in last 30 days", icon: TrendingUp, color: "#D97706" },
     { label: "Platform Health", value: "OK", sub: "all systems operational", icon: Activity, color: "#6366F1" },
   ];
 
@@ -1131,8 +1131,8 @@ const CAPABILITY_LABELS: Record<string, string> = {
 const OUTCOME_CONFIG: Record<string, { label: string; className: string }> = {
   strong:      { label: "Strong",      className: "bg-primary/8 text-primary border-primary/25" },
   adequate:    { label: "Adequate",    className: "bg-primary/8 text-primary border-primary/25" },
-  partial:     { label: "Partial",     className: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25" },
-  failure:     { label: "Failure",     className: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" },
+  partial:     { label: "Partial",     className: "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25" },
+  failure:     { label: "Failure",     className: "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25" },
   abstain:     { label: "Abstain",     className: "bg-muted text-muted-foreground border-border" },
   unknown:     { label: "Unknown",     className: "bg-muted text-muted-foreground border-border" },
 };
@@ -1350,7 +1350,7 @@ function ReasoningTab() {
                                 "inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border",
                                 delta > 0
                                   ? "bg-primary/8 text-primary border-primary/25"
-                                  : "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25"
+                                  : "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25"
                               )}
                             >
                               {signal.replace(/_/g, " ")}: {delta > 0 ? "+" : ""}{delta.toFixed(2)}
@@ -1578,7 +1578,7 @@ function LlmReviewQueueTab() {
                         onClick={() => updateStatus.mutate({ id: item.id, status: "approved" })}>
                         <Check className="w-3.5 h-3.5" /> Approve
                       </Button>
-                      <Button size="sm" variant="outline" className="gap-1 text-[#CC3344] border-[#EE6677]/25 hover:bg-[#EE6677]/8"
+                      <Button size="sm" variant="outline" className="gap-1 text-[#CC3344] border-[#DC2626]/25 hover:bg-[#DC2626]/8"
                         onClick={() => updateStatus.mutate({ id: item.id, status: "rejected" })}>
                         <X className="w-3.5 h-3.5" /> Reject
                       </Button>
@@ -1587,7 +1587,7 @@ function LlmReviewQueueTab() {
                   {item.status !== "pending" && (
                     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border",
                       item.status === "approved" ? "bg-primary/8 text-primary border-primary/25" :
-                      item.status === "rejected" ? "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25" :
+                      item.status === "rejected" ? "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25" :
                       "bg-blue-50 text-blue-700 border-blue-200"
                     )}>{item.status.replace("_", " ")}</span>
                   )}
@@ -1664,9 +1664,9 @@ function SessionFlagsTab() {
 // ─── TD-3: Feature Flags Tab ─────────────────────────────────────────────────
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
   quality:    { label: "Quality",    color: "#6366F1" },
-  integrity:  { label: "Integrity",  color: "#EE6677" },
+  integrity:  { label: "Integrity",  color: "#DC2626" },
   ux:         { label: "UX",         color: "var(--primary)" },
-  assessment: { label: "Assessment", color: "#CCBB44" },
+  assessment: { label: "Assessment", color: "#D97706" },
 };
 function FeatureFlagsTab() {
   const { data: flags, isLoading } = trpc.backoffice.getFeatureFlags.useQuery();
@@ -1720,7 +1720,7 @@ function FeatureFlagsTab() {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-foreground">{flag.label}</p>
                           {flag.defaultOn !== flag.enabled && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full border border-[#CCBB44]/30 bg-[#CCBB44]/8 text-[#99882A] dark:bg-[#CCBB44]/8 dark:text-[#CCBB44] dark:border-[#CCBB44]/30">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full border border-[#D97706]/30 bg-[#D97706]/8 text-[#99882A] dark:bg-[#D97706]/8 dark:text-[#D97706] dark:border-[#D97706]/30">
                               Non-default
                             </span>
                           )}

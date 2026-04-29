@@ -13,11 +13,11 @@ import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } f
 // ─── Rating Badge ────────────────────────────────────────────────────────────
 
 const RATING_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  ai_ready:              { bg: "#F0F4F0", text: "#2D5A3D", border: "#B8CEB8", dot: "#7A9E8E" },
-  developing:            { bg: "#F7F3EC", text: "#6B4F1E", border: "#D8C89A", dot: "#C8B07A" },
-  not_yet_ready:         { bg: "#F5EFEE", text: "#6B3030", border: "#D4B0A8", dot: "#C08878" },
-  foundation_gap:        { bg: "#F4EEEC", text: "#6B2E2E", border: "#CCA898", dot: "#A87868" },
-  insufficient_evidence: { bg: "#F5F6F8", text: "#4A5568", border: "#C8D0D8", dot: "#B0B8C4" },
+  ai_ready:              { bg: "#f0fdf4", text: "#047857", border: "#bbf7d0", dot: "#047857" },
+  developing:            { bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe", dot: "#2563EB" },
+  not_yet_ready:         { bg: "#fffbeb", text: "#b45309", border: "#fde68a", dot: "#D97706" },
+  foundation_gap:        { bg: "#fef2f2", text: "#b91c1c", border: "#fecaca", dot: "#DC2626" },
+  insufficient_evidence: { bg: "#F9FAFB", text: "#6B7280", border: "#D1D5DB", dot: "#9CA3AF" },
 };
 
 const RATING_DISPLAY: Record<string, string> = {
@@ -162,7 +162,7 @@ export function ScoreDisplay({ score, size = "lg", className, peakon = false }: 
 
 const CONFIDENCE_STYLES: Record<string, { colour: string; label: string }> = {
   high: { colour: "var(--primary)", label: "High confidence" },
-  moderate: { colour: "#CCBB44", label: "Moderate confidence" },
+  moderate: { colour: "#D97706", label: "Moderate confidence" },
   low: { colour: "#94A3B8", label: "Low confidence" },
 };
 
@@ -322,10 +322,10 @@ export function HeatmapCell({
 
 const DOMAIN_COLOUR_MAP: Record<string, string> = {
   ai_interaction: "#4477AA",
-  ai_output_evaluation: "#AA3377",
+  ai_output_evaluation: "#b91c1c",
   ai_workflow_design: "var(--primary)",
-  workforce_ai_readiness: "#CCBB44",
-  ai_ethics_trust: "#EE6677",
+  workforce_ai_readiness: "#D97706",
+  ai_ethics_trust: "#DC2626",
   ai_change_leadership: "#06B6D4",
 };
 

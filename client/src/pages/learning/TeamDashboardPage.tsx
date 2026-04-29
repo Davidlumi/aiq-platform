@@ -17,10 +17,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const BAND_COLOURS: Record<string, { text: string; bg: string; border: string }> = {
-  critical:   { text: "text-[#CC3344]",     bg: "bg-[#EE6677]/8",     border: "border-[#EE6677]/25" },
-  developing: { text: "text-[#99882A]",   bg: "bg-[#CCBB44]/8",   border: "border-[#CCBB44]/25" },
+  critical:   { text: "text-[#CC3344]",     bg: "bg-[#DC2626]/8",     border: "border-[#DC2626]/25" },
+  developing: { text: "text-[#99882A]",   bg: "bg-[#D97706]/8",   border: "border-[#D97706]/25" },
   proficient: { text: "text-primary", bg: "bg-primary/8", border: "border-primary/25" },
-  advanced:   { text: "text-[#228833]", bg: "bg-[#228833]/8", border: "border-[#228833]/25" },
+  advanced:   { text: "text-[#047857]", bg: "bg-[#047857]/8", border: "border-[#047857]/25" },
 };
 
 function NudgeDialog({
@@ -142,7 +142,7 @@ function MemberCard({ member, onNudge }: { member: any; onNudge: (member: any) =
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${member.overallScore}%`, background: member.overallScore >= 80 ? "#6366f1" : member.overallScore >= 60 ? "var(--primary)" : member.overallScore >= 40 ? "#CCBB44" : "#EE6677" }}
+              style={{ width: `${member.overallScore}%`, background: member.overallScore >= 80 ? "#6366f1" : member.overallScore >= 60 ? "var(--primary)" : member.overallScore >= 40 ? "#D97706" : "#DC2626" }}
             />
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function TeamDashboardPage() {
           {[
             { label: "Team Members", value: members.length, icon: Users, color: "#6366f1" },
             { label: "Avg AI Readiness", value: avgScore !== null ? `${avgScore}%` : "—", icon: Target, color: "var(--primary)" },
-            { label: "Modules Completed", value: totalModulesDone, icon: BookOpen, color: "#CCBB44" },
+            { label: "Modules Completed", value: totalModulesDone, icon: BookOpen, color: "#D97706" },
             { label: "Active Streaks", value: activeStreaks, icon: Flame, color: "#f97316" },
           ].map(stat => (
             <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center">
@@ -301,7 +301,7 @@ export default function TeamDashboardPage() {
                 <div key={band} className="flex items-center gap-3">
                   <div className={cn("w-20 text-xs capitalize font-medium", colours.text)}>{band}</div>
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className={cn("h-full rounded-full")} style={{ width: `${pct}%`, background: band === "critical" ? "#EE6677" : band === "developing" ? "#CCBB44" : band === "proficient" ? "var(--primary)" : "#6366f1" }} />
+                    <div className={cn("h-full rounded-full")} style={{ width: `${pct}%`, background: band === "critical" ? "#DC2626" : band === "developing" ? "#D97706" : band === "proficient" ? "var(--primary)" : "#6366f1" }} />
                   </div>
                   <div className="w-16 text-right text-xs text-muted-foreground">{count} ({pct}%)</div>
                 </div>

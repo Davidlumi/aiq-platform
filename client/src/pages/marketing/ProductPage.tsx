@@ -127,13 +127,13 @@ export default function ProductPage() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             <div className="order-2 lg:order-1 rounded-2xl border p-6" style={{ background: "rgba(255,255,255,0.04)", borderColor: borderD }}>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-5" style={{ color: "#228833" }}>Manager dashboard</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-5" style={{ color: "#047857" }}>Manager dashboard</p>
               <div className="flex flex-col gap-3">
                 {[
-                  { name: "Sarah Chen", role: "Senior HRBP", score: 7.2, status: "Progressing", color: "#228833" },
-                  { name: "James Okafor", role: "Reward Specialist", score: 5.8, status: "Developing", color: "#CCBB44" },
+                  { name: "Sarah Chen", role: "Senior HRBP", score: 7.2, status: "Progressing", color: "#047857" },
+                  { name: "James Okafor", role: "Reward Specialist", score: 5.8, status: "Developing", color: "#D97706" },
                   { name: "Priya Patel", role: "L&D Manager", score: 8.4, status: "AI-Ready", color: green },
-                  { name: "Tom Bradley", role: "HR Business Partner", score: 4.9, status: "Foundation gap", color: "#EE6677" },
+                  { name: "Tom Bradley", role: "HR Business Partner", score: 4.9, status: "Foundation gap", color: "#DC2626" },
                 ].map(({ name, role, score, status, color }) => (
                   <div key={name} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }}>
                     <div>
@@ -154,11 +154,11 @@ export default function ProductPage() {
             </div>
             <div className="order-1 lg:order-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#22883318" }}>
-                  <BarChart3 className="w-5 h-5" style={{ color: "#228833" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#04785718" }}>
+                  <BarChart3 className="w-5 h-5" style={{ color: "#047857" }} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#228833" }}>Manager view</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#047857" }}>Manager view</p>
                   <h2 className="font-bold text-xl text-white">What every line manager sees</h2>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function ProductPage() {
                   "Drill-down to individual reports with full audit logging",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#228833" }} />
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#047857" }} />
                     <p className="text-slate-400 text-sm leading-relaxed">{item}</p>
                   </div>
                 ))}
@@ -237,7 +237,7 @@ export default function ProductPage() {
                   <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "#FEF9C3", color: "#854D0E" }}>At risk</span>
                 </div>
                 <div className="h-2 rounded-full" style={{ background: "#E2E8F0" }}>
-                  <div className="h-full rounded-full" style={{ width: "67%", background: "#CCBB44" }} />
+                  <div className="h-full rounded-full" style={{ width: "67%", background: "#D97706" }} />
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-xs text-slate-400">67% of target</span>
@@ -253,7 +253,7 @@ export default function ProductPage() {
                 ].map(({ label, value, good }) => (
                   <div key={label} className="flex justify-between items-center py-2 border-b" style={{ borderColor: borderL }}>
                     <span className="text-xs text-slate-500">{label}</span>
-                    <span className="text-xs font-semibold" style={{ color: good ? green : "#EE6677" }}>{value}</span>
+                    <span className="text-xs font-semibold" style={{ color: good ? green : "#DC2626" }}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -326,7 +326,7 @@ export default function ProductPage() {
               { text: "AiQ does not currently support multi-jurisdiction regulatory contexts. UK regulatory translation is built; international expansion is on the roadmap." },
             ].map(({ text }, i) => (
               <div key={i} className="flex items-start gap-4 p-5 rounded-xl border" style={{ background: "white", borderColor: borderL }}>
-                <XCircle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "#EE6677" }} />
+                <XCircle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "#DC2626" }} />
                 <p className="text-slate-600 text-sm leading-relaxed">{text}</p>
               </div>
             ))}

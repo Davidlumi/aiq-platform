@@ -21,8 +21,8 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const CAP_COLORS: Record<string, string> = {
-  EXEC: "#4477AA", JUDG: "#AA3377", LIT: "#228833",
-  RISK: "#EE6677", STEW: "#EE8866", COLLAB: "#66CCEE",
+  EXEC: "#4477AA", JUDG: "#b91c1c", LIT: "#047857",
+  RISK: "#DC2626", STEW: "#EE8866", COLLAB: "#66CCEE",
 };
 
 
@@ -34,8 +34,8 @@ function passwordStrength(pw: string): { label: string; color: string; width: st
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { label: "Weak", color: "#EE6677", width: "20%" };
-  if (score <= 2) return { label: "Fair", color: "#CCBB44", width: "40%" };
+  if (score <= 1) return { label: "Weak", color: "#DC2626", width: "20%" };
+  if (score <= 2) return { label: "Fair", color: "#D97706", width: "40%" };
   if (score <= 3) return { label: "Good", color: "#4477AA", width: "60%" };
   if (score <= 4) return { label: "Strong", color: "var(--primary)", width: "80%" };
   return { label: "Excellent", color: "var(--primary)", width: "100%" };
@@ -314,8 +314,8 @@ export default function ProfilePage() {
           <Link href="/assessment">
             <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#AA3377]/10 flex items-center justify-center">
-                  <ClipboardList className="h-4 w-4 text-[#AA3377]" />
+                <div className="w-8 h-8 rounded-lg bg-[#b91c1c]/10 flex items-center justify-center">
+                  <ClipboardList className="h-4 w-4 text-[#b91c1c]" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Assessment</p>

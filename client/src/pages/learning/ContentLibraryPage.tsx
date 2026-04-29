@@ -24,24 +24,24 @@ import { DOMAIN_COLOURS } from "@/lib/domains";
 
 const MODALITY_CONFIG: Record<string, { label: string; color: string }> = {
   micro_lesson:      { label: "Micro",        color: "#4477AA" },
-  scenario:          { label: "Scenario",     color: "#AA3377" },
-  scenario_practice: { label: "Practice",     color: "#AA3377" },
+  scenario:          { label: "Scenario",     color: "#b91c1c" },
+  scenario_practice: { label: "Practice",     color: "#b91c1c" },
   simulation:        { label: "Simulation",   color: "#EE8866" },
-  coach_prompt:      { label: "Coaching",     color: "#228833" },
-  video:             { label: "Video",        color: "#EE6677" },
+  coach_prompt:      { label: "Coaching",     color: "#047857" },
+  video:             { label: "Video",        color: "#DC2626" },
   article:           { label: "Article",      color: "#66CCEE" },
   quiz:              { label: "Quiz",         color: "#4477AA" },
   walkthrough:       { label: "Walkthrough",  color: "#4477AA" },
-  worked_example:    { label: "Example",      color: "#AA3377" },
-  checklist:         { label: "Checklist",    color: "#228833" },
-  reflection:        { label: "Reflection",   color: "#228833" },
+  worked_example:    { label: "Example",      color: "#b91c1c" },
+  checklist:         { label: "Checklist",    color: "#047857" },
+  reflection:        { label: "Reflection",   color: "#047857" },
   nudge:             { label: "Nudge",        color: "#EE8866" },
 };
 
 const CAPABILITY_COLORS: Record<string, string> = {
   ...(DOMAIN_COLOURS as Record<string, string>),
-  prioritisation:     "#AA3377",
-  validation:         "#228833",
+  prioritisation:     "#b91c1c",
+  validation:         "#047857",
   data_interpretation:"#BBBBBB",
 };
 
@@ -123,7 +123,7 @@ function ContentCard({ item }: { item: any }) {
           ) : <div />}
 
           {isCompleted ? (
-            <span className="text-xs text-[#228833] font-medium flex items-center gap-1">
+            <span className="text-xs text-[#047857] font-medium flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
               Done
             </span>

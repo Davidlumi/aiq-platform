@@ -53,7 +53,7 @@ const CAPABILITY_DOMAINS = [
   {
     key: "ai_output_evaluation",
     name: "AI Output Evaluation",
-    colour: "#228833",
+    colour: "#047857",
     foundation: true,
     description:
       "Measures the ability to critically assess AI outputs before acting on them — detecting errors, hallucinations, and logical flaws; judging fitness for purpose; calibrating confidence accurately; and verifying claims against authoritative sources.",
@@ -80,7 +80,7 @@ const CAPABILITY_DOMAINS = [
   {
     key: "ai_ethics_trust",
     name: "AI Ethics & Employee Trust",
-    colour: "#AA3377",
+    colour: "#b91c1c",
     foundation: false,
     description:
       "Measures ethical reasoning about AI in the workplace — identifying dilemmas, maintaining positions under pressure, considering stakeholder impact, preserving employee trust during AI-driven changes, and communicating decisions transparently.",
@@ -291,7 +291,7 @@ export default function MethodologyPage() {
             {[
               { phase: "Baseline", range: "0–30%", desc: "Broad calibration across all six capability domains", colour: "#4477AA" },
               { phase: "Adaptive", range: "30–75%", desc: "Deep probing of identified weaknesses — targets the lowest-scoring capabilities", colour: "#EE8866" },
-              { phase: "Validation", range: "75–100%", desc: "Confirms or challenges earlier responses with higher-difficulty items", colour: "#228833" },
+              { phase: "Validation", range: "75–100%", desc: "Confirms or challenges earlier responses with higher-difficulty items", colour: "#047857" },
             ].map(p => (
               <Card key={p.phase} className="border-border">
                 <CardContent className="p-4 text-center space-y-2">
@@ -408,12 +408,12 @@ export default function MethodologyPage() {
               </thead>
               <tbody>
                 {[
-                  { cls: "Leading", range: "80–100", desc: "Exceptional AI capability; can lead and mentor others", color: "#228833" },
-                  { cls: "Advanced", range: "70–79", desc: "Strong capability; works effectively with AI across complex scenarios", color: "#228833" },
+                  { cls: "Leading", range: "80–100", desc: "Exceptional AI capability; can lead and mentor others", color: "#047857" },
+                  { cls: "Advanced", range: "70–79", desc: "Strong capability; works effectively with AI across complex scenarios", color: "#047857" },
                   { cls: "Proficient", range: "60–69", desc: "Competent; handles routine AI-augmented work well", color: "#4477AA" },
                   { cls: "Developing", range: "50–59", desc: "Emerging capability; needs targeted development in specific areas", color: "#EE8866" },
-                  { cls: "Provisional", range: "40–49", desc: "Significant gaps; requires structured learning before independent AI use", color: "#EE6677" },
-                  { cls: "At Risk", range: "0–39", desc: "Critical gaps; may pose risk if working unsupervised with AI", color: "#AA3377" },
+                  { cls: "Provisional", range: "40–49", desc: "Significant gaps; requires structured learning before independent AI use", color: "#DC2626" },
+                  { cls: "At Risk", range: "0–39", desc: "Critical gaps; may pose risk if working unsupervised with AI", color: "#b91c1c" },
                 ].map(row => (
                   <tr key={row.cls} className="border-t border-border/50">
                     <td className="px-4 py-2.5">
@@ -482,7 +482,7 @@ export default function MethodologyPage() {
         {/* ── Section 6: Limitations & Transparency ────────────────────── */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#CCBB44]/12 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#D97706]/12 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4 text-[#99882A]" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Limitations & Transparency</h2>
@@ -530,8 +530,8 @@ export default function MethodologyPage() {
                     <div className="flex items-center gap-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         lim.severity === "High"
-                          ? "bg-[#EE6677]/12 text-[#CC3344]"
-                          : "bg-[#CCBB44]/12 text-[#99882A]"
+                          ? "bg-[#DC2626]/12 text-[#CC3344]"
+                          : "bg-[#D97706]/12 text-[#99882A]"
                       }`}>
                         {lim.severity}
                       </span>

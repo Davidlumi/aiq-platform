@@ -41,10 +41,10 @@ export const DOMAIN_SHORT_LABELS: Record<CapabilityKey, string> = {
 /** Colorblind-safe palette — Tol Bright scheme */
 export const DOMAIN_COLOURS: Record<CapabilityKey, string> = {
   ai_interaction:        "#4477AA",
-  ai_output_evaluation:  "#EE6677",
-  ai_workflow_design:    "#228833",
-  workforce_ai_readiness:"#CCBB44",
-  ai_ethics_trust:       "#AA3377",
+  ai_output_evaluation:  "#DC2626",
+  ai_workflow_design:    "#047857",
+  workforce_ai_readiness:"#D97706",
+  ai_ethics_trust:       "#b91c1c",
   ai_change_leadership:  "#66CCEE",
 };
 
@@ -216,36 +216,36 @@ export const INTERACTION_TYPE_DESCRIPTIONS: Record<InteractionType, string> = {
   legitimate_concern:     "Tests your ability to distinguish legitimate AI concerns from unfounded resistance.",
 };
 
-/** Five-state readiness classification */
+/** Five-state readiness classification — Design System v2.2 §2.2 */
 export const READINESS_STATES = {
   safe: {
     label: "AI-Ready",
-    color: "text-[#228833]",
-    bg: "bg-[#228833]/8 border-[#228833]/30",
+    color: "text-[#047857]",
+    bg: "bg-[#f0fdf4] border-[#bbf7d0]",
     description: "Your responses demonstrate strong AI capability across all assessed domains. You can work effectively with AI tools in your role.",
   },
   at_risk: {
     label: "Developing",
-    color: "text-[#CCBB44]",
-    bg: "bg-[#CCBB44]/8 border-[#CCBB44]/30",
+    color: "text-[#1d4ed8]",
+    bg: "bg-[#eff6ff] border-[#bfdbfe]",
     description: "You show emerging AI capability but have gaps in some areas. Targeted development will help you reach full readiness.",
   },
   unsafe: {
     label: "Not Yet Ready",
-    color: "text-[#EE6677]",
-    bg: "bg-[#EE6677]/8 border-[#EE6677]/30",
+    color: "text-[#b45309]",
+    bg: "bg-[#fffbeb] border-[#fde68a]",
     description: "Significant capability gaps were identified. A structured development plan is recommended before independent AI use in your role.",
   },
   foundation_gap: {
     label: "Foundation Gap",
-    color: "text-[#AA3377]",
-    bg: "bg-[#AA3377]/8 border-[#AA3377]/30",
+    color: "text-[#b91c1c]",
+    bg: "bg-[#fef2f2] border-[#fecaca]",
     description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
   },
   unknown: {
     label: "Insufficient Data",
-    color: "text-gray-500",
-    bg: "bg-gray-100 border-gray-300",
+    color: "text-[#6B7280]",
+    bg: "bg-[#F9FAFB] border-[#D1D5DB]",
     description: "Not enough assessment data to determine your readiness state. Complete more of the assessment for a reliable classification.",
   },
 } as const;

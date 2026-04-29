@@ -121,7 +121,7 @@ export default function TenantsPage() {
                   </Badge>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                     currentTenant.status === "active"
-                      ? "bg-[#228833]/8 text-[#228833] border-[#228833]/25"
+                      ? "bg-[#047857]/8 text-[#047857] border-[#047857]/25"
                       : "bg-muted text-muted-foreground border-border"
                   }`}>
                     <CheckCircle2 className="h-3 w-3" />

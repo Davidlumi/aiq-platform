@@ -29,17 +29,17 @@ import {
 import { formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 
 const VERDICT_CONFIG: Record<string, { bg: string; border: string; text: string; label: string; icon: React.ReactNode }> = {
-  exceeds:  { bg: "#F0F4F0", border: "#7A9E8E", text: "#2D5A3D", label: "Exceeds ambition target", icon: <CheckCircle2 className="w-4 h-4" /> },
-  on_track: { bg: "#F7F3EC", border: "#C8B07A", text: "#6B4F1E", label: "Within reach of target",  icon: <TrendingUp className="w-4 h-4" /> },
-  gap:      { bg: "#F4EEEC", border: "#C08878", text: "#6B3030", label: "Significant capability gap", icon: <AlertTriangle className="w-4 h-4" /> },
+  exceeds:  { bg: "#f0fdf4", border: "#047857", text: "#047857", label: "Exceeds ambition target", icon: <CheckCircle2 className="w-4 h-4" /> },
+  on_track: { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", label: "Within reach of target",  icon: <TrendingUp className="w-4 h-4" /> },
+  gap:      { bg: "#fef2f2", border: "#DC2626", text: "#b91c1c", label: "Significant capability gap", icon: <AlertTriangle className="w-4 h-4" /> },
   no_target:{ bg: "#F5F5F5", border: "#D0D0D0", text: "#555",    label: "No target configured",    icon: <Target className="w-4 h-4" /> },
 };
 
 const STATUS_COLOURS: Record<string, string> = {
-  aligned: "#7A9E8E",
-  partial:  "#C8B07A",
-  gap:      "#C08878",
-  unknown:  "#B0B8C4",
+  aligned: "#047857",
+  partial:  "#2563EB",
+  gap:      "#DC2626",
+  unknown:  "#9CA3AF",
 };
 
 const PRIORITY_ACTIONS: Record<string, string[]> = {
@@ -124,8 +124,8 @@ export default function AIStrategyPage() {
     return (
       <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto">
         <div className="text-center py-16 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#228833]/10 flex items-center justify-center mx-auto">
-            <Target className="w-8 h-8 text-[#228833]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#047857]/10 flex items-center justify-center mx-auto">
+            <Target className="w-8 h-8 text-[#047857]" />
           </div>
           <div>
             <h2 className="text-xl font-bold mb-2">No AI Ambition Target Set</h2>
@@ -134,7 +134,7 @@ export default function AIStrategyPage() {
             </p>
           </div>
           <Button
-            className="gap-2 bg-[#228833] hover:bg-[#1a6626] text-white"
+            className="gap-2 bg-[#047857] hover:bg-[#1a6626] text-white"
             onClick={openTargetDialog}
           >
             <Target className="w-4 h-4" />
@@ -156,7 +156,7 @@ export default function AIStrategyPage() {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Target className="w-5 h-5 text-[#228833]" />
+            <Target className="w-5 h-5 text-[#047857]" />
             AI Strategy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
@@ -195,7 +195,7 @@ export default function AIStrategyPage() {
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Gap</p>
-            <p className="text-3xl font-bold font-mono tabular-nums" style={{ color: ambitionGap.verdict === "exceeds" ? "#7A9E8E" : "#C08878" }}>
+            <p className="text-3xl font-bold font-mono tabular-nums" style={{ color: ambitionGap.verdict === "exceeds" ? "#047857" : "#DC2626" }}>
               {ambitionGap.verdict === "exceeds" ? "0.0" : (gapPeakon ?? "—")}
             </p>
             <p className="text-xs text-muted-foreground">pts</p>
@@ -324,7 +324,7 @@ export default function AIStrategyPage() {
                   <div className="space-y-1.5">
                     {actions.map((action, ai) => (
                       <div key={ai} className="flex items-start gap-2 text-xs">
-                        <Lightbulb className="w-3 h-3 text-[#CCBB44] shrink-0 mt-0.5" />
+                        <Lightbulb className="w-3 h-3 text-[#D97706] shrink-0 mt-0.5" />
                         <span className="text-muted-foreground">{action}</span>
                       </div>
                     ))}
@@ -342,7 +342,7 @@ export default function AIStrategyPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-[#228833]" />
+              <Target className="w-4 h-4 text-[#047857]" />
               Set AI Readiness Ambition Target
             </DialogTitle>
             <DialogDescription>
@@ -361,7 +361,7 @@ export default function AIStrategyPage() {
                 value={targetScore}
                 onChange={(e) => setTargetScore(e.target.value)}
                 placeholder="e.g. 7.5"
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               />
             </div>
             <div>
@@ -370,7 +370,7 @@ export default function AIStrategyPage() {
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               />
             </div>
             <div>
@@ -381,11 +381,11 @@ export default function AIStrategyPage() {
                 onChange={(e) => setTargetLabel(e.target.value)}
                 placeholder="e.g. HR function fully capable of deploying AI tools"
                 maxLength={200}
-                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#228833]"
+                className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#047857]"
               />
             </div>
             {targetScore && parseFloat(targetScore) >= 0 && parseFloat(targetScore) <= 10 && (
-              <div className="p-3 rounded-xl bg-[#228833]/5 border border-[#228833]/15 text-xs text-muted-foreground">
+              <div className="p-3 rounded-xl bg-[#047857]/5 border border-[#047857]/15 text-xs text-muted-foreground">
                 Target: <strong className="text-foreground">{parseFloat(targetScore).toFixed(1)}</strong> / 10
                 {targetDate && <> by <strong className="text-foreground">{new Date(targetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
                 {targetLabel && <> — {targetLabel}</>}
@@ -395,7 +395,7 @@ export default function AIStrategyPage() {
               <Button variant="outline" size="sm" onClick={() => setShowTargetDialog(false)}>Cancel</Button>
               <Button
                 size="sm"
-                className="bg-[#228833] hover:bg-[#1a6626] text-white"
+                className="bg-[#047857] hover:bg-[#1a6626] text-white"
                 onClick={handleSaveTarget}
                 disabled={setAmbitionTarget.isPending || !targetScore}
               >

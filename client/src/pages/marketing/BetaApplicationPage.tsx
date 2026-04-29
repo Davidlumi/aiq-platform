@@ -164,7 +164,7 @@ function IneligibleScreen({ hrTeamSize }: { hrTeamSize: number }) {
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
             style={{ background: "rgba(204,187,68,0.12)" }}
           >
-            <Users className="w-8 h-8" style={{ color: "#CCBB44" }} />
+            <Users className="w-8 h-8" style={{ color: "#D97706" }} />
           </div>
           <h1 className="text-2xl font-bold text-white mb-3">
             Not a fit for this cohort
@@ -624,7 +624,7 @@ export default function BetaApplicationPage() {
                       className="flex items-start gap-2 mt-2 p-3 rounded-lg"
                       style={{ background: "rgba(204,187,68,0.06)", border: "1px solid rgba(204,187,68,0.25)" }}
                     >
-                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#CCBB44" }} />
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#D97706" }} />
                       <p className="text-xs leading-relaxed text-slate-300">
                         The AiQ beta programme requires at least 25 HR professionals. You can still
                         submit — we will note your interest for our upcoming self-serve tier.
@@ -700,7 +700,7 @@ export default function BetaApplicationPage() {
                 className="flex items-start gap-3 p-4 rounded-xl"
                 style={{ background: "rgba(238,102,119,0.06)", border: "1px solid rgba(238,102,119,0.25)" }}
               >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#EE6677" }} />
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#DC2626" }} />
                 <div>
                   <p className="font-medium text-sm text-white">Submission failed</p>
                   <p className="text-sm mt-0.5 text-slate-300">

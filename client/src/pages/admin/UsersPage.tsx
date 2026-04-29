@@ -24,16 +24,16 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  active: "bg-[#228833]/8 text-[#228833] border-[#228833]/25",
-  pending: "bg-[#CCBB44]/8 text-[#99882A] border-[#CCBB44]/25",
-  suspended: "bg-[#EE6677]/8 text-[#CC3344] border-[#EE6677]/25",
+  active: "bg-[#047857]/8 text-[#047857] border-[#047857]/25",
+  pending: "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25",
+  suspended: "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25",
   deactivated: "bg-muted text-muted-foreground border-border",
 };
 
 
 const AVATAR_COLORS = [
-  "#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE",
-  "#AA3377", "#EE8866", "var(--primary)", "#6366F1", "#EC4899",
+  "#4477AA", "#DC2626", "#047857", "#D97706", "#66CCEE",
+  "#b91c1c", "#EE8866", "var(--primary)", "#6366F1", "#EC4899",
 ];
 function avatarColor(name: string): string {
   let hash = 0;

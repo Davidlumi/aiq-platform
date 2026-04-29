@@ -34,66 +34,70 @@
   --color-neutral-900:        oklch(20.5% 0.036 240);
   --color-white:              oklch(100% 0 0);
 
-  /* ── READINESS STATE COLOURS ── */
-  --color-safe:               oklch(70.4% 0.165 162);
-  --color-safe-bg:            oklch(97.2% 0.025 162);
-  --color-safe-border:        oklch(88.5% 0.075 162);
-  --color-safe-text:          oklch(38.2% 0.130 162);
+  /* ── READINESS STATE COLOURS — Design System v2.2 ── */
+  --color-safe:               #047857;
+  --color-safe-bg:            #f0fdf4;
+  --color-safe-border:        #bbf7d0;
+  --color-safe-text:          #047857;
+  --color-risk:               #2563EB;
+  --color-risk-bg:            #eff6ff;
+  --color-risk-border:        #bfdbfe;
+  --color-risk-text:          #1d4ed8;
+  --color-unsafe:             #D97706;
+  --color-unsafe-bg:          #fffbeb;
+  --color-unsafe-border:      #fde68a;
+  --color-unsafe-text:        #b45309;
+  --color-foundation-gap:     #DC2626;
+  --color-foundation-gap-bg:  #fef2f2;
+  --color-foundation-gap-border: #fecaca;
+  --color-foundation-gap-text: #b91c1c;
+  --color-unknown:            #6B7280;
+  --color-unknown-bg:         #F9FAFB;
+  --color-unknown-border:     #D1D5DB;
+  --color-unknown-text:       #6B7280;
 
-  --color-risk:               oklch(74.8% 0.155 68);
-  --color-risk-bg:            oklch(98.0% 0.030 68);
-  --color-risk-border:        oklch(88.0% 0.090 68);
-  --color-risk-text:          oklch(42.0% 0.120 68);
+  /* ── READINESS STATE BADGE COLOURS (Individual) ── */
+  --state-strong-individual-bg:       #f0fdf4;
+  --state-strong-individual-text:     #047857;
+  --state-strong-individual-border:   #bbf7d0;
+  --state-developing-individual-bg:   #eff6ff;
+  --state-developing-individual-text: #1d4ed8;
+  --state-developing-individual-border: #bfdbfe;
+  --state-critical-individual-bg:     #fffbeb;
+  --state-critical-individual-text:   #b45309;
+  --state-critical-individual-border: #fde68a;
+  --state-foundation-individual-bg:   #fef2f2;
+  --state-foundation-individual-text: #b91c1c;
+  --state-foundation-individual-border: #fecaca;
+  --state-insufficient-bg:            #F9FAFB;
+  --state-insufficient-text:          #6B7280;
+  --state-insufficient-border:        #D1D5DB;
 
-  --color-unsafe:             oklch(53.5% 0.200 27);
-  --color-unsafe-bg:          oklch(97.5% 0.020 27);
-  --color-unsafe-border:      oklch(87.0% 0.075 27);
-  --color-unsafe-text:        oklch(35.0% 0.160 27);
+  /* ── READINESS STATE BADGE COLOURS (Org) ── */
+  --state-strong-org-bg:              #f0fdf4;
+  --state-strong-org-text:            #047857;
+  --state-strong-org-border:          #bbf7d0;
+  --state-developing-org-bg:          #eff6ff;
+  --state-developing-org-text:        #1d4ed8;
+  --state-developing-org-border:      #bfdbfe;
+  --state-critical-org-bg:            #fffbeb;
+  --state-critical-org-text:          #b45309;
+  --state-critical-org-border:        #fde68a;
+  --state-foundation-org-bg:          #fef2f2;
+  --state-foundation-org-text:        #b91c1c;
+  --state-foundation-org-border:      #fecaca;
 
-  --color-unknown:            oklch(61.8% 0.022 240);
-  --color-unknown-bg:         oklch(96.1% 0.006 240);
-  --color-unknown-border:     oklch(86.2% 0.012 240);
-  --color-unknown-text:       oklch(40.8% 0.030 240);
-
-  /* ── READINESS STATE BADGE COLOURS (Individual — softer, never red) ── */
-  --state-strong-individual-bg:       oklch(97.2% 0.025 162);
-  --state-strong-individual-text:     oklch(38.2% 0.130 162);
-  --state-strong-individual-border:   oklch(88.5% 0.075 162);
-  --state-developing-individual-bg:   oklch(98.0% 0.030 68);
-  --state-developing-individual-text: oklch(42.0% 0.120 68);
-  --state-developing-individual-border: oklch(88.0% 0.090 68);
-  --state-critical-individual-bg:     oklch(97.5% 0.020 27);
-  --state-critical-individual-text:   oklch(42.0% 0.120 27);
-  --state-critical-individual-border: oklch(88.0% 0.060 27);
-  --state-foundation-individual-bg:   oklch(96.5% 0.015 290);
-  --state-foundation-individual-text: oklch(40.0% 0.100 290);
-  --state-foundation-individual-border: oklch(88.0% 0.050 290);
-  --state-insufficient-bg:            oklch(96.1% 0.006 240);
-  --state-insufficient-text:          oklch(40.8% 0.030 240);
-  --state-insufficient-border:        oklch(86.2% 0.012 240);
-
-  /* ── READINESS STATE BADGE COLOURS (Org — semantic, bolder) ── */
-  --state-strong-org-bg:              oklch(97.2% 0.025 162);
-  --state-strong-org-text:            oklch(38.2% 0.130 162);
-  --state-strong-org-border:          oklch(88.5% 0.075 162);
-  --state-developing-org-bg:          oklch(98.0% 0.030 68);
-  --state-developing-org-text:        oklch(42.0% 0.120 68);
-  --state-developing-org-border:      oklch(88.0% 0.090 68);
-  --state-critical-org-bg:            oklch(97.5% 0.020 27);
-  --state-critical-org-text:          oklch(35.0% 0.160 27);
-  --state-critical-org-border:        oklch(87.0% 0.075 27);
-  --state-foundation-org-bg:          oklch(96.5% 0.015 290);
-  --state-foundation-org-text:        oklch(40.0% 0.100 290);
-  --state-foundation-org-border:      oklch(88.0% 0.050 290);
-
-  /* ── NAVY SCALE (used by shadcn overrides) ── */
-  --navy-50:                  oklch(96.5% 0.012 250);
-  --navy-100:                 oklch(92.5% 0.020 250);
-  --navy-200:                 oklch(85.0% 0.030 250);
-  --navy-400:                 oklch(62.0% 0.060 250);
-  --navy-800:                 oklch(28.0% 0.055 250);
-  --navy-900:                 oklch(22.0% 0.050 250);
-  --navy-1000:                oklch(16.0% 0.045 250);
+  /* ── NAVY SCALE — Design System v2.2 ── */
+  --navy-50:                  #f0f4f8;
+  --navy-100:                 #d9e2ec;
+  --navy-200:                 #bcccdc;
+  --navy-400:                 #829ab1;
+  --navy-500:                 #557DAE;
+  --navy-600:                 #3F5F94;
+  --navy-700:                 #2E4C7A;
+  --navy-800:                 #1F3A5F;
+  --navy-900:                 #0F2547;
+  --navy-1000:                #091a35;
 
   /* ── NEUTRAL EXTRAS ── */
   --neutral-0:                oklch(100% 0 0);
@@ -102,13 +106,18 @@
   --elevation-sm:             0 1px 2px 0 rgb(0 0 0 / 0.05);
   --elevation-md:             0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
 
-  /* ── CAPABILITY DOMAIN COLOURS ── */
-  --color-cap-execution:      oklch(60.5% 0.200 250);
-  --color-cap-judgement:      oklch(55.0% 0.230 295);
-  --color-cap-literacy:       oklch(65.0% 0.240 330);
-  --color-cap-governance:     oklch(70.0% 0.155 195);
-  --color-cap-strategy:       oklch(74.8% 0.155 68);
-  --color-cap-ethics:         oklch(70.4% 0.165 162);
+  /* ── CAPABILITY DOMAIN COLOURS — Design System v2.2 §6.3 ── */
+  --color-cap-interaction:    #0EA5E9;
+  --color-cap-output-eval:    #8B5CF6;
+  --color-cap-workflow:       #10B981;
+  --color-cap-workforce:      #F59E0B;
+  --color-cap-ethics:         #EC4899;
+  --color-cap-change:         #EF4444;
+  --color-cap-execution:      #0EA5E9;
+  --color-cap-judgement:      #8B5CF6;
+  --color-cap-literacy:       #10B981;
+  --color-cap-governance:     #F59E0B;
+  --color-cap-strategy:       #EC4899;
 
   /* ── TYPOGRAPHY ── */
   --font-sans: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

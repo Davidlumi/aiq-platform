@@ -249,8 +249,8 @@ export function PolicyDecisionExplanation({
 }: PolicyDecisionProps) {
   const resultConfig = {
     allow: { icon: CheckCircle, color: "var(--primary)", bg: "#DCFCE7", label: "Allowed" },
-    restrict: { icon: AlertTriangle, color: "#EE6677", bg: "#FEE2E2", label: "Restricted" },
-    flag: { icon: AlertTriangle, color: "#CCBB44", bg: "#FEF9C3", label: "Flagged" },
+    restrict: { icon: AlertTriangle, color: "#DC2626", bg: "#FEE2E2", label: "Restricted" },
+    flag: { icon: AlertTriangle, color: "#D97706", bg: "#FEF9C3", label: "Flagged" },
     require_remediation: { icon: Clock, color: "#6366F1", bg: "#EEF2FF", label: "Remediation Required" },
   };
   const config = resultConfig[result];
@@ -284,7 +284,7 @@ export function PolicyDecisionExplanation({
               {cond.met ? (
                 <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "var(--primary)" }} />
               ) : (
-                <X className="w-4 h-4 shrink-0" style={{ color: "#EE6677" }} />
+                <X className="w-4 h-4 shrink-0" style={{ color: "#DC2626" }} />
               )}
               <span className="text-sm flex-1" style={{ color: "#374151" }}>{cond.label}</span>
               {cond.value && (
@@ -377,11 +377,11 @@ interface WhyAssignedProps {
 
 export function WhyAssigned({ itemTitle, reasons }: WhyAssignedProps) {
   const typeConfig = {
-    gap: { color: "#EE6677", bg: "rgba(238,102,119,0.10)", label: "Capability Gap" },
-    policy: { color: "#AA3377", bg: "rgba(170,51,119,0.10)", label: "Policy Requirement" },
+    gap: { color: "#DC2626", bg: "rgba(238,102,119,0.10)", label: "Capability Gap" },
+    policy: { color: "#b91c1c", bg: "rgba(170,51,119,0.10)", label: "Policy Requirement" },
     revalidation: { color: "#EE8866", bg: "rgba(238,136,102,0.10)", label: "Revalidation Due" },
     manager: { color: "#4477AA", bg: "rgba(68,119,170,0.10)", label: "Manager Assigned" },
-    system: { color: "#228833", bg: "rgba(34,136,51,0.10)", label: "System Recommended" },
+    system: { color: "#047857", bg: "rgba(34,136,51,0.10)", label: "System Recommended" },
   };
 
   return (

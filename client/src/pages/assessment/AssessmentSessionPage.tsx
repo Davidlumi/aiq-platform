@@ -74,9 +74,9 @@ import type { CapabilityKey, InteractionType } from "@/lib/domains";
 const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS;
 
 const RISK_CONFIG = {
-  High:   { color: "text-[#CC3344] bg-[#EE6677]/8 border-[#EE6677]/25", icon: AlertTriangle },
-  Medium: { color: "text-[#99882A] bg-[#CCBB44]/8 border-[#CCBB44]/25", icon: AlertTriangle },
-  Low:    { color: "text-[#228833] bg-[#228833]/8 border-[#228833]/25", icon: Target },
+  High:   { color: "text-[#CC3344] bg-[#DC2626]/8 border-[#DC2626]/25", icon: AlertTriangle },
+  Medium: { color: "text-[#99882A] bg-[#D97706]/8 border-[#D97706]/25", icon: AlertTriangle },
+  Low:    { color: "text-[#047857] bg-[#047857]/8 border-[#047857]/25", icon: Target },
 } as const;
 
 // ─── Interaction type config ──────────────────────────────────────────────────
@@ -108,7 +108,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
         questionLabel: meta.questionLabel,
         hasAiOutput: ["error_detection", "scenario_critique", "confidence_calibration", "prompt_diagnosis"].includes(key),
         hasDataContext: false,
-        accent: key.includes("error") ? "#EE6677" : key.includes("ethic") ? "#AA3377" : key.includes("risk") ? "#EE6677" : key.includes("change") || key.includes("resistance") ? "#66CCEE" : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? "var(--primary)" : "#4477AA",
+        accent: key.includes("error") ? "#DC2626" : key.includes("ethic") ? "#b91c1c" : key.includes("risk") ? "#DC2626" : key.includes("change") || key.includes("resistance") ? "#66CCEE" : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? "var(--primary)" : "#4477AA",
         icon: key.includes("error") ? AlertCircle : key.includes("risk") ? AlertTriangle : key.includes("ethic") || key.includes("pressure") ? Shield : key.includes("critique") || key.includes("diagnosis") ? Search : key.includes("prompt") ? Sparkles : key.includes("workflow") || key.includes("handoff") || key.includes("process") ? Layers : key.includes("leader") || key.includes("advisory") ? Briefcase : key.includes("resist") || key.includes("concern") || key.includes("stakeholder") ? Scale : Target,
       },
     ])
@@ -129,7 +129,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
     questionLabel: "Which answer is most consistent with your earlier response?",
     hasAiOutput: false,
     hasDataContext: false,
-    accent: "#AA3377",
+    accent: "#b91c1c",
     icon: Scale,
   },
 };
@@ -170,15 +170,15 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
       label: "AI-Generated Output",
       sublabel: "Identify improvements",
       borderColor: "border-yellow-200",
-      bgColor: "bg-[#CCBB44]/8",
+      bgColor: "bg-[#D97706]/8",
       labelColor: "text-yellow-700",
       iconColor: "text-yellow-600",
     },
     error: {
       label: "AI-Generated Output",
       sublabel: "Find the error",
-      borderColor: "border-[#EE6677]/25",
-      bgColor: "bg-[#EE6677]/8",
+      borderColor: "border-[#DC2626]/25",
+      bgColor: "bg-[#DC2626]/8",
       labelColor: "text-[#CC3344]",
       iconColor: "text-[#CC3344]",
     },
@@ -245,18 +245,18 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     cv_extract: {
       label: "CV Extract",
       sublabel: "Review the candidate profile",
-      borderColor: "border-[#228833]/25",
-      bgColor: "bg-[#228833]/8",
-      labelColor: "text-[#228833]",
-      headerBg: "bg-[#228833]/12",
+      borderColor: "border-[#047857]/25",
+      bgColor: "bg-[#047857]/8",
+      labelColor: "text-[#047857]",
+      headerBg: "bg-[#047857]/12",
     },
     policy_doc: {
       label: "Policy Document",
       sublabel: "Review the policy extract",
-      borderColor: "border-[#CCBB44]/25",
-      bgColor: "bg-[#CCBB44]/8",
+      borderColor: "border-[#D97706]/25",
+      bgColor: "bg-[#D97706]/8",
       labelColor: "text-[#99882A]",
-      headerBg: "bg-[#CCBB44]/12",
+      headerBg: "bg-[#D97706]/12",
     },
     meeting_notes: {
       label: "Meeting Notes",
@@ -301,10 +301,10 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     alert: {
       label: "System Alert",
       sublabel: "Review the automated alert",
-      borderColor: "border-[#EE6677]/25",
-      bgColor: "bg-[#EE6677]/8",
+      borderColor: "border-[#DC2626]/25",
+      bgColor: "bg-[#DC2626]/8",
       labelColor: "text-[#CC3344]",
-      headerBg: "bg-[#EE6677]/12",
+      headerBg: "bg-[#DC2626]/12",
     },
     document_excerpt: {
       label: "Document Excerpt",
@@ -531,7 +531,7 @@ function CompletionScreen({
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{stateConfig.description}</p>
           )}
           {caveat && (
-            <div className="flex items-start gap-1.5 mt-3 text-xs text-[#CCBB44]">
+            <div className="flex items-start gap-1.5 mt-3 text-xs text-[#D97706]">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>{caveat}</span>
             </div>
@@ -941,9 +941,9 @@ export default function AssessmentSessionPage() {
     const stagger = (i: number) => ({ style: { animationDelay: `${i * 80}ms` } });
     const outcomeColors: Record<string, string> = {
       strong: "var(--primary)",
-      acceptable: "#CCBB44",
-      weak: "#CCBB44",
-      failure: "#EE6677",
+      acceptable: "#D97706",
+      weak: "#D97706",
+      failure: "#DC2626",
       critical_failure: "#AA0000",
     };
     const outcomeLabels: Record<string, string> = {
@@ -1249,7 +1249,7 @@ export default function AssessmentSessionPage() {
 
           {/* Constraint — only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
-            <div className="bg-[#CCBB44]/8 rounded-xl p-3 border border-[#CCBB44]/25">
+            <div className="bg-[#D97706]/8 rounded-xl p-3 border border-[#D97706]/25">
               <p className="text-xs font-semibold text-[#99882A] uppercase tracking-widest mb-1">
                 Constraint
               </p>
@@ -1259,7 +1259,7 @@ export default function AssessmentSessionPage() {
 
           {/* Risk framing for pressure_test */}
           {interactionType === "pressure_test" && (nextItem as any).constraint && (
-            <div className="bg-[#EE6677]/8 rounded-xl p-3 border border-[#EE6677]/25">
+            <div className="bg-[#DC2626]/8 rounded-xl p-3 border border-[#DC2626]/25">
               <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-widest mb-1">
                 Risk Factor
               </p>
@@ -1269,8 +1269,8 @@ export default function AssessmentSessionPage() {
 
           {/* Governance framing */}
           {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
-            <div className="bg-[#228833]/8 rounded-xl p-3 border border-[#228833]/25">
-              <p className="text-xs font-semibold text-[#228833] uppercase tracking-widest mb-1">
+            <div className="bg-[#047857]/8 rounded-xl p-3 border border-[#047857]/25">
+              <p className="text-xs font-semibold text-[#047857] uppercase tracking-widest mb-1">
                 Policy Context
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1329,7 +1329,7 @@ export default function AssessmentSessionPage() {
                   className={cn(
                     "w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition-all text-sm",
                     selectedValue === option.value
-                      ? "border-primary bg-[#228833]/8 ring-1 ring-primary/25"
+                      ? "border-primary bg-[#047857]/8 ring-1 ring-primary/25"
                       : "border-border hover:border-[var(--navy-400)] hover:bg-muted/30"
                   )}
                 >
@@ -1337,7 +1337,7 @@ export default function AssessmentSessionPage() {
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-primary bg-[#228833]/80 text-white"
+                        ? "border-primary bg-[#047857]/80 text-white"
                         : "border-border text-muted-foreground"
                     )}
                   >
@@ -1392,7 +1392,7 @@ export default function AssessmentSessionPage() {
               {(["guessing", "fairly_sure", "certain"] as ConfidenceStake[]).map((stake) => {
                 const isSelected = confidenceStake === stake;
                 const labels: Record<ConfidenceStake, { label: string; desc: string; weight: string; color: string }> = {
-                  guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#EE6677" },
+                  guessing:    { label: "Guessing",    desc: "Not sure at all",        weight: "0.25×", color: "#DC2626" },
                   fairly_sure: { label: "Fairly sure", desc: "I think this is right",  weight: "0.65×", color: "#99882A" },
                   certain:     { label: "Certain",     desc: "Confident in my answer", weight: "1.0×",  color: "var(--primary)" },
                 };

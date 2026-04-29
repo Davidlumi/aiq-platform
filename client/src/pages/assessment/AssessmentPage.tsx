@@ -44,11 +44,11 @@ import {
 // ─── Capability Domains ───────────────────────────────────────────────────────
 const CAPABILITY_DOMAINS = [
   { key: "ai_interaction",        label: "AI Interaction",          icon: Target,   colour: "#4477AA" },
-  { key: "ai_output_evaluation",  label: "AI Output Evaluation",    icon: Brain,    colour: "#228833" },
-  { key: "ai_ethics_trust",       label: "AI Ethics & Trust",       icon: Shield,   colour: "#AA3377" },
+  { key: "ai_output_evaluation",  label: "AI Output Evaluation",    icon: Brain,    colour: "#047857" },
+  { key: "ai_ethics_trust",       label: "AI Ethics & Trust",       icon: Shield,   colour: "#b91c1c" },
   { key: "ai_change_leadership",  label: "AI Change Leadership",    icon: Gavel,    colour: "#99882A" },
   { key: "ai_workflow_design",    label: "AI Workflow Design",      icon: Workflow, colour: "#66CCEE" },
-  { key: "workforce_ai_readiness",label: "Workforce AI Readiness",  icon: Database, colour: "#CCBB44" },
+  { key: "workforce_ai_readiness",label: "Workforce AI Readiness",  icon: Database, colour: "#D97706" },
 ];
 
 // ─── Readiness Config ─────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ const READINESS_CONFIG: Record<string, { label: string; color: string; icon: Rea
 function SessionBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
     completed:   "bg-primary/12 text-primary border-primary/25",
-    in_progress: "bg-[#CCBB44]/12 text-[#99882A] border-[#CCBB44]/25",
+    in_progress: "bg-[#D97706]/12 text-[#99882A] border-[#D97706]/25",
     abandoned:   "bg-gray-100 text-gray-500 border-gray-200",
   };
   const labels: Record<string, string> = { completed: "Completed", in_progress: "In Progress", abandoned: "Abandoned" };

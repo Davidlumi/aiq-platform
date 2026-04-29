@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 
 const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  hard_block: { label: "Hard Block", color: "bg-[#EE6677]/12 text-[#CC3344] border-[#EE6677]/25", icon: <Ban className="h-3 w-3" /> },
-  warning: { label: "Warning", color: "bg-[#CCBB44]/10 text-[#99882A] border-[#CCBB44]/30", icon: <AlertTriangle className="h-3 w-3" /> },
+  hard_block: { label: "Hard Block", color: "bg-[#DC2626]/12 text-[#CC3344] border-[#DC2626]/25", icon: <Ban className="h-3 w-3" /> },
+  warning: { label: "Warning", color: "bg-[#D97706]/10 text-[#99882A] border-[#D97706]/30", icon: <AlertTriangle className="h-3 w-3" /> },
   remediation_trigger: { label: "Remediation", color: "bg-primary/10 text-primary border-primary/30", icon: <RefreshCw className="h-3 w-3" /> },
   escalate: { label: "Escalate", color: "bg-primary/10 text-primary border-primary/30", icon: <ArrowUpRight className="h-3 w-3" /> },
-  force_revalidation: { label: "Force Revalidation", color: "bg-[#CCBB44]/10 text-[#99882A] border-[#CCBB44]/30", icon: <RefreshCw className="h-3 w-3" /> },
+  force_revalidation: { label: "Force Revalidation", color: "bg-[#D97706]/10 text-[#99882A] border-[#D97706]/30", icon: <RefreshCw className="h-3 w-3" /> },
 };
 
 function ActionBadge({ action }: { action: string }) {
@@ -197,7 +197,7 @@ export default function PolicyPage() {
                         <ActionBadge action={policy.actionType} />
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
                           isActive
-                            ? "bg-[#228833]/8 text-[#228833] border-[#228833]/25"
+                            ? "bg-[#047857]/8 text-[#047857] border-[#047857]/25"
                             : "bg-muted text-muted-foreground border-border"
                         }`}>
                           {isActive ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
@@ -229,7 +229,7 @@ function PolicyEvaluationsLog() {
     <Card className="aiq-card">
       <CardHeader className="pb-3">
         <CardTitle className="font-semibold text-foreground flex items-center gap-2">
-          <Bell className="h-5 w-5 text-[#CCBB44]" />
+          <Bell className="h-5 w-5 text-[#D97706]" />
           Recent Policy Evaluations
         </CardTitle>
       </CardHeader>
@@ -263,8 +263,8 @@ function PolicyEvaluationsLog() {
                     <td className="py-2 px-3 text-muted-foreground text-xs">{ev.contextType}</td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        ev.result === "triggered" ? "bg-[#EE6677]/12 text-[#CC3344]" :
-                        ev.result === "passed" ? "bg-[#228833]/10 text-[#228833]" :
+                        ev.result === "triggered" ? "bg-[#DC2626]/12 text-[#CC3344]" :
+                        ev.result === "passed" ? "bg-[#047857]/10 text-[#047857]" :
                         ev.result === "no_action" ? "bg-muted text-muted-foreground" :
                         "bg-blue-100 text-blue-700"
                       }`}>{ev.result}</span>

@@ -29,19 +29,19 @@ const READINESS_CONFIG: Record<ReadinessState, {
   safe: {
     label: "AI-Ready",
     description: "Demonstrates reliable AI judgement across all core capabilities.",
-    bg: "bg-[#228833]/10", border: "border-[#228833]/30", text: "text-[#228833]",
+    bg: "bg-[#047857]/10", border: "border-[#047857]/30", text: "text-[#047857]",
     icon: <CheckCircle2 className="w-5 h-5" />,
   },
   at_risk: {
     label: "Developing",
     description: "Capability gaps identified in one or more domains. Structured learning recommended.",
-    bg: "bg-[#CCBB44]/10", border: "border-[#CCBB44]/30", text: "text-[#CCBB44]",
+    bg: "bg-[#D97706]/10", border: "border-[#D97706]/30", text: "text-[#D97706]",
     icon: <Clock className="w-5 h-5" />,
   },
   unsafe: {
     label: "Foundation Gap",
     description: "Core AI interaction skills require development before independent AI tool use.",
-    bg: "bg-[#EE6677]/10", border: "border-[#EE6677]/30", text: "text-[#EE6677]",
+    bg: "bg-[#DC2626]/10", border: "border-[#DC2626]/30", text: "text-[#DC2626]",
     icon: <AlertTriangle className="w-5 h-5" />,
   },
   unknown: {
@@ -80,7 +80,7 @@ function ScoreTrend({ history }: { history: Array<{ completedAt: number | null; 
   const prev = history[1].overallScore;
   const delta = latest - prev;
   const Icon = delta > 2 ? TrendingUp : delta < -2 ? TrendingDown : Minus;
-  const colour = delta > 2 ? "text-[#228833]" : delta < -2 ? "text-[#EE6677]" : "text-muted-foreground";
+  const colour = delta > 2 ? "text-[#047857]" : delta < -2 ? "text-[#DC2626]" : "text-muted-foreground";
   return (
     <div className={`flex items-center gap-1 text-sm font-medium ${colour}`}>
       <Icon className="w-4 h-4" />
@@ -104,7 +104,7 @@ export default function MemberReportPage() {
     const isForbidden = error.data?.code === "FORBIDDEN" || error.data?.httpStatus === 403;
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-6">
-        <AlertTriangle className="w-10 h-10 text-[#EE6677]" />
+        <AlertTriangle className="w-10 h-10 text-[#DC2626]" />
         <p className="text-lg font-semibold">
           {isForbidden ? "Access Restricted" : "Report Unavailable"}
         </p>
@@ -244,7 +244,7 @@ export default function MemberReportPage() {
 
           {/* Governance flag */}
           {latest.governanceFlag && (
-            <div className="mt-4 flex items-center gap-2 text-xs text-[#EE6677] bg-[#EE6677]/10 border border-[#EE6677]/20 rounded-lg px-3 py-2">
+            <div className="mt-4 flex items-center gap-2 text-xs text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/20 rounded-lg px-3 py-2">
               <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Governance concern detected — review AI tool access policy for this individual.</span>
             </div>
@@ -318,7 +318,7 @@ export default function MemberReportPage() {
           <h2 className="text-sm font-semibold text-foreground mb-3">Risk Indicators</h2>
           <div className="flex flex-wrap gap-2">
             {latest.failureModes.map(mode => (
-              <Badge key={mode} variant="outline" className="text-xs border-[#EE6677]/30 text-[#EE6677] bg-[#EE6677]/10">
+              <Badge key={mode} variant="outline" className="text-xs border-[#DC2626]/30 text-[#DC2626] bg-[#DC2626]/10">
                 {mode.replace(/_/g, " ")}
               </Badge>
             ))}

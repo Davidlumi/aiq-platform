@@ -239,9 +239,9 @@ function DashboardMockup() {
       </div>
       <div className="px-5 py-4 border-b grid grid-cols-3 gap-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
         {[
-          { label: "Current readiness",  value: "67%",       sub: "of target",      color: "#CCBB44" },
+          { label: "Current readiness",  value: "67%",       sub: "of target",      color: "#D97706" },
           { label: "Projected closure",  value: "Q2 2027",   sub: "3 months early", color: greenHex  },
-          { label: "Risk concentration", value: "Sr. HRBPs", sub: "Workflow design", color: "#EE6677" },
+          { label: "Risk concentration", value: "Sr. HRBPs", sub: "Workflow design", color: "#DC2626" },
         ].map(({ label, value, sub, color }) => (
           <div key={label} className="text-center">
             <p className="text-xs mb-1" style={{ color: "rgba(148,163,184,0.7)" }}>{label}</p>
@@ -258,7 +258,7 @@ function DashboardMockup() {
           {domains.map((d, i) => {
             const pct  = (scores[i] / 10) * 100;
             const tpct = (target / 10) * 100;
-            const color = scores[i] >= target ? greenHex : scores[i] >= 6.5 ? "#CCBB44" : "#EE6677";
+            const color = scores[i] >= target ? greenHex : scores[i] >= 6.5 ? "#D97706" : "#DC2626";
             return (
               <div key={d}>
                 <div className="flex items-center justify-between mb-1">
@@ -367,7 +367,7 @@ function Hero() {
                 <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Scenario</p>
                 <p className="text-slate-200 text-sm leading-relaxed">
                   An AI tool flags an employee as{" "}
-                  <span className="font-semibold" style={{ color: "#EE6677" }}>"high risk"</span>{" "}
+                  <span className="font-semibold" style={{ color: "#DC2626" }}>"high risk"</span>{" "}
                   for involuntary turnover. The data is 6 months old, the model confidence is 61%, and your manager is asking for immediate action.
                 </p>
               </div>
@@ -571,7 +571,7 @@ function ThreeAltitudes() {
       body: "Where they are now, what their specific gaps are, how they compare against anonymous peers in the same role, and what they're working on next. Their development plan is personalised to them. Their reassessment shows them whether the work is paying off. They feel respected — not measured against, developed with.",
     },
     {
-      audience: "Every line manager", subtitle: "sees their team's progress", icon: BarChart3, color: "#228833",
+      audience: "Every line manager", subtitle: "sees their team's progress", icon: BarChart3, color: "#047857",
       body: "Who's where, who's progressing, who's stalled, and what's worth discussing in next week's 1:1s. Specific conversation prompts surface the development context that matters. Not a heatmap. A briefing.",
     },
     {
@@ -803,12 +803,12 @@ function HonestySection() {
     <section style={{ background: chalk }} className="py-20 px-6">
       <div className="max-w-3xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8"
-          style={{ background: "rgba(238,102,119,0.12)", color: "#EE6677", border: "1px solid rgba(238,102,119,0.3)" }}>
+          style={{ background: "rgba(238,102,119,0.12)", color: "#DC2626", border: "1px solid rgba(238,102,119,0.3)" }}>
           <AlertCircle className="w-3 h-3" /> Honest about limitations
         </div>
         <h2 className="text-3xl font-bold mb-6" style={{ color: navy, letterSpacing: "-0.02em" }}>
           The methodology is rigorous.{" "}
-          <span style={{ color: "#EE6677" }}>It is not yet empirically validated at scale.</span>
+          <span style={{ color: "#DC2626" }}>It is not yet empirically validated at scale.</span>
         </h2>
         <p className="text-slate-600 leading-relaxed mb-6 text-lg">
           AiQ's methodology is rigorous in its design. It is not yet empirically validated against real customer data at scale.

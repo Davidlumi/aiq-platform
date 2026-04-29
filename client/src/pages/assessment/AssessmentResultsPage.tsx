@@ -101,19 +101,19 @@ const READINESS_CONFIG = {
     label: "Developing",
     description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
     color: "text-[#99882A]",
-    bg: "border-[#CCBB44]/25 bg-[#CCBB44]/8",
-    barColor: "#CCBB44",
+    bg: "border-[#D97706]/25 bg-[#D97706]/8",
+    barColor: "#D97706",
     icon: AlertTriangle,
-    dotColor: "#CCBB44",
+    dotColor: "#D97706",
   },
   unsafe: {
     label: "Not Yet Ready",
     description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
     color: "text-[#CC3344]",
-    bg: "border-[#EE6677]/25 bg-[#EE6677]/8",
-    barColor: "#EE6677",
+    bg: "border-[#DC2626]/25 bg-[#DC2626]/8",
+    barColor: "#DC2626",
     icon: ShieldAlert,
-    dotColor: "#EE6677",
+    dotColor: "#DC2626",
   },
   unknown: {
     label: "Insufficient Data",
@@ -129,9 +129,9 @@ const READINESS_CONFIG = {
     description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
     color: "text-violet-700",
     bg: "border-violet-200 bg-violet-50",
-    barColor: "#AA3377",
+    barColor: "#b91c1c",
     icon: ShieldAlert,
-    dotColor: "#AA3377",
+    dotColor: "#b91c1c",
   },
   unknown_insufficient_evidence: {
     label: "Result Unavailable",
@@ -146,14 +146,14 @@ const READINESS_CONFIG = {
 
 const CREDIBILITY_CONFIG = {
   high: { label: "High Credibility", color: "text-primary", bg: "bg-primary/8" },
-  medium: { label: "Medium Credibility", color: "text-[#99882A]", bg: "bg-[#CCBB44]/8" },
-  low: { label: "Low Credibility", color: "text-[#CC3344]", bg: "bg-[#EE6677]/8" },
+  medium: { label: "Medium Credibility", color: "text-[#99882A]", bg: "bg-[#D97706]/8" },
+  low: { label: "Low Credibility", color: "text-[#CC3344]", bg: "bg-[#DC2626]/8" },
 } as const;
 
 const RISK_CONFIG = {
   low: { label: "Low Risk", color: "text-primary", bg: "bg-primary/8" },
-  medium: { label: "Medium Risk", color: "text-[#99882A]", bg: "bg-[#CCBB44]/8" },
-  high: { label: "High Risk", color: "text-[#CC3344]", bg: "bg-[#EE6677]/8" },
+  medium: { label: "Medium Risk", color: "text-[#99882A]", bg: "bg-[#D97706]/8" },
+  high: { label: "High Risk", color: "text-[#CC3344]", bg: "bg-[#DC2626]/8" },
 } as const;
 
 // ─── Radar Chart Component ────────────────────────────────────────────────────
@@ -348,8 +348,8 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
 const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
   "Top 20%":        { colour: "var(--primary)", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
   "Above average":  { colour: "#44bb99", description: "Your score is above the midpoint for your peer group. You are performing better than most HR professionals at a similar level and role." },
-  "Around average": { colour: "#CCBB44", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
-  "Below average":  { colour: "#EE6677", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
+  "Around average": { colour: "#D97706", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
+  "Below average":  { colour: "#DC2626", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
   "Bottom 20%":     { colour: "#CC3311", description: "Your score is in the bottom fifth of your peer group. Focused development in this capability is recommended before taking on AI-assisted decisions in this area." },
 };
 
@@ -425,7 +425,7 @@ function CapabilityBar({
   normGroupLabel?: string;
 }) {
   const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
-  const bandColor = score >= 75 ? "var(--primary)" : score >= 55 ? "#CCBB44" : "#EE6677";
+  const bandColor = score >= 75 ? "var(--primary)" : score >= 55 ? "#D97706" : "#DC2626";
   const hw = computeConfidenceHalfWidth(signalCount ?? 0);
   const lo = Math.max(0, score - hw);
   const hi = Math.min(100, score + hw);
@@ -537,7 +537,7 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs text-foreground">{displayName}</span>
             {isRisk && (
-              <span className="text-xs text-[#99882A] bg-[#CCBB44]/10 px-1.5 py-0.5 rounded text-xs">risk signal</span>
+              <span className="text-xs text-[#99882A] bg-[#D97706]/10 px-1.5 py-0.5 rounded text-xs">risk signal</span>
             )}
           </div>
           {glossaryEntry && (
@@ -638,7 +638,7 @@ export default function AssessmentResultsPage() {
       <div className="p-6 text-center max-w-2xl mx-auto">
         {isInProgress ? (
           <>
-            <div className="w-14 h-14 rounded-full bg-[#CCBB44]/8 border-2 border-[#CCBB44]/25 flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-full bg-[#D97706]/8 border-2 border-[#D97706]/25 flex items-center justify-center mx-auto mb-4">
               <RotateCcw className="w-7 h-7 text-[#99882A]" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Assessment in progress</h2>
@@ -870,7 +870,7 @@ export default function AssessmentResultsPage() {
                     </span>
                     {/* S3.3: Governing constraint in header when classification is not safe */}
                     {governingConstraint && (governingConstraint as any).droveClassification && primaryState !== "safe" && (
-                      <span className="text-xs font-medium text-[#99882A] dark:text-[#CCBB44] flex items-center gap-1">
+                      <span className="text-xs font-medium text-[#99882A] dark:text-[#D97706] flex items-center gap-1">
                         <Flag className="w-3 h-3 flex-shrink-0" />
                         Governing constraint: <span className="capitalize">{String((governingConstraint as any).capability).replace(/_/g, " ")}</span>
                         &nbsp;(gap {Math.round(Number((governingConstraint as any).gap))} pts)
@@ -916,7 +916,7 @@ export default function AssessmentResultsPage() {
 
           {/* P3: Classification confidence gate caveat */}
           {classificationConfidence?.caveat && (
-            <Card className="border-[#CCBB44]/25 bg-[#CCBB44]/8">
+            <Card className="border-[#D97706]/25 bg-[#D97706]/8">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-4 h-4 text-[#99882A] shrink-0 mt-0.5" />
@@ -983,9 +983,9 @@ export default function AssessmentResultsPage() {
                 <div className="flex items-center gap-4 pt-2 flex-wrap">
                   {[
                     { label: "Strong", range: "75–100", color: "var(--primary)" },
-                    { label: "Developing", range: "55–74", color: "#CCBB44" },
-                    { label: "Needs Work", range: "35–54", color: "#EE6677" },
-                    { label: "Critical", range: "0–34", color: "#AA3377" },
+                    { label: "Developing", range: "55–74", color: "#D97706" },
+                    { label: "Needs Work", range: "35–54", color: "#DC2626" },
+                    { label: "Critical", range: "0–34", color: "#b91c1c" },
                   ].map(b => (
                     <div key={b.label} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
@@ -995,7 +995,7 @@ export default function AssessmentResultsPage() {
                 </div>
                 {/* S5: Provisional percentile band disclosure */}
                 {normGroupVersion && (
-                  <div className="rounded-md border border-[#CCBB44]/25 bg-[#CCBB44]/8 px-3 py-2 mt-1">
+                  <div className="rounded-md border border-[#D97706]/25 bg-[#D97706]/8 px-3 py-2 mt-1">
                     <p className="text-xs text-[#99882A] flex items-center gap-1.5">
                       <Info className="w-3 h-3 shrink-0" />
                       <span>
@@ -1038,7 +1038,7 @@ export default function AssessmentResultsPage() {
 
           {/* Contradiction Profile */}
           {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
-            <Card className="border-[#EE6677]/25 bg-[#EE6677]/8">
+            <Card className="border-[#DC2626]/25 bg-[#DC2626]/8">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-[#CC3344] shrink-0 mt-0.5" />
@@ -1051,7 +1051,7 @@ export default function AssessmentResultsPage() {
                     {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
                       <div className="space-y-2">
                         {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
-                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#EE6677]/25">
+                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#DC2626]/25">
                             <span className="font-medium text-[#CC3344]">Inconsistency {i + 1}:</span>{" "}
                             {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
                           </div>
@@ -1100,7 +1100,7 @@ export default function AssessmentResultsPage() {
 
           {/* A4: Development Action Banner (v10) */}
           {governanceAction && (
-            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#EE6677] bg-[#EE6677]/8" : "border-l-[#CCBB44] bg-[#CCBB44]/8"}`}>
+            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#DC2626] bg-[#DC2626]/8" : "border-l-[#D97706] bg-[#D97706]/8"}`}>
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-[#CC3344]" : "text-[#99882A]"}`} />
@@ -1203,7 +1203,7 @@ export default function AssessmentResultsPage() {
                 {explanationData && (
                   <>
                     {(explanationData as any).isProvisional && (
-                      <div className="rounded-md border border-[#CCBB44]/25 bg-[#CCBB44]/8 px-3 py-2">
+                      <div className="rounded-md border border-[#D97706]/25 bg-[#D97706]/8 px-3 py-2">
                         <p className="text-xs text-[#99882A] flex items-center gap-1.5">
                           <Info className="w-3 h-3 shrink-0" />
                           This classification is provisional due to limited evidence or low assessment confidence.
@@ -1234,7 +1234,7 @@ export default function AssessmentResultsPage() {
                       </div>
                     )}
                     {((explanationData as any).topGaps ?? []).length > 0 && (
-                      <div className="rounded-md bg-[#EE6677]/8 border border-[#EE6677]/25 px-3 py-2">
+                      <div className="rounded-md bg-[#DC2626]/8 border border-[#DC2626]/25 px-3 py-2">
                         <p className="text-xs font-semibold text-[#CC3344] mb-1">Development priorities</p>
                         <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
                       </div>
@@ -1249,7 +1249,7 @@ export default function AssessmentResultsPage() {
                               <div key={i} className="flex items-start gap-2 text-xs">
                                 <span className={`shrink-0 mt-0.5 font-mono text-xs px-1 rounded ${
                                   c.outcomeClass === "strong" ? "bg-primary/10 text-primary" :
-                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#EE6677]/10 text-[#CC3344]" :
+                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#DC2626]/10 text-[#CC3344]" :
                                   "bg-muted text-muted-foreground"
                                 }`}>{c.outcomeClass ?? "?"}</span>
                                 <div className="min-w-0">
@@ -1479,7 +1479,7 @@ export default function AssessmentResultsPage() {
                   </h4>
                   <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#CCBB44]/8 border border-[#CCBB44]/20 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#D97706]/8 border border-[#D97706]/20 space-y-1.5">
                   <h4 className="text-xs font-bold text-[#99882A] uppercase tracking-widest flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Development Areas
@@ -1681,7 +1681,7 @@ export default function AssessmentResultsPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-[#CCBB44]" />
+                      <div className="w-3 h-3 rounded-sm bg-[#D97706]" />
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Globe className="w-3 h-3" /> Platform Average
                       </span>
@@ -1730,7 +1730,7 @@ export default function AssessmentResultsPage() {
                         />
                         <Bar dataKey="Your Score" fill="var(--primary)" radius={[3, 3, 0, 0]} maxBarSize={28} />
                         <Bar dataKey="Role Average" fill="#4477AA" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                        <Bar dataKey="Platform Average" fill="#CCBB44" radius={[3, 3, 0, 0]} maxBarSize={28} />
+                        <Bar dataKey="Platform Average" fill="#D97706" radius={[3, 3, 0, 0]} maxBarSize={28} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1750,7 +1750,7 @@ export default function AssessmentResultsPage() {
                           <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Capability</th>
                           <th className="text-center px-3 py-2.5 text-primary font-medium">Your Score</th>
                           <th className="text-center px-3 py-2.5 text-[#4477AA] font-medium">Role Avg</th>
-                          <th className="text-center px-3 py-2.5 text-[#CCBB44] font-medium">Platform Avg</th>
+                          <th className="text-center px-3 py-2.5 text-[#D97706] font-medium">Platform Avg</th>
                           <th className="text-center px-3 py-2.5 text-muted-foreground font-medium">vs Role</th>
                         </tr>
                       </thead>
@@ -1808,7 +1808,7 @@ export default function AssessmentResultsPage() {
                             className="h-full rounded-full transition-all"
                             style={{
                               width: `${cap.userScore}%`,
-                              backgroundColor: cap.userScore >= 75 ? "var(--primary)" : cap.userScore >= 55 ? "#CCBB44" : "#EE6677",
+                              backgroundColor: cap.userScore >= 75 ? "var(--primary)" : cap.userScore >= 55 ? "#D97706" : "#DC2626",
                             }}
                           />
                         </div>
@@ -1866,7 +1866,7 @@ export default function AssessmentResultsPage() {
                 const OUTCOME_COLORS: Record<string, { bg: string; border: string; badge: string; text: string; label: string }> = {
                   strong:     { bg: "bg-primary/8",  border: "border-primary/30", badge: "bg-primary/15 text-primary",  text: "text-primary",  label: "Strong" },
                   acceptable: { bg: "bg-[#44bb99]/8",  border: "border-[#44bb99]/30", badge: "bg-[#44bb99]/15 text-[#44bb99]",  text: "text-[#44bb99]",  label: "Acceptable" },
-                  weak:       { bg: "bg-[#CCBB44]/8",  border: "border-[#CCBB44]/30", badge: "bg-[#CCBB44]/15 text-[#99882A]",  text: "text-[#99882A]",  label: "Needs Work" },
+                  weak:       { bg: "bg-[#D97706]/8",  border: "border-[#D97706]/30", badge: "bg-[#D97706]/15 text-[#99882A]",  text: "text-[#99882A]",  label: "Needs Work" },
                   poor:       { bg: "bg-[#CC3311]/8",  border: "border-[#CC3311]/30", badge: "bg-[#CC3311]/15 text-[#CC3311]",  text: "text-[#CC3311]",  label: "Critical Gap" },
                 };
                 const oc = cb.outcomeClass ?? "weak";
@@ -1945,7 +1945,7 @@ export default function AssessmentResultsPage() {
             const calibrationScore = cal.totalAnswers > 0
               ? Math.round((cal.wellCalibratedCount / cal.totalAnswers) * 100)
               : 0;
-            const calColor = calibrationScore >= 70 ? "var(--primary)" : calibrationScore >= 45 ? "#CCBB44" : "#CC3311";
+            const calColor = calibrationScore >= 70 ? "var(--primary)" : calibrationScore >= 45 ? "#D97706" : "#CC3311";
             return (
               <div className="space-y-4">
                 {/* Summary banner */}
@@ -1969,7 +1969,7 @@ export default function AssessmentResultsPage() {
                       <div className="text-xs text-muted-foreground mt-0.5">Well calibrated</div>
                     </CardContent>
                   </Card>
-                  <Card className="border-[#CCBB44]/30 bg-[#CCBB44]/5">
+                  <Card className="border-[#D97706]/30 bg-[#D97706]/5">
                     <CardContent className="p-4 text-center">
                       <ThumbsDown className="w-5 h-5 text-[#99882A] mx-auto mb-2" />
                       <div className="text-2xl font-bold text-[#99882A]">{cal.overconfidentCount}</div>
@@ -2061,8 +2061,8 @@ export default function AssessmentResultsPage() {
             }
 
             const QUADRANT_COLOURS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-              unconscious_incompetence: { bg: "bg-[#EE6677]/80/10", border: "border-[#EE6677]/30", text: "text-[#CC3344]", dot: "#EE6677" },
-              conscious_incompetence: { bg: "bg-[#CCBB44]/80/10", border: "border-[#CCBB44]/30", text: "text-[#99882A]", dot: "#CCBB44" },
+              unconscious_incompetence: { bg: "bg-[#DC2626]/80/10", border: "border-[#DC2626]/30", text: "text-[#CC3344]", dot: "#DC2626" },
+              conscious_incompetence: { bg: "bg-[#D97706]/80/10", border: "border-[#D97706]/30", text: "text-[#99882A]", dot: "#D97706" },
               conscious_competence: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-600", dot: "#4477AA" },
               unconscious_competence: { bg: "bg-primary/80/10", border: "border-primary/30", text: "text-primary", dot: "var(--primary)" },
             };
@@ -2093,7 +2093,7 @@ export default function AssessmentResultsPage() {
                       {/* Grid */}
                       <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
                         {/* Q1: Top-left = Low competence, High confidence = Blind Spot */}
-                        <div className="bg-[#EE6677]/80/5 border border-[#EE6677]/20 rounded-tl-lg p-3 relative">
+                        <div className="bg-[#DC2626]/80/5 border border-[#DC2626]/20 rounded-tl-lg p-3 relative">
                           <span className="text-xs font-semibold text-[#CC3344]/70 uppercase tracking-widest">Blind Spot</span>
                           <p className="text-xs text-muted-foreground mt-0.5">High confidence, low competence</p>
                         </div>
@@ -2103,7 +2103,7 @@ export default function AssessmentResultsPage() {
                           <p className="text-xs text-muted-foreground mt-0.5">High confidence, high competence</p>
                         </div>
                         {/* Q2: Bottom-left = Low competence, Low confidence = Aware Gap */}
-                        <div className="bg-[#CCBB44]/80/5 border border-[#CCBB44]/20 rounded-bl-lg p-3 relative">
+                        <div className="bg-[#D97706]/80/5 border border-[#D97706]/20 rounded-bl-lg p-3 relative">
                           <span className="text-xs font-semibold text-[#99882A]/70 uppercase tracking-widest">Aware Gap</span>
                           <p className="text-xs text-muted-foreground mt-0.5">Low confidence, low competence</p>
                         </div>
@@ -2199,7 +2199,7 @@ export default function AssessmentResultsPage() {
 
                 {/* Blind Spots Alert */}
                 {blindSpotsList.length > 0 && (
-                  <Card className="border-[#EE6677]/30 bg-[#EE6677]/80/5">
+                  <Card className="border-[#DC2626]/30 bg-[#DC2626]/80/5">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base flex items-center gap-2">
                         <ShieldAlert className="w-5 h-5 text-[#CC3344]" />
@@ -2212,8 +2212,8 @@ export default function AssessmentResultsPage() {
                         You may be making AI-related decisions in these areas without recognising the risks.
                       </p>
                       {blindSpotsList.map((bs) => (
-                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-[#EE6677]/80/5 border border-[#EE6677]/20">
-                          <div className="w-10 h-10 rounded-full bg-[#EE6677]/80/20 flex items-center justify-center shrink-0">
+                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-[#DC2626]/80/5 border border-[#DC2626]/20">
+                          <div className="w-10 h-10 rounded-full bg-[#DC2626]/80/20 flex items-center justify-center shrink-0">
                             <AlertTriangle className="w-5 h-5 text-[#CC3344]" />
                           </div>
                           <div className="min-w-0">
@@ -2282,19 +2282,19 @@ function AssessmentBusinessImpactCard({
   // BA-06: Capability-to-outcome table
   const CAPABILITY_OUTCOMES: Array<{ domain: string; label: string; outcome: string; colour: string }> = [
     { domain: "ai_interaction", label: "AI Interaction", outcome: "Faster, higher-quality AI-assisted HR decisions", colour: "#4477AA" },
-    { domain: "ai_output_evaluation", label: "Output Evaluation", outcome: "Reduced risk from AI errors and hallucinations", colour: "#228833" },
-    { domain: "ai_workflow_design", label: "Workflow Design", outcome: "Scalable automation of repetitive HR processes", colour: "#CCBB44" },
-    { domain: "ai_ethics_trust", label: "Ethics & Trust", outcome: "Compliant, fair AI use that maintains employee confidence", colour: "#EE6677" },
-    { domain: "workforce_ai_readiness", label: "Workforce Readiness", outcome: "Faster organisation-wide AI adoption", colour: "#AA3377" },
+    { domain: "ai_output_evaluation", label: "Output Evaluation", outcome: "Reduced risk from AI errors and hallucinations", colour: "#047857" },
+    { domain: "ai_workflow_design", label: "Workflow Design", outcome: "Scalable automation of repetitive HR processes", colour: "#D97706" },
+    { domain: "ai_ethics_trust", label: "Ethics & Trust", outcome: "Compliant, fair AI use that maintains employee confidence", colour: "#DC2626" },
+    { domain: "workforce_ai_readiness", label: "Workforce Readiness", outcome: "Faster organisation-wide AI adoption", colour: "#b91c1c" },
     { domain: "ai_change_leadership", label: "Change Leadership", outcome: "Sustainable AI transformation with stakeholder buy-in", colour: "#66CCEE" },
   ];
 
   return (
-    <Card className="border-[#228833]/20 bg-[#228833]/3">
+    <Card className="border-[#047857]/20 bg-[#047857]/3">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#228833]/10 border border-[#228833]/20 flex items-center justify-center shrink-0">
-            <Target className="w-4.5 h-4.5 text-[#228833]" />
+          <div className="w-9 h-9 rounded-lg bg-[#047857]/10 border border-[#047857]/20 flex items-center justify-center shrink-0">
+            <Target className="w-4.5 h-4.5 text-[#047857]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">Business impact of your result</p>
@@ -2309,7 +2309,7 @@ function AssessmentBusinessImpactCard({
         <div className="grid grid-cols-2 gap-2">
           <div className="p-2.5 rounded-lg bg-background border border-border text-center">
             <p className="text-xs text-muted-foreground mb-0.5">vs org average</p>
-            <p className="text-sm font-bold" style={{ color: isAboveOrgAvg ? "#228833" : "#C08878" }}>
+            <p className="text-sm font-bold" style={{ color: isAboveOrgAvg ? "#047857" : "#b45309" }}>
               {isAboveOrgAvg ? "Above" : "Below"}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -2318,7 +2318,7 @@ function AssessmentBusinessImpactCard({
           </div>
           <div className="p-2.5 rounded-lg bg-background border border-border text-center">
             <p className="text-xs text-muted-foreground mb-0.5">vs ambition target</p>
-            <p className="text-sm font-bold" style={{ color: isAboveTarget ? "#228833" : "#C08878" }}>
+            <p className="text-sm font-bold" style={{ color: isAboveTarget ? "#047857" : "#b45309" }}>
               {isAboveTarget ? "Meets target ✓" : gapRaw !== null ? `${(gapRaw / 10).toFixed(1)} pts gap` : "—"}
             </p>
             <p className="text-xs text-muted-foreground">target: {targetPeakon ?? "—"}</p>
@@ -2344,8 +2344,8 @@ function AssessmentBusinessImpactCard({
         </div>
 
         {ambitionGap.ambitionTargetLabel && (
-          <div className="p-2.5 rounded-lg bg-[#228833]/5 border border-[#228833]/15">
-            <p className="text-xs text-[#228833] font-medium">Organisation's AI ambition</p>
+          <div className="p-2.5 rounded-lg bg-[#047857]/5 border border-[#047857]/15">
+            <p className="text-xs text-[#047857] font-medium">Organisation's AI ambition</p>
             <p className="text-xs text-muted-foreground mt-0.5 italic">"{ambitionGap.ambitionTargetLabel}"</p>
             {ambitionGap.ambitionTargetDate && (
               <p className="text-xs text-muted-foreground mt-0.5">

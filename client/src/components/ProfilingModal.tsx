@@ -73,7 +73,7 @@ const ROLE_FAMILIES = [
     label: "HR Business Partner",
     description: "Strategic partnering, change management, ER",
     icon: Briefcase,
-    colour: "#AA3377",
+    colour: "#b91c1c",
     roles: [
       "HR Business Partner",
       "Senior HRBP",
@@ -86,7 +86,7 @@ const ROLE_FAMILIES = [
     label: "People Analytics & Data",
     description: "Workforce data, reporting, HR systems",
     icon: BarChart3,
-    colour: "#CCBB44",
+    colour: "#D97706",
     roles: [
       "People Analytics Manager",
       "HR Data Analyst",
@@ -169,7 +169,7 @@ const AI_EXPERIENCE_LEVELS = [
     label: "Occasional user",
     description: "I've tried tools like ChatGPT a few times",
     usageLevel: "occasional" as const,
-    colour: "#CCBB44",
+    colour: "#D97706",
     icon: "◔"},
   {
     id: "regular",
@@ -636,7 +636,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                         <Clock className="w-3 h-3 mr-1" />
                         8–12 minutes
                       </Badge>
-                      <Badge className="bg-[#CCBB44]/12 text-[#99882A] border border-[#CCBB44]/25 text-xs font-medium">
+                      <Badge className="bg-[#D97706]/12 text-[#99882A] border border-[#D97706]/25 text-xs font-medium">
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Adaptive difficulty
                       </Badge>

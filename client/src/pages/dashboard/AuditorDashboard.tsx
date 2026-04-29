@@ -26,7 +26,7 @@ import {
   ResponsiveContainer, Cell,
 } from "recharts";
 
-const INCIDENT_COLORS = ["#EE6677", "#EE8866", "#AA3377", "#4477AA", "#228833", "#66CCEE", "#BBBBBB"];
+const INCIDENT_COLORS = ["#DC2626", "#EE8866", "#b91c1c", "#4477AA", "#047857", "#66CCEE", "#BBBBBB"];
 
 export default function AuditorDashboard() {
   const { data, isLoading } = trpc.dashboard.auditor.useQuery();
@@ -88,8 +88,8 @@ export default function AuditorDashboard() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: "Audit Events",       value: counts?.auditEvents ?? 0,       icon: Activity,      color: "#4477AA" },
-          { label: "Policy Incidents",   value: counts?.policyIncidents ?? 0,   icon: AlertTriangle, color: "#EE6677" },
-          { label: "Completed Sessions", value: counts?.completedSessions ?? 0, icon: ClipboardList, color: "#228833" },
+          { label: "Policy Incidents",   value: counts?.policyIncidents ?? 0,   icon: AlertTriangle, color: "#DC2626" },
+          { label: "Completed Sessions", value: counts?.completedSessions ?? 0, icon: ClipboardList, color: "#047857" },
         ].map(kpi => {
           const Icon = kpi.icon;
           return (
@@ -113,7 +113,7 @@ export default function AuditorDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#EE6677]" />Incidents by Type
+              <Shield className="w-4 h-4 text-[#DC2626]" />Incidents by Type
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,7 +133,7 @@ export default function AuditorDashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-48 text-center">
-                <CheckCircle className="w-8 h-8 text-[#228833] mx-auto mb-2" />
+                <CheckCircle className="w-8 h-8 text-[#047857] mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">No policy incidents recorded</p>
               </div>
             )}
@@ -150,9 +150,9 @@ export default function AuditorDashboard() {
             <div className="space-y-3">
               {[
                 { label: "Total audit trail entries", value: counts?.auditEvents ?? 0, color: "#4477AA" },
-                { label: "Policy violations triggered", value: counts?.policyIncidents ?? 0, color: "#EE6677" },
-                { label: "Assessment sessions completed", value: counts?.completedSessions ?? 0, color: "#228833" },
-                { label: "Incident types observed", value: Object.keys(incidentsByType).length, color: "#AA3377" },
+                { label: "Policy violations triggered", value: counts?.policyIncidents ?? 0, color: "#DC2626" },
+                { label: "Assessment sessions completed", value: counts?.completedSessions ?? 0, color: "#047857" },
+                { label: "Incident types observed", value: Object.keys(incidentsByType).length, color: "#b91c1c" },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
@@ -169,7 +169,7 @@ export default function AuditorDashboard() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#EE6677]" />Policy Incidents ({filteredIncidents.length})
+              <AlertTriangle className="w-4 h-4 text-[#DC2626]" />Policy Incidents ({filteredIncidents.length})
             </CardTitle>
             <div className="relative w-56">
               <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground" />
@@ -193,7 +193,7 @@ export default function AuditorDashboard() {
                   <tr key={inc.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                     <td className="py-3 px-4 text-xs font-medium text-foreground">{inc.policyRuleId ?? "—"}</td>
                     <td className="py-3 px-4">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#EE6677]/10 text-[#EE6677] font-semibold capitalize">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#DC2626]/10 text-[#DC2626] font-semibold capitalize">
                         {inc.result?.replace(/_/g, " ") ?? "—"}
                       </span>
                     </td>

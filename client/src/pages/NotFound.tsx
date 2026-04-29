@@ -16,7 +16,7 @@ export default function NotFound() {
         <CardContent className="pt-8 pb-8 text-center">
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-[#EE6677]/12 rounded-full animate-pulse" />
+              <div className="absolute inset-0 bg-[#DC2626]/12 rounded-full animate-pulse" />
               <AlertCircle className="relative h-16 w-16 text-[#CC3344]" />
             </div>
           </div>
