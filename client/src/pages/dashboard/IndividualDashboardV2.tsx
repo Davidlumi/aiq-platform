@@ -134,9 +134,23 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     </div>
   );
 
+  // Derive a hero-level finding for the banner
+  const heroStatement = useMemo(() => {
+    if (!data) return null;
+    if (data.overallScore === null) return "Complete your assessment to generate your capability profile.";
+    const scored = data.domains.filter(d => d.score !== null);
+    const topDomain = [...scored].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+    const weakDomain = [...scored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
+    const readiness = scoreToReadinessLabel(data.overallScore);
+    if (topDomain && weakDomain && weakDomain.key !== topDomain.key) {
+      return `Your strongest capability is ${topDomain.name} — focus development on ${weakDomain.name} to accelerate your overall readiness.`;
+    }
+    return `Your overall readiness is ${readiness}. ${data.ratingExplanation ?? ""}`;
+  }, [data]);
+
   return (
-    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div>
           <h1 className="text-xl font-semibold text-foreground">
             {isOwnDashboard ? "Your capability profile" : `${data.user.firstName} ${data.user.lastName}`}
@@ -177,70 +191,65 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <DashboardCard className="lg:col-span-1">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Overall Score</p>
-                <HeroScore
-                  score={data.overallScore}
-                  label={data.overallScore !== null ? scoreToReadinessLabel(data.overallScore) : undefined}
-                  delta={scoreDelta}
-                  size="xl"
-                />
-              </div>
-              {scoreHistory.length >= 2 && (
-                <Sparkline
-                  data={scoreHistory}
-                  width={80}
-                  height={48}
-                  colour={data.overallScore !== null ? scoreToColor(data.overallScore).bg : undefined}
-                />
+      {/* ── Hero finding banner ── */}
+      {heroStatement && (
+        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-border bg-card shadow-sm">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-foreground leading-relaxed">{heroStatement}</p>
+            <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground flex-wrap">
+              {data.overallScore !== null && (
+                <span>Overall score: <strong className="text-foreground" style={{ color: scoreToColor(data.overallScore).bg }}>{(data.overallScore / 10).toFixed(1)}</strong> / 10</span>
+              )}
+              {data.assessmentHistory.length > 0 && (
+                <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
+              )}
+              {isOwnDashboard && (
+                <Link href="/assessment">
+                  <button className="text-primary hover:underline font-medium">View development priorities →</button>
+                </Link>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <RatingBadge rating={data.overallRating} size="sm" />
-              <ConfidenceIndicator band={data.confidenceBand} />
-            </div>
-            {data.ratingExplanation && (
-              <p className="text-xs text-muted-foreground leading-relaxed border-t border-neutral-100 pt-3">
-                {data.ratingExplanation}
-              </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── 4-column stat grid (mirrors leader dashboard) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <DashboardCard className="col-span-2 lg:col-span-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Overall Score</p>
+          <div className="flex items-start justify-between">
+            <HeroScore
+              score={data.overallScore}
+              label={data.overallScore !== null ? scoreToReadinessLabel(data.overallScore) : undefined}
+              delta={scoreDelta}
+              size="xl"
+            />
+            {scoreHistory.length >= 2 && (
+              <Sparkline
+                data={scoreHistory}
+                width={64}
+                height={40}
+                colour={data.overallScore !== null ? scoreToColor(data.overallScore).bg : undefined}
+              />
             )}
-            {/* BA-09: Strategic Fit Score */}
-            {strategicFitScore !== null && (
-              <div className="border-t border-neutral-100 pt-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1.5">Strategic Fit Score</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold font-mono tabular-nums"
-                    style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#C08878" }}>
-                    {(strategicFitScore / 10).toFixed(1)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/ 10 on priority domains</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {strategicFitScore >= 70
-                    ? "Strong alignment with org AI priorities"
-                    : strategicFitScore >= 50
-                      ? "Partial alignment — targeted development recommended"
-                      : "Priority development needed for strategic alignment"}
-                </p>
-              </div>
-            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap mt-2">
+            <RatingBadge rating={data.overallRating} size="sm" />
+            <ConfidenceIndicator band={data.confidenceBand} />
           </div>
         </DashboardCard>
 
-        <DashboardCard className="lg:col-span-2">
-          <div className="flex flex-col gap-4 h-full">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Readiness Distribution</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Across {readinessDistribution.total} capability domains</p>
-              </div>
-              <Users className="w-4 h-4 text-muted-foreground" />
-            </div>
-            {readinessDistribution.total > 0 ? (
+        <DashboardCard>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Domains Ready</p>
+          <p className="text-3xl font-bold tabular-nums" style={{ color: "#7A9E8E" }}>
+            {readinessDistribution.aiReady}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">of {readinessDistribution.total} domains AI-ready</p>
+          {readinessDistribution.total > 0 && (
+            <div className="mt-3">
               <ReadinessDistributionBar
                 aiReady={readinessDistribution.aiReady}
                 developing={readinessDistribution.developing}
@@ -248,18 +257,57 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 foundationGap={readinessDistribution.foundationGap}
                 total={readinessDistribution.total}
               />
-            ) : (
-              <p className="text-xs text-muted-foreground">Complete an assessment to see your distribution.</p>
-            )}
-            {data.assessmentHistory.length >= 2 && (
-              <div className="border-t border-neutral-100 pt-3">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Score history</p>
-                <ScoreProgressChart history={data.assessmentHistory} target={data.roleTarget} />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Assessments</p>
+          <p className="text-3xl font-bold tabular-nums text-foreground">
+            {data.assessmentHistory.length}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">completed to date</p>
+          {strategicFitScore !== null && (
+            <div className="mt-3 pt-3 border-t border-neutral-100">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Strategic fit</p>
+              <span className="text-lg font-bold font-mono tabular-nums"
+                style={{ color: strategicFitScore >= 70 ? "#7A9E8E" : strategicFitScore >= 50 ? "#C8B07A" : "#C08878" }}>
+                {(strategicFitScore / 10).toFixed(1)}
+              </span>
+              <span className="text-xs text-muted-foreground ml-1">/ 10</span>
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">Next Reassessment</p>
+          {data.nextReassessmentDate ? (
+            <>
+              <p className="text-sm font-semibold text-foreground">
+                {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Scheduled reassessment</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-muted-foreground">Not scheduled</p>
+              <p className="text-xs text-muted-foreground mt-1">Complete your assessment to set a cadence</p>
+            </>
+          )}
+          {data.lastAssessmentDate && (
+            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-neutral-100">
+              Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </p>
+          )}
         </DashboardCard>
       </div>
+
+      {/* Score history (shown when ≥2 assessments) */}
+      {data.assessmentHistory.length >= 2 && (
+        <DashboardCard title="Score history" subtitle="Your capability trajectory over time">
+          <ScoreProgressChart history={data.assessmentHistory} target={data.roleTarget} />
+        </DashboardCard>
+      )}
 
       {insights.length > 0 && (
         <AIInsightCard title="Capability insights" insights={insights} />

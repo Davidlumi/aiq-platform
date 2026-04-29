@@ -14,6 +14,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
+import { AssessmentHistoryPanel } from "./AssessmentPage";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { DownloadPdfButton } from "@/components/DownloadPdfButton";
@@ -729,8 +730,33 @@ export default function AssessmentResultsPage() {
       })
     : "Unknown";
 
+  const { data: allSessions } = trpc.assessment.history.useQuery({});
+  const startMutation2 = trpc.assessment.startSession.useMutation({
+    onSuccess: result => navigate(`/assessment/${result.sessionId}`),
+    onError: err => toast.error(err.message),
+  });
+  const { data: defaultBlueprint2 } = trpc.assessment.defaultBlueprint.useQuery();
+  const [showProfiling2, setShowProfiling2] = useState(false);
+
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="flex h-full min-h-0">
+      {/* ── History sidebar ── */}
+      <div className="hidden lg:flex flex-col w-56 shrink-0 border-r border-border bg-muted/20">
+        <AssessmentHistoryPanel
+          sessions={allSessions ?? []}
+          activeId={sessionId}
+          onStart={() => {
+            if (defaultBlueprint2?.id) {
+              startMutation2.mutate({ blueprintId: defaultBlueprint2.id, roleHint: "hr_professional::regular" });
+            }
+          }}
+          isStarting={startMutation2.isPending}
+        />
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 overflow-y-auto">
+      <div className="p-6 space-y-6 max-w-3xl mx-auto">
       {/* Back nav */}
       <div className="flex items-center justify-between">
         <button
@@ -2229,6 +2255,8 @@ export default function AssessmentResultsPage() {
           })()}
         </TabsContent>
       </Tabs>
+    </div>
+    </div>
     </div>
   );
 }
