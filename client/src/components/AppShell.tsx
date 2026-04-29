@@ -47,95 +47,54 @@ type NavItem = {
   section?: string;
 };
 
+// ─── Role constants ───────────────────────────────────────────────────────────
+const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
+const MANAGER_ROLES = ["manager"];
+
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard",       path: "/dashboard",   icon: LayoutDashboard, section: "core" },
-  { label: "Assessment",      path: "/assessment",  icon: ClipboardList,   section: "learn" },
-  { label: "Learning plan",   path: "/learning",    icon: BookOpen,        section: "learn" },
-  { label: "Content library", path: "/library",     icon: Library,         section: "learn" },
+  // ── My Development (all roles) ──────────────────────────────────────────────
+  { label: "Assessment",      path: "/assessment",     icon: ClipboardList, section: "mydev" },
+  { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
+  { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
+  { label: "Knowledge Base",  path: "/knowledge-base", icon: BookMarked,    section: "mydev" },
+
+  // ── My Team (CPO + Manager) ──────────────────────────────────────────────────
   {
-    label: "Reports",
-    path: "/reports",
-    icon: BarChart3,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader", "auditor"],
-    section: "govern",
+    label: "Overview",
+    path: "/dashboard",
+    icon: LayoutDashboard,
+    roles: [...CPO_ROLES, ...MANAGER_ROLES],
+    section: "myteam",
   },
   {
     label: "AI Strategy",
     path: "/ai-strategy",
     icon: Target,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
-    section: "govern",
+    roles: CPO_ROLES,
+    section: "myteam",
   },
   {
     label: "People",
     path: "/people",
     icon: UserSearch,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader", "manager"],
-    section: "govern",
+    roles: [...CPO_ROLES, ...MANAGER_ROLES],
+    section: "myteam",
   },
-  {
-    label: "Audit log",
-    path: "/audit",
-    icon: FileText,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader", "auditor"],
-    section: "govern",
-  },
-  {
-    label: "Policy",
-    path: "/policy",
-    icon: Shield,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader", "auditor"],
-    section: "govern",
-  },
-  {
-    label: "Content CMS",
-    path: "/admin/content",
-    icon: FolderOpen,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
-    section: "admin",
-  },
-  {
-    label: "Blueprints",
-    path: "/admin/assessments",
-    icon: Layers,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
-    section: "admin",
-  },
-  {
-    label: "Scenario library",
-    path: "/admin/scenarios",
-    icon: BookMarked,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
-    section: "admin",
-  },
+
+  // ── Admin (CPO only) ─────────────────────────────────────────────────────────
   {
     label: "Users",
     path: "/admin/users",
     icon: Users,
-    roles: ["platform_super_admin", "tenant_admin", "hr_leader"],
-    section: "admin",
-  },
-  {
-    label: "Tenants",
-    path: "/admin/tenants",
-    icon: Building2,
-    roles: ["platform_super_admin"],
-    section: "admin",
-  },
-  {
-    label: "Back office",
-    path: "/backoffice",
-    icon: ShieldCheck,
-    roles: ["super_admin"],
+    roles: CPO_ROLES,
     section: "admin",
   },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-  core:   "",
-  learn:  "Develop",
-  govern: "Governance",
-  admin:  "Administration",
+  mydev:  "My Development",
+  myteam: "My Team",
+  admin:  "Admin",
 };
 
 /** AiQ logo mark — dark slate circle, white A+Q, primary i dot */
