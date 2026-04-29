@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
-  tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems,
+  tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems, assessmentBlueprints,
   scoringConfig, organisationCapabilityThresholds, sectorVocabulary, auditLogs,
   antiGamingThresholds, llmItemReviewQueue, assessmentReviewFlags,
   userPersonas, userStates, credibilityScores, riskScores, decisionLogs,
@@ -941,4 +941,162 @@ export const backofficeRouter = router({
       newUsersLast30Days: allUsers.filter(u => new Date(u.createdAt) > thirtyDaysAgo).length,
     };
   }),
+
+  /**
+   * Delete all assessment sessions for a user and seed a realistic completed one.
+   * Used for demo/testing purposes.
+   */
+  seedCompletedAssessment: protectedProcedure
+    .input(z.object({
+      userId: z.string(),
+      overallScore: z.number().min(0).max(100).default(78),
+      capabilityScores: z.record(z.string(), z.number()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      // Allow super_admin or hr_leader (demo seeding)
+      const callerRoles = await db
+        .select({ key: roles.key })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(and(eq(userRoles.userId, ctx.user.id), eq(userRoles.tenantId, ctx.user.tenantId)));
+      const callerKeys = callerRoles.map(r => r.key);
+      if (!callerKeys.includes("super_admin") && !callerKeys.includes("hr_leader")) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "HR Leader or Super Admin access required" });
+      }
+
+      // 1. Find all sessions for this user
+      const existingSessions = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(eq(assessmentSessions.userId, input.userId));
+
+      const sessionIds = existingSessions.map(s => s.id);
+
+      // 2. Delete related records for all sessions
+      if (sessionIds.length > 0) {
+        await db.delete(assessmentAnswers).where(inArray(assessmentAnswers.sessionId, sessionIds));
+        await db.delete(assessmentScores).where(inArray(assessmentScores.sessionId, sessionIds));
+      }
+      // Delete credibility/risk scores for user
+      await db.delete(credibilityScores).where(eq(credibilityScores.userId, input.userId));
+      await db.delete(riskScores).where(eq(riskScores.userId, input.userId));
+
+      // 3. Delete all sessions
+      await db.delete(assessmentSessions).where(eq(assessmentSessions.userId, input.userId));
+
+      // 4. Find blueprint
+      const bpRows = await db.select({ id: assessmentBlueprints.id }).from(assessmentBlueprints).orderBy(desc(assessmentBlueprints.createdAt)).limit(1);
+      const blueprintId: string = bpRows[0]?.id ?? "bp-default";
+
+      // 5. Find tenant
+      const userRow = await db.select({ tenantId: users.tenantId }).from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!userRow.length) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const tenantId = userRow[0].tenantId;
+
+      // 6. Build capability scores
+      const capKeys = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
+      const defaultCaps: Record<string, number> = {
+        ai_interaction: 82,
+        ai_output_evaluation: 79,
+        ai_workflow_design: 74,
+        workforce_ai_readiness: 81,
+        ai_ethics_trust: 76,
+        ai_change_leadership: 80,
+      };
+      const capabilityScores = input.capabilityScores ?? defaultCaps;
+      const capabilitySignalCounts: Record<string, number> = {};
+      capKeys.forEach(k => { capabilitySignalCounts[k] = 8; });
+
+      const scoreBreakdown = {
+        overallScore: input.overallScore,
+        capabilityScores,
+        capabilitySignalCounts,
+        signalScores: {},
+        readiness: {
+          state: "safe",
+          label: "AI Capable",
+          governanceAction: "monitor",
+          governingConstraint: null,
+        },
+        narrative: {
+          summary: "Strong AI capability profile across all six domains. Demonstrates confident, responsible AI use with particular strength in AI Interaction and Workforce AI Readiness.",
+          gaps: "Some room to develop AI Workflow Design further.",
+          priorities: "Focus on workflow automation and AI change leadership to reach AI Ready status.",
+        },
+        confidenceProfile: { overall: 0.82 },
+        failureModes: { governanceFlag: false },
+        contradictions: { count: 0, pairs: [] },
+        contradictionProfile: { detected: 0, pairs: [] },
+        governanceProfile: { score: 76, band: "strong", bypasses: 0 },
+        credibilityBand: "high",
+        gamingAnalysis: { score: 0.1, scrutinyLevel: "low", patterns: [] },
+        roleArchetype: "hr_leader_senior",
+        totalAnswers: 49,
+        avgConfidence: 0.78,
+        riskBand: "low",
+        modelVersion: "adaptive-v2",
+        llmNarrative: null,
+        percentileRanks: {},
+        normGroupVersion: "v1",
+        classificationConfidence: { band: "high", label: "High confidence", wasDowngraded: false, caveat: null },
+        targetItems: 49,
+      };
+
+      // 7. Create completed session
+      const sessionId = nanoid();
+      const completedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+      const startedAt = new Date(completedAt.getTime() - 38 * 60 * 1000); // 38 min before
+
+      await db.insert(assessmentSessions).values({
+        id: sessionId,
+        tenantId,
+        userId: input.userId,
+        blueprintId,
+        state: "completed",
+        startedAt,
+        completedAt,
+        sessionMetadataJson: JSON.stringify({ answeredCount: 49, totalTarget: 49 }),
+        normGroupVersion: "v1",
+        localeCode: "en-GB",
+        scoringConfigVersionAtStart: 1,
+        roleArchetypeId: "hr_leader_senior",
+        roleHintFreetext: "hr_leader::senior",
+        createdAt: startedAt,
+      });
+
+      // 8. Insert score record
+      await db.insert(assessmentScores).values({
+        id: nanoid(),
+        sessionId,
+        overallScore: input.overallScore.toFixed(2) as any,
+        scoreBreakdownJson: scoreBreakdown as any,
+        signalScoresJson: {} as any,
+        modelVersion: "adaptive-v2",
+        scoringConfigVersion: 1,
+      });
+
+      // 9. Insert credibility score
+      await db.insert(credibilityScores).values({
+        id: nanoid(),
+        userId: input.userId,
+        assessmentSessionId: sessionId,
+        credibilityScore: "0.8200" as any,
+        band: "high",
+        reasonJson: JSON.stringify({ overall: 0.82 }),
+        modelVersion: "adaptive-v2",
+      });
+
+      // 10. Insert risk score
+      await db.insert(riskScores).values({
+        id: nanoid(),
+        userId: input.userId,
+        riskScore: "0.2000" as any,
+        band: "low",
+        reasonJson: JSON.stringify({ riskBand: "low" }),
+      });
+
+      return { success: true, sessionId, deletedCount: sessionIds.length };
+    }),
 });
