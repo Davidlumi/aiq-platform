@@ -125,7 +125,7 @@ function TrajectoryChart({
         {levelLines.map(l => (
           <g key={l.score}>
             <line x1={PAD_L} y1={l.y} x2={W - PAD_R} y2={l.y} stroke="oklch(22% 0.030 240)" strokeWidth={0.5} strokeDasharray="2 2" />
-            <text x={PAD_L - 8} y={l.y + 4} textAnchor="end" style={{ fontSize: 10, fill: "#9CA3AF", fontFamily: "Sora, system-ui, sans-serif" }}>{l.label}</text>
+            <text x={PAD_L - 8} y={l.y + 4} textAnchor="end" style={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{l.label}</text>
           </g>
         ))}
         {/* Target threshold line — green */}
@@ -139,15 +139,15 @@ function TrajectoryChart({
         )}
         {/* Actual line — primary */}
         {actualPts.length >= 2 && (
-          <polyline points={actualPolyline} fill="none" stroke="#60A5FA" strokeWidth={2.5} strokeLinejoin="round" />
+          <polyline points={actualPolyline} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinejoin="round" />
         )}
         {/* Actual dots */}
         {actualPts.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={i === actualPts.length - 1 ? 5 : 4} fill="#60A5FA" />
+          <circle key={i} cx={p.x} cy={p.y} r={i === actualPts.length - 1 ? 5 : 4} fill="var(--primary)" />
         ))}
         {/* Projected line — muted blue */}
         {projPts.length >= 2 && (
-          <polyline points={projPolyline} fill="none" stroke="#557DAE" strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
+          <polyline points={projPolyline} fill="none" stroke="var(--primary)" strokeOpacity={0.5} strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
         )}
         {/* X axis labels */}
         {validPts.map((m, i) => {
@@ -156,7 +156,7 @@ function TrajectoryChart({
           const label = `${["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][parseInt(month)]} ${year.slice(2)}`;
           if (i % Math.max(1, Math.floor(validPts.length / 6)) !== 0 && i !== validPts.length - 1) return null;
           return (
-            <text key={i} x={x} y={H - 8} textAnchor="middle" style={{ fontSize: 10, fill: "#9CA3AF", fontFamily: "Sora, system-ui, sans-serif" }}>{label}</text>
+            <text key={i} x={x} y={H - 8} textAnchor="middle" style={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{label}</text>
           );
         })}
       </svg>
@@ -319,9 +319,9 @@ export default function AIStrategyPage() {
               background: ambitionGap?.verdict === "gap" ? "oklch(18% 0.040 68)" : "oklch(17% 0.028 240)",
               border: ambitionGap?.verdict === "gap" ? "0.5px solid oklch(30% 0.090 68)" : "0.5px solid oklch(22% 0.030 240)"
             }}>
-            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: ambitionGap?.verdict === "gap" ? "#FCD34D" : "#9CA3AF" }}>Gap</p>
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: ambitionGap?.verdict === "gap" ? "#F59E0B" : "var(--muted-foreground)" }}>Gap</p>
             <p className="text-2xl font-medium text-foreground">{gapLevel !== null && parseFloat(gapLevel) > 0 ? `${gapLevel} levels` : "On target"}</p>
-            <p className="text-xs mt-0.5" style={{ color: ambitionGap?.verdict === "gap" ? "#FCD34D" : "#9CA3AF" }}>
+            <p className="text-xs mt-0.5" style={{ color: ambitionGap?.verdict === "gap" ? "#F59E0B" : "var(--muted-foreground)" }}>
               {monthsToTarget ? `closes in ~${monthsToTarget} months` : ambitionGap?.configured ? "at current pace" : "no target set"}
             </p>
           </div>

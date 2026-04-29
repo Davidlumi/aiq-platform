@@ -38,9 +38,9 @@ const CAP_META: Record<string, { label: string; color: string; shortLabel: strin
   ai_interaction:         { label: "AI Interaction",         color: "#4477AA", shortLabel: "Interact" },
   ai_output_evaluation:   { label: "Output Evaluation",      color: "var(--primary)", shortLabel: "Evaluate" },
   ai_workflow_design:     { label: "Workflow Design",        color: "#06B6D4", shortLabel: "Workflow" },
-  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#D97706", shortLabel: "Readiness" },
-  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#b91c1c", shortLabel: "Ethics" },
-  ai_change_leadership:   { label: "Change Leadership",      color: "#EC4899", shortLabel: "Leadership" },
+  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#F59E0B", shortLabel: "Readiness" },
+  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#F97316", shortLabel: "Ethics" },
+  ai_change_leadership:   { label: "Change Leadership",      color: "#AA3377", shortLabel: "Leadership" },
 };
 
 const READINESS_META: Record<string, { label: string; color: string; bg: string; icon: any; description: string }> = {
@@ -53,21 +53,21 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
   },
   at_risk: {
     label: "Developing",
-    color: "#D97706",
+    color: "#F59E0B",
     bg: "#D9770618",
     icon: AlertTriangle,
     description: "You're building your AI capability. Focus on the areas highlighted below to progress.",
   },
   unsafe: {
     label: "Foundational",
-    color: "#DC2626",
+    color: "#EF4444",
     bg: "#DC262618",
     icon: XCircle,
     description: "Your assessment indicates foundational gaps. Your learning plan has been tailored to address these.",
   },
   unknown: {
     label: "Not Yet Assessed",
-    color: "#9CA3AF",
+    color: "#6B7280",
     bg: "#9CA3AF18",
     icon: HelpCircle,
     description: "Complete your first assessment to receive your personalised capability profile.",
@@ -76,21 +76,21 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
 
 // Band from score - never show raw number to participant
 function scoreToBand(score: number | null): { label: string; color: string; icon: any } {
-  if (score === null) return { label: "Not assessed", color: "#9CA3AF", icon: HelpCircle };
+  if (score === null) return { label: "Not assessed", color: "#6B7280", icon: HelpCircle };
   if (score >= 75) return { label: "Strong",         color: "var(--primary)",  icon: ThumbsUp };
-  if (score >= 55) return { label: "Developing",     color: "#D97706",  icon: Minus };
-  return                  { label: "Foundational",   color: "#DC2626",  icon: ThumbsDown };
+  if (score >= 55) return { label: "Developing",     color: "#F59E0B",  icon: Minus };
+  return                  { label: "Foundational",   color: "#EF4444",  icon: ThumbsDown };
 }
 
 // Outcome class → signal for scenario callbacks
 function outcomeToSignal(oc: string | null): { label: string; color: string; icon: any } {
-  if (!oc) return { label: "Answered", color: "#9CA3AF", icon: Minus };
+  if (!oc) return { label: "Answered", color: "#6B7280", icon: Minus };
   if (oc === "strong")           return { label: "Handled well",    color: "var(--primary)", icon: ThumbsUp };
   if (oc === "acceptable")       return { label: "Solid approach",  color: "var(--primary)", icon: ThumbsUp };
-  if (oc === "weak")             return { label: "Needs attention", color: "#D97706", icon: Minus };
-  if (oc === "failure")          return { label: "Area to develop", color: "#DC2626", icon: ThumbsDown };
-  if (oc === "critical_failure") return { label: "Priority gap",    color: "#DC2626", icon: ThumbsDown };
-  return { label: "Answered", color: "#9CA3AF", icon: Minus };
+  if (oc === "weak")             return { label: "Needs attention", color: "#F59E0B", icon: Minus };
+  if (oc === "failure")          return { label: "Area to develop", color: "#EF4444", icon: ThumbsDown };
+  if (oc === "critical_failure") return { label: "Priority gap",    color: "#EF4444", icon: ThumbsDown };
+  return { label: "Answered", color: "#6B7280", icon: Minus };
 }
 
 // --- Sub-components -----------------------------------------------------------
@@ -354,8 +354,8 @@ function CompetenceConfidenceWidget() {
   const QUADRANT_META = {
     competent_confident:     { label: "Competent & Confident",      color: "var(--primary)", bg: "color-mix(in srgb, var(--primary) 8%, transparent)", dot: "bg-primary" },
     competent_underconfident:{ label: "Competent, Underconfident",   color: "#4477AA", bg: "#4477AA15", dot: "bg-blue-500" },
-    incompetent_overconfident:{ label: "Blind Spot",                 color: "#DC2626", bg: "#DC262615", dot: "bg-[#DC2626]/80" },
-    incompetent_unconfident: { label: "Developing",                  color: "#D97706", bg: "#D9770615", dot: "bg-[#D97706]/80" },
+    incompetent_overconfident:{ label: "Blind Spot",                 color: "#EF4444", bg: "rgba(239,68,68,0.08)", dot: "bg-red-500/80" },
+    incompetent_unconfident: { label: "Developing",                  color: "#F59E0B", bg: "rgba(245,158,11,0.08)", dot: "bg-amber-500/80" },
   } as const;
 
   return (
@@ -659,7 +659,7 @@ export default function LearnerDashboard() {
           {[
             { label: "Take Assessment",  path: "/assessment",  icon: ClipboardList, color: "var(--primary)" },
             { label: "My Learning Plan", path: "/learning",    icon: BookOpen,      color: "#4477AA" },
-            { label: "Content Library",  path: "/library",     icon: Library,       color: "#b91c1c" },
+            { label: "Content Library",  path: "/library",     icon: Library,       color: "#F97316" },
           ].map(action => {
             const Icon = action.icon;
             return (

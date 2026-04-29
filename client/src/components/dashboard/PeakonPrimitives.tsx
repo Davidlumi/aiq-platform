@@ -60,7 +60,7 @@ export function HeroScore({
           {displayScore}
         </span>
         {delta != null && delta !== 0 && (
-          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-primary" : "text-[#CC3344]")}>
+          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-primary" : "text-red-400")}>
             {delta > 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             {delta > 0 ? "+" : ""}{(delta / 10).toFixed(1)}
           </span>
@@ -68,7 +68,7 @@ export function HeroScore({
       </div>
       {label && <span className="text-xs text-muted-foreground font-medium">{label}</span>}
       {benchmarkDelta != null && (
-        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-primary" : "text-[#99882A]")}>
+        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-primary" : "text-amber-400")}>
           {benchmarkDelta >= 0 ? "+" : ""}{benchmarkDelta.toFixed(1)} vs benchmark ({formatPeakonScore(benchmark!)})
         </span>
       )}
@@ -126,7 +126,7 @@ export function Sparkline({
         strokeLinejoin="round"
       />
       {showDot && (
-        <circle cx={last.x} cy={last.y} r={3.5} fill={lineColour} stroke="white" strokeWidth={1.5} />
+        <circle cx={last.x} cy={last.y} r={3.5} fill={lineColour} stroke="var(--background)" strokeWidth={1.5} />
       )}
     </svg>
   );
@@ -220,10 +220,10 @@ export function ReadinessDistributionBar({
   className?: string;
 }) {
   const segments: DistributionSegment[] = [
-    { label: "AI Ready", value: aiReady, colour: "#047857" },
-    { label: "Developing", value: developing, colour: "#2563EB" },
-    { label: "Not Yet Ready", value: notYetReady, colour: "#D97706" },
-    { label: "Foundation Gap", value: foundationGap, colour: "#DC2626" },
+    { label: "AI Ready", value: aiReady, colour: "var(--primary)" },
+    { label: "Developing", value: developing, colour: "#90CDF4" },
+    { label: "Not Yet Ready", value: notYetReady, colour: "#F59E0B" },
+    { label: "Foundation Gap", value: foundationGap, colour: "#F97316" },
   ].filter(s => s.value > 0);
 
   return <DistributionBar segments={segments} total={total} className={className} />;
@@ -317,7 +317,7 @@ export function TrendArrow({ delta, suffix = "pts", className }: { delta: number
   }
   const positive = delta > 0;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "text-[#CC3344]", className)}>
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "text-red-400", className)}>
       {positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
       {positive ? "+" : ""}{(delta / 10).toFixed(1)} {suffix}
     </span>
@@ -332,7 +332,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   return (
     <span className={cn(
       "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
-      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#D97706]/8 text-[#99882A] border border-[#D97706]/25"
+      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#D97706]/8 text-amber-400 border border-[#D97706]/25"
     )}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{delta.toFixed(1)} {label}

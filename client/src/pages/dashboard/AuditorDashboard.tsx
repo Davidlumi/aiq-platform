@@ -26,7 +26,7 @@ import {
   ResponsiveContainer, Cell,
 } from "recharts";
 
-const INCIDENT_COLORS = ["#DC2626", "#EE8866", "#b91c1c", "#4477AA", "#047857", "#66CCEE", "#BBBBBB"];
+const INCIDENT_COLORS = ["#EF4444", "#F59E0B", "#F97316", "#4477AA", "var(--primary)", "#66CCEE", "#BBBBBB"];
 
 export default function AuditorDashboard() {
   const { data, isLoading } = trpc.dashboard.auditor.useQuery();
@@ -88,8 +88,8 @@ export default function AuditorDashboard() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: "Audit Events",       value: counts?.auditEvents ?? 0,       icon: Activity,      color: "#4477AA" },
-          { label: "Policy Incidents",   value: counts?.policyIncidents ?? 0,   icon: AlertTriangle, color: "#DC2626" },
-          { label: "Completed Sessions", value: counts?.completedSessions ?? 0, icon: ClipboardList, color: "#047857" },
+          { label: "Policy Incidents",   value: counts?.policyIncidents ?? 0,   icon: AlertTriangle, color: "#EF4444" },
+          { label: "Completed Sessions", value: counts?.completedSessions ?? 0, icon: ClipboardList, color: "var(--primary)" },
         ].map(kpi => {
           const Icon = kpi.icon;
           return (
@@ -150,9 +150,9 @@ export default function AuditorDashboard() {
             <div className="space-y-3">
               {[
                 { label: "Total audit trail entries", value: counts?.auditEvents ?? 0, color: "#4477AA" },
-                { label: "Policy violations triggered", value: counts?.policyIncidents ?? 0, color: "#DC2626" },
-                { label: "Assessment sessions completed", value: counts?.completedSessions ?? 0, color: "#047857" },
-                { label: "Incident types observed", value: Object.keys(incidentsByType).length, color: "#b91c1c" },
+                { label: "Policy violations triggered", value: counts?.policyIncidents ?? 0, color: "#EF4444" },
+                { label: "Assessment sessions completed", value: counts?.completedSessions ?? 0, color: "var(--primary)" },
+                { label: "Incident types observed", value: Object.keys(incidentsByType).length, color: "#F97316" },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">{item.label}</span>

@@ -52,8 +52,8 @@ function LevelDistributionDonut({ distribution, avgScore }: { distribution: Arra
     <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
       {segments.map(seg => { if (seg.arc <= 0) return null; const s = getLevelChipStyle(seg.level); return (<circle key={seg.level} cx={cx} cy={cy} r={r} fill="none" stroke={s.bg} strokeWidth={sw} strokeDasharray={`${seg.arc} ${circ}`} strokeDashoffset={-seg.offset} transform={`rotate(-90 ${cx} ${cy})`} />); })}
-      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "#F9FAFB", fontFamily: "Sora, system-ui, sans-serif" }}>{preciseAvg}</text>
-      <text x={cx} y={cy + 10} textAnchor="middle" style={{ fontSize: 10, fill: "#9CA3AF", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}>FUNCTION AVG</text>
+      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "var(--foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{preciseAvg}</text>
+      <text x={cx} y={cy + 10} textAnchor="middle" style={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}>FUNCTION AVG</text>
     </svg>
   );
 }
@@ -200,11 +200,11 @@ export default function LeaderDashboardV2() {
       {/* Active filter */}
       {roleFamily && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "oklch(18% 0.040 250)", border: "0.5px solid oklch(30% 0.080 250)" }}>
-          <Filter className="w-3.5 h-3.5" style={{ color: "#60A5FA" }} />
-          <span className="text-xs" style={{ color: "#93C5FD" }}>
+          <Filter className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
+          <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
             Filtered to <strong>{ROLE_FAMILY_OPTIONS.find(o => o.value === roleFamily)?.label ?? roleFamily}</strong>
           </span>
-          <button onClick={() => setRoleFamily(undefined)} className="ml-auto text-xs font-medium" style={{ color: "#60A5FA" }}>Clear filter</button>
+          <button onClick={() => setRoleFamily(undefined)} className="ml-auto text-xs font-medium" style={{ color: "var(--primary)" }}>Clear filter</button>
         </div>
       )}
 
@@ -256,7 +256,7 @@ export default function LeaderDashboardV2() {
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{lv}</span>
                     <span className="text-sm font-medium text-foreground">{getLevelLabel(lv)}</span>
                   </div>
-                  <span className="text-sm" style={{ color: (d?.count ?? 0) > 0 ? "#F9FAFB" : "#6B7280" }}>
+                  <span className="text-sm" style={{ color: (d?.count ?? 0) > 0 ? "var(--foreground)" : "var(--muted-foreground)" }}>
                     {(d?.count ?? 0) > 0 ? `${d!.count} · ${d!.pct}%` : "0"}
                   </span>
                 </div>
@@ -314,7 +314,7 @@ export default function LeaderDashboardV2() {
         <div className="bg-card rounded-xl border border-border shadow-md p-6">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "oklch(18% 0.040 250)" }}>
-              <Target className="w-5 h-5" style={{ color: "#60A5FA" }} />
+              <Target className="w-5 h-5" style={{ color: "var(--primary)" }} />
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium uppercase tracking-widest mb-1 text-primary">AI ambition gap</p>

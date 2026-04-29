@@ -1,43 +1,41 @@
 /**
  * AiQ Design System v2.2 - Score & Rating Colour Utilities
  *
- * Capability score scale: single-hue sequential navy (neutral → deep navy)
- * Rating colours: categorical, distinct hues (green / blue / amber / red / grey)
- *
+ * Dark navy theme — all colours readable on #0d1117 background.
  * Scores are 0-100 internally; display as 0.0-10.0 where needed.
  */
 
-// -- Sequential capability score scale (single-hue navy) ----------------------
-// Mirrors Design System v2.2 §2.3
+// -- Sequential capability score scale (dark-navy-compatible) -----------------
+// Higher scores → brighter green; lower scores → muted slate on dark bg
 
 const SCORE_STOPS: Array<{ min: number; bg: string; text: string }> = [
-  { min: 85, bg: "#1F3A5F", text: "#FFFFFF" }, // Very high
-  { min: 75, bg: "#2E4C7A", text: "#FFFFFF" }, // High
-  { min: 65, bg: "#3F5F94", text: "#FFFFFF" }, // Above average
-  { min: 55, bg: "#557DAE", text: "#FFFFFF" }, // Average
-  { min: 40, bg: "#94A3B8", text: "#FFFFFF" }, // Below average
-  { min: 20, bg: "#D1D5DB", text: "#374151" }, // Low
-  { min:  1, bg: "#E5E7EB", text: "#374151" }, // Very low
-  { min:  0, bg: "#F3F4F6", text: "#6B7280" }, // No data / insufficient
+  { min: 85, bg: "#22543D", text: "#68D391" }, // Very high  — deep green bg, bright green text
+  { min: 75, bg: "#276749", text: "#9AE6B4" }, // High       — green bg, light green text
+  { min: 65, bg: "#1E5A4E", text: "#68D391" }, // Above avg  — teal-green bg
+  { min: 55, bg: "#2C4A6E", text: "#90CDF4" }, // Average    — cool blue bg
+  { min: 40, bg: "#2D3748", text: "#A0AEC0" }, // Below avg  — slate bg
+  { min: 20, bg: "#3D2C2C", text: "#FCA5A5" }, // Low        — dark red-tint bg
+  { min:  1, bg: "#3D2C2C", text: "#FCA5A5" }, // Very low   — dark red-tint bg
+  { min:  0, bg: "#1A2332", text: "#4A5568" }, // No data    — card bg, muted text
 ];
 
-/** Convert a 0-100 score to the Design System v2.2 sequential navy bg + text colour */
+/** Convert a 0-100 score to a dark-theme sequential bg + text colour */
 export function scoreToColor(score: number): { bg: string; text: string } {
   const s = Math.max(0, Math.min(100, score));
   for (const stop of SCORE_STOPS) {
     if (s >= stop.min) return { bg: stop.bg, text: stop.text };
   }
-  return { bg: "#F3F4F6", text: "#6B7280" };
+  return { bg: "#1A2332", text: "#4A5568" };
 }
 
-/** Convert a 0-100 score to a lighter tinted background for cards/badges */
+/** Convert a 0-100 score to a semi-transparent tinted background for cards/badges */
 export function scoreToTint(score: number): { bg: string; text: string; border: string } {
   const s = Math.max(0, Math.min(100, score));
-  if (s >= 75) return { bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe" };
-  if (s >= 55) return { bg: "#f0f9ff", text: "#0369a1", border: "#bae6fd" };
-  if (s >= 40) return { bg: "#fafafa", text: "#374151", border: "#e5e7eb" };
-  if (s >= 20) return { bg: "#fffbeb", text: "#b45309", border: "#fde68a" };
-  return { bg: "#fef2f2", text: "#b91c1c", border: "#fecaca" };
+  if (s >= 75) return { bg: "rgba(34,197,94,0.10)",  text: "#68D391", border: "rgba(34,197,94,0.25)" };
+  if (s >= 55) return { bg: "rgba(144,205,244,0.10)", text: "#90CDF4", border: "rgba(144,205,244,0.25)" };
+  if (s >= 40) return { bg: "rgba(160,174,192,0.10)", text: "#A0AEC0", border: "rgba(160,174,192,0.25)" };
+  if (s >= 20) return { bg: "rgba(245,158,11,0.10)",  text: "#F59E0B", border: "rgba(245,158,11,0.25)" };
+  return { bg: "rgba(239,68,68,0.10)", text: "#FCA5A5", border: "rgba(239,68,68,0.25)" };
 }
 
 /** Format a 0-100 score as a decimal (e.g. 5.5, 8.7) */
@@ -55,25 +53,21 @@ export function scoreToReadinessLabel(score: number): string {
   return "Foundation Gap";
 }
 
-// -- Categorical rating colours ------------------------------------------------
-// Design System v2.2 §2.2 - distinct hues, never gradations
-
+// -- Categorical rating colours (dark-navy-safe) --------------------------------
 export const RATING_COLORS = {
-  ai_ready:             { bg: "#047857", text: "#FFFFFF", tintBg: "#f0fdf4", tintText: "#047857", tintBorder: "#bbf7d0" },
-  developing:           { bg: "#2563EB", text: "#FFFFFF", tintBg: "#eff6ff", tintText: "#1d4ed8", tintBorder: "#bfdbfe" },
-  not_yet_ready:        { bg: "#D97706", text: "#FFFFFF", tintBg: "#fffbeb", tintText: "#b45309", tintBorder: "#fde68a" },
-  foundation_gap:       { bg: "#DC2626", text: "#FFFFFF", tintBg: "#fef2f2", tintText: "#b91c1c", tintBorder: "#fecaca" },
-  insufficient_evidence:{ bg: "#6B7280", text: "#FFFFFF", tintBg: "#F9FAFB", tintText: "#6B7280", tintBorder: "#D1D5DB" },
+  ai_ready:             { bg: "#22543D", text: "#68D391", tintBg: "rgba(34,197,94,0.10)",  tintText: "#68D391", tintBorder: "rgba(34,197,94,0.25)" },
+  developing:           { bg: "#2C4A6E", text: "#90CDF4", tintBg: "rgba(144,205,244,0.10)",tintText: "#90CDF4", tintBorder: "rgba(144,205,244,0.25)" },
+  not_yet_ready:        { bg: "#7C4A00", text: "#F59E0B", tintBg: "rgba(245,158,11,0.10)", tintText: "#F59E0B", tintBorder: "rgba(245,158,11,0.25)" },
+  foundation_gap:       { bg: "#7C2D12", text: "#F97316", tintBg: "rgba(249,115,22,0.10)", tintText: "#F97316", tintBorder: "rgba(249,115,22,0.25)" },
+  insufficient_evidence:{ bg: "#2D3748", text: "#9CA3AF", tintBg: "rgba(107,114,128,0.10)",tintText: "#9CA3AF", tintBorder: "rgba(107,114,128,0.25)" },
 } as const;
 
-// -- Domain identification colours ---------------------------------------------
-// Design System v2.2 §6.3 - fixed per domain, NOT used for ratings
-
+// -- Domain identification colours (Paul Tol palette — dark-bg readable) ------
 export const DOMAIN_ID_COLORS = {
-  ai_interaction:        "#0EA5E9", // sky blue
-  ai_output_evaluation:  "#8B5CF6", // violet
-  ai_workflow_design:    "#10B981", // emerald
-  workforce_ai_readiness:"#F59E0B", // amber
-  ai_ethics_trust:       "#EC4899", // pink
-  ai_change_leadership:  "#EF4444", // red
+  ai_interaction:        "#4477AA", // Paul Tol blue
+  ai_output_evaluation:  "#EE6677", // Paul Tol rose
+  ai_workflow_design:    "#228833", // Paul Tol green
+  workforce_ai_readiness:"#CCBB44", // Paul Tol yellow
+  ai_ethics_trust:       "#AA3377", // Paul Tol purple
+  ai_change_leadership:  "#66CCEE", // Paul Tol cyan
 } as const;

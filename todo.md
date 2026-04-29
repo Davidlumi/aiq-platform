@@ -1814,6 +1814,19 @@
 - [x] WF-C3: Redesign CPO Strategic Dashboard (AIStrategyPage) to match C3 wireframe — strategic finding hero card, capability vs roadmap bars with target markers, trajectory chart (actual + projected), board options
 - [x] WF-NAV: Add Team Progress and Conversation Prompts to AppShell sidebar navigation for manager role
 
+## Chart & Visualization Dark Theme Audit (Apr 29 2026)
+
+- [x] VIZ-01: Recharts RadarChart — grid lines, polar angles, tick labels, tooltip background
+- [x] VIZ-02: Recharts LineChart / AreaChart — grid lines, axes, tooltip, reference lines
+- [x] VIZ-03: Recharts BarChart — grid lines, axes, tooltip, bar fills
+- [x] VIZ-04: PeakonHeatmap — cell colours, header row, sticky column, tooltip
+- [x] VIZ-05: SVG donut/ring charts (level rings, score rings) — track colour, text fills
+- [x] VIZ-06: SVG sparklines / trajectory charts — line colour, dot colour, axis labels
+- [x] VIZ-07: Score progress bars (capability bars, domain bars) — track colour, fill colour
+- [x] VIZ-08: Benchmark chart (AssessmentResultsPage) — bar fills, axis, tooltip
+- [x] VIZ-09: Longitudinal chart (LongitudinalChart) — line colours, reference line, dots
+- [x] VIZ-10: ScoreProgressChart — line, dot, tooltip colours
+
 ## Brand Retheme — Dark Navy + Green (Apr 29 2026)
 
 - [x] Rewrite index.css CSS variables: dark navy bg (#0d1117), green primary (#22c55e), dark card surfaces (#1a2332), white foreground

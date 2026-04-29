@@ -391,7 +391,7 @@ export default function ManagerDashboardV2() {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-0.5 shrink-0"
                   style={{
                     background: prompt.priority === "high" ? "oklch(18% 0.040 68)" : "oklch(18% 0.025 240)",
-                    color: prompt.priority === "high" ? "#FCD34D" : "#9CA3AF"
+                    color: prompt.priority === "high" ? "#F59E0B" : "var(--muted-foreground)"
                   }}>
                   {prompt.priority}
                 </span>
@@ -423,16 +423,16 @@ export default function ManagerDashboardV2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl" style={{ background: "oklch(18% 0.040 142)", border: "0.5px solid oklch(30% 0.100 142)" }}>
-              <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4" style={{ color: "#4ADE80" }} /><span className="text-xs font-semibold" style={{ color: "#4ADE80" }}>On track</span></div>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "#4ADE80" }}>{devOverview.statusCounts.onTrack}</span>
+              <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4" style={{ color: "var(--primary)" }} /><span className="text-xs font-semibold" style={{ color: "var(--primary)" }}>On track</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "var(--primary)" }}>{devOverview.statusCounts.onTrack}</span>
             </div>
             <div className="p-4 rounded-xl" style={{ background: "oklch(18% 0.040 68)", border: "0.5px solid oklch(30% 0.090 68)" }}>
-              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#FCD34D" }} /><span className="text-xs font-semibold" style={{ color: "#FCD34D" }}>Slipping</span></div>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "#FCD34D" }}>{devOverview.statusCounts.slipping}</span>
+              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#F59E0B" }} /><span className="text-xs font-semibold" style={{ color: "#F59E0B" }}>Slipping</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "#F59E0B" }}>{devOverview.statusCounts.slipping}</span>
             </div>
             <div className="p-4 rounded-xl" style={{ background: "oklch(18% 0.040 27)", border: "0.5px solid oklch(30% 0.090 27)" }}>
-              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#F87171" }} /><span className="text-xs font-semibold" style={{ color: "#F87171" }}>Stalled</span></div>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "#F87171" }}>{devOverview.statusCounts.stalled}</span>
+              <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4" style={{ color: "#FCA5A5" }} /><span className="text-xs font-semibold" style={{ color: "#FCA5A5" }}>Stalled</span></div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "#FCA5A5" }}>{devOverview.statusCounts.stalled}</span>
             </div>
           </div>
           {devOverview.aggregateCompletionRate > 0 && (

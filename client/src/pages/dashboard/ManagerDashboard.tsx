@@ -37,10 +37,10 @@ import {
 } from "recharts";
 
 const READINESS_META: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  safe:    { label: "Safe",    color: "#047857", bg: "#04785715", icon: CheckCircle },
-  at_risk: { label: "At Risk", color: "#EE8866", bg: "#EE886615", icon: AlertTriangle },
-  unsafe:  { label: "Unsafe",  color: "#DC2626", bg: "#DC262615", icon: XCircle },
-  unknown: { label: "Unknown", color: "#9CA3AF", bg: "#9CA3AF15", icon: HelpCircle },
+  safe:    { label: "Safe",    color: "var(--primary)", bg: "#04785715", icon: CheckCircle },
+  at_risk: { label: "At Risk", color: "#F59E0B", bg: "#F59E0B15", icon: AlertTriangle },
+  unsafe:  { label: "Unsafe",  color: "#EF4444", bg: "rgba(239,68,68,0.08)", icon: XCircle },
+  unknown: { label: "Unknown", color: "#6B7280", bg: "rgba(107,114,128,0.08)", icon: HelpCircle },
 };
 
 const CAP_COLORS: Record<string, string> = {
@@ -55,11 +55,11 @@ const CAP_LABELS: Record<string, string> = {
 
 // Delegation tier logic - deterministic, not ranked
 const DELEGATION_TIERS = [
-  { key: "autonomous",  label: "Tier 1 - Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#047857", bg: "#04785710", border: "#04785730", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
+  { key: "autonomous",  label: "Tier 1 - Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "var(--primary)", bg: "#04785710", border: "#04785730", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
   { key: "supervised",  label: "Tier 2 - Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
-  { key: "restricted",  label: "Tier 3 - Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
-  { key: "paused",      label: "Tier 4 - Paused",        desc: "AI use should be paused pending capability development",     color: "#DC2626", bg: "#DC262610", border: "#DC262630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
-  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data - tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
+  { key: "restricted",  label: "Tier 3 - Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#F59E0B", bg: "#F59E0B10", border: "#F59E0B30", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
+  { key: "paused",      label: "Tier 4 - Paused",        desc: "AI use should be paused pending capability development",     color: "#EF4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.19)", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
+  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data - tier cannot be assigned",              color: "#6B7280", bg: "rgba(107,114,128,0.06)", border: "rgba(107,114,128,0.19)", test: (m: any) => !m.latestReadiness },
 ];
 
 function getDelegationTier(m: any) {
@@ -147,10 +147,10 @@ function ReadinessBadge({ readiness }: { readiness: string | null }) {
 function DistributionRing({ distribution }: { distribution: { safe: number; atRisk: number; unsafe: number; unknown: number; total: number } }) {
   const { safe, atRisk, unsafe, unknown, total } = distribution;
   const segments = [
-    { value: safe,    color: "#047857", label: "Safe" },
-    { value: atRisk,  color: "#EE8866", label: "At Risk" },
-    { value: unsafe,  color: "#DC2626", label: "Unsafe" },
-    { value: unknown, color: "#9CA3AF", label: "Unknown" },
+    { value: safe,    color: "var(--primary)", label: "Safe" },
+    { value: atRisk,  color: "#F59E0B", label: "At Risk" },
+    { value: unsafe,  color: "#EF4444", label: "Unsafe" },
+    { value: unknown, color: "#6B7280", label: "Unknown" },
   ];
   const r = 44;
   const circ = 2 * Math.PI * r;
@@ -200,7 +200,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
   const last = history[history.length - 1]?.overallScore;
   const delta = first != null && last != null ? last - first : null;
   const trend = delta == null ? "unknown" : delta > 3 ? "improving" : delta < -3 ? "declining" : "stable";
-  const trendColor = trend === "improving" ? "#047857" : trend === "declining" ? "#DC2626" : "#9CA3AF";
+  const trendColor = trend === "improving" ? "var(--primary)" : trend === "declining" ? "#EF4444" : "#6B7280";
   const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
   const capShape = member.capabilityShape as Record<string, number> | null;
   const revalDays = member.revalidationDue
@@ -229,13 +229,13 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
           <div className="flex items-center gap-3 flex-wrap">
             <ReadinessBadge readiness={member.latestReadiness} />
             {member.conversationDue && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EE8866]/10 text-[#EE8866] border border-[#EE8866]/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30">
                 <MessageSquare className="w-3 h-3" />Conversation due
               </span>
             )}
             {revalDays != null && revalDays <= 14 && (
               <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
-                revalDays <= 0 ? "bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30" : "bg-[#EE8866]/10 text-[#EE8866] border border-[#EE8866]/30")}>
+                revalDays <= 0 ? "bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30" : "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30")}>
                 <Calendar className="w-3 h-3" />
                 {revalDays <= 0 ? "Revalidation overdue" : `Revalidation in ${revalDays}d`}
               </span>
@@ -343,8 +343,8 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                 </div>
                 <div className="flex items-end gap-1 h-14">
                   {history.map((h, i) => {
-                    const RSTATE_COLORS: Record<string, string> = { safe: "#047857", at_risk: "#EE8866", unsafe: "#DC2626" };
-                    const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#9CA3AF";
+                    const RSTATE_COLORS: Record<string, string> = { safe: "var(--primary)", at_risk: "#F59E0B", unsafe: "#EF4444" };
+                    const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#6B7280";
                     const barH = Math.max(4, Math.round((h.overallScore / 100) * 56));
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${Math.round(h.overallScore)} - ${h.readiness ?? "unknown"}`}>
@@ -401,7 +401,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                   <div className="rounded-lg border border-border p-3">
                     <p className="text-xs text-muted-foreground mb-1">Risk Band</p>
                     <p className={cn("text-sm font-bold capitalize",
-                      member.risk.band === "high" ? "text-[#DC2626]" : member.risk.band === "medium" ? "text-[#EE8866]" : "text-[#047857]")}>
+                      member.risk.band === "high" ? "text-[#DC2626]" : member.risk.band === "medium" ? "text-[#F59E0B]" : "text-[#047857]")}>
                       {member.risk.band}
                     </p>
                   </div>
@@ -410,7 +410,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                   <div className="rounded-lg border border-border p-3">
                     <p className="text-xs text-muted-foreground mb-1">Credibility</p>
                     <p className={cn("text-sm font-bold capitalize",
-                      member.credibility.band === "high" ? "text-[#047857]" : member.credibility.band === "medium" ? "text-[#EE8866]" : "text-[#DC2626]")}>
+                      member.credibility.band === "high" ? "text-[#047857]" : member.credibility.band === "medium" ? "text-[#F59E0B]" : "text-[#DC2626]")}>
                       {member.credibility.band}
                     </p>
                   </div>
@@ -503,8 +503,8 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
   }
 
   const priorityMeta = {
-    high:   { label: "Urgent",   color: "#DC2626", bg: "#DC262610", border: "#DC262630" },
-    medium: { label: "This week", color: "#EE8866", bg: "#EE886610", border: "#EE886630" },
+    high:   { label: "Urgent",   color: "#EF4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.19)" },
+    medium: { label: "This week", color: "#F59E0B", bg: "#F59E0B10", border: "#F59E0B30" },
     low:    { label: "When ready", color: "#4477AA", bg: "#4477AA10", border: "#4477AA30" },
   };
 
@@ -693,9 +693,9 @@ export default function ManagerDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Team Members",        value: total,                                                      icon: Users,         color: "#4477AA" },
-            { label: "AI-Ready",            value: safe,                                                       icon: CheckCircle,   color: "#047857" },
+            { label: "AI-Ready",            value: safe,                                                       icon: CheckCircle,   color: "var(--primary)" },
             { label: "Need Support",        value: atRisk,                                                     icon: AlertTriangle, color: "#DC2626" },
-            { label: "Conversations Due",   value: conversationDueMembers.length,                              icon: MessageSquare, color: "#EE8866" },
+            { label: "Conversations Due",   value: conversationDueMembers.length,                              icon: MessageSquare, color: "#F59E0B" },
           ].map(kpi => {
             const Icon = kpi.icon;
             return (
@@ -781,7 +781,7 @@ export default function ManagerDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[#EE8866]" />Conversations Due
+                <MessageSquare className="w-4 h-4 text-[#F59E0B]" />Conversations Due
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">Members with overdue revalidation or high risk band - a conversation is recommended</p>
             </CardHeader>
@@ -817,7 +817,7 @@ export default function ManagerDashboard() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#EE8866]" />Revalidation Due (14 days)
+                <Calendar className="w-4 h-4 text-[#F59E0B]" />Revalidation Due (14 days)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -838,7 +838,7 @@ export default function ManagerDashboard() {
                           <p className="text-xs text-muted-foreground">{m.jobFunction ?? m.email}</p>
                         </div>
                         <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full",
-                          days <= 3 ? "bg-[#DC2626]/10 text-[#DC2626]" : "bg-[#EE8866]/10 text-[#EE8866]")}>
+                          days <= 3 ? "bg-[#DC2626]/10 text-[#DC2626]" : "bg-[#F59E0B]/10 text-[#F59E0B]")}>
                           {days}d
                         </span>
                       </button>
@@ -899,7 +899,7 @@ export default function ManagerDashboard() {
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#EE8866]" />Misuse Friction Indicators
+              <Zap className="w-4 h-4 text-[#F59E0B]" />Misuse Friction Indicators
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Patterns that may indicate AI misuse risk or over-reliance</p>
           </CardHeader>
@@ -912,7 +912,7 @@ export default function ManagerDashboard() {
                   label: "High risk + safe classification",
                   desc: "High risk score despite safe readiness - may indicate gaming or inconsistent behaviour",
                   members: team.filter(m => (m as any).risk?.band === "high" && m.latestReadiness === "safe"),
-                  color: "#EE8866",
+                  color: "#F59E0B",
                 },
                 {
                   label: "Low credibility + safe classification",
@@ -924,7 +924,7 @@ export default function ManagerDashboard() {
                   label: "Overdue revalidation",
                   desc: "Assessment is overdue - capability profile may no longer reflect current practice",
                   members: team.filter(m => m.revalidationDue && new Date(m.revalidationDue) < new Date()),
-                  color: "#99882A",
+                  color: "#F59E0B",
                 },
               ].filter(i => i.members.length > 0);
               if (indicators.length === 0) return (
@@ -1001,7 +1001,7 @@ export default function ManagerDashboard() {
                               <p className="text-xs text-muted-foreground">{m.email}</p>
                             </div>
                             {hasConversation && (
-                              <span title="Conversation due" className="w-2 h-2 rounded-full bg-[#EE8866] flex-shrink-0" />
+                              <span title="Conversation due" className="w-2 h-2 rounded-full bg-[#F59E0B] flex-shrink-0" />
                             )}
                           </div>
                         </td>
@@ -1093,7 +1093,7 @@ function LearningOverviewSection() {
                 <div className="text-xs text-muted-foreground">Active streaks</div>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-lg font-bold text-[#EE8866]">{noActivity}</div>
+                <div className="text-lg font-bold text-[#F59E0B]">{noActivity}</div>
                 <div className="text-xs text-muted-foreground">No activity</div>
               </div>
             </div>

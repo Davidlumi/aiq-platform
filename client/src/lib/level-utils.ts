@@ -5,20 +5,20 @@
  * Score is 0-100 (raw assessment score).
  * Precise level = score / 10 (e.g. score 26 → Level 2.6).
  *
- * Colour palette (from wireframe shared.css):
- *   Level 1: #E5E7EB bg / #4B5563 text
- *   Level 2: #94A3B8 bg / #FFFFFF text
- *   Level 3: #557DAE bg / #FFFFFF text
- *   Level 4: #2E4C7A bg / #FFFFFF text
- *   Level 5: #1F3A5F bg / #FFFFFF text
+ * Colour palette (dark navy theme — readable on #0d1117 background):
+ *   Level 1: #2D3748 bg / #A0AEC0 text  (muted slate — emerging)
+ *   Level 2: #2C4A6E bg / #90CDF4 text  (cool blue — developing)
+ *   Level 3: #1E5A4E bg / #68D391 text  (teal-green — capable)
+ *   Level 4: #276749 bg / #9AE6B4 text  (green — strong)
+ *   Level 5: #22543D bg / #68D391 text  (deep green — AI Ready)
  */
 
 export const LEVEL_COLOURS: Record<number, { bg: string; text: string }> = {
-  1: { bg: "#E5E7EB", text: "#4B5563" },
-  2: { bg: "#94A3B8", text: "#FFFFFF" },
-  3: { bg: "#557DAE", text: "#FFFFFF" },
-  4: { bg: "#2E4C7A", text: "#FFFFFF" },
-  5: { bg: "#1F3A5F", text: "#FFFFFF" },
+  1: { bg: "#2D3748", text: "#A0AEC0" },  // Emerging — muted slate
+  2: { bg: "#2C4A6E", text: "#90CDF4" },  // Developing — cool blue
+  3: { bg: "#1E5A4E", text: "#68D391" },  // Capable — teal-green
+  4: { bg: "#276749", text: "#9AE6B4" },  // Strong — green
+  5: { bg: "#22543D", text: "#68D391" },  // AI Ready — deep green
 };
 
 export const LEVEL_LABELS: Record<number, string> = {
@@ -59,13 +59,13 @@ export function getLevelLabel(level: number): string {
  */
 export function getLevelBarColour(preciseLevel: number): string {
   const level = Math.min(5, Math.max(1, Math.ceil(preciseLevel)));
-  return LEVEL_COLOURS[level]?.bg ?? "#94A3B8";
+  return LEVEL_COLOURS[level]?.bg ?? "#2C4A6E";
 }
 
 /**
  * Get text colour for a heatmap cell based on level.
- * Levels 1 use dark text; levels 2-5 use white.
+ * All levels use their palette text colour on dark backgrounds.
  */
 export function getLevelCellTextColour(level: number): string {
-  return level <= 1 ? "#0F2547" : "#FFFFFF";
+  return LEVEL_COLOURS[level]?.text ?? "#FFFFFF";
 }

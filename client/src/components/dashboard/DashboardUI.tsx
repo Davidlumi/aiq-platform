@@ -13,11 +13,11 @@ import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } f
 // --- Rating Badge ------------------------------------------------------------
 
 const RATING_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  ai_ready:              { bg: "#f0fdf4", text: "#047857", border: "#bbf7d0", dot: "#047857" },
-  developing:            { bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe", dot: "#2563EB" },
-  not_yet_ready:         { bg: "#fffbeb", text: "#b45309", border: "#fde68a", dot: "#D97706" },
-  foundation_gap:        { bg: "#fef2f2", text: "#b91c1c", border: "#fecaca", dot: "#DC2626" },
-  insufficient_evidence: { bg: "#F9FAFB", text: "#6B7280", border: "#D1D5DB", dot: "#9CA3AF" },
+  ai_ready:              { bg: "rgba(34,197,94,0.10)",  text: "#68D391", border: "rgba(34,197,94,0.25)",   dot: "#68D391" },
+  developing:            { bg: "rgba(144,205,244,0.10)",text: "#90CDF4", border: "rgba(144,205,244,0.25)", dot: "#90CDF4" },
+  not_yet_ready:         { bg: "rgba(245,158,11,0.10)", text: "#F59E0B", border: "rgba(245,158,11,0.25)",  dot: "#F59E0B" },
+  foundation_gap:        { bg: "rgba(249,115,22,0.10)", text: "#F97316", border: "rgba(249,115,22,0.25)",  dot: "#F97316" },
+  insufficient_evidence: { bg: "rgba(107,114,128,0.10)",text: "#9CA3AF", border: "rgba(107,114,128,0.25)", dot: "#9CA3AF" },
 };
 
 const RATING_DISPLAY: Record<string, string> = {
@@ -162,8 +162,8 @@ export function ScoreDisplay({ score, size = "lg", className, peakon = false }: 
 
 const CONFIDENCE_STYLES: Record<string, { colour: string; label: string }> = {
   high: { colour: "var(--primary)", label: "High confidence" },
-  moderate: { colour: "#D97706", label: "Moderate confidence" },
-  low: { colour: "#94A3B8", label: "Low confidence" },
+  moderate: { colour: "#F59E0B", label: "Moderate confidence" },
+  low: { colour: "#9CA3AF", label: "Low confidence" },
 };
 
 export function ConfidenceIndicator({ band }: { band: "high" | "moderate" | "low" }) {
@@ -180,7 +180,7 @@ export function ConfidenceIndicator({ band }: { band: "high" | "moderate" | "low
                 style={{
                   backgroundColor: i <= (band === "high" ? 2 : band === "moderate" ? 1 : 0)
                     ? style.colour
-                    : "#E2E8F0",
+                    : "var(--muted)",
                 }}
               />
             ))}
@@ -205,7 +205,7 @@ export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null
   if (value === null || value === 0) return <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>;
   const positive = value > 0;
   return (
-    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "text-[#CC3344]")}>
+    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "text-red-400")}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{value} {suffix}
     </span>
@@ -280,7 +280,7 @@ export function HeatmapCell({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={cn("rounded-md flex flex-col items-center justify-center text-muted-foreground border border-dashed border-border", size === "sm" ? "w-12 h-8" : "w-14 h-10")}
-            style={{ backgroundColor: "#F8FAFC" }}>
+            style={{ backgroundColor: "var(--muted)" }}>
             <span className="text-xs">-</span>
           </div>
         </TooltipTrigger>
@@ -310,7 +310,7 @@ export function HeatmapCell({
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
         {headcount != null && <p>{headcount} assessed</p>}
-        {gap != null && gap > 0 && <p className="text-[#CC3344]">{gap} pts below target</p>}
+        {gap != null && gap > 0 && <p className="text-red-400">{gap} pts below target</p>}
         {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
         <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
       </TooltipContent>
@@ -322,11 +322,11 @@ export function HeatmapCell({
 
 const DOMAIN_COLOUR_MAP: Record<string, string> = {
   ai_interaction: "#4477AA",
-  ai_output_evaluation: "#b91c1c",
-  ai_workflow_design: "var(--primary)",
-  workforce_ai_readiness: "#D97706",
-  ai_ethics_trust: "#DC2626",
-  ai_change_leadership: "#06B6D4",
+  ai_output_evaluation:  "#EE6677",   // Paul Tol rose
+  ai_workflow_design:    "#228833",   // Paul Tol green
+  workforce_ai_readiness:"#CCBB44",   // Paul Tol yellow
+  ai_ethics_trust:       "#AA3377",   // Paul Tol purple
+  ai_change_leadership:  "#66CCEE",   // Paul Tol cyan
 };
 
 export function DomainDot({ domain, size = 8 }: { domain: string; size?: number }) {
@@ -355,7 +355,7 @@ export function CapabilityBar({
   const fillColour = colour || scoreToColor(score).bg;
   return (
     <div className="relative w-full" style={{ height }}>
-      <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "#E2E8F0" }} />
+      <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "var(--muted)" }} />
       <div
         className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
         style={{ width: `${Math.min(score, 100)}%`, backgroundColor: fillColour }}
@@ -411,10 +411,10 @@ export function PeakonProgressBar({
 
 export function PriorityBadge({ priority }: { priority: "critical" | "high" | "medium" | "low" }) {
   const styles = {
-    critical: { bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
-    high: { bg: "#FFF7ED", text: "#9A3412", border: "#FED7AA" },
-    medium: { bg: "#FFFBEB", text: "#92400E", border: "#FDE68A" },
-    low: { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+    critical: { bg: "rgba(239,68,68,0.10)", text: "#FCA5A5", border: "rgba(239,68,68,0.25)" },
+    high: { bg: "rgba(249,115,22,0.10)", text: "#F97316", border: "rgba(249,115,22,0.25)" },
+    medium: { bg: "rgba(245,158,11,0.10)", text: "#F59E0B", border: "rgba(245,158,11,0.25)" },
+    low: { bg: "rgba(34,197,94,0.10)", text: "#68D391", border: "rgba(34,197,94,0.25)" },
   };
   const s = styles[priority];
   return (

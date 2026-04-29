@@ -39,10 +39,10 @@ import { cn } from "@/lib/utils";
 
 // --- Design tokens ------------------------------------------------------------
 const GREEN  = "var(--primary)";
-const AMBER  = "#D97706";
-const RED    = "#DC2626";
+const AMBER  = "#F59E0B";
+const RED    = "#EF4444";
 const BLUE   = "#4477AA";
-const PURPLE = "#b91c1c";
+const PURPLE = "#F97316";
 const CYAN   = "#06B6D4";
 
 const CAP_COLORS: Record<string, string> = {
@@ -67,7 +67,7 @@ function readinessColor(r: string | null) {
   if (r === "safe")    return GREEN;
   if (r === "at_risk") return AMBER;
   if (r === "unsafe")  return RED;
-  return "#9CA3AF";
+  return "#6B7280";
 }
 function readinessLabel(r: string | null) {
   if (r === "safe")    return "AI Ready";
