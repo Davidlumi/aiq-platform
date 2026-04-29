@@ -1816,8 +1816,8 @@
 
 ## Brand Retheme — Dark Navy + Green (Apr 29 2026)
 
-- [ ] Rewrite index.css CSS variables: dark navy bg (#0d1117), green primary (#22c55e), dark card surfaces (#1a2332), white foreground
-- [ ] Update ThemeProvider to force dark theme matching new CSS variables
-- [ ] Update AppShell sidebar: dark navy bg, green active state, white text
-- [ ] Update AppShell header: dark navy, green accent
-- [ ] Verify assessment page, dashboard pages, and learning plan render correctly with new theme
+- [x] Rewrite index.css CSS variables: dark navy bg (#0d1117), green primary (#22c55e), dark card surfaces (#1a2332), white foreground
+- [x] Update ThemeProvider to force dark theme matching new CSS variables
+- [x] Update AppShell sidebar: dark navy bg, green active state, white text
+- [x] Update AppShell header: dark navy, green accent
+- [x] Verify assessment page, dashboard pages, and learning plan render correctly with new theme

@@ -272,7 +272,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
                           active
                             ? "bg-primary/14 text-primary font-semibold border-l-primary"
-                            : "text-sidebar-foreground/60 hover:bg-white/5 hover:text-sidebar-foreground/85 border-l-transparent",
+                            : "text-sidebar-foreground/60 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85 border-l-transparent",
                         )}
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
@@ -332,7 +332,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/60 hover:bg-white/5",
+                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/60 hover:bg-sidebar-foreground/5",
                 collapsed && "justify-center"
               )}
               aria-label="Account menu"
