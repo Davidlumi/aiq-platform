@@ -616,6 +616,14 @@ export default function AssessmentResultsPage() {
     },
   });
 
+   // Hooks hoisted before early returns to satisfy Rules of Hooks
+  const { data: allSessions } = trpc.assessment.history.useQuery({});
+  const startMutation2 = trpc.assessment.startSession.useMutation({
+    onSuccess: result => navigate(`/assessment/${result.sessionId}`),
+    onError: err => toast.error(err.message),
+  });
+  const { data: defaultBlueprint2 } = trpc.assessment.defaultBlueprint.useQuery();
+  const [showProfiling2, setShowProfiling2] = useState(false);
   // P2-AE-3: Trigger staged reveal when data loads (only once per page visit)
   useEffect(() => {
     if (data?.score && !hasRevealed) {
@@ -626,7 +634,6 @@ export default function AssessmentResultsPage() {
       });
     }
   }, [data?.score, hasRevealed]);
-
   if (isLoading) {
     return <AssessmentResultsSkeleton />;
   }
@@ -728,16 +735,7 @@ export default function AssessmentResultsPage() {
         hour: "2-digit",
         minute: "2-digit",
       })
-    : "Unknown";
-
-  const { data: allSessions } = trpc.assessment.history.useQuery({});
-  const startMutation2 = trpc.assessment.startSession.useMutation({
-    onSuccess: result => navigate(`/assessment/${result.sessionId}`),
-    onError: err => toast.error(err.message),
-  });
-  const { data: defaultBlueprint2 } = trpc.assessment.defaultBlueprint.useQuery();
-  const [showProfiling2, setShowProfiling2] = useState(false);
-
+     : "Unknown";
   return (
     <div className="flex h-full min-h-0">
       {/* ── History sidebar ── */}
