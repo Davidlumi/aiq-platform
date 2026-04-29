@@ -1866,3 +1866,14 @@
 - [x] CARD-02: Update aiq-card-elevated utility class with inner shadow
 - [x] CARD-03: Update aiq-main-bg card surfaces in dashboard pages with inner shadow
 - [x] CARD-04: Visual verification — cards pop against indigo background
+
+## Assessment UX Rebuild — Clean & Simple (Apr 29 2026)
+
+- [x] ASSESS-01: Assessment nav link redirects to latest completed assessment results (or to start if none)
+- [x] ASSESS-02: Rewrite AssessmentResultsPage — remove all tabs, history sidebar, right panel clutter
+- [x] ASSESS-03: AssessmentResultsPage shows: overall score chip + readiness state, full-width spider chart
+- [x] ASSESS-04: AssessmentResultsPage shows: domain cards grid below spider chart (one card per domain)
+- [x] ASSESS-05: Domain card shows: domain name, icon, score, level badge, short insight
+- [ ] ASSESS-06: Clicking domain card opens a slide-out sheet with domain detail + development link
+- [ ] ASSESS-07: Domain sheet shows: score breakdown, what this means, key strengths/gaps, link to learning plan filtered to domain
+- [ ] ASSESS-08: If no completed assessment, show a clean "Start your assessment" CTA page

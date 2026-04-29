@@ -10,7 +10,7 @@
  * results/session views via AssessmentHistoryPanel (exported for use there).
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -254,6 +254,15 @@ export default function AssessmentPage() {
   const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
   const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
   const onboardingMutation = trpc.auth.completeOnboarding.useMutation();
+
+  // Auto-redirect to latest completed assessment results
+  useEffect(() => {
+    if (!sessions) return;
+    const completed = sessions.find((s: any) => s.state === "completed");
+    if (completed) {
+      navigate(`/assessment/${completed.id}/results`, { replace: true });
+    }
+  }, [sessions, navigate]);
 
   const startMutation = trpc.assessment.startSession.useMutation({
     onSuccess: result => {

@@ -1,2360 +1,520 @@
-/*
- * Assessment Results Page - AiQ Enterprise Platform
+/**
+ * AssessmentResultsPage — Clean & Simple
  *
- * UX improvements applied:
- * UX-1: Deep Dive tab no longer duplicates Summary content - shows only longitudinal chart,
- *        LLM narrative, and expanded signal breakdown with per-capability grouping.
- * UX-2: Development tab leads with LLM narrative (strengths/gaps/priorities) instead of
- *        generic static boilerplate.
- * UX-3: Score Summary card shows actual question count with early-completion label instead
- *        of hard-coded "/50".
- * UX-10: LongitudinalChart dots are coloured by readiness state; role-threshold reference
- *         line added at y=75 (safe threshold).
+ * Layout:
+ *   1. Header: overall score ring + readiness state + completed date
+ *   2. Spider chart (full-width card)
+ *   3. Domain cards grid (2-col on sm, 3-col on lg)
+ *   4. Clicking a domain card → slide-out Sheet with detail + dev link
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { AssessmentHistoryPanel } from "./AssessmentPage";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { DownloadPdfButton } from "@/components/DownloadPdfButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AssessmentResultsSkeleton } from "@/components/ui/loading";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import {
-  CheckCircle2,
-  AlertTriangle,
-  ShieldAlert,
-  HelpCircle,
-  Award,
-  Shield,
-  ArrowLeft,
-  BookOpen,
-  LayoutDashboard,
-  RotateCcw,
-  TrendingUp,
-  TrendingDown,
-  Info,
-  Brain,
-  Target,
-  FileText,
-  Lightbulb,
-  Sparkles,
-  Zap,
-  ChevronDown,
-  ChevronUp,
-  Flag,
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
-  BarChart2,
-  Users,
-  Globe,
-  Link2,
-  ArrowRight,
-  GraduationCap,
-  ListChecks,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { ExplanationDrawer, ScoreBreakdown } from "@/components/ExplanationDrawer";
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  ResponsiveContainer,
-  Tooltip,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ReferenceLine,
-  Dot,
-  BarChart,
-  Bar,
-  Legend,
-  Cell,
+  RadarChart, PolarGrid, PolarAngleAxis, Radar,
+  ResponsiveContainer, Tooltip,
 } from "recharts";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CheckCircle2, AlertTriangle, ShieldAlert, HelpCircle,
+  ChevronRight, BookOpen, ArrowLeft, Target, Brain,
+  Shield, Workflow, Database, Gavel, TrendingUp, TrendingDown,
+} from "lucide-react";
+import { scoreToColor } from "@/lib/peakon-colors";
 
-// --- Readiness / Credibility / Risk config ------------------------------------
+// ── Domain icons ───────────────────────────────────────────────────────────────
 
-const READINESS_CONFIG = {
-  safe: {
-    label: "AI-Ready",
-    description: "Demonstrates consistent, appropriate application of AI tools with strong awareness of risks and limitations.",
-    color: "text-primary",
-    bg: "border-primary/25 bg-primary/8",
-    barColor: "var(--primary)",
-    icon: CheckCircle2,
-    dotColor: "var(--primary)",
-  },
-  at_risk: {
-    label: "Developing",
-    description: "Emerging AI capability identified with areas for further development. Supervised practice and structured learning is recommended.",
-    color: "text-amber-400",
-    bg: "border-amber-500/25 bg-amber-500/8",
-    barColor: "#F59E0B",
-    icon: AlertTriangle,
-    dotColor: "#F59E0B",
-  },
-  unsafe: {
-    label: "Not Yet Ready",
-    description: "Significant AI capability gaps identified. Structured development and supervised AI use is recommended before independent deployment.",
-    color: "text-red-400",
-    bg: "border-red-500/25 bg-red-500/8",
-    barColor: "#EF4444",
-    icon: ShieldAlert,
-    dotColor: "#EF4444",
-  },
-  unknown: {
-    label: "Insufficient Data",
-    description: "Not enough evidence to classify readiness. Complete more assessment interactions.",
-    color: "text-muted-foreground",
-    bg: "border-border bg-muted/50",
-    barColor: "#6B7280",
-    icon: HelpCircle,
-    dotColor: "#6B7280",
-  },
-  foundation_gap: {
-    label: "Foundation Gap",
-    description: "Core AI interaction and output evaluation skills need development before strategic AI capabilities can be reliably assessed.",
-    color: "text-orange-400",
-    bg: "border-orange-500/25 bg-orange-500/8",
-    barColor: "#F97316",
-    icon: ShieldAlert,
-    dotColor: "#F97316",
-  },
-  unknown_insufficient_evidence: {
-    label: "Result Unavailable",
-    description: "The assessment could not produce a reliable classification due to low confidence. This may be due to inconsistent responses or limited interaction variety.",
-    color: "text-muted-foreground",
-    bg: "border-border bg-muted/50",
-    barColor: "#6B7280",
-    icon: HelpCircle,
-    dotColor: "#6B7280",
-  },
-} as const;
+const DOMAIN_ICONS: Record<string, React.ElementType> = {
+  ai_interaction: Target,
+  ai_output_evaluation: Brain,
+  ai_ethics_trust: Shield,
+  ai_change_leadership: Gavel,
+  ai_workflow_design: Workflow,
+  workforce_ai_readiness: Database,
+};
 
-const CREDIBILITY_CONFIG = {
-  high: { label: "High Credibility", color: "text-primary", bg: "bg-primary/8" },
-  medium: { label: "Medium Credibility", color: "text-amber-400", bg: "bg-[#D97706]/8" },
-  low: { label: "Low Credibility", color: "text-red-400", bg: "bg-[#DC2626]/8" },
-} as const;
+// ── Readiness config ───────────────────────────────────────────────────────────
 
-const RISK_CONFIG = {
-  low: { label: "Low Risk", color: "text-primary", bg: "bg-primary/8" },
-  medium: { label: "Medium Risk", color: "text-amber-400", bg: "bg-[#D97706]/8" },
-  high: { label: "High Risk", color: "text-red-400", bg: "bg-[#DC2626]/8" },
-} as const;
+const READINESS_CONFIG: Record<string, {
+  label: string; color: string; bg: string; border: string; icon: React.ElementType;
+}> = {
+  safe:    { label: "AI-Ready",          color: "text-primary",          bg: "bg-primary/10",    border: "border-primary/25",    icon: CheckCircle2 },
+  at_risk: { label: "Developing",        color: "text-amber-400",        bg: "bg-amber-400/10",  border: "border-amber-400/25",  icon: AlertTriangle },
+  unsafe:  { label: "Needs Development", color: "text-red-400",          bg: "bg-red-400/10",    border: "border-red-400/25",    icon: ShieldAlert },
+  unknown: { label: "Not Assessed",      color: "text-muted-foreground", bg: "bg-muted/30",      border: "border-border",        icon: HelpCircle },
+  foundation_gap: { label: "Foundation Gap", color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", icon: ShieldAlert },
+  unknown_insufficient_evidence: { label: "Insufficient Data", color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border", icon: HelpCircle },
+};
 
-// --- Radar Chart Component ----------------------------------------------------
+// ── Score to level ─────────────────────────────────────────────────────────────
 
-function RadarCapabilityChart({
-  capabilities,
-}: {
-  capabilities: Array<{ key: string; displayName: string; score: number; colour: string }>;
+function scoreToLevel(score: number): { label: string; color: string } {
+  if (score >= 80) return { label: "Expert",     color: "text-primary" };
+  if (score >= 65) return { label: "Proficient", color: "text-emerald-400" };
+  if (score >= 50) return { label: "Developing", color: "text-amber-400" };
+  if (score >= 35) return { label: "Beginner",   color: "text-orange-400" };
+  return              { label: "Novice",      color: "text-red-400" };
+}
+
+// ── Domain insight text ────────────────────────────────────────────────────────
+
+function domainInsight(key: string, score: number): string {
+  const level = score >= 65 ? "strong" : score >= 45 ? "developing" : "early";
+  const insights: Record<string, Record<string, string>> = {
+    ai_interaction: {
+      strong:     "You interact with AI tools effectively — crafting precise prompts and iterating well.",
+      developing: "Your AI interaction skills are developing — focus on prompt structure and iteration.",
+      early:      "Building foundational AI interaction skills is your priority right now.",
+    },
+    ai_output_evaluation: {
+      strong:     "You critically evaluate AI outputs before acting — a key capability in HR.",
+      developing: "You're building the habit of validating AI outputs before relying on them.",
+      early:      "Learning to question and verify AI outputs will significantly reduce risk.",
+    },
+    ai_ethics_trust: {
+      strong:     "You demonstrate strong ethical awareness in AI use — bias, fairness, and accountability.",
+      developing: "Your ethical AI awareness is growing — keep exploring bias and accountability frameworks.",
+      early:      "Understanding AI ethics and risk is foundational to safe HR AI practice.",
+    },
+    ai_change_leadership: {
+      strong:     "You're well-placed to lead AI adoption and manage change in your organisation.",
+      developing: "Your change leadership capability is developing — focus on stakeholder communication.",
+      early:      "Building confidence in leading AI change will unlock significant impact.",
+    },
+    ai_workflow_design: {
+      strong:     "You design effective AI-augmented workflows — integrating tools into real processes.",
+      developing: "You're learning to embed AI into workflows systematically.",
+      early:      "Exploring how AI fits into your day-to-day HR processes is the right starting point.",
+    },
+    workforce_ai_readiness: {
+      strong:     "You can assess and build AI readiness across your workforce effectively.",
+      developing: "Your ability to assess and build workforce AI readiness is growing.",
+      early:      "Understanding how to develop AI capability in others is a key development area.",
+    },
+  };
+  return insights[key]?.[level] ?? "This domain measures your practical AI capability in a specific area.";
+}
+
+// ── Spider Chart ───────────────────────────────────────────────────────────────
+
+function SpiderChart({ domains }: {
+  domains: Array<{ key: string; displayName: string; score: number; colour: string }>;
 }) {
-  const data = capabilities.map(cap => ({
-    subject: cap.displayName.replace("AI ", ""),
-    score: cap.score,
+  const data = domains.map(d => ({
+    subject: d.displayName.replace("AI ", "").replace("Workforce ", ""),
+    score: Math.round(d.score),
     fullMark: 100,
   }));
+
   return (
-    <div className="w-full" style={{ height: 260 }}>
-      <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
-        <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-          <PolarGrid stroke="var(--border)" strokeOpacity={0.5} />
-          <PolarAngleAxis
-            dataKey="subject"
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 }}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--card)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-              fontSize: 12,
-            }}
-            formatter={(value: number) => [`${value}`, "Score"]}
-          />
-          <Radar
-            name="Score"
-            dataKey="score"
-            stroke="var(--primary)"
-            fill="var(--primary)"
-            fillOpacity={0.12}
-            strokeWidth={2}
-            dot={{ r: 4, fill: "var(--primary)", strokeWidth: 0 }}
-          />
-        </RadarChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={340}>
+      <RadarChart data={data} margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
+        <PolarGrid stroke="oklch(0.35 0.04 264 / 0.5)" strokeDasharray="3 3" />
+        <PolarAngleAxis
+          dataKey="subject"
+          tick={{ fill: "oklch(0.75 0.03 264)", fontSize: 12, fontWeight: 500 }}
+        />
+        <Radar
+          name="Score"
+          dataKey="score"
+          stroke="var(--primary)"
+          fill="var(--primary)"
+          fillOpacity={0.15}
+          strokeWidth={2}
+          dot={{ fill: "var(--primary)", r: 4, strokeWidth: 0 }}
+        />
+        <Tooltip
+          contentStyle={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            color: "var(--foreground)",
+            fontSize: "13px",
+          }}
+          formatter={(value: number) => [`${value}/100`, "Score"]}
+        />
+      </RadarChart>
+    </ResponsiveContainer>
   );
 }
 
-// --- Longitudinal Tracking Chart (UX-10: readiness dots + threshold line) ----
+// ── Domain Card ────────────────────────────────────────────────────────────────
 
-interface LongitudinalEntry {
-  sessionId: string;
-  completedAt: number | null;
-  overallScore: number;
-  capabilityScores: Record<string, number>;
-  readinessState: string;
-}
-
-// Custom dot coloured by readiness state
-function ReadinessDot(props: any) {
-  const { cx, cy, payload } = props;
-  const state = (payload?.readinessState ?? "unknown") as keyof typeof READINESS_CONFIG;
-  const color = READINESS_CONFIG[state]?.dotColor ?? "#888888";
-  return <circle cx={cx} cy={cy} r={6} fill={color} stroke="var(--background)" strokeWidth={2} />;
-}
-
-function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
-  if (data.length < 2) {
-    return (
-      <Card className="border-border">
-        <CardContent className="p-5 text-center">
-          <TrendingUp className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm font-semibold text-foreground">Longitudinal Tracking</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Complete at least 2 assessments to see your capability trend over time.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const chartData = data.map((s, i) => ({
-    name: s.completedAt
-      ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-      : `Session ${i + 1}`,
-    score: s.overallScore,
-    readinessState: s.readinessState,
-  }));
+function DomainCard({
+  domainKey, displayName, score, colour, quadrant, onClick,
+}: {
+  domainKey: string; displayName: string; score: number;
+  colour: string; quadrant?: string; onClick: () => void;
+}) {
+  const Icon = DOMAIN_ICONS[domainKey] ?? Target;
+  const level = scoreToLevel(score);
+  const isBlindSpot = quadrant === "unconscious_incompetence";
+  const isStrength = score >= 70;
 
   return (
-    <Card className="border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" style={{ color: "var(--primary)" }} />
-          Progress Over Time
-        </CardTitle>
-        <div className="flex items-center gap-4 flex-wrap mt-1">
-          {(["safe", "at_risk", "unsafe"] as const).map(state => (
-            <div key={state} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: READINESS_CONFIG[state].dotColor }} />
-              <span className="text-xs text-muted-foreground">{READINESS_CONFIG[state].label}</span>
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-xl border bg-card p-4 hover:bg-accent/30 transition-all duration-200 hover:border-primary/30 group"
+      style={{ boxShadow: "var(--card-shadow)" }}
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `${colour}20` }}
+        >
+          <Icon className="w-4 h-4" style={{ color: colour }} />
+        </div>
+        <div className="flex items-center gap-1.5">
+          {isBlindSpot && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 border border-amber-400/25">
+              Blind spot
+            </span>
+          )}
+          {isStrength && !isBlindSpot && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/12 text-primary border border-primary/25">
+              Strength
+            </span>
+          )}
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </div>
+      </div>
+
+      <p className="text-sm font-semibold text-foreground mb-1">{displayName}</p>
+
+      <div className="flex items-center justify-between mb-2">
+        <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
+        <span className="text-lg font-bold text-foreground tabular-nums">
+          {Math.round(score)}
+          <span className="text-xs text-muted-foreground font-normal">/100</span>
+        </span>
+      </div>
+
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.round(score)}%`, backgroundColor: colour }}
+        />
+      </div>
+    </button>
+  );
+}
+
+// ── Domain Detail Sheet ────────────────────────────────────────────────────────
+
+function DomainSheet({
+  open, onClose, domainKey, displayName, score, colour,
+  quadrant, quadrantLabel, quadrantDescription,
+}: {
+  open: boolean; onClose: () => void; domainKey: string;
+  displayName: string; score: number; colour: string;
+  quadrant?: string; quadrantLabel?: string; quadrantDescription?: string;
+}) {
+  const [, navigate] = useLocation();
+  const Icon = DOMAIN_ICONS[domainKey] ?? Target;
+  const level = scoreToLevel(score);
+  const insight = domainInsight(domainKey, score);
+  const isBlindSpot = quadrant === "unconscious_incompetence";
+  const isStrength = score >= 70;
+  const circumference = 2 * Math.PI * 40;
+
+  return (
+    <Sheet open={open} onOpenChange={v => !v && onClose()}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-card border-border">
+        <SheetHeader className="mb-6">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${colour}20` }}
+            >
+              <Icon className="w-5 h-5" style={{ color: colour }} />
             </div>
-          ))}
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-0.5 border-t-2 border-dashed border-primary/60" />
-            <span className="text-xs text-muted-foreground">Safe threshold (7.5)</span>
+            <div>
+              <SheetTitle className="text-base font-semibold text-foreground">{displayName}</SheetTitle>
+              <p className={cn("text-xs font-medium mt-0.5", level.color)}>{level.label}</p>
+            </div>
+          </div>
+        </SheetHeader>
+
+        {/* Score ring */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="relative w-28 h-28">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="10" />
+              <circle
+                cx="50" cy="50" r="40" fill="none"
+                stroke={colour}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${(score / 100) * circumference} ${circumference}`}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-foreground tabular-nums">{Math.round(score)}</span>
+              <span className="text-xs text-muted-foreground">/100</span>
+            </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div style={{ height: 200 }}>
-          <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                tickFormatter={(v: number) => formatPeakonScore(v)}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  fontSize: 12,
-                }}
-                formatter={(value: number) => [formatPeakonScore(value), "Overall Score"]}
-              />
-              {/* UX-10: Safe threshold reference line - A5-07: label updated to Peakon format */}
-              <ReferenceLine
-                y={75}
-                stroke="var(--primary)"
-                strokeDasharray="4 4"
-                strokeOpacity={0.6}
-                label={{ value: "7.5 (Safe)", position: "right", fontSize: 10, fill: "var(--primary)" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="var(--primary)"
-                strokeWidth={2}
-                dot={<ReadinessDot />}
-                activeDot={{ r: 8 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+
+        {/* Insight */}
+        <div className="rounded-xl border border-border bg-background/40 p-4 mb-4">
+          <p className="text-sm text-foreground leading-relaxed">{insight}</p>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
 
-// --- Score Ring ---------------------------------------------------------------
-
-function ScoreRing({ score, color, size = 100 }: { score: number; color: string; size?: number }) {
-  const radius = (size - 16) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const peakonColor = scoreToColor(score);
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--muted)" strokeWidth="8" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={peakonColor.bg}
-          strokeWidth="8"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="text-2xl font-bold font-mono px-2 py-0.5 rounded-md"
-          style={{ backgroundColor: peakonColor.bg, color: peakonColor.text }}
-        >
-          {formatPeakonScore(score)}
-        </span>
-        <span className="text-xs text-muted-foreground mt-0.5">/ 10</span>
-      </div>
-    </div>
-  );
-}
-
-// --- Percentile Band Badge with Tooltip -------------------------------------
-
-const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
-  "Top 20%":        { colour: "var(--primary)", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
-  "Above average":  { colour: "#44bb99", description: "Your score is above the midpoint for your peer group. You are performing better than most HR professionals at a similar level and role." },
-  "Around average": { colour: "#D97706", description: "Your score is close to the typical result for your peer group. This is a normal starting point - most capability development happens from here." },
-  "Below average":  { colour: "#DC2626", description: "Your score is below the midpoint for your peer group. This signals a development opportunity relative to HR professionals at a similar level and role." },
-  "Bottom 20%":     { colour: "#CC3311", description: "Your score is in the bottom fifth of your peer group. Focused development in this capability is recommended before taking on AI-assisted decisions in this area." },
-};
-
-function PercentileBandBadge({
-  label,
-  normGroupLabel,
-}: {
-  label: string;
-  normGroupLabel?: string;
-}) {
-  const info = PERCENTILE_BAND_INFO[label];
-  const colour = info?.colour ?? "#888888";
-  return (
-    <UITooltip>
-      <TooltipTrigger asChild>
-        <span
-          className="inline-flex items-center gap-1 cursor-help rounded-full px-2 py-0.5 text-xs font-medium border select-none"
-          style={{
-            color: colour,
-            borderColor: `${colour}55`,
-            backgroundColor: `${colour}18`,
-          }}
-        >
-          {label}
-          <Info className="size-3 opacity-60" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="max-w-xs text-xs leading-relaxed"
-        sideOffset={6}
-      >
-        <p className="font-semibold mb-1">{label}</p>
-        {info && <p>{info.description}</p>}
-        {normGroupLabel && (
-          <p className="mt-1.5 opacity-70 italic">Compared to: {normGroupLabel}</p>
-        )}
-        <p className="mt-1.5 opacity-60 italic">Provisional - based on synthetic baseline distributions.</p>
-      </TooltipContent>
-    </UITooltip>
-  );
-}
-
-// --- Capability Bar -----------------------------------------------------------
-
-/**
- * CR-2: Compute confidence interval half-width based on signal count.
- * Fewer signals → wider interval. Uses a heuristic based on the
- * standard error of a proportion, scaled to the 0-100 score range.
- * At 3 signals: ±18 points. At 8 signals: ±11 points. At 15+: ±8 points.
- */
-function computeConfidenceHalfWidth(signalCount: number): number {
-  if (signalCount <= 0) return 25; // no evidence - maximum uncertainty
-  // Heuristic: base SE ≈ 50/sqrt(n), capped at [6, 25]
-  const raw = 50 / Math.sqrt(signalCount);
-  return Math.round(Math.max(6, Math.min(25, raw)));
-}
-
-function CapabilityBar({
-  displayName,
-  score,
-  colour,
-  signalCount,
-  percentileBandLabel,
-  normGroupLabel,
-}: {
-  displayName: string;
-  score: number;
-  colour: string;
-  signalCount?: number;
-  /** S5: Use band label instead of precise percentile */
-  percentileBandLabel?: string;
-  normGroupLabel?: string;
-}) {
-  const band = score >= 75 ? "Strong" : score >= 55 ? "Developing" : score >= 35 ? "Needs Work" : "Critical";
-  const bandColor = score >= 75 ? "var(--primary)" : score >= 55 ? "#D97706" : "#DC2626";
-  const hw = computeConfidenceHalfWidth(signalCount ?? 0);
-  const lo = Math.max(0, score - hw);
-  const hi = Math.min(100, score + hw);
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{displayName}</span>
-        <div className="flex items-center gap-2">
-          {percentileBandLabel && (
-            <PercentileBandBadge
-              label={percentileBandLabel}
-              normGroupLabel={normGroupLabel}
-            />
-          )}
-          <span className="text-xs font-medium" style={{ color: bandColor }}>{band}</span>
-          <span
-            className="text-xs font-bold font-mono px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: scoreToColor(score).bg, color: scoreToColor(score).text }}
-          >
-            {formatPeakonScore(score)}
-          </span>
-        </div>
-      </div>
-      {/* Score bar with confidence interval overlay */}
-      <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
-        {/* Confidence interval range - translucent band */}
-        <div
-          className="absolute top-0 h-full rounded-full opacity-20 transition-all duration-700"
-          style={{
-            left: `${lo}%`,
-            width: `${hi - lo}%`,
-            backgroundColor: colour,
-          }}
-        />
-        {/* Point estimate bar */}
-        <div
-          className="absolute top-0 h-full rounded-full transition-all duration-700"
-          style={{ width: `${score}%`, backgroundColor: colour }}
-        />
-      </div>
-      {/* Confidence interval label */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          Range: {lo}-{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
-        </span>
-        {hw >= 15 && (
-          <span className="text-xs text-amber-400 flex items-center gap-0.5">
-            <AlertTriangle className="w-2.5 h-2.5" />
-            Low evidence
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// --- Signal Row ---------------------------------------------------------------
-
-// v10 signal glossary - 26 signals across 6 domains
-const SIGNAL_GLOSSARY: Record<string, string> = {
-  // AI Interaction (foundation)
-  prompt_quality:              "How effectively you construct prompts that produce useful, accurate AI outputs.",
-  iteration_quality:           "How well you refine and improve prompts when initial results are unsatisfactory.",
-  context_framing:             "How clearly you provide context, constraints, and format requirements to AI tools.",
-  tool_selection:              "How appropriately you choose the right AI tool or approach for each task.",
-  // AI Output Evaluation (foundation)
-  error_detection_quality:     "How accurately you spot factual errors, hallucinations, or logical flaws in AI outputs.",
-  fitness_for_purpose:           "How well you assess whether AI output is fit for its intended purpose and audience.",
-  confidence_calibration:      "How accurately your self-assessed confidence aligns with the quality of your answers.",
-  source_verification:         "How thoroughly you verify AI claims against authoritative sources.",
-  // AI Workflow Design (strategic)
-  process_analysis:            "How well you identify where AI adds value in existing workflows.",
-  handoff_design:              "How appropriately you design human-AI handoff points with clear accountability.",
-  efficiency_gain:             "How effectively your AI workflow designs improve efficiency without introducing risk.",
-  oversight_integration:       "How well you build quality checks and human oversight into AI-augmented processes.",
-  // Workforce AI Readiness (strategic)
-  gap_diagnosis:               "How accurately you diagnose AI capability gaps in teams and organisations.",
-  intervention_quality:        "How well you design targeted interventions to address identified capability gaps.",
-  advisory_quality:            "How effectively you advise leaders on AI readiness and capability development.",
-  measurement_rigour:          "How rigorously you measure and track AI capability development progress.",
-  // AI Ethics & Employee Trust (strategic)
-  ethical_reasoning:           "How well you identify and navigate ethical dilemmas involving AI in the workplace.",
-  pressure_resistance:         "How firmly you maintain ethical positions when pressure escalates.",
-  stakeholder_awareness:       "How well you consider the impact of AI decisions on different stakeholder groups.",
-  trust_preservation:          "How effectively you maintain employee trust during AI-driven changes.",
-  transparency_quality:        "How well you communicate AI decisions and their rationale to affected parties.",
-  // AI Change Leadership (strategic)
-  resistance_handling:         "How constructively you address resistance to AI adoption.",
-  pace_calibration:            "How well you calibrate the pace of AI change to organisational readiness.",
-  legitimate_concern_recognition: "How accurately you distinguish legitimate AI concerns from unfounded resistance.",
-  change_sustainability:       "How well you design AI changes that are sustainable and self-reinforcing.",
-  vision_articulation:         "How clearly you articulate the case for AI transformation to diverse audiences.",
-};
-
-function SignalRow({ signal, delta }: { signal: string; delta: number }) {
-  const isPositive = delta > 0;
-  const isRisk = signal.includes("_risk") || signal.includes("_index");
-  const displayName = signal.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-  const glossaryEntry = SIGNAL_GLOSSARY[signal];
-  return (
-    <div className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-2 min-w-0">
-        {isPositive ? (
-          <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
-        ) : (
-          <TrendingDown className="w-3.5 h-3.5 text-[#CC3344] shrink-0" />
-        )}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-foreground">{displayName}</span>
-            {isRisk && (
-              <span className="text-xs text-amber-400 bg-[#D97706]/10 px-1.5 py-0.5 rounded text-xs">risk signal</span>
+        {/* Quadrant badge */}
+        {quadrant && quadrantLabel && (
+          <div className={cn(
+            "rounded-xl border p-4 mb-4",
+            isBlindSpot ? "border-amber-400/25 bg-amber-400/8" : "border-border bg-background/40"
+          )}>
+            <div className="flex items-center gap-2 mb-1">
+              {isBlindSpot ? (
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              ) : isStrength ? (
+                <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <span className={cn(
+                "text-xs font-semibold",
+                isBlindSpot ? "text-amber-400" : isStrength ? "text-primary" : "text-foreground"
+              )}>
+                {quadrantLabel}
+              </span>
+            </div>
+            {quadrantDescription && (
+              <p className="text-xs text-muted-foreground leading-relaxed">{quadrantDescription}</p>
             )}
           </div>
-          {glossaryEntry && (
-            <p className="text-xs text-muted-foreground leading-tight mt-0.5">{glossaryEntry}</p>
-          )}
+        )}
+
+        {/* Score bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground">Capability score</span>
+            <span className="text-xs font-semibold text-foreground">{Math.round(score)}/100</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${Math.round(score)}%`, backgroundColor: colour }} />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-muted-foreground">Novice</span>
+            <span className="text-[10px] text-muted-foreground">Expert</span>
+          </div>
+        </div>
+
+        {/* Dev link */}
+        <Button
+          className="w-full gap-2"
+          onClick={() => { navigate(`/learning-plan?domain=${domainKey}`); onClose(); }}
+        >
+          <BookOpen className="w-4 h-4" />
+          View development for {displayName}
+        </Button>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ── Loading skeleton ───────────────────────────────────────────────────────────
+
+function ResultsSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-24 w-24 rounded-full" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <span className={cn("text-xs font-bold tabular-nums ml-3 shrink-0", isPositive ? "text-primary" : "text-red-400")}>
-        {isPositive ? "+" : ""}{delta.toFixed(1)}
-      </span>
+      <Skeleton className="h-80 w-full rounded-2xl" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 rounded-xl" />
+        ))}
+      </div>
     </div>
   );
 }
 
-// --- Capability Development Actions -----------------------------------------
-
-// v10 capability development actions - imported from shared constants
-import { DOMAIN_COLOURS, DOMAIN_LABELS, DOMAIN_DESCRIPTIONS, DOMAIN_RECOMMENDATIONS, DOMAIN_SHORT_LABELS, READINESS_STATES, FOUNDATION_DOMAINS, STRATEGIC_DOMAINS } from "@/lib/domains";
-import type { CapabilityKey } from "@/lib/domains";
-
-const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = DOMAIN_RECOMMENDATIONS;
-
-// --- Main Component -------------------------------------------------------------
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function AssessmentResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [flagged, setFlagged] = useState(false);
-  // P2-AE-3: Staged reveal - sections animate in sequentially after data loads
-  const [revealStage, setRevealStage] = useState(0); // 0=hidden, 1=readiness, 2=domains, 3=signals, 4=full
-  const [hasRevealed, setHasRevealed] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
 
   const { data, isLoading, error } = trpc.assessment.results.useQuery(
-    { sessionId: sessionId! },
-    { enabled: !!sessionId, refetchOnWindowFocus: false }
+    { sessionId },
+    { enabled: !!sessionId }
   );
 
-  // WS1.4: Classification explanation (lazy - only fetched when panel is opened)
-  const { data: explanationData, isLoading: explanationLoading } =
-    trpc.assessment.getClassificationExplanation.useQuery(
-      { sessionId: sessionId! },
-      { enabled: !!sessionId && showExplanation, refetchOnWindowFocus: false }
-    );
+  if (isLoading) return <ResultsSkeleton />;
 
-  // Benchmark comparison data
-  const { data: benchmarkData, isLoading: benchmarkLoading } =
-    trpc.assessment.getBenchmarks.useQuery(
-      { sessionId: sessionId! },
-      { enabled: !!sessionId, refetchOnWindowFocus: false }
-    );
-
-  // HP-01: Query the user's active learning plan to surface handoff status
-  const { data: learningPlan, isLoading: planLoading } = trpc.learning.activePlan.useQuery(
-    {},
-    { enabled: !!sessionId, refetchOnWindowFocus: false }
-  );
-
-  // BA-04: Org ambition context for business impact section
-  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, {
-    retry: false,
-    onError: () => {},
-  } as any);
-  // WS4.3: Flag for review
-  const flagMutation = trpc.assessment.flagForReview.useMutation({
-    onSuccess: (res: any) => {
-      setFlagged(true);
-      if (res.alreadyFlagged) {
-        toast.warning("Already flagged - this session has already been submitted for review.");
-      } else {
-        toast.success("Session flagged for review - a member of the assessment team will review your results.");
-      }
-    },
-    onError: () => {
-      toast.error("Could not submit flag - please try again later.");
-    },
-  });
-
-   // Hooks hoisted before early returns to satisfy Rules of Hooks
-  const { data: allSessions } = trpc.assessment.history.useQuery({});
-  const startMutation2 = trpc.assessment.startSession.useMutation({
-    onSuccess: result => navigate(`/assessment/${result.sessionId}`),
-    onError: err => toast.error(err.message),
-  });
-  const { data: defaultBlueprint2 } = trpc.assessment.defaultBlueprint.useQuery();
-  const [showProfiling2, setShowProfiling2] = useState(false);
-  // P2-AE-3: Trigger staged reveal when data loads (only once per page visit)
-  useEffect(() => {
-    if (data?.score && !hasRevealed) {
-      setHasRevealed(true);
-      const delays = [200, 800, 1400, 2000];
-      delays.forEach((delay, i) => {
-        setTimeout(() => setRevealStage(i + 1), delay);
-      });
-    }
-  }, [data?.score, hasRevealed]);
-  if (isLoading) {
-    return <AssessmentResultsSkeleton />;
-  }
-
-  if (error || !data?.score) {
-    const sessionState = (data as any)?.session?.state;
-    const isInProgress = sessionState === "in_progress" || (!error && !data?.score && data?.session);
+  if (error || !data) {
     return (
-      <div className="p-6 text-center max-w-2xl mx-auto">
-        {isInProgress ? (
-          <>
-            <div className="w-14 h-14 rounded-full bg-[#D97706]/8 border-2 border-[#D97706]/25 flex items-center justify-center mx-auto mb-4">
-              <RotateCcw className="w-7 h-7 text-amber-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-foreground">Assessment in progress</h2>
-            <p className="text-muted-foreground text-sm mt-2 mb-6">
-              This assessment hasn't been completed yet. Results will appear here once you submit your final answer.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => navigate(`/assessment/${sessionId}`)} className="gap-2">
-                <RotateCcw className="w-4 h-4" />
-                Resume Assessment
-              </Button>
-              <Button onClick={() => navigate("/assessment")} variant="outline" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Assessments
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <ShieldAlert className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-foreground">Results not available</h2>
-            <p className="text-muted-foreground text-sm mt-2 mb-6">
-              {error ? error.message : "This session has not been completed yet or results are still processing."}
-            </p>
-            <Button onClick={() => navigate("/assessment")} variant="outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Assessments
-            </Button>
-          </>
-        )}
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-muted-foreground">Could not load assessment results.</p>
+        <Button variant="outline" onClick={() => navigate("/assessment")}>
+          Back to Assessment
+        </Button>
       </div>
     );
   }
 
-  const { score } = data;
-  const longitudinalData = ((data as any).longitudinalData ?? []) as LongitudinalEntry[];
-  const breakdown = (score.breakdown ?? {}) as any;
-  const overallScore = Math.round(score.overallScore ?? 0);
-  const readiness = breakdown.readiness as { state?: string; label?: string; description?: string } | undefined;
-  const primaryState = (readiness?.state ?? breakdown.primaryState ?? "unknown") as keyof typeof READINESS_CONFIG;
-  const credibilityBand = (breakdown.credibilityBand ?? breakdown.credibility_band ?? (breakdown.confidenceProfile as any)?.band ?? "medium") as keyof typeof CREDIBILITY_CONFIG;
-  const riskBand = (breakdown.riskBand ?? breakdown.risk_band ?? "medium") as keyof typeof RISK_CONFIG;
-  const narrative = (typeof breakdown.narrative === "string" ? breakdown.narrative : (breakdown.narrative as any)?.text) ?? "";
-  const llmNarrative = (breakdown.llmNarrative ?? null) as { strengths: string; gaps: string; priorities: string } | null;
-  const capabilityScores = breakdown.capabilityScores ?? {};
-  const signalScores = breakdown.signalScores ?? {};
-  const totalAnswers = breakdown.totalAnswers ?? 0;
-  const targetItems = breakdown.targetItems ?? 49;
-  const isEarlyCompletion = totalAnswers < targetItems;
-  // P1/P2: Percentile ranks and norm group (S5: use band labels)
-  const percentileRanks = (breakdown.percentileRanks ?? {}) as Record<string, { percentile: number; percentileBand: string; percentileBandLabel: string; label: string; normGroupLabel: string; isSynthetic: boolean }>;
-  const normGroupVersion = (breakdown.normGroupVersion ?? null) as string | null;
-  // P3: Classification confidence gate caveat
-  const classificationConfidence = (breakdown.classificationConfidence ?? null) as { band: string; label: string; wasDowngraded: boolean; caveat: string | null } | null;
+  const { session, score, competenceConfidenceMatrix } = data as any;
+  const overallScore: number = score.overallScore;
+  const breakdown = score.breakdown as {
+    readiness?: { state?: string };
+    capabilityScores?: Record<string, { score: number; displayName: string; colour: string; signalCount: number }>;
+  };
+  const readinessState = breakdown?.readiness?.state ?? "unknown";
+  const readinessConfig = READINESS_CONFIG[readinessState] ?? READINESS_CONFIG.unknown;
+  const ReadinessIcon = readinessConfig.icon;
 
-  // A4: Governance action and governing constraint
-  const governanceAction = (breakdown.governanceAction ?? null) as string | null;
-  const governingConstraint = (breakdown.governingConstraint ?? null) as {
-    capability: string; score: number; band: string; thresholdRequired: number; gap: number; droveClassification: boolean;
-  } | null;
-  const stateConfig = READINESS_CONFIG[primaryState] ?? READINESS_CONFIG.unknown;
-  const StateIcon = stateConfig.icon;
-  const credConfig = CREDIBILITY_CONFIG[credibilityBand] ?? CREDIBILITY_CONFIG.medium;
-  const riskConfig = RISK_CONFIG[riskBand] ?? RISK_CONFIG.medium;
+  const capabilityScores = breakdown?.capabilityScores ?? {};
+  const domains = Object.entries(capabilityScores).map(([key, val]) => ({
+    key,
+    displayName: val.displayName,
+    score: val.score,
+    colour: val.colour ?? "#4477AA",
+    signalCount: val.signalCount,
+  }));
 
-  // Sort capabilities by score descending
-  const sortedCapabilities = Object.entries(capabilityScores)
-    .map(([key, val]: [string, any]) => ({
-      key,
-      score: typeof val === "object" ? val.score : (val as number),
-      displayName: typeof val === "object" ? val.displayName : key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-      colour: typeof val === "object" ? val.colour : "#4477AA",
-      signalCount: typeof val === "object" ? (val.signalCount ?? 0) : 0,
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  // Sort signals by absolute delta descending, show top 12
-  const sortedSignals = Object.entries(signalScores as Record<string, number>)
-    .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
-    .slice(0, 12);
-
-  const completedAt = data.session.completedAt
-    ? new Date(data.session.completedAt).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+  const completedAt = session.completedAt
+    ? new Date(session.completedAt).toLocaleDateString("en-GB", {
+        day: "numeric", month: "long", year: "numeric",
       })
-     : "Unknown";
-  return (
-    <div className="flex h-full min-h-0">
-      {/* -- History sidebar -- */}
-      <div className="hidden lg:flex flex-col w-56 shrink-0 border-r border-border bg-muted/20">
-        <AssessmentHistoryPanel
-          sessions={allSessions ?? []}
-          activeId={sessionId}
-          onStart={() => {
-            if (defaultBlueprint2?.id) {
-              startMutation2.mutate({ blueprintId: defaultBlueprint2.id, roleHint: "hr_professional::regular" });
-            }
-          }}
-          isStarting={startMutation2.isPending}
-        />
-      </div>
+    : null;
 
-      {/* -- Main content -- */}
-      <div className="flex-1 overflow-y-auto">
-      <div className="p-6 space-y-6 max-w-3xl mx-auto">
-      {/* Back nav */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigate("/assessment")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Assessments
-        </button>
+  const selectedDomainData = selectedDomain ? domains.find(d => d.key === selectedDomain) : null;
+  const selectedMatrix = selectedDomain
+    ? (competenceConfidenceMatrix as any[])?.find((m: any) => m.domain === selectedDomain)
+    : null;
+
+  const displayScore = (overallScore / 10).toFixed(1);
+  const scoreColor = scoreToColor(overallScore / 10);
+  const circumference = 2 * Math.PI * 38;
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      {/* Back */}
+      <button
+        onClick={() => navigate("/assessment")}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Assessment
+      </button>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
+        {/* Score ring */}
+        <div className="relative w-24 h-24 shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="38" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="10" />
+            <circle
+              cx="50" cy="50" r="38" fill="none"
+              stroke={scoreColor.bg}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={`${(overallScore / 100) * circumference} ${circumference}`}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-xl font-bold text-foreground tabular-nums">{displayScore}</span>
+            <span className="text-[10px] text-muted-foreground">/10</span>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={cn(
+              "inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full border",
+              readinessConfig.bg, readinessConfig.color, readinessConfig.border
+            )}>
+              <ReadinessIcon className="w-3.5 h-3.5" />
+              {readinessConfig.label}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Your AI Capability Profile</h1>
+          {completedAt && (
+            <p className="text-sm text-muted-foreground">Completed {completedAt}</p>
+          )}
+        </div>
+
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            toast.success("Link copied to clipboard");
-          }}
+          className="shrink-0 gap-2"
+          onClick={() => navigate("/assessment")}
         >
-          <Link2 className="w-3.5 h-3.5" />
-          Copy link
+          Reassess
         </Button>
       </div>
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Assessment results</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-          AiQ Adaptive Assessment · Completed {completedAt}
-        </p>
-      </div>
-
-      {/* -- Three-Layer Tabs -- */}
-      <Tabs defaultValue="summary" className="w-full">
-        {/* A5-06: Horizontally scrollable tab bar - icons hidden on mobile to prevent overflow */}
-        <div className="overflow-x-auto -mx-1 px-1 mb-6 scrollbar-none">
-          <TabsList className="w-max min-w-full">
-            <TabsTrigger value="summary" className="gap-1.5 text-xs">
-              <Target className="w-3.5 h-3.5 hidden sm:block" />
-              Summary
-            </TabsTrigger>
-            <TabsTrigger value="deepdive" className="gap-1.5 text-xs">
-              <Brain className="w-3.5 h-3.5 hidden sm:block" />
-              Deep Dive
-            </TabsTrigger>
-            <TabsTrigger value="development" className="gap-1.5 text-xs">
-              <Lightbulb className="w-3.5 h-3.5 hidden sm:block" />
-              Development
-            </TabsTrigger>
-            <TabsTrigger value="benchmarks" className="gap-1.5 text-xs">
-              <BarChart2 className="w-3.5 h-3.5 hidden sm:block" />
-              Benchmarks
-            </TabsTrigger>
-            <TabsTrigger value="scenarios" className="gap-1.5 text-xs">
-              <FileText className="w-3.5 h-3.5 hidden sm:block" />
-              Scenarios
-            </TabsTrigger>
-            <TabsTrigger value="calibration" className="gap-1.5 text-xs">
-              <Zap className="w-3.5 h-3.5 hidden sm:block" />
-              Calibration
-            </TabsTrigger>
-            <TabsTrigger value="metacognition" className="gap-1.5 text-xs">
-              <Globe className="w-3.5 h-3.5 hidden sm:block" />
-              Metacognition
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 1: SUMMARY
-            Contains: readiness banner, narrative, capability breakdown (radar +
-            bars), signal profile, contradiction profile, ethics profile,
-            score summary, actions, disclaimer.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="summary" className="space-y-6">
-
-          {/* Readiness State Banner */}
-          <div
-            className="transition-all duration-700 ease-out"
-            style={{ opacity: revealStage >= 1 ? 1 : 0, transform: revealStage >= 1 ? "translateY(0)" : "translateY(16px)" }}
-          >
-          <Card className={cn("border-2", stateConfig.bg)}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-6">
-                <div className="shrink-0">
-                  <ScoreRing score={overallScore} color={stateConfig.barColor} size={120} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <StateIcon className={cn("w-5 h-5", stateConfig.color)} />
-                    <span className={cn("text-xs font-semibold uppercase tracking-widest", stateConfig.color)}>
-                      Readiness State
-                    </span>
-                  </div>
-                  <h2 className={cn("text-2xl font-semibold", stateConfig.color)}>
-                    {stateConfig.label}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    {stateConfig.description}
-                  </p>
-                  <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", credConfig.color, credConfig.bg)}>
-                      <Award className="w-3 h-3 inline mr-1" />
-                      {credConfig.label}
-                    </span>
-                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full", riskConfig.color, riskConfig.bg)}>
-                      <Shield className="w-3 h-3 inline mr-1" />
-                      {riskConfig.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {totalAnswers} questions answered
-                    </span>
-                    {/* S3.3: Governing constraint in header when classification is not safe */}
-                    {governingConstraint && (governingConstraint as any).droveClassification && primaryState !== "safe" && (
-                      <span className="text-xs font-medium text-amber-400 dark:text-[#D97706] flex items-center gap-1">
-                        <Flag className="w-3 h-3 flex-shrink-0" />
-                        Governing constraint: <span className="capitalize">{String((governingConstraint as any).capability).replace(/_/g, " ")}</span>
-                        &nbsp;(gap {Math.round(Number((governingConstraint as any).gap))} pts)
-                      </span>
-                    )}
-                    {/* P15: ExplanationDrawer - score transparency */}
-                    <ExplanationDrawer
-                      trigger={
-                        <button className="text-xs underline underline-offset-2 flex items-center gap-1 hover:opacity-80 transition-opacity" style={{ color: "var(--primary)" }}>
-                          <Info className="w-3 h-3" />
-                          How is this calculated?
-                        </button>
-                      }
-                      title="How your AiQ score is calculated"
-                      subtitle="A transparent breakdown of the six capability domains that make up your readiness profile"
-                    >
-                      <ScoreBreakdown
-                        overallScore={overallScore}
-                        confidenceLevel={
-                          (classificationConfidence?.band === "high" ? "high"
-                          : classificationConfidence?.band === "medium" ? "medium"
-                          : "low") as "high" | "medium" | "low"
-                        }
-                        dataPoints={totalAnswers}
-                        lastUpdated={data.session.completedAt
-                          ? new Date(data.session.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                          : "today"}
-                        factors={sortedCapabilities.map(cap => ({
-                          name: cap.displayName,
-                          score: Math.round(cap.score),
-                          weight: Math.round(100 / Math.max(sortedCapabilities.length, 1)),
-                          description: SIGNAL_GLOSSARY[cap.key] ?? cap.displayName,
-                          color: cap.colour,
-                        }))}
-                      />
-                    </ExplanationDrawer>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          </div>{/* end reveal stage 1 */}
-
-          {/* P3: Classification confidence gate caveat */}
-          {classificationConfidence?.caveat && (
-            <Card className="border-[#D97706]/25 bg-[#D97706]/8">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-amber-400 uppercase tracking-widest mb-1">
-                      About This Result
-                    </p>
-                    <p className="text-sm text-foreground leading-relaxed">{classificationConfidence.caveat}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Narrative */}
-          {narrative && (
-            <Card className="border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1.5">
-                      Your Results Narrative
-                    </p>
-                    <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Capability Breakdown - reveal stage 2 */}
-          <div
-            className="transition-all duration-700 ease-out"
-            style={{ opacity: revealStage >= 2 ? 1 : 0, transform: revealStage >= 2 ? "translateY(0)" : "translateY(16px)" }}
-          >
-          {sortedCapabilities.length > 0 && (
-            <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Capability Breakdown
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Scores are derived from signal-weighted deltas across all answered interactions.
-                  Each capability domain maps to multiple performance and risk signals.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {sortedCapabilities.length >= 3 && (
-                  <RadarCapabilityChart capabilities={sortedCapabilities} />
-                )}
-                {sortedCapabilities.map(cap => (
-                  <CapabilityBar
-                    key={cap.key}
-                    displayName={cap.displayName}
-                    score={cap.score}
-                    colour={cap.colour}
-                    signalCount={cap.signalCount}
-                    percentileBandLabel={percentileRanks[cap.key]?.percentileBandLabel}
-                    normGroupLabel={percentileRanks[cap.key]?.normGroupLabel}
-                  />
-                ))}
-                {/* Score bands legend */}
-                <div className="flex items-center gap-4 pt-2 flex-wrap">
-                  {[
-                    { label: "Strong", range: "75-100", color: "var(--primary)" },
-                    { label: "Developing", range: "55-74", color: "#D97706" },
-                    { label: "Needs Work", range: "35-54", color: "#DC2626" },
-                    { label: "Critical", range: "0-34", color: "#b91c1c" },
-                  ].map(b => (
-                    <div key={b.label} className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
-                      <span className="text-xs text-muted-foreground">{b.label} ({b.range})</span>
-                    </div>
-                  ))}
-                </div>
-                {/* S5: Provisional percentile band disclosure */}
-                {normGroupVersion && (
-                  <div className="rounded-md border border-[#D97706]/25 bg-[#D97706]/8 px-3 py-2 mt-1">
-                    <p className="text-xs text-amber-400 flex items-center gap-1.5">
-                      <Info className="w-3 h-3 shrink-0" />
-                      <span>
-                        <strong>Provisional benchmark:</strong> Relative standing is shown as broad quartile bands rather than precise percentiles. These benchmarks are based on synthetic baseline distributions ({normGroupVersion}) and will be recalibrated once sufficient real-world assessment data is available.
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          </div>{/* end reveal stage 2 */}
-
-          {/* Signal Profile - reveal stage 3 */}
-          <div
-            className="transition-all duration-700 ease-out"
-            style={{ opacity: revealStage >= 3 ? 1 : 0, transform: revealStage >= 3 ? "translateY(0)" : "translateY(16px)" }}
-          >
-          {sortedSignals.length > 0 && (
-            <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Signal Profile
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Cumulative signal deltas from all answered interactions, weighted by risk level and difficulty.
-                  Positive values indicate capability; negative values indicate risk patterns.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="divide-y divide-border/40">
-                  {sortedSignals.map(([signal, delta]) => (
-                    <SignalRow key={signal} signal={signal} delta={delta as number} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Contradiction Profile */}
-          {breakdown.contradictionProfile && (breakdown.contradictionProfile as any).detected > 0 && (
-            <Card className="border-[#DC2626]/25 bg-[#DC2626]/8">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-[#CC3344] shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-foreground  mb-1">Contradiction Profile</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {(breakdown.contradictionProfile as any).detected} inconsistenc{(breakdown.contradictionProfile as any).detected === 1 ? 'y' : 'ies'} detected across your responses.
-                      Contradictions reduce credibility and may indicate uncertainty or inconsistent reasoning across domains.
-                    </p>
-                    {(breakdown.contradictionProfile as any).pairs?.length > 0 && (
-                      <div className="space-y-2">
-                        {(breakdown.contradictionProfile as any).pairs.slice(0, 3).map((pair: any, i: number) => (
-                          <div key={i} className="text-xs bg-background/60 rounded-lg p-2.5 border border-[#DC2626]/25">
-                            <span className="font-medium text-red-400">Inconsistency {i + 1}:</span>{" "}
-                            {pair.description ?? `Responses to items ${pair.itemA} and ${pair.itemB} were inconsistent.`}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Ethics & Trust Profile (v10) */}
-          {breakdown.governanceProfile && (
-            <Card className="border-border">
-              <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground  mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-violet-600" />
-                  Ethics & Trust Profile
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-muted/50 rounded-lg p-3 border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">Ethics Score</p>
-                    <p className="text-xl font-bold  text-foreground">
-                      {Math.round((breakdown.governanceProfile as any).score ?? 0)}
-                      <span className="text-sm font-normal text-muted-foreground">/100</span>
-                    </p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">Ethics Band</p>
-                    <p className="text-sm font-bold  text-foreground capitalize">
-                      {(breakdown.governanceProfile as any).band ?? "Not assessed"}
-                    </p>
-                  </div>
-                </div>
-                {(breakdown.governanceProfile as any).bypasses > 0 && (
-                  <p className="text-xs text-[#CC3344] mt-3 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    {(breakdown.governanceProfile as any).bypasses} ethical concern{(breakdown.governanceProfile as any).bypasses === 1 ? '' : 's'} flagged.
-                    These are highlighted for review by your ethics and trust team.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* A4: Development Action Banner (v10) */}
-          {governanceAction && (
-            <Card className={`border-l-4 ${governanceAction === "development_required" ? "border-l-[#DC2626] bg-[#DC2626]/8" : "border-l-[#D97706] bg-[#D97706]/8"}`}>
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${governanceAction === "development_required" ? "text-red-400" : "text-amber-400"}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground  mb-1">
-                      {governanceAction === "development_required" ? "Development Required Before Independent AI Use" : "Supported AI Use Recommended"}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {governanceAction === "development_required"
-                        ? "Your current capability profile indicates significant gaps that should be addressed through structured development before independent AI use."
-                        : "Your capability profile supports AI use with appropriate oversight. A manager or senior colleague should review AI outputs in high-stakes decisions."}
-                    </p>
-                    {governingConstraint && governingConstraint.droveClassification && (
-                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-                        <Flag className="w-3 h-3 flex-shrink-0" />
-                        Governing constraint: <span className="font-medium text-foreground capitalize">{governingConstraint.capability.replace(/_/g, " ")}</span>
-                        {" "}(score {Math.round(governingConstraint.score)}, threshold {Math.round(governingConstraint.thresholdRequired)}, gap {Math.round(governingConstraint.gap)} points)
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {/* UX-3: Score Summary - actual question count with early-completion label */}
-          <Card className="border-border">
-            <CardContent className="p-5">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Questions Answered</p>
-                  <p className="text-2xl font-bold text-foreground ">
-                    {totalAnswers}
-                  </p>
-                  {isEarlyCompletion && (
-                    <div className="flex items-center justify-center gap-1 mt-1">
-                      <Zap className="w-3 h-3 text-primary" />
-                      <span className="text-xs text-primary font-semibold">Early completion</span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Overall Score</p>
-                  <p className="text-2xl font-bold" style={{ color: stateConfig.barColor }}>
-                    {formatPeakonScore(overallScore)}
-                    <span className="text-sm font-normal text-muted-foreground"> / 10</span>
-                  </p>
-                  {/* CR-2: Overall confidence interval - A5-02: formatted as Peakon 0-10 */}
-                  {(() => {
-                    const totalSignals = sortedCapabilities.reduce((sum, c) => sum + c.signalCount, 0);
-                    const oHw = computeConfidenceHalfWidth(totalSignals);
-                    const oLo = Math.max(0, overallScore - oHw);
-                    const oHi = Math.min(100, overallScore + oHw);
-                    return (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Range: {formatPeakonScore(oLo)}\u2013{formatPeakonScore(oHi)}
-                      </p>
-                    );
-                  })()}
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Model Version</p>
-                  <p className="text-sm font-bold text-foreground ">
-                    {breakdown.modelVersion ?? "V9.2"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          {/* CR-3: Methodology transparency badge */}
-          <a
-            href="/methodology"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-primary/25 bg-primary/8 hover:bg-primary/12 transition-colors cursor-pointer no-underline"
-          >
-            <Shield className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs text-primary font-medium">SJT-based adaptive assessment</span>
-            <span className="text-xs text-muted-foreground ml-auto">View methodology</span>
-          </a>
-
-          {/* WS4.2: Why this classification? expandable panel */}
-          <Card className="border-border">
-            <CardHeader className="pb-2">
-              <button
-                onClick={() => setShowExplanation(v => !v)}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                  Why this classification?
-                </CardTitle>
-                {showExplanation
-                  ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                  : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-              </button>
-            </CardHeader>
-            {showExplanation && (
-              <CardContent className="pt-0 space-y-3">
-                {explanationLoading && <Skeleton className="h-24 w-full" />}
-                {explanationData && (
-                  <>
-                    {(explanationData as any).isProvisional && (
-                      <div className="rounded-md border border-[#D97706]/25 bg-[#D97706]/8 px-3 py-2">
-                        <p className="text-xs text-amber-400 flex items-center gap-1.5">
-                          <Info className="w-3 h-3 shrink-0" />
-                          This classification is provisional due to limited evidence or low assessment confidence.
-                        </p>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {((explanationData as any).factors ?? []).map((f: any, i: number) => (
-                        <div key={i} className="flex items-start gap-2.5 text-sm">
-                          {f.direction === "positive" ? (
-                            <ThumbsUp className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                          ) : f.direction === "negative" ? (
-                            <ThumbsDown className="w-4 h-4 text-[#CC3344] shrink-0 mt-0.5" />
-                          ) : (
-                            <Minus className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                          )}
-                          <div>
-                            <span className="font-medium text-foreground">{f.factor}: </span>
-                            <span className="text-muted-foreground">{f.detail}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {((explanationData as any).topStrengths ?? []).length > 0 && (
-                      <div className="rounded-md bg-primary/8 border border-primary/25 px-3 py-2">
-                        <p className="text-xs font-semibold text-primary mb-1">Top strengths</p>
-                        <p className="text-xs text-muted-foreground">{(explanationData as any).topStrengths.join(" · ")}</p>
-                      </div>
-                    )}
-                    {((explanationData as any).topGaps ?? []).length > 0 && (
-                      <div className="rounded-md bg-[#DC2626]/8 border border-[#DC2626]/25 px-3 py-2">
-                        <p className="text-xs font-semibold text-[#CC3344] mb-1">Development priorities</p>
-                        <p className="text-xs text-muted-foreground">{(explanationData as any).topGaps.join(" · ")}</p>
-                      </div>
-                    )}
-                    {((explanationData as any).itemCitations ?? []).length > 0 && (
-                      <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
-                        <p className="text-xs font-semibold text-foreground mb-2">Evidence trail - key items that influenced this classification</p>
-                        <div className="space-y-1.5">
-                          {((explanationData as any).itemCitations as Array<{itemId: string; questionSummary: string; signalKey: string; delta: number; capabilityKey: string | null; outcomeClass: string | null}>)
-                            .slice(0, 5)
-                            .map((c, i) => (
-                              <div key={i} className="flex items-start gap-2 text-xs">
-                                <span className={`shrink-0 mt-0.5 font-mono text-xs px-1 rounded ${
-                                  c.outcomeClass === "strong" ? "bg-primary/10 text-primary" :
-                                  c.outcomeClass === "failure" || c.outcomeClass === "critical_failure" ? "bg-[#DC2626]/10 text-red-400" :
-                                  "bg-muted text-muted-foreground"
-                                }`}>{c.outcomeClass ?? "?"}</span>
-                                <div className="min-w-0">
-                                  <p className="text-muted-foreground truncate">{c.questionSummary}</p>
-                                  <p className="text-xs text-muted-foreground/70">{c.signalKey.replace(/_/g, " ")} · Δ{c.delta > 0 ? "+" : ""}{c.delta.toFixed(2)}{c.capabilityKey ? ` · ${c.capabilityKey.replace(/_/g, " ")}` : ""}</p>
-                                </div>
-                              </div>
-                            ))
-                          }
-                        </div>
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Scoring model: {(explanationData as any).scoringConfigVersion} · Confidence: {(explanationData as any).confidenceBand}
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            )}
-          </Card>
-
-          {/* WS4.3: Flag for review */}
-          <div className="flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
-              disabled={flagged || flagMutation.isPending}
-              onClick={() => {
-                if (sessionId) flagMutation.mutate({ sessionId, reason: "Participant-initiated review request" });
-              }}
-            >
-              <Flag className="w-3.5 h-3.5" />
-              {flagged ? "Flagged for review" : "Flag this result for review"}
-            </Button>
-          </div>
-
-          </div>{/* end reveal stage 3 */}
-
-          {/* Actions - reveal stage 4 */}
-          <div
-            className="transition-all duration-700 ease-out"
-            style={{ opacity: revealStage >= 4 ? 1 : 0, transform: revealStage >= 4 ? "translateY(0)" : "translateY(16px)" }}
-          >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Button
-              onClick={() => navigate("/learning?tab=insights")}
-              className="bg-primary hover:bg-primary/90 text-white gap-2"
-            >
-              <BookOpen className="w-4 h-4" />
-              View Learning Plan
-            </Button>
-            <Button
-              onClick={() => navigate("/dashboard")}
-              variant="outline"
-              className="gap-2"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Back to Dashboard
-            </Button>
-            <Button
-              onClick={() => navigate("/assessment")}
-              variant="outline"
-              className="gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Take Another Assessment
-            </Button>
-          </div>
-
-          {/* Disclaimer */}
-          <p className="text-xs text-muted-foreground text-center pb-4">
-            Results are generated by the AiQ signal-delta scoring model. Scores reflect demonstrated
-            decision-making patterns across the assessed interactions and are not a measure of general
-            intelligence or professional competence. This report is intended for development purposes
-            only and should be reviewed alongside other evidence before any employment decisions are made.
+      {/* Spider chart */}
+      {domains.length > 0 && (
+        <div
+          className="rounded-2xl border border-border bg-card p-6 mb-8 aiq-chart-mount"
+          style={{ boxShadow: "var(--card-shadow)" }}
+        >
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+            Capability Profile
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Your scores across all {domains.length} capability domains
           </p>
-          </div>{/* end reveal stage 4 */}
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 2: DEEP DIVE
-            UX-1: Contains ONLY content exclusive to this tab - no duplication
-            of capability bars / signal profile / ethics profile from Summary.
-            Shows: longitudinal tracking, LLM narrative, expanded signal breakdown
-            grouped by positive vs risk signals.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="deepdive" className="space-y-6">
-
-          {/* UX-10: Longitudinal Tracking with readiness dots + threshold line */}
-          <LongitudinalChart data={longitudinalData} />
-
-          {/* LLM Development Narrative (also shown in Development tab) */}
-          {llmNarrative && (
-            <Card className="border-primary/30 bg-primary/8">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  Your Development Narrative
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  AI-generated personalised feedback based on your assessment responses and capability profile.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-primary uppercase tracking-widest">Strengths</h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-widest">Development Areas</h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-primary uppercase tracking-widest">Priorities</h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Expanded Signal Breakdown - grouped by positive vs risk */}
-          {sortedSignals.length > 0 && (
-            <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Full Signal Breakdown
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  All {sortedSignals.length} signals detected, sorted by magnitude. Positive signals indicate
-                  demonstrated capability; negative signals indicate risk patterns or gaps.
-                </p>
-              </CardHeader>
-              <CardContent>
-                {/* Positive signals */}
-                {sortedSignals.filter(([, v]) => (v as number) > 0).length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      Positive Signals ({sortedSignals.filter(([, v]) => (v as number) > 0).length})
-                    </p>
-                    <div className="divide-y divide-border/40">
-                      {sortedSignals
-                        .filter(([, v]) => (v as number) > 0)
-                        .map(([signal, delta]) => (
-                          <SignalRow key={signal} signal={signal} delta={delta as number} />
-                        ))}
-                    </div>
-                  </div>
-                )}
-                {/* Risk signals */}
-                {sortedSignals.filter(([, v]) => (v as number) <= 0).length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <TrendingDown className="w-3.5 h-3.5" />
-                      Risk Signals ({sortedSignals.filter(([, v]) => (v as number) <= 0).length})
-                    </p>
-                    <div className="divide-y divide-border/40">
-                      {sortedSignals
-                        .filter(([, v]) => (v as number) <= 0)
-                        .map(([signal, delta]) => (
-                          <SignalRow key={signal} signal={signal} delta={delta as number} />
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Technical metadata - only in deep dive */}
-          <Card className="border-border">
-            <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground  mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                Assessment Metadata
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <p className="text-muted-foreground">Model Version</p>
-                  <p className="font-semibold text-foreground">{breakdown.modelVersion ?? "V9.2"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Questions Answered</p>
-                  <p className="font-semibold text-foreground">
-                    {totalAnswers}{isEarlyCompletion ? " (early completion)" : ""}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Credibility Band</p>
-                  <p className="font-semibold text-foreground capitalize">{credibilityBand}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Risk Band</p>
-                  <p className="font-semibold text-foreground capitalize">{riskBand}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 3: DEVELOPMENT
-            UX-2: Leads with LLM narrative (strengths/gaps/priorities) instead
-            of generic static boilerplate. Falls back to capability-based
-            recommendations only when llmNarrative is unavailable.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="development" className="space-y-6">
-
-          {/* UX-2: LLM narrative as primary content */}
-          {llmNarrative ? (
-            <Card className="border-primary/30 bg-primary/8">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  Personalised Development Report
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Generated from your full capability profile and response patterns.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
-                  <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Your Strengths
-                  </h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.strengths}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#D97706]/8 border border-[#D97706]/20 space-y-1.5">
-                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    Development Areas
-                  </h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.gaps}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-primary/8 border border-primary/25 space-y-1.5">
-                  <h4 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5" />
-                    Immediate Priorities
-                  </h4>
-                  <p className="text-sm text-foreground leading-relaxed">{llmNarrative.priorities}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            /* Fallback: static narrative + lowest-3-capabilities card */
-            <>
-              {narrative && (
-                <Card className="border-border">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-3">
-                      <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1.5">Your Results Narrative</p>
-                        <p className="text-sm text-foreground leading-relaxed">{narrative}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {sortedCapabilities.length > 0 && (
-                <Card className="border-border">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-primary" />
-                      Development Focus Areas
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Based on your lowest-scoring capability domains.
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {sortedCapabilities.slice(-3).map(cap => (
-                      <div key={cap.key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                        <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: cap.colour }} />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-semibold text-foreground">{cap.displayName}</p>
-                            <span className="text-xs font-bold" style={{ color: cap.colour }}>{cap.score}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                            {CAPABILITY_DEVELOPMENT_ACTIONS[cap.key] ?? "Practice applying this capability in realistic HR scenarios. Review the relevant module in your learning plan."}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
-
-          {/* BA-04: Business Impact - how this result connects to org ambition */}
-          {ambitionGap && ambitionGap.configured && data.score?.overallScore !== null && data.score?.overallScore !== undefined && (
-            <AssessmentBusinessImpactCard
-              overallScore={data.score.overallScore}
-              ambitionGap={ambitionGap}
-            />
-          )}
-          {/* HP-01: Learning plan ready card */}
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-semibold text-foreground">Your personalised learning plan is ready</p>
-                    {!planLoading && learningPlan && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25 text-xs font-semibold text-primary">
-                        <ListChecks className="w-3 h-3" />
-                        {learningPlan.items?.length ?? 0} modules
-                      </span>
-                    )}
-                  </div>
-                  {planLoading ? (
-                    <p className="text-xs text-muted-foreground">Generating your plan based on this assessment…</p>
-                  ) : learningPlan ? (
-                    <>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Based on your results, we’ve built a capability-mapped plan targeting your development areas.
-                        {(() => {
-                          const summary = typeof learningPlan.summaryJson === "string"
-                            ? JSON.parse(learningPlan.summaryJson as string)
-                            : (learningPlan.summaryJson as any);
-                          const weak = (summary?.weakestCapabilities as string[] | undefined) ?? [];
-                          if (weak.length === 0) return null;
-                          const labels = weak.map((k: string) => DOMAIN_LABELS[k as keyof typeof DOMAIN_LABELS] ?? k.replace(/_/g, " "));
-                          return <> Starting with: <span className="font-medium text-foreground">{labels.join(", ")}</span>.</>;
-                        })()}
-                      </p>
-                      <button
-                        onClick={() => navigate("/learning?tab=insights")}
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Open your learning plan
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your learning plan will be generated automatically based on these results. It may take a moment to appear.
-                      </p>
-                      <button
-                        onClick={() => navigate("/learning")}
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Go to learning
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button onClick={() => navigate("/learning?tab=insights")} className="bg-primary hover:bg-primary/90 text-white gap-2">
-              <BookOpen className="w-4 h-4" />
-              View Learning Plan
-            </Button>
-            <Button onClick={() => navigate("/assessment")} variant="outline" className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Retake Assessment
-            </Button>
-            <DownloadPdfButton
-              type="assessment_report"
-              sessionId={sessionId ?? undefined}
-              label="Download Report PDF"
-              variant="outline"
-              size="default"
-              className="sm:col-span-2"
-            />
-          </div>
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 4: BENCHMARKS
-            Contains: grouped bar chart (user vs role avg vs platform avg),
-            comparison table, percentile context, synthetic data disclaimer.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="benchmarks" className="space-y-6">
-          {benchmarkLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-            </div>
-          ) : !benchmarkData ? (
-            <Card className="border-border">
-              <CardContent className="p-8 text-center">
-                <BarChart2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm font-semibold text-foreground">Benchmark data unavailable</p>
-                <p className="text-xs text-muted-foreground mt-1">Complete the assessment to see how you compare.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Header */}
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[#4477AA]/10">
-                  <BarChart2 className="w-5 h-5 text-[#4477AA]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">Benchmark Comparison</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Your scores compared against {benchmarkData.roleLabel} ({benchmarkData.seniorityLabel}-level)
-                    and the platform-wide average across all HR professionals.
-                  </p>
-                </div>
-              </div>
-
-              {/* Grouped Bar Chart */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-foreground">Score Comparison by Capability</CardTitle>
-                  <div className="flex items-center gap-5 flex-wrap mt-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-primary" />
-                      <span className="text-xs text-muted-foreground">Your Score</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-[#4477AA]" />
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="w-3 h-3" /> Role Average
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm bg-[#D97706]" />
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Globe className="w-3 h-3" /> Platform Average
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div style={{ height: 300 }}>
-                    <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
-                      <BarChart
-                        data={benchmarkData.capabilities.map(c => ({
-                          name: c.displayName.replace("AI ", ""),
-                          "Your Score": c.userScore,
-                          "Role Average": c.roleMean,
-                          "Platform Average": c.platformMean,
-                        }))}
-                        margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
-                        barCategoryGap="25%"
-                        barGap={2}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(v: number) => formatPeakonScore(v)}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "var(--card)",
-                            border: "1px solid var(--border)",
-                            borderRadius: "8px",
-                            fontSize: 12,
-                          }}
-                          formatter={(value: number, name: string) => [formatPeakonScore(value), name]}
-                        />
-                        <ReferenceLine y={75} stroke="var(--primary)" strokeDasharray="4 4" strokeOpacity={0.5}
-                          label={{ value: "7.5 (Safe)", position: "right", fontSize: 9, fill: "var(--primary)" }}
-                        />
-                        <Bar dataKey="Your Score" fill="var(--primary)" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                        <Bar dataKey="Role Average" fill="#4477AA" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                        <Bar dataKey="Platform Average" fill="#F59E0B" radius={[3, 3, 0, 0]} maxBarSize={28} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Comparison Table */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-foreground">Detailed Comparison</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Capability</th>
-                          <th className="text-center px-3 py-2.5 text-primary font-medium">Your Score</th>
-                          <th className="text-center px-3 py-2.5 text-[#90CDF4] font-medium">Role Avg</th>
-                          <th className="text-center px-3 py-2.5 text-amber-400 font-medium">Platform Avg</th>
-                          <th className="text-center px-3 py-2.5 text-muted-foreground font-medium">vs Role</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {benchmarkData.capabilities.map((cap, i) => {
-                          const diff = cap.userScore - cap.roleMean;
-                          const isAbove = diff > 0;
-                          const isBelow = diff < -5;
-                          return (
-                            <tr key={cap.key} className={cn("border-b border-border/50", i % 2 === 0 ? "bg-muted/20" : "")}>
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
-                                  <span className="font-medium text-foreground">{cap.displayName.replace("AI ", "")}</span>
-                                </div>
-                              </td>
-                              <td className="text-center px-3 py-2.5 font-semibold text-foreground">{formatPeakonScore(cap.userScore)}</td>
-                              <td className="text-center px-3 py-2.5 text-muted-foreground">{formatPeakonScore(cap.roleMean)}</td>
-                              <td className="text-center px-3 py-2.5 text-muted-foreground">{formatPeakonScore(cap.platformMean)}</td>
-                              <td className="text-center px-3 py-2.5">
-                                <span className={cn(
-                                  "inline-flex items-center gap-0.5 font-medium",
-                                  isAbove ? "text-primary" : isBelow ? "text-red-400" : "text-muted-foreground"
-                                )}>
-                                  {isAbove ? <TrendingUp className="w-3 h-3" /> : isBelow ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                                  {isAbove ? `+${(diff / 10).toFixed(1)}` : (diff / 10).toFixed(1)}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Percentile Context Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {benchmarkData.capabilities.map(cap => {
-                  const diff = cap.userScore - cap.roleMean;
-                  const sigmas = cap.stdDev > 0 ? diff / cap.stdDev : 0;
-                  const percentileApprox = Math.round(Math.min(99, Math.max(1, 50 + sigmas * 34)));
-                  return (
-                    <Card key={cap.key} className="border-border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cap.colour }} />
-                          <span className="text-xs font-semibold text-foreground truncate">{cap.displayName.replace("AI ", "")}</span>
-                        </div>
-                        <div className="text-2xl font-bold text-foreground">{formatPeakonScore(cap.userScore)}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">~{percentileApprox}th percentile</div>
-                        <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${cap.userScore}%`,
-                              backgroundColor: cap.userScore >= 75 ? "var(--primary)" : cap.userScore >= 55 ? "#D97706" : "#DC2626",
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>Role avg: {formatPeakonScore(cap.roleMean)}</span>
-                          <span>Platform: {formatPeakonScore(cap.platformMean)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              {/* Synthetic data disclaimer */}
-              {benchmarkData.isSynthetic && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/40 border border-border">
-                  <Info className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    <span className="font-medium">Benchmark data note:</span> Role and platform averages are currently
-                    based on synthetic reference distributions (norm group version: {benchmarkData.normGroupVersion}).
-                    These will be replaced with empirical data as the platform accumulates real assessment results.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 5: SCENARIO CALLBACKS
-            Shows the top 5 most signal-rich answers with scenario text, chosen
-            option, outcome class, and what the choice reveals about capability.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="scenarios" className="space-y-4">
-          <div>
-            <h3 className="text-base font-semibold text-foreground ">Key Scenario Moments</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              The five scenarios that contributed most to your capability profile. Each choice reveals something specific about how you approach AI-assisted HR decisions.
-            </p>
-          </div>
-          {((data as any).scenarioCallbacks ?? []).length === 0 ? (
-            <Card className="border-border">
-              <CardContent className="p-8 text-center">
-                <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Scenario callback data is not available for this session.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {((data as any).scenarioCallbacks as Array<{
-                itemId: string; scenarioText: string; chosenLabel: string; chosenText: string;
-                outcomeClass: string | null; revealText: string; capabilityKey: string;
-                signalDeltas: Record<string, number>;
-              }>).map((cb, idx) => {
-                const OUTCOME_COLORS: Record<string, { bg: string; border: string; badge: string; text: string; label: string }> = {
-                  strong:     { bg: "bg-primary/8",  border: "border-primary/30", badge: "bg-primary/15 text-primary",  text: "text-primary",  label: "Strong" },
-                  acceptable: { bg: "bg-[#44bb99]/8",  border: "border-[#44bb99]/30", badge: "bg-[#44bb99]/15 text-[#44bb99]",  text: "text-[#44bb99]",  label: "Acceptable" },
-                  weak:       { bg: "bg-[#D97706]/8",  border: "border-[#D97706]/30", badge: "bg-[#D97706]/15 text-amber-400",  text: "text-amber-400",  label: "Needs Work" },
-                  poor:       { bg: "bg-red-500/8",  border: "border-[#CC3311]/30", badge: "bg-red-500/15 text-red-400",  text: "text-red-400",  label: "Critical Gap" },
-                };
-                const oc = cb.outcomeClass ?? "weak";
-                const colors = OUTCOME_COLORS[oc] ?? OUTCOME_COLORS.weak;
-                const topSignals = Object.entries(cb.signalDeltas).sort(([,a],[,b]) => Math.abs(b)-Math.abs(a)).slice(0,3);
-                return (
-                  <Card key={cb.itemId} className={cn("border-2", colors.border, colors.bg)}>
-                    <CardContent className="p-5 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-muted-foreground w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">{idx + 1}</span>
-                          <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", colors.badge)}>{colors.label}</span>
-                          {cb.capabilityKey && (
-                            <span className="text-xs text-muted-foreground">· {DOMAIN_LABELS[cb.capabilityKey as keyof typeof DOMAIN_LABELS] ?? cb.capabilityKey.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
-                          )}
-                        </div>
-                        <span className="text-xs font-mono text-muted-foreground shrink-0">Option {cb.chosenLabel}</span>
-                      </div>
-                      <blockquote className="text-sm text-foreground leading-relaxed border-l-2 border-border pl-3 italic">
-                        &ldquo;{cb.scenarioText}&rdquo;
-                      </blockquote>
-                      {cb.chosenText && (
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">You chose:</span> {cb.chosenText}
-                        </div>
-                      )}
-                      <div className={cn("flex items-start gap-2 rounded-lg p-3", colors.bg, "border", colors.border)}>
-                        <Sparkles className={cn("w-3.5 h-3.5 shrink-0 mt-0.5", colors.text)} />
-                        <p className={cn("text-xs leading-relaxed", colors.text)}>{cb.revealText}</p>
-                      </div>
-                      {topSignals.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {topSignals.map(([sig, delta]) => (
-                            <span key={sig} className={cn(
-                              "text-xs font-medium px-2 py-0.5 rounded-full border",
-                              (delta as number) >= 0 ? "bg-primary/10 text-primary border-primary/25" : "bg-red-500/10 text-red-400 border-[#CC3311]/20"
-                            )}>
-                              {DOMAIN_LABELS[sig as keyof typeof DOMAIN_LABELS] ?? sig.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} {(delta as number) >= 0 ? "+" : ""}{Math.round((delta as number) * 100) / 100}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 6: CONFIDENCE CALIBRATION
-            Shows how well the participant’s self-assessed confidence matched
-            the actual quality of their answers.
-        ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="calibration" className="space-y-4">
-          <div>
-            <h3 className="text-base font-semibold text-foreground ">Confidence Calibration</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              How well did your confidence match the quality of your answers? Strong calibration is itself a capability signal.
-            </p>
-          </div>
-          {!(data as any).confidenceCalibration ? (
-            <Card className="border-border">
-              <CardContent className="p-8 text-center">
-                <Zap className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Calibration data is not available for this session.</p>
-              </CardContent>
-            </Card>
-          ) : (() => {
-            const cal = (data as any).confidenceCalibration as {
-              overconfidentCount: number; underconfidentCount: number; wellCalibratedCount: number;
-              totalAnswers: number; avgConfidence: number; avgConfidenceOnStrong: number;
-              avgConfidenceOnWeak: number; calibrationIndex: number | null; summary: string;
-            };
-            const calibrationScore = cal.totalAnswers > 0
-              ? Math.round((cal.wellCalibratedCount / cal.totalAnswers) * 100)
-              : 0;
-            const calColor = calibrationScore >= 70 ? "var(--primary)" : calibrationScore >= 45 ? "#D97706" : "#CC3311";
-            return (
-              <div className="space-y-4">
-                {/* Summary banner */}
-                <Card className="border-2" style={{ borderColor: `${calColor}40`, backgroundColor: `${calColor}08` }}>
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-5">
-                      <ScoreRing score={calibrationScore} color={calColor} size={90} />
-                      <div className="flex-1">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Calibration Score</p>
-                        <p className="text-sm text-foreground leading-relaxed">{cal.summary}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                {/* Three-bucket breakdown */}
-                <div className="grid grid-cols-3 gap-3">
-                  <Card className="border-primary/30 bg-primary/8">
-                    <CardContent className="p-4 text-center">
-                      <ThumbsUp className="w-5 h-5 text-primary mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-primary">{cal.wellCalibratedCount}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Well calibrated</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-[#D97706]/30 bg-[#D97706]/5">
-                    <CardContent className="p-4 text-center">
-                      <ThumbsDown className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-amber-400">{cal.overconfidentCount}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Overconfident</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-[#CC3311]/30 bg-red-500/5">
-                    <CardContent className="p-4 text-center">
-                      <Minus className="w-5 h-5 text-red-400 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-red-400">{cal.underconfidentCount}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Underconfident</div>
-                    </CardContent>
-                  </Card>
-                </div>
-                {/* Confidence vs outcome comparison */}
-                <Card className="border-border">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Average Confidence by Answer Quality</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">On strong/acceptable answers</span>
-                        <span className="font-semibold text-foreground">{cal.avgConfidenceOnStrong}%</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${cal.avgConfidenceOnStrong}%` }} />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">On weak/poor answers</span>
-                        <span className="font-semibold text-foreground">{cal.avgConfidenceOnWeak}%</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-red-500 transition-all" style={{ width: `${cal.avgConfidenceOnWeak}%` }} />
-                      </div>
-                    </div>
-                    {cal.calibrationIndex !== null && (
-                      <div className="flex items-center gap-2 pt-2 border-t border-border">
-                        <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">Calibration index: {cal.calibrationIndex > 0 ? "+" : ""}{cal.calibrationIndex}</span>
-                          {" "}(positive = confidence correctly tracks answer quality; negative = overconfident on gaps)
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                {/* Interpretation guide */}
-                <Card className="border-border bg-muted/30">
-                  <CardContent className="p-5">
-                    <p className="text-xs font-semibold text-foreground mb-2">What does calibration mean?</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Confidence calibration measures whether your certainty levels matched the actual quality of your decisions. 
-                      A well-calibrated professional is certain when they are right and uncertain when they are wrong - this is a 
-                      distinct metacognitive skill that predicts real-world AI decision quality.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            );
-          })()}
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════════════════
-            TAB 7: METACOGNITION - Competence-Confidence Matrix & Blind Spots
-            Based on Area9 Lyceum's 4-Dimensional Learning Model
-            ══════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="metacognition" className="space-y-6">
-          {(() => {
-            const matrix = ((data as any).competenceConfidenceMatrix ?? []) as Array<{
-              domain: string; displayName: string; colour: string;
-              competenceScore: number; avgConfidence: number;
-              quadrant: string; quadrantLabel: string; quadrantDescription: string;
-              risk: string; answerCount: number;
-            }>;
-            const blindSpotsList = ((data as any).blindSpots ?? []) as typeof matrix;
-
-            if (matrix.length === 0) {
-              return (
-                <Card className="border-border">
-                  <CardContent className="p-8 text-center">
-                    <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Metacognitive analysis requires confidence data per answer. Complete an assessment with confidence staking enabled to see this analysis.</p>
-                  </CardContent>
-                </Card>
-              );
-            }
-
-            const QUADRANT_COLOURS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-              unconscious_incompetence: { bg: "bg-[#DC2626]/80/10", border: "border-[#DC2626]/30", text: "text-red-400", dot: "#DC2626" },
-              conscious_incompetence: { bg: "bg-[#D97706]/80/10", border: "border-[#D97706]/30", text: "text-amber-400", dot: "#D97706" },
-              conscious_competence: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-600", dot: "#4477AA" },
-              unconscious_competence: { bg: "bg-primary/80/10", border: "border-primary/30", text: "text-primary", dot: "var(--primary)" },
-            };
-
-            return (
-              <div className="space-y-6">
-                {/* Section header */}
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">Competence-Confidence Matrix</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Based on Area9 Lyceum's 4-Dimensional Learning Model. Each capability domain is placed in one of four quadrants
-                    based on your actual competence (assessment score) and your self-reported confidence.
-                  </p>
-                </div>
-
-                {/* 2x2 Matrix Visualisation */}
-                <Card className="border-border">
-                  <CardContent className="p-6">
-                    <div className="relative w-full" style={{ aspectRatio: "1.4/1", minHeight: 320 }}>
-                      {/* Axis labels */}
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ transformOrigin: "center" }}>
-                        Confidence →
-                      </div>
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-medium text-muted-foreground">
-                        Competence →
-                      </div>
-
-                      {/* Grid */}
-                      <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
-                        {/* Q1: Top-left = Low competence, High confidence = Blind Spot */}
-                        <div className="bg-[#DC2626]/80/5 border border-[#DC2626]/20 rounded-tl-lg p-3 relative">
-                          <span className="text-xs font-semibold text-red-400/70 uppercase tracking-widest">Blind Spot</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">High confidence, low competence</p>
-                        </div>
-                        {/* Q4: Top-right = High competence, High confidence = Mastery */}
-                        <div className="bg-primary/80/5 border border-primary/20 rounded-tr-lg p-3 relative">
-                          <span className="text-xs font-semibold text-primary/70 uppercase tracking-widest">Mastery</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">High confidence, high competence</p>
-                        </div>
-                        {/* Q2: Bottom-left = Low competence, Low confidence = Aware Gap */}
-                        <div className="bg-[#D97706]/80/5 border border-[#D97706]/20 rounded-bl-lg p-3 relative">
-                          <span className="text-xs font-semibold text-amber-400/70 uppercase tracking-widest">Aware Gap</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Low confidence, low competence</p>
-                        </div>
-                        {/* Q3: Bottom-right = High competence, Low confidence = Developing */}
-                        <div className="bg-blue-500/5 border border-blue-500/20 rounded-br-lg p-3 relative">
-                          <span className="text-xs font-semibold text-blue-500/70 uppercase tracking-widest">Developing</span>
-                          <p className="text-xs text-muted-foreground mt-0.5">Low confidence, high competence</p>
-                        </div>
-
-                        {/* Plot domain dots */}
-                        {matrix.map((d) => {
-                          // Map competence (0-100) to x% within the grid (0=left, 100=right)
-                          const x = Math.max(5, Math.min(95, d.competenceScore));
-                          // Map confidence (0-100) to y% within the grid (0=bottom, 100=top)
-                          const y = Math.max(5, Math.min(95, 100 - d.avgConfidence));
-                          const qc = QUADRANT_COLOURS[d.quadrant] ?? QUADRANT_COLOURS.conscious_competence;
-                          return (
-                            <UITooltip key={d.domain}>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className="absolute z-10 w-8 h-8 rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                                  style={{
-                                    left: `${x}%`,
-                                    top: `${y}%`,
-                                    transform: "translate(-50%, -50%)",
-                                    backgroundColor: qc.dot,
-                                  }}
-                                >
-                                  <span className="text-[8px] font-bold text-white">{d.competenceScore}</span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="font-semibold text-sm">{d.displayName}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Competence: {d.competenceScore}/100 · Confidence: {d.avgConfidence}%
-                                </p>
-                                <p className="text-xs mt-1">
-                                  <span className={cn("font-medium", qc.text)}>{d.quadrantLabel}</span>
-                                  {" "}- {d.quadrantDescription}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">Based on {d.answerCount} answers</p>
-                              </TooltipContent>
-                            </UITooltip>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Domain cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {matrix.map((d) => {
-                    const qc = QUADRANT_COLOURS[d.quadrant] ?? QUADRANT_COLOURS.conscious_competence;
-                    return (
-                      <Card key={d.domain} className={cn("border", qc.border, qc.bg)}>
-                        <CardContent className="p-5">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground">{d.displayName}</h4>
-                              <span className={cn("text-xs font-medium", qc.text)}>{d.quadrantLabel}</span>
-                            </div>
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: d.colour + "20" }}>
-                              <span className="text-xs font-bold" style={{ color: d.colour }}>{d.competenceScore}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2 mt-3">
-                            <div>
-                              <div className="flex justify-between text-xs mb-0.5">
-                                <span className="text-muted-foreground">Competence</span>
-                                <span className="font-medium text-foreground">{d.competenceScore}/100</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div className="h-full rounded-full transition-all" style={{ width: `${d.competenceScore}%`, backgroundColor: d.colour }} />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-xs mb-0.5">
-                                <span className="text-muted-foreground">Confidence</span>
-                                <span className="font-medium text-foreground">{d.avgConfidence}%</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div className="h-full rounded-full transition-all" style={{ width: `${d.avgConfidence}%`, backgroundColor: qc.dot }} />
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">{d.quadrantDescription}</p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                {/* Blind Spots Alert */}
-                {blindSpotsList.length > 0 && (
-                  <Card className="border-[#DC2626]/30 bg-[#DC2626]/80/5">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <ShieldAlert className="w-5 h-5 text-red-400" />
-                        <span className="text-red-400">Blind Spots Detected</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        These domains show high confidence but low competence - the most dangerous metacognitive state.
-                        You may be making AI-related decisions in these areas without recognising the risks.
-                      </p>
-                      {blindSpotsList.map((bs) => (
-                        <div key={bs.domain} className="flex items-center gap-3 p-3 rounded-lg bg-[#DC2626]/80/5 border border-[#DC2626]/20">
-                          <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-5 h-5 text-red-400" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">{bs.displayName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Score: {bs.competenceScore}/100 but confidence: {bs.avgConfidence}% -
-                              {" "}a {bs.avgConfidence - bs.competenceScore > 20 ? "significant" : "notable"} gap between
-                              what you think you know and what the assessment revealed.
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                        <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">What to do:</span> Blind spots require deliberate practice with feedback.
-                          Your learning plan will prioritise these domains. Focus on scenarios where you must evaluate AI outputs critically
-                          rather than accepting them at face value.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Interpretation guide */}
-                <Card className="border-border bg-muted/30">
-                  <CardContent className="p-5">
-                    <p className="text-xs font-semibold text-foreground mb-2">About the Competence-Confidence Matrix</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      This analysis is based on Area9 Lyceum's 4-Dimensional Learning Model, which maps learners across
-                      competence (what you can actually do) and confidence (what you think you can do). The most productive
-                      learning happens when you move from "Blind Spot" (unconscious incompetence) to "Aware Gap" (conscious
-                      incompetence) - recognising what you don't know is the first step to building genuine capability.
-                      The goal is to reach "Mastery" (unconscious competence) where correct behaviour is automatic.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            );
-          })()}
-        </TabsContent>
-      </Tabs>
-    </div>
-    </div>
-    </div>
-  );
-}
-
-
-// BA-04 / BA-06: Assessment Business Impact Card
-
-function AssessmentBusinessImpactCard({
-  overallScore,
-  ambitionGap,
-}: {
-  overallScore: number;
-  ambitionGap: any;
-}) {
-  const currentPeakon = (overallScore / 10).toFixed(1);
-  const targetPeakon = ambitionGap.ambitionTargetScore !== null
-    ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : null;
-  const gapRaw = ambitionGap.ambitionTargetScore !== null
-    ? ambitionGap.ambitionTargetScore - overallScore : null;
-  const isAboveTarget = gapRaw !== null && gapRaw <= 0;
-  const isAboveOrgAvg = ambitionGap.functionAvgRaw !== null && overallScore > ambitionGap.functionAvgRaw;
-
-  // BA-06: Capability-to-outcome table
-  const CAPABILITY_OUTCOMES: Array<{ domain: string; label: string; outcome: string; colour: string }> = [
-    { domain: "ai_interaction", label: "AI Interaction", outcome: "Faster, higher-quality AI-assisted HR decisions", colour: "#4477AA" },
-    { domain: "ai_output_evaluation", label: "Output Evaluation", outcome: "Reduced risk from AI errors and hallucinations", colour: "#68D391" },
-    { domain: "ai_workflow_design", label: "Workflow Design", outcome: "Scalable automation of repetitive HR processes", colour: "#CCBB44" },
-    { domain: "ai_ethics_trust", label: "Ethics & Trust", outcome: "Compliant, fair AI use that maintains employee confidence", colour: "#EE6677" },
-    { domain: "workforce_ai_readiness", label: "Workforce Readiness", outcome: "Faster organisation-wide AI adoption", colour: "#BBBBBB" },
-    { domain: "ai_change_leadership", label: "Change Leadership", outcome: "Sustainable AI transformation with stakeholder buy-in", colour: "#66CCEE" },
-  ];
-
-  return (
-    <Card className="border-[#047857]/20 bg-[#047857]/3">
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#047857]/10 border border-[#047857]/20 flex items-center justify-center shrink-0">
-            <Target className="w-4.5 h-4.5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Business impact of your result</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              How your score of <strong className="text-foreground">{currentPeakon}/10</strong> relates to the organisation's AI ambition
-              {targetPeakon && <> (target: <strong className="text-foreground">{targetPeakon}/10</strong>)</>}
-            </p>
-          </div>
+          <SpiderChart domains={domains} />
         </div>
+      )}
 
-        {/* Position summary */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2.5 rounded-lg bg-background border border-border text-center">
-            <p className="text-xs text-muted-foreground mb-0.5">vs org average</p>
-            <p className="text-sm font-bold" style={{ color: isAboveOrgAvg ? "var(--primary)" : "#F59E0B" }}>
-              {isAboveOrgAvg ? "Above" : "Below"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} avg
-            </p>
-          </div>
-          <div className="p-2.5 rounded-lg bg-background border border-border text-center">
-            <p className="text-xs text-muted-foreground mb-0.5">vs ambition target</p>
-            <p className="text-sm font-bold" style={{ color: isAboveTarget ? "var(--primary)" : "#F59E0B" }}>
-              {isAboveTarget ? "Meets target ✓" : gapRaw !== null ? `${(gapRaw / 10).toFixed(1)} pts gap` : "-"}
-            </p>
-            <p className="text-xs text-muted-foreground">target: {targetPeakon ?? "-"}</p>
-          </div>
-        </div>
-
-        {/* BA-06: Capability-to-outcome table */}
+      {/* Domain cards */}
+      {domains.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">
-            What each capability unlocks for the business
-          </p>
-          <div className="space-y-1.5">
-            {CAPABILITY_OUTCOMES.map(co => (
-              <div key={co.domain} className="flex items-start gap-2.5 text-xs">
-                <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: co.colour }} />
-                <div className="flex-1 min-w-0">
-                  <span className="font-medium text-foreground">{co.label}</span>
-                  <span className="text-muted-foreground"> - {co.outcome}</span>
-                </div>
-              </div>
-            ))}
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+            Domain Scores
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {domains.map(domain => {
+              const matrix = (competenceConfidenceMatrix as any[])?.find((m: any) => m.domain === domain.key);
+              return (
+                <DomainCard
+                  key={domain.key}
+                  domainKey={domain.key}
+                  displayName={domain.displayName}
+                  score={domain.score}
+                  colour={domain.colour}
+                  quadrant={matrix?.quadrant}
+                  onClick={() => setSelectedDomain(domain.key)}
+                />
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {ambitionGap.ambitionTargetLabel && (
-          <div className="p-2.5 rounded-lg bg-[#047857]/5 border border-[#047857]/15">
-            <p className="text-xs text-[#047857] font-medium">Organisation's AI ambition</p>
-            <p className="text-xs text-muted-foreground mt-0.5 italic">"{ambitionGap.ambitionTargetLabel}"</p>
-            {ambitionGap.ambitionTargetDate && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Target date: <strong className="text-foreground">
-                  {new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
-                </strong>
-              </p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Domain detail sheet */}
+      {selectedDomainData && (
+        <DomainSheet
+          open={!!selectedDomain}
+          onClose={() => setSelectedDomain(null)}
+          domainKey={selectedDomainData.key}
+          displayName={selectedDomainData.displayName}
+          score={selectedDomainData.score}
+          colour={selectedDomainData.colour}
+          quadrant={selectedMatrix?.quadrant}
+          quadrantLabel={selectedMatrix?.quadrantLabel}
+          quadrantDescription={selectedMatrix?.quadrantDescription}
+        />
+      )}
+    </div>
   );
 }
