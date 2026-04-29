@@ -1859,3 +1859,10 @@
 - [x] THEME2-03: Update AppShell background depth classes to use new palette
 - [x] THEME2-04: Ensure all hardcoded dark colours in dashboard pages are updated to new card surface tokens
 - [x] THEME2-05: Update chart/viz colours to work on new lighter card surfaces
+
+## Card Inner Shadow Polish (Apr 29 2026)
+
+- [x] CARD-01: Update shadcn Card component box-shadow to include subtle inner shadow
+- [x] CARD-02: Update aiq-card-elevated utility class with inner shadow
+- [x] CARD-03: Update aiq-main-bg card surfaces in dashboard pages with inner shadow
+- [x] CARD-04: Visual verification — cards pop against indigo background

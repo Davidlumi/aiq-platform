@@ -21,11 +21,11 @@ const cardVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-md border-[var(--color-neutral-200)] shadow-[var(--elevation-sm)] gap-0",
+          "rounded-md border-border shadow-[var(--card-shadow)] gap-0",
         elevated:
-          "rounded-lg border-[var(--color-neutral-200)] shadow-[var(--elevation-md)] gap-0",
+          "rounded-lg border-border shadow-[var(--card-shadow)] gap-0",
         sunken:
-          "rounded-md border-[var(--color-neutral-200)] bg-[var(--color-neutral-50)] shadow-none gap-0",
+          "rounded-md border-border bg-muted shadow-[var(--card-inner-shadow)] gap-0",
       },
     },
     defaultVariants: {
@@ -69,7 +69,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "text-[17px] font-medium leading-[26px] text-[var(--color-neutral-900)]",
+        "text-[17px] font-medium leading-[26px] text-card-foreground",
         className
       )}
       {...props}
@@ -82,7 +82,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-description"
       className={cn(
-        "text-[14px] font-normal leading-[20px] text-[var(--color-neutral-600)]",
+        "text-[14px] font-normal leading-[20px] text-muted-foreground",
         className
       )}
       {...props}
@@ -116,7 +116,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="card-footer"
       className={cn(
         "flex items-center px-6 pb-6 pt-0",
-        "text-sm font-normal leading-[18px] text-[var(--color-neutral-500)]",
+        "text-sm font-normal leading-[18px] text-muted-foreground",
         className
       )}
       {...props}
@@ -129,7 +129,7 @@ function CardDivider({ className, ...props }: React.ComponentProps<"hr">) {
   return (
     <hr
       data-slot="card-divider"
-      className={cn("border-0 border-t border-[var(--color-neutral-200)] mx-6", className)}
+      className={cn("border-0 border-t border-border mx-6", className)}
       {...props}
     />
   );

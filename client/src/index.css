@@ -143,6 +143,27 @@
   --shadow-md:   0 4px 12px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.30);
   --shadow-lg:   0 10px 24px -3px rgb(0 0 0 / 0.50), 0 4px 8px -4px rgb(0 0 0 / 0.30);
 
+  /* ── CARD INNER SHADOW ── */
+  /* Top-edge highlight: thin bright line at top = light catching the card rim */
+  /* Bottom-edge inner shadow: dark gradient sinking inward = depth illusion */
+  --card-inner-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.07),
+    inset 0 -1px 0 oklch(0% 0 0 / 0.20),
+    inset 1px 0 0 oklch(100% 0 0 / 0.03),
+    inset -1px 0 0 oklch(0% 0 0 / 0.10);
+  /* Outer drop shadow for lift */
+  --card-outer-shadow:
+    0 2px 8px oklch(0% 0 0 / 0.30),
+    0 1px 2px oklch(0% 0 0 / 0.20);
+  /* Combined card shadow */
+  --card-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.07),
+    inset 0 -1px 0 oklch(0% 0 0 / 0.20),
+    inset 1px 0 0 oklch(100% 0 0 / 0.03),
+    inset -1px 0 0 oklch(0% 0 0 / 0.10),
+    0 2px 8px oklch(0% 0 0 / 0.30),
+    0 1px 2px oklch(0% 0 0 / 0.20);
+
   /* ── MOTION ── */
   --duration-fast:   150ms;
   --duration-base:   200ms;
@@ -520,14 +541,16 @@
   box-shadow: 0 1px 0 oklch(72.3% 0.220 142 / 0.05), 0 2px 8px oklch(0% 0 0 / 0.25);
 }
 
-/* Card — elevated surface with soft inner-glow border */
+/* Card — elevated surface with inner shadow depth */
 .aiq-card-elevated {
   background: oklch(22.5% 0.055 264);
   border: 1px solid oklch(30% 0.050 264);
-  box-shadow:
-    0 0 0 1px oklch(72.3% 0.220 142 / 0.05),
-    0 2px 8px oklch(0% 0 0 / 0.25),
-    inset 0 1px 0 oklch(100% 0 0 / 0.05);
+  box-shadow: var(--card-shadow);
+}
+
+/* Global shadcn Card override — apply inner shadow to all .card elements */
+.card {
+  box-shadow: var(--card-shadow) !important;
 }
 
 /* Ambient glow blob — decorative background element */
