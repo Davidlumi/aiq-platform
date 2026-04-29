@@ -288,7 +288,7 @@ export function AIInsightCard({
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-3 bg-primary/10 rounded animate-pulse" style={{ width: `${70 + i * 10}%` }} />
+            <div key={i} className="h-3 rounded aiq-shimmer-brand" style={{ width: `${70 + i * 10}%`, animationDelay: `${i * 80}ms` }} />
           ))}
         </div>
       ) : (

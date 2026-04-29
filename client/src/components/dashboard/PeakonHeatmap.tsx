@@ -291,7 +291,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
       </div>
 
       {/* -- Heatmap Table -- */}
-      <div className="overflow-x-auto rounded-lg border border-border shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-border shadow-sm aiq-chart-mount">
         <table className="w-full border-collapse" style={{ minWidth: domainKeys.length * 100 + 240 }}>
           {/* Column headers */}
           <thead>

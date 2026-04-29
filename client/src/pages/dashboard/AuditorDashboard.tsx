@@ -118,7 +118,7 @@ export default function AuditorDashboard() {
           </CardHeader>
           <CardContent>
             {incidentTypeData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer className="aiq-chart-mount" width="100%" height={200}>
                 <BarChart data={incidentTypeData} layout="vertical"
                   margin={{ top: 0, right: 16, left: 90, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />

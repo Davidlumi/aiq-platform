@@ -173,7 +173,7 @@ function CapabilityRadarCard({ scores }: { scores: Record<string, number> }) {
       <CardContent>
         {hasAnyScore ? (
           <>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer className="aiq-chart-mount" width="100%" height={220}>
               <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                 <PolarGrid stroke="var(--border)" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />

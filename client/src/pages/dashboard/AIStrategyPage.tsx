@@ -120,7 +120,7 @@ function TrajectoryChart({
 
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: H }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="aiq-chart-mount" style={{ width: "100%", height: H }}>
         {/* Grid lines — dark navy */}
         {levelLines.map(l => (
           <g key={l.score}>

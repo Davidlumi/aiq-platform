@@ -24,7 +24,7 @@ function LevelRing({ score, size = 140 }: { score: number; size?: number }) {
   const arc = (score / 100) * circ;
   return (
     <div style={{ position: "relative", width: size, height: size }}>
-      <svg viewBox={`0 0 ${size} ${size}`} style={{ width: size, height: size }}>
+      <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: size, height: size }}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={chipStyle.bg} strokeWidth={sw}
           strokeDasharray={`${arc} ${circ}`} strokeDashoffset={0}
@@ -86,7 +86,7 @@ function TrajectoryChart({ history }: { history: Array<{ completedAt: number | n
           {delta >= 0 ? "+" : ""}{Math.round(delta)} vs previous
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: H }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="aiq-chart-mount" style={{ width: "100%", height: H }}>
         <polyline points={pts.join(" ")} fill="none" stroke="#60A5FA" strokeWidth={2} strokeLinejoin="round" />
         {reversed.map((h, i) => {
           const x = PAD + (i / (reversed.length - 1)) * (W - 2 * PAD);

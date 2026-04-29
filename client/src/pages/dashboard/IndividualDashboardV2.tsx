@@ -84,7 +84,7 @@ function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
-        <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+        <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: "100%", height: "100%" }}>
           {/* Track — dark navy */}
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={strokeWidth} />
           {/* Fill — level colour */}
@@ -345,10 +345,27 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-card border-border">
         {isLoading ? (
-          <div className="space-y-4 p-2">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 rounded-lg bg-secondary animate-pulse" />
-            ))}
+          <div className="space-y-5 p-2 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full aiq-shimmer-brand" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-36 rounded aiq-shimmer" />
+                <div className="h-3 w-24 rounded aiq-shimmer" />
+              </div>
+            </div>
+            <div className="h-3 w-full rounded aiq-shimmer" />
+            <div className="h-3 w-5/6 rounded aiq-shimmer" />
+            <div className="h-3 w-4/6 rounded aiq-shimmer" />
+            <div className="h-px w-full bg-border" />
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-3 w-3 rounded-full aiq-shimmer-brand" />
+                  <div className="h-3 flex-1 rounded aiq-shimmer" style={{ animationDelay: `${i * 60}ms` }} />
+                  <div className="h-5 w-12 rounded aiq-shimmer-brand" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : data ? (
           <>

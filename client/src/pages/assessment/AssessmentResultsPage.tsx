@@ -170,7 +170,7 @@ function RadarCapabilityChart({
   }));
   return (
     <div className="w-full" style={{ height: 260 }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
         <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
           <PolarGrid stroke="var(--border)" strokeOpacity={0.5} />
           <PolarAngleAxis
@@ -264,7 +264,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
       </CardHeader>
       <CardContent>
         <div style={{ height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
@@ -1688,7 +1688,7 @@ export default function AssessmentResultsPage() {
                 </CardHeader>
                 <CardContent>
                   <div style={{ height: 300 }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer className="aiq-chart-mount" width="100%" height="100%">
                       <BarChart
                         data={benchmarkData.capabilities.map(c => ({
                           name: c.displayName.replace("AI ", ""),

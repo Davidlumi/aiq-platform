@@ -43,7 +43,7 @@ function LevelDistributionDonut({
   });
   const preciseAvg = avgScore !== null ? (avgScore / 10).toFixed(1) : "-";
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+    <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: "100%", height: "100%" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
       {segments.map(seg => {
         if (seg.arc <= 0) return null;
@@ -381,7 +381,17 @@ export default function ManagerDashboardV2() {
           </Link>
         </div>
         {promptsLoading ? (
-          <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 rounded-lg bg-secondary animate-pulse" />)}</div>
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-border" style={{ background: "oklch(17% 0.028 240)" }}>
+                <div className="h-5 w-12 rounded-full aiq-shimmer-brand shrink-0" style={{ animationDelay: `${i * 60}ms` }} />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-1/3 rounded aiq-shimmer" style={{ animationDelay: `${i * 60}ms` }} />
+                  <div className="h-2.5 w-3/4 rounded aiq-shimmer" style={{ animationDelay: `${i * 60 + 30}ms` }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : !prompts || prompts.prompts.length === 0 ? (
           <p className="text-xs py-4 text-muted-foreground">No conversation prompts at this time. Your team is on track.</p>
         ) : (

@@ -680,7 +680,7 @@ export default function HRDashboard() {
         ) : (
           <Card className="border-border">
             <CardContent className="pt-5">
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer className="aiq-chart-mount" width="100%" height={220}>
                 <BarChart data={barData} margin={{ top: 0, right: 16, left: -16, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
@@ -738,7 +738,7 @@ export default function HRDashboard() {
                     <span className="text-xs text-muted-foreground">current org average</span>
                   </div>
                 )}
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer className="aiq-chart-mount" width="100%" height={160}>
                   <LineChart data={trajectoryPoints} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="month" tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
@@ -880,7 +880,7 @@ export default function HRDashboard() {
               {readinessPie.length === 0 ? (
                 <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">No data</div>
               ) : (
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer className="aiq-chart-mount" width="100%" height={180}>
                   <PieChart>
                     <Pie data={readinessPie} cx="50%" cy="50%" innerRadius={45} outerRadius={70}
                       dataKey="value" paddingAngle={2}>

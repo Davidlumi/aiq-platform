@@ -754,7 +754,7 @@ export default function ManagerDashboard() {
             </CardHeader>
             <CardContent>
               {capGaps.length > 0 ? (
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer className="aiq-chart-mount" width="100%" height={180}>
                   <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
                     layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />

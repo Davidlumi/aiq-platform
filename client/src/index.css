@@ -559,6 +559,39 @@ tr {
   to { transform: rotate(360deg); }
 }
 
+/* ── Chart-specific loading animations ── */
+@keyframes aiq-bar-grow {
+  from { transform: scaleY(0); transform-origin: bottom; opacity: 0.5; }
+  to   { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+}
+
+@keyframes aiq-line-draw {
+  from { stroke-dashoffset: 1000; opacity: 0.2; }
+  to   { stroke-dashoffset: 0;    opacity: 1; }
+}
+
+@keyframes aiq-chart-fade-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+@keyframes aiq-ring-draw {
+  from { stroke-dashoffset: 251; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* SVG path animation helper */
+.aiq-line-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: aiq-line-draw 1.2s ease-out forwards;
+}
+
+/* Chart mount fade-in — wraps real chart after data loads */
+.aiq-chart-mount {
+  animation: aiq-chart-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .aiq-shimmer {
   background: linear-gradient(
     90deg,

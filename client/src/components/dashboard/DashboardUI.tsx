@@ -431,23 +431,23 @@ export function PriorityBadge({ priority }: { priority: "critical" | "high" | "m
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="h-12 w-12 rounded-full aiq-shimmer-brand" />
         <div className="space-y-2">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-3 w-32" />
+          <div className="h-5 w-48 rounded aiq-shimmer" />
+          <div className="h-3 w-32 rounded aiq-shimmer" />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-32 rounded-xl" />
+          <div key={i} className="h-32 rounded-xl aiq-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
         ))}
       </div>
-      <Skeleton className="h-64 rounded-xl" />
+      <div className="h-64 rounded-xl aiq-shimmer-brand" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[1, 2].map(i => (
-          <Skeleton key={i} className="h-48 rounded-xl" />
+          <div key={i} className="h-48 rounded-xl aiq-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
         ))}
       </div>
     </div>

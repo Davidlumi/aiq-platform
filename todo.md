@@ -1834,3 +1834,11 @@
 - [x] Update AppShell sidebar: dark navy bg, green active state, white text
 - [x] Update AppShell header: dark navy, green accent
 - [x] Verify assessment page, dashboard pages, and learning plan render correctly with new theme
+
+## Chart Loading Animations (Apr 29 2026)
+
+- [x] ANIM-01: Enhance ChartSkeleton with animated SVG bar, line/area, radar, donut, sparkline, heatmap, and ring variants
+- [x] ANIM-02: Add fade-in transition when charts mount after data loads (AnimatedContainer wrapper)
+- [x] ANIM-03: Wire inline chart skeletons for sub-section queries (domain detail, benchmark, explanation)
+- [x] ANIM-04: Add CSS keyframe for animated bar-grow and line-draw effects on chart mount
+- [x] ANIM-05: Verify all 6 dashboard pages show skeleton → chart transition cleanly

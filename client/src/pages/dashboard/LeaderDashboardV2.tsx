@@ -49,7 +49,7 @@ function LevelDistributionDonut({ distribution, avgScore }: { distribution: Arra
   const segments = distribution.map(d => { const arc = (d.pct / 100) * circ; const seg = { level: d.level, arc, offset }; offset += arc; return seg; });
   const preciseAvg = avgScore !== null ? (avgScore / 10).toFixed(1) : "-";
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
+    <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: "100%", height: "100%" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
       {segments.map(seg => { if (seg.arc <= 0) return null; const s = getLevelChipStyle(seg.level); return (<circle key={seg.level} cx={cx} cy={cy} r={r} fill="none" stroke={s.bg} strokeWidth={sw} strokeDasharray={`${seg.arc} ${circ}`} strokeDashoffset={-seg.offset} transform={`rotate(-90 ${cx} ${cy})`} />); })}
       <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "var(--foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{preciseAvg}</text>
