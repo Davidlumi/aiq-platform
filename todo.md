@@ -1877,3 +1877,9 @@
 - [ ] ASSESS-06: Clicking domain card opens a slide-out sheet with domain detail + development link
 - [ ] ASSESS-07: Domain sheet shows: score breakdown, what this means, key strengths/gaps, link to learning plan filtered to domain
 - [ ] ASSESS-08: If no completed assessment, show a clean "Start your assessment" CTA page
+
+## Assessment Results Polish (Apr 29 2026)
+
+- [x] POLISH-01: Score ring — use bright primary green stroke, not muted scoreToColor
+- [x] POLISH-02: Spider chart — white/light grid lines and axis labels for definition
+- [x] POLISH-03: Add AI-generated 2-sentence summary below the header

@@ -8,7 +8,7 @@
  *   4. Clicking a domain card → slide-out Sheet with detail + dev link
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ import {
   ChevronRight, BookOpen, ArrowLeft, Target, Brain,
   Shield, Workflow, Database, Gavel, TrendingUp, TrendingDown,
 } from "lucide-react";
-import { scoreToColor } from "@/lib/peakon-colors";
+import { Sparkles } from "lucide-react";
 
 // ── Domain icons ───────────────────────────────────────────────────────────────
 
@@ -115,10 +115,10 @@ function SpiderChart({ domains }: {
   return (
     <ResponsiveContainer width="100%" height={340}>
       <RadarChart data={data} margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
-        <PolarGrid stroke="oklch(0.35 0.04 264 / 0.5)" strokeDasharray="3 3" />
+        <PolarGrid stroke="rgba(255,255,255,0.20)" />
         <PolarAngleAxis
           dataKey="subject"
-          tick={{ fill: "oklch(0.75 0.03 264)", fontSize: 12, fontWeight: 500 }}
+          tick={{ fill: "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 500 }}
         />
         <Radar
           name="Score"
@@ -349,11 +349,19 @@ export default function AssessmentResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
 
   const { data, isLoading, error } = trpc.assessment.results.useQuery(
     { sessionId },
     { enabled: !!sessionId }
   );
+  const summaryQuery = trpc.assessment.generateSummary.useQuery(
+    { sessionId: sessionId! },
+    { enabled: !!sessionId, staleTime: Infinity }
+  );
+  useEffect(() => {
+    if (summaryQuery.data?.summary) setSummary(summaryQuery.data.summary);
+  }, [summaryQuery.data]);
 
   if (isLoading) return <ResultsSkeleton />;
 
@@ -399,7 +407,6 @@ export default function AssessmentResultsPage() {
     : null;
 
   const displayScore = (overallScore / 10).toFixed(1);
-  const scoreColor = scoreToColor(overallScore / 10);
   const circumference = 2 * Math.PI * 38;
 
   return (
@@ -421,7 +428,7 @@ export default function AssessmentResultsPage() {
             <circle cx="50" cy="50" r="38" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="10" />
             <circle
               cx="50" cy="50" r="38" fill="none"
-              stroke={scoreColor.bg}
+              stroke="var(--primary)"
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={`${(overallScore / 100) * circumference} ${circumference}`}
@@ -446,7 +453,20 @@ export default function AssessmentResultsPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Your AI Capability Profile</h1>
           {completedAt && (
-            <p className="text-sm text-muted-foreground">Completed {completedAt}</p>
+            <p className="text-sm text-muted-foreground mb-2">Completed {completedAt}</p>
+          )}
+          {/* AI summary */}
+          {summaryQuery.isLoading && (
+            <div className="flex items-center gap-2 mt-1">
+              <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse shrink-0" />
+              <span className="text-xs text-muted-foreground italic">Generating your summary…</span>
+            </div>
+          )}
+          {summary && (
+            <div className="flex items-start gap-2 mt-1">
+              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground leading-relaxed">{summary}</p>
+            </div>
           )}
         </div>
 

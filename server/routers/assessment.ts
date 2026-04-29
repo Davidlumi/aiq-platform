@@ -2657,4 +2657,61 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         isSynthetic: true,
       };
     }),
+
+  // ── AI-generated 2-sentence assessment summary ──────────────────────────────────────
+  generateSummary: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { summary: null };
+
+      const sessionRows = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)))
+        .limit(1);
+      const session = sessionRows[0];
+      if (!session || !session.completedAt) return { summary: null };
+
+      const scoreRows = await db
+        .select({ overallScore: assessmentScores.overallScore, breakdown: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, input.sessionId))
+        .limit(1);
+      const scoreRow = scoreRows[0];
+      if (!scoreRow) return { summary: null };
+
+      const breakdown = scoreRow.breakdown as any;
+      const overallScore = parseFloat(String(scoreRow.overallScore));
+      const readinessState = breakdown?.readiness?.state ?? "unknown";
+      const capabilityScores = breakdown?.capabilityScores ?? {};
+
+      const readinessLabel =
+        readinessState === "safe" ? "AI-Ready" :
+        readinessState === "at_risk" ? "Developing" :
+        readinessState === "unsafe" ? "Needs Development" : "Not yet assessed";
+
+      const domainLines = Object.entries(capabilityScores)
+        .map(([, v]: [string, any]) => `${v.displayName}: ${Math.round(v.score)}/100`)
+        .join(", ");
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: "You are a concise, encouraging HR AI capability coach. Always respond with exactly 2 sentences, no bullet points, no headers.",
+            },
+            {
+              role: "user",
+              content: `Write exactly 2 concise, encouraging sentences (max 60 words total) summarising this person's AI capability assessment. Be specific about their strongest domain and one area to develop.\n\nOverall score: ${(overallScore / 10).toFixed(1)}/10 (${readinessLabel})\nDomain scores: ${domainLines}`,
+            },
+          ],
+        });
+        const summary = (response as any)?.choices?.[0]?.message?.content?.trim() ?? null;
+        return { summary };
+      } catch {
+        return { summary: null };
+      }
+    }),
 });
