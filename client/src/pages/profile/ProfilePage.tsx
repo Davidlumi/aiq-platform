@@ -340,14 +340,14 @@ export default function ProfilePage() {
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             {[
               { label: "User ID", value: profile?.id, mono: true },
-              { label: "Tenant", value: profile?.tenantId ?? "—" },
-              { label: "Member Since", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "—" },
-              { label: "Last Sign In", value: profile?.lastSignedIn ? new Date(profile.lastSignedIn).toLocaleString() : "—" },
+              { label: "Tenant", value: profile?.tenantId ?? "-" },
+              { label: "Member Since", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "-" },
+              { label: "Last Sign In", value: profile?.lastSignedIn ? new Date(profile.lastSignedIn).toLocaleString() : "-" },
             ].map(item => (
               <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
                 <dt className="aiq-label text-muted-foreground">{item.label}</dt>
                 <dd className={`mt-0.5 text-foreground font-medium ${item.mono ? "font-['DM_Mono'] text-xs" : ""}`}>
-                  {item.value ?? "—"}
+                  {item.value ?? "-"}
                 </dd>
               </div>
             ))}

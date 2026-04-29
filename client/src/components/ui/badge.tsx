@@ -1,5 +1,5 @@
 /**
- * Badge — AiQ Design System v2.2 §5.7
+ * Badge - AiQ Design System v2.2 §5.7
  *
  * Shape: rectangular (radius-xs = 2px), not pill.
  * Text: sentence case, 13px / 12px (sm).
@@ -18,7 +18,7 @@ const badgeVariants = cva(
   [
     "inline-flex items-center justify-center gap-1",
     "w-fit whitespace-nowrap shrink-0",
-    "rounded-[2px]", // radius-xs — rectangular, not pill
+    "rounded-[2px]", // radius-xs - rectangular, not pill
     "border",
     "text-xs font-normal leading-none",
     "px-2 py-1",
@@ -30,7 +30,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        // ── Shadcn backward-compat ──────────────────────────────────────
+        // -- Shadcn backward-compat --------------------------------------
         default:
           "bg-[var(--navy-800)] text-white border-[var(--navy-800)]",
         secondary:
@@ -40,7 +40,7 @@ const badgeVariants = cva(
         destructive:
           "bg-[var(--color-red-50)] text-[var(--color-red-900)] border-[var(--color-red-100)]",
 
-        // ── Individual (participant-facing) — never red ─────────────────
+        // -- Individual (participant-facing) - never red -----------------
         "strong-individual":
           "bg-[var(--state-strong-individual-bg)] text-[var(--state-strong-individual-text)] border-[var(--state-strong-individual-border)]",
         "developing-individual":
@@ -52,7 +52,7 @@ const badgeVariants = cva(
         "insufficient":
           "bg-[var(--state-insufficient-bg)] text-[var(--state-insufficient-text)] border-[var(--state-insufficient-border)]",
 
-        // ── Org (manager/CPO-facing) — semantic colour permitted ────────
+        // -- Org (manager/CPO-facing) - semantic colour permitted --------
         "strong-org":
           "bg-[var(--state-strong-org-bg)] text-[var(--state-strong-org-text)] border-[var(--state-strong-org-border)]",
         "developing-org":
@@ -62,7 +62,7 @@ const badgeVariants = cva(
         "foundation-org":
           "bg-[var(--state-foundation-org-bg)] text-[var(--state-foundation-org-text)] border-[var(--state-foundation-org-border)]",
 
-        // ── Neutral / muted ─────────────────────────────────────────────
+        // -- Neutral / muted ---------------------------------------------
         muted:
           "bg-[var(--color-neutral-50)] text-[var(--color-neutral-700)] border-[var(--color-neutral-200)]",
         navy:

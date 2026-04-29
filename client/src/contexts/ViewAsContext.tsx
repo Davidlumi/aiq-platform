@@ -1,5 +1,5 @@
 /**
- * ViewAsContext — Demo role switcher
+ * ViewAsContext - Demo role switcher
  * Lets the logged-in user override their effective role for demo purposes.
  * The override is stored in localStorage so it persists across page refreshes.
  */

@@ -18,7 +18,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-/** AiQ logo mark — dark slate circle, white A+Q, green i dot */
+/** AiQ logo mark - dark slate circle, white A+Q, green i dot */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
   const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
   return (
@@ -125,7 +125,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "#F7F8FA" }}>
-      {/* ── Left brand panel ── */}
+      {/* -- Left brand panel -- */}
       <div
         className="hidden lg:flex flex-col justify-between w-[440px] shrink-0 p-10"
         style={{
@@ -180,7 +180,7 @@ export default function LoginPage() {
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
             AiQ doesn't ask you to define hallucination. It puts you in realistic
-            work situations — under time pressure, with incomplete information — and
+            work situations - under time pressure, with incomplete information - and
             reads how you actually behave.
           </p>
 
@@ -250,7 +250,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* ── Right login form ── */}
+      {/* -- Right login form -- */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">
@@ -403,7 +403,7 @@ export default function LoginPage() {
                 letterSpacing: "0.08em",
               }}
             >
-              Demo credentials — password:{" "}
+              Demo credentials - password:{" "}
               <span
                 style={{
                   fontFamily: "monospace",

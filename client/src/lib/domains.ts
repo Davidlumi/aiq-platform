@@ -1,5 +1,5 @@
 /**
- * AiQ v10 — Capability Domain Constants
+ * AiQ v10 - Capability Domain Constants
  * Single source of truth for all domain labels, colours, icons, and descriptions.
  */
 
@@ -38,7 +38,7 @@ export const DOMAIN_SHORT_LABELS: Record<CapabilityKey, string> = {
   ai_change_leadership:  "Change",
 };
 
-/** Colorblind-safe palette — Tol Bright scheme */
+/** Colorblind-safe palette - Tol Bright scheme */
 export const DOMAIN_COLOURS: Record<CapabilityKey, string> = {
   ai_interaction:        "#4477AA",
   ai_output_evaluation:  "#DC2626",
@@ -59,12 +59,12 @@ export const DOMAIN_BG_COLOURS: Record<CapabilityKey, string> = {
 };
 
 export const DOMAIN_DESCRIPTIONS: Record<CapabilityKey, string> = {
-  ai_interaction:        "How effectively you communicate with AI tools — prompting, iterating, and directing AI to produce useful outputs.",
+  ai_interaction:        "How effectively you communicate with AI tools - prompting, iterating, and directing AI to produce useful outputs.",
   ai_output_evaluation:  "Your ability to critically assess AI-generated content for accuracy, fitness for purpose, and hidden errors.",
   ai_workflow_design:    "How well you can identify where AI adds value in a process and design appropriate human-AI handoff points.",
   workforce_ai_readiness:"Your capability to diagnose team AI skill gaps, design interventions, and advise leaders on readiness.",
   ai_ethics_trust:       "How you navigate ethical dilemmas involving AI, maintain employee trust, and hold firm under pressure.",
-  ai_change_leadership:  "Your ability to lead AI-driven change — managing resistance, calibrating pace, and designing sustainable transformation.",
+  ai_change_leadership:  "Your ability to lead AI-driven change - managing resistance, calibrating pace, and designing sustainable transformation.",
 };
 
 /** Foundation domains must reach ≥3 signals before strategic domains are assessed */
@@ -216,7 +216,7 @@ export const INTERACTION_TYPE_DESCRIPTIONS: Record<InteractionType, string> = {
   legitimate_concern:     "Tests your ability to distinguish legitimate AI concerns from unfounded resistance.",
 };
 
-/** Five-state readiness classification — Design System v2.2 §2.2 */
+/** Five-state readiness classification - Design System v2.2 §2.2 */
 export const READINESS_STATES = {
   safe: {
     label: "AI-Ready",

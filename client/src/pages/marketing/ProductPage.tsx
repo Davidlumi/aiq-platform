@@ -1,5 +1,5 @@
 /**
- * AiQ — The Product page — v3.0
+ * AiQ - The Product page - v3.0
  */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default function ProductPage() {
             <span style={{ color: green }}>All answering the same question.</span>
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            AiQ is a single platform with three distinct views — for the individual, for the manager, and for you.
+            AiQ is a single platform with three distinct views - for the individual, for the manager, and for you.
             Each view is designed for a different question. All three are live, connected, and updating continuously.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default function ProductPage() {
                 and what they're working on next.
               </p>
               <p className="text-slate-600 leading-relaxed mb-8">
-                Their development plan is personalised to them — not selected from a catalogue, generated
+                Their development plan is personalised to them - not selected from a catalogue, generated
                 for their specific diagnosed gaps, role context, and seniority. Their reassessment shows
                 them whether the work is paying off.
               </p>
@@ -68,7 +68,7 @@ export default function ProductPage() {
                   "Their current AI capability score across six domains",
                   "Their specific diagnosed gaps with plain-language explanations",
                   "Anonymous percentile context against role peers",
-                  "Their personalised development plan — sequenced, bounded, and calibrated to their role",
+                  "Their personalised development plan - sequenced, bounded, and calibrated to their role",
                   "Their reassessment results showing whether the gap closed",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -148,7 +148,7 @@ export default function ProductPage() {
                 ))}
               </div>
               <div className="mt-5 rounded-lg p-4 border" style={{ borderColor: borderD, background: "rgba(255,255,255,0.02)" }}>
-                <p className="text-xs font-semibold mb-2" style={{ color: green }}>1:1 prompt — Tom Bradley</p>
+                <p className="text-xs font-semibold mb-2" style={{ color: green }}>1:1 prompt - Tom Bradley</p>
                 <p className="text-xs text-slate-400 leading-relaxed">Foundation gap in AI Output Evaluation. Discuss the hallucination recognition module before Project Aurora kickoff.</p>
               </div>
             </div>
@@ -163,18 +163,18 @@ export default function ProductPage() {
                 </div>
               </div>
               <p className="text-slate-300 leading-relaxed mb-6">
-                Every line manager sees their team's capability state — who's where, who's progressing,
+                Every line manager sees their team's capability state - who's where, who's progressing,
                 who's stalled, and what's worth discussing in next week's 1:1s.
               </p>
               <p className="text-slate-400 leading-relaxed mb-8">
                 Not a heatmap. A briefing. Specific conversation prompts surface the development context
-                that matters — the gap that's relevant to the project they're about to kick off, the
+                that matters - the gap that's relevant to the project they're about to kick off, the
                 module that's sitting incomplete, the reassessment that's showing the gap isn't closing.
               </p>
               <div className="flex flex-col gap-4">
                 {[
                   "Team capability heatmap across all six domains",
-                  "Individual progress tracking — who's developing, who's stalled",
+                  "Individual progress tracking - who's developing, who's stalled",
                   "1:1 conversation prompts calibrated to each person's current development context",
                   "Team-level gap against business AI initiative requirements",
                   "Drill-down to individual reports with full audit logging",
@@ -210,7 +210,7 @@ export default function ProductPage() {
                 is asking for.
               </p>
               <p className="text-slate-600 leading-relaxed mb-8">
-                You configure your business's AI initiatives — the specific projects, timelines, and
+                You configure your business's AI initiatives - the specific projects, timelines, and
                 capability requirements. AiQ translates these into HR capability targets and shows
                 you the gap, the rate of closure, and the projected closure date for each commitment.
               </p>
@@ -218,8 +218,8 @@ export default function ProductPage() {
                 {[
                   "Function-level readiness against your business AI roadmap",
                   "Per-initiative gap analysis with trajectory and projected closure date",
-                  "Development investment efficiency — which interventions are producing measurable change",
-                  "Regulatory exposure brief — capability gaps that affect specific regulatory commitments",
+                  "Development investment efficiency - which interventions are producing measurable change",
+                  "Regulatory exposure brief - capability gaps that affect specific regulatory commitments",
                   "Drill-down to any manager's team or any individual, with audit logging",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -247,7 +247,7 @@ export default function ProductPage() {
               <div className="flex flex-col gap-2 mb-5">
                 {[
                   { label: "Current pace closure", value: "Q2 2027", good: true },
-                  { label: "Risk concentration", value: "Senior HRBPs — Workflow Design", good: false },
+                  { label: "Risk concentration", value: "Senior HRBPs - Workflow Design", good: false },
                   { label: "Stalled individuals", value: "3 of 24 assessed", good: false },
                   { label: "Development ROI", value: "0.8 pts per module completed", good: true },
                 ].map(({ label, value, good }) => (
@@ -260,7 +260,7 @@ export default function ProductPage() {
               <div className="rounded-lg p-4 border-l-4" style={{ background: "#F0FDF4", borderColor: green }}>
                 <p className="text-xs font-semibold mb-1" style={{ color: navy }}>Board finding</p>
                 <p className="text-xs text-slate-600 leading-relaxed italic">
-                  "At current pace, Project Aurora capability requirement will be met by Q2 2027 — one quarter early.
+                  "At current pace, Project Aurora capability requirement will be met by Q2 2027 - one quarter early.
                   Remaining risk is concentrated in workflow design among Senior HRBPs."
                 </p>
               </div>
@@ -282,7 +282,7 @@ export default function ProductPage() {
             </h2>
             <p className="text-slate-300 leading-relaxed">
               Every dashboard zone produces shareable export artefacts designed for board and executive committee use.
-              Not screenshots of your dashboard — designed documents that translate function-level intelligence into
+              Not screenshots of your dashboard - designed documents that translate function-level intelligence into
               briefing material your audience can read in five minutes and forward without explanation.
             </p>
           </div>
@@ -320,7 +320,7 @@ export default function ProductPage() {
           <div className="flex flex-col gap-5">
             {[
               { text: "AiQ does not assess AI capability across non-HR roles. It is built for HR functions specifically. The methodology and platform architecture would translate to other professional groups but that's a different product, not a feature." },
-              { text: "AiQ does not replace your performance management system or your existing learning platforms. It is the layer above them — the diagnostic intelligence that informs which development is worth investing in." },
+              { text: "AiQ does not replace your performance management system or your existing learning platforms. It is the layer above them - the diagnostic intelligence that informs which development is worth investing in." },
               { text: "AiQ does not predict who will succeed or who should be promoted. The methodology refuses to make predictive claims about individuals; it measures current capability and supports development." },
               { text: "AiQ does not produce comparative rankings of named individuals within an organisation. The architecture forbids this. Anonymous percentile context against role peers is available; named-individual league tables are not." },
               { text: "AiQ does not currently support multi-jurisdiction regulatory contexts. UK regulatory translation is built; international expansion is on the roadmap." },
@@ -342,7 +342,7 @@ export default function ProductPage() {
             Beta partners get full platform access plus direct access to the team building it.
           </p>
           <p className="text-slate-400 text-sm leading-relaxed mb-10">
-            The conversation starts with understanding your specific situation — whether AiQ is right for you depends
+            The conversation starts with understanding your specific situation - whether AiQ is right for you depends
             on your function size, your business AI commitments, and your appetite for working with a product that's still maturing.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

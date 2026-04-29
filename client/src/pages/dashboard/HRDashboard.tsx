@@ -1,21 +1,21 @@
 /**
- * CPO / HR Leader Dashboard — AiQ Platform
+ * CPO / HR Leader Dashboard - AiQ Platform
  *
  * Competitive benchmark improvements implemented:
- * QW-1  Hero KPI — single dominant readiness number above the fold
- * QW-2  Nav rename — "Org Capability" label (handled in AppShell)
- * QW-3  Empty state quality — onboarding CTA when no assessments
+ * QW-1  Hero KPI - single dominant readiness number above the fold
+ * QW-2  Nav rename - "Org Capability" label (handled in AppShell)
+ * QW-3  Empty state quality - onboarding CTA when no assessments
  * QW-4  Strengths / Development priorities two-column split
  * QW-5  Conversation starters for all team members
  * SU-1  Department / role-family filter on the people table
- * SU-2  Progressive disclosure — summary → drill-down → action
+ * SU-2  Progressive disclosure - summary → drill-down → action
  * SU-3  Action recommendations panel (Lattice-style)
  * SU-4  Card-level CSV export
  * SU-5  Signal transparency link to results
- * DI-1  LLM narrative layer — 3-sentence org intelligence brief
+ * DI-1  LLM narrative layer - 3-sentence org intelligence brief
  * DI-2  Longitudinal trend view (trajectory chart)
- * DL-1  Typography hierarchy — 64px hero, 24px section, 14px body
- * DL-2  Whitespace — generous padding, clear section separation
+ * DL-1  Typography hierarchy - 64px hero, 24px section, 14px body
+ * DL-2  Whitespace - generous padding, clear section separation
  */
 import { useState, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
@@ -37,7 +37,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// --- Design tokens ------------------------------------------------------------
 const GREEN  = "var(--primary)";
 const AMBER  = "#D97706";
 const RED    = "#DC2626";
@@ -62,7 +62,7 @@ const CAP_LABELS: Record<string, string> = {
   ai_change_leadership:   "Change Leadership",
 };
 
-// ─── Readiness state helpers ──────────────────────────────────────────────────
+// --- Readiness state helpers --------------------------------------------------
 function readinessColor(r: string | null) {
   if (r === "safe")    return GREEN;
   if (r === "at_risk") return AMBER;
@@ -84,7 +84,7 @@ function scoreToHeatClass(score: number | null): string {
   return "bg-[#DC2626]/80/10 text-[#CC3344] dark:text-[#DC2626]";
 }
 
-// ─── CSV export ───────────────────────────────────────────────────────────────
+// --- CSV export ---------------------------------------------------------------
 function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
@@ -99,7 +99,7 @@ function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   URL.revokeObjectURL(url);
 }
 
-// ─── Custom tooltip ───────────────────────────────────────────────────────────
+// --- Custom tooltip -----------------------------------------------------------
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
@@ -116,7 +116,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
-// ─── LLM Narrative Panel ─────────────────────────────────────────────────────
+// --- LLM Narrative Panel -----------------------------------------------------
 function NarrativePanel({ narrative }: { narrative: { headline: string; insight: string; action: string } | null }) {
   if (!narrative) return null;
   return (
@@ -137,7 +137,7 @@ function NarrativePanel({ narrative }: { narrative: { headline: string; insight:
   );
 }
 
-// ─── Action Recommendations Panel (Lattice-style) ────────────────────────────
+// --- Action Recommendations Panel (Lattice-style) ----------------------------
 function ActionRecommendations({ data }: { data: any }) {
   const rd = data?.readinessDistribution;
   const reval = data?.revalidationStats;
@@ -254,7 +254,7 @@ function ActionRecommendations({ data }: { data: any }) {
   );
 }
 
-// ─── Department filter + people table ────────────────────────────────────────
+// --- Department filter + people table ----------------------------------------
 function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; lastName: string; roleFamily: string | null; jobFunction: string | null; readiness: string | null }> }) {
   const [deptFilter, setDeptFilter] = useState<string>("all");
   const [readinessFilter, setReadinessFilter] = useState<string>("all");
@@ -334,8 +334,8 @@ function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; 
                     <td className="py-3 px-4 font-medium text-foreground">
                       {u.firstName} {u.lastName}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{u.roleFamily ?? "—"}</td>
-                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell truncate max-w-[160px]">{u.jobFunction ?? "—"}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{u.roleFamily ?? "-"}</td>
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell truncate max-w-[160px]">{u.jobFunction ?? "-"}</td>
                     <td className="px-3 py-2.5">
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
                         style={{ color, backgroundColor: `${color}15` }}>
@@ -361,7 +361,7 @@ function PeopleTable({ users }: { users: Array<{ id: string; firstName: string; 
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// --- Main component -----------------------------------------------------------
 export default function HRDashboard() {
   const { data, isLoading, refetch } = trpc.dashboard.hr.useQuery();
   const { data: trajectoryData } = trpc.dashboard.orgTrajectory.useQuery();
@@ -418,7 +418,7 @@ export default function HRDashboard() {
   const userList = data?.userReadinessList ?? [];
   const deptBreakdown = data?.departmentBreakdown ?? [];
 
-  // No assessments yet — onboarding empty state
+  // No assessments yet - onboarding empty state
   if (total === 0) {
     return (
       <div className="p-6 max-w-3xl">
@@ -428,7 +428,7 @@ export default function HRDashboard() {
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">No assessments yet</h2>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-6">
-            Once your team members complete their AI Readiness Assessment, your organisation's capability intelligence will appear here — including readiness distribution, capability gaps, and compliance status.
+            Once your team members complete their AI Readiness Assessment, your organisation's capability intelligence will appear here - including readiness distribution, capability gaps, and compliance status.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="sm" className="gap-2 bg-primary hover:bg-[var(--primary)] text-white">
@@ -478,7 +478,7 @@ export default function HRDashboard() {
   return (
     <div className="p-6 space-y-8 max-w-7xl">
 
-      {/* ── Page header ── */}
+      {/* -- Page header -- */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Org Capability</h1>
@@ -501,7 +501,7 @@ export default function HRDashboard() {
         </div>
       </div>
 
-      {/* ── HERO KPI — single dominant number ── */}
+      {/* -- HERO KPI - single dominant number -- */}
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
           {/* Hero number */}
@@ -551,10 +551,10 @@ export default function HRDashboard() {
         </div>
       </div>
 
-      {/* ── LLM Narrative ── */}
+      {/* -- LLM Narrative -- */}
       {narrative && <NarrativePanel narrative={narrative} />}
 
-      {/* ── Action Recommendations + Strengths/Development split ── */}
+      {/* -- Action Recommendations + Strengths/Development split -- */}
       <div className="grid lg:grid-cols-2 gap-4">
         <ActionRecommendations data={data} />
 
@@ -605,7 +605,7 @@ export default function HRDashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-foreground truncate">{CAP_LABELS[c.capability]}</span>
-                              <span className="text-xs font-bold ml-1" style={{ color }}>{c.avgScore ?? "—"}</span>
+                              <span className="text-xs font-bold ml-1" style={{ color }}>{c.avgScore ?? "-"}</span>
                             </div>
                             <div className="h-1 rounded-full bg-muted mt-1 overflow-hidden">
                               <div className="h-full rounded-full" style={{ width: `${c.avgScore ?? 0}%`, backgroundColor: color }} />
@@ -622,7 +622,7 @@ export default function HRDashboard() {
         </Card>
       </div>
 
-      {/* ── Capability Intelligence ── */}
+      {/* -- Capability Intelligence -- */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => setShowCapIntel(!showCapIntel)} className="flex items-center gap-2 group text-left">
@@ -661,7 +661,7 @@ export default function HRDashboard() {
                       <span className="text-xs font-semibold text-foreground">{CAP_LABELS[c.capability]}</span>
                     </div>
                     <div className={cn("rounded-lg p-3 text-center", heatClass)}>
-                      <p className="text-3xl font-bold">{score !== null ? score : "—"}</p>
+                      <p className="text-3xl font-bold">{score !== null ? score : "-"}</p>
                       <p className="text-xs mt-0.5 opacity-80">avg score</p>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
@@ -700,7 +700,7 @@ export default function HRDashboard() {
         )}
       </div>
 
-      {/* ── Trajectory + Mismatch row ── */}
+      {/* -- Trajectory + Mismatch row -- */}
       <div className="grid lg:grid-cols-2 gap-4">
 
         {/* Readiness Trajectory (DI-2) */}
@@ -814,7 +814,7 @@ export default function HRDashboard() {
         </Card>
       </div>
 
-      {/* ── Department breakdown ── */}
+      {/* -- Department breakdown -- */}
       {deptBreakdown.length > 0 && (
         <div>
           <button onClick={() => setShowDeptBreakdown(!showDeptBreakdown)} className="flex items-center gap-2 mb-3 group">
@@ -846,7 +846,7 @@ export default function HRDashboard() {
         </div>
       )}
 
-      {/* ── People table with filter (SU-1 + progressive disclosure SU-2) ── */}
+      {/* -- People table with filter (SU-1 + progressive disclosure SU-2) -- */}
       <div>
         <button
           onClick={() => setShowPeople(!showPeople)}
@@ -860,7 +860,7 @@ export default function HRDashboard() {
         {showPeople && <PeopleTable users={userList} />}
       </div>
 
-      {/* ── Regulatory Zone ── */}
+      {/* -- Regulatory Zone -- */}
       <div>
         <button onClick={() => setShowRegulatory(!showRegulatory)} className="flex items-center gap-2 mb-4 group">
           <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", showRegulatory && "rotate-90")} />

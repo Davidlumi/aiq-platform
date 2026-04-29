@@ -1,5 +1,5 @@
 /**
- * LearningPlanPage — Domain-card layout
+ * LearningPlanPage - Domain-card layout
  *
  * Clean, full-width layout inspired by world-class learning platforms.
  * One card per capability domain showing the assessment score + readiness,
@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { scoreToColor } from "@/lib/peakon-colors";
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// --- Constants -----------------------------------------------------------------
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   ai_foundations:       { label: "AI Foundations",       color: "#4477AA", icon: Brain },
@@ -55,7 +55,7 @@ const READINESS_LABELS: Record<string, { label: string; color: string; bg: strin
   insufficient_evidence: { label: "Not yet assessed", color: "#888", bg: "#88888818" },
 };
 
-// ─── Module Card ───────────────────────────────────────────────────────────────
+// --- Module Card ---------------------------------------------------------------
 
 function ModuleCard({
   item,
@@ -165,7 +165,7 @@ function ModuleCard({
   );
 }
 
-// ─── Domain Card ───────────────────────────────────────────────────────────────
+// --- Domain Card ---------------------------------------------------------------
 
 function DomainCard({
   domainKey,
@@ -272,7 +272,7 @@ function DomainCard({
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// --- Main Page -----------------------------------------------------------------
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
@@ -364,7 +364,7 @@ export default function LearningPlanPage() {
   return (
     <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-6">
 
-      {/* ── Page header ── */}
+      {/* -- Page header -- */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Your AI Capability Plan</h1>
@@ -376,7 +376,7 @@ export default function LearningPlanPage() {
         <DownloadPdfButton type="learning_plan" label="Download Plan PDF" variant="outline" size="sm" className="shrink-0" />
       </div>
 
-      {/* ── Overall progress bar ── */}
+      {/* -- Overall progress bar -- */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-muted-foreground">Overall progress</span>
@@ -387,19 +387,19 @@ export default function LearningPlanPage() {
         </div>
       </div>
 
-      {/* ── Org ambition banner ── */}
+      {/* -- Org ambition banner -- */}
       {ambitionGap && ambitionGap.configured && (
         <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-[#047857]/20 bg-[#047857]/3">
           <TrendingUp className="h-4 w-4 text-[#047857] mt-0.5 flex-shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-[#047857]">Aligned to your organisation's AI ambition — </span>
-            closing the gap from <strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}/10</strong> to target <strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}/10</strong>.
+            <span className="font-semibold text-[#047857]">Aligned to your organisation's AI ambition - </span>
+            closing the gap from <strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"}/10</strong> to target <strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}/10</strong>.
             {ambitionGap.ambitionTargetLabel && <> Goal: <em>"{ambitionGap.ambitionTargetLabel}"</em>.</>}
           </p>
         </div>
       )}
 
-      {/* ── Continue learning CTA ── */}
+      {/* -- Continue learning CTA -- */}
       {nextItem && (
         <button
           className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors text-left"
@@ -421,7 +421,7 @@ export default function LearningPlanPage() {
         </button>
       )}
 
-      {/* ── Domain cards ── */}
+      {/* -- Domain cards -- */}
       <div className="space-y-3">
         {capOrderFinal.length === 0 ? (
           <div className="text-center py-12">

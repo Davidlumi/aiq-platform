@@ -1,5 +1,5 @@
 /**
- * Content Library Page — AiQ Enterprise Platform
+ * Content Library Page - AiQ Enterprise Platform
  *
  * Canonical learner view from the build bible:
  * - Browse all 80 real learning modules
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Clock, Search, Target, CheckCircle2, Play, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DOMAIN_COLOURS } from "@/lib/domains";
-// ─── Modality Config ───────────────────────────────────────────────────────────
+// --- Modality Config -----------------------------------------------------------
 
 const MODALITY_CONFIG: Record<string, { label: string; color: string }> = {
   micro_lesson:      { label: "Micro",        color: "#4477AA" },
@@ -51,7 +51,7 @@ function formatDuration(seconds: number): string | null {
   return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-// ─── Content Card ─────────────────────────────────────────────────────────────
+// --- Content Card -------------------------------------------------------------
 
 function ContentCard({ item }: { item: any }) {
   const [, navigate] = useLocation();
@@ -141,7 +141,7 @@ function ContentCard({ item }: { item: any }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// --- Main Component -----------------------------------------------------------
 
 const CAPABILITY_OPTIONS = [
   { value: "all", label: "All capabilities" },

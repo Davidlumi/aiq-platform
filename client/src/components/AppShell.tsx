@@ -1,5 +1,5 @@
 /**
- * AppShell — AiQ Platform Navigation Shell
+ * AppShell - AiQ Platform Navigation Shell
  * Uses semantic CSS variables from index.css for all colours.
  * Sidebar: 240px expanded, 56px collapsed.
  */
@@ -50,18 +50,18 @@ type NavItem = {
   section?: string;
 };
 
-// ─── Role constants ───────────────────────────────────────────────────────────
+// --- Role constants -----------------------------------------------------------
 const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
 const MANAGER_ROLES = ["manager"];
 
 const NAV_ITEMS: NavItem[] = [
-  // ── My Development (all roles) ──────────────────────────────────────────────
+  // -- My Development (all roles) ----------------------------------------------
   { label: "Assessment",      path: "/assessment",     icon: ClipboardList, section: "mydev" },
   { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
   { label: "Knowledge Base",  path: "/knowledge-base", icon: BookMarked,    section: "mydev" },
 
-  // ── My Team (CPO + Manager) ──────────────────────────────────────────────────
+  // -- My Team (CPO + Manager) --------------------------------------------------
   {
     label: "Overview",
     path: "/dashboard",
@@ -98,7 +98,7 @@ const NAV_ITEMS: NavItem[] = [
     section: "myteam",
   },
 
-  // ── Admin (CPO only) ─────────────────────────────────────────────────────────
+  // -- Admin (CPO only) ---------------------------------------------------------
   {
     label: "Users",
     path: "/admin/users",
@@ -114,7 +114,7 @@ const SECTION_LABELS: Record<string, string> = {
   admin:  "Admin",
 };
 
-/** AiQ logo mark — dark slate circle, white A+Q, primary i dot */
+/** AiQ logo mark - dark slate circle, white A+Q, primary i dot */
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg
@@ -383,7 +383,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop sidebar — 240px expanded, 56px collapsed */}
+      {/* Desktop sidebar - 240px expanded, 56px collapsed */}
       <aside
         className={cn(
           "hidden lg:flex flex-col transition-all shrink-0",

@@ -1,5 +1,5 @@
 /**
- * Reports Page — AiQ Enterprise Platform
+ * Reports Page - AiQ Enterprise Platform
  * Dual-audience reporting per AiQ Reporting & Analytics v2.3 spec
  */
 import { useState } from "react";
@@ -23,7 +23,7 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
   org_readiness_report: "Org Readiness Report",
   audit_evidence_pack: "Audit Evidence Pack",
   dual_audience_narrative: "Dual-Audience Narrative",
-  capability_requirement_fit: "Capability–Requirement Fit",
+  capability_requirement_fit: "Capability-Requirement Fit",
   trajectory_report: "Trajectory Report",
   small_function_report: "Small HR Function Report",
 };
@@ -195,7 +195,7 @@ function TrajectoryView({ data }: { data: any }) {
                   <tr key={t.sessionId} className="border-t border-border">
                     <td className="px-3 py-2 text-foreground">Assessment #{i + 1}</td>
                     <td className="px-3 py-2 text-right font-semibold text-foreground">{Math.round(t.overallScore)}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{t.completedAt ? new Date(t.completedAt).toLocaleDateString() : "—"}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">{t.completedAt ? new Date(t.completedAt).toLocaleDateString() : "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -255,9 +255,9 @@ function SmallFunctionView({ data }: { data: any }) {
             <tbody>
               {(data.teamSummaries as any[]).map((s: any) => (
                 <tr key={s.userId} className="border-t border-border">
-                  <td className="px-3 py-2 text-foreground">{s.name || "—"}</td>
+                  <td className="px-3 py-2 text-foreground">{s.name || "-"}</td>
                   <td className="px-3 py-2 text-center"><StatusBadge state={s.readinessState} /></td>
-                  <td className="px-3 py-2 text-right font-semibold text-foreground">{s.overallScore !== null ? Math.round(s.overallScore) : "—"}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-foreground">{s.overallScore !== null ? Math.round(s.overallScore) : "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -277,8 +277,8 @@ function LearnerReportView({ data }: { data: any }) {
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Readiness State", value: state?.readinessState ?? "—", color: "text-foreground" },
-          { label: "Compliance", value: state?.complianceState ?? "—", color: state?.complianceState === "compliant" ? "text-[#047857]" : "text-[#D97706]" },
+          { label: "Readiness State", value: state?.readinessState ?? "-", color: "text-foreground" },
+          { label: "Compliance", value: state?.complianceState ?? "-", color: state?.complianceState === "compliant" ? "text-[#047857]" : "text-[#D97706]" },
           { label: "Assessments", value: sessions.length, color: "text-primary" },
         ].map(m => (
           <Card key={m.label} className="border-border">
@@ -295,8 +295,8 @@ function LearnerReportView({ data }: { data: any }) {
             <Card className="border-border">
               <CardContent className="pt-4">
                 <p className="text-xs font-semibold text-muted-foreground mb-1">Credibility</p>
-                <p className="text-sm font-bold text-foreground capitalize">{cred.credibilityState ?? "—"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Score: {cred.credibilityScore != null ? Math.round(Number(cred.credibilityScore)) : "—"}</p>
+                <p className="text-sm font-bold text-foreground capitalize">{cred.credibilityState ?? "-"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Score: {cred.credibilityScore != null ? Math.round(Number(cred.credibilityScore)) : "-"}</p>
               </CardContent>
             </Card>
           )}
@@ -304,8 +304,8 @@ function LearnerReportView({ data }: { data: any }) {
             <Card className="border-border">
               <CardContent className="pt-4">
                 <p className="text-xs font-semibold text-muted-foreground mb-1">Risk</p>
-                <p className="text-sm font-bold text-foreground capitalize">{risk.riskState ?? "—"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Score: {risk.riskScore != null ? Math.round(Number(risk.riskScore)) : "—"}</p>
+                <p className="text-sm font-bold text-foreground capitalize">{risk.riskState ?? "-"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Score: {risk.riskScore != null ? Math.round(Number(risk.riskScore)) : "-"}</p>
               </CardContent>
             </Card>
           )}
@@ -325,7 +325,7 @@ function LearnerReportView({ data }: { data: any }) {
               {sessions.map((s: any, i: number) => (
                 <tr key={s.id ?? i} className="border-t border-border">
                   <td className="px-3 py-2 font-mono text-muted-foreground">{(s.id ?? "").slice(0, 12)}…</td>
-                  <td className="px-3 py-2 text-foreground">{s.completedAt ? new Date(s.completedAt).toLocaleDateString() : "—"}</td>
+                  <td className="px-3 py-2 text-foreground">{s.completedAt ? new Date(s.completedAt).toLocaleDateString() : "-"}</td>
                   <td className="px-3 py-2 text-center"><StatusBadge state={s.state} /></td>
                 </tr>
               ))}
@@ -369,8 +369,8 @@ function ManagerTeamReportView({ data }: { data: any }) {
             <tbody>
               {members.map((m: any) => (
                 <tr key={m.id} className="border-t border-border">
-                  <td className="px-3 py-2 text-foreground">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "—"}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{m.email ?? "—"}</td>
+                  <td className="px-3 py-2 text-foreground">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "-"}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{m.email ?? "-"}</td>
                   <td className="px-3 py-2 text-center"><StatusBadge state={m.state?.readinessState} /></td>
                   <td className="px-3 py-2 text-center"><StatusBadge state={m.state?.complianceState} /></td>
                 </tr>
@@ -416,7 +416,7 @@ const REPORT_CATEGORIES = [
     reports: [
       { value: "learner_report", label: "Learner Report", desc: "Capability and progress summary", icon: User },
       { value: "dual_audience_narrative", label: "Dual-Audience Narrative", desc: "Individual, manager, and board views", icon: FileText },
-      { value: "capability_requirement_fit", label: "Capability–Requirement Fit", desc: "Score vs. minimum threshold per domain", icon: BarChart2 },
+      { value: "capability_requirement_fit", label: "Capability-Requirement Fit", desc: "Score vs. minimum threshold per domain", icon: BarChart2 },
       { value: "trajectory_report", label: "Trajectory Report", desc: "Score progression over time", icon: TrendingUp },
     ],
   },

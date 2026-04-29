@@ -1,16 +1,16 @@
 /**
- * Assessment Session Page — AiQ Enterprise Platform (v2)
+ * Assessment Session Page - AiQ Enterprise Platform (v2)
  *
  * Renders each of the 8 interaction types with a distinct visual treatment:
  *
- * 1. prompt_refinement     — refine a weak prompt into an effective one
- * 2. prioritisation         — scenario + constraint + ranked MCQ (coloured priority badge)
- * 3. agent_oversight       — evaluate and correct an AI agent's actions
- * 4. ethical_dilemma       — navigate ethical tensions in AI deployment
- * 5. scenario_critique      — scenario + AI OUTPUT block (evaluate this) + MCQ
- * 6. output_improvement     — scenario + AI OUTPUT block (improve this) + MCQ
- * 7. error_detection        — scenario + AI OUTPUT block (find the error) + MCQ
- * 8. data_interpretation    — scenario + DATA CONTEXT block + MCQ
+ * 1. prompt_refinement     - refine a weak prompt into an effective one
+ * 2. prioritisation         - scenario + constraint + ranked MCQ (coloured priority badge)
+ * 3. agent_oversight       - evaluate and correct an AI agent's actions
+ * 4. ethical_dilemma       - navigate ethical tensions in AI deployment
+ * 5. scenario_critique      - scenario + AI OUTPUT block (evaluate this) + MCQ
+ * 6. output_improvement     - scenario + AI OUTPUT block (improve this) + MCQ
+ * 7. error_detection        - scenario + AI OUTPUT block (find the error) + MCQ
+ * 8. data_interpretation    - scenario + DATA CONTEXT block + MCQ
  *
  * The nextItem from the server includes:
  * - title, scenario, constraint, question, interactionType
@@ -65,9 +65,9 @@ import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// ─── Capability colours ───────────────────────────────────────────────────────
+// --- Capability colours -------------------------------------------------------
 
-// v10 domain colours — imported from shared constants
+// v10 domain colours - imported from shared constants
 import { DOMAIN_COLOURS, DOMAIN_LABELS, INTERACTION_TYPE_META, INTERACTION_TYPE_DESCRIPTIONS, READINESS_STATES } from "@/lib/domains";
 import type { CapabilityKey, InteractionType } from "@/lib/domains";
 
@@ -79,7 +79,7 @@ const RISK_CONFIG = {
   Low:    { color: "text-[#047857] bg-[#047857]/8 border-[#047857]/25", icon: Target },
 } as const;
 
-// ─── Interaction type config ──────────────────────────────────────────────────
+// --- Interaction type config --------------------------------------------------
 
 type InteractionTypeKey = InteractionType | "contradiction_probe" | "multi_step_workflow";
 
@@ -96,7 +96,7 @@ interface InteractionConfig {
   icon: React.ElementType;
 }
 
-// v10 interaction type configs — built from shared constants + legacy types
+// v10 interaction type configs - built from shared constants + legacy types
 const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
   // v10 interaction types from shared constants
   ...Object.fromEntries(
@@ -134,7 +134,7 @@ const INTERACTION_CONFIGS: Record<string, InteractionConfig> = {
   },
 };
 
-// v10 interaction type purpose explanations — built from shared constants
+// v10 interaction type purpose explanations - built from shared constants
 const INTERACTION_PURPOSE: Record<string, string> = {
   ...INTERACTION_TYPE_DESCRIPTIONS,
   // Legacy types
@@ -154,7 +154,7 @@ function getInteractionConfig(interactionType: string): InteractionConfig {
   };
 }
 
-// ─── AI Output Block ──────────────────────────────────────────────────────────
+// --- AI Output Block ----------------------------------------------------------
 
 function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | "improvement" | "error" }) {
   const configs = {
@@ -205,7 +205,7 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
   );
 }
 
-// ─── Data Context Block ───────────────────────────────────────────────────────
+// --- Data Context Block -------------------------------------------------------
 
 function DataContextBlock({ content }: { content: string }) {
   return (
@@ -228,7 +228,7 @@ function DataContextBlock({ content }: { content: string }) {
   );
 }
 
-// ─── Artefact Block (Immersive Scenario Rendering) ─────────────────────────────
+// --- Artefact Block (Immersive Scenario Rendering) -----------------------------
 
 type ArtefactType = "email_thread" | "cv_extract" | "policy_doc" | "meeting_notes" | "chat_log" | "data_table" | "dashboard_card" | "screening_output" | "alert" | "document_excerpt" | "none";
 
@@ -380,7 +380,7 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
   );
 }
 
-// ─── Narrative Wrapper (Persistent Session Context) ─────────────────────────────────
+// --- Narrative Wrapper (Persistent Session Context) ---------------------------------
 
 function NarrativeWrapper({ context }: { context: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -408,7 +408,7 @@ function NarrativeWrapper({ context }: { context: string }) {
   );
 }
 
-// ─── Generating State ─────────────────────────────────────────────────────────
+// --- Generating State ---------------------------------------------------------
 
 const GENERATING_STEPS = [
   { label: "Analysing your response pattern",      delay: 0    },
@@ -484,7 +484,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
   );
 }
 
-// ─── Completion Screen ────────────────────────────────────────────────────────
+// --- Completion Screen --------------------------------------------------------
 
 function CompletionScreen({
   result,
@@ -598,7 +598,7 @@ className="w-full gap-2"
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// --- Main Component -----------------------------------------------------------
 
 // B2: Device and browser detection helpers
 function detectDeviceType(): "mobile" | "tablet" | "desktop" {
@@ -627,7 +627,7 @@ export default function AssessmentSessionPage() {
   // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
   const [isGenerating, setIsGenerating] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // T2-5: Rationale reveal state — shown after answer submission
+  // T2-5: Rationale reveal state - shown after answer submission
   const [rationaleData, setRationaleData] = useState<{
     rationaleText: string | null;
     allOptionsRationale: Array<{ value: string; rationaleText: string | null; outcomeClass: string | null }>;
@@ -752,9 +752,9 @@ export default function AssessmentSessionPage() {
     };
   }, [isGenerating, sessionData?.nextItem, refetch]);
 
-  // ─── ALL REMAINING HOOKS — must be declared before any early return ───────────
+  // --- ALL REMAINING HOOKS - must be declared before any early return -----------
 
-  // handleSubmit — declared before any early return to satisfy Rules of Hooks
+  // handleSubmit - declared before any early return to satisfy Rules of Hooks
   const handleSubmit = useCallback(() => {
     if (!selectedValue) {
       toast.error("Please select an answer before continuing");
@@ -793,7 +793,7 @@ export default function AssessmentSessionPage() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  // UX-4: Keyboard navigation — 1-4 to select option, Enter to submit
+  // UX-4: Keyboard navigation - 1-4 to select option, Enter to submit
   useEffect(() => {
     const currentItem = sessionData?.nextItem;
     if (!currentItem || rationaleData) return;
@@ -832,13 +832,13 @@ export default function AssessmentSessionPage() {
   const isComplete = sessionData.isComplete;
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
 
-  // Completed state — redirect to results page
+  // Completed state - redirect to results page
   if (session.state === "completed") {
     navigate(`/assessment/${sessionId}/results`);
     return null;
   }
 
-  // All answered — show completion screen
+  // All answered - show completion screen
   if (isComplete && answeredCount > 0) {
     if (!completeMutation.isSuccess) {
       return (
@@ -877,7 +877,7 @@ export default function AssessmentSessionPage() {
     );
   }
 
-  // T2-5a: Rationale loading skeleton — shown immediately after submit, before rationale arrives
+  // T2-5a: Rationale loading skeleton - shown immediately after submit, before rationale arrives
   if (rationaleLoading && !rationaleData) {
     return (
       <div className="p-6 space-y-5 max-w-2xl mx-auto animate-in fade-in duration-200">
@@ -887,7 +887,7 @@ export default function AssessmentSessionPage() {
               Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
             </span>
             <button
-              onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
+              onClick={() => { toast.success("Progress saved - resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
               style={{ color: "var(--primary)", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
@@ -935,7 +935,7 @@ export default function AssessmentSessionPage() {
     );
   }
 
-  // T2-5: Rationale reveal — show after answer, before next question
+  // T2-5: Rationale reveal - show after answer, before next question
   if (rationaleData) {
     // Stagger delays for section cascade animation
     const stagger = (i: number) => ({ style: { animationDelay: `${i * 80}ms` } });
@@ -963,7 +963,7 @@ export default function AssessmentSessionPage() {
               Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
             </span>
             <button
-              onClick={() => { toast.success("Progress saved — resume any time from the Assessment page."); navigate("/assessment"); }}
+              onClick={() => { toast.success("Progress saved - resume any time from the Assessment page."); navigate("/assessment"); }}
               className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
               style={{ color: "var(--primary)", borderColor: "#D1FAE5", background: "#F8FAFC" }}
             >
@@ -1079,7 +1079,7 @@ export default function AssessmentSessionPage() {
     );
   }
 
-  // Generating state — waiting for LLM to produce next item
+  // Generating state - waiting for LLM to produce next item
   if (isGenerating || !nextItem) {
     return <GeneratingState answeredCount={answeredCount} totalItems={totalItems} />;
   }
@@ -1113,7 +1113,7 @@ export default function AssessmentSessionPage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </button>
-          {/* Save & Exit — always visible so users know they can leave safely */}
+          {/* Save & Exit - always visible so users know they can leave safely */}
           <button
             onClick={() => setShowLeaveDialog(true)}
             className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
@@ -1136,7 +1136,7 @@ export default function AssessmentSessionPage() {
               <AlertDialogCancel>Continue Assessment</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  toast.success("Progress saved — resume any time from the Assessment page.");
+                  toast.success("Progress saved - resume any time from the Assessment page.");
                   navigate("/assessment");
                 }}
               >
@@ -1242,12 +1242,12 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Artefact Block — immersive rendering for email threads, CVs, policy docs, etc. */}
+          {/* Artefact Block - immersive rendering for email threads, CVs, policy docs, etc. */}
           {artefactType && artefactType !== "none" && (nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (
             <ArtefactBlock content={(nextItem as any).constraint} artefactType={artefactType} />
           )}
 
-          {/* Constraint — only for non-AI-output types and no artefact */}
+          {/* Constraint - only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
             <div className="bg-[#D97706]/8 rounded-xl p-3 border border-[#D97706]/25">
               <p className="text-xs font-semibold text-[#99882A] uppercase tracking-widest mb-1">
@@ -1277,7 +1277,7 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* AI Output block — for critique/improvement/error types */}
+          {/* AI Output block - for critique/improvement/error types */}
           {iConfig.hasAiOutput && aiOutput && (
             <AiOutputBlock content={aiOutput} mode={aiOutputMode} />
           )}
@@ -1307,7 +1307,7 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* Question prompt — A5-04: promoted from text-xs uppercase to text-sm for readability */}
+          {/* Question prompt - A5-04: promoted from text-xs uppercase to text-sm for readability */}
           <div>
             <p
               className="text-sm font-semibold text-foreground leading-snug mb-2"
@@ -1319,7 +1319,7 @@ export default function AssessmentSessionPage() {
             </p>
           </div>
 
-          {/* Options — UX-4: keyboard hint shown below */}
+          {/* Options - UX-4: keyboard hint shown below */}
           {nextItem.options && nextItem.options.length > 0 && (
             <div className="space-y-2">
               {nextItem.options.map((option: any, idx: number) => (
@@ -1346,11 +1346,11 @@ export default function AssessmentSessionPage() {
                   <span className="leading-relaxed">{option.label}</span>
                 </button>
               ))}
-              <p className="text-xs text-muted-foreground pt-1 pl-1">Press <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">1</kbd>–<kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">{nextItem.options.length}</kbd> to select · <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">Enter</kbd> to submit</p>
+              <p className="text-xs text-muted-foreground pt-1 pl-1">Press <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">1</kbd>-<kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">{nextItem.options.length}</kbd> to select · <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted text-xs font-mono">Enter</kbd> to submit</p>
             </div>
           )}
 
-          {/* C2.1 / S4.3: Reasoning capture — required for high-signal items, optional for others */}
+          {/* C2.1 / S4.3: Reasoning capture - required for high-signal items, optional for others */}
           {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -1383,7 +1383,7 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* v10: Three-level confidence staking — A5-05: dimmed until an answer is selected */}
+          {/* v10: Three-level confidence staking - A5-05: dimmed until an answer is selected */}
           <div className={cn("space-y-2 pt-1 transition-opacity duration-200", !selectedValue ? "opacity-40 pointer-events-none" : "")}>
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
               How confident are you in this answer?

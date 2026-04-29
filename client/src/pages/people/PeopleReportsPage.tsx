@@ -1,5 +1,5 @@
 /**
- * PeopleReportsPage — PR-05
+ * PeopleReportsPage - PR-05
  *
  * Searchable, filterable table of all org members (leaders) or direct reports (managers).
  * Each row links to the full individual report at /people/:userId.
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ─── Readiness helpers ────────────────────────────────────────────────────────
+// --- Readiness helpers --------------------------------------------------------
 
 type ReadinessState = "safe" | "at_risk" | "unsafe" | "not_assessed" | "unknown";
 
@@ -59,7 +59,7 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function PeopleReportsPage() {
   const [search, setSearch] = useState("");
@@ -230,7 +230,7 @@ export default function PeopleReportsPage() {
 
                     {/* Role */}
                     <div className="hidden sm:block text-xs text-muted-foreground max-w-[140px] truncate">
-                      {member.jobFunction ?? member.roleFamily ?? "—"}
+                      {member.jobFunction ?? member.roleFamily ?? "-"}
                     </div>
 
                     {/* Readiness badge */}
@@ -240,7 +240,7 @@ export default function PeopleReportsPage() {
                     <div className="hidden md:block">
                       {member.score
                         ? <ScoreBar score={member.score.overallScore} />
-                        : <span className="text-xs text-muted-foreground">—</span>
+                        : <span className="text-xs text-muted-foreground">-</span>
                       }
                     </div>
 
@@ -261,7 +261,7 @@ export default function PeopleReportsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}</span>
+          <span>Showing {((page - 1) * PAGE_SIZE) + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
               Previous

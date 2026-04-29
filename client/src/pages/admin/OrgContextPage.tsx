@@ -1,5 +1,5 @@
 /**
- * Organisation Context Configuration — AiQ Enterprise Platform
+ * Organisation Context Configuration - AiQ Enterprise Platform
  *
  * Captures all 6 configuration blocks from the AiQ Methodology v10.7 spec:
  * 1. Organisation Profile
@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Option Sets ──────────────────────────────────────────────────────────────
+// --- Option Sets --------------------------------------------------------------
 
 const SECTORS = [
   { value: "financial_services", label: "Financial Services" },
@@ -105,7 +105,7 @@ const REVALIDATION_CYCLES = [
   { value: 24, label: "Biennial (24 months)" },
 ];
 
-// ─── Toggle Button ─────────────────────────────────────────────────────────────
+// --- Toggle Button -------------------------------------------------------------
 
 function ToggleChip({
   value,
@@ -134,7 +134,7 @@ function ToggleChip({
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export default function OrgContextPage() {
   const { data: existing, isLoading } = trpc.intelligence.orgContext.useQuery();
@@ -317,7 +317,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Building2 className="w-4 h-4 text-primary" />
-            Block 1 — Organisation Profile
+            Block 1 - Organisation Profile
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -500,7 +500,7 @@ export default function OrgContextPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Readiness Score (0–10)</label>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Target Readiness Score (0-10)</label>
               <p className="text-xs text-muted-foreground mb-2">The Peakon-scale score your function is aiming for. 7.5 = "AI Ready", 9.0 = "Advanced".</p>
               <input
                 type="number"
@@ -547,7 +547,7 @@ export default function OrgContextPage() {
               <p className="text-xs text-muted-foreground">
                 Target: <strong className="text-foreground">{(parseFloat(ambitionTargetScore) / 10).toFixed(1)}</strong> / 10
                 {ambitionTargetDate && <> by <strong className="text-foreground">{new Date(ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></>}
-                {ambitionTargetLabel && <> — {ambitionTargetLabel}</>}
+                {ambitionTargetLabel && <> - {ambitionTargetLabel}</>}
               </p>
             </div>
           )}
@@ -559,7 +559,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Bot className="w-4 h-4 text-primary" />
-            Block 2 — AI Tools & Company AI Context
+            Block 2 - AI Tools & Company AI Context
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             Select the AI tools deployed in your organisation. This personalises scenario framing to reflect real tools your people encounter.
@@ -617,7 +617,7 @@ export default function OrgContextPage() {
           <div>
             <label className="text-xs font-medium text-foreground mb-1.5 block">
               Company AI Context Narrative
-              <span className="ml-1 text-muted-foreground font-normal">(optional — improves scenario personalisation)</span>
+              <span className="ml-1 text-muted-foreground font-normal">(optional - improves scenario personalisation)</span>
             </label>
             <textarea
               value={companyAiContextNarrative}
@@ -637,7 +637,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" />
-            Block 3 — Risk Appetite & AI Maturity
+            Block 3 - Risk Appetite & AI Maturity
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -692,7 +692,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Settings className="w-4 h-4 text-primary" />
-            Block 4 — Governance & Policies
+            Block 4 - Governance & Policies
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             These settings affect how ethical pressure and governance scenarios are applied in simulations.
@@ -764,7 +764,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Scale className="w-4 h-4 text-primary" />
-            Block 5 — UK Regulatory Context
+            Block 5 - UK Regulatory Context
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             Select all regulatory frameworks that apply to your organisation. This ensures simulations reflect the correct compliance obligations and risk exposure.
@@ -801,7 +801,7 @@ export default function OrgContextPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <RefreshCw className="w-4 h-4 text-primary" />
-            Block 6 — Assessment Configuration
+            Block 6 - Assessment Configuration
           </CardTitle>
           <p className="text-xs text-muted-foreground">
             Configure how often capability assessments are refreshed and whether simplified scoring applies.

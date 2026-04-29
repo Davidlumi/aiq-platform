@@ -1,5 +1,5 @@
 /**
- * DownloadPdfButton — triggers a server-side PDF download for any of the 5 document types.
+ * DownloadPdfButton - triggers a server-side PDF download for any of the 5 document types.
  *
  * Usage:
  *   <DownloadPdfButton type="assessment_report" />

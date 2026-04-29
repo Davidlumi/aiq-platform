@@ -1,5 +1,5 @@
 /**
- * Admin Assessment Blueprints Page — AiQ Enterprise Platform
+ * Admin Assessment Blueprints Page - AiQ Enterprise Platform
  *
  * Canonical admin blueprint management from the build bible:
  * - View all assessment blueprints with question counts

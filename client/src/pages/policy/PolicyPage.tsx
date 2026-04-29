@@ -23,7 +23,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string; icon: React.
 };
 
 function ActionBadge({ action }: { action: string }) {
-  const meta = ACTION_LABELS[action] ?? { label: action ?? "—", color: "bg-muted text-muted-foreground border-border", icon: null };
+  const meta = ACTION_LABELS[action] ?? { label: action ?? "-", color: "bg-muted text-muted-foreground border-border", icon: null };
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${meta.color}`}>
       {meta.icon}{meta.label}
@@ -67,7 +67,7 @@ export default function PolicyPage() {
         <div>
           <h1 className="aiq-h1 text-foreground">Policy Rules Engine</h1>
           <p className="aiq-caption text-muted-foreground mt-1">
-            Runtime policy evaluation — hard blocks, warnings, remediation triggers, escalations, and revalidations
+            Runtime policy evaluation - hard blocks, warnings, remediation triggers, escalations, and revalidations
           </p>
         </div>
         {canManage && (
@@ -123,7 +123,7 @@ export default function PolicyPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="aiq-label text-muted-foreground">Priority (1–100)</Label>
+                  <Label className="aiq-label text-muted-foreground">Priority (1-100)</Label>
                   <Input
                     type="number"
                     min={1}
@@ -258,7 +258,7 @@ function PolicyEvaluationsLog() {
                 {(evals as any[]).map((ev: any) => (
                   <tr key={ev.id} className="border-b border-border hover:bg-muted/50">
                     <td className="py-2 px-3 text-foreground font-medium font-['DM_Mono'] text-xs">
-                      {ev.policyRuleId?.slice(0, 12) ?? "—"}…
+                      {ev.policyRuleId?.slice(0, 12) ?? "-"}…
                     </td>
                     <td className="py-2 px-3 text-muted-foreground text-xs">{ev.contextType}</td>
                     <td className="py-2 px-3">

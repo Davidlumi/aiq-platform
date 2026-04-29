@@ -1,5 +1,5 @@
 /**
- * Admin Content CMS Page — AiQ Enterprise Platform
+ * Admin Content CMS Page - AiQ Enterprise Platform
  *
  * Canonical admin content management from the build bible:
  * - Browse all 80 real learning modules

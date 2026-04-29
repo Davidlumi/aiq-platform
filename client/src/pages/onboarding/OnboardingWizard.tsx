@@ -1,5 +1,5 @@
 /**
- * OnboardingWizard — AiQ Enterprise Platform
+ * OnboardingWizard - AiQ Enterprise Platform
  *
  * A 4-step wizard that collects experience level, AI usage level,
  * and job function to seed the AIL cold start persona and difficulty profile.
@@ -24,25 +24,25 @@ import {
   Users,
 } from "lucide-react";
 
-// ─── Step Data ────────────────────────────────────────────────────────────────
+// --- Step Data ----------------------------------------------------------------
 
 const EXPERIENCE_OPTIONS = [
   {
     value: "junior",
     label: "Early Career",
-    description: "0–3 years in HR, learning the fundamentals",
+    description: "0-3 years in HR, learning the fundamentals",
     icon: "🌱",
   },
   {
     value: "mid",
     label: "Developing Professional",
-    description: "3–7 years, building specialist knowledge",
+    description: "3-7 years, building specialist knowledge",
     icon: "📈",
   },
   {
     value: "senior",
     label: "Senior Practitioner",
-    description: "7–15 years, leading teams and strategy",
+    description: "7-15 years, leading teams and strategy",
     icon: "🎯",
   },
   {
@@ -95,7 +95,7 @@ const JOB_FUNCTIONS = [
   { value: "other", label: "Other / Generalist", icon: Briefcase },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export default function OnboardingWizard() {
   const [, navigate] = useLocation();
@@ -226,7 +226,7 @@ export default function OnboardingWizard() {
   );
 }
 
-// ─── Step Components ──────────────────────────────────────────────────────────
+// --- Step Components ----------------------------------------------------------
 
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (

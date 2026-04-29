@@ -1,16 +1,16 @@
 /**
- * Manager Dashboard — AiQ Platform
+ * Manager Dashboard - AiQ Platform
  *
  * Team readiness overview with individual detail panel.
  * Anti-comparison design: no ranked lists, no raw score league tables.
  * Primary frame: each team member against their own development trajectory.
  *
  * Competitive improvements (CB-8 through CB-12):
- * - CB-8:  Hero KPI row — larger primary stat (5xl), hero summary statement
- * - CB-9:  Team Insights card — progressive disclosure, most important signal first
- * - CB-10: Action Recommendations panel — Lattice-style suggested next actions
+ * - CB-8:  Hero KPI row - larger primary stat (5xl), hero summary statement
+ * - CB-9:  Team Insights card - progressive disclosure, most important signal first
+ * - CB-10: Action Recommendations panel - Lattice-style suggested next actions
  * - CB-11: Conversation starters for ALL members (not just at-risk)
- * - CB-12: Design language pass — consistent brand tokens throughout
+ * - CB-12: Design language pass - consistent brand tokens throughout
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -53,13 +53,13 @@ const CAP_LABELS: Record<string, string> = {
   workforce_ai_readiness: "Workforce Readiness", ai_ethics_trust: "Ethics & Trust", ai_change_leadership: "Change Leadership",
 };
 
-// Delegation tier logic — deterministic, not ranked
+// Delegation tier logic - deterministic, not ranked
 const DELEGATION_TIERS = [
-  { key: "autonomous",  label: "Tier 1 — Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#047857", bg: "#04785710", border: "#04785730", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
-  { key: "supervised",  label: "Tier 2 — Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
-  { key: "restricted",  label: "Tier 3 — Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
-  { key: "paused",      label: "Tier 4 — Paused",        desc: "AI use should be paused pending capability development",     color: "#DC2626", bg: "#DC262610", border: "#DC262630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
-  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data — tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
+  { key: "autonomous",  label: "Tier 1 - Autonomous",    desc: "Can use AI independently for high-stakes decisions",        color: "#047857", bg: "#04785710", border: "#04785730", test: (m: any) => m.latestReadiness === "safe" && (m.credibility?.band === "high" || m.credibility?.band === "medium") && m.risk?.band !== "high" },
+  { key: "supervised",  label: "Tier 2 - Supervised",    desc: "Can use AI with peer or manager review of key outputs",      color: "#4477AA", bg: "#4477AA10", border: "#4477AA30", test: (m: any) => m.latestReadiness === "at_risk" || (m.latestReadiness === "safe" && m.risk?.band === "high") },
+  { key: "restricted",  label: "Tier 3 - Restricted",    desc: "AI use should be limited to low-stakes, supervised tasks",   color: "#EE8866", bg: "#EE886610", border: "#EE886630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band !== "high" },
+  { key: "paused",      label: "Tier 4 - Paused",        desc: "AI use should be paused pending capability development",     color: "#DC2626", bg: "#DC262610", border: "#DC262630", test: (m: any) => m.latestReadiness === "unsafe" && m.risk?.band === "high" },
+  { key: "unassessed",  label: "Unassessed",             desc: "No assessment data - tier cannot be assigned",              color: "#9CA3AF", bg: "#9CA3AF10", border: "#9CA3AF30", test: (m: any) => !m.latestReadiness },
 ];
 
 function getDelegationTier(m: any) {
@@ -89,13 +89,13 @@ function getDelegationGuidance(m: any): string[] {
     "Refer to HR if there are concerns about AI misuse patterns.",
   ];
   return [
-    "Assessment not yet completed — capability tier cannot be assigned.",
+    "Assessment not yet completed - capability tier cannot be assigned.",
     "Encourage completion of the initial assessment.",
     "No AI task delegation guidance is available without assessment data.",
   ];
 }
 
-/** CB-11: Conversation starters for ALL members — tailored by readiness state */
+/** CB-11: Conversation starters for ALL members - tailored by readiness state */
 function getConversationStarters(m: any): string[] {
   const tier = getDelegationTier(m);
   const firstName = m.firstName ?? "them";
@@ -106,22 +106,22 @@ function getConversationStarters(m: any): string[] {
   const weakLabel = weakDomain ? (CAP_LABELS[weakDomain] ?? weakDomain) : "their development area";
 
   if (m.latestReadiness === "safe") return [
-    `"${firstName}, you're in a strong position with AI capability — are there areas where you'd like to go deeper or take on more complex AI tasks?"`,
+    `"${firstName}, you're in a strong position with AI capability - are there areas where you'd like to go deeper or take on more complex AI tasks?"`,
     `"What's the most useful AI workflow you've used recently? I'd love to share that with the team."`,
     `"Are there any AI tools or approaches you'd like to explore that we haven't given you access to yet?"`,
   ];
   if (m.latestReadiness === "at_risk") return [
-    `"${firstName}, your assessment shows you're building capability — what's feeling most challenging right now?"`,
+    `"${firstName}, your assessment shows you're building capability - what's feeling most challenging right now?"`,
     `"Your ${weakLabel} score has room to grow. What would help you feel more confident there?"`,
-    `"I want to make sure you have the right support — is there anything blocking you from completing your learning modules?"`,
+    `"I want to make sure you have the right support - is there anything blocking you from completing your learning modules?"`,
   ];
   if (m.latestReadiness === "unsafe") return [
-    `"${firstName}, I want to have a supportive conversation about your AI capability development — this isn't about performance, it's about making sure you have the right tools."`,
+    `"${firstName}, I want to have a supportive conversation about your AI capability development - this isn't about performance, it's about making sure you have the right tools."`,
     `"Your assessment flagged ${weakLabel} as a priority area. What's your current understanding of that domain?"`,
-    `"I'd like to set up a structured development plan together — what would feel most useful as a starting point?"`,
+    `"I'd like to set up a structured development plan together - what would feel most useful as a starting point?"`,
   ];
   if (tier.key === "unassessed") return [
-    `"${firstName}, we haven't got your AI capability assessment on file yet — I'd like to understand where you're at."`,
+    `"${firstName}, we haven't got your AI capability assessment on file yet - I'd like to understand where you're at."`,
     `"The assessment takes about 20 minutes and gives you a personalised development plan. When could you fit that in?"`,
     `"Is there anything about the assessment process I can clarify before you get started?"`,
   ];
@@ -189,7 +189,7 @@ function DistributionRing({ distribution }: { distribution: { safe: number; atRi
   );
 }
 
-// ─── Individual Member Detail Panel ──────────────────────────────────────────
+// --- Individual Member Detail Panel ------------------------------------------
 function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => void }) {
   const [showStarters, setShowStarters] = useState(false);
   const tier = getDelegationTier(member);
@@ -242,7 +242,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
             )}
           </div>
 
-          {/* CB-11: Conversation Starters — for ALL members */}
+          {/* CB-11: Conversation Starters - for ALL members */}
           <div>
             <button
               className="w-full flex items-center justify-between text-left group"
@@ -262,7 +262,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                   </div>
                 ))}
                 <p className="text-xs text-muted-foreground mt-1">
-                  These are suggested starting points — adapt them to your own style and relationship.
+                  These are suggested starting points - adapt them to your own style and relationship.
                 </p>
               </div>
             )}
@@ -347,7 +347,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
                     const barColor = RSTATE_COLORS[h.readiness ?? "unknown"] ?? "#9CA3AF";
                     const barH = Math.max(4, Math.round((h.overallScore / 100) * 56));
                     return (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${Math.round(h.overallScore)} — ${h.readiness ?? "unknown"}`}>
+                      <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`${Math.round(h.overallScore)} - ${h.readiness ?? "unknown"}`}>
                         <div className="w-full rounded-sm" style={{ height: barH, backgroundColor: barColor, opacity: 0.8 }} />
                         <span className="text-xs text-muted-foreground tabular-nums">{Math.round(h.overallScore)}</span>
                       </div>
@@ -424,7 +424,7 @@ function MemberDetailPanel({ member, onClose }: { member: any; onClose: () => vo
   );
 }
 
-// ─── CB-10: Action Recommendations Panel ─────────────────────────────────────
+// --- CB-10: Action Recommendations Panel -------------------------------------
 function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers, capGaps, onSelectMember }: {
   team: any[];
   revalDueSoon: any[];
@@ -441,7 +441,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
       priority: "high",
       icon: MessageSquare,
       label: `Schedule a conversation with ${urgentConversation.firstName} ${urgentConversation.lastName}`,
-      detail: `Readiness: ${urgentConversation.latestReadiness ?? "unknown"} — a check-in is recommended.`,
+      detail: `Readiness: ${urgentConversation.latestReadiness ?? "unknown"} - a check-in is recommended.`,
       cta: "Open profile",
       member: urgentConversation,
     });
@@ -454,7 +454,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
       priority: "high",
       icon: Calendar,
       label: `${overdueReval.length} revalidation${overdueReval.length > 1 ? "s" : ""} overdue`,
-      detail: `${overdueReval.map((m: any) => m.firstName).slice(0, 3).join(", ")}${overdueReval.length > 3 ? ` +${overdueReval.length - 3} more` : ""} — capability profiles may be stale.`,
+      detail: `${overdueReval.map((m: any) => m.firstName).slice(0, 3).join(", ")}${overdueReval.length > 3 ? ` +${overdueReval.length - 3} more` : ""} - capability profiles may be stale.`,
     });
   }
 
@@ -464,7 +464,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
       priority: "medium",
       icon: Clock,
       label: `${revalDueSoon.length} revalidation${revalDueSoon.length > 1 ? "s" : ""} due in the next 14 days`,
-      detail: `${revalDueSoon.map((m: any) => m.firstName).slice(0, 3).join(", ")}${revalDueSoon.length > 3 ? ` +${revalDueSoon.length - 3} more` : ""} — plan ahead to avoid gaps.`,
+      detail: `${revalDueSoon.map((m: any) => m.firstName).slice(0, 3).join(", ")}${revalDueSoon.length > 3 ? ` +${revalDueSoon.length - 3} more` : ""} - plan ahead to avoid gaps.`,
     });
   }
 
@@ -475,7 +475,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
       priority: "medium",
       icon: Target,
       label: `Team's weakest domain: ${CAP_LABELS[weakestDomain.capability] ?? weakestDomain.capability}`,
-      detail: `Average band score ${Math.round(weakestDomain.avgScore ?? 0)} — consider a group learning session or shared resource.`,
+      detail: `Average band score ${Math.round(weakestDomain.avgScore ?? 0)} - consider a group learning session or shared resource.`,
     });
   }
 
@@ -557,7 +557,7 @@ function ActionRecommendationsPanel({ team, revalDueSoon, conversationDueMembers
   );
 }
 
-// ─── CB-9: Team Insights Card (progressive disclosure) ────────────────────────
+// --- CB-9: Team Insights Card (progressive disclosure) ------------------------
 function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; capGaps: any[] }) {
   const total = dist?.total ?? 0;
   const safe = dist?.safe ?? 0;
@@ -582,7 +582,7 @@ function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; cap
     color = "#9CA3AF";
   } else if (unassessed > 0 && unassessed === total) {
     headline = "No assessments completed";
-    subtext = "Your team hasn't completed any assessments yet — capability tiers cannot be assigned.";
+    subtext = "Your team hasn't completed any assessments yet - capability tiers cannot be assigned.";
     color = "#9CA3AF";
   } else if (atRisk > 0 && atRisk / total >= 0.5) {
     headline = `${atRisk} of ${total} team members need attention`;
@@ -617,7 +617,7 @@ function TeamInsightsCard({ team, dist, capGaps }: { team: any[]; dist: any; cap
   );
 }
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
+// --- Main Dashboard -----------------------------------------------------------
 export default function ManagerDashboard() {
   const { data, isLoading } = trpc.dashboard.manager.useQuery();
   const [search, setSearch] = useState("");
@@ -684,12 +684,12 @@ export default function ManagerDashboard() {
           </Button>
         </div>
 
-        {/* CB-9: Team Insights — progressive disclosure, most important signal first */}
+        {/* CB-9: Team Insights - progressive disclosure, most important signal first */}
         {total > 0 && (
           <TeamInsightsCard team={team} dist={dist} capGaps={capGaps} />
         )}
 
-        {/* CB-8: Hero KPI row — larger primary stat, hero summary statement */}
+        {/* CB-8: Hero KPI row - larger primary stat, hero summary statement */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Team Members",        value: total,                                                      icon: Users,         color: "#4477AA" },
@@ -783,7 +783,7 @@ export default function ManagerDashboard() {
               <CardTitle className="text-sm flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-[#EE8866]" />Conversations Due
               </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">Members with overdue revalidation or high risk band — a conversation is recommended</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Members with overdue revalidation or high risk band - a conversation is recommended</p>
             </CardHeader>
             <CardContent>
               {conversationDueMembers.length === 0 ? (
@@ -850,7 +850,7 @@ export default function ManagerDashboard() {
           </Card>
         </div>
 
-        {/* Delegation Tiers — aggregated, no ranked list */}
+        {/* Delegation Tiers - aggregated, no ranked list */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -910,7 +910,7 @@ export default function ManagerDashboard() {
               const indicators = [
                 {
                   label: "High risk + safe classification",
-                  desc: "High risk score despite safe readiness — may indicate gaming or inconsistent behaviour",
+                  desc: "High risk score despite safe readiness - may indicate gaming or inconsistent behaviour",
                   members: team.filter(m => (m as any).risk?.band === "high" && m.latestReadiness === "safe"),
                   color: "#EE8866",
                 },
@@ -922,7 +922,7 @@ export default function ManagerDashboard() {
                 },
                 {
                   label: "Overdue revalidation",
-                  desc: "Assessment is overdue — capability profile may no longer reflect current practice",
+                  desc: "Assessment is overdue - capability profile may no longer reflect current practice",
                   members: team.filter(m => m.revalidationDue && new Date(m.revalidationDue) < new Date()),
                   color: "#99882A",
                 },
@@ -959,7 +959,7 @@ export default function ManagerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Team table — anti-comparison: no raw score column, no ranking */}
+        {/* Team table - anti-comparison: no raw score column, no ranking */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -1006,7 +1006,7 @@ export default function ManagerDashboard() {
                           </div>
                         </td>
                         <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">
-                          {m.roleFamily ?? m.jobFunction ?? "—"}
+                          {m.roleFamily ?? m.jobFunction ?? "-"}
                         </td>
                         <td className="py-2.5 pr-4">
                           <ReadinessBadge readiness={m.latestReadiness} />
@@ -1021,7 +1021,7 @@ export default function ManagerDashboard() {
                               <p className="text-xs text-muted-foreground">{Math.round((m as any).activeModule.progressPercent)}% complete</p>
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </td>
                         <td className="py-2.5 pr-4 text-xs text-muted-foreground whitespace-nowrap">

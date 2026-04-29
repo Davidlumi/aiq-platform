@@ -1,5 +1,5 @@
 /**
- * AiQ — About page — v3.0
+ * AiQ - About page - v3.0
  */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export default function AboutPage() {
                   AiQ was built by a team with deep roots in HR practice, psychometrics, and AI systems design.
                   The founding insight was simple: the measurement problem in HR AI capability was being treated
                   as a training problem. Organisations were deploying learning content without any diagnostic
-                  foundation — no way to know whether the content was addressing the actual gaps, no way to
+                  foundation - no way to know whether the content was addressing the actual gaps, no way to
                   measure whether it was working.
                 </p>
                 <p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
                 </p>
                 <p>
                   We built AiQ to make that question answerable. Not with a survey. Not with a self-assessment.
-                  With a measurement system that meets the standard of the claim — adaptive, scenario-based,
+                  With a measurement system that meets the standard of the claim - adaptive, scenario-based,
                   role-calibrated, and connected to the specific business AI commitments your function is
                   expected to support.
                 </p>
@@ -120,7 +120,7 @@ export default function AboutPage() {
               },
               {
                 title: "The loop must close",
-                body: "Development that isn't followed by measurement isn't development — it's activity. AiQ is built around the reassessment loop. Capability change must be measurable.",
+                body: "Development that isn't followed by measurement isn't development - it's activity. AiQ is built around the reassessment loop. Capability change must be measurable.",
               },
               {
                 title: "Trustworthy or not at all",
@@ -154,7 +154,7 @@ export default function AboutPage() {
               </h2>
               <div className="flex flex-col gap-5 text-slate-600 leading-relaxed">
                 <p>
-                  AiQ is in private beta. The core platform is built — assessment engine, adaptive item selection,
+                  AiQ is in private beta. The core platform is built - assessment engine, adaptive item selection,
                   diagnostic scoring, development plan generation, manager and leader views, strategic intelligence
                   layer, board-ready exports.
                 </p>
@@ -165,7 +165,7 @@ export default function AboutPage() {
                 </p>
                 <p>
                   Beta partners get full platform access, direct access to the team, and the ability to shape what
-                  AiQ becomes. They also accept that they're working with a product that's still maturing — some
+                  AiQ becomes. They also accept that they're working with a product that's still maturing - some
                   things will change, some things won't work perfectly, and we'll be honest about both.
                 </p>
               </div>
@@ -178,7 +178,7 @@ export default function AboutPage() {
                   { label: "Direct team access", detail: "Regular calls with the people building it" },
                   { label: "Methodology input", detail: "Your use cases shape the calibration" },
                   { label: "Honest about limitations", detail: "We'll tell you what doesn't work yet" },
-                  { label: "No long-term commitment", detail: "Beta is beta — no lock-in" },
+                  { label: "No long-term commitment", detail: "Beta is beta - no lock-in" },
                   { label: "Early pricing", detail: "Beta pricing reflects the stage of the product" },
                 ].map(({ label, detail }) => (
                   <div key={label} className="flex items-start gap-3 pb-3 border-b last:border-0 last:pb-0" style={{ borderColor: borderL }}>

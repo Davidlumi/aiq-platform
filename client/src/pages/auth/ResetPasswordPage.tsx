@@ -1,5 +1,5 @@
 /**
- * ResetPasswordPage — AiQ Platform
+ * ResetPasswordPage - AiQ Platform
  * Centered card on light canvas. Mirrors ForgotPasswordPage treatment.
  */
 import { useState } from "react";

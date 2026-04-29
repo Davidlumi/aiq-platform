@@ -1,5 +1,5 @@
 /**
- * Admin Dashboard — AiQ Platform
+ * Admin Dashboard - AiQ Platform
  *
  * Platform health and system intelligence:
  * - User counts (total / active / pending / suspended)
@@ -110,23 +110,23 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Calibration Source</span>
-                  <span className="text-xs font-semibold text-foreground capitalize">{cfg.calibrationSource?.replace(/_/g, " ") ?? "—"}</span>
+                  <span className="text-xs font-semibold text-foreground capitalize">{cfg.calibrationSource?.replace(/_/g, " ") ?? "-"}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Contribution Cap</span>
-                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionCap ?? "—"}</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionCap ?? "-"}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Contribution Multiplier</span>
-                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionMultiplier ?? "—"}</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.contributionMultiplier ?? "-"}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Blocking Failure Min Items</span>
-                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.blockingFailureMinItems ?? "—"}</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.blockingFailureMinItems ?? "-"}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground">Downgrade Failure Min Items</span>
-                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.downgradeFailureMinItems ?? "—"}</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">{cfg.downgradeFailureMinItems ?? "-"}</span>
                 </div>
               </div>
             ) : (
@@ -156,10 +156,10 @@ export default function AdminDashboard() {
                   <div key={log.id} className="flex items-start justify-between p-2 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-foreground capitalize truncate">
-                        {log.action?.replace(/_/g, " ") ?? "—"}
+                        {log.action?.replace(/_/g, " ") ?? "-"}
                       </p>
                       <p className="text-xs text-muted-foreground capitalize truncate">
-                        {log.targetType?.replace(/_/g, " ") ?? "—"}
+                        {log.targetType?.replace(/_/g, " ") ?? "-"}
                         {log.actorUserId && <span className="ml-1 font-mono opacity-60">· {log.actorUserId.slice(0, 6)}</span>}
                       </p>
                     </div>

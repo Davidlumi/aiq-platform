@@ -1,5 +1,5 @@
 /**
- * Organisations Management — C2.2a
+ * Organisations Management - C2.2a
  * Allows admins to create and manage multiple organisations within a tenant,
  * configure their profiles (sector, AI adoption stage, risk appetite),
  * and set capability threshold overrides (S10.3).
@@ -30,7 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Building2, Plus, Settings2, Shield, TrendingUp } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type Org = {
   id: string;
@@ -41,7 +41,7 @@ type Org = {
   updatedAt: Date;
 };
 
-// ─── Org Card ─────────────────────────────────────────────────────────────────
+// --- Org Card -----------------------------------------------------------------
 
 function OrgCard({ org, onSelect }: { org: Org; onSelect: (id: string) => void }) {
   return (
@@ -69,7 +69,7 @@ function OrgCard({ org, onSelect }: { org: Org; onSelect: (id: string) => void }
   );
 }
 
-// ─── Create Org Dialog ────────────────────────────────────────────────────────
+// --- Create Org Dialog --------------------------------------------------------
 
 function CreateOrgDialog({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
@@ -137,7 +137,7 @@ function CreateOrgDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-// ─── Org Detail Panel ─────────────────────────────────────────────────────────
+// --- Org Detail Panel ---------------------------------------------------------
 
 function OrgDetailPanel({ orgId, onBack }: { orgId: string; onBack: () => void }) {
   const { data, isLoading, refetch } = trpc.organisation.get.useQuery({ id: orgId });
@@ -344,7 +344,7 @@ function OrgDetailPanel({ orgId, onBack }: { orgId: string; onBack: () => void }
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 
 export default function OrganisationsPage() {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);

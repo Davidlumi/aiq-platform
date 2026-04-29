@@ -1,10 +1,10 @@
 /**
- * Card — AiQ Design System v2.2 §5.4
+ * Card - AiQ Design System v2.2 §5.4
  *
  * Variants:
- *   default  — raised surface, radius-md (6px), elevation-sm, 24px padding
- *   elevated — raised surface, radius-lg (8px), elevation-md, 32px padding
- *   sunken   — sunken surface, radius-md (6px), no shadow, 16px padding
+ *   default  - raised surface, radius-md (6px), elevation-sm, 24px padding
+ *   elevated - raised surface, radius-lg (8px), elevation-md, 32px padding
+ *   sunken   - sunken surface, radius-md (6px), no shadow, 16px padding
  *
  * CardDivider provides a 1px horizontal rule that bleeds to card edges.
  * CardTitle uses type-heading-xs (17px/500).

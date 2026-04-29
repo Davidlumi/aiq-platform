@@ -40,7 +40,7 @@ import { Button } from "./ui/button";
 type NavItem = { icon: React.ElementType; label: string; path: string };
 type NavSection = { section: string; items: NavItem[] };
 
-// ─── Role helpers ────────────────────────────────────────────────────────────
+// --- Role helpers ------------------------------------------------------------
 const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
 const MANAGER_ROLES = ["manager"];
 
@@ -51,7 +51,7 @@ function isManager(roles: string[]) {
   return !isCpo(roles) && roles.some(r => MANAGER_ROLES.includes(r));
 }
 
-// ─── Nav definitions ─────────────────────────────────────────────────────────
+// --- Nav definitions ---------------------------------------------------------
 const MY_DEVELOPMENT: NavSection = {
   section: "My Development",
   items: [
@@ -97,13 +97,13 @@ function getNavSections(roles: string[]): NavSection[] {
   return [MY_DEVELOPMENT];
 }
 
-// ─── Width persistence ────────────────────────────────────────────────────────
+// --- Width persistence --------------------------------------------------------
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
-// ─── Root component ───────────────────────────────────────────────────────────
+// --- Root component -----------------------------------------------------------
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -144,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 }
 
-// ─── Inner layout ─────────────────────────────────────────────────────────────
+// --- Inner layout -------------------------------------------------------------
 function DashboardLayoutContent({
   children,
   setSidebarWidth,

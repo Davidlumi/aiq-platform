@@ -1,5 +1,5 @@
 /**
- * ExplanationDrawer — AiQ Core Trust & Explainability Component
+ * ExplanationDrawer - AiQ Core Trust & Explainability Component
  *
  * Required on every score, readiness state, and policy decision display.
  * Implements the "Why does this score exist?" pattern from the build bible.
@@ -15,7 +15,7 @@ import { X, Info, ChevronRight, AlertTriangle, CheckCircle, Clock, Target, Eye, 
 import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 
-// ─── Drawer Shell ─────────────────────────────────────────────────────────────
+// --- Drawer Shell -------------------------------------------------------------
 
 interface ExplanationDrawerProps {
   trigger: React.ReactNode;
@@ -51,7 +51,7 @@ export function ExplanationDrawer({
       {/* Drawer panel */}
       <div
         className={cn(
-          "fixed z-50 bg-white shadow-2xl transition-transform duration-300 flex flex-col",
+          "fixed z-50 bg-card shadow-2xl transition-transform duration-300 flex flex-col",
           side === "right"
             ? "top-0 right-0 h-full w-full max-w-[480px]"
             : "bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl",
@@ -61,24 +61,24 @@ export function ExplanationDrawer({
             ? "translate-x-full"
             : "translate-y-full"
         )}
-        style={{ borderLeft: side === "right" ? "1px solid #EAECF0" : undefined }}
+        style={{ borderLeft: side === "right" ? "1px solid oklch(22% 0.030 240)" : undefined }}
       >
         {/* Header */}
         <div
           className="flex items-start justify-between p-5 shrink-0"
-          style={{ borderBottom: "1px solid #EAECF0" }}
+          style={{ borderBottom: "1px solid oklch(22% 0.030 240)" }}
         >
           <div className="flex items-start gap-3">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-              style={{ background: "#EEF0FF" }}
+              style={{ background: "oklch(18% 0.040 250)" }}
             >
               <Info className="w-4 h-4" style={{ color: "var(--primary)" }} />
             </div>
             <div>
               <h2
                 className="font-semibold text-base"
-                style={{ color: "#0E1726" }}
+                style={{ color: "var(--foreground)" }}
               >
                 {title}
               </h2>
@@ -93,7 +93,7 @@ export function ExplanationDrawer({
             onClick={() => setOpen(false)}
             className="p-1.5 rounded-lg transition-colors shrink-0"
             style={{ color: "#9CA3AF" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F6FF")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "oklch(22% 0.030 240)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             aria-label="Close"
           >
@@ -108,7 +108,7 @@ export function ExplanationDrawer({
   );
 }
 
-// ─── Score Breakdown Panel ────────────────────────────────────────────────────
+// --- Score Breakdown Panel ----------------------------------------------------
 
 interface CapabilityFactor {
   name: string;
@@ -137,18 +137,18 @@ export function ScoreBreakdown({
   const peakonColor = scoreToColor(overallScore);
 
   const confidenceColors = {
-    high: { bg: "#DCFCE7", text: "#15803D" },
-    medium: { bg: "#FEF9C3", text: "#A16207" },
-    low: { bg: "#FEE2E2", text: "#B91C1C" },
+    high:   { bg: "oklch(18% 0.040 142)", text: "#4ADE80" },
+    medium: { bg: "oklch(18% 0.040 68)",  text: "#FCD34D" },
+    low:    { bg: "oklch(18% 0.040 27)",  text: "#F87171" },
   };
   const conf = confidenceColors[confidenceLevel];
 
   return (
     <div className="space-y-4">
       {/* Overall score */}
-      <div className="p-4 rounded-xl" style={{ background: "#F9FAFB", border: "1px solid #EAECF0" }}>
+      <div className="p-4 rounded-xl" style={{ background: "oklch(17% 0.028 240)", border: "1px solid oklch(22% 0.030 240)" }}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold" style={{ color: "#6B7280" }}>
+          <span className="text-sm font-semibold text-muted-foreground">
             Overall AI Readiness Score
           </span>
           <span
@@ -158,7 +158,7 @@ export function ScoreBreakdown({
             {formatPeakonScore(overallScore)}
           </span>
         </div>
-        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "#E5E7EB" }}>
+        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${overallScore}%`, background: peakonColor.bg }}
@@ -188,12 +188,12 @@ export function ScoreBreakdown({
         </h4>
         <div className="space-y-3">
           {factors.map((factor, idx) => (
-            <div key={idx} className="p-3.5 rounded-xl border" style={{ borderColor: "#EAECF0" }}>
+            <div key={idx} className="p-3.5 rounded-xl border" style={{ borderColor: "oklch(22% 0.030 240)" }}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: factor.color }} />
-                    <span className="text-sm font-semibold" style={{ color: "#0E1726"}}>
+                    <span className="text-sm font-semibold text-foreground">
                       {factor.name}
                     </span>
                     <span className="text-xs" style={{ color: "#9CA3AF" }}>
@@ -211,7 +211,7 @@ export function ScoreBreakdown({
                   {formatPeakonScore(factor.score)}
                 </span>
               </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "#E5E7EB" }}>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${factor.score}%`, background: factor.color }}
@@ -230,7 +230,7 @@ export function ScoreBreakdown({
   );
 }
 
-// ─── Policy Decision Explanation ─────────────────────────────────────────────
+// --- Policy Decision Explanation ---------------------------------------------
 
 interface PolicyDecisionProps {
   policyName: string;
@@ -264,7 +264,7 @@ export function PolicyDecisionExplanation({
           <Icon className="w-5 h-5" style={{ color: config.color }} />
           <div>
             <p className="font-semibold text-sm" style={{ color: config.color}}>
-              {config.label} — {policyName}
+              {config.label} - {policyName}
             </p>
             <p className="text-xs mt-0.5" style={{ color: config.color, opacity: 0.8 }}>
               {reason}
@@ -280,13 +280,13 @@ export function PolicyDecisionExplanation({
         </h4>
         <div className="space-y-2">
           {conditions.map((cond, idx) => (
-            <div key={idx} className="flex items-center gap-2.5 py-2 px-3 rounded-lg" style={{ background: "#F9FAFB" }}>
+            <div key={idx} className="flex items-center gap-2.5 py-2 px-3 rounded-lg" style={{ background: "oklch(17% 0.028 240)" }}>
               {cond.met ? (
                 <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "var(--primary)" }} />
               ) : (
                 <X className="w-4 h-4 shrink-0" style={{ color: "#DC2626" }} />
               )}
-              <span className="text-sm flex-1" style={{ color: "#374151" }}>{cond.label}</span>
+              <span className="text-sm flex-1 text-foreground">{cond.label}</span>
               {cond.value && (
                 <span className="text-xs font-mono" style={{ color: "#6B7280" }}>{cond.value}</span>
               )}
@@ -311,7 +311,7 @@ export function PolicyDecisionExplanation({
   );
 }
 
-// ─── Visibility Boundaries ────────────────────────────────────────────────────
+// --- Visibility Boundaries ----------------------------------------------------
 
 interface VisibilityBoundariesProps {
   items: Array<{
@@ -329,10 +329,10 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
       <p className="text-sm" style={{ color: "#6B7280" }}>
         This table shows exactly who can see each piece of your data.
       </p>
-      <div className="rounded-xl overflow-hidden border" style={{ borderColor: "#EAECF0" }}>
+      <div className="rounded-xl overflow-hidden border" style={{ borderColor: "oklch(22% 0.030 240)" }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #EAECF0" }}>
+            <tr style={{ background: "oklch(17% 0.028 240)", borderBottom: "1px solid oklch(22% 0.030 240)" }}>
               <th className="text-left px-3 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Data</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>You</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Manager</th>
@@ -341,8 +341,8 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
           </thead>
           <tbody>
             {items.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? "1px solid #F3F4F6" : undefined }}>
-                <td className="px-3 py-2.5" style={{ color: "#374151" }}>
+              <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? "1px solid oklch(22% 0.030 240)" : undefined }}>
+                <td className="px-3 py-2.5 text-foreground">
                   <div>{item.label}</div>
                   {item.value && <div className="text-xs" style={{ color: "#9CA3AF" }}>{item.value}</div>}
                 </td>
@@ -364,7 +364,7 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
   );
 }
 
-// ─── Why Assigned ─────────────────────────────────────────────────────────────
+// --- Why Assigned -------------------------------------------------------------
 
 interface WhyAssignedProps {
   itemTitle: string;

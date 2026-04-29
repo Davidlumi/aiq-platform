@@ -1,6 +1,7 @@
 /**
- * Individual Dashboard — Wireframe P2 visual language
+ * Individual Dashboard - Wireframe P2 visual language
  * Level ring · "Where you are" narrative · Continue Learning · 6-domain capability grid
+ * Dark navy brand theme (AiQ Design System)
  */
 import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
@@ -12,21 +13,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Separator } from "@/components/ui/separator";
 import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { useState } from "react";
-import { BookOpen, ArrowRight, Sparkles, AlertTriangle, Target } from "lucide-react";
+import { BookOpen, Sparkles, Target } from "lucide-react";
 import { DomainDot, CapabilityBar, EmptyState, RatingBadge, PeakonScoreBadge, ConfidenceIndicator } from "@/components/dashboard/DashboardUI";
 import { HeroScore } from "@/components/dashboard/PeakonPrimitives";
 import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 import { DOMAIN_COLOURS } from "@/lib/domains";
 
-// ─── Wireframe colour scale (1→5 levels) ─────────────────────────────────────
-// Level 1 Emerging: #E5E7EB / #4B5563
-// Level 2 Developing: #94A3B8 / #FFFFFF
-// Level 3 Capable: #557DAE / #FFFFFF
-// Level 4 Strong: #2E4C7A / #FFFFFF
-// Level 5 AI Ready: #1F3A5F / #FFFFFF
+// --- Wireframe colour scale (1→5 levels) -------------------------------------
+// Level 1 Emerging: grey chip
+// Level 2 Developing: slate chip
+// Level 3 Capable: mid-blue #557DAE
+// Level 4 Strong: navy #2E4C7A
+// Level 5 AI Ready: dark navy #1F3A5F
 
 function getLevelFromScore(score: number): number {
-  // score is 0–100; map to 1–5
   if (score >= 80) return 5;
   if (score >= 60) return 4;
   if (score >= 40) return 3;
@@ -40,8 +40,8 @@ function getLevelLabel(level: number): string {
 
 function getLevelChipStyle(level: number): { bg: string; text: string } {
   const styles: Record<number, { bg: string; text: string }> = {
-    1: { bg: "#E5E7EB", text: "#4B5563" },
-    2: { bg: "#94A3B8", text: "#FFFFFF" },
+    1: { bg: "#374151", text: "#D1D5DB" },
+    2: { bg: "#475569", text: "#E2E8F0" },
     3: { bg: "#557DAE", text: "#FFFFFF" },
     4: { bg: "#2E4C7A", text: "#FFFFFF" },
     5: { bg: "#1F3A5F", text: "#FFFFFF" },
@@ -62,23 +62,21 @@ function LevelChip({ level, size = "sm" }: { level: number; size?: "sm" | "md" |
   );
 }
 
-// SVG donut ring showing level progress
+// SVG donut ring showing level progress — dark theme
 function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
   const level = getLevelFromScore(score);
   const levelLabel = getLevelLabel(level);
   const preciseScore = (score / 10).toFixed(1);
   const chipStyle = getLevelChipStyle(level);
 
-  // Progress within the current level (0–1)
   const levelMin = (level - 1) * 20;
   const levelMax = level * 20;
   const progressInLevel = Math.min(1, (score - levelMin) / 20);
   const pctToNextLevel = Math.round(progressInLevel * 100);
 
-  // Circle geometry
   const cx = size / 2;
   const cy = size / 2;
-  const r = size * 0.375; // radius
+  const r = size * 0.375;
   const strokeWidth = size * 0.0875;
   const circumference = 2 * Math.PI * r;
   const filled = (score / 100) * circumference;
@@ -87,9 +85,9 @@ function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
     <div style={{ textAlign: "center" }}>
       <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
         <svg viewBox={`0 0 ${size} ${size}`} style={{ width: "100%", height: "100%" }}>
-          {/* Track */}
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F3F4F6" strokeWidth={strokeWidth} />
-          {/* Fill */}
+          {/* Track — dark navy */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={strokeWidth} />
+          {/* Fill — level colour */}
           <circle
             cx={cx} cy={cy} r={r}
             fill="none"
@@ -100,24 +98,24 @@ function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
             transform={`rotate(-90 ${cx} ${cy})`}
             strokeLinecap="round"
           />
-          {/* Score text */}
+          {/* Score text — white */}
           <text
             x={cx} y={cy - size * 0.04}
             textAnchor="middle"
-            style={{ fontSize: size * 0.2, fontWeight: 500, fill: "#0F2547", fontFamily: "Inter, system-ui, sans-serif" }}
+            style={{ fontSize: size * 0.2, fontWeight: 500, fill: "#F9FAFB", fontFamily: "Sora, system-ui, sans-serif" }}
           >
             {preciseScore}
           </text>
           <text
             x={cx} y={cy + size * 0.12}
             textAnchor="middle"
-            style={{ fontSize: size * 0.065, fill: "#6B7280", fontFamily: "Inter, system-ui, sans-serif", letterSpacing: "0.06em" }}
+            style={{ fontSize: size * 0.065, fill: "#9CA3AF", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}
           >
             YOUR LEVEL
           </text>
         </svg>
       </div>
-      <p style={{ fontSize: 11, color: "#6B7280", marginTop: 8 }}>{pctToNextLevel}% of the way to Level {Math.min(5, level + 1)}</p>
+      <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 8 }}>{pctToNextLevel}% of the way to Level {Math.min(5, level + 1)}</p>
       <span
         className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium mt-2"
         style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}
@@ -165,7 +163,6 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const levelLabel = getLevelLabel(level);
   const preciseScore = (score / 10).toFixed(1);
 
-  // Derive narrative text
   const sortedDomains = [...data.domains].filter(d => d.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   const topDomain = sortedDomains[0];
   const weakDomain = sortedDomains[sortedDomains.length - 1];
@@ -173,13 +170,12 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     ? `Up ${Math.abs(scoreDelta / 10).toFixed(1)} levels this cycle. `
     : "";
   const narrativeText = data.overallScore !== null
-    ? `You're at Level ${preciseScore} — ${levelLabel.toLowerCase()}. ${deltaText}${topDomain ? `Strongest in ${topDomain.name} (${(topDomain.score! / 10).toFixed(1)}).` : ""} ${weakDomain && weakDomain.key !== topDomain?.key ? `Biggest opportunity is ${weakDomain.name} (${(weakDomain.score! / 10).toFixed(1)}) — your current development focus.` : ""}`
+    ? `You're at Level ${preciseScore} - ${levelLabel.toLowerCase()}. ${deltaText}${topDomain ? `Strongest in ${topDomain.name} (${(topDomain.score! / 10).toFixed(1)}).` : ""} ${weakDomain && weakDomain.key !== topDomain?.key ? `Biggest opportunity is ${weakDomain.name} (${(weakDomain.score! / 10).toFixed(1)}) - your current development focus.` : ""}`
     : "Complete your assessment to generate your capability profile.";
 
   const roleTarget = data.roleTarget;
   const roleTargetText = roleTarget ? `Role target: Level ${(roleTarget / 10).toFixed(1)} by December.` : "";
 
-  // Continue learning — use planSummary if available
   const plan = data.planSummary;
 
   const firstName = isOwnDashboard
@@ -189,13 +185,13 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   return (
     <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-4">
 
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+      {/* -- Page header -- */}
+      <div className="flex items-center justify-between pb-3 border-b border-border">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-neutral-400 mb-0.5">
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">
             {isOwnDashboard ? "Your capability profile" : `${data.user.firstName} ${data.user.lastName}`}
           </p>
-          <h1 className="text-lg font-semibold" style={{ color: "#0F2547" }}>
+          <h1 className="text-lg font-semibold text-foreground">
             Good morning, {firstName}
           </h1>
         </div>
@@ -205,7 +201,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           )}
           {isOwnDashboard && (
             <Link href="/assessment">
-              <Button size="sm" className="gap-1.5" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>
+              <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
                 <Sparkles className="w-3.5 h-3.5" />
                 {data.overallScore !== null ? "Reassess" : "Start assessment"}
               </Button>
@@ -214,72 +210,72 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       </div>
 
-      {/* ── Hero card: level ring + "Where you are" narrative ── */}
+      {/* -- Hero card: level ring + "Where you are" narrative -- */}
       {data.overallScore !== null && (
-        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-7">
+        <div className="bg-card rounded-xl border border-border shadow-md p-7">
           <div className="grid gap-8 items-center" style={{ gridTemplateColumns: "200px 1fr" }}>
             {/* Level ring */}
             <LevelRing score={score} size={160} />
 
             {/* Narrative */}
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#6B7280" }}>
+              <p className="text-xs font-medium uppercase tracking-widest mb-2 text-muted-foreground">
                 Where you are
               </p>
-              <h3 className="text-xl font-medium leading-snug mb-3" style={{ color: "#0F2547" }}>
+              <h3 className="text-xl font-medium leading-snug mb-3 text-foreground">
                 {narrativeText}
               </h3>
               {roleTargetText && (
-                <p className="text-sm" style={{ color: "#6B7280" }}>{roleTargetText}</p>
+                <p className="text-sm text-muted-foreground">{roleTargetText}</p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── No assessment state ── */}
+      {/* -- No assessment state -- */}
       {data.overallScore === null && (
-        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-7 text-center">
-          <p className="text-base font-medium mb-3" style={{ color: "#0F2547" }}>
+        <div className="bg-card rounded-xl border border-border shadow-md p-7 text-center">
+          <p className="text-base font-medium mb-3 text-foreground">
             Complete your assessment to see your capability level
           </p>
           <Link href="/assessment">
-            <Button style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>Start Assessment →</Button>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Start Assessment →</Button>
           </Link>
         </div>
       )}
 
-      {/* ── Continue learning card ── */}
+      {/* -- Continue learning card -- */}
       {plan && (
-        <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
+        <div className="bg-card rounded-xl border border-border shadow-md p-6">
           <div className="flex items-start justify-between mb-3">
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#1F3A5F" }}>
+              <p className="text-xs font-medium uppercase tracking-widest mb-1 text-primary">
                 Continue learning
               </p>
-              <h3 className="text-base font-medium" style={{ color: "#0F2547" }}>
+              <h3 className="text-base font-medium text-foreground">
                 Your development plan
               </h3>
             </div>
             <Link href="/learning">
-              <Button size="sm" style={{ backgroundColor: "#1F3A5F", color: "#FFFFFF" }}>
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
                 Resume →
               </Button>
             </Link>
           </div>
-          <p className="text-sm mb-3" style={{ color: "#6B7280" }}>
+          <p className="text-sm mb-3 text-muted-foreground">
             {plan.moduleCount} module{plan.moduleCount !== 1 ? "s" : ""} · {plan.completionPercentage}% complete
             {plan.totalEstimatedMinutes > 0 && ` · ~${Math.round(plan.totalEstimatedMinutes)} minutes remaining`}
           </p>
-          <div style={{ position: "relative", height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${plan.completionPercentage}%`, background: "#557DAE", borderRadius: 3 }} />
+          <div style={{ position: "relative", height: 6, background: "oklch(22% 0.030 240)", borderRadius: 3, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${plan.completionPercentage}%`, background: "oklch(72.3% 0.220 142)", borderRadius: 3 }} />
           </div>
         </div>
       )}
 
-      {/* ── Six capability areas ── */}
-      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-6">
-        <p className="text-sm font-medium mb-4" style={{ color: "#0F2547" }}>
+      {/* -- Six capability areas -- */}
+      <div className="bg-card rounded-xl border border-border shadow-md p-6">
+        <p className="text-sm font-medium mb-4 text-foreground">
           Your six capability areas
         </p>
 
@@ -296,17 +292,21 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <button
                 key={d.key}
                 onClick={() => setDrillDomain(d.key)}
-                className="flex items-center gap-3 p-3 rounded-lg text-left transition-all hover:shadow-sm"
+                className="flex items-center gap-3 p-3 rounded-lg text-left transition-all hover:bg-secondary/50"
                 style={{
-                  background: isWeakest ? "#FEF7ED" : "#F9FAFB",
-                  border: isWeakest ? "0.5px solid #FED7AA" : "0.5px solid transparent",
+                  background: isWeakest
+                    ? "oklch(18% 0.040 68 / 0.4)"
+                    : "oklch(17% 0.028 240)",
+                  border: isWeakest
+                    ? "0.5px solid oklch(30% 0.090 68)"
+                    : "0.5px solid oklch(22% 0.030 240)",
                 }}
               >
                 <LevelChip level={domainLevel} size="sm" />
                 <div style={{ flex: 1 }}>
-                  <p className="text-sm font-medium" style={{ color: "#0F2547" }}>{d.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: isWeakest ? "#B45309" : "#6B7280" }}>
-                    Level {preciseLevel ?? "—"}
+                  <p className="text-sm font-medium text-foreground">{d.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: isWeakest ? "#FCD34D" : "#9CA3AF" }}>
+                    Level {preciseLevel ?? "-"}
                     {isStrongest && " · Strongest"}
                     {isWeakest && " · Active development"}
                   </p>
@@ -317,7 +317,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       </div>
 
-      {/* ── Domain drill-down sheet ── */}
+      {/* -- Domain drill-down sheet -- */}
       <DomainDrillDown
         open={drillDomain !== null}
         onClose={() => setDrillDomain(null)}
@@ -328,7 +328,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   );
 }
 
-// ─── Domain drill-down sheet ─────────────────────────────────────────────────
+// --- Domain drill-down sheet -------------------------------------------------
 
 function DomainDrillDown({ open, onClose, domainKey, userId }: {
   open: boolean;
@@ -343,11 +343,11 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
 
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-card border-border">
         {isLoading ? (
           <div className="space-y-4 p-2">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 rounded-lg bg-neutral-100 animate-pulse" />
+              <div key={i} className="h-20 rounded-lg bg-secondary animate-pulse" />
             ))}
           </div>
         ) : data ? (
@@ -355,7 +355,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
             <SheetHeader className="pb-4">
               <div className="flex items-center gap-2.5">
                 <DomainDot domain={data.domainKey} size={12} />
-                <SheetTitle className="text-base">{data.domainName}</SheetTitle>
+                <SheetTitle className="text-base text-foreground">{data.domainName}</SheetTitle>
               </div>
             </SheetHeader>
 
@@ -373,16 +373,16 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="p-3 rounded-lg" style={{ background: "oklch(18% 0.040 68 / 0.4)", border: "1px solid oklch(30% 0.090 68)" }}>
                   <div className="flex items-start gap-2">
-                    <Target className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-amber-700">{data.gapStatement}</p>
+                    <Target className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#FCD34D" }} />
+                    <p className="text-xs" style={{ color: "#FCD34D" }}>{data.gapStatement}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <Separator />
+            <Separator className="bg-border" />
 
             <div className="py-4 space-y-3">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Signal breakdown</h4>
@@ -393,7 +393,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                   {data.signals.map(s => (
                     <div key={s.signalKey} className="flex items-center justify-between py-1.5">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#047857" : s.level === "Developing" ? "#2563EB" : "#D97706" }} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.level === "Strong" ? "#4ADE80" : s.level === "Developing" ? "#60A5FA" : "#FCD34D" }} />
                         <span className="text-xs text-foreground truncate">{s.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -405,7 +405,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               )}
             </div>
 
-            <Separator />
+            <Separator className="bg-border" />
 
             {data.developmentModules.length > 0 && (
               <div className="py-4 space-y-3">
@@ -413,12 +413,13 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                 <div className="space-y-2">
                   {data.developmentModules.map(m => (
                     <Link key={m.moduleId} href={`/learning/module/${m.moduleId}`}>
-                      <div className="flex items-center justify-between p-2.5 rounded-lg border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all cursor-pointer">
+                      <div className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all cursor-pointer">
                         <div className="flex items-center gap-2">
                           <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-medium text-foreground">{m.title}</span>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "completed" ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "completed" ? "text-primary" : "text-muted-foreground"}`}
+                          style={{ background: m.status === "completed" ? "oklch(18% 0.040 142)" : "oklch(18% 0.010 240)" }}>
                           {m.status}
                         </span>
                       </div>

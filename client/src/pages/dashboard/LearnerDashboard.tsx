@@ -1,8 +1,8 @@
 /**
- * Participant Dashboard — AiQ Platform
+ * Participant Dashboard - AiQ Platform
  *
  * Design principles (from enterprise launch prompt):
- * - Band-based language: "Strong", "Developing", "Needs Support" — no raw numeric scores
+ * - Band-based language: "Strong", "Developing", "Needs Support" - no raw numeric scores
  * - Above-fold hero card: readiness band, governing constraint, revalidation countdown
  * - Capability radar (shape, not numbers)
  * - Scenario callbacks: which scenarios you handled well vs. struggled with
@@ -33,7 +33,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
 } from "recharts";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// --- Design tokens ------------------------------------------------------------
 const CAP_META: Record<string, { label: string; color: string; shortLabel: string }> = {
   ai_interaction:         { label: "AI Interaction",         color: "#4477AA", shortLabel: "Interact" },
   ai_output_evaluation:   { label: "Output Evaluation",      color: "var(--primary)", shortLabel: "Evaluate" },
@@ -74,7 +74,7 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
   },
 };
 
-// Band from score — never show raw number to participant
+// Band from score - never show raw number to participant
 function scoreToBand(score: number | null): { label: string; color: string; icon: any } {
   if (score === null) return { label: "Not assessed", color: "#9CA3AF", icon: HelpCircle };
   if (score >= 75) return { label: "Strong",         color: "var(--primary)",  icon: ThumbsUp };
@@ -93,7 +93,7 @@ function outcomeToSignal(oc: string | null): { label: string; color: string; ico
   return { label: "Answered", color: "#9CA3AF", icon: Minus };
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function ReadinessHeroCard({
   readiness, daysToRevalidation, revalidationDue, firstName,
@@ -225,7 +225,7 @@ function ScenarioCallbacksCard({
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Target className="w-4 h-4 text-[#b91c1c]" />Recent Assessment Moments
         </CardTitle>
-        <p className="text-xs text-muted-foreground">Scenarios from your last assessment — what you handled well and where to focus</p>
+        <p className="text-xs text-muted-foreground">Scenarios from your last assessment - what you handled well and where to focus</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {strong.length > 0 && (
@@ -337,7 +337,7 @@ function TransferFindingsPanel() {
   );
 }
 
-// ─── Competence-Confidence Matrix Widget ────────────────────────────────────
+// --- Competence-Confidence Matrix Widget ------------------------------------
 function CompetenceConfidenceWidget() {
   const { data: results, isLoading, isError } = trpc.assessment.results.useQuery(
     {},
@@ -346,7 +346,7 @@ function CompetenceConfidenceWidget() {
   if (isLoading) return (
     <Card className="border-border"><CardContent className="pt-5"><Skeleton className="h-24 w-full" /></CardContent></Card>
   );
-  if (isError) return null; // No completed assessment — hide the widget
+  if (isError) return null; // No completed assessment - hide the widget
   const matrix = results?.competenceConfidenceMatrix;
   const blindSpots = results?.blindSpots;
   if (!matrix || matrix.length === 0) return null;
@@ -403,7 +403,7 @@ function CompetenceConfidenceWidget() {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// --- Main component -----------------------------------------------------------
 export default function LearnerDashboard() {
   const { user } = useAuth();
   const { data, isLoading, refetch } = trpc.dashboard.learner.useQuery();
@@ -434,7 +434,7 @@ export default function LearnerDashboard() {
   return (
     <div className="p-6 space-y-6 max-w-4xl">
 
-      {/* ── Page header ── */}
+      {/* -- Page header -- */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -474,7 +474,7 @@ export default function LearnerDashboard() {
         </div>
       </div>
 
-      {/* ── Above-fold hero ── */}
+      {/* -- Above-fold hero -- */}
       <ReadinessHeroCard
         readiness={data?.latestReadiness ?? null}
         daysToRevalidation={daysToRevalidation}
@@ -482,14 +482,14 @@ export default function LearnerDashboard() {
         firstName={user?.firstName ?? undefined}
       />
 
-      {/* ── No assessment CTA ── */}
+      {/* -- No assessment CTA -- */}
       {!hasAssessment && (
         <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
           <CardContent className="pt-8 pb-8 text-center">
             <ClipboardList className="w-10 h-10 text-primary mx-auto mb-3" />
             <h3 className="text-base font-semibold text-foreground mb-1">Ready to discover your AI capability profile?</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-              The adaptive assessment takes 25–35 minutes and produces a personalised profile across 6 AI capability domains.
+              The adaptive assessment takes 25-35 minutes and produces a personalised profile across 6 AI capability domains.
             </p>
             <Link href="/assessment">
               <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
@@ -500,7 +500,7 @@ export default function LearnerDashboard() {
         </Card>
       )}
 
-      {/* ── Capability shape + scenario callbacks ── */}
+      {/* -- Capability shape + scenario callbacks -- */}
       {hasAssessment && capScores && (
         <div className="grid lg:grid-cols-2 gap-4">
           <CapabilityRadarCard scores={capScores} />
@@ -508,17 +508,17 @@ export default function LearnerDashboard() {
         </div>
       )}
 
-      {/* ── Competence-Confidence Matrix (compact) ── */}
+      {/* -- Competence-Confidence Matrix (compact) -- */}
       {hasAssessment && capScores && (
         <CompetenceConfidenceWidget />
       )}
 
-      {/* ── LLM narrative ── */}
+      {/* -- LLM narrative -- */}
       {hasAssessment && data?.llmNarrative && (
         <NarrativeCard narrative={data.llmNarrative} />
       )}
 
-      {/* ── Learning plan + revalidation ── */}
+      {/* -- Learning plan + revalidation -- */}
       {hasAssessment && (
         <div className="grid lg:grid-cols-2 gap-4">
           <Card className="border-border">
@@ -616,7 +616,7 @@ export default function LearnerDashboard() {
         </div>
       )}
 
-      {/* ── Credibility + risk bands (band language only) ── */}
+      {/* -- Credibility + risk bands (band language only) -- */}
       {hasAssessment && (data?.credibility || data?.risk) && (
         <div className="grid grid-cols-2 gap-4">
           {data?.credibility && (
@@ -649,10 +649,10 @@ export default function LearnerDashboard() {
         </div>
       )}
 
-      {/* ── Transfer findings ── */}
+      {/* -- Transfer findings -- */}
       {hasAssessment && <TransferFindingsPanel />}
 
-      {/* ── Quick actions ── */}
+      {/* -- Quick actions -- */}
       <div>
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

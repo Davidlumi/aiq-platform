@@ -1,5 +1,5 @@
 /**
- * ProfilingModal — multi-step pre-assessment profiling flow
+ * ProfilingModal - multi-step pre-assessment profiling flow
  *
  * Step 1: Role Family (broad category)
  * Step 2: Specific Role + Seniority
@@ -20,7 +20,7 @@ import {
   HelpCircle, ChevronDown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 export interface ProfilingData {
   roleFamily: string;
@@ -39,7 +39,7 @@ interface ProfilingModalProps {
   isPending: boolean;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// --- Data ---------------------------------------------------------------------
 
 const ROLE_FAMILIES = [
   {
@@ -149,9 +149,9 @@ const ROLE_FAMILIES = [
 ];
 
 const SENIORITY_LEVELS = [
-  { id: "coordinator", label: "Coordinator / Advisor", description: "0–3 years in role", expLevel: "junior" as const },
-  { id: "manager", label: "Manager / Specialist", description: "3–7 years, team or project ownership", expLevel: "mid" as const },
-  { id: "senior_manager", label: "Senior Manager / Lead", description: "7–12 years, department or function", expLevel: "senior" as const },
+  { id: "coordinator", label: "Coordinator / Advisor", description: "0-3 years in role", expLevel: "junior" as const },
+  { id: "manager", label: "Manager / Specialist", description: "3-7 years, team or project ownership", expLevel: "mid" as const },
+  { id: "senior_manager", label: "Senior Manager / Lead", description: "7-12 years, department or function", expLevel: "senior" as const },
   { id: "director", label: "Director / Head of", description: "12+ years, strategic ownership", expLevel: "principal" as const },
   { id: "executive", label: "VP / CPO / C-Suite", description: "Executive leadership", expLevel: "principal" as const },
 ];
@@ -216,7 +216,7 @@ const SECTORS = [
   { id: "other", label: "Other", icon: Globe },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingModalProps) {
   const [step, setStep] = useState(1);
@@ -227,7 +227,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
   const WHY_WE_ASK: Record<number, string> = {
     1: "Role family determines which capability domains matter most for your assessment. An HRBP faces different AI risks than a People Analyst.",
     2: "Your specific role and seniority calibrates question difficulty. A Coordinator and a Director face different expectations.",
-    3: "AI experience level sets your starting difficulty. Honest answers lead to a more accurate score — there's no penalty for low experience.",
+    3: "AI experience level sets your starting difficulty. Honest answers lead to a more accurate score - there's no penalty for low experience.",
     4: "Sector context lets us weight scenarios towards your industry's specific regulatory and ethical landscape."};
 
   // Form state
@@ -290,7 +290,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                 Before You Begin
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Help us calibrate your assessment — takes about 60 seconds
+                Help us calibrate your assessment - takes about 60 seconds
               </p>
             </div>
             {/* UX-8: Why we ask tooltip */}
@@ -337,7 +337,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
 
         {/* Step content */}
         <div className="px-6 py-5">
-          {/* ── Step 1: Role Family ── */}
+          {/* -- Step 1: Role Family -- */}
           {step === 1 && (
             <div className="space-y-4">
               <div>
@@ -390,7 +390,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
             </div>
           )}
 
-          {/* ── Step 2: Specific Role + Seniority ── */}
+          {/* -- Step 2: Specific Role + Seniority -- */}
           {step === 2 && family && (
             <div className="space-y-5">
               <div>
@@ -460,13 +460,13 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
             </div>
           )}
 
-          {/* ── Step 3: AI Experience + Tools ── */}
+          {/* -- Step 3: AI Experience + Tools -- */}
           {step === 3 && (
             <div className="space-y-5">
               <div>
                 <h3 className="text-base font-semibold text-foreground">How would you describe your AI experience?</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Be honest — there's no right answer. This calibrates the difficulty of your first questions.
+                  Be honest - there's no right answer. This calibrates the difficulty of your first questions.
                 </p>
               </div>
               {/* UX-8: Profile context reminder */}
@@ -564,7 +564,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
             </div>
           )}
 
-          {/* ── Step 4: Context ── */}
+          {/* -- Step 4: Context -- */}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -634,7 +634,7 @@ export function ProfilingModal({ open, onClose, onStart, isPending }: ProfilingM
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge className="bg-primary/12 text-primary border border-primary/25 text-xs font-medium">
                         <Clock className="w-3 h-3 mr-1" />
-                        8–12 minutes
+                        8-12 minutes
                       </Badge>
                       <Badge className="bg-[#D97706]/12 text-[#99882A] border border-[#D97706]/25 text-xs font-medium">
                         <AlertTriangle className="w-3 h-3 mr-1" />

@@ -1,5 +1,5 @@
 /**
- * Input — AiQ Design System v2.2 §5.6
+ * Input - AiQ Design System v2.2 §5.6
  *
  * - Height: 44px (WCAG 2.5.8 minimum target)
  * - Focus ring: 2px navy-800, 2px offset
@@ -69,7 +69,7 @@ function Input({
         "selection:bg-[var(--navy-200)] selection:text-[var(--navy-900)]",
         // Transition
         "transition-[border-color,box-shadow] duration-[120ms]",
-        // Focus — 2px navy-800 ring, 2px offset
+        // Focus - 2px navy-800 ring, 2px offset
         "outline-none",
         "focus-visible:border-[var(--navy-800)]",
         "focus-visible:ring-2 focus-visible:ring-[var(--navy-800)] focus-visible:ring-offset-2",

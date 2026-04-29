@@ -1,12 +1,12 @@
 /**
- * AiQ Loading Components — Enterprise-grade skeleton screens and loading states
+ * AiQ Loading Components - Enterprise-grade skeleton screens and loading states
  *
  * Provides branded shimmer animations, page-level loaders, and composable
  * skeleton primitives for cards, tables, charts, stats, and forms.
  */
 import { cn } from "@/lib/utils";
 
-// ─── Shimmer Block ──────────────────────────────────────────────────────────
+// --- Shimmer Block ----------------------------------------------------------
 // Base building block: a rounded rectangle with the AiQ shimmer gradient
 
 export function ShimmerBlock({
@@ -26,7 +26,7 @@ export function ShimmerBlock({
   );
 }
 
-// ─── Page Loader ────────────────────────────────────────────────────────────
+// --- Page Loader ------------------------------------------------------------
 // Full-page centered spinner with AiQ brand ring animation
 
 export function PageLoader({ message }: { message?: string }) {
@@ -34,7 +34,7 @@ export function PageLoader({ message }: { message?: string }) {
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <div className="relative w-12 h-12">
         <div
-          className="absolute inset-0 rounded-full border-[3px] border-neutral-200"
+          className="absolute inset-0 rounded-full border-[3px] border-border"
         />
         <div
           className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-primary"
@@ -48,7 +48,7 @@ export function PageLoader({ message }: { message?: string }) {
   );
 }
 
-// ─── Stat Skeleton ──────────────────────────────────────────────────────────
+// --- Stat Skeleton ----------------------------------------------------------
 // Mimics a KPI stat card with label + large number + subtitle
 
 export function StatSkeleton({ className }: { className?: string }) {
@@ -61,7 +61,7 @@ export function StatSkeleton({ className }: { className?: string }) {
   );
 }
 
-// ─── Card Skeleton ──────────────────────────────────────────────────────────
+// --- Card Skeleton ----------------------------------------------------------
 // Generic card with configurable number of content rows
 
 export function CardSkeleton({
@@ -94,7 +94,7 @@ export function CardSkeleton({
   );
 }
 
-// ─── Chart Skeleton ─────────────────────────────────────────────────────────
+// --- Chart Skeleton ---------------------------------------------------------
 // Mimics a chart area with axis lines and bar/area placeholders
 
 export function ChartSkeleton({
@@ -142,8 +142,8 @@ export function ChartSkeleton({
       )}
       {type === "radar" && (
         <div className="h-40 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-full border-2 border-dashed border-neutral-200 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full border-2 border-dashed border-neutral-200 flex items-center justify-center">
+          <div className="w-32 h-32 rounded-full border-2 border-dashed border-border flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full border-2 border-dashed border-border flex items-center justify-center">
               <ShimmerBlock brand className="w-10 h-10 rounded-full" />
             </div>
           </div>
@@ -166,7 +166,7 @@ export function ChartSkeleton({
   );
 }
 
-// ─── Table Skeleton ─────────────────────────────────────────────────────────
+// --- Table Skeleton ---------------------------------------------------------
 // Mimics a data table with header row and body rows
 
 export function TableSkeleton({
@@ -214,7 +214,7 @@ export function TableSkeleton({
   );
 }
 
-// ─── Heatmap Skeleton ───────────────────────────────────────────────────────
+// --- Heatmap Skeleton -------------------------------------------------------
 // Mimics the dashboard heatmap grid
 
 export function HeatmapSkeleton({
@@ -256,7 +256,7 @@ export function HeatmapSkeleton({
   );
 }
 
-// ─── Profile Header Skeleton ────────────────────────────────────────────────
+// --- Profile Header Skeleton ------------------------------------------------
 // Mimics a user profile / dashboard header with avatar + name + subtitle
 
 export function ProfileHeaderSkeleton({ className }: { className?: string }) {
@@ -271,7 +271,7 @@ export function ProfileHeaderSkeleton({ className }: { className?: string }) {
   );
 }
 
-// ─── Form Skeleton ──────────────────────────────────────────────────────────
+// --- Form Skeleton ----------------------------------------------------------
 // Mimics a form with label + input pairs
 
 export function FormSkeleton({
@@ -297,7 +297,7 @@ export function FormSkeleton({
   );
 }
 
-// ─── List Skeleton ──────────────────────────────────────────────────────────
+// --- List Skeleton ----------------------------------------------------------
 // Mimics a list of items (e.g., module cards, assessment history)
 
 export function ListSkeleton({
@@ -329,7 +329,7 @@ export function ListSkeleton({
   );
 }
 
-// ─── Dashboard Page Skeletons ───────────────────────────────────────────────
+// --- Dashboard Page Skeletons -----------------------------------------------
 // Layout-accurate skeletons for each V2 dashboard
 
 export function IndividualDashboardSkeleton() {
@@ -428,7 +428,7 @@ export function LeaderDashboardSkeleton() {
   );
 }
 
-// ─── Assessment Skeletons ───────────────────────────────────────────────────
+// --- Assessment Skeletons ---------------------------------------------------
 
 export function AssessmentResultsSkeleton() {
   return (
@@ -502,7 +502,7 @@ export function AssessmentSessionSkeleton() {
   );
 }
 
-// ─── Learning Skeletons ─────────────────────────────────────────────────────
+// --- Learning Skeletons -----------------------------------------------------
 
 export function LearningPlanSkeleton() {
   return (
@@ -574,7 +574,7 @@ export function ModulePlayerSkeleton() {
   );
 }
 
-// ─── Admin Skeletons ────────────────────────────────────────────────────────
+// --- Admin Skeletons --------------------------------------------------------
 
 export function AdminPageSkeleton({
   title = true,
@@ -607,7 +607,7 @@ export function AdminPageSkeleton({
   );
 }
 
-// ─── Animated Container ─────────────────────────────────────────────────────
+// --- Animated Container -----------------------------------------------------
 // Wraps children with staggered fade-in animation on mount
 
 export function AnimatedContainer({

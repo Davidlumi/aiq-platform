@@ -1813,3 +1813,11 @@
 - [x] WF-C1: Redesign CPO Functional Summary (LeaderDashboardV2) to match C1 wireframe — hero narrative, 4 KPI tiles, level distribution donut, segment comparison bars, "Worth your attention" insight cards
 - [x] WF-C3: Redesign CPO Strategic Dashboard (AIStrategyPage) to match C3 wireframe — strategic finding hero card, capability vs roadmap bars with target markers, trajectory chart (actual + projected), board options
 - [x] WF-NAV: Add Team Progress and Conversation Prompts to AppShell sidebar navigation for manager role
+
+## Brand Retheme — Dark Navy + Green (Apr 29 2026)
+
+- [ ] Rewrite index.css CSS variables: dark navy bg (#0d1117), green primary (#22c55e), dark card surfaces (#1a2332), white foreground
+- [ ] Update ThemeProvider to force dark theme matching new CSS variables
+- [ ] Update AppShell sidebar: dark navy bg, green active state, white text
+- [ ] Update AppShell header: dark navy, green accent
+- [ ] Verify assessment page, dashboard pages, and learning plan render correctly with new theme

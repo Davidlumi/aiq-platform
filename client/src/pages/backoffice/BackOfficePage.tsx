@@ -1,5 +1,5 @@
 /**
- * Back-Office Admin Panel — super_admin only
+ * Back-Office Admin Panel - super_admin only
  * Accessible at /backoffice
  * Tabs: Dashboard | Organisations | Users
  */
@@ -81,10 +81,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "session_flags" | "feature_flags";
 
-// ─── Beta Applications Tab ────────────────────────────────────────────────────
+// --- Beta Applications Tab ----------------------------------------------------
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
 type ApplicationStatus = typeof APPLICATION_STATUSES[number];
 
@@ -341,7 +341,7 @@ function BetaApplicationsTab() {
   );
 }
 
-// ─── Status badge helpers ─────────────────────────────────────────────────────
+// --- Status badge helpers -----------------------------------------------------
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     active:      { label: "Active",      className: "bg-primary/8 text-primary border-primary/25" },
@@ -359,7 +359,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Dashboard Tab ────────────────────────────────────────────────────────────
+// --- Dashboard Tab ------------------------------------------------------------
 function DashboardTab() {
   const { data: stats, isLoading } = trpc.backoffice.stats.useQuery();
 
@@ -431,7 +431,7 @@ function DashboardTab() {
   );
 }
 
-// ─── Create Org Dialog ────────────────────────────────────────────────────────
+// --- Create Org Dialog --------------------------------------------------------
 function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -499,7 +499,7 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
   );
 }
 
-// ─── Edit Org Dialog ──────────────────────────────────────────────────────────
+// --- Edit Org Dialog ----------------------------------------------------------
 function EditOrgDialog({ org, onClose, onSaved }: { org: any; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(org.name ?? "");
   const [domain, setDomain] = useState(org.primaryDomain ?? "");
@@ -553,7 +553,7 @@ function EditOrgDialog({ org, onClose, onSaved }: { org: any; onClose: () => voi
   );
 }
 
-// ─── Orgs Tab ─────────────────────────────────────────────────────────────────
+// --- Orgs Tab -----------------------------------------------------------------
 function OrgsTab() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -615,7 +615,7 @@ function OrgsTab() {
                 <tr key={org.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3 font-medium text-foreground">{org.name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{org.slug}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{org.primaryDomain ?? "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">{org.primaryDomain ?? "-"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{org.userCount}</td>
                   <td className="px-4 py-3"><StatusBadge status={org.status ?? "active"} /></td>
                   <td className="px-4 py-3 text-right">
@@ -689,7 +689,7 @@ function OrgsTab() {
   );
 }
 
-// ─── Create User Dialog ───────────────────────────────────────────────────────
+// --- Create User Dialog -------------------------------------------------------
 function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; onClose: () => void; onCreated: () => void; orgs: any[] }) {
   const [tenantId, setTenantId] = useState("");
   const [email, setEmail] = useState("");
@@ -796,7 +796,7 @@ function CreateUserDialog({ open, onClose, onCreated, orgs }: { open: boolean; o
   );
 }
 
-// ─── Reset Password Dialog ────────────────────────────────────────────────────
+// --- Reset Password Dialog ----------------------------------------------------
 function ResetPasswordDialog({ user, onClose }: { user: any; onClose: () => void }) {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -849,7 +849,7 @@ function ResetPasswordDialog({ user, onClose }: { user: any; onClose: () => void
   );
 }
 
-// ─── Edit User Dialog ─────────────────────────────────────────────────────────
+// --- Edit User Dialog ---------------------------------------------------------
 function EditUserDialog({ user, onClose, onSaved, orgs }: { user: any; onClose: () => void; onSaved: () => void; orgs: any[] }) {
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [lastName, setLastName] = useState(user.lastName ?? "");
@@ -938,7 +938,7 @@ function EditUserDialog({ user, onClose, onSaved, orgs }: { user: any; onClose: 
   );
 }
 
-// ─── Users Tab ────────────────────────────────────────────────────────────────
+// --- Users Tab ----------------------------------------------------------------
 function UsersTab({ orgs }: { orgs: any[] }) {
   const [search, setSearch] = useState("");
   const [filterTenant, setFilterTenant] = useState("all");
@@ -1024,7 +1024,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
                         {u.roles[0].replace(/_/g, " ")}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={u.status} /></td>
@@ -1117,7 +1117,7 @@ function UsersTab({ orgs }: { orgs: any[] }) {
   );
 }
 
-// ─── Reasoning Review Tab ────────────────────────────────────────────────────
+// --- Reasoning Review Tab ----------------------------------------------------
 const CAPABILITY_LABELS: Record<string, string> = {
   ai_interaction:      "AI Interaction",
   ai_output_evaluation:"AI Output Evaluation",
@@ -1182,7 +1182,7 @@ function ReasoningTab() {
   }
 
   function confidenceLabel(score: number | null) {
-    if (score === null) return "—";
+    if (score === null) return "-";
     const pct = Math.round(score * 100);
     if (pct <= 25) return "Guessing";
     if (pct <= 50) return "Unsure";
@@ -1319,7 +1319,7 @@ function ReasoningTab() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-background rounded-lg border border-border p-3">
                         <p className="text-xs text-muted-foreground mb-1">Selected option</p>
-                        <p className="text-sm font-medium text-foreground">{String(r.selectedValue ?? "—").toUpperCase()}</p>
+                        <p className="text-sm font-medium text-foreground">{String(r.selectedValue ?? "-").toUpperCase()}</p>
                       </div>
                       <div className="bg-background rounded-lg border border-border p-3">
                         <p className="text-xs text-muted-foreground mb-1">Outcome</p>
@@ -1388,7 +1388,7 @@ function ReasoningTab() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+            Showing {((page - 1) * PAGE_SIZE) + 1}-{Math.min(page * PAGE_SIZE, total)} of {total}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
@@ -1400,7 +1400,7 @@ function ReasoningTab() {
   );
 }
 
-// ─── WS2.2: Anti-Gaming Thresholds Tab ──────────────────────────────────────
+// --- WS2.2: Anti-Gaming Thresholds Tab --------------------------------------
 function AntiGamingTab() {
   const utils = trpc.useUtils();
   const { data: thresholds, isLoading } = trpc.backoffice.listAntiGamingThresholds.useQuery();
@@ -1528,7 +1528,7 @@ function AntiGamingTab() {
   );
 }
 
-// ─── WS3: LLM Item Review Queue Tab ──────────────────────────────────────────
+// --- WS3: LLM Item Review Queue Tab ------------------------------------------
 function LlmReviewQueueTab() {
   const utils = trpc.useUtils();
   const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected" | "auto_approved" | "all">("pending");
@@ -1601,7 +1601,7 @@ function LlmReviewQueueTab() {
   );
 }
 
-// ─── WS4.3: Session Review Flags Tab ─────────────────────────────────────────
+// --- WS4.3: Session Review Flags Tab -----------------------------------------
 function SessionFlagsTab() {
   const utils = trpc.useUtils();
   const [statusFilter, setStatusFilter] = useState<"pending" | "reviewed" | "all">("pending");
@@ -1661,7 +1661,7 @@ function SessionFlagsTab() {
   );
 }
 
-// ─── TD-3: Feature Flags Tab ─────────────────────────────────────────────────
+// --- TD-3: Feature Flags Tab -------------------------------------------------
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
   quality:    { label: "Quality",    color: "#6366F1" },
   integrity:  { label: "Integrity",  color: "#DC2626" },
@@ -1752,7 +1752,7 @@ function FeatureFlagsTab() {
     </div>
   );
 }
-// ─── Main Back-Office Page ────────────────────────────────────────────────────
+// --- Main Back-Office Page ----------------------------------------------------
 export default function BackOfficePage() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -1793,7 +1793,7 @@ export default function BackOfficePage() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">Back Office</h1>
-          <p className="text-xs text-muted-foreground">Platform administration — super admin only</p>
+          <p className="text-xs text-muted-foreground">Platform administration - super admin only</p>
         </div>
       </div>
 

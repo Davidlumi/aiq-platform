@@ -1,5 +1,5 @@
 /**
- * AiQ — How It Works page — v3.0
+ * AiQ - How It Works page - v3.0
  */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,14 @@ export default function HowItWorksPage() {
     {
       num: "01",
       icon: Zap,
-      label: "STEP ONE — ASSESS",
+      label: "STEP ONE - ASSESS",
       title: "An adaptive assessment that probes actual capability",
       body: [
-        "Each HR person takes a structured assessment generated for their specific role and seniority. The scenarios use real workflow contexts — workforce planning under uncertainty, AI-informed performance decisions, employee relations cases involving AI tools, governance questions where the right answer depends on judgement under pressure.",
+        "Each HR person takes a structured assessment generated for their specific role and seniority. The scenarios use real workflow contexts - workforce planning under uncertainty, AI-informed performance decisions, employee relations cases involving AI tools, governance questions where the right answer depends on judgement under pressure.",
         "The assessment is adaptive in three specific ways:",
       ],
       bullets: [
-        "Items are calibrated to the user's role and seniority — a Senior HRBP at a financial services firm doesn't see the same items as a Reward Specialist at a manufacturer",
+        "Items are calibrated to the user's role and seniority - a Senior HRBP at a financial services firm doesn't see the same items as a Reward Specialist at a manufacturer",
         "The system probes deeper on capabilities where the user has shown variance, surfacing specifically where their judgement breaks down rather than just confirming where it's strong",
         "Across multiple sessions, the system learns each user's response patterns, so each subsequent assessment is more precise about their actual capability",
       ],
@@ -37,13 +37,13 @@ export default function HowItWorksPage() {
     {
       num: "02",
       icon: Search,
-      label: "STEP TWO — DIAGNOSE",
+      label: "STEP TWO - DIAGNOSE",
       title: "Specific gaps articulated, not just scores reported",
       body: [
-        "Most assessment platforms produce numerical scores. AiQ produces diagnoses — articulated capability findings that explain the specific failure mode, the context where it surfaces, and what closing the gap requires.",
+        "Most assessment platforms produce numerical scores. AiQ produces diagnoses - articulated capability findings that explain the specific failure mode, the context where it surfaces, and what closing the gap requires.",
       ],
       quote: {
-        text: "Your AI Output Evaluation is driven primarily by strong performance on bias detection and weaker performance on hallucination recognition. This pattern suggests you are appropriately sceptical about the politics of AI outputs but more trusting about their factual claims. The pattern is common in HR generalists — and it matters because Project Aurora's customer-facing decisions depend specifically on hallucination recognition.",
+        text: "Your AI Output Evaluation is driven primarily by strong performance on bias detection and weaker performance on hallucination recognition. This pattern suggests you are appropriately sceptical about the politics of AI outputs but more trusting about their factual claims. The pattern is common in HR generalists - and it matters because Project Aurora's customer-facing decisions depend specifically on hallucination recognition.",
         label: "Example diagnosis",
       },
       footnote: "The diagnosis is what the development plan responds to. The diagnosis is what the manager conversation references. The diagnosis is the bridge between what the assessment measured and what the user does about it.",
@@ -51,25 +51,25 @@ export default function HowItWorksPage() {
     {
       num: "03",
       icon: BookOpen,
-      label: "STEP THREE — CLOSE",
+      label: "STEP THREE - CLOSE",
       title: "Personalised development that closes the specific gap",
       body: [
-        "Each user receives a development plan generated for them — not selected from a library. The plan addresses their specific diagnosed gaps, calibrated to their role context, sequenced so foundation capabilities are addressed before dependent ones, and bounded to respect their time.",
+        "Each user receives a development plan generated for them - not selected from a library. The plan addresses their specific diagnosed gaps, calibrated to their role context, sequenced so foundation capabilities are addressed before dependent ones, and bounded to respect their time.",
         "AiQ's development content is built on a hybrid model:",
       ],
       bullets: [
-        "A curated content base produced by AiQ — modules written and reviewed by HR-AI subject matter experts, version-controlled, methodologically defensible",
-        "Adaptive personalisation that calibrates each module to the specific user — the scenarios use their workflow context, the examples match their sector, the exercises probe the specific failure mode their assessment surfaced",
+        "A curated content base produced by AiQ - modules written and reviewed by HR-AI subject matter experts, version-controlled, methodologically defensible",
+        "Adaptive personalisation that calibrates each module to the specific user - the scenarios use their workflow context, the examples match their sector, the exercises probe the specific failure mode their assessment surfaced",
       ],
-      footnote: "Development happens in the platform. Users don't have to switch to your existing LMS. The intervention, the practice, the application all happen where the assessment happened — so the loop closes cleanly.",
+      footnote: "Development happens in the platform. Users don't have to switch to your existing LMS. The intervention, the practice, the application all happen where the assessment happened - so the loop closes cleanly.",
     },
     {
       num: "04",
       icon: RefreshCw,
-      label: "STEP FOUR — REASSESS",
+      label: "STEP FOUR - REASSESS",
       title: "Measurable capability change, attributable to specific interventions",
       body: [
-        "After development, the user reassesses. The system measures whether the gap that was diagnosed has closed. Not whether they completed the module — whether their capability changed.",
+        "After development, the user reassesses. The system measures whether the gap that was diagnosed has closed. Not whether they completed the module - whether their capability changed.",
         "This produces the evidence chain your board needs: the gap was X, the intervention was Y, the gap is now Z. Development investment is attributable to capability outcome. The loop is closed.",
       ],
     },
@@ -156,7 +156,7 @@ export default function HowItWorksPage() {
             The four steps above describe what happens for each HR person. The strategic layer is what happens at function level.
           </p>
           <p className="text-slate-400 leading-relaxed mb-6">
-            You capture your business's AI initiatives — the specific projects, timelines, and capability requirements.
+            You capture your business's AI initiatives - the specific projects, timelines, and capability requirements.
             AiQ translates these into HR capability targets per role family per timeline. Every assessment, diagnosis,
             and development plan runs against those targets. Every reassessment updates the function-level view.
           </p>

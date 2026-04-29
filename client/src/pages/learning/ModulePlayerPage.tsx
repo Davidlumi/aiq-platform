@@ -1,15 +1,15 @@
 /**
- * Module Player Page — AiQ Adaptive Learning Engine
+ * Module Player Page - AiQ Adaptive Learning Engine
  *
  * Renders all 8 modality types with rich, best-in-class content rendering:
- *   tutorial   — structured lesson with sections, key points, worked example, quiz
- *   practical  — step-by-step exercise with workspace and success criteria
- *   case_study — narrative scenario with decision points and analysis
- *   quiz       — multiple-choice questions with explanations and scoring
- *   scenario   — branching decision scenario with outcomes
- *   video      — video with transcript and reflection
- *   reflection — guided journalling prompts with coaching guidance
- *   coaching   — structured coaching framework (GROW model)
+ *   tutorial   - structured lesson with sections, key points, worked example, quiz
+ *   practical  - step-by-step exercise with workspace and success criteria
+ *   case_study - narrative scenario with decision points and analysis
+ *   quiz       - multiple-choice questions with explanations and scoring
+ *   scenario   - branching decision scenario with outcomes
+ *   video      - video with transcript and reflection
+ *   reflection - guided journalling prompts with coaching guidance
+ *   coaching   - structured coaching framework (GROW model)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ─── Progress Tracking ───────────────────────────────────────────────────────
+// --- Progress Tracking -------------------------------------------------------
 
 /** A named step in the module progress bar */
 export interface ProgressStep {
@@ -221,7 +221,7 @@ function ModuleProgressBar({
   );
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const CAPABILITY_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   ai_interaction:       { label: "AI Interaction",         color: "#4477AA", icon: Zap },
@@ -249,7 +249,7 @@ const MODALITY_META: Record<string, { label: string; color: string; icon: React.
   coaching:   { label: "Coaching",   color: "#047857", icon: Users },
 };
 
-// ─── Shared sub-components ────────────────────────────────────────────────────
+// --- Shared sub-components ----------------------------------------------------
 
 function IntroductionPanel({ intro }: { intro: any }) {
   if (!intro) return null;
@@ -421,7 +421,7 @@ function FurtherReadingPanel({ items }: { items: any[] }) {
   );
 }
 
-// ─── Tutorial Renderer ────────────────────────────────────────────────────────
+// --- Tutorial Renderer --------------------------------------------------------
 
 function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "learn" | "quiz">("intro");
@@ -650,7 +650,7 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
   );
 }
 
-// ─── Quiz Renderer ────────────────────────────────────────────────────────────
+// --- Quiz Renderer ------------------------------------------------------------
 
 function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "questions">("intro");
@@ -796,7 +796,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
   );
 }
 
-// ─── Practical Renderer ───────────────────────────────────────────────────────
+// --- Practical Renderer -------------------------------------------------------
 
 function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "exercise">("intro");
@@ -961,7 +961,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
   );
 }
 
-// ─── Case Study Renderer ──────────────────────────────────────────────────────
+// --- Case Study Renderer ------------------------------------------------------
 
 function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "case" | "decision" | "insights">("intro");
@@ -1141,7 +1141,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
   );
 }
 
-// ─── Scenario Renderer ────────────────────────────────────────────────────────
+// --- Scenario Renderer --------------------------------------------------------
 
 function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "situation" | "decision" | "outcome">("intro");
@@ -1286,7 +1286,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
   );
 }
 
-// ─── Reflection Renderer ──────────────────────────────────────────────────────
+// --- Reflection Renderer ------------------------------------------------------
 
 function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "reflect">("intro");
@@ -1365,7 +1365,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
               )}
               <textarea
                 className="w-full min-h-[140px] p-3 rounded-xl border border-border bg-muted text-sm resize-none focus:outline-none focus:border-primary/50"
-                placeholder="Reflect here — there are no right or wrong answers…"
+                placeholder="Reflect here - there are no right or wrong answers…"
                 value={responses[promptIdx] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [promptIdx]: e.target.value }))}
               />
@@ -1399,7 +1399,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
   );
 }
 
-// ─── Coaching Renderer ────────────────────────────────────────────────────────
+// --- Coaching Renderer --------------------------------------------------------
 
 function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"intro" | "framework" | "questions">("intro");
@@ -1480,7 +1480,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
           </div>
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
             <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">
-              {framework.model} — {currentFrameworkPhase?.phase}
+              {framework.model} - {currentFrameworkPhase?.phase}
             </p>
             <p className="text-sm text-foreground/80">{currentFrameworkPhase?.purpose}</p>
           </div>
@@ -1580,7 +1580,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
   );
 }
 
-// ─── Video Renderer ───────────────────────────────────────────────────────────
+// --- Video Renderer -----------------------------------------------------------
 
 function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
   const [phase, setPhase] = useState<"watch" | "reflect">("watch");
@@ -1742,7 +1742,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
   );
 }
 
-// ─── Completion Screen ────────────────────────────────────────────────────────
+// --- Completion Screen --------------------------------------------------------
 
 function CompletionScreen({
   score, title, capability, moduleId, onContinue, onReportNoTransfer, noTransferResult,
@@ -1785,7 +1785,7 @@ function CompletionScreen({
         </div>
         <div>
           <h2 className="text-2xl font-bold mb-1">
-            {isGateBlocked ? "Mastery Gate — Retake Required" : "Module Complete!"}
+            {isGateBlocked ? "Mastery Gate - Retake Required" : "Module Complete!"}
           </h2>
           <p className="text-sm text-muted-foreground">{title}</p>
         </div>
@@ -1920,7 +1920,7 @@ function CompletionScreen({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 
 export default function ModulePlayerPage() {
   const params = useParams<{ moduleId: string }>();
@@ -1949,7 +1949,7 @@ export default function ModulePlayerPage() {
   const markComplete = trpc.adaptiveLearning.markModuleComplete.useMutation({
     onSuccess: (data) => {
       if (data.masteryGateBlocked) {
-        toast.error(`Score ${data.score}% — below ${data.masteryGateThreshold}% mastery threshold. Retake required.`);
+        toast.error(`Score ${data.score}% - below ${data.masteryGateThreshold}% mastery threshold. Retake required.`);
         setMasteryGateResult({ blocked: true, message: data.masteryGateMessage, threshold: data.masteryGateThreshold, score: data.score });
       } else {
         toast.success("Module completed! Spaced repetition scheduled.");
@@ -2056,7 +2056,7 @@ export default function ModulePlayerPage() {
             completed={false}
           />
 
-          {/* LLM Personalised Context Panel — collapsible, shown below progress bar */}
+          {/* LLM Personalised Context Panel - collapsible, shown below progress bar */}
           {(personalisedLoading || personalised) && (
             <details className="group rounded-xl border border-border bg-muted/20 overflow-hidden">
               <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none list-none">
@@ -2112,7 +2112,7 @@ export default function ModulePlayerPage() {
         </>
       ) : (
         <>
-          {/* Progress bar — 100% on completion */}
+          {/* Progress bar - 100% on completion */}
           <ModuleProgressBar
             steps={progressSteps}
             currentStepIdx={progressSteps.length - 1}

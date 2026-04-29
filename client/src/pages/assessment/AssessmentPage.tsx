@@ -1,5 +1,5 @@
 /**
- * Assessment Landing — AiQ Enterprise Platform
+ * Assessment Landing - AiQ Enterprise Platform
  *
  * Auto-redirects to the most recent session:
  *   in_progress → /assessment/:id  (resume)
@@ -41,7 +41,7 @@ import {
   Plus,
 } from "lucide-react";
 
-// ─── Capability Domains ───────────────────────────────────────────────────────
+// --- Capability Domains -------------------------------------------------------
 const CAPABILITY_DOMAINS = [
   { key: "ai_interaction",        label: "AI Interaction",          icon: Target,   colour: "#4477AA" },
   { key: "ai_output_evaluation",  label: "AI Output Evaluation",    icon: Brain,    colour: "#047857" },
@@ -51,7 +51,7 @@ const CAPABILITY_DOMAINS = [
   { key: "workforce_ai_readiness",label: "Workforce AI Readiness",  icon: Database, colour: "#D97706" },
 ];
 
-// ─── Readiness Config ─────────────────────────────────────────────────────────
+// --- Readiness Config ---------------------------------------------------------
 const READINESS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   safe:    { label: "Safe to Deploy",     color: "text-primary",        icon: CheckCircle2 },
   at_risk: { label: "At Risk",            color: "text-[#99882A]",      icon: AlertTriangle },
@@ -59,7 +59,7 @@ const READINESS_CONFIG: Record<string, { label: string; color: string; icon: Rea
   unknown: { label: "Not Assessed",       color: "text-muted-foreground",icon: HelpCircle },
 };
 
-// ─── Session badge ────────────────────────────────────────────────────────────
+// --- Session badge ------------------------------------------------------------
 function SessionBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
     completed:   "bg-primary/12 text-primary border-primary/25",
@@ -74,7 +74,7 @@ function SessionBadge({ state }: { state: string }) {
   );
 }
 
-// ─── History Panel (also exported for use inside results/session pages) ───────
+// --- History Panel (also exported for use inside results/session pages) -------
 export function AssessmentHistoryPanel({
   sessions,
   activeId,
@@ -152,7 +152,7 @@ export function AssessmentHistoryPanel({
   );
 }
 
-// ─── Start Screen (no sessions) ───────────────────────────────────────────────
+// --- Start Screen (no sessions) -----------------------------------------------
 function StartScreen({
   onStart,
   isStarting,
@@ -196,7 +196,7 @@ function StartScreen({
               <p className="text-sm text-muted-foreground leading-relaxed pt-3">
                 The AIQ V9.2 Standard Assessment measures your practical AI capability across six domains using
                 50 scenario-based interactions. Each interaction presents a realistic workplace situation and asks
-                you to make a decision. Your answers accumulate into a capability profile — not a pass/fail score.
+                you to make a decision. Your answers accumulate into a capability profile - not a pass/fail score.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {CAPABILITY_DOMAINS.map(domain => {
@@ -247,7 +247,7 @@ function StartScreen({
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// --- Main Component -----------------------------------------------------------
 export default function AssessmentPage() {
   const [, navigate] = useLocation();
   const [showProfiling, setShowProfiling] = useState(false);
@@ -315,7 +315,7 @@ export default function AssessmentPage() {
         onStart={handleProfilingStart}
         isPending={startMutation.isPending || onboardingMutation.isPending}
       />
-      {/* Resume banner — shown when an assessment is in progress */}
+      {/* Resume banner - shown when an assessment is in progress */}
       {inProgressSession && (
         <div className="mx-6 mt-6 mb-0 rounded-xl border border-[#D97706]/30 bg-[#D97706]/8 p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 /**
- * Assessment Content CMS — AiQ Enterprise Platform
+ * Assessment Content CMS - AiQ Enterprise Platform
  *
  * Full scenario browser for the content system:
  * - Browse all assessment scenarios across 13 workflow domains
@@ -53,7 +53,7 @@ const DOMAIN_COLOURS: Record<string, string> = {
   "Candidate Screening & Evaluation":    "#4477AA",
   "Recruitment & Hiring":                "#b91c1c",
   "Performance Management":              "#047857",
-  "Employee Relations — Grievance, Disciplinary & Investigations": "#DC2626",
+  "Employee Relations - Grievance, Disciplinary & Investigations": "#DC2626",
   "DEI-Related Decision-Making":         "#D97706",
   "HR Operations & Automation":          "#66CCEE",
   "Learning & Development":              "#BB5566",

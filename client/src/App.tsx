@@ -198,7 +198,7 @@ function Router() {
       <Route path="/people">
         <ProtectedRoute component={PeopleReportsPage} />
       </Route>
-      {/* Marketing pages — public */}
+      {/* Marketing pages - public */}
       <Route path="/how-it-works" component={HowItWorksPage} />
       <Route path="/product" component={ProductPage} />
       <Route path="/about" component={AboutPage} />
@@ -256,7 +256,7 @@ function RoleDashboard() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />

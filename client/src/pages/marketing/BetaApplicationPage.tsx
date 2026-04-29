@@ -1,8 +1,8 @@
 /**
- * AiQ Beta Programme Page — v3.0
+ * AiQ Beta Programme Page - v3.0
  * Copy: AiQ_Marketing_Site_Copy_v3.docx
  *
- * Public page — no authentication required.
+ * Public page - no authentication required.
  * Route: /beta
  */
 import { useState } from "react";
@@ -37,13 +37,13 @@ import {
 import { trpc } from "@/lib/trpc";
 import { MarketingNav, MarketingFooter } from "./MarketingPage";
 
-// ─── Brand tokens ─────────────────────────────────────────────────────────────
+// --- Brand tokens -------------------------------------------------------------
 const navy   = "#0F172A";
 const slate  = "#1E293B";
 const border = "rgba(255,255,255,0.08)";
 const green  = "var(--primary)";
 
-// ─── Schema (mirrors server-side) ─────────────────────────────────────────────
+// --- Schema (mirrors server-side) ---------------------------------------------
 const SECTORS = [
   "Financial Services",
   "Healthcare",
@@ -89,7 +89,7 @@ const formSchema = z.object({
 });
 type FormData = z.infer<typeof formSchema>;
 
-// ─── Success screen ───────────────────────────────────────────────────────────
+// --- Success screen -----------------------------------------------------------
 function SuccessScreen({ companyName }: { companyName: string }) {
   return (
     <div className="min-h-screen" style={{ background: navy }}>
@@ -106,7 +106,7 @@ function SuccessScreen({ companyName }: { companyName: string }) {
             Application received
           </h1>
           <p className="text-slate-300 mb-2">
-            Thank you — we have received the application for{" "}
+            Thank you - we have received the application for{" "}
             <span className="font-semibold text-white">{companyName}</span>.
           </p>
           <p className="text-slate-400 mb-8">
@@ -123,7 +123,7 @@ function SuccessScreen({ companyName }: { companyName: string }) {
                 { step: "01", label: "Apply", text: "We review your application against our beta criteria" },
                 { step: "02", label: "Conversation", text: "If you look like a fit, we schedule a one-hour call to learn about your specific situation" },
                 { step: "03", label: "Pilot", text: "If we both want to proceed, we agree the commercial structure and begin onboarding" },
-                { step: "04", label: "Loop", text: "The loop runs — quarterly reviews, roadmap input, and close collaboration throughout" },
+                { step: "04", label: "Loop", text: "The loop runs - quarterly reviews, roadmap input, and close collaboration throughout" },
               ].map((item) => (
                 <div key={item.step} className="flex items-start gap-3">
                   <div
@@ -153,7 +153,7 @@ function SuccessScreen({ companyName }: { companyName: string }) {
   );
 }
 
-// ─── Ineligible screen ────────────────────────────────────────────────────────
+// --- Ineligible screen --------------------------------------------------------
 function IneligibleScreen({ hrTeamSize }: { hrTeamSize: number }) {
   return (
     <div className="min-h-screen" style={{ background: navy }}>
@@ -192,7 +192,7 @@ function IneligibleScreen({ hrTeamSize }: { hrTeamSize: number }) {
   );
 }
 
-// ─── Duplicate screen ─────────────────────────────────────────────────────────
+// --- Duplicate screen ---------------------------------------------------------
 function DuplicateScreen({ message }: { message: string }) {
   return (
     <div className="min-h-screen" style={{ background: navy }}>
@@ -222,7 +222,7 @@ function DuplicateScreen({ message }: { message: string }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// --- Main page ----------------------------------------------------------------
 export default function BetaApplicationPage() {
   const [result, setResult] = useState<{
     type: "success" | "ineligible" | "duplicate";
@@ -313,10 +313,10 @@ export default function BetaApplicationPage() {
               <h2 className="text-xl font-bold text-white mb-6">What you get</h2>
               <div className="space-y-4">
                 {[
-                  { icon: BarChart3, text: "Full platform access for your HR function — assessment, diagnosis, personalised development, three-altitude dashboards, board-ready exports, the full strategic capability layer" },
-                  { icon: MessageSquare, text: "Direct access to the founders during the beta period — for product feedback, customer success support, and roadmap input" },
-                  { icon: Star, text: "Beta pricing — meaningfully below general availability pricing, structured to reflect that you are shaping the product, not just consuming it" },
-                  { icon: Zap, text: "Onboarding designed to fit your function — including your AI roadmap capture, role mapping, and policy configuration" },
+                  { icon: BarChart3, text: "Full platform access for your HR function - assessment, diagnosis, personalised development, three-altitude dashboards, board-ready exports, the full strategic capability layer" },
+                  { icon: MessageSquare, text: "Direct access to the founders during the beta period - for product feedback, customer success support, and roadmap input" },
+                  { icon: Star, text: "Beta pricing - meaningfully below general availability pricing, structured to reflect that you are shaping the product, not just consuming it" },
+                  { icon: Zap, text: "Onboarding designed to fit your function - including your AI roadmap capture, role mapping, and policy configuration" },
                   { icon: CheckCircle2, text: "Quarterly business review with the team to review impact, surface issues, and discuss roadmap priorities" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -330,10 +330,10 @@ export default function BetaApplicationPage() {
               <h2 className="text-xl font-bold text-white mb-6">What we need from you</h2>
               <div className="space-y-4">
                 {[
-                  "Active engagement during onboarding — the first 30 days set the trajectory of the engagement, and that requires CPO time, not just delegation to L&D",
-                  "Honest feedback as the platform evolves — what is working, what is not, what is missing, what is wrong",
-                  "Willingness to be a reference at some point — not initially, but eventually, once we have delivered enough value that referencing AiQ is reciprocal",
-                  "Realistic expectations — the platform works and the methodology is rigorous, but visual craft and certain features are still maturing",
+                  "Active engagement during onboarding - the first 30 days set the trajectory of the engagement, and that requires CPO time, not just delegation to L&D",
+                  "Honest feedback as the platform evolves - what is working, what is not, what is missing, what is wrong",
+                  "Willingness to be a reference at some point - not initially, but eventually, once we have delivered enough value that referencing AiQ is reciprocal",
+                  "Realistic expectations - the platform works and the methodology is rigorous, but visual craft and certain features are still maturing",
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: green }} />
@@ -367,7 +367,7 @@ export default function BetaApplicationPage() {
                 {[
                   "Your business has AI initiatives with specific timelines and your function has been told to support them",
                   "You are answering specific questions from your CEO, your General Counsel, or your board about HR's AI capability state",
-                  "You believe measurement and rigour matter for capability work — even when the measurement is uncomfortable",
+                  "You believe measurement and rigour matter for capability work - even when the measurement is uncomfortable",
                   "You want to influence how this category gets built, not just consume what someone else builds",
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-2">
@@ -387,10 +387,10 @@ export default function BetaApplicationPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  "You need a finished product with proven case studies — we are earlier than that",
-                  "Your function is under 25 HR people — the unit economics do not work yet, and we would rather tell you that than waste your time",
-                  "You are looking primarily for content — there are larger learning libraries available; AiQ's value is the diagnostic and strategic intelligence layer",
-                  "You are shopping for the cheapest option — beta pricing is reduced but the full proposition is sized for enterprise budget",
+                  "You need a finished product with proven case studies - we are earlier than that",
+                  "Your function is under 25 HR people - the unit economics do not work yet, and we would rather tell you that than waste your time",
+                  "You are looking primarily for content - there are larger learning libraries available; AiQ's value is the diagnostic and strategic intelligence layer",
+                  "You are shopping for the cheapest option - beta pricing is reduced but the full proposition is sized for enterprise budget",
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2 bg-slate-500" />
@@ -412,7 +412,7 @@ export default function BetaApplicationPage() {
               {
                 num: "01",
                 label: "Apply",
-                text: "Tell us about your function, your business AI commitments, and what you are hoping to get from AiQ. The application is brief — we do not need a thesis.",
+                text: "Tell us about your function, your business AI commitments, and what you are hoping to get from AiQ. The application is brief - we do not need a thesis.",
               },
               {
                 num: "02",
@@ -422,7 +422,7 @@ export default function BetaApplicationPage() {
               {
                 num: "03",
                 label: "Pilot",
-                text: "If we both want to proceed, we agree the commercial structure and start the onboarding — approximately four weeks.",
+                text: "If we both want to proceed, we agree the commercial structure and start the onboarding - approximately four weeks.",
               },
               {
                 num: "04",
@@ -627,7 +627,7 @@ export default function BetaApplicationPage() {
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#D97706" }} />
                       <p className="text-xs leading-relaxed text-slate-300">
                         The AiQ beta programme requires at least 25 HR professionals. You can still
-                        submit — we will note your interest for our upcoming self-serve tier.
+                        submit - we will note your interest for our upcoming self-serve tier.
                       </p>
                     </div>
                   )}
@@ -647,7 +647,7 @@ export default function BetaApplicationPage() {
                     <span className="text-destructive">*</span>
                   </Label>
                   <p className="text-slate-500 text-xs">
-                    Be specific — which initiatives, what timelines, what your function has been asked to deliver.
+                    Be specific - which initiatives, what timelines, what your function has been asked to deliver.
                   </p>
                   <Textarea
                     rows={4}

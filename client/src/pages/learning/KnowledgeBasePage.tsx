@@ -16,7 +16,7 @@ const TOPICS = [
 
 export default function KnowledgeBasePage() {
   function handleClick() {
-    toast("Coming soon — the Knowledge Base is being built.");
+    toast("Coming soon - the Knowledge Base is being built.");
   }
 
   return (

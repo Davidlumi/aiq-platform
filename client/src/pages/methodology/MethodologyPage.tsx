@@ -47,7 +47,7 @@ const CAPABILITY_DOMAINS = [
     colour: "#4477AA",
     foundation: true,
     description:
-      "Measures practical competence with AI tools — how effectively someone constructs prompts, iterates on outputs, provides context and constraints, and selects the right tool for each task. This is the foundational skill that underpins all other AI capability domains.",
+      "Measures practical competence with AI tools - how effectively someone constructs prompts, iterates on outputs, provides context and constraints, and selects the right tool for each task. This is the foundational skill that underpins all other AI capability domains.",
     example: "Refining a vague prompt like 'write me an email about restructuring' into a specific request with context, tone, audience, and format requirements that produces a usable first draft.",
   },
   {
@@ -56,7 +56,7 @@ const CAPABILITY_DOMAINS = [
     colour: "#047857",
     foundation: true,
     description:
-      "Measures the ability to critically assess AI outputs before acting on them — detecting errors, hallucinations, and logical flaws; judging fitness for purpose; calibrating confidence accurately; and verifying claims against authoritative sources.",
+      "Measures the ability to critically assess AI outputs before acting on them - detecting errors, hallucinations, and logical flaws; judging fitness for purpose; calibrating confidence accurately; and verifying claims against authoritative sources.",
     example: "Spotting that an AI-drafted redundancy letter uses legally incorrect notice periods and cites a statutory instrument that doesn't exist, despite the output appearing professional and well-structured.",
   },
   {
@@ -83,7 +83,7 @@ const CAPABILITY_DOMAINS = [
     colour: "#b91c1c",
     foundation: false,
     description:
-      "Measures ethical reasoning about AI in the workplace — identifying dilemmas, maintaining positions under pressure, considering stakeholder impact, preserving employee trust during AI-driven changes, and communicating decisions transparently.",
+      "Measures ethical reasoning about AI in the workplace - identifying dilemmas, maintaining positions under pressure, considering stakeholder impact, preserving employee trust during AI-driven changes, and communicating decisions transparently.",
     example: "Pushing back when a CEO demands immediate deployment of keystroke monitoring 'for productivity data', articulating the employee trust, legal, and ethical risks clearly and constructively.",
   },
   {
@@ -92,7 +92,7 @@ const CAPABILITY_DOMAINS = [
     colour: "#99882A",
     foundation: false,
     description:
-      "Measures the ability to lead AI transformation — handling resistance constructively, calibrating the pace of change to organisational readiness, distinguishing legitimate concerns from unfounded resistance, and articulating a compelling vision for AI adoption.",
+      "Measures the ability to lead AI transformation - handling resistance constructively, calibrating the pace of change to organisational readiness, distinguishing legitimate concerns from unfounded resistance, and articulating a compelling vision for AI adoption.",
     example: "Recognising that a team's resistance to an AI screening tool stems from legitimate concerns about bias in their specific candidate pool, not from general technophobia, and adjusting the rollout accordingly.",
   },
 ];
@@ -138,7 +138,7 @@ const REFERENCES = [
   },
   {
     id: 4,
-    text: "ISO/IEC 42001:2023. Information Technology — Artificial Intelligence — Management System. Clause 7.2: Competence.",
+    text: "ISO/IEC 42001:2023. Information Technology - Artificial Intelligence - Management System. Clause 7.2: Competence.",
     url: "https://www.iso.org/standard/42001",
   },
   {
@@ -180,7 +180,7 @@ export default function MethodologyPage() {
             Built for HR functions delivering AI transformation. Designed to survive General Counsel scrutiny.
           </p>
           <p className="text-slate-400 leading-relaxed max-w-2xl">
-            This page provides a transparent explanation of the assessment methodology used by AiQ —
+            This page provides a transparent explanation of the assessment methodology used by AiQ -
             what we measure, how we measure it, the quality assurance processes that protect the
             integrity of results, and the known limitations of the current system.
           </p>
@@ -188,7 +188,7 @@ export default function MethodologyPage() {
       </section>
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-12" style={{ color: "white" }}>
-        {/* ── Section 1: What We Measure ───────────────────────────────── */}
+        {/* -- Section 1: What We Measure --------------------------------- */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -201,7 +201,7 @@ export default function MethodologyPage() {
             <p>
               AiQ does not measure AI knowledge. It does not test whether someone can define
               &ldquo;machine learning&rdquo; or list the features of a particular AI tool. Instead,
-              it measures <strong className="text-foreground">applied AI capability</strong> — the
+              it measures <strong className="text-foreground">applied AI capability</strong> - the
               ability to make sound professional decisions when AI tools are involved in HR workflows.
             </p>
             <p>
@@ -247,7 +247,7 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Section 2: How We Measure It ─────────────────────────────── */}
+        {/* -- Section 2: How We Measure It ------------------------------- */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -259,7 +259,7 @@ export default function MethodologyPage() {
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
             <p>
               AiQ uses a <strong className="text-foreground">Situational Judgement Test (SJT)</strong> design
-              — a well-established psychometric methodology with over 30 years of research evidence.
+              - a well-established psychometric methodology with over 30 years of research evidence.
               SJTs present realistic workplace scenarios and ask the respondent to evaluate a set of
               response options, each representing a different level of professional capability.
             </p>
@@ -289,9 +289,9 @@ export default function MethodologyPage() {
           <h3 className="text-lg font-semibold text-foreground mt-6">Three-Phase Adaptive Structure</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { phase: "Baseline", range: "0–30%", desc: "Broad calibration across all six capability domains", colour: "#4477AA" },
-              { phase: "Adaptive", range: "30–75%", desc: "Deep probing of identified weaknesses — targets the lowest-scoring capabilities", colour: "#EE8866" },
-              { phase: "Validation", range: "75–100%", desc: "Confirms or challenges earlier responses with higher-difficulty items", colour: "#047857" },
+              { phase: "Baseline", range: "0-30%", desc: "Broad calibration across all six capability domains", colour: "#4477AA" },
+              { phase: "Adaptive", range: "30-75%", desc: "Deep probing of identified weaknesses - targets the lowest-scoring capabilities", colour: "#EE8866" },
+              { phase: "Validation", range: "75-100%", desc: "Confirms or challenges earlier responses with higher-difficulty items", colour: "#047857" },
             ].map(p => (
               <Card key={p.phase} className="border-border">
                 <CardContent className="p-4 text-center space-y-2">
@@ -315,7 +315,7 @@ export default function MethodologyPage() {
           </p>
         </section>
 
-        {/* ── Section 3: Quality Assurance ──────────────────────────────── */}
+        {/* -- Section 3: Quality Assurance -------------------------------- */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -374,7 +374,7 @@ export default function MethodologyPage() {
           </p>
         </section>
 
-        {/* ── Section 4: Scoring ───────────────────────────────────────── */}
+        {/* -- Section 4: Scoring ----------------------------------------- */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -385,14 +385,14 @@ export default function MethodologyPage() {
 
           <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
             <p>
-              Each response generates <strong className="text-foreground">signal deltas</strong> — positive
+              Each response generates <strong className="text-foreground">signal deltas</strong> - positive
               values indicate capability demonstrated, negative values indicate risk or weakness. These
-              signals are aggregated per capability domain, producing scores on a 0–100 scale.
+              signals are aggregated per capability domain, producing scores on a 0-100 scale.
             </p>
             <p>
               Individuals are classified into one of six readiness levels. Scores are accompanied by
               <strong className="text-foreground"> confidence intervals</strong> that communicate the
-              precision of each measurement — wider intervals indicate less certainty, typically due
+              precision of each measurement - wider intervals indicate less certainty, typically due
               to fewer evidence signals in that domain.
             </p>
           </div>
@@ -408,12 +408,12 @@ export default function MethodologyPage() {
               </thead>
               <tbody>
                 {[
-                  { cls: "Leading", range: "80–100", desc: "Exceptional AI capability; can lead and mentor others", color: "#047857" },
-                  { cls: "Advanced", range: "70–79", desc: "Strong capability; works effectively with AI across complex scenarios", color: "#047857" },
-                  { cls: "Proficient", range: "60–69", desc: "Competent; handles routine AI-augmented work well", color: "#4477AA" },
-                  { cls: "Developing", range: "50–59", desc: "Emerging capability; needs targeted development in specific areas", color: "#EE8866" },
-                  { cls: "Provisional", range: "40–49", desc: "Significant gaps; requires structured learning before independent AI use", color: "#DC2626" },
-                  { cls: "At Risk", range: "0–39", desc: "Critical gaps; may pose risk if working unsupervised with AI", color: "#b91c1c" },
+                  { cls: "Leading", range: "80-100", desc: "Exceptional AI capability; can lead and mentor others", color: "#047857" },
+                  { cls: "Advanced", range: "70-79", desc: "Strong capability; works effectively with AI across complex scenarios", color: "#047857" },
+                  { cls: "Proficient", range: "60-69", desc: "Competent; handles routine AI-augmented work well", color: "#4477AA" },
+                  { cls: "Developing", range: "50-59", desc: "Emerging capability; needs targeted development in specific areas", color: "#EE8866" },
+                  { cls: "Provisional", range: "40-49", desc: "Significant gaps; requires structured learning before independent AI use", color: "#DC2626" },
+                  { cls: "At Risk", range: "0-39", desc: "Critical gaps; may pose risk if working unsupervised with AI", color: "#b91c1c" },
                 ].map(row => (
                   <tr key={row.cls} className="border-t border-border/50">
                     <td className="px-4 py-2.5">
@@ -428,7 +428,7 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Section 5: Standards Alignment ────────────────────────────── */}
+        {/* -- Section 5: Standards Alignment ------------------------------ */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -446,13 +446,13 @@ export default function MethodologyPage() {
             {[
               {
                 standard: "ISO/IEC 42001:2023",
-                clause: "Clause 7.2 — Competence",
+                clause: "Clause 7.2 - Competence",
                 alignment: "AiQ provides documented evidence of AI competence assessment, directly addressing the requirement to 'determine the necessary competence of persons doing work under its control that affects its AI performance' and 'retain appropriate documented information as evidence of competence.'",
               },
               {
                 standard: "EU AI Act",
-                clause: "Article 4 — AI Literacy",
-                alignment: "Article 4 requires organisations to 'ensure, to their best extent, a sufficient level of AI literacy of their staff.' AiQ provides the assessment mechanism to measure and evidence this — going beyond literacy to measure applied capability.",
+                clause: "Article 4 - AI Literacy",
+                alignment: "Article 4 requires organisations to 'ensure, to their best extent, a sufficient level of AI literacy of their staff.' AiQ provides the assessment mechanism to measure and evidence this - going beyond literacy to measure applied capability.",
               },
               {
                 standard: "CIPD AI Skills Planning",
@@ -470,7 +470,7 @@ export default function MethodologyPage() {
                   <div className="flex items-center gap-2">
                     <Shield className="w-3.5 h-3.5 text-[#0F6E56]" />
                     <span className="text-sm font-semibold text-foreground">{s.standard}</span>
-                    <span className="text-xs text-muted-foreground">— {s.clause}</span>
+                    <span className="text-xs text-muted-foreground">- {s.clause}</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{s.alignment}</p>
                 </CardContent>
@@ -479,7 +479,7 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Section 6: Limitations & Transparency ────────────────────── */}
+        {/* -- Section 6: Limitations & Transparency ---------------------- */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#D97706]/12 flex items-center justify-center">
@@ -499,25 +499,25 @@ export default function MethodologyPage() {
                 title: "Synthetic Norm Data",
                 severity: "High",
                 detail: "Benchmark comparisons (role averages, percentiles) are currently based on synthetic reference distributions, not real HR professional data. This is standard for a newly launched assessment but will be replaced with empirical norms as the user base grows (target: n ≥ 200 per role archetype).",
-                timeline: "6–12 months",
+                timeline: "6-12 months",
               },
               {
                 title: "Expert-Authored Role Weights",
                 severity: "Medium",
-                detail: "Capability weights for each role archetype are based on structured job analysis reasoning. These will be formally validated through a Delphi panel study with 10–12 senior HR professionals per archetype.",
-                timeline: "3–6 months",
+                detail: "Capability weights for each role archetype are based on structured job analysis reasoning. These will be formally validated through a Delphi panel study with 10-12 senior HR professionals per archetype.",
+                timeline: "3-6 months",
               },
               {
                 title: "No Test-Retest Reliability Data",
                 severity: "Medium",
                 detail: "Formal test-retest reliability has not yet been measured. The assessment includes reliability safeguards (evidence sufficiency gates, confidence profiling) but empirical reliability evidence is pending.",
-                timeline: "6–9 months",
+                timeline: "6-9 months",
               },
               {
                 title: "No Adverse Impact Analysis",
                 severity: "Medium",
                 detail: "While the SJT methodology has documented advantages for group fairness, formal adverse impact analysis has not been conducted with AiQ-specific data. Optional demographic data collection will enable this analysis.",
-                timeline: "6–12 months",
+                timeline: "6-12 months",
               },
             ].map(lim => (
               <Card key={lim.title} className="border-border">
@@ -545,7 +545,7 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Section 7: References ────────────────────────────────────── */}
+        {/* -- Section 7: References -------------------------------------- */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#0F6E56]/10 flex items-center justify-center">
@@ -576,7 +576,7 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* ── Footer note ─────────────────────────────────────────────────────── */}
+        {/* -- Footer note ------------------------------------------------------- */}
         <div className="border-t pt-8 pb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
           <div className="rounded-lg px-5 py-4 flex items-start gap-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <Info className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />

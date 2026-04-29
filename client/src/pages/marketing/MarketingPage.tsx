@@ -1,5 +1,5 @@
 /**
- * AiQ Marketing Home Page — v3.1 (Sprint 1 visual improvements)
+ * AiQ Marketing Home Page - v3.1 (Sprint 1 visual improvements)
  * Adds: loop diagram, dashboard mockup, hex grid, mid-page CTAs, hero pill + social proof, enhanced footer
  */
 import { Link } from "wouter";
@@ -9,7 +9,7 @@ import {
   Users, CheckCircle2, AlertCircle, Clock,
   MessagesSquare, ScanSearch, Workflow, ShieldCheck, Compass } from "lucide-react";
 
-// ─── Brand tokens ─────────────────────────────────────────────────────────────
+// --- Brand tokens -------------------------------------------------------------
 const navy    = "#0F172A";
 const slate   = "#1E293B";
 const chalk   = "#F8FAFC";
@@ -19,9 +19,9 @@ const borderL = "#E2E8F0";
 const green   = "var(--primary)";
 const greenHex = "#22C55E";
 
-// ─── Shared components ────────────────────────────────────────────────────────
+// --- Shared components --------------------------------------------------------
 function AiQLogo({ size = 32 }: { size?: number }) {
-  // Official AiQ logo — uses the uploaded PNG asset for pixel-perfect rendering
+  // Official AiQ logo - uses the uploaded PNG asset for pixel-perfect rendering
   return (
     <img
       src="/manus-storage/aiq-logo-nav_dd4a0931.png"
@@ -135,22 +135,22 @@ export function MarketingFooter() {
   );
 }
 
-// ─── Illustration components ──────────────────────────────────────────────────
+// --- Illustration components --------------------------------------------------
 
 /** Continuous loop diagram: Assess → Diagnose → Develop → Reassess */
 /**
- * Loop diagram — pure CSS/HTML, no SVG text wrapping issues.
+ * Loop diagram - pure CSS/HTML, no SVG text wrapping issues.
  * Four nodes positioned absolutely around a central circle.
  * The orbiting dot uses a CSS keyframe rotate trick so it always works.
  */
 /**
- * Loop diagram — pure CSS/HTML.
+ * Loop diagram - pure CSS/HTML.
  * Container: 480×480px. Orbit radius: 160px. Node size: 100px.
  * All nodes fully inside the container (no overflow).
  * Orbiting dot uses CSS keyframe rotate+translateX (reliable cross-browser).
  */
 function LoopDiagram() {
-  // [label, sub, topPx, leftPx] — node top-left corner in 480px container
+  // [label, sub, topPx, leftPx] - node top-left corner in 480px container
   // Centre = (240,240), orbit radius = 160px, node size = 100px
   // Node centre positions: top=(240,80), right=(400,240), bottom=(240,400), left=(80,240)
   // top-left = centre - 50 → (190,30), (350,190), (190,350), (30,190)
@@ -173,7 +173,7 @@ function LoopDiagram() {
       {/* Fixed 480×480 container */}
       <div className="relative mx-auto" style={{ width: 480, height: 480 }}>
 
-        {/* Dashed orbit ring — centred at 240,240, radius 160 */}
+        {/* Dashed orbit ring - centred at 240,240, radius 160 */}
         <div className="absolute rounded-full pointer-events-none"
           style={{
             top: 80, left: 80, width: 320, height: 320,
@@ -282,7 +282,7 @@ function DashboardMockup() {
       <div className="px-5 pb-4">
         <div className="rounded-xl p-3 border-l-2" style={{ background: "rgba(34,197,94,0.06)", borderColor: greenHex }}>
           <p className="text-xs italic leading-relaxed" style={{ color: "rgba(226,232,240,0.85)" }}>
-            "Gap will close by Q2 2027 — 3 months before launch. Remaining risk concentrated in workflow design among Senior HRBPs."
+            "Gap will close by Q2 2027 - 3 months before launch. Remaining risk concentrated in workflow design among Senior HRBPs."
           </p>
         </div>
       </div>
@@ -308,7 +308,7 @@ function FloatingScoreCard() {
   );
 }
 
-// ─── Page sections ────────────────────────────────────────────────────────────
+// --- Page sections ------------------------------------------------------------
 
 function Hero() {
   return (
@@ -319,7 +319,7 @@ function Hero() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
             style={{ background: "rgba(34,197,94,0.12)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
             <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: greenHex }} />
-            Now in beta — first cohort of UK HR leaders open now
+            Now in beta - first cohort of UK HR leaders open now
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -331,7 +331,7 @@ function Hero() {
               <span style={{ color: greenHex, fontWeight: 700 }}>Built for HR. Nothing else like it exists.</span>
             </p>
             <p className="text-slate-400 leading-relaxed mb-10">
-              HR AiQ measures your HR people's actual AI capability across six domains. It identifies the specific gaps at individual, team, and function level. It closes them through personalised development. And it measures whether the development worked. So the next time your board asks, you have evidence — not estimates.
+              HR AiQ measures your HR people's actual AI capability across six domains. It identifies the specific gaps at individual, team, and function level. It closes them through personalised development. And it measures whether the development worked. So the next time your board asks, you have evidence - not estimates.
             </p>
             <div className="flex flex-wrap gap-4 mb-8">
               <Link href="/beta">
@@ -375,10 +375,10 @@ function Hero() {
                 <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">What do you do?</p>
                 <div className="flex flex-col gap-2">
                   {[
-                    { key: "A", label: "Act on the flag immediately — schedule a retention conversation", sel: false },
+                    { key: "A", label: "Act on the flag immediately - schedule a retention conversation", sel: false },
                     { key: "B", label: "Validate the model output before taking action",                 sel: true  },
                     { key: "C", label: "Escalate to HR leadership to decide",                            sel: false },
-                    { key: "D", label: "Dismiss the flag — AI tools are often wrong",                    sel: false },
+                    { key: "D", label: "Dismiss the flag - AI tools are often wrong",                    sel: false },
                   ].map(opt => (
                     <div key={opt.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
                       style={{
@@ -419,17 +419,17 @@ function WhatItIs() {
     <section style={{ background: chalk }} className="py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold mb-6" style={{ color: navy, letterSpacing: "-0.02em" }}>
-          What HR AiQ is —{" "}
+          What HR AiQ is -{" "}
           <span style={{ color: greenHex }}>and what it isn't.</span>
         </h2>
         <p className="text-slate-600 leading-relaxed mb-5 text-lg">
           HR AiQ is a capability intelligence platform built specifically for HR functions. It measures
-          your HR people's actual AI capability — not their self-reported confidence, not their training
+          your HR people's actual AI capability - not their self-reported confidence, not their training
           completion, not their job title. What they can actually do, under realistic conditions, on
           scenarios that match their role and seniority.
         </p>
         <p className="text-slate-600 leading-relaxed mb-5">
-          If you lead a specialist HR area — reward, talent acquisition, L&D, employee relations — HR AiQ
+          If you lead a specialist HR area - reward, talent acquisition, L&D, employee relations - HR AiQ
           measures the AI capability that matters for your specific domain. Not generic digital literacy.
           Not a broad AI awareness score. The capability your function needs to govern AI-informed decisions
           in your area of HR, with the rigour your General Counsel and your regulators will expect.
@@ -438,7 +438,7 @@ function WhatItIs() {
           It is not a learning platform. It is not a survey tool. It is not a consulting engagement.
           It is not an AI tool that assesses your whole organisation. It is not a replacement for your
           existing HR systems. It is the thing that tells you whether your HR function is actually capable
-          of doing what your business has committed to — and closes the gap when the answer is no.
+          of doing what your business has committed to - and closes the gap when the answer is no.
         </p>
         <p className="text-slate-700 font-semibold leading-relaxed">
           No other platform does what HR AiQ does. We checked carefully before building it.
@@ -452,17 +452,17 @@ function BoardQuestions() {
     {
       num: "01", icon: BarChart3,
       q: "Where is HR right now?",
-      body: "Not what people say in surveys. Not what your learning system reports. What your HR people can actually do — tested through real scenarios that match their roles and their seniority.",
+      body: "Not what people say in surveys. Not what your learning system reports. What your HR people can actually do - tested through real scenarios that match their roles and their seniority.",
     },
     {
       num: "02", icon: Target,
       q: "Where does HR need to be?",
-      body: "The skill levels Project Aurora actually needs by Q3 2027. The capabilities Project Phoenix will need across customer-facing roles. The link between what your business has committed to and what HR specifically needs to be good at — with deadlines and role-by-role detail.",
+      body: "The skill levels Project Aurora actually needs by Q3 2027. The capabilities Project Phoenix will need across customer-facing roles. The link between what your business has committed to and what HR specifically needs to be good at - with deadlines and role-by-role detail.",
     },
     {
       num: "03", icon: TrendingUp,
       q: "How fast is the gap closing?",
-      body: "Whether the development you're paying for is actually working. Which programmes are moving the needle and which aren't. When you'll get there at current pace — and what would be needed to get there faster if the timeline matters.",
+      body: "Whether the development you're paying for is actually working. Which programmes are moving the needle and which aren't. When you'll get there at current pace - and what would be needed to get there faster if the timeline matters.",
     },
   ];
   return (
@@ -474,7 +474,7 @@ function BoardQuestions() {
             <span style={{ color: greenHex }}>Each needs a real answer.</span>
           </h2>
           <p className="text-slate-600 leading-relaxed">
-            Most HR leaders can answer the first question with a survey, the second with consultants, and the third only after the fact. HR AiQ answers all three continuously — with evidence solid enough to share with your General Counsel.
+            Most HR leaders can answer the first question with a survey, the second with consultants, and the third only after the fact. HR AiQ answers all three continuously - with evidence solid enough to share with your General Counsel.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -568,7 +568,7 @@ function ThreeAltitudes() {
   const views = [
     {
       audience: "Every HR person", subtitle: "sees their own journey", icon: Users, color: "#4477AA",
-      body: "Where they are now, what their specific gaps are, how they compare against anonymous peers in the same role, and what they're working on next. Their development plan is personalised to them. Their reassessment shows them whether the work is paying off. They feel respected — not measured against, developed with.",
+      body: "Where they are now, what their specific gaps are, how they compare against anonymous peers in the same role, and what they're working on next. Their development plan is personalised to them. Their reassessment shows them whether the work is paying off. They feel respected - not measured against, developed with.",
     },
     {
       audience: "Every line manager", subtitle: "sees their team's progress", icon: BarChart3, color: "#047857",
@@ -621,7 +621,7 @@ function StrategicLayer() {
             </h2>
             <p className="text-slate-300 leading-relaxed mb-4">This is what makes AiQ board-grade rather than diagnostic-grade.</p>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              You capture your business's AI initiatives — Project Aurora launches Q3 2027 and requires
+              You capture your business's AI initiatives - Project Aurora launches Q3 2027 and requires
               advanced output evaluation across customer-facing roles. Project Phoenix needs ethics-under-pressure
               capability across operations leadership. The transformation programme requires baseline capability
               uplift across the function by year-end.
@@ -678,7 +678,7 @@ function SixDomains() {
       name: "Workforce AI Readiness",
       tier: "Strategic",
       color: "#FBBF24",
-      desc: "Assessing and developing the AI capability of the wider workforce — not just HR — as a strategic people priority.",
+      desc: "Assessing and developing the AI capability of the wider workforce - not just HR - as a strategic people priority.",
       Icon: Users,
     },
     {
@@ -692,7 +692,7 @@ function SixDomains() {
       name: "AI Change Leadership",
       tier: "Strategic",
       color: "#FB923C",
-      desc: "Leading the human side of AI transformation — managing resistance, building confidence, and sustaining adoption.",
+      desc: "Leading the human side of AI transformation - managing resistance, building confidence, and sustaining adoption.",
       Icon: Compass,
     },
   ];
@@ -714,7 +714,7 @@ function SixDomains() {
             <span style={{ color: greenHex }}>Every HR role. Every seniority level.</span>
           </h2>
           <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            AiQ's framework covers the full spectrum of AI capability your HR function needs — from foundation literacy through to strategic governance.
+            AiQ's framework covers the full spectrum of AI capability your HR function needs - from foundation literacy through to strategic governance.
           </p>
         </div>
         {/* Tier legend */}
@@ -757,7 +757,7 @@ function WhoItsFor() {
     "Your CEO has named AI as a strategic priority and your function has been told to deliver the people-side of the transformation",
     "Your General Counsel has asked specific questions about Article 22 implications, AI bias risk, or your function's readiness to govern AI deployment responsibly",
     "Your function is implementing AI tools and your people are making AI-informed decisions every day, with no measurement of whether those decisions are sound",
-    "You're being asked for evidence — not estimates — about HR's AI capability state, and your existing assessment tools weren't built for this",
+    "You're being asked for evidence - not estimates - about HR's AI capability state, and your existing assessment tools weren't built for this",
   ];
   return (
     <section style={{ background: chalk }} className="py-24 px-6">
@@ -769,7 +769,7 @@ function WhoItsFor() {
               <span style={{ color: greenHex }}>whose business has committed to AI.</span>
             </h2>
             <p className="text-slate-600 leading-relaxed mb-8">
-              HR AiQ is built for CPOs, Heads of HR, and Heads of specialist HR areas — reward, talent, L&D, and employee relations — leading functions of 25+ HR people in UK enterprises that have made specific AI commitments their HR function is responsible for delivering against.
+              HR AiQ is built for CPOs, Heads of HR, and Heads of specialist HR areas - reward, talent, L&D, and employee relations - leading functions of 25+ HR people in UK enterprises that have made specific AI commitments their HR function is responsible for delivering against.
             </p>
             <p className="font-semibold mb-5" style={{ color: navy }}>You'll recognise yourself if:</p>
             <div className="flex flex-col gap-4">
@@ -787,7 +787,7 @@ function WhoItsFor() {
               <div className="flex flex-col gap-4 text-sm text-slate-600">
                 <p><strong className="text-slate-800">UK regulatory context.</strong>{" "}AiQ is built for UK GDPR, Equality Act, Employment Rights Act, ICO guidance, and sector regulators including FCA Consumer Duty and ICO AI Auditing Framework.</p>
                 <p><strong className="text-slate-800">HR functions of 25+ people.</strong>{" "}Smaller functions may benefit from a different commercial model; we're happy to discuss what would make sense.</p>
-                <p><strong className="text-slate-800">HR people's AI capability specifically.</strong>{" "}If you need to measure AI capability across your whole organisation, AiQ is not the right tool for that — but the methodology and design principles transfer.</p>
+                <p><strong className="text-slate-800">HR people's AI capability specifically.</strong>{" "}If you need to measure AI capability across your whole organisation, AiQ is not the right tool for that - but the methodology and design principles transfer.</p>
               </div>
             </div>
 
@@ -812,7 +812,7 @@ function HonestySection() {
         </h2>
         <p className="text-slate-600 leading-relaxed mb-6 text-lg">
           AiQ's methodology is rigorous in its design. It is not yet empirically validated against real customer data at scale.
-          Beta partners are buying into a methodology that is sound but still maturing — meaningful discount, direct influence
+          Beta partners are buying into a methodology that is sound but still maturing - meaningful discount, direct influence
           on the platform's evolution, and the trust that comes from working with a vendor that doesn't pretend to certainty it doesn't yet have.
         </p>
         <p className="text-slate-500 leading-relaxed text-sm">
@@ -839,20 +839,20 @@ function WhyNow() {
           </h2>
           <p className="text-slate-300 leading-relaxed mb-6">
             The first wave of HR AI adoption was about productivity tools. The second wave is about
-            governance — whether HR is capable of evaluating AI-informed decisions, designing safe
+            governance - whether HR is capable of evaluating AI-informed decisions, designing safe
             workflows, supporting workforce transitions, and standing up to regulator scrutiny when
             AI affects employment outcomes.
           </p>
           <p className="text-slate-400 leading-relaxed mb-6">
             Most HR functions are not yet ready for the second wave. The capability gap is real, the
-            timeline is short, and the consequences of getting it wrong are visible — Article 22
+            timeline is short, and the consequences of getting it wrong are visible - Article 22
             challenges, ICO investigations, employment tribunal cases, board-level questions that
             nobody can answer credibly.
           </p>
           <p className="text-slate-400 leading-relaxed mb-12">
             AiQ exists because the assessment tools, learning platforms, and consulting engagements
             available today weren't built for this specific question. They measure other things.
-            AiQ measures this thing — your HR function's actual AI capability — with the rigour the question deserves.
+            AiQ measures this thing - your HR function's actual AI capability - with the rigour the question deserves.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/beta">
@@ -885,7 +885,7 @@ function FinalCTA() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-8"
           style={{ background: "rgba(34,197,94,0.15)", color: greenHex, border: "1px solid rgba(34,197,94,0.3)" }}>
           <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: greenHex }} />
-          First cohort — limited places
+          First cohort - limited places
         </div>
         <h2 className="text-4xl font-black text-white mb-4" style={{ letterSpacing: "-0.03em" }}>
           Apply for the AiQ Beta Programme
@@ -914,7 +914,7 @@ function FinalCTA() {
   );
 }
 
-/** Explainer video section — sits between Hero and BoardQuestions */
+/** Explainer video section - sits between Hero and BoardQuestions */
 function ExplainerVideo() {
   return (
     <section style={{ background: navy }} className="py-16 px-6">

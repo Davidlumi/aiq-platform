@@ -1,5 +1,5 @@
 /**
- * AiQ Dashboard UI Components — Peakon Design System v3.0
+ * AiQ Dashboard UI Components - Peakon Design System v3.0
  *
  * Shared primitives used across all dashboards and data pages.
  * Peakon-style gradient colour scale, clean data-dense layouts.
@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Info, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 
-// ─── Rating Badge ────────────────────────────────────────────────────────────
+// --- Rating Badge ------------------------------------------------------------
 
 const RATING_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
   ai_ready:              { bg: "#f0fdf4", text: "#047857", border: "#bbf7d0", dot: "#047857" },
@@ -47,8 +47,8 @@ export function RatingBadge({ rating, size = "md" }: { rating: string; size?: "s
   );
 }
 
-// ─── Peakon Score Cell ──────────────────────────────────────────────────────
-// The core Peakon visual — gradient-coloured cell with white decimal score
+// --- Peakon Score Cell ------------------------------------------------------
+// The core Peakon visual - gradient-coloured cell with white decimal score
 
 export function PeakonScoreCell({
   score,
@@ -71,8 +71,8 @@ export function PeakonScoreCell({
       xl: "w-20 h-14 text-base",
     };
     return (
-      <div className={cn("rounded-md flex items-center justify-center text-muted-foreground bg-neutral-100 border border-dashed border-neutral-200", emptySize[size], className)}>
-        —
+      <div className={cn("rounded-md flex items-center justify-center text-muted-foreground bg-secondary border border-dashed border-border", emptySize[size], className)}>
+        -
       </div>
     );
   }
@@ -109,10 +109,10 @@ export function PeakonScoreCell({
   );
 }
 
-// ─── Peakon Score Badge (inline, for text flow) ─────────────────────────────
+// --- Peakon Score Badge (inline, for text flow) -----------------------------
 
 export function PeakonScoreBadge({ score, className }: { score: number | null; className?: string }) {
-  if (score === null) return <span className={cn("text-muted-foreground font-mono text-xs", className)}>—</span>;
+  if (score === null) return <span className={cn("text-muted-foreground font-mono text-xs", className)}>-</span>;
   const { bg, text } = scoreToColor(score);
   return (
     <span
@@ -124,10 +124,10 @@ export function PeakonScoreBadge({ score, className }: { score: number | null; c
   );
 }
 
-// ─── Score Display (large hero numbers) ─────────────────────────────────────
+// --- Score Display (large hero numbers) -------------------------------------
 
 export function ScoreDisplay({ score, size = "lg", className, peakon = false }: { score: number | null; size?: "sm" | "md" | "lg"; className?: string; peakon?: boolean }) {
-  if (score === null) return <span className={cn("text-muted-foreground", className)}>—</span>;
+  if (score === null) return <span className={cn("text-muted-foreground", className)}>-</span>;
 
   if (peakon) {
     const { bg, text } = scoreToColor(score);
@@ -158,7 +158,7 @@ export function ScoreDisplay({ score, size = "lg", className, peakon = false }: 
   );
 }
 
-// ─── Confidence Indicator ────────────────────────────────────────────────────
+// --- Confidence Indicator ----------------------------------------------------
 
 const CONFIDENCE_STYLES: Record<string, { colour: string; label: string }> = {
   high: { colour: "var(--primary)", label: "High confidence" },
@@ -199,7 +199,7 @@ export function ConfidenceIndicator({ band }: { band: "high" | "moderate" | "low
   );
 }
 
-// ─── Delta Indicator ─────────────────────────────────────────────────────────
+// --- Delta Indicator ---------------------------------------------------------
 
 export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null; suffix?: string }) {
   if (value === null || value === 0) return <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>;
@@ -212,7 +212,7 @@ export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null
   );
 }
 
-// ─── Section Card ────────────────────────────────────────────────────────────
+// --- Section Card ------------------------------------------------------------
 
 export function DashboardCard({
   title,
@@ -230,7 +230,7 @@ export function DashboardCard({
   noPadding?: boolean;
 }) {
   return (
-    <div className={cn("bg-white rounded-xl border border-neutral-200 shadow-sm", className)}>
+    <div className={cn("bg-card rounded-xl border border-border shadow-md", className)}>
       {(title || action) && (
         <div className="flex items-center justify-between px-6 pt-5 pb-0">
           <div>
@@ -245,7 +245,7 @@ export function DashboardCard({
   );
 }
 
-// ─── Info Tooltip ────────────────────────────────────────────────────────────
+// --- Info Tooltip ------------------------------------------------------------
 
 export function InfoTip({ text }: { text: string }) {
   return (
@@ -260,7 +260,7 @@ export function InfoTip({ text }: { text: string }) {
   );
 }
 
-// ─── Heatmap Cell (legacy — uses Peakon gradient now) ───────────────────────
+// --- Heatmap Cell (legacy - uses Peakon gradient now) -----------------------
 
 export function HeatmapCell({
   score,
@@ -279,9 +279,9 @@ export function HeatmapCell({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn("rounded-md flex flex-col items-center justify-center text-muted-foreground border border-dashed border-neutral-200", size === "sm" ? "w-12 h-8" : "w-14 h-10")}
+          <div className={cn("rounded-md flex flex-col items-center justify-center text-muted-foreground border border-dashed border-border", size === "sm" ? "w-12 h-8" : "w-14 h-10")}
             style={{ backgroundColor: "#F8FAFC" }}>
-            <span className="text-xs">—</span>
+            <span className="text-xs">-</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
@@ -318,7 +318,7 @@ export function HeatmapCell({
   );
 }
 
-// ─── Domain Colour Dot ──────────────────────────────────────────────────────
+// --- Domain Colour Dot ------------------------------------------------------
 
 const DOMAIN_COLOUR_MAP: Record<string, string> = {
   ai_interaction: "#4477AA",
@@ -338,7 +338,7 @@ export function DomainDot({ domain, size = 8 }: { domain: string; size?: number 
   );
 }
 
-// ─── Capability Bar (Peakon gradient fill) ──────────────────────────────────
+// --- Capability Bar (Peakon gradient fill) ----------------------------------
 
 export function CapabilityBar({
   score,
@@ -372,7 +372,7 @@ export function CapabilityBar({
   );
 }
 
-// ─── Peakon Progress Bar (gradient fill based on percentage) ────────────────
+// --- Peakon Progress Bar (gradient fill based on percentage) ----------------
 
 export function PeakonProgressBar({
   value,
@@ -407,7 +407,7 @@ export function PeakonProgressBar({
   );
 }
 
-// ─── Priority Badge ──────────────────────────────────────────────────────────
+// --- Priority Badge ----------------------------------------------------------
 
 export function PriorityBadge({ priority }: { priority: "critical" | "high" | "medium" | "low" }) {
   const styles = {
@@ -427,7 +427,7 @@ export function PriorityBadge({ priority }: { priority: "critical" | "high" | "m
   );
 }
 
-// ─── Skeleton Loaders ────────────────────────────────────────────────────────
+// --- Skeleton Loaders --------------------------------------------------------
 
 export function DashboardSkeleton() {
   return (
@@ -454,12 +454,12 @@ export function DashboardSkeleton() {
   );
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
+// --- Empty State -------------------------------------------------------------
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
         <Info className="w-7 h-7 text-neutral-400" />
       </div>
       <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
@@ -469,7 +469,7 @@ export function EmptyState({ title, description, action }: { title: string; desc
   );
 }
 
-// ─── Drill-down Chevron ──────────────────────────────────────────────────────
+// --- Drill-down Chevron ------------------------------------------------------
 
 export function DrillChevron() {
   return <ChevronRight className="w-4 h-4 text-neutral-400 shrink-0" />;

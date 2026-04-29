@@ -1,5 +1,5 @@
 /**
- * TeamLearningPage — /manager/team-learning
+ * TeamLearningPage - /manager/team-learning
  * Manager view of team learning progress: per-report plan status,
  * capability progress, last active date, at-risk learners, nudge functionality.
  */

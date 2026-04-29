@@ -1,5 +1,5 @@
 /**
- * Audit Log Page — AiQ Enterprise Platform
+ * Audit Log Page - AiQ Enterprise Platform
  *
  * Canonical audit view from the build bible:
  * - Read-only record of all platform actions
@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ── Event type config ─────────────────────────────────────────────────────────
+// -- Event type config ---------------------------------------------------------
 
 const EVENT_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
   assessment:     { label: "Assessment",  colour: "#4477AA", icon: FileText },
@@ -46,7 +46,7 @@ function getEventCategory(action: string): string {
   return "admin";
 }
 
-// ── Audit Entry Row ───────────────────────────────────────────────────────────
+// -- Audit Entry Row -----------------------------------------------------------
 
 function AuditEntryRow({ log }: { log: any }) {
   const [expanded, setExpanded] = useState(false);
@@ -135,7 +135,7 @@ function AuditEntryRow({ log }: { log: any }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// -- Main Page -----------------------------------------------------------------
 
 export default function AuditLogPage() {
   const [search, setSearch] = useState("");

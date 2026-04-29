@@ -1,5 +1,5 @@
 /**
- * Team Learning Dashboard — Manager view
+ * Team Learning Dashboard - Manager view
  * Shows team members' readiness scores, learning progress, streaks, and capability gaps.
  * Includes nudge functionality for managers to recommend modules to team members.
  */
@@ -273,7 +273,7 @@ export default function TeamDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Team Members", value: members.length, icon: Users, color: "#6366f1" },
-            { label: "Avg AI Readiness", value: avgScore !== null ? `${avgScore}%` : "—", icon: Target, color: "var(--primary)" },
+            { label: "Avg AI Readiness", value: avgScore !== null ? `${avgScore}%` : "-", icon: Target, color: "var(--primary)" },
             { label: "Modules Completed", value: totalModulesDone, icon: BookOpen, color: "#D97706" },
             { label: "Active Streaks", value: activeStreaks, icon: Flame, color: "#f97316" },
           ].map(stat => (
@@ -333,7 +333,7 @@ export default function TeamDashboardPage() {
           <h2 className="font-semibold mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             Team Members ({members.length})
-            <span className="text-xs text-muted-foreground font-normal ml-1">— click <Bell className="h-3 w-3 inline" /> to recommend a module</span>
+            <span className="text-xs text-muted-foreground font-normal ml-1">- click <Bell className="h-3 w-3 inline" /> to recommend a module</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {members.map((member: any) => (

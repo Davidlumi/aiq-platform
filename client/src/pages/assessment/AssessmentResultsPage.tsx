@@ -85,7 +85,7 @@ import {
   Cell,
 } from "recharts";
 
-// ─── Readiness / Credibility / Risk config ────────────────────────────────────
+// --- Readiness / Credibility / Risk config ------------------------------------
 
 const READINESS_CONFIG = {
   safe: {
@@ -156,7 +156,7 @@ const RISK_CONFIG = {
   high: { label: "High Risk", color: "text-[#CC3344]", bg: "bg-[#DC2626]/8" },
 } as const;
 
-// ─── Radar Chart Component ────────────────────────────────────────────────────
+// --- Radar Chart Component ----------------------------------------------------
 
 function RadarCapabilityChart({
   capabilities,
@@ -201,7 +201,7 @@ function RadarCapabilityChart({
   );
 }
 
-// ─── Longitudinal Tracking Chart (UX-10: readiness dots + threshold line) ────
+// --- Longitudinal Tracking Chart (UX-10: readiness dots + threshold line) ----
 
 interface LongitudinalEntry {
   sessionId: string;
@@ -282,7 +282,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
                 }}
                 formatter={(value: number) => [formatPeakonScore(value), "Overall Score"]}
               />
-              {/* UX-10: Safe threshold reference line — A5-07: label updated to Peakon format */}
+              {/* UX-10: Safe threshold reference line - A5-07: label updated to Peakon format */}
               <ReferenceLine
                 y={75}
                 stroke="var(--primary)"
@@ -306,7 +306,7 @@ function LongitudinalChart({ data }: { data: LongitudinalEntry[] }) {
   );
 }
 
-// ─── Score Ring ───────────────────────────────────────────────────────────────
+// --- Score Ring ---------------------------------------------------------------
 
 function ScoreRing({ score, color, size = 100 }: { score: number; color: string; size?: number }) {
   const radius = (size - 16) / 2;
@@ -343,7 +343,7 @@ function ScoreRing({ score, color, size = 100 }: { score: number; color: string;
   );
 }
 
-// ─── Percentile Band Badge with Tooltip ─────────────────────────────────────
+// --- Percentile Band Badge with Tooltip -------------------------------------
 
 const PERCENTILE_BAND_INFO: Record<string, { description: string; colour: string }> = {
   "Top 20%":        { colour: "var(--primary)", description: "Your score places you in the top fifth of your peer group - a strong result relative to HR professionals at a similar level and role." },
@@ -393,16 +393,16 @@ function PercentileBandBadge({
   );
 }
 
-// ─── Capability Bar ───────────────────────────────────────────────────────────
+// --- Capability Bar -----------------------------------------------------------
 
 /**
  * CR-2: Compute confidence interval half-width based on signal count.
  * Fewer signals → wider interval. Uses a heuristic based on the
- * standard error of a proportion, scaled to the 0–100 score range.
+ * standard error of a proportion, scaled to the 0-100 score range.
  * At 3 signals: ±18 points. At 8 signals: ±11 points. At 15+: ±8 points.
  */
 function computeConfidenceHalfWidth(signalCount: number): number {
-  if (signalCount <= 0) return 25; // no evidence — maximum uncertainty
+  if (signalCount <= 0) return 25; // no evidence - maximum uncertainty
   // Heuristic: base SE ≈ 50/sqrt(n), capped at [6, 25]
   const raw = 50 / Math.sqrt(signalCount);
   return Math.round(Math.max(6, Math.min(25, raw)));
@@ -451,7 +451,7 @@ function CapabilityBar({
       </div>
       {/* Score bar with confidence interval overlay */}
       <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
-        {/* Confidence interval range — translucent band */}
+        {/* Confidence interval range - translucent band */}
         <div
           className="absolute top-0 h-full rounded-full opacity-20 transition-all duration-700"
           style={{
@@ -469,7 +469,7 @@ function CapabilityBar({
       {/* Confidence interval label */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">
-          Range: {lo}–{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
+          Range: {lo}-{hi} ({signalCount ?? 0} signal{(signalCount ?? 0) !== 1 ? "s" : ""})
         </span>
         {hw >= 15 && (
           <span className="text-xs text-[#99882A] flex items-center gap-0.5">
@@ -482,9 +482,9 @@ function CapabilityBar({
   );
 }
 
-// ─── Signal Row ───────────────────────────────────────────────────────────────
+// --- Signal Row ---------------------------------------------------------------
 
-// v10 signal glossary — 26 signals across 6 domains
+// v10 signal glossary - 26 signals across 6 domains
 const SIGNAL_GLOSSARY: Record<string, string> = {
   // AI Interaction (foundation)
   prompt_quality:              "How effectively you construct prompts that produce useful, accurate AI outputs.",
@@ -552,22 +552,22 @@ function SignalRow({ signal, delta }: { signal: string; delta: number }) {
   );
 }
 
-// ─── Capability Development Actions ─────────────────────────────────────────
+// --- Capability Development Actions -----------------------------------------
 
-// v10 capability development actions — imported from shared constants
+// v10 capability development actions - imported from shared constants
 import { DOMAIN_COLOURS, DOMAIN_LABELS, DOMAIN_DESCRIPTIONS, DOMAIN_RECOMMENDATIONS, DOMAIN_SHORT_LABELS, READINESS_STATES, FOUNDATION_DOMAINS, STRATEGIC_DOMAINS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
 
 const CAPABILITY_DEVELOPMENT_ACTIONS: Record<string, string> = DOMAIN_RECOMMENDATIONS;
 
-// ─── Main Component ─────────────────────────────────────────────────────────────
+// --- Main Component -------------------------------------------------------------
 
 export default function AssessmentResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
   const [showExplanation, setShowExplanation] = useState(false);
   const [flagged, setFlagged] = useState(false);
-  // P2-AE-3: Staged reveal — sections animate in sequentially after data loads
+  // P2-AE-3: Staged reveal - sections animate in sequentially after data loads
   const [revealStage, setRevealStage] = useState(0); // 0=hidden, 1=readiness, 2=domains, 3=signals, 4=full
   const [hasRevealed, setHasRevealed] = useState(false);
 
@@ -738,7 +738,7 @@ export default function AssessmentResultsPage() {
      : "Unknown";
   return (
     <div className="flex h-full min-h-0">
-      {/* ── History sidebar ── */}
+      {/* -- History sidebar -- */}
       <div className="hidden lg:flex flex-col w-56 shrink-0 border-r border-border bg-muted/20">
         <AssessmentHistoryPanel
           sessions={allSessions ?? []}
@@ -752,7 +752,7 @@ export default function AssessmentResultsPage() {
         />
       </div>
 
-      {/* ── Main content ── */}
+      {/* -- Main content -- */}
       <div className="flex-1 overflow-y-auto">
       <div className="p-6 space-y-6 max-w-3xl mx-auto">
       {/* Back nav */}
@@ -786,9 +786,9 @@ export default function AssessmentResultsPage() {
         </p>
       </div>
 
-      {/* ── Three-Layer Tabs ── */}
+      {/* -- Three-Layer Tabs -- */}
       <Tabs defaultValue="summary" className="w-full">
-        {/* A5-06: Horizontally scrollable tab bar — icons hidden on mobile to prevent overflow */}
+        {/* A5-06: Horizontally scrollable tab bar - icons hidden on mobile to prevent overflow */}
         <div className="overflow-x-auto -mx-1 px-1 mb-6 scrollbar-none">
           <TabsList className="w-max min-w-full">
             <TabsTrigger value="summary" className="gap-1.5 text-xs">
@@ -946,7 +946,7 @@ export default function AssessmentResultsPage() {
             </Card>
           )}
 
-          {/* Capability Breakdown — reveal stage 2 */}
+          {/* Capability Breakdown - reveal stage 2 */}
           <div
             className="transition-all duration-700 ease-out"
             style={{ opacity: revealStage >= 2 ? 1 : 0, transform: revealStage >= 2 ? "translateY(0)" : "translateY(16px)" }}
@@ -980,10 +980,10 @@ export default function AssessmentResultsPage() {
                 {/* Score bands legend */}
                 <div className="flex items-center gap-4 pt-2 flex-wrap">
                   {[
-                    { label: "Strong", range: "75–100", color: "var(--primary)" },
-                    { label: "Developing", range: "55–74", color: "#D97706" },
-                    { label: "Needs Work", range: "35–54", color: "#DC2626" },
-                    { label: "Critical", range: "0–34", color: "#b91c1c" },
+                    { label: "Strong", range: "75-100", color: "var(--primary)" },
+                    { label: "Developing", range: "55-74", color: "#D97706" },
+                    { label: "Needs Work", range: "35-54", color: "#DC2626" },
+                    { label: "Critical", range: "0-34", color: "#b91c1c" },
                   ].map(b => (
                     <div key={b.label} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
@@ -1008,7 +1008,7 @@ export default function AssessmentResultsPage() {
 
           </div>{/* end reveal stage 2 */}
 
-          {/* Signal Profile — reveal stage 3 */}
+          {/* Signal Profile - reveal stage 3 */}
           <div
             className="transition-all duration-700 ease-out"
             style={{ opacity: revealStage >= 3 ? 1 : 0, transform: revealStage >= 3 ? "translateY(0)" : "translateY(16px)" }}
@@ -1145,7 +1145,7 @@ export default function AssessmentResultsPage() {
                     {formatPeakonScore(overallScore)}
                     <span className="text-sm font-normal text-muted-foreground"> / 10</span>
                   </p>
-                  {/* CR-2: Overall confidence interval — A5-02: formatted as Peakon 0-10 */}
+                  {/* CR-2: Overall confidence interval - A5-02: formatted as Peakon 0-10 */}
                   {(() => {
                     const totalSignals = sortedCapabilities.reduce((sum, c) => sum + c.signalCount, 0);
                     const oHw = computeConfidenceHalfWidth(totalSignals);
@@ -1239,7 +1239,7 @@ export default function AssessmentResultsPage() {
                     )}
                     {((explanationData as any).itemCitations ?? []).length > 0 && (
                       <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
-                        <p className="text-xs font-semibold text-foreground mb-2">Evidence trail — key items that influenced this classification</p>
+                        <p className="text-xs font-semibold text-foreground mb-2">Evidence trail - key items that influenced this classification</p>
                         <div className="space-y-1.5">
                           {((explanationData as any).itemCitations as Array<{itemId: string; questionSummary: string; signalKey: string; delta: number; capabilityKey: string | null; outcomeClass: string | null}>)
                             .slice(0, 5)
@@ -1287,7 +1287,7 @@ export default function AssessmentResultsPage() {
 
           </div>{/* end reveal stage 3 */}
 
-          {/* Actions — reveal stage 4 */}
+          {/* Actions - reveal stage 4 */}
           <div
             className="transition-all duration-700 ease-out"
             style={{ opacity: revealStage >= 4 ? 1 : 0, transform: revealStage >= 4 ? "translateY(0)" : "translateY(16px)" }}
@@ -1541,7 +1541,7 @@ export default function AssessmentResultsPage() {
             </>
           )}
 
-          {/* BA-04: Business Impact — how this result connects to org ambition */}
+          {/* BA-04: Business Impact - how this result connects to org ambition */}
           {ambitionGap && ambitionGap.configured && data.score?.overallScore !== null && data.score?.overallScore !== undefined && (
             <AssessmentBusinessImpactCard
               overallScore={data.score.overallScore}
@@ -2023,7 +2023,7 @@ export default function AssessmentResultsPage() {
                     <p className="text-xs font-semibold text-foreground mb-2">What does calibration mean?</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       Confidence calibration measures whether your certainty levels matched the actual quality of your decisions. 
-                      A well-calibrated professional is certain when they are right and uncertain when they are wrong — this is a 
+                      A well-calibrated professional is certain when they are right and uncertain when they are wrong - this is a 
                       distinct metacognitive skill that predicts real-world AI decision quality.
                     </p>
                   </CardContent>
@@ -2034,7 +2034,7 @@ export default function AssessmentResultsPage() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════════
-            TAB 7: METACOGNITION — Competence-Confidence Matrix & Blind Spots
+            TAB 7: METACOGNITION - Competence-Confidence Matrix & Blind Spots
             Based on Area9 Lyceum's 4-Dimensional Learning Model
             ══════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="metacognition" className="space-y-6">
@@ -2140,7 +2140,7 @@ export default function AssessmentResultsPage() {
                                 </p>
                                 <p className="text-xs mt-1">
                                   <span className={cn("font-medium", qc.text)}>{d.quadrantLabel}</span>
-                                  {" "}— {d.quadrantDescription}
+                                  {" "}- {d.quadrantDescription}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">Based on {d.answerCount} answers</p>
                               </TooltipContent>
@@ -2206,7 +2206,7 @@ export default function AssessmentResultsPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        These domains show high confidence but low competence — the most dangerous metacognitive state.
+                        These domains show high confidence but low competence - the most dangerous metacognitive state.
                         You may be making AI-related decisions in these areas without recognising the risks.
                       </p>
                       {blindSpotsList.map((bs) => (
@@ -2217,7 +2217,7 @@ export default function AssessmentResultsPage() {
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">{bs.displayName}</p>
                             <p className="text-xs text-muted-foreground">
-                              Score: {bs.competenceScore}/100 but confidence: {bs.avgConfidence}% —
+                              Score: {bs.competenceScore}/100 but confidence: {bs.avgConfidence}% -
                               {" "}a {bs.avgConfidence - bs.competenceScore > 20 ? "significant" : "notable"} gap between
                               what you think you know and what the assessment revealed.
                             </p>
@@ -2243,7 +2243,7 @@ export default function AssessmentResultsPage() {
                       This analysis is based on Area9 Lyceum's 4-Dimensional Learning Model, which maps learners across
                       competence (what you can actually do) and confidence (what you think you can do). The most productive
                       learning happens when you move from "Blind Spot" (unconscious incompetence) to "Aware Gap" (conscious
-                      incompetence) — recognising what you don't know is the first step to building genuine capability.
+                      incompetence) - recognising what you don't know is the first step to building genuine capability.
                       The goal is to reach "Mastery" (unconscious competence) where correct behaviour is automatic.
                     </p>
                   </CardContent>
@@ -2260,7 +2260,7 @@ export default function AssessmentResultsPage() {
 }
 
 
-// ─── BA-04 / BA-06: Assessment Business Impact Card ──────────────────────────
+// BA-04 / BA-06: Assessment Business Impact Card
 
 function AssessmentBusinessImpactCard({
   overallScore,
@@ -2311,15 +2311,15 @@ function AssessmentBusinessImpactCard({
               {isAboveOrgAvg ? "Above" : "Below"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} avg
+              {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} avg
             </p>
           </div>
           <div className="p-2.5 rounded-lg bg-background border border-border text-center">
             <p className="text-xs text-muted-foreground mb-0.5">vs ambition target</p>
             <p className="text-sm font-bold" style={{ color: isAboveTarget ? "#047857" : "#b45309" }}>
-              {isAboveTarget ? "Meets target ✓" : gapRaw !== null ? `${(gapRaw / 10).toFixed(1)} pts gap` : "—"}
+              {isAboveTarget ? "Meets target ✓" : gapRaw !== null ? `${(gapRaw / 10).toFixed(1)} pts gap` : "-"}
             </p>
-            <p className="text-xs text-muted-foreground">target: {targetPeakon ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">target: {targetPeakon ?? "-"}</p>
           </div>
         </div>
 
@@ -2334,7 +2334,7 @@ function AssessmentBusinessImpactCard({
                 <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: co.colour }} />
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-foreground">{co.label}</span>
-                  <span className="text-muted-foreground"> — {co.outcome}</span>
+                  <span className="text-muted-foreground"> - {co.outcome}</span>
                 </div>
               </div>
             ))}

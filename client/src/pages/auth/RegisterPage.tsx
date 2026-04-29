@@ -1,5 +1,5 @@
 /**
- * RegisterPage — AiQ Platform
+ * RegisterPage - AiQ Platform
  * Two-column: dark slate brand panel (left) + form (right)
  */
 import { useState } from "react";
@@ -87,7 +87,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "#F7F8FA" }}>
-      {/* ── Left brand panel ── */}
+      {/* -- Left brand panel -- */}
       <div
         className="hidden lg:flex flex-col justify-between w-[400px] shrink-0 p-10"
         style={{
@@ -135,7 +135,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* ── Right form panel ── */}
+      {/* -- Right form panel -- */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-3 mb-8">

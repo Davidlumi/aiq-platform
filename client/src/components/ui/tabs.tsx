@@ -1,7 +1,7 @@
 /**
- * Tabs — AiQ Design System v2.2 §5.8
+ * Tabs - AiQ Design System v2.2 §5.8
  *
- * Pattern: underline tabs — transparent background, 2px navy-800 bottom border on active.
+ * Pattern: underline tabs - transparent background, 2px navy-800 bottom border on active.
  * No pill/filled background. No rounded container.
  */
 import * as React from "react";

@@ -1,5 +1,5 @@
 /**
- * ForgotPasswordPage — AiQ Platform
+ * ForgotPasswordPage - AiQ Platform
  * Centered card layout on light canvas.
  */
 import { useState } from "react";
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
                 style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
               >
                 <p className="text-xs font-medium mb-1" style={{ color: "#64748B" }}>
-                  Dev mode — reset token:
+                  Dev mode - reset token:
                 </p>
                 <code className="text-xs break-all" style={{ color: "var(--foreground)", fontFamily: "monospace" }}>
                   {devToken}

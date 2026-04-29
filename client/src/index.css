@@ -2,24 +2,29 @@
 @import "tw-animate-css";
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   AiQ Design System — Original Brand Palette
-   Primary Green #10B981 · Dark Slate #1E293B · Background #F7F8FA
-   System font stack · Clean enterprise density
+   AiQ Design System — Core Brand (Dark Navy + Green)
+   Background #0d1117 · Primary Green #22c55e · Card #131d2e · White text
+   Matches hraiq.co.uk marketing site visual language
    ───────────────────────────────────────────────────────────────────────────── */
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   /* ── BRAND PRIMITIVES ── */
-  --color-brand:              oklch(70.4% 0.165 162);
-  --color-brand-light:        oklch(81.3% 0.143 162);
-  --color-brand-dark:         oklch(57.8% 0.148 162);
-  --color-brand-bg:           oklch(97.2% 0.025 162);
-  --color-brand-border:       oklch(88.5% 0.075 162);
+  /* Green primary — #22c55e (oklch ~72% 0.22 142) */
+  --color-brand:              oklch(72.3% 0.220 142);
+  --color-brand-light:        oklch(82.0% 0.190 142);
+  --color-brand-dark:         oklch(58.0% 0.200 142);
+  --color-brand-bg:           oklch(20.0% 0.040 142);
+  --color-brand-border:       oklch(35.0% 0.100 142);
 
-  --color-slate:              oklch(25.1% 0.040 240);
-  --color-slate-light:        oklch(30.5% 0.038 240);
-  --color-slate-muted:        oklch(55.0% 0.028 240);
+  /* Navy scale — dark background palette */
+  --color-navy-bg:            oklch(11.5% 0.020 240);   /* #0d1117 — page background */
+  --color-navy-card:          oklch(14.5% 0.025 240);   /* #131d2e — card surface */
+  --color-navy-card-hover:    oklch(17.0% 0.028 240);   /* slightly lighter card hover */
+  --color-navy-border:        oklch(22.0% 0.030 240);   /* #1e2d42 — border */
+  --color-navy-muted:         oklch(28.0% 0.030 240);   /* muted surface */
+  --color-navy-sidebar:       oklch(9.5% 0.018 240);    /* #0a1120 — sidebar bg */
 
   /* ── NEUTRAL SCALE ── */
   --color-neutral-50:         oklch(98.2% 0.004 240);
@@ -34,60 +39,60 @@
   --color-neutral-900:        oklch(20.5% 0.036 240);
   --color-white:              oklch(100% 0 0);
 
-  /* ── READINESS STATE COLOURS — Design System v2.2 ── */
-  --color-safe:               #047857;
-  --color-safe-bg:            #f0fdf4;
-  --color-safe-border:        #bbf7d0;
-  --color-safe-text:          #047857;
-  --color-risk:               #2563EB;
-  --color-risk-bg:            #eff6ff;
-  --color-risk-border:        #bfdbfe;
-  --color-risk-text:          #1d4ed8;
-  --color-unsafe:             #D97706;
-  --color-unsafe-bg:          #fffbeb;
-  --color-unsafe-border:      #fde68a;
-  --color-unsafe-text:        #b45309;
-  --color-foundation-gap:     #DC2626;
-  --color-foundation-gap-bg:  #fef2f2;
-  --color-foundation-gap-border: #fecaca;
-  --color-foundation-gap-text: #b91c1c;
-  --color-unknown:            #6B7280;
-  --color-unknown-bg:         #F9FAFB;
-  --color-unknown-border:     #D1D5DB;
-  --color-unknown-text:       #6B7280;
+  /* ── READINESS STATE COLOURS — dark-mode adjusted ── */
+  --color-safe:               #22c55e;
+  --color-safe-bg:            oklch(18% 0.040 142);
+  --color-safe-border:        oklch(30% 0.100 142);
+  --color-safe-text:          #4ade80;
+  --color-risk:               #3b82f6;
+  --color-risk-bg:            oklch(18% 0.040 250);
+  --color-risk-border:        oklch(30% 0.080 250);
+  --color-risk-text:          #60a5fa;
+  --color-unsafe:             #f59e0b;
+  --color-unsafe-bg:          oklch(18% 0.040 68);
+  --color-unsafe-border:      oklch(30% 0.090 68);
+  --color-unsafe-text:        #fbbf24;
+  --color-foundation-gap:     #ef4444;
+  --color-foundation-gap-bg:  oklch(18% 0.040 27);
+  --color-foundation-gap-border: oklch(30% 0.090 27);
+  --color-foundation-gap-text: #f87171;
+  --color-unknown:            #6b7280;
+  --color-unknown-bg:         oklch(18% 0.010 240);
+  --color-unknown-border:     oklch(28% 0.015 240);
+  --color-unknown-text:       #9ca3af;
 
-  /* ── READINESS STATE BADGE COLOURS (Individual) ── */
-  --state-strong-individual-bg:       #f0fdf4;
-  --state-strong-individual-text:     #047857;
-  --state-strong-individual-border:   #bbf7d0;
-  --state-developing-individual-bg:   #eff6ff;
-  --state-developing-individual-text: #1d4ed8;
-  --state-developing-individual-border: #bfdbfe;
-  --state-critical-individual-bg:     #fffbeb;
-  --state-critical-individual-text:   #b45309;
-  --state-critical-individual-border: #fde68a;
-  --state-foundation-individual-bg:   #fef2f2;
-  --state-foundation-individual-text: #b91c1c;
-  --state-foundation-individual-border: #fecaca;
-  --state-insufficient-bg:            #F9FAFB;
-  --state-insufficient-text:          #6B7280;
-  --state-insufficient-border:        #D1D5DB;
+  /* ── READINESS STATE BADGE COLOURS (dark-mode) ── */
+  --state-strong-individual-bg:       oklch(18% 0.040 142);
+  --state-strong-individual-text:     #4ade80;
+  --state-strong-individual-border:   oklch(30% 0.100 142);
+  --state-developing-individual-bg:   oklch(18% 0.040 250);
+  --state-developing-individual-text: #60a5fa;
+  --state-developing-individual-border: oklch(30% 0.080 250);
+  --state-critical-individual-bg:     oklch(18% 0.040 68);
+  --state-critical-individual-text:   #fbbf24;
+  --state-critical-individual-border: oklch(30% 0.090 68);
+  --state-foundation-individual-bg:   oklch(18% 0.040 27);
+  --state-foundation-individual-text: #f87171;
+  --state-foundation-individual-border: oklch(30% 0.090 27);
+  --state-insufficient-bg:            oklch(18% 0.010 240);
+  --state-insufficient-text:          #9ca3af;
+  --state-insufficient-border:        oklch(28% 0.015 240);
 
   /* ── READINESS STATE BADGE COLOURS (Org) ── */
-  --state-strong-org-bg:              #f0fdf4;
-  --state-strong-org-text:            #047857;
-  --state-strong-org-border:          #bbf7d0;
-  --state-developing-org-bg:          #eff6ff;
-  --state-developing-org-text:        #1d4ed8;
-  --state-developing-org-border:      #bfdbfe;
-  --state-critical-org-bg:            #fffbeb;
-  --state-critical-org-text:          #b45309;
-  --state-critical-org-border:        #fde68a;
-  --state-foundation-org-bg:          #fef2f2;
-  --state-foundation-org-text:        #b91c1c;
-  --state-foundation-org-border:      #fecaca;
+  --state-strong-org-bg:              oklch(18% 0.040 142);
+  --state-strong-org-text:            #4ade80;
+  --state-strong-org-border:          oklch(30% 0.100 142);
+  --state-developing-org-bg:          oklch(18% 0.040 250);
+  --state-developing-org-text:        #60a5fa;
+  --state-developing-org-border:      oklch(30% 0.080 250);
+  --state-critical-org-bg:            oklch(18% 0.040 68);
+  --state-critical-org-text:          #fbbf24;
+  --state-critical-org-border:        oklch(30% 0.090 68);
+  --state-foundation-org-bg:          oklch(18% 0.040 27);
+  --state-foundation-org-text:        #f87171;
+  --state-foundation-org-border:      oklch(30% 0.090 27);
 
-  /* ── NAVY SCALE — Design System v2.2 ── */
+  /* ── NAVY SCALE (wireframe level chips) ── */
   --navy-50:                  #f0f4f8;
   --navy-100:                 #d9e2ec;
   --navy-200:                 #bcccdc;
@@ -102,22 +107,22 @@
   /* ── NEUTRAL EXTRAS ── */
   --neutral-0:                oklch(100% 0 0);
 
-  /* ── ELEVATION (box-shadow aliases) ── */
-  --elevation-sm:             0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --elevation-md:             0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  /* ── ELEVATION ── */
+  --elevation-sm:             0 1px 3px 0 rgb(0 0 0 / 0.30);
+  --elevation-md:             0 4px 12px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.30);
 
-  /* ── CAPABILITY DOMAIN COLOURS — Design System v2.2 §6.3 ── */
-  --color-cap-interaction:    #0EA5E9;
-  --color-cap-output-eval:    #8B5CF6;
-  --color-cap-workflow:       #10B981;
-  --color-cap-workforce:      #F59E0B;
-  --color-cap-ethics:         #EC4899;
-  --color-cap-change:         #EF4444;
-  --color-cap-execution:      #0EA5E9;
-  --color-cap-judgement:      #8B5CF6;
-  --color-cap-literacy:       #10B981;
-  --color-cap-governance:     #F59E0B;
-  --color-cap-strategy:       #EC4899;
+  /* ── CAPABILITY DOMAIN COLOURS ── */
+  --color-cap-interaction:    #38bdf8;
+  --color-cap-output-eval:    #a78bfa;
+  --color-cap-workflow:       #34d399;
+  --color-cap-workforce:      #fbbf24;
+  --color-cap-ethics:         #f472b6;
+  --color-cap-change:         #fb7185;
+  --color-cap-execution:      #38bdf8;
+  --color-cap-judgement:      #a78bfa;
+  --color-cap-literacy:       #34d399;
+  --color-cap-governance:     #fbbf24;
+  --color-cap-strategy:       #f472b6;
 
   /* ── TYPOGRAPHY ── */
   --font-sans: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -125,17 +130,17 @@
 
   /* ── RADIUS ── */
   --radius-sm:   0.25rem;
-  --radius:      0.375rem;
-  --radius-md:   0.5rem;
-  --radius-lg:   0.75rem;
-  --radius-xl:   1rem;
+  --radius:      0.5rem;
+  --radius-md:   0.625rem;
+  --radius-lg:   0.875rem;
+  --radius-xl:   1.25rem;
   --radius-full: 9999px;
 
   /* ── ELEVATION ── */
-  --shadow-sm:   0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow:      0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
-  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
-  --shadow-lg:   0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.10);
+  --shadow-sm:   0 1px 3px 0 rgb(0 0 0 / 0.30);
+  --shadow:      0 2px 6px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.25);
+  --shadow-md:   0 4px 12px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.30);
+  --shadow-lg:   0 10px 24px -3px rgb(0 0 0 / 0.50), 0 4px 8px -4px rgb(0 0 0 / 0.30);
 
   /* ── MOTION ── */
   --duration-fast:   150ms;
@@ -143,79 +148,156 @@
   --duration-slow:   300ms;
   --ease-default:    cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── SHADCN SEMANTIC COLOURS (--color-* for TW4 utility generation) ── */
-  --color-background:              oklch(98.2% 0.004 240);
-  --color-foreground:              oklch(8.2% 0.025 240);
-  --color-card:                    oklch(100% 0 0);
-  --color-card-foreground:         oklch(8.2% 0.025 240);
-  --color-popover:                 oklch(100% 0 0);
-  --color-popover-foreground:      oklch(8.2% 0.025 240);
-  --color-primary:                 oklch(70.4% 0.165 162);
-  --color-primary-foreground:      oklch(100% 0 0);
-  --color-secondary:               oklch(96.1% 0.006 240);
-  --color-secondary-foreground:    oklch(25.1% 0.040 240);
-  --color-muted:                   oklch(96.1% 0.006 240);
-  --color-muted-foreground:        oklch(61.8% 0.022 240);
-  --color-accent:                  oklch(97.2% 0.025 162);
-  --color-accent-foreground:       oklch(38.2% 0.130 162);
-  --color-destructive:             oklch(53.5% 0.200 27);
+  /* ── SHADCN SEMANTIC COLOURS — DARK NAVY THEME ── */
+  --color-background:              oklch(11.5% 0.020 240);   /* #0d1117 */
+  --color-foreground:              oklch(95.0% 0.006 240);   /* near-white */
+  --color-card:                    oklch(14.5% 0.025 240);   /* #131d2e */
+  --color-card-foreground:         oklch(95.0% 0.006 240);
+  --color-popover:                 oklch(16.0% 0.028 240);
+  --color-popover-foreground:      oklch(95.0% 0.006 240);
+  --color-primary:                 oklch(72.3% 0.220 142);   /* #22c55e green */
+  --color-primary-foreground:      oklch(10.0% 0.010 142);   /* dark on green */
+  --color-secondary:               oklch(18.0% 0.028 240);
+  --color-secondary-foreground:    oklch(85.0% 0.010 240);
+  --color-muted:                   oklch(18.0% 0.028 240);
+  --color-muted-foreground:        oklch(60.0% 0.018 240);
+  --color-accent:                  oklch(20.0% 0.040 142);   /* dark green tint */
+  --color-accent-foreground:       oklch(72.3% 0.220 142);
+  --color-destructive:             oklch(55.0% 0.200 27);
   --color-destructive-foreground:  oklch(100% 0 0);
-  --color-border:                  oklch(91.8% 0.009 240);
-  --color-input:                   oklch(91.8% 0.009 240);
-  --color-ring:                    oklch(70.4% 0.165 162);
+  --color-border:                  oklch(22.0% 0.030 240);   /* #1e2d42 */
+  --color-input:                   oklch(20.0% 0.028 240);
+  --color-ring:                    oklch(72.3% 0.220 142);
 
-  /* ── SHADCN COMPATIBILITY (bare vars for var(--xxx) references) ── */
-  --background:              oklch(98.2% 0.004 240);
-  --foreground:              oklch(8.2% 0.025 240);
-  --card:                    oklch(100% 0 0);
-  --card-foreground:         oklch(8.2% 0.025 240);
-  --popover:                 oklch(100% 0 0);
-  --popover-foreground:      oklch(8.2% 0.025 240);
-  --primary:                 oklch(70.4% 0.165 162);
-  --primary-foreground:      oklch(100% 0 0);
-  --secondary:               oklch(96.1% 0.006 240);
-  --secondary-foreground:    oklch(25.1% 0.040 240);
-  --muted:                   oklch(96.1% 0.006 240);
-  --muted-foreground:        oklch(61.8% 0.022 240);
-  --accent:                  oklch(97.2% 0.025 162);
-  --accent-foreground:       oklch(38.2% 0.130 162);
-  --destructive:             oklch(53.5% 0.200 27);
+  /* ── SHADCN COMPATIBILITY (bare vars) ── */
+  --background:              oklch(11.5% 0.020 240);
+  --foreground:              oklch(95.0% 0.006 240);
+  --card:                    oklch(14.5% 0.025 240);
+  --card-foreground:         oklch(95.0% 0.006 240);
+  --popover:                 oklch(16.0% 0.028 240);
+  --popover-foreground:      oklch(95.0% 0.006 240);
+  --primary:                 oklch(72.3% 0.220 142);
+  --primary-foreground:      oklch(10.0% 0.010 142);
+  --secondary:               oklch(18.0% 0.028 240);
+  --secondary-foreground:    oklch(85.0% 0.010 240);
+  --muted:                   oklch(18.0% 0.028 240);
+  --muted-foreground:        oklch(60.0% 0.018 240);
+  --accent:                  oklch(20.0% 0.040 142);
+  --accent-foreground:       oklch(72.3% 0.220 142);
+  --destructive:             oklch(55.0% 0.200 27);
   --destructive-foreground:  oklch(100% 0 0);
-  --border:                  oklch(91.8% 0.009 240);
-  --input:                   oklch(91.8% 0.009 240);
-  --ring:                    oklch(70.4% 0.165 162);
+  --border:                  oklch(22.0% 0.030 240);
+  --input:                   oklch(20.0% 0.028 240);
+  --ring:                    oklch(72.3% 0.220 142);
 
-  /* ── CHART COLOURS (--color-* for TW4 + bare for var() refs) ── */
-  --color-chart-1: oklch(60.5% 0.200 250);
-  --color-chart-2: oklch(55.0% 0.230 295);
-  --color-chart-3: oklch(70.4% 0.165 162);
-  --color-chart-4: oklch(74.8% 0.155 68);
-  --color-chart-5: oklch(53.5% 0.200 27);
-  --color-chart-6: oklch(70.0% 0.155 195);
-  --chart-1: oklch(60.5% 0.200 250);
-  --chart-2: oklch(55.0% 0.230 295);
-  --chart-3: oklch(70.4% 0.165 162);
-  --chart-4: oklch(74.8% 0.155 68);
-  --chart-5: oklch(53.5% 0.200 27);
+  /* ── CHART COLOURS (dark-mode friendly) ── */
+  --color-chart-1: oklch(72.3% 0.220 142);   /* green */
+  --color-chart-2: oklch(65.0% 0.200 250);   /* blue */
+  --color-chart-3: oklch(74.8% 0.155 68);    /* amber */
+  --color-chart-4: oklch(70.0% 0.180 295);   /* purple */
+  --color-chart-5: oklch(65.0% 0.200 27);    /* red */
+  --color-chart-6: oklch(70.0% 0.155 195);   /* teal */
+  --chart-1: oklch(72.3% 0.220 142);
+  --chart-2: oklch(65.0% 0.200 250);
+  --chart-3: oklch(74.8% 0.155 68);
+  --chart-4: oklch(70.0% 0.180 295);
+  --chart-5: oklch(65.0% 0.200 27);
   --chart-6: oklch(70.0% 0.155 195);
 
-  /* ── SIDEBAR TOKENS (--color-* for TW4 + bare for var() refs) ── */
-  --color-sidebar:                  oklch(25.1% 0.040 240);
-  --color-sidebar-foreground:       oklch(85.0% 0.012 240);
-  --color-sidebar-primary:          oklch(70.4% 0.165 162);
-  --color-sidebar-primary-foreground: oklch(100% 0 0);
-  --color-sidebar-accent:           oklch(30.5% 0.038 240);
-  --color-sidebar-accent-foreground: oklch(100% 0 0);
-  --color-sidebar-border:           oklch(30.5% 0.038 240);
-  --color-sidebar-ring:             oklch(70.4% 0.165 162);
-  --sidebar:                  oklch(25.1% 0.040 240);
-  --sidebar-foreground:       oklch(85.0% 0.012 240);
-  --sidebar-primary:          oklch(70.4% 0.165 162);
-  --sidebar-primary-foreground: oklch(100% 0 0);
-  --sidebar-accent:           oklch(30.5% 0.038 240);
-  --sidebar-accent-foreground: oklch(100% 0 0);
-  --sidebar-border:           oklch(30.5% 0.038 240);
-  --sidebar-ring:             oklch(70.4% 0.165 162);
+  /* ── SIDEBAR TOKENS ── */
+  --color-sidebar:                  oklch(9.5% 0.018 240);   /* #0a1120 */
+  --color-sidebar-foreground:       oklch(80.0% 0.010 240);
+  --color-sidebar-primary:          oklch(72.3% 0.220 142);
+  --color-sidebar-primary-foreground: oklch(10.0% 0.010 142);
+  --color-sidebar-accent:           oklch(16.0% 0.025 240);
+  --color-sidebar-accent-foreground: oklch(95.0% 0.006 240);
+  --color-sidebar-border:           oklch(18.0% 0.025 240);
+  --color-sidebar-ring:             oklch(72.3% 0.220 142);
+  --sidebar:                  oklch(9.5% 0.018 240);
+  --sidebar-foreground:       oklch(80.0% 0.010 240);
+  --sidebar-primary:          oklch(72.3% 0.220 142);
+  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
+  --sidebar-accent:           oklch(16.0% 0.025 240);
+  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
+  --sidebar-border:           oklch(18.0% 0.025 240);
+  --sidebar-ring:             oklch(72.3% 0.220 142);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RUNTIME CSS CUSTOM PROPERTIES — required for shadcn/ui components
+   These must be in :root so components can read them at runtime.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --background:              oklch(11.5% 0.020 240);
+  --foreground:              oklch(95.0% 0.006 240);
+  --card:                    oklch(14.5% 0.025 240);
+  --card-foreground:         oklch(95.0% 0.006 240);
+  --popover:                 oklch(16.0% 0.028 240);
+  --popover-foreground:      oklch(95.0% 0.006 240);
+  --primary:                 oklch(72.3% 0.220 142);
+  --primary-foreground:      oklch(10.0% 0.010 142);
+  --secondary:               oklch(18.0% 0.028 240);
+  --secondary-foreground:    oklch(85.0% 0.010 240);
+  --muted:                   oklch(18.0% 0.028 240);
+  --muted-foreground:        oklch(60.0% 0.018 240);
+  --accent:                  oklch(20.0% 0.040 142);
+  --accent-foreground:       oklch(72.3% 0.220 142);
+  --destructive:             oklch(55.0% 0.200 27);
+  --destructive-foreground:  oklch(100% 0 0);
+  --border:                  oklch(22.0% 0.030 240);
+  --input:                   oklch(20.0% 0.028 240);
+  --ring:                    oklch(72.3% 0.220 142);
+  --radius:                  0.5rem;
+  --chart-1:                 oklch(72.3% 0.220 142);
+  --chart-2:                 oklch(65.0% 0.200 250);
+  --chart-3:                 oklch(74.8% 0.155 68);
+  --chart-4:                 oklch(70.0% 0.180 295);
+  --chart-5:                 oklch(65.0% 0.200 27);
+  --sidebar:                 oklch(9.5% 0.018 240);
+  --sidebar-foreground:      oklch(80.0% 0.010 240);
+  --sidebar-primary:         oklch(72.3% 0.220 142);
+  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
+  --sidebar-accent:          oklch(16.0% 0.025 240);
+  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
+  --sidebar-border:          oklch(18.0% 0.025 240);
+  --sidebar-ring:            oklch(72.3% 0.220 142);
+}
+
+/* Dark mode — same values since this is a dark-only theme */
+.dark {
+  --background:              oklch(11.5% 0.020 240);
+  --foreground:              oklch(95.0% 0.006 240);
+  --card:                    oklch(14.5% 0.025 240);
+  --card-foreground:         oklch(95.0% 0.006 240);
+  --popover:                 oklch(16.0% 0.028 240);
+  --popover-foreground:      oklch(95.0% 0.006 240);
+  --primary:                 oklch(72.3% 0.220 142);
+  --primary-foreground:      oklch(10.0% 0.010 142);
+  --secondary:               oklch(18.0% 0.028 240);
+  --secondary-foreground:    oklch(85.0% 0.010 240);
+  --muted:                   oklch(18.0% 0.028 240);
+  --muted-foreground:        oklch(60.0% 0.018 240);
+  --accent:                  oklch(20.0% 0.040 142);
+  --accent-foreground:       oklch(72.3% 0.220 142);
+  --destructive:             oklch(55.0% 0.200 27);
+  --destructive-foreground:  oklch(100% 0 0);
+  --border:                  oklch(22.0% 0.030 240);
+  --input:                   oklch(20.0% 0.028 240);
+  --ring:                    oklch(72.3% 0.220 142);
+  --chart-1:                 oklch(72.3% 0.220 142);
+  --chart-2:                 oklch(65.0% 0.200 250);
+  --chart-3:                 oklch(74.8% 0.155 68);
+  --chart-4:                 oklch(70.0% 0.180 295);
+  --chart-5:                 oklch(65.0% 0.200 27);
+  --sidebar:                 oklch(9.5% 0.018 240);
+  --sidebar-foreground:      oklch(80.0% 0.010 240);
+  --sidebar-primary:         oklch(72.3% 0.220 142);
+  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
+  --sidebar-accent:          oklch(16.0% 0.025 240);
+  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
+  --sidebar-border:          oklch(18.0% 0.025 240);
+  --sidebar-ring:            oklch(72.3% 0.220 142);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -234,8 +316,8 @@
   }
 
   body {
-    background-color: oklch(98.2% 0.004 240);
-    color: oklch(8.2% 0.025 240);
+    background-color: oklch(11.5% 0.020 240);
+    color: oklch(95.0% 0.006 240);
     font-family: var(--font-sans);
     margin: 0;
     padding: 0;
@@ -245,17 +327,18 @@
     font-weight: 600;
     line-height: 1.3;
     margin: 0;
+    color: oklch(97.0% 0.004 240);
   }
 
   p { margin: 0; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: oklch(86.2% 0.012 240); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: oklch(71.5% 0.018 240); }
+  ::-webkit-scrollbar-track { background: oklch(14.5% 0.025 240); }
+  ::-webkit-scrollbar-thumb { background: oklch(28.0% 0.030 240); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: oklch(35.0% 0.030 240); }
 
   :focus-visible {
-    outline: 2px solid oklch(70.4% 0.165 162);
+    outline: 2px solid oklch(72.3% 0.220 142);
     outline-offset: 2px;
   }
 }
@@ -286,10 +369,10 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: oklch(75% 0.015 240);
+    color: oklch(65% 0.015 240);
     transition: background-color 150ms ease, color 150ms ease;
     cursor: pointer;
     text-decoration: none;
@@ -297,14 +380,14 @@
   }
 
   .nav-item:hover {
-    background-color: rgb(255 255 255 / 0.08);
-    color: oklch(100% 0 0);
+    background-color: oklch(16.0% 0.025 240);
+    color: oklch(92% 0.006 240);
     text-decoration: none;
   }
 
   .nav-item-active {
-    background-color: rgb(255 255 255 / 0.10);
-    color: oklch(100% 0 0);
+    background-color: oklch(20.0% 0.040 142);
+    color: oklch(72.3% 0.220 142);
   }
 
   .nav-item-active::before {
@@ -314,7 +397,7 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background-color: oklch(70.4% 0.165 162);
+    background-color: oklch(72.3% 0.220 142);
     border-radius: 0 2px 2px 0;
   }
 
@@ -323,46 +406,46 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: oklch(50% 0.022 240);
+    color: oklch(40% 0.018 240);
     padding: 0.25rem 0.75rem;
     margin-top: 0.5rem;
   }
 
-  /* ── READINESS BADGES ── */
+  /* ── READINESS BADGES (dark-mode) ── */
   .badge-safe {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem; border-radius: 9999px;
     font-size: 0.75rem; font-weight: 600;
-    background-color: oklch(97.2% 0.025 162);
-    color: oklch(38.2% 0.130 162);
-    border: 1px solid oklch(88.5% 0.075 162);
+    background-color: oklch(18% 0.040 142);
+    color: #4ade80;
+    border: 1px solid oklch(30% 0.100 142);
   }
 
   .badge-risk {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem; border-radius: 9999px;
     font-size: 0.75rem; font-weight: 600;
-    background-color: oklch(98.0% 0.030 68);
-    color: oklch(42.0% 0.120 68);
-    border: 1px solid oklch(88.0% 0.090 68);
+    background-color: oklch(18% 0.040 68);
+    color: #fbbf24;
+    border: 1px solid oklch(30% 0.090 68);
   }
 
   .badge-unsafe {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem; border-radius: 9999px;
     font-size: 0.75rem; font-weight: 600;
-    background-color: oklch(97.5% 0.020 27);
-    color: oklch(35.0% 0.160 27);
-    border: 1px solid oklch(87.0% 0.075 27);
+    background-color: oklch(18% 0.040 27);
+    color: #f87171;
+    border: 1px solid oklch(30% 0.090 27);
   }
 
   .badge-unknown {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem; border-radius: 9999px;
     font-size: 0.75rem; font-weight: 600;
-    background-color: oklch(96.1% 0.006 240);
-    color: oklch(40.8% 0.030 240);
-    border: 1px solid oklch(86.2% 0.012 240);
+    background-color: oklch(18% 0.010 240);
+    color: #9ca3af;
+    border: 1px solid oklch(28% 0.015 240);
   }
 
   /* ── SECTION HEADER ── */
@@ -371,7 +454,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: oklch(61.8% 0.022 240);
+    color: oklch(55% 0.018 240);
     margin-bottom: 0.75rem;
   }
 
@@ -379,7 +462,7 @@
   .capability-bar {
     height: 8px;
     border-radius: 9999px;
-    background-color: oklch(91.8% 0.009 240);
+    background-color: oklch(22.0% 0.030 240);
     overflow: hidden;
   }
 
@@ -389,8 +472,6 @@
     transition: width 300ms ease;
   }
 }
-
-
 
 /* AiQ utility typography classes */
 .aiq-h1 {
@@ -424,7 +505,7 @@ html {
 
 /* Better focus rings for accessibility */
 :focus-visible {
-  outline: 2px solid oklch(0.7 0.15 160);
+  outline: 2px solid oklch(72.3% 0.220 142);
   outline-offset: 2px;
 }
 
@@ -445,9 +526,8 @@ tr {
   transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
 }
 .aiq-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.40);
 }
-
 
 /* ─────────────────────────────────────────────────────────────────────────────
    AiQ LOADING ANIMATIONS
@@ -482,9 +562,9 @@ tr {
 .aiq-shimmer {
   background: linear-gradient(
     90deg,
-    oklch(96.1% 0.006 240) 0%,
-    oklch(98.2% 0.004 240) 40%,
-    oklch(96.1% 0.006 240) 80%
+    oklch(16% 0.025 240) 0%,
+    oklch(20% 0.030 240) 40%,
+    oklch(16% 0.025 240) 80%
   );
   background-size: 200% 100%;
   animation: aiq-shimmer 1.8s ease-in-out infinite;
@@ -493,9 +573,9 @@ tr {
 .aiq-shimmer-brand {
   background: linear-gradient(
     90deg,
-    oklch(96.1% 0.006 240) 0%,
-    oklch(97.2% 0.025 162 / 0.3) 40%,
-    oklch(96.1% 0.006 240) 80%
+    oklch(16% 0.025 240) 0%,
+    oklch(20% 0.040 142 / 0.3) 40%,
+    oklch(16% 0.025 240) 80%
   );
   background-size: 200% 100%;
   animation: aiq-shimmer 1.8s ease-in-out infinite;

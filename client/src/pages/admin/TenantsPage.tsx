@@ -71,7 +71,7 @@ export default function TenantsPage() {
                 <Button
                   className="w-full bg-primary hover:bg-[var(--primary)] text-white"
                   onClick={() => {
-                    toast.success("Request submitted — the platform team will provision your tenant shortly.");
+                    toast.success("Request submitted - the platform team will provision your tenant shortly.");
                     setCreateOpen(false);
                     setNewTenant({ name: "", slug: "", plan: "starter" });
                   }}
@@ -136,7 +136,7 @@ export default function TenantsPage() {
               {[
                 { label: "Tenant ID", value: currentTenant.id, mono: true },
                 { label: "Plan", value: "Enterprise" },
-                { label: "Created", value: currentTenant.createdAt ? new Date(currentTenant.createdAt).toLocaleDateString() : "—" },
+                { label: "Created", value: currentTenant.createdAt ? new Date(currentTenant.createdAt).toLocaleDateString() : "-" },
                 { label: "Status", value: currentTenant.status ?? "Active" },
               ].map(item => (
                 <div key={item.label} className="p-3 rounded-lg bg-muted/50 border border-border">
@@ -232,7 +232,7 @@ function TenantSettingsCard() {
                     <div key={key} className="p-3 rounded-lg bg-muted/50 border border-border">
                       <dt className="aiq-label text-muted-foreground text-xs">{label}</dt>
                       <dd className="mt-0.5 text-foreground font-medium text-sm">
-                        {String((settings as any)[key] ?? "—")}
+                        {String((settings as any)[key] ?? "-")}
                       </dd>
                     </div>
                   ))}

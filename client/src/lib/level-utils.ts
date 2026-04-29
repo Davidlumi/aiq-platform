@@ -1,8 +1,8 @@
 /**
- * AiQ Design System v2.2 — Level Scale Utilities
+ * AiQ Design System v2.2 - Level Scale Utilities
  *
  * 5-level scale: 1 Emerging → 2 Developing → 3 Capable → 4 Strong → 5 AI Ready
- * Score is 0–100 (raw assessment score).
+ * Score is 0-100 (raw assessment score).
  * Precise level = score / 10 (e.g. score 26 → Level 2.6).
  *
  * Colour palette (from wireframe shared.css):
@@ -29,7 +29,7 @@ export const LEVEL_LABELS: Record<number, string> = {
   5: "AI Ready",
 };
 
-/** Convert raw 0–100 score to integer level 1–5 */
+/** Convert raw 0-100 score to integer level 1-5 */
 export function getLevelFromScore(score: number): number {
   if (score >= 80) return 5;
   if (score >= 60) return 4;
@@ -38,7 +38,7 @@ export function getLevelFromScore(score: number): number {
   return 1;
 }
 
-/** Convert raw 0–100 score to precise level string e.g. "2.6" */
+/** Convert raw 0-100 score to precise level string e.g. "2.6" */
 export function getPreciseLevel(score: number): string {
   return (score / 10).toFixed(1);
 }
@@ -64,7 +64,7 @@ export function getLevelBarColour(preciseLevel: number): string {
 
 /**
  * Get text colour for a heatmap cell based on level.
- * Levels 1 use dark text; levels 2–5 use white.
+ * Levels 1 use dark text; levels 2-5 use white.
  */
 export function getLevelCellTextColour(level: number): string {
   return level <= 1 ? "#0F2547" : "#FFFFFF";

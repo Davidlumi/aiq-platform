@@ -18,7 +18,7 @@ import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } f
 import { ChevronDown, ChevronRight, Sparkles, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// ─── Hero Score ───────────────────────────────────────────────────────────────
+// --- Hero Score ---------------------------------------------------------------
 // Large bold number with colour-coded text (Peakon style: colour IS the number)
 
 export function HeroScore({
@@ -39,7 +39,7 @@ export function HeroScore({
   if (score === null) {
     return (
       <div className={cn("flex flex-col gap-1", className)}>
-        <span className="text-4xl font-bold text-neutral-300">—</span>
+        <span className="text-4xl font-bold text-neutral-300">-</span>
         {label && <span className="text-xs text-muted-foreground">{label}</span>}
       </div>
     );
@@ -76,8 +76,8 @@ export function HeroScore({
   );
 }
 
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-// Minimalist SVG line chart — no axes, just trend + current dot
+// --- Sparkline ----------------------------------------------------------------
+// Minimalist SVG line chart - no axes, just trend + current dot
 
 export function Sparkline({
   data,
@@ -95,7 +95,7 @@ export function Sparkline({
   className?: string;
 }) {
   if (!data || data.length < 2) {
-    return <div className={cn("flex items-center justify-center text-xs text-muted-foreground", className)} style={{ width, height }}>—</div>;
+    return <div className={cn("flex items-center justify-center text-xs text-muted-foreground", className)} style={{ width, height }}>-</div>;
   }
 
   const min = Math.min(...data);
@@ -132,8 +132,8 @@ export function Sparkline({
   );
 }
 
-// ─── Distribution Bar ─────────────────────────────────────────────────────────
-// Horizontal segmented bar — AI Ready / Developing / Not Yet Ready
+// --- Distribution Bar ---------------------------------------------------------
+// Horizontal segmented bar - AI Ready / Developing / Not Yet Ready
 
 interface DistributionSegment {
   label: string;
@@ -202,7 +202,7 @@ export function DistributionBar({
   );
 }
 
-// ─── AI Readiness Distribution Bar (pre-configured) ──────────────────────────
+// --- AI Readiness Distribution Bar (pre-configured) --------------------------
 
 export function ReadinessDistributionBar({
   aiReady,
@@ -229,7 +229,7 @@ export function ReadinessDistributionBar({
   return <DistributionBar segments={segments} total={total} className={className} />;
 }
 
-// ─── Pill Filter ─────────────────────────────────────────────────────────────
+// --- Pill Filter -------------------------------------------------------------
 // Peakon-style pill-shaped dropdown filter
 
 export function PillFilter({
@@ -263,7 +263,7 @@ export function PillFilter({
   );
 }
 
-// ─── AI Insight Card ──────────────────────────────────────────────────────────
+// --- AI Insight Card ----------------------------------------------------------
 // Peakon-style AI-generated summary with sparkle icon
 
 export function AIInsightCard({
@@ -305,7 +305,7 @@ export function AIInsightCard({
   );
 }
 
-// ─── Trend Arrow ─────────────────────────────────────────────────────────────
+// --- Trend Arrow -------------------------------------------------------------
 
 export function TrendArrow({ delta, suffix = "pts", className }: { delta: number | null; suffix?: string; className?: string }) {
   if (delta === null || delta === 0) {
@@ -324,7 +324,7 @@ export function TrendArrow({ delta, suffix = "pts", className }: { delta: number
   );
 }
 
-// ─── Benchmark Chip ───────────────────────────────────────────────────────────
+// --- Benchmark Chip -----------------------------------------------------------
 
 export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { score: number; benchmark: number; label?: string }) {
   const delta = parseFloat(formatPeakonScore(score)) - parseFloat(formatPeakonScore(benchmark));
@@ -340,7 +340,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   );
 }
 
-// ─── Expandable Segment Row (for heatmaps) ────────────────────────────────────
+// --- Expandable Segment Row (for heatmaps) ------------------------------------
 
 export function SegmentRow({
   label,
@@ -366,7 +366,7 @@ export function SegmentRow({
   return (
     <div
       className={cn(
-        "flex items-center border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors",
+        "flex items-center border-b border-border hover:bg-secondary/50 transition-colors",
         isChild && "bg-neutral-50/30",
       )}
       style={{ paddingLeft: depth * 16 + 16, paddingRight: 16, paddingTop: 10, paddingBottom: 10 }}
@@ -408,10 +408,10 @@ function ScoreCell({ score }: { score: number | null }) {
   if (score === null) {
     return (
       <div
-        className="w-14 h-9 rounded flex items-center justify-center text-xs text-neutral-300 border border-dashed border-neutral-200"
+        className="w-14 h-9 rounded flex items-center justify-center text-xs text-neutral-300 border border-dashed border-border"
         style={{ backgroundColor: "#FAFAFA" }}
       >
-        —
+        -
       </div>
     );
   }
@@ -434,7 +434,7 @@ function ScoreCell({ score }: { score: number | null }) {
   );
 }
 
-// ─── Score Trend Card ─────────────────────────────────────────────────────────
+// --- Score Trend Card ---------------------------------------------------------
 // Domain trajectory card with sparkline (like Peakon driver cards)
 
 export function ScoreTrendCard({
@@ -457,7 +457,7 @@ export function ScoreTrendCard({
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border border-neutral-200 p-4 flex flex-col gap-2",
+        "bg-card rounded-xl border border-border p-4 flex flex-col gap-2",
         onClick && "cursor-pointer hover:border-neutral-300 hover:shadow-sm transition-all",
         className,
       )}
@@ -480,7 +480,7 @@ export function ScoreTrendCard({
   );
 }
 
-// ─── Stat Tile ────────────────────────────────────────────────────────────────
+// --- Stat Tile ----------------------------------------------------------------
 // Clean stat display for overview metrics
 
 export function StatTile({

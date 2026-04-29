@@ -1,13 +1,13 @@
 /**
- * AiQ Design System v2.2 — Score & Rating Colour Utilities
+ * AiQ Design System v2.2 - Score & Rating Colour Utilities
  *
  * Capability score scale: single-hue sequential navy (neutral → deep navy)
  * Rating colours: categorical, distinct hues (green / blue / amber / red / grey)
  *
- * Scores are 0–100 internally; display as 0.0–10.0 where needed.
+ * Scores are 0-100 internally; display as 0.0-10.0 where needed.
  */
 
-// ── Sequential capability score scale (single-hue navy) ──────────────────────
+// -- Sequential capability score scale (single-hue navy) ----------------------
 // Mirrors Design System v2.2 §2.3
 
 const SCORE_STOPS: Array<{ min: number; bg: string; text: string }> = [
@@ -55,8 +55,8 @@ export function scoreToReadinessLabel(score: number): string {
   return "Foundation Gap";
 }
 
-// ── Categorical rating colours ────────────────────────────────────────────────
-// Design System v2.2 §2.2 — distinct hues, never gradations
+// -- Categorical rating colours ------------------------------------------------
+// Design System v2.2 §2.2 - distinct hues, never gradations
 
 export const RATING_COLORS = {
   ai_ready:             { bg: "#047857", text: "#FFFFFF", tintBg: "#f0fdf4", tintText: "#047857", tintBorder: "#bbf7d0" },
@@ -66,8 +66,8 @@ export const RATING_COLORS = {
   insufficient_evidence:{ bg: "#6B7280", text: "#FFFFFF", tintBg: "#F9FAFB", tintText: "#6B7280", tintBorder: "#D1D5DB" },
 } as const;
 
-// ── Domain identification colours ─────────────────────────────────────────────
-// Design System v2.2 §6.3 — fixed per domain, NOT used for ratings
+// -- Domain identification colours ---------------------------------------------
+// Design System v2.2 §6.3 - fixed per domain, NOT used for ratings
 
 export const DOMAIN_ID_COLORS = {
   ai_interaction:        "#0EA5E9", // sky blue
