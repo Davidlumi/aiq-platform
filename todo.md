@@ -1791,14 +1791,14 @@
 
 - [x] AP-01: Session creation — add "Estimated time" (8-12 min) and "Difficulty level" badges to the session start dialog
 - [x] AP-02: Session creation — show domain coverage preview (which domains will be assessed) before starting
-- [ ] AP-03: Session page — add live domain progress tracker in the sidebar showing % answered per domain
+- [x] AP-03: [DEFERRED — removed from new clean design] Session page — add live domain progress tracker in the sidebar showing % answered per domain
 - [x] AP-04: Session page — add "Flag for review" button per question for ambiguous/problematic items
 - [x] AP-05: Session page — add keyboard shortcut hints (1-4 to select, Enter to submit) in the question card footer
-- [ ] AP-06: Results page — add "Score vs previous session" delta card in the summary tab (e.g., "+1.2 points since last assessment")
-- [ ] AP-07: Results page — add "Time to target" projection card showing estimated weeks to reach org ambition target
-- [ ] AP-08: Results page — add "Recommended focus area" callout highlighting the lowest-scoring domain with development path
-- [ ] AP-09: Results page — add "Assessment confidence" transparency showing # of questions answered vs target and confidence band
-- [ ] AP-10: Results page — add "Next steps" action panel with links to learning plan, manager 1:1 discussion prompt, and peer comparison
+- [x] AP-06: [SUPERSEDED by new clean results page] Results page — add "Score vs previous session" delta card in the summary tab (e.g., "+1.2 points since last assessment")
+- [x] AP-07: [SUPERSEDED by new clean results page] Results page — add "Time to target" projection card showing estimated weeks to reach org ambition target
+- [x] AP-08: [SUPERSEDED — domain cards + slide-out panel cover this] Results page — add "Recommended focus area" callout highlighting the lowest-scoring domain with development path
+- [x] AP-09: [SUPERSEDED by new clean results page] Results page — add "Assessment confidence" transparency showing # of questions answered vs target and confidence band
+- [x] AP-10: [SUPERSEDED — domain slide-out has development link] Results page — add "Next steps" action panel with links to learning plan, manager 1:1 discussion prompt, and peer comparison
 
 ## Wireframe Redesign (Apr 2026)
 
@@ -1874,12 +1874,26 @@
 - [x] ASSESS-03: AssessmentResultsPage shows: overall score chip + readiness state, full-width spider chart
 - [x] ASSESS-04: AssessmentResultsPage shows: domain cards grid below spider chart (one card per domain)
 - [x] ASSESS-05: Domain card shows: domain name, icon, score, level badge, short insight
-- [ ] ASSESS-06: Clicking domain card opens a slide-out sheet with domain detail + development link
-- [ ] ASSESS-07: Domain sheet shows: score breakdown, what this means, key strengths/gaps, link to learning plan filtered to domain
-- [ ] ASSESS-08: If no completed assessment, show a clean "Start your assessment" CTA page
+- [x] ASSESS-06: Clicking domain card opens a slide-out sheet with domain detail + development link
+- [x] ASSESS-07: Domain sheet shows: score breakdown, what this means, key strengths/gaps, link to learning plan filtered to domain
+- [x] ASSESS-08: If no completed assessment, show a clean "Start your assessment" CTA page
 
 ## Assessment Results Polish (Apr 29 2026)
 
 - [x] POLISH-01: Score ring — use bright primary green stroke, not muted scoreToColor
 - [x] POLISH-02: Spider chart — white/light grid lines and axis labels for definition
 - [x] POLISH-03: Add AI-generated 2-sentence summary below the header
+
+## Domain Deep Dive Panel (Apr 29 2026)
+
+- [ ] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM with domain score, quadrant, and session context
+- [ ] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, 2-3 key strengths, 2-3 development areas, 1 specific next step
+- [ ] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
+- [ ] DEEPDIVE-04: Ensure deep dive is cached (staleTime: Infinity) to avoid repeated LLM calls
+
+## Domain Deep Dive Panel (Apr 29 2026)
+
+- [ ] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM
+- [ ] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, strengths, gaps, next step
+- [ ] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
+- [ ] DEEPDIVE-04: Cache deep dive (staleTime: Infinity)

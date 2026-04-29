@@ -2714,4 +2714,68 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         return { summary: null };
       }
     }),
+
+  // ── AI-generated domain deep dive ───────────────────────────────────────────
+  generateDomainDeepDive: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      domainKey: z.string(),
+      domainName: z.string(),
+      score: z.number(),
+      quadrant: z.string().optional(),
+      quadrantLabel: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { deepDive: null };
+
+      // Verify session belongs to user
+      const sessionRows = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)))
+        .limit(1);
+      if (!sessionRows[0]) return { deepDive: null };
+
+      // Get user's name for context
+      const userRows = await db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, ctx.user.id))
+        .limit(1);
+      const userName = userRows[0] ? `${userRows[0].firstName} ${userRows[0].lastName}`.trim() : "the user";
+
+      const levelLabel = input.score >= 80 ? "Expert" : input.score >= 60 ? "Proficient" : input.score >= 40 ? "Developing" : "Novice";
+      const isStrength = input.score >= 70;
+      const isBlindSpot = input.quadrant === "unconscious_incompetence";
+
+      const domainDescriptions: Record<string, string> = {
+        ai_change_leadership: "leading AI adoption, managing change resistance, and building organisational AI readiness",
+        ai_ethics_employee_trust: "responsible AI use, bias awareness, employee data privacy, and maintaining trust in AI-assisted decisions",
+        ai_interaction: "effective prompting, AI tool selection, and getting high-quality outputs from AI systems",
+        ai_output_evaluation: "critically assessing AI-generated content, spotting errors, hallucinations, and knowing when to override AI recommendations",
+        ai_workflow_design: "integrating AI into HR workflows, process redesign, and automation of routine tasks",
+        workforce_ai_readiness: "assessing team AI capability, identifying skill gaps, and designing upskilling programmes",
+      };
+      const domainDesc = domainDescriptions[input.domainKey] ?? input.domainName;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert HR AI capability coach providing personalised, actionable assessment feedback. Be specific, encouraging, and practical. Use plain prose — no markdown headers, no bullet points, no asterisks. Write in flowing paragraphs.",
+            },
+            {
+              role: "user",
+              content: `Write a personalised deep dive for ${userName}'s performance in the "${input.domainName}" domain of their AI capability assessment.\n\nDomain focus: ${domainDesc}\nScore: ${Math.round(input.score)}/100 (${levelLabel})${input.quadrantLabel ? `\nProfile: ${input.quadrantLabel}` : ""}${isBlindSpot ? " — this is a blind spot area" : ""}\n\nWrite 4 short paragraphs (2-3 sentences each):\n1. What this domain means and why it matters for HR professionals\n2. What their score of ${Math.round(input.score)}/100 tells us about their current capability — be specific and honest\n3. Their likely strengths in this area based on their score${isStrength ? " (they are strong here)" : " (they have gaps here)"}\n4. One concrete, actionable next step they can take this week to develop in this domain\n\nKeep total response under 200 words. No bullet points. No headers. Plain paragraphs only.`,
+            },
+          ],
+        });
+        const deepDive = (response as any)?.choices?.[0]?.message?.content?.trim() ?? null;
+        return { deepDive };
+      } catch {
+        return { deepDive: null };
+      }
+    }),
 });

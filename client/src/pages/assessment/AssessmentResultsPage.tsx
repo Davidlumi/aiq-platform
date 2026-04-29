@@ -208,25 +208,30 @@ function DomainCard({
 // ── Domain Detail Sheet ────────────────────────────────────────────────────────
 
 function DomainSheet({
-  open, onClose, domainKey, displayName, score, colour,
-  quadrant, quadrantLabel, quadrantDescription,
+  open, onClose, sessionId, domainKey, displayName, score, colour,
+  quadrant, quadrantLabel,
 }: {
-  open: boolean; onClose: () => void; domainKey: string;
+  open: boolean; onClose: () => void; sessionId: string; domainKey: string;
   displayName: string; score: number; colour: string;
   quadrant?: string; quadrantLabel?: string; quadrantDescription?: string;
 }) {
   const [, navigate] = useLocation();
   const Icon = DOMAIN_ICONS[domainKey] ?? Target;
   const level = scoreToLevel(score);
-  const insight = domainInsight(domainKey, score);
   const isBlindSpot = quadrant === "unconscious_incompetence";
   const isStrength = score >= 70;
   const circumference = 2 * Math.PI * 40;
 
+  // AI-generated deep dive — cached so it only runs once per domain
+  const { data: deepDiveData, isLoading: deepDiveLoading } = trpc.assessment.generateDomainDeepDive.useQuery(
+    { sessionId, domainKey, domainName: displayName, score, quadrant, quadrantLabel },
+    { enabled: open && !!sessionId, staleTime: Infinity, retry: 1 }
+  );
+
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-card border-border">
-        <SheetHeader className="mb-6">
+        <SheetHeader className="mb-5">
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -241,71 +246,78 @@ function DomainSheet({
           </div>
         </SheetHeader>
 
-        {/* Score ring */}
-        <div className="flex items-center justify-center mb-6">
-          <div className="relative w-28 h-28">
+        {/* Score ring + level */}
+        <div className="flex items-center gap-5 mb-6 p-4 rounded-xl border border-border bg-background/40">
+          <div className="relative w-20 h-20 shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="10" />
+              <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="12" />
               <circle
                 cx="50" cy="50" r="40" fill="none"
                 stroke={colour}
-                strokeWidth="10"
+                strokeWidth="12"
                 strokeLinecap="round"
                 strokeDasharray={`${(score / 100) * circumference} ${circumference}`}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold text-foreground tabular-nums">{Math.round(score)}</span>
-              <span className="text-xs text-muted-foreground">/100</span>
+              <span className="text-xl font-bold text-foreground tabular-nums">{Math.round(score)}</span>
+              <span className="text-[10px] text-muted-foreground">/100</span>
             </div>
           </div>
-        </div>
-
-        {/* Insight */}
-        <div className="rounded-xl border border-border bg-background/40 p-4 mb-4">
-          <p className="text-sm text-foreground leading-relaxed">{insight}</p>
-        </div>
-
-        {/* Quadrant badge */}
-        {quadrant && quadrantLabel && (
-          <div className={cn(
-            "rounded-xl border p-4 mb-4",
-            isBlindSpot ? "border-amber-400/25 bg-amber-400/8" : "border-border bg-background/40"
-          )}>
-            <div className="flex items-center gap-2 mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
               {isBlindSpot ? (
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               ) : isStrength ? (
-                <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+                <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <TrendingDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               )}
-              <span className={cn(
-                "text-xs font-semibold",
-                isBlindSpot ? "text-amber-400" : isStrength ? "text-primary" : "text-foreground"
-              )}>
-                {quadrantLabel}
-              </span>
+              {quadrantLabel && (
+                <span className={cn(
+                  "text-xs font-semibold",
+                  isBlindSpot ? "text-amber-400" : isStrength ? "text-primary" : "text-foreground"
+                )}>{quadrantLabel}</span>
+              )}
             </div>
-            {quadrantDescription && (
-              <p className="text-xs text-muted-foreground leading-relaxed">{quadrantDescription}</p>
-            )}
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${Math.round(score)}%`, backgroundColor: colour }} />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[10px] text-muted-foreground">Novice</span>
+              <span className="text-[10px] text-muted-foreground">Expert</span>
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Score bar */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">Capability score</span>
-            <span className="text-xs font-semibold text-foreground">{Math.round(score)}/100</span>
+        {/* AI Deep Dive */}
+        <div className="rounded-xl border border-border bg-background/40 p-4 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wide">AI Analysis</span>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${Math.round(score)}%`, backgroundColor: colour }} />
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-muted-foreground">Novice</span>
-            <span className="text-[10px] text-muted-foreground">Expert</span>
-          </div>
+          {deepDiveLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-5/6" />
+              <Skeleton className="h-3.5 w-full mt-3" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-4/5" />
+              <Skeleton className="h-3.5 w-full mt-3" />
+              <Skeleton className="h-3.5 w-3/4" />
+            </div>
+          ) : deepDiveData?.deepDive ? (
+            <div className="text-sm text-foreground leading-relaxed space-y-3">
+              {deepDiveData.deepDive.split(/\n\n+/).map((para: string, i: number) => (
+                <p key={i}>{para.trim()}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {domainInsight(domainKey, score)}
+            </p>
+          )}
         </div>
 
         {/* Dev link */}
@@ -526,6 +538,7 @@ export default function AssessmentResultsPage() {
         <DomainSheet
           open={!!selectedDomain}
           onClose={() => setSelectedDomain(null)}
+          sessionId={sessionId!}
           domainKey={selectedDomainData.key}
           displayName={selectedDomainData.displayName}
           score={selectedDomainData.score}
