@@ -210,7 +210,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const SidebarInner = () => (
-    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+    <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">
       {/* Logo header */}
       <div
         className={cn(
@@ -382,7 +382,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden aiq-main-bg">
       {/* Desktop sidebar - 240px expanded, 56px collapsed */}
       <aside
         className={cn(
@@ -417,9 +417,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden aiq-dot-grid">
         {/* Top bar */}
-        <header className="flex items-center h-14 px-4 lg:px-6 gap-3 shrink-0 bg-card border-b border-border shadow-sm">
+        <header className="flex items-center h-14 px-4 lg:px-6 gap-3 shrink-0 aiq-header-glass sticky top-0 z-20">
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(true)}
@@ -496,8 +496,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          <div key={location} className="aiq-fade-in" style={{ animationDuration: '0.2s' }}>
+        <main className="flex-1 overflow-y-auto relative">
+          {/* Ambient glow blobs for depth */}
+          <div
+            className="aiq-glow-blob"
+            style={{
+              width: '700px',
+              height: '500px',
+              top: '-120px',
+              right: '-150px',
+              background: 'oklch(22% 0.045 142 / 0.10)',
+            }}
+          />
+          <div
+            className="aiq-glow-blob"
+            style={{
+              width: '600px',
+              height: '500px',
+              bottom: '-100px',
+              left: '-100px',
+              background: 'oklch(13% 0.035 220 / 0.16)',
+            }}
+          />
+          <div key={location} className="aiq-fade-in relative z-10" style={{ animationDuration: '0.2s' }}>
             {children}
           </div>
         </main>

@@ -473,6 +473,71 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   AiQ BACKGROUND DEPTH SYSTEM
+   Inspired by Origin Benefits — multi-layer depth, glow blobs, dot grid
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Dot-grid texture overlay — very subtle repeating dot pattern */
+.aiq-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    oklch(40% 0.020 240 / 0.18) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+/* Main content area — multi-layer radial gradient for depth */
+.aiq-main-bg {
+  background:
+    /* Centre-top warm glow — very faint green tint */
+    radial-gradient(ellipse 80% 40% at 60% 0%, oklch(20% 0.040 142 / 0.18) 0%, transparent 70%),
+    /* Bottom-left cool depth */
+    radial-gradient(ellipse 60% 50% at 0% 100%, oklch(12% 0.030 220 / 0.40) 0%, transparent 60%),
+    /* Top-right ambient glow */
+    radial-gradient(ellipse 50% 40% at 100% 0%, oklch(14% 0.025 250 / 0.30) 0%, transparent 60%),
+    /* Base background */
+    oklch(11.5% 0.020 240);
+}
+
+/* Sidebar — deeper dark with a subtle right-edge glow separator */
+.aiq-sidebar-bg {
+  background:
+    /* Subtle top glow */
+    radial-gradient(ellipse 100% 30% at 50% 0%, oklch(16% 0.025 240 / 0.60) 0%, transparent 70%),
+    oklch(9.0% 0.018 240);
+  box-shadow: inset -1px 0 0 oklch(22% 0.030 240), 1px 0 12px oklch(0% 0 0 / 0.25);
+}
+
+/* Header bar — frosted glass effect */
+.aiq-header-glass {
+  background: oklch(13% 0.022 240 / 0.92);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border-bottom: 1px solid oklch(22% 0.030 240 / 0.80);
+  box-shadow: 0 1px 0 oklch(72.3% 0.220 142 / 0.04), 0 2px 8px oklch(0% 0 0 / 0.20);
+}
+
+/* Card — elevated surface with soft inner-glow border */
+.aiq-card-elevated {
+  background: oklch(14.5% 0.025 240);
+  border: 1px solid oklch(22% 0.030 240);
+  box-shadow:
+    0 0 0 1px oklch(72.3% 0.220 142 / 0.04),
+    0 2px 8px oklch(0% 0 0 / 0.30),
+    inset 0 1px 0 oklch(100% 0 0 / 0.03);
+}
+
+/* Ambient glow blob — decorative background element */
+.aiq-glow-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* AiQ utility typography classes */
 .aiq-h1 {
   font-family: 'Sora', sans-serif;

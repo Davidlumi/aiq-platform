@@ -1842,3 +1842,12 @@
 - [x] ANIM-03: Wire inline chart skeletons for sub-section queries (domain detail, benchmark, explanation)
 - [x] ANIM-04: Add CSS keyframe for animated bar-grow and line-draw effects on chart mount
 - [x] ANIM-05: Verify all 6 dashboard pages show skeleton → chart transition cleanly
+
+## Background Depth & Visual Definition (Apr 29 2026)
+
+- [x] BG-01: Main content area — multi-layer radial gradient background (centre lighter navy, edges deeper)
+- [x] BG-02: Ambient glow blobs — large soft teal/green radial glows at top-right and bottom-left
+- [x] BG-03: Subtle dot-grid texture overlay on the main background
+- [x] BG-04: Sidebar — distinctly darker than main content area with a right-edge separator glow
+- [x] BG-05: Cards — slightly elevated surface with soft inner-glow border
+- [x] BG-06: Top header bar — frosted glass effect with backdrop-blur
