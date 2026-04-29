@@ -1851,3 +1851,11 @@
 - [x] BG-04: Sidebar — distinctly darker than main content area with a right-edge separator glow
 - [x] BG-05: Cards — slightly elevated surface with soft inner-glow border
 - [x] BG-06: Top header bar — frosted glass effect with backdrop-blur
+
+## Theme Rework — Navy/Indigo + Clear Cards (Apr 29 2026)
+
+- [x] THEME2-01: Rewrite CSS variables — background to deep navy/indigo (#0f1535 range), card surfaces to clearly lighter blue-tinted surfaces (#1a2151 range)
+- [x] THEME2-02: Update sidebar to slightly darker than background with clear separation
+- [x] THEME2-03: Update AppShell background depth classes to use new palette
+- [x] THEME2-04: Ensure all hardcoded dark colours in dashboard pages are updated to new card surface tokens
+- [x] THEME2-05: Update chart/viz colours to work on new lighter card surfaces
