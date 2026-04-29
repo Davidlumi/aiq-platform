@@ -9,7 +9,7 @@
  * - Consistent visual language throughout
  */
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
   BookOpen, Zap, FileText, HelpCircle, Layers, Video, MessageSquare,
   Users, Clock, CheckCircle2, Lock, Play, RotateCcw,
   Target, Brain, Lightbulb, BarChart3, Sparkles, TrendingUp, Award,
-  Flame, ArrowRight, Star,
+  Flame, ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scoreToColor } from "@/lib/peakon-colors";
@@ -434,14 +434,7 @@ function ActivityTab({ items }: { items: any[] }) {
 
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  // HP-01: Read ?tab= query param so deep-links from the results page work
-  const initialTab = (() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("tab");
-    if (t === "insights" || t === "activity") return t;
-    return "path";
-  })();
-  const [activeTab, setActiveTab] = useState<"path" | "insights" | "activity">(initialTab);
+  // tabs removed — single-page layout
 
   const { data: plan, isLoading } = trpc.adaptiveLearning.getAdaptivePlan.useQuery({}, {
     staleTime: 1000 * 60 * 2,
@@ -477,17 +470,25 @@ export default function LearningPlanPage() {
 
   if (isLoading) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
-        <Skeleton className="h-36 rounded-2xl" />
-        <Skeleton className="h-10 rounded-xl" />
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+      <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <div className="space-y-4">
+            <Skeleton className="h-48 rounded-2xl" />
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-32 rounded-2xl" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-10 rounded-xl" />
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!plan) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto">
+      <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto">
         <div className="text-center py-16 space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
             <BookOpen className="h-8 w-8 text-primary" />
@@ -509,120 +510,143 @@ export default function LearningPlanPage() {
     );
   }
 
-  return (
-    <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
+  // Group items by capability domain for the module list
+  const capOrder: string[] = [];
+  const grouped = new Map<string, any[]>();
+  items.forEach((item: any) => {
+    const cap = item.module?.capability ?? "other";
+    if (!grouped.has(cap)) { grouped.set(cap, []); capOrder.push(cap); }
+    grouped.get(cap)!.push(item);
+  });
 
-      {/* BA-07: Org ambition context banner */}
+  return (
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto space-y-6">
+
+      {/* ── Page header ── */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Your AI Capability Plan</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            {completedCount} of {totalItems} modules complete
+            {remainingMins > 0 && <> · {remainingHours > 0 ? `${remainingHours}h ` : ""}{remainingMinRem}m remaining</>}
+          </p>
+        </div>
+        <DownloadPdfButton type="learning_plan" label="Download Plan PDF" variant="outline" size="sm" />
+      </header>
+
+      {/* ── Org ambition banner ── */}
       {ambitionGap && ambitionGap.configured && (
-        <div className="rounded-xl border border-[#228833]/20 bg-[#228833]/3 px-4 py-3 flex items-start gap-3">
+        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-[#228833]/20 bg-[#228833]/3">
           <div className="w-7 h-7 rounded-lg bg-[#228833]/10 flex items-center justify-center shrink-0 mt-0.5">
-            <span className="text-[#228833] text-sm font-bold">↑</span>
+            <TrendingUp className="h-3.5 w-3.5 text-[#228833]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-[#228833]">Aligned to your organisation's AI ambition</p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Your learning plan is designed to close the gap between the function's current readiness
-              (<strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}/10</strong>) and
-              the target (<strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}/10</strong>).
+              Closing the gap from <strong className="text-foreground">{ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"}/10</strong> to target <strong className="text-foreground">{ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}/10</strong>.
               {ambitionGap.ambitionTargetLabel && <> Goal: <em>"{ambitionGap.ambitionTargetLabel}"</em>.</>}
             </p>
           </div>
         </div>
       )}
-      {/* ── Plan Header ── */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-        <div className="flex items-start gap-4">
-          {/* Progress ring */}
+
+      {/* ── 4-column stat grid ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
           <div className="relative flex-shrink-0">
-            <ProgressRing pct={pct} size={72} stroke={5} color="#4477AA" />
+            <ProgressRing pct={pct} size={56} stroke={4} color="#4477AA" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-bold">{pct}%</span>
+              <span className="text-xs font-bold">{pct}%</span>
             </div>
           </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest">Progress</p>
+            <p className="text-sm font-semibold text-foreground mt-0.5">{completedCount} / {totalItems} done</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-bold text-[#7A9E8E]">{completedCount}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Completed</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-bold text-[#C8B07A]">{inProgressCount}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">In Progress</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-bold text-muted-foreground">{totalItems - completedCount - inProgressCount}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Remaining</p>
+        </div>
+      </div>
 
-          {/* Plan info */}
+      {/* ── Overall progress bar ── */}
+      <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+        <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
+      </div>
+
+      {/* ── Continue learning CTA ── */}
+      {nextItem && (
+        <button
+          className="w-full flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15 hover:bg-primary/10 transition-colors text-left"
+          onClick={() => setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`)}
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Play className="h-4 w-4 text-primary" />
+          </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold leading-tight mb-1">Your AI Capability Plan</h1>
-            <p className="text-xs text-muted-foreground mb-3">
-              {completedCount} of {totalItems} modules complete
-              {remainingMins > 0 && (
-                <> · {remainingHours > 0 ? `${remainingHours}h ` : ""}{remainingMinRem}m remaining</>
-              )}
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-base font-bold text-[#7A9E8E]">{completedCount}</p>
-                <p className="text-xs text-muted-foreground">Done</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div className="text-center">
-                <p className="text-base font-bold text-[#C8B07A]">{inProgressCount}</p>
-                <p className="text-xs text-muted-foreground">In Progress</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div className="text-center">
-                <p className="text-base font-bold text-muted-foreground">{totalItems - completedCount - inProgressCount}</p>
-                <p className="text-xs text-muted-foreground">Remaining</p>
-              </div>
-            </div>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-0.5">Continue Learning</p>
+            <p className="text-sm font-semibold truncate">{nextItem.module?.title ?? "Next Module"}</p>
+            {nextItem.module?.capability && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {CAPABILITY_META[nextItem.module.capability]?.label ?? nextItem.module.capability}
+              </p>
+            )}
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" />
+        </button>
+      )}
+
+      {/* ── Two-column layout: domain progress sidebar + module list ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
+
+        {/* Left: domain progress summary */}
+        <div className="rounded-xl border border-border bg-card p-4 space-y-4 lg:sticky lg:top-6">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Domain progress</p>
+          <div className="space-y-3">
+            {capOrder.map(capKey => {
+              const capItems = grouped.get(capKey)!;
+              const meta = CAPABILITY_META[capKey] ?? { label: capKey, color: "#888", icon: BookOpen };
+              const CapIcon = meta.icon;
+              const capCompleted = capItems.filter((i: any) => i.status === "completed").length;
+              const capTotal = capItems.length;
+              const capPct = capTotal > 0 ? Math.round((capCompleted / capTotal) * 100) : 0;
+              return (
+                <div key={capKey}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: `${meta.color}20` }}>
+                        <CapIcon className="h-3 w-3" style={{ color: meta.color }} />
+                      </div>
+                      <span className="text-xs font-medium text-foreground">{meta.label}</span>
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: meta.color }}>{capPct}%</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${capPct}%`, backgroundColor: meta.color }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{capCompleted}/{capTotal} modules</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Gap insights inline */}
+          <div className="pt-3 border-t border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Gap insights</p>
+            <InsightsTab />
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
-          <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
-        </div>
-
-        {/* Download PDF */}
-        <DownloadPdfButton
-          type="learning_plan"
-          label="Download Learning Plan PDF"
-          variant="outline"
-          size="sm"
-          className="w-full"
-        />
-        {/* Next up CTA */}
-        {nextItem && (
-          <button
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15 hover:bg-primary/10 transition-colors text-left"
-            onClick={() => setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`)}
-          >
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Play className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-0.5">Continue Learning</p>
-              <p className="text-sm font-semibold truncate">{nextItem.module?.title ?? "Next Module"}</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-primary flex-shrink-0" />
-          </button>
-        )}
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="flex gap-1 p-1 rounded-xl bg-muted/20 border border-border/50">
-        {([
-          { key: "path",     label: "My Path",  icon: BookOpen },
-          { key: "insights", label: "Insights", icon: TrendingUp },
-          { key: "activity", label: "Activity", icon: Award },
-        ] as const).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <tab.icon className="h-3.5 w-3.5" />{tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── My Path Tab ── */}
-      {activeTab === "path" && (
+        {/* Right: full module list grouped by domain */}
         <div className="space-y-6">
           {items.length === 0 ? (
             <div className="text-center py-12">
@@ -630,64 +654,45 @@ export default function LearningPlanPage() {
               <p className="text-sm text-muted-foreground">Your learning path is being prepared.</p>
             </div>
           ) : (
-            (() => {
-              // Group items by capability domain, preserving order of first appearance
-              const capOrder: string[] = [];
-              const grouped = new Map<string, any[]>();
-              items.forEach((item: any) => {
-                const cap = item.module?.capability ?? "other";
-                if (!grouped.has(cap)) { grouped.set(cap, []); capOrder.push(cap); }
-                grouped.get(cap)!.push(item);
-              });
-              return capOrder.map((capKey) => {
-                const capItems = grouped.get(capKey)!;
-                const meta = CAPABILITY_META[capKey] ?? { label: capKey, color: "#888", icon: BookOpen };
-                const CapIcon = meta.icon;
-                const capCompleted = capItems.filter((i: any) => i.status === "completed").length;
-                const capTotal = capItems.length;
-                const capPct = capTotal > 0 ? Math.round((capCompleted / capTotal) * 100) : 0;
-                return (
-                  <div key={capKey}>
-                    {/* Capability group header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: `${meta.color}20` }}>
-                          <CapIcon className="h-3.5 w-3.5" style={{ color: meta.color }} />
-                        </div>
-                        <span className="text-sm font-semibold text-foreground">{meta.label}</span>
-                        <span className="text-xs text-muted-foreground">{capCompleted}/{capTotal} modules</span>
+            capOrder.map((capKey) => {
+              const capItems = grouped.get(capKey)!;
+              const meta = CAPABILITY_META[capKey] ?? { label: capKey, color: "#888", icon: BookOpen };
+              const CapIcon = meta.icon;
+              const capCompleted = capItems.filter((i: any) => i.status === "completed").length;
+              const capTotal = capItems.length;
+              const capPct = capTotal > 0 ? Math.round((capCompleted / capTotal) * 100) : 0;
+              return (
+                <div key={capKey}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: `${meta.color}20` }}>
+                        <CapIcon className="h-3.5 w-3.5" style={{ color: meta.color }} />
                       </div>
-                      <span className="text-xs font-semibold" style={{ color: meta.color }}>{capPct}%</span>
+                      <span className="text-sm font-semibold text-foreground">{meta.label}</span>
+                      <span className="text-xs text-muted-foreground">{capCompleted}/{capTotal} modules</span>
                     </div>
-                    {/* Mini progress bar */}
-                    <div className="h-1 rounded-full bg-muted overflow-hidden mb-3">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${capPct}%`, backgroundColor: meta.color }} />
-                    </div>
-                    {/* Module cards */}
-                    <div className="space-y-2">
-                      {capItems.map((item: any, i: number) => (
-                        <ModuleCard
-                          key={item.id ?? i}
-                          item={item}
-                          index={items.indexOf(item)}
-                          isNext={!!(nextItem && item.id === nextItem.id)}
-                          onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
-                        />
-                      ))}
-                    </div>
+                    <span className="text-xs font-semibold" style={{ color: meta.color }}>{capPct}%</span>
                   </div>
-                );
-              });
-            })()
+                  <div className="h-1 rounded-full bg-muted overflow-hidden mb-3">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${capPct}%`, backgroundColor: meta.color }} />
+                  </div>
+                  <div className="space-y-2">
+                    {capItems.map((item: any, i: number) => (
+                      <ModuleCard
+                        key={item.id ?? i}
+                        item={item}
+                        index={items.indexOf(item)}
+                        isNext={!!(nextItem && item.id === nextItem.id)}
+                        onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      )}
-
-      {/* ── Insights Tab ── */}
-      {activeTab === "insights" && <InsightsTab />}
-
-      {/* ── Activity Tab ── */}
-      {activeTab === "activity" && <ActivityTab items={items} />}
+      </div>
     </div>
   );
 }
