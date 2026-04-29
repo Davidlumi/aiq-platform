@@ -2884,6 +2884,38 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         // If signal fetch fails, proceed without breakdown
       }
 
+      // Collect signal breakdown for frontend visualisation
+      let signalBreakdownForFrontend: Array<{ key: string; label: string; normScore: number; isRisk: boolean }> = [];
+      try {
+        const scoreRows2 = await db
+          .select({ signalScoresJson: assessmentScores.signalScoresJson })
+          .from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, input.sessionId))
+          .limit(1);
+        if (scoreRows2[0]?.signalScoresJson) {
+          const raw2 = typeof scoreRows2[0].signalScoresJson === "string"
+            ? JSON.parse(scoreRows2[0].signalScoresJson as string)
+            : scoreRows2[0].signalScoresJson as Record<string, unknown>;
+          for (const [sigKey, sigVal] of Object.entries(raw2)) {
+            if (SIGNAL_TO_DOMAIN_MAP[sigKey] !== input.domainKey) continue;
+            const sv = sigVal as { sum?: number; count?: number };
+            if (!sv || typeof sv.sum !== "number" || !sv.count) continue;
+            const avg = sv.sum / sv.count;
+            const isRisk = RISK_SIGNALS_SET.has(sigKey);
+            const normScore = isRisk
+              ? Math.max(0, Math.min(100, Math.round(50 - avg * 25)))
+              : Math.max(0, Math.min(100, Math.round(50 + avg * 25)));
+            signalBreakdownForFrontend.push({
+              key: sigKey,
+              label: SIGNAL_DISPLAY_MAP[sigKey] ?? sigKey.replace(/_/g, " "),
+              normScore,
+              isRisk,
+            });
+          }
+          signalBreakdownForFrontend.sort((a, b) => b.normScore - a.normScore);
+        }
+      } catch { /* ignore */ }
+
       try {
         const response = await invokeLLM({
           messages: [
@@ -2898,9 +2930,9 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           ],
         });
         const deepDive = (response as any)?.choices?.[0]?.message?.content?.trim() ?? null;
-        return { deepDive };
+        return { deepDive, signals: signalBreakdownForFrontend };
       } catch {
-        return { deepDive: null };
+        return { deepDive: null, signals: signalBreakdownForFrontend };
       }
     }),
 });

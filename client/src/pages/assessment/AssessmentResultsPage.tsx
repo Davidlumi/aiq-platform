@@ -26,7 +26,87 @@ import {
   ChevronRight, BookOpen, ArrowLeft, Target, Brain,
   Shield, Workflow, Database, Gavel, TrendingUp, TrendingDown,
 } from "lucide-react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, BarChart2, AlertCircle } from "lucide-react";
+
+// ── Signal Breakdown Chart ─────────────────────────────────────────────────────
+
+type SignalItem = { key: string; label: string; normScore: number; isRisk: boolean };
+
+function SignalBreakdownChart({ signals, domainColour }: { signals: SignalItem[]; domainColour: string }) {
+  if (!signals || signals.length === 0) return null;
+
+  // Separate positive signals from risk signals
+  const positiveSignals = signals.filter(s => !s.isRisk);
+  const riskSignals = signals.filter(s => s.isRisk);
+
+  const getBarColour = (s: SignalItem) => {
+    if (s.isRisk) {
+      // Risk signals: green = low risk (high score), red = high risk (low score)
+      if (s.normScore >= 70) return "oklch(0.72 0.19 142)"; // green — risk well-managed
+      if (s.normScore >= 50) return "oklch(0.75 0.18 60)";  // amber — moderate risk
+      return "oklch(0.65 0.22 25)";                          // red — elevated risk
+    }
+    // Positive signals: use domain colour for strong, fade for weaker
+    if (s.normScore >= 70) return domainColour;
+    if (s.normScore >= 50) return `${domainColour}99`;
+    return "oklch(0.65 0.22 25)";
+  };
+
+  const SignalRow = ({ s }: { s: SignalItem }) => (
+    <div key={s.key} className="group">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {s.isRisk && <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />}
+          <span className="text-xs text-foreground/80 truncate" title={s.label}>{s.label}</span>
+        </div>
+        <span className="text-xs font-semibold tabular-nums ml-2 shrink-0" style={{ color: getBarColour(s) }}>
+          {s.normScore}
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${s.normScore}%`, backgroundColor: getBarColour(s) }}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-4 mb-5">
+      <div className="flex items-center gap-2 mb-4">
+        <BarChart2 className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sub-Capability Breakdown</span>
+      </div>
+
+      {/* Positive signals */}
+      {positiveSignals.length > 0 && (
+        <div className="space-y-3 mb-4">
+          {positiveSignals.map(s => <SignalRow key={s.key} s={s} />)}
+        </div>
+      )}
+
+      {/* Risk signals — separated with a divider */}
+      {riskSignals.length > 0 && (
+        <>
+          {positiveSignals.length > 0 && (
+            <div className="flex items-center gap-2 my-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Risk Signals</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          )}
+          <div className="space-y-3">
+            {riskSignals.map(s => <SignalRow key={s.key} s={s} />)}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+            Risk signals: higher score = risk well-managed. Lower score = area to watch.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 // ── Domain icons ───────────────────────────────────────────────────────────────
 
@@ -319,6 +399,30 @@ function DomainSheet({
             </p>
           )}
         </div>
+
+        {/* Signal Breakdown Chart */}
+        {deepDiveData?.signals && deepDiveData.signals.length > 0 && (
+          <SignalBreakdownChart signals={deepDiveData.signals} domainColour={colour} />
+        )}
+        {deepDiveLoading && (
+          <div className="rounded-xl border border-border bg-background/40 p-4 mb-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i}>
+                  <div className="flex justify-between mb-1">
+                    <Skeleton className="h-3 w-36" />
+                    <Skeleton className="h-3 w-6" />
+                  </div>
+                  <Skeleton className="h-1.5 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Dev link */}
         <Button
