@@ -10,7 +10,7 @@
  * results/session views via AssessmentHistoryPanel (exported for use there).
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -251,8 +251,6 @@ function StartScreen({
 export default function AssessmentPage() {
   const [, navigate] = useLocation();
   const [showProfiling, setShowProfiling] = useState(false);
-  const [redirected, setRedirected] = useState(false);
-
   const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
   const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
   const onboardingMutation = trpc.auth.completeOnboarding.useMutation();
@@ -265,22 +263,7 @@ export default function AssessmentPage() {
     onError: err => toast.error(err.message),
   });
 
-  // Auto-redirect to most recent session
-  useEffect(() => {
-    if (redirected || isLoading || !sessions) return;
-    const inProgress = sessions.find((s: any) => s.state === "in_progress");
-    if (inProgress) {
-      setRedirected(true);
-      navigate(`/assessment/${inProgress.id}`);
-      return;
-    }
-    const completed = sessions.find((s: any) => s.state === "completed");
-    if (completed) {
-      setRedirected(true);
-      navigate(`/assessment/${completed.id}/results`);
-    }
-  }, [sessions, isLoading, redirected, navigate]);
-
+  const inProgressSession = sessions?.find((s: any) => s.state === "in_progress") as any;
   const lastCompletedSession = sessions?.find((s: any) => s.state === "completed");
   const lastCapabilityScores: Record<string, number> = lastCompletedSession?.score?.capabilityScores ?? {};
 
@@ -324,7 +307,6 @@ export default function AssessmentPage() {
     );
   }
 
-  // If no sessions or redirect hasn't fired yet, show start screen
   return (
     <>
       <ProfilingModal
@@ -333,11 +315,79 @@ export default function AssessmentPage() {
         onStart={handleProfilingStart}
         isPending={startMutation.isPending || onboardingMutation.isPending}
       />
+      {/* Resume banner — shown when an assessment is in progress */}
+      {inProgressSession && (
+        <div className="mx-6 mt-6 mb-0 rounded-xl border border-[#D97706]/30 bg-[#D97706]/8 p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-[#D97706] shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
+              <p className="text-xs text-muted-foreground">
+                {inProgressSession.answeredCount ?? 0} of {inProgressSession.totalTarget ?? 49} questions answered
+                {" · "}{Math.round(((inProgressSession.answeredCount ?? 0) / (inProgressSession.totalTarget ?? 49)) * 100)}% complete
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate(`/assessment/${inProgressSession.id}`)}
+            className="gap-2 shrink-0"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Resume
+          </Button>
+        </div>
+      )}
       <StartScreen
         onStart={handleStartClick}
         isStarting={startMutation.isPending}
         lastCapabilityScores={lastCapabilityScores}
       />
+      {/* Assessment history */}
+      {sessions && sessions.length > 0 && (
+        <div className="mx-6 mb-8">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">Assessment History</h2>
+          <div className="space-y-2">
+            {sessions.map((s: any) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  if (s.state === "completed") navigate(`/assessment/${s.id}/results`);
+                  else if (s.state === "in_progress") navigate(`/assessment/${s.id}`);
+                }}
+                className="w-full text-left flex items-center justify-between gap-4 p-4 rounded-xl border bg-card hover:bg-accent/40 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  {s.state === "completed" ? (
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-[#D97706] shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">AIQ V9.2 Standard Assessment</p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.state === "completed"
+                        ? `Completed ${new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                        : `Started ${new Date(s.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <SessionBadge state={s.state} />
+                  {s.state === "completed" && s.score?.overallScore !== undefined && (
+                    <span
+                      className="text-sm font-bold tabular-nums px-2 py-0.5 rounded-lg text-white"
+                      style={{ backgroundColor: scoreToColor(s.score.overallScore).bg }}
+                    >
+                      {formatPeakonScore(s.score.overallScore)}
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
