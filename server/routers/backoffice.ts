@@ -1066,13 +1066,76 @@ export const backofficeRouter = router({
         createdAt: startedAt,
       });
 
+      // 8. Build realistic signal scores from domain scores
+      // Each domain score maps to its signals; we add some variance to make it realistic
+      const DOMAIN_SIGNALS: Record<string, Array<{ key: string; isRisk: boolean }>> = {
+        ai_interaction: [
+          { key: "prompt_construction_quality", isRisk: false },
+          { key: "prompt_iteration_quality", isRisk: false },
+          { key: "output_direction_skill", isRisk: false },
+          { key: "tool_fluency_index", isRisk: false },
+        ],
+        ai_output_evaluation: [
+          { key: "output_evaluation_quality", isRisk: false },
+          { key: "error_detection_accuracy", isRisk: false },
+          { key: "fitness_for_purpose_judgement", isRisk: false },
+          { key: "blind_acceptance_risk", isRisk: true },
+          { key: "hallucination_acceptance_risk", isRisk: true },
+          { key: "bias_detection_skill", isRisk: false },
+          { key: "data_interpretation_quality", isRisk: false },
+        ],
+        ai_workflow_design: [
+          { key: "workflow_redesign_quality", isRisk: false },
+          { key: "handoff_design_quality", isRisk: false },
+          { key: "human_oversight_preservation", isRisk: false },
+          { key: "automation_expansion_risk", isRisk: true },
+        ],
+        workforce_ai_readiness: [
+          { key: "capability_diagnosis_accuracy", isRisk: false },
+          { key: "intervention_design_quality", isRisk: false },
+          { key: "leader_advisory_quality", isRisk: false },
+          { key: "generic_prescription_risk", isRisk: true },
+        ],
+        ai_ethics_trust: [
+          { key: "ethics_under_pressure", isRisk: false },
+          { key: "stakeholder_impact_awareness", isRisk: false },
+          { key: "employee_transparency_advocacy", isRisk: false },
+          { key: "pressure_drift_risk", isRisk: true },
+          { key: "legal_vs_fair_distinction", isRisk: false },
+        ],
+        ai_change_leadership: [
+          { key: "resistance_response_quality", isRisk: false },
+          { key: "legitimate_concern_recognition", isRisk: false },
+          { key: "change_pace_calibration", isRisk: false },
+          { key: "dismissive_of_concern_risk", isRisk: true },
+        ],
+      };
+      // Variance seeds for each signal position (deterministic but varied)
+      const VARIANCE = [0.15, -0.10, 0.20, -0.05, 0.10, -0.15, 0.05];
+      const seededSignalScores: Record<string, { sum: number; count: number }> = {};
+      for (const [domain, signals] of Object.entries(DOMAIN_SIGNALS)) {
+        const domainScore = (capabilityScores[domain] ?? 70) as number;
+        // Convert domain score (0-100) to avg delta: (score - 50) / 25
+        const baseDelta = (domainScore - 50) / 25;
+        signals.forEach((sig, idx) => {
+          const variance = VARIANCE[idx % VARIANCE.length];
+          let delta = baseDelta + variance;
+          // Risk signals: invert (positive delta = bad for risk signals)
+          if (sig.isRisk) delta = -delta;
+          // Clamp to reasonable range
+          delta = Math.max(-1.6, Math.min(1.6, delta));
+          // Store as sum/count (simulate 2 observations)
+          seededSignalScores[sig.key] = { sum: parseFloat((delta * 2).toFixed(3)), count: 2 };
+        });
+      }
+
       // 8. Insert score record
       await db.insert(assessmentScores).values({
         id: nanoid(),
         sessionId,
         overallScore: input.overallScore.toFixed(2) as any,
         scoreBreakdownJson: scoreBreakdown as any,
-        signalScoresJson: {} as any,
+        signalScoresJson: seededSignalScores as any,
         modelVersion: "adaptive-v2",
         scoringConfigVersion: 1,
       });

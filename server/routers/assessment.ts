@@ -2746,18 +2746,143 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       const userName = userRows[0] ? `${userRows[0].firstName} ${userRows[0].lastName}`.trim() : "the user";
 
       const levelLabel = input.score >= 80 ? "Expert" : input.score >= 60 ? "Proficient" : input.score >= 40 ? "Developing" : "Novice";
-      const isStrength = input.score >= 70;
       const isBlindSpot = input.quadrant === "unconscious_incompetence";
 
       const domainDescriptions: Record<string, string> = {
         ai_change_leadership: "leading AI adoption, managing change resistance, and building organisational AI readiness",
         ai_ethics_employee_trust: "responsible AI use, bias awareness, employee data privacy, and maintaining trust in AI-assisted decisions",
+        ai_ethics_trust: "responsible AI use, bias awareness, employee data privacy, and maintaining trust in AI-assisted decisions",
         ai_interaction: "effective prompting, AI tool selection, and getting high-quality outputs from AI systems",
         ai_output_evaluation: "critically assessing AI-generated content, spotting errors, hallucinations, and knowing when to override AI recommendations",
         ai_workflow_design: "integrating AI into HR workflows, process redesign, and automation of routine tasks",
         workforce_ai_readiness: "assessing team AI capability, identifying skill gaps, and designing upskilling programmes",
       };
       const domainDesc = domainDescriptions[input.domainKey] ?? input.domainName;
+
+      // ── Fetch actual signal-level scores for this domain ─────────────────────
+      // signalScoresJson stores: Record<signalKey, { sum: number; count: number }>
+      // Risk signals are negative (higher sum = more risk behaviour shown)
+      const SIGNAL_TO_DOMAIN_MAP: Record<string, string> = {
+        prompt_construction_quality: "ai_interaction",
+        prompt_iteration_quality: "ai_interaction",
+        output_direction_skill: "ai_interaction",
+        tool_fluency_index: "ai_interaction",
+        output_evaluation_quality: "ai_output_evaluation",
+        error_detection_accuracy: "ai_output_evaluation",
+        fitness_for_purpose_judgement: "ai_output_evaluation",
+        blind_acceptance_risk: "ai_output_evaluation",
+        hallucination_acceptance_risk: "ai_output_evaluation",
+        bias_detection_skill: "ai_output_evaluation",
+        data_interpretation_quality: "ai_output_evaluation",
+        workflow_redesign_quality: "ai_workflow_design",
+        handoff_design_quality: "ai_workflow_design",
+        human_oversight_preservation: "ai_workflow_design",
+        automation_expansion_risk: "ai_workflow_design",
+        capability_diagnosis_accuracy: "workforce_ai_readiness",
+        intervention_design_quality: "workforce_ai_readiness",
+        leader_advisory_quality: "workforce_ai_readiness",
+        generic_prescription_risk: "workforce_ai_readiness",
+        ethics_under_pressure: "ai_ethics_trust",
+        stakeholder_impact_awareness: "ai_ethics_trust",
+        employee_transparency_advocacy: "ai_ethics_trust",
+        pressure_drift_risk: "ai_ethics_trust",
+        legal_vs_fair_distinction: "ai_ethics_trust",
+        resistance_response_quality: "ai_change_leadership",
+        legitimate_concern_recognition: "ai_change_leadership",
+        change_pace_calibration: "ai_change_leadership",
+        dismissive_of_concern_risk: "ai_change_leadership",
+      };
+      const SIGNAL_DISPLAY_MAP: Record<string, string> = {
+        prompt_construction_quality: "Prompt Construction Quality",
+        prompt_iteration_quality: "Prompt Iteration Quality",
+        output_direction_skill: "Output Direction Skill",
+        tool_fluency_index: "Tool Fluency",
+        output_evaluation_quality: "Output Evaluation Quality",
+        error_detection_accuracy: "Error Detection Accuracy",
+        fitness_for_purpose_judgement: "Fitness-for-Purpose Judgement",
+        blind_acceptance_risk: "Blind Acceptance Risk",
+        hallucination_acceptance_risk: "Hallucination Acceptance Risk",
+        bias_detection_skill: "Bias Detection Skill",
+        data_interpretation_quality: "Data Interpretation Quality",
+        workflow_redesign_quality: "Workflow Redesign Quality",
+        handoff_design_quality: "Handoff Design Quality",
+        human_oversight_preservation: "Human Oversight Preservation",
+        automation_expansion_risk: "Automation Expansion Risk",
+        capability_diagnosis_accuracy: "Capability Diagnosis Accuracy",
+        intervention_design_quality: "Intervention Design Quality",
+        leader_advisory_quality: "Leader Advisory Quality",
+        generic_prescription_risk: "Generic Prescription Risk",
+        ethics_under_pressure: "Ethics Under Pressure",
+        stakeholder_impact_awareness: "Stakeholder Impact Awareness",
+        employee_transparency_advocacy: "Employee Transparency Advocacy",
+        pressure_drift_risk: "Pressure Drift Risk",
+        legal_vs_fair_distinction: "Legal vs Fair Distinction",
+        resistance_response_quality: "Resistance Response Quality",
+        legitimate_concern_recognition: "Legitimate Concern Recognition",
+        change_pace_calibration: "Change Pace Calibration",
+        dismissive_of_concern_risk: "Dismissive of Concern Risk",
+      };
+      // Risk signals: higher sum = more risk behaviour (bad), so we invert for scoring
+      const RISK_SIGNALS_SET = new Set([
+        "blind_acceptance_risk", "hallucination_acceptance_risk",
+        "automation_expansion_risk", "generic_prescription_risk",
+        "pressure_drift_risk", "dismissive_of_concern_risk",
+      ]);
+
+      // Fetch signal scores from DB
+      let signalBreakdownText = "";
+      try {
+        const scoreRows = await db
+          .select({ signalScoresJson: assessmentScores.signalScoresJson })
+          .from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, input.sessionId))
+          .limit(1);
+
+        if (scoreRows[0]?.signalScoresJson) {
+          const raw = typeof scoreRows[0].signalScoresJson === "string"
+            ? JSON.parse(scoreRows[0].signalScoresJson as string)
+            : scoreRows[0].signalScoresJson as Record<string, unknown>;
+
+          // Filter to signals belonging to this domain
+          const domainSignals: Array<{ key: string; label: string; normScore: number; isRisk: boolean }> = [];
+          for (const [sigKey, sigVal] of Object.entries(raw)) {
+            if (SIGNAL_TO_DOMAIN_MAP[sigKey] !== input.domainKey) continue;
+            const sv = sigVal as { sum?: number; count?: number };
+            if (!sv || typeof sv.sum !== "number" || !sv.count) continue;
+            const avg = sv.sum / sv.count; // avg delta per answer
+            const isRisk = RISK_SIGNALS_SET.has(sigKey);
+            // Normalise to 0-100 scale: positive signals: 50 + avg*25 clamped; risk: 50 - avg*25 clamped
+            const normScore = isRisk
+              ? Math.max(0, Math.min(100, Math.round(50 - avg * 25)))
+              : Math.max(0, Math.min(100, Math.round(50 + avg * 25)));
+            domainSignals.push({
+              key: sigKey,
+              label: SIGNAL_DISPLAY_MAP[sigKey] ?? sigKey.replace(/_/g, " "),
+              normScore,
+              isRisk,
+            });
+          }
+
+          if (domainSignals.length > 0) {
+            // Sort by score descending
+            domainSignals.sort((a, b) => b.normScore - a.normScore);
+            const strengths = domainSignals.filter(s => s.normScore >= 60).slice(0, 3);
+            const weaknesses = domainSignals.filter(s => s.normScore < 60).slice(-3).reverse();
+            const lines: string[] = [];
+            if (strengths.length > 0) {
+              lines.push(`Their strongest sub-capabilities in this domain are: ${strengths.map(s => `${s.label} (${s.normScore}/100)`).join(", ")}.`);
+            }
+            if (weaknesses.length > 0) {
+              lines.push(`Their areas for development are: ${weaknesses.map(s => `${s.label} (${s.normScore}/100)`).join(", ")}.`);
+            }
+            if (lines.length > 0) {
+              signalBreakdownText = "\n\nActual sub-capability breakdown from their assessment:\n" + lines.join(" ");
+            }
+          }
+        }
+      } catch {
+        // If signal fetch fails, proceed without breakdown
+      }
 
       try {
         const response = await invokeLLM({
@@ -2768,7 +2893,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
             },
             {
               role: "user",
-              content: `Write a personalised deep dive for ${userName}'s performance in the "${input.domainName}" domain of their AI capability assessment.\n\nDomain focus: ${domainDesc}\nScore: ${Math.round(input.score)}/100 (${levelLabel})${input.quadrantLabel ? `\nProfile: ${input.quadrantLabel}` : ""}${isBlindSpot ? " — this is a blind spot area" : ""}\n\nWrite 4 short paragraphs (2-3 sentences each):\n1. What this domain means and why it matters for HR professionals\n2. What their score of ${Math.round(input.score)}/100 tells us about their current capability — be specific and honest\n3. Their likely strengths in this area based on their score${isStrength ? " (they are strong here)" : " (they have gaps here)"}\n4. One concrete, actionable next step they can take this week to develop in this domain\n\nKeep total response under 200 words. No bullet points. No headers. Plain paragraphs only.`,
+              content: `Write a personalised deep dive for ${userName}'s performance in the "${input.domainName}" domain of their AI capability assessment.\n\nDomain focus: ${domainDesc}\nOverall domain score: ${Math.round(input.score)}/100 (${levelLabel})${input.quadrantLabel ? `\nProfile: ${input.quadrantLabel}` : ""}${isBlindSpot ? " — this is a blind spot area" : ""}${signalBreakdownText}\n\nWrite 4 short paragraphs (2-3 sentences each):\n1. What this domain means and why it matters for HR professionals\n2. What their overall score of ${Math.round(input.score)}/100 tells us about their current capability — be specific and honest\n3. Their specific strengths and gaps in this domain — you MUST reference the actual sub-capabilities listed above by name (e.g. their strongest and weakest signals). Do not be vague — name the specific signals.\n4. One concrete, actionable next step they can take this week to develop in their weakest area\n\nKeep total response under 220 words. No bullet points. No headers. Plain paragraphs only.`,
             },
           ],
         });
