@@ -5,6 +5,7 @@ import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { Loader2 } from "lucide-react";
 
 // Auth pages
@@ -221,7 +222,13 @@ function PersonalDashboard() {
 }
 function RoleDashboard() {
   const { user } = useAuth();
+  const { viewAs } = useViewAs();
   if (!user) return null;
+  // Demo role switcher overrides the real role
+  if (viewAs === "individual") return <IndividualDashboardV2 />;
+  if (viewAs === "manager") return <ManagerDashboardV2 />;
+  if (viewAs === "cpo") return <LeaderDashboardV2 />;
+  // Fallback: use real role
   const roles = (user as any).roles as string[] ?? [];
   if (roles.includes("platform_super_admin") || roles.includes("tenant_admin")) {
     return <AdminDashboard />;

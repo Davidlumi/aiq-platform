@@ -4,6 +4,7 @@
  * Sidebar: 240px expanded, 56px collapsed.
  */
 import { useState } from "react";
+import { useViewAs, VIEW_AS_LABELS, type ViewAsRole } from "@/contexts/ViewAsContext";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -36,6 +37,8 @@ import {
   ShieldCheck,
   Target,
   UserSearch,
+  Eye,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -153,10 +156,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { viewAs, setViewAs, effectiveRoles } = useViewAs();
   const userRoles = ((user as any)?.roles as string[]) ?? [];
+  const [viewAsOpen, setViewAsOpen] = useState(false);
 
+  // Use effectiveRoles for nav filtering (demo role override)
   const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.roles || item.roles.some((r) => userRoles.includes(r))
+    (item) => !item.roles || item.roles.some((r) => effectiveRoles.includes(r))
   );
 
   const initials = user
@@ -170,9 +176,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       : (user as any)?.email ?? "User";
 
   const primaryRole = userRoles[0] ?? "learner";
-  const roleLabel = primaryRole
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const roleLabel = VIEW_AS_LABELS[viewAs];
 
   function isActive(path: string) {
     if (path === "/dashboard") return location === "/dashboard" || location === "/";
@@ -273,6 +277,41 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
 
+      {/* View As role switcher */}
+      {!collapsed && (
+        <div className="shrink-0 px-3 pb-2">
+          <div className="relative">
+            <button
+              onClick={() => setViewAsOpen((v) => !v)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-sidebar-border/60 bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 transition-colors text-sidebar-foreground/70"
+            >
+              <Eye className="w-3.5 h-3.5 shrink-0 text-primary" />
+              <span className="flex-1 text-left">View as: <span className="text-primary font-semibold">{VIEW_AS_LABELS[viewAs]}</span></span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${viewAsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {viewAsOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-sidebar-border bg-sidebar shadow-xl overflow-hidden z-50">
+                {(['cpo', 'manager', 'individual'] as ViewAsRole[]).map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => { setViewAs(role); setViewAsOpen(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors ${
+                      viewAs === role
+                        ? 'bg-primary/15 text-primary font-semibold'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-foreground/10'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      viewAs === role ? 'bg-primary' : 'bg-sidebar-foreground/20'
+                    }`} />
+                    {VIEW_AS_LABELS[role]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* User profile footer */}
       <div className="shrink-0 p-2 border-t border-sidebar-border">
         <DropdownMenu>
