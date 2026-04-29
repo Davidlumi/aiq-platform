@@ -255,15 +255,6 @@ export default function AssessmentPage() {
   const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
   const onboardingMutation = trpc.auth.completeOnboarding.useMutation();
 
-  // Auto-redirect to latest completed assessment results
-  useEffect(() => {
-    if (!sessions) return;
-    const completed = sessions.find((s: any) => s.state === "completed");
-    if (completed) {
-      navigate(`/assessment/${completed.id}/results`, { replace: true });
-    }
-  }, [sessions, navigate]);
-
   const startMutation = trpc.assessment.startSession.useMutation({
     onSuccess: result => {
       setShowProfiling(false);

@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
@@ -23,8 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2, AlertTriangle, ShieldAlert, HelpCircle,
-  ChevronRight, BookOpen, ArrowLeft, Target, Brain,
+  ChevronRight, BookOpen, Target, Brain,
   Shield, Workflow, Database, Gavel, TrendingUp, TrendingDown,
+  RotateCcw,
 } from "lucide-react";
 import { Sparkles, BarChart2, AlertCircle } from "lucide-react";
 
@@ -466,6 +468,30 @@ export default function AssessmentResultsPage() {
   const [, navigate] = useLocation();
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  const [isStartingReassess, setIsStartingReassess] = useState(false);
+
+  const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
+  const startMutation = trpc.assessment.startSession.useMutation({
+    onSuccess: result => {
+      navigate(`/assessment/${result.sessionId}`);
+    },
+    onError: err => {
+      toast.error(err.message);
+      setIsStartingReassess(false);
+    },
+  });
+
+  const handleReassess = () => {
+    if (!defaultBlueprint?.id) {
+      toast.error("No assessment blueprint available.");
+      return;
+    }
+    setIsStartingReassess(true);
+    // Reuse the same roleHint from the current session's metadata
+    const meta = (data?.session?.sessionMetadataJson ?? {}) as Record<string, unknown>;
+    const roleHint = (meta.roleHint as string) ?? undefined;
+    startMutation.mutate({ blueprintId: defaultBlueprint.id, roleHint });
+  };
 
   const { data, isLoading, error } = trpc.assessment.results.useQuery(
     { sessionId },
@@ -525,17 +551,19 @@ export default function AssessmentResultsPage() {
   const displayScore = (overallScore / 10).toFixed(1);
   const circumference = 2 * Math.PI * 38;
 
+  // Build progress delta vs previous session
+  const longitudinalData = (data as any)?.longitudinalData as Array<{
+    sessionId: string; completedAt: Date | null; overallScore: number;
+    capabilityScores: Record<string, number>;
+  }> | undefined;
+  // Current session is the last in longitudinalData; previous is second-to-last
+  const prevSession = longitudinalData && longitudinalData.length >= 2
+    ? longitudinalData[longitudinalData.length - 2]
+    : null;
+  const overallDelta = prevSession ? overallScore - prevSession.overallScore : null;
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      {/* Back */}
-      <button
-        onClick={() => navigate("/assessment")}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Assessment
-      </button>
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
         {/* Score ring */}
@@ -589,12 +617,79 @@ export default function AssessmentResultsPage() {
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 gap-2"
-          onClick={() => navigate("/assessment")}
+          className="shrink-0 gap-2 text-foreground border-border hover:bg-accent"
+          onClick={handleReassess}
+          disabled={isStartingReassess || startMutation.isPending}
         >
-          Reassess
+          <RotateCcw className={cn("w-4 h-4", (isStartingReassess || startMutation.isPending) && "animate-spin")} />
+          {isStartingReassess || startMutation.isPending ? "Starting…" : "Reassess"}
         </Button>
       </div>
+
+      {/* Progress vs previous assessment */}
+      {prevSession && (
+        <div className="rounded-2xl border border-border bg-card p-5 mb-8" style={{ boxShadow: "var(--card-shadow)" }}>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+            <h2 className="text-xs font-semibold text-primary uppercase tracking-widest">Progress Since Last Assessment</h2>
+            {prevSession.completedAt && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                vs {new Date(prevSession.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
+          </div>
+
+          {/* Overall delta */}
+          <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-background/40 border border-border">
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground mb-0.5">Overall Score</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-foreground tabular-nums">{(overallScore / 10).toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground">/10</span>
+                {overallDelta !== null && (
+                  <span className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    overallDelta > 0 ? "text-primary" : overallDelta < 0 ? "text-red-400" : "text-muted-foreground"
+                  )}>
+                    {overallDelta > 0 ? `+${overallDelta.toFixed(1)}` : overallDelta.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground mb-0.5">Previous</p>
+              <span className="text-lg font-semibold text-muted-foreground tabular-nums">{(prevSession.overallScore / 10).toFixed(1)}</span>
+            </div>
+          </div>
+
+          {/* Per-domain deltas */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {domains.map(domain => {
+              const prev = prevSession.capabilityScores[domain.key];
+              const delta = prev !== undefined ? domain.score - prev : null;
+              return (
+                <div key={domain.key} className="p-2.5 rounded-lg bg-background/40 border border-border">
+                  <p className="text-[10px] text-muted-foreground truncate mb-1" title={domain.displayName}>{domain.displayName}</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-bold text-foreground tabular-nums">{Math.round(domain.score)}</span>
+                    {delta !== null && (
+                      <span className={cn(
+                        "text-[11px] font-semibold tabular-nums",
+                        delta > 0 ? "text-primary" : delta < 0 ? "text-red-400" : "text-muted-foreground"
+                      )}>
+                        {delta > 0 ? `+${Math.round(delta)}` : Math.round(delta)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-1 rounded-full bg-muted/60 mt-1.5 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${Math.round(domain.score)}%`, backgroundColor: domain.colour }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Spider chart */}
       {domains.length > 0 && (
