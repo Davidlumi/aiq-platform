@@ -475,47 +475,6 @@ export default function LeaderDashboardV2() {
         )}
       </div>
 
-      {/* ── Function × Domain Heatmap ── */}
-      {heatmapData && heatmapData.functions.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Function capability heatmap</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Average score per function across all six domains · click a row to expand members</p>
-            </div>
-            <Badge variant="outline" className="text-xs">{heatmapData.functions.length} functions</Badge>
-          </div>
-          <FunctionHeatmap functions={heatmapData.functions} domains={heatmapData.domains} />
-        </div>
-      )}
-
-      {/* ── Worth your attention ── */}
-      {worthAttention.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-5">
-          <p className="text-sm font-semibold text-foreground mb-4">Worth your attention</p>
-          <div className="space-y-4">
-            {worthAttention.map((ins, i) => {
-              const iconColour = ins.type === "high" ? "#ef4444" : ins.type === "medium" ? "#f59e0b" : "var(--primary)";
-              const Icon = ins.type === "high" ? AlertTriangle : ins.type === "strategic" ? Target : TrendingUp;
-              return (
-                <div key={i} className={cn("flex items-start gap-3 pb-4", i < worthAttention.length - 1 && "border-b border-border")}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${iconColour}18` }}>
-                    <Icon className="w-4 h-4" style={{ color: iconColour }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: iconColour }}>{ins.priority}</p>
-                    <p className="text-sm font-medium text-foreground mb-0.5">{ins.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">{ins.body}</p>
-                    <Link href={ins.linkHref}>
-                      <span className="text-xs font-semibold text-primary hover:text-primary/80">{ins.linkLabel} →</span>
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ── Strategy Gap Chart ── */}
       {ambitionGap?.configured && ambitionGap.functionAvgRaw !== null && ambitionGap.ambitionTargetScore !== null && (() => {
@@ -592,6 +551,47 @@ export default function LeaderDashboardV2() {
         );
       })()}
 
+      {/* ── Function × Domain Heatmap ── */}
+      {heatmapData && heatmapData.functions.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Function capability heatmap</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Average score per function across all six domains · click a row to expand members</p>
+            </div>
+            <Badge variant="outline" className="text-xs">{heatmapData.functions.length} functions</Badge>
+          </div>
+          <FunctionHeatmap functions={heatmapData.functions} domains={heatmapData.domains} />
+        </div>
+      )}
+
+      {/* ── Worth your attention ── */}
+      {worthAttention.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <p className="text-sm font-semibold text-foreground mb-4">Worth your attention</p>
+          <div className="space-y-4">
+            {worthAttention.map((ins, i) => {
+              const iconColour = ins.type === "high" ? "#ef4444" : ins.type === "medium" ? "#f59e0b" : "var(--primary)";
+              const Icon = ins.type === "high" ? AlertTriangle : ins.type === "strategic" ? Target : TrendingUp;
+              return (
+                <div key={i} className={cn("flex items-start gap-3 pb-4", i < worthAttention.length - 1 && "border-b border-border")}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${iconColour}18` }}>
+                    <Icon className="w-4 h-4" style={{ color: iconColour }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: iconColour }}>{ins.priority}</p>
+                    <p className="text-sm font-medium text-foreground mb-0.5">{ins.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">{ins.body}</p>
+                    <Link href={ins.linkHref}>
+                      <span className="text-xs font-semibold text-primary hover:text-primary/80">{ins.linkLabel} →</span>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
