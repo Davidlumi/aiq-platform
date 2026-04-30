@@ -9,13 +9,11 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { Target, AlertTriangle, CheckCircle2, TrendingUp, Edit2 } from "lucide-react";
-import { getLevelFromScore, getLevelChipStyle, getLevelLabel, getPreciseLevel } from "@/lib/level-utils";
+import { Target, Edit2 } from "lucide-react";
+import { getLevelChipStyle, getLevelFromScore, getPreciseLevel } from "@/lib/level-utils";
 import { DOMAIN_KEYS, DOMAIN_LABELS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
+import StrategyBuilderWizard from "@/components/StrategyBuilderWizard";
 
 // --- Roadmap bar --------------------------------------------------------------
 function RoadmapBar({
@@ -85,7 +83,7 @@ function TrajectoryChart({
   const W = 700; const H = 220; const PAD_L = 50; const PAD_R = 20; const PAD_T = 30; const PAD_B = 40;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
-  const maxScore = 100; const minScore = 0;
+  const maxScore = 100;
 
   function scoreToY(score: number) {
     return PAD_T + (1 - score / maxScore) * chartH;
@@ -114,21 +112,18 @@ function TrajectoryChart({
     }
   }
   const projPolyline = projPts.map(p => `${p.x},${p.y}`).join(" ");
-
   const targetY = targetScore !== null ? scoreToY(targetScore) : null;
   const levelLines = [20, 40, 60, 80, 100].map(score => ({ score, y: scoreToY(score), label: (score / 10).toFixed(0) }));
 
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="aiq-chart-mount" style={{ width: "100%", height: H }}>
-        {/* Grid lines — dark navy */}
         {levelLines.map(l => (
           <g key={l.score}>
             <line x1={PAD_L} y1={l.y} x2={W - PAD_R} y2={l.y} stroke="oklch(22% 0.030 240)" strokeWidth={0.5} strokeDasharray="2 2" />
             <text x={PAD_L - 8} y={l.y + 4} textAnchor="end" style={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{l.label}</text>
           </g>
         ))}
-        {/* Target threshold line — green */}
         {targetY !== null && (
           <>
             <line x1={PAD_L} y1={targetY} x2={W - PAD_R} y2={targetY} stroke="oklch(72.3% 0.220 142)" strokeWidth={1.5} strokeDasharray="6 4" />
@@ -137,19 +132,15 @@ function TrajectoryChart({
             </text>
           </>
         )}
-        {/* Actual line — primary */}
         {actualPts.length >= 2 && (
           <polyline points={actualPolyline} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinejoin="round" />
         )}
-        {/* Actual dots */}
         {actualPts.map((p, i) => (
           <circle key={i} cx={p.x} cy={p.y} r={i === actualPts.length - 1 ? 5 : 4} fill="var(--primary)" />
         ))}
-        {/* Projected line — muted blue */}
         {projPts.length >= 2 && (
           <polyline points={projPolyline} fill="none" stroke="var(--primary)" strokeOpacity={0.5} strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
         )}
-        {/* X axis labels */}
         {validPts.map((m, i) => {
           const x = idxToX(i, validPts.length);
           const [year, month] = m.date.split("-");
@@ -160,19 +151,18 @@ function TrajectoryChart({
           );
         })}
       </svg>
-      {/* Legend */}
       <div className="flex gap-5 mt-3 pt-3" style={{ borderTop: "0.5px solid oklch(22% 0.030 240)" }}>
         <div className="flex items-center gap-1.5">
           <span style={{ width: 18, height: 2.5, background: "#60A5FA", display: "inline-block" }} />
           <span className="text-xs text-muted-foreground">Actual</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span style={{ width: 18, height: 2, background: "#557DAE", display: "inline-block", borderTop: "1px dashed #557DAE" }} />
+          <span style={{ width: 18, height: 2, background: "#557DAE", display: "inline-block" }} />
           <span className="text-xs text-muted-foreground">Projected at current pace</span>
         </div>
         {targetY !== null && (
           <div className="flex items-center gap-1.5">
-            <span style={{ width: 18, height: 1.5, background: "oklch(72.3% 0.220 142)", display: "inline-block", borderTop: "1px dashed oklch(72.3% 0.220 142)" }} />
+            <span style={{ width: 18, height: 1.5, background: "oklch(72.3% 0.220 142)", display: "inline-block" }} />
             <span className="text-xs text-muted-foreground">Target threshold</span>
           </div>
         )}
@@ -184,40 +174,12 @@ function TrajectoryChart({
 // --- Page ---------------------------------------------------------------------
 export default function AIStrategyPage() {
   const utils = trpc.useUtils();
-  const [showTargetDialog, setShowTargetDialog] = useState(false);
-  const [targetScore, setTargetScore] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  const [targetLabel, setTargetLabel] = useState("");
+  const [showWizard, setShowWizard] = useState(false);
 
   const { data: ambitionGap, isLoading } = trpc.dashboardV2.leader.ambitionGap.useQuery(undefined, { retry: false } as any);
   const { data: trajectory } = trpc.dashboardV2.leader.domainTrajectory.useQuery(undefined);
   const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(undefined);
-
-  const setAmbitionTarget = trpc.intelligence.setAmbitionTarget.useMutation({
-    onSuccess: () => {
-      toast.success("Ambition target saved - dashboard updated.");
-      setShowTargetDialog(false);
-      utils.dashboardV2.leader.ambitionGap.invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  function openTargetDialog() {
-    if (ambitionGap?.ambitionTargetScore != null) setTargetScore(String((ambitionGap.ambitionTargetScore / 10).toFixed(1)));
-    if (ambitionGap?.ambitionTargetDate) setTargetDate(ambitionGap.ambitionTargetDate);
-    if (ambitionGap?.ambitionTargetLabel) setTargetLabel(ambitionGap.ambitionTargetLabel);
-    setShowTargetDialog(true);
-  }
-
-  function handleSaveTarget() {
-    const score = parseFloat(targetScore);
-    if (isNaN(score) || score < 0 || score > 10) { toast.error("Score must be between 0 and 10"); return; }
-    setAmbitionTarget.mutate({
-      ambitionTargetScore: Math.round(score * 10),
-      ambitionTargetDate: targetDate || null,
-      ambitionTargetLabel: targetLabel || null,
-    });
-  }
+  const { data: strategyData } = trpc.intelligence.getStrategy.useQuery(undefined, { retry: false } as any);
 
   const monthsToTarget = useMemo(() => {
     if (!ambitionGap?.configured || ambitionGap.functionAvgRaw === null || ambitionGap.gapRaw === null || ambitionGap.gapRaw <= 0) return null;
@@ -239,7 +201,7 @@ export default function AIStrategyPage() {
 
   const strategicFindingText = useMemo(() => {
     if (!ambitionGap?.configured || currentLevel === null || targetLevel === null) {
-      return "Set an ambition target to generate your strategic finding.";
+      return "Set your AI People Strategy to generate your strategic finding.";
     }
     const targetDateStr = ambitionGap.ambitionTargetDate
       ? new Date(ambitionGap.ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
@@ -292,10 +254,56 @@ export default function AIStrategyPage() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">Strategic dashboard</p>
           <h1 className="text-lg font-semibold text-foreground">HR capability vs AI roadmap</h1>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={openTargetDialog}>
-          <Edit2 className="w-3.5 h-3.5" />{ambitionGap?.configured ? "Edit target" : "Set target"}
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowWizard(true)}>
+          <Edit2 className="w-3.5 h-3.5" />{ambitionGap?.configured ? "Edit strategy" : "Set AI strategy"}
         </Button>
       </div>
+
+      {/* Strategy Builder Wizard — full-screen overlay */}
+      {showWizard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <StrategyBuilderWizard
+            initialData={strategyData ?? null}
+            onSaved={() => {
+              setShowWizard(false);
+              utils.dashboardV2.leader.ambitionGap.invalidate();
+              utils.intelligence.getStrategy.invalidate();
+            }}
+            onCancel={() => setShowWizard(false)}
+          />
+        </div>
+      )}
+
+      {/* Strategy summary banner — shown when strategy is configured */}
+      {strategyData?.configured && (
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/60">
+          <div className="flex gap-6">
+            <div>
+              <p className="text-xs text-muted-foreground">Business Ambition</p>
+              <p className="text-lg font-bold text-foreground">{strategyData.businessAmbitionLevel}/5</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">People Ambition</p>
+              <p className="text-lg font-bold text-foreground">{strategyData.peopleAmbitionLevel}/5</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Overall Target</p>
+              <p className="text-lg font-bold text-primary">Level {strategyData.ambitionTargetScore !== null ? (strategyData.ambitionTargetScore / 10).toFixed(1) : "-"}</p>
+            </div>
+            {strategyData.ambitionTargetLabel && (
+              <div>
+                <p className="text-xs text-muted-foreground">Goal</p>
+                <p className="text-sm font-medium text-foreground">{strategyData.ambitionTargetLabel}</p>
+              </div>
+            )}
+          </div>
+          {strategyData.strategySavedAt && (
+            <p className="ml-auto text-xs text-muted-foreground">
+              Saved {new Date(strategyData.strategySavedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Strategic finding hero */}
       <div className="bg-card rounded-xl border border-border shadow-md p-7">
@@ -347,10 +355,12 @@ export default function AIStrategyPage() {
           <div className="flex items-center gap-3 p-4 rounded-lg border border-border" style={{ background: "oklch(17% 0.028 240)" }}>
             <Target className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-foreground">No ambition target configured</p>
-              <p className="text-xs text-muted-foreground">Set a target level and date to generate your strategic finding and roadmap analysis.</p>
+              <p className="text-sm font-medium text-foreground">No AI People Strategy configured</p>
+              <p className="text-xs text-muted-foreground">Set your business and people ambition levels to generate your strategic finding and roadmap analysis.</p>
             </div>
-            <Button size="sm" className="ml-auto flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90" onClick={openTargetDialog}>Set target</Button>
+            <Button size="sm" className="ml-auto flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setShowWizard(true)}>
+              Set strategy
+            </Button>
           </div>
         )}
       </div>
@@ -381,14 +391,16 @@ export default function AIStrategyPage() {
           <div className="flex flex-col gap-8">
             {DOMAIN_KEYS.map(key => {
               const domainData = trajectory?.domains?.find(d => d.domain === key);
+              // Use per-domain target if available from strategy, otherwise fall back to overall
+              const perDomainTarget = strategyData?.domainTargets?.[key] ?? ambitionGap.ambitionTargetScore;
               return (
                 <RoadmapBar
                   key={key}
                   label={DOMAIN_LABELS[key as CapabilityKey]}
                   currentScore={domainData?.currentValue ?? null}
-                  targetScore={ambitionGap.ambitionTargetScore}
-                  status={domainData?.currentValue !== null && ambitionGap.ambitionTargetScore !== null
-                    ? (domainData!.currentValue! >= ambitionGap.ambitionTargetScore ? "aligned" : domainData!.currentValue! >= ambitionGap.ambitionTargetScore - 15 ? "partial" : "gap")
+                  targetScore={perDomainTarget}
+                  status={domainData?.currentValue !== null && perDomainTarget !== null
+                    ? (domainData!.currentValue! >= perDomainTarget ? "aligned" : domainData!.currentValue! >= perDomainTarget - 15 ? "partial" : "gap")
                     : "unknown"}
                 />
               );
@@ -433,36 +445,6 @@ export default function AIStrategyPage() {
           </div>
         </div>
       )}
-
-      {/* Set target dialog */}
-      <Dialog open={showTargetDialog} onOpenChange={setShowTargetDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Set ambition target</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block text-foreground">Target level (0-10)</label>
-              <Input placeholder="e.g. 4.0" value={targetScore} onChange={e => setTargetScore(e.target.value)} />
-              <p className="text-xs mt-1 text-muted-foreground">Level 3 = Capable · Level 4 = Strong · Level 5 = AI Ready</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block text-foreground">Target date</label>
-              <Input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block text-foreground">Label (optional)</label>
-              <Input placeholder="e.g. December 2026" value={targetLabel} onChange={e => setTargetLabel(e.target.value)} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setShowTargetDialog(false)}>Cancel</Button>
-            <Button disabled={setAmbitionTarget.isPending} onClick={handleSaveTarget} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {setAmbitionTarget.isPending ? "Saving…" : "Save target"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -22,7 +22,7 @@ import {
 import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
-import { getDb } from "../db";
+import { getDb, getUserRoleKeys } from "../db";
 import { auditLogs, ailOrgContext } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
@@ -267,6 +267,105 @@ export const intelligenceRouter = router({
         await db.insert(ailOrgContext).values({
           id: nanoid(),
           tenantId: ctx.user.tenantId,
+          ambitionTargetScore: input.ambitionTargetScore,
+          ambitionTargetDate: input.ambitionTargetDate ?? null,
+          ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+        });
+      }
+      return { success: true };
+    }),
+
+  /**
+   * Get the full AI People Strategy (ambition levels + domain targets + narrative).
+   */
+  getStrategy: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({
+      businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
+      peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
+      domainTargetsJson: ailOrgContext.domainTargetsJson,
+      strategyNarrative: ailOrgContext.strategyNarrative,
+      strategySavedAt: ailOrgContext.strategySavedAt,
+      ambitionTargetScore: ailOrgContext.ambitionTargetScore,
+      ambitionTargetDate: ailOrgContext.ambitionTargetDate,
+      ambitionTargetLabel: ailOrgContext.ambitionTargetLabel,
+    }).from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const row = rows[0] ?? null;
+    if (!row) return {
+      configured: false, businessAmbitionLevel: null, peopleAmbitionLevel: null,
+      domainTargets: null, strategyNarrative: null, strategySavedAt: null,
+      ambitionTargetScore: null, ambitionTargetDate: null, ambitionTargetLabel: null,
+    };
+    let domainTargets: Record<string, number> | null = null;
+    if (row.domainTargetsJson) {
+      try { domainTargets = typeof row.domainTargetsJson === "string" ? JSON.parse(row.domainTargetsJson) : row.domainTargetsJson as Record<string, number>; } catch {}
+    }
+    return {
+      configured: !!(row.businessAmbitionLevel && row.peopleAmbitionLevel),
+      businessAmbitionLevel: row.businessAmbitionLevel,
+      peopleAmbitionLevel: row.peopleAmbitionLevel,
+      domainTargets,
+      strategyNarrative: row.strategyNarrative,
+      strategySavedAt: row.strategySavedAt,
+      ambitionTargetScore: row.ambitionTargetScore,
+      ambitionTargetDate: row.ambitionTargetDate,
+      ambitionTargetLabel: row.ambitionTargetLabel,
+    };
+  }),
+
+  /**
+   * Save the full AI People Strategy.
+   */
+  saveStrategy: protectedProcedure
+    .input(z.object({
+      businessAmbitionLevel: z.number().int().min(1).max(5),
+      peopleAmbitionLevel: z.number().int().min(1).max(5),
+      domainTargets: z.record(z.string(), z.number().min(0).max(100)),
+      strategyNarrative: z.string().max(2000).optional(),
+      ambitionTargetScore: z.number().int().min(0).max(100),
+      ambitionTargetDate: z.string().max(10).nullable().optional(),
+      ambitionTargetLabel: z.string().max(200).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const domainTargetsJson = JSON.stringify(input.domainTargets);
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (existing.length > 0) {
+        await db.update(ailOrgContext).set({
+          businessAmbitionLevel: input.businessAmbitionLevel,
+          peopleAmbitionLevel: input.peopleAmbitionLevel,
+          domainTargetsJson,
+          strategyNarrative: input.strategyNarrative ?? null,
+          strategySavedAt: new Date(),
+          ambitionTargetScore: input.ambitionTargetScore,
+          ambitionTargetDate: input.ambitionTargetDate ?? null,
+          ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+          updatedAt: new Date(),
+        }).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      } else {
+        await db.insert(ailOrgContext).values({
+          id: nanoid(),
+          tenantId: ctx.user.tenantId,
+          businessAmbitionLevel: input.businessAmbitionLevel,
+          peopleAmbitionLevel: input.peopleAmbitionLevel,
+          domainTargetsJson,
+          strategyNarrative: input.strategyNarrative ?? null,
+          strategySavedAt: new Date(),
           ambitionTargetScore: input.ambitionTargetScore,
           ambitionTargetDate: input.ambitionTargetDate ?? null,
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,

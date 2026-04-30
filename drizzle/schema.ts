@@ -857,6 +857,12 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   ambitionTargetScore: int("ambition_target_score"),                                       // 0-100 raw (displayed as 0-10 Peakon); org's readiness ambition level
   ambitionTargetDate: varchar("ambition_target_date", { length: 10 }),                    // ISO date string YYYY-MM-DD
   ambitionTargetLabel: varchar("ambition_target_label", { length: 200 }),                 // e.g. "Ready to deploy AI across all HR workflows"
+  // Phase 4: Business & People Ambition Strategy Builder
+  businessAmbitionLevel: int("business_ambition_level"),                                    // 1-5: how aggressively org adopts AI in business
+  peopleAmbitionLevel: int("people_ambition_level"),                                       // 1-5: how much HR people lead vs follow AI adoption
+  domainTargetsJson: text("domain_targets_json"),                                          // JSON: { ai_interaction: 65, ... } stored as 0-100 raw
+  strategyNarrative: text("strategy_narrative"),                                           // CPO free-text strategic intent
+  strategySavedAt: timestamp("strategy_saved_at"),                                         // when strategy was last saved
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
