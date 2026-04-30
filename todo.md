@@ -1905,4 +1905,4 @@
 - [x] PM-04: Inline manager select per row (dropdown of all users with manager role, saves on change)
 - [x] PM-05: Build ManageTeamSheet — slide-out panel per manager showing their current members with remove button, plus add-by-email form
 - [x] PM-06: Wire /admin/people route and add nav link in AppShell under ADMIN section
-- [ ] PM-07: Checkpoint and test
+- [x] PM-07: Checkpoint and test

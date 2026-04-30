@@ -423,24 +423,25 @@ export default function LeaderDashboardV2() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Function snapshot</p>
           <p className="text-base font-medium text-foreground leading-relaxed mb-4">{heroNarrative.text}</p>
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/dashboard/strategic">
+            <Link href="/ai-strategy">
               <Button size="sm">View strategic roadmap</Button>
             </Link>
-            {heroNarrative.cta && (
-              <Link href={heroNarrative.cta.route}>
-                <Button size="sm" variant="outline">{heroNarrative.cta.label}</Button>
-              </Link>
-            )}
           </div>
         </div>
       )}
 
-      {/* ── 4 KPI tiles ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── 5 KPI tiles ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"} sub="Capability level" />
         <KpiCard label="AI Ready" value={`${aiReadyPct}%`} sub={`${main.ratingCounts.ai_ready ?? 0} of ${main.assessedCount}`} accent="#22c55e" />
         <KpiCard label="Capability gaps" value={atRiskCount} sub="Need urgent support" accent={atRiskCount > 0 ? "#ef4444" : undefined} />
         <KpiCard label="Assessment coverage" value={`${assessedPct}%`} sub={`${main.assessedCount} of ${main.totalHeadcount}`} />
+        <KpiCard
+          label="Strategy gap score"
+          value={ambitionGap?.configured ? (ambitionGap.gapRaw !== null ? (ambitionGap.gapRaw > 0 ? `+${(ambitionGap.gapRaw / 10).toFixed(1)}` : (ambitionGap.gapRaw / 10).toFixed(1)) : "—") : "—"}
+          sub={ambitionGap?.configured ? (ambitionGap.ambitionTargetLabel ?? "vs. target") : "No target set"}
+          accent={ambitionGap?.gapRaw != null ? (ambitionGap.gapRaw > 10 ? "#ef4444" : ambitionGap.gapRaw > 0 ? "#f59e0b" : "#22c55e") : undefined}
+        />
       </div>
 
       {/* ── Two-column: Level distribution + Domain breakdown ── */}
