@@ -15,6 +15,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, LabelList,
+} from "recharts";
 import { DOMAIN_COLOURS as BRAND_DOMAIN_COLOURS, LEVEL_COLOURS } from "@shared/brand";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -398,11 +401,7 @@ export default function LeaderDashboardV2() {
               {ROLE_FAMILY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Link href="/dashboard">
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs">
-              <UserCircle className="w-3.5 h-3.5" />My profile
-            </Button>
-          </Link>
+
         </div>
       </div>
 
@@ -518,28 +517,80 @@ export default function LeaderDashboardV2() {
         </div>
       )}
 
-      {/* ── Ambition gap ── */}
-      {ambitionGap?.configured && ambitionGap.gapRaw !== null && (
-        <div className="bg-card rounded-xl border border-border p-5">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10">
-              <Target className="w-5 h-5 text-primary" />
+      {/* ── Strategy Gap Chart ── */}
+      {ambitionGap?.configured && ambitionGap.functionAvgRaw !== null && ambitionGap.ambitionTargetScore !== null && (() => {
+        const current = ambitionGap.functionAvgRaw! / 10;
+        const target = ambitionGap.ambitionTargetScore! / 10;
+        const gap = target - current;
+        const gapColour = gap > 1 ? "#ef4444" : gap > 0 ? "#f59e0b" : "#22c55e";
+        const domainChartData = (main.domainDistribution ?? []).map((d: any) => ({
+          name: d.domainName.replace("AI ", "").replace("Workforce ", ""),
+          current: d.avgScore !== null ? +(d.avgScore / 10).toFixed(1) : 0,
+          target: +target.toFixed(1),
+          colour: BRAND_DOMAIN_COLOURS[d.domain as keyof typeof BRAND_DOMAIN_COLOURS] ?? "#6366f1",
+        }));
+        return (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Strategy capability gap</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Current vs AI ambition target{ambitionGap.ambitionTargetLabel ? ` · Goal: "${ambitionGap.ambitionTargetLabel}"` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-5">
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Current</p>
+                  <p className="text-xl font-bold text-foreground">{current.toFixed(1)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Target</p>
+                  <p className="text-xl font-bold text-primary">{target.toFixed(1)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Gap</p>
+                  <p className="text-xl font-bold" style={{ color: gapColour }}>{gap > 0 ? `+${gap.toFixed(1)}` : gap.toFixed(1)}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">AI ambition gap</p>
-              <p className="text-sm font-medium text-foreground mb-0.5">
-                Current {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} vs target {ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}
-              </p>
-              {ambitionGap.ambitionTargetLabel && (
-                <p className="text-xs text-muted-foreground">Goal: "{ambitionGap.ambitionTargetLabel}"</p>
-              )}
-              <Link href="/dashboard/strategic">
-                <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-2 inline-block">View strategic roadmap →</span>
+            <div className="h-52 mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={domainChartData} margin={{ top: 12, right: 16, left: -20, bottom: 0 }} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} ticks={[0,2,4,6,8,10]} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "var(--foreground)", fontWeight: 600 }}
+                    formatter={(value: number, name: string) => [value.toFixed(1), name === "current" ? "Current score" : "Target"]}
+                  />
+                  <ReferenceLine y={target} stroke="var(--primary)" strokeDasharray="5 4" strokeWidth={1.5}
+                    label={{ value: `Target ${target.toFixed(1)}`, position: "insideTopRight", fontSize: 10, fill: "var(--primary)", dy: -6 }} />
+                  <Bar dataKey="current" name="current" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                    {domainChartData.map((entry: any, index: number) => (
+                      <Cell key={index} fill={entry.colour} fillOpacity={0.85} />
+                    ))}
+                    <LabelList dataKey="current" position="top" style={{ fontSize: 10, fill: "var(--muted-foreground)" }} formatter={(v: number) => v.toFixed(1)} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-4 mt-2 justify-end">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm" style={{ background: "var(--primary)", opacity: 0.7 }} />
+                <span className="text-xs text-muted-foreground">Domain score</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-0" style={{ borderTop: "2px dashed var(--primary)" }} />
+                <span className="text-xs text-muted-foreground">Target {target.toFixed(1)}</span>
+              </div>
+              <Link href="/ai-strategy">
+                <span className="text-xs font-semibold text-primary hover:text-primary/80">View roadmap →</span>
               </Link>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );
