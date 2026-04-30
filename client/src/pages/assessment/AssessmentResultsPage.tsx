@@ -528,32 +528,45 @@ function DomainCard({
         />
       </div>
 
-      {/* Sub-domain signal dots */}
+      {/* Sub-domain mini heatmap */}
       {topSignals.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border/60">
-          {topSignals.map(sig => {
-            const dotScore = sig.normScore;
-            const dotColor = sig.isRisk
-              ? dotScore >= 70 ? "#22c55e" : dotScore >= 50 ? "#f59e0b" : "#ef4444"
-              : colour;
-            const opacity = dotScore >= 70 ? "ff" : dotScore >= 50 ? "bb" : "77";
-            const bg = sig.isRisk ? `${dotColor}22` : `${colour}18`;
-            return (
-              <span
-                key={sig.key}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
-                style={{ backgroundColor: bg, border: `1px solid ${dotColor}${opacity}`, color: dotColor }}
-                title={`${sig.label}: ${dotScore}/100`}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: dotColor }}
-                />
-                {sig.label}
-                <span className="font-bold ml-0.5">{dotScore}</span>
-              </span>
-            );
-          })}
+        <div className="pt-3 border-t border-border/60">
+          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${topSignals.length}, 1fr)` }}>
+            {topSignals.map(sig => {
+              const s = sig.normScore;
+              // Colour: green (high) → amber (mid) → red (low), risk signals inverted
+              const cellColor = s >= 80 ? "#22c55e"
+                : s >= 65 ? "#4ade80"
+                : s >= 50 ? "#f59e0b"
+                : s >= 35 ? "#f97316"
+                : "#ef4444";
+              return (
+                <div
+                  key={sig.key}
+                  className="flex flex-col items-center gap-1"
+                  title={`${sig.label}: ${s}/100`}
+                >
+                  <div
+                    className="w-full rounded-md flex items-center justify-center text-[11px] font-bold"
+                    style={{
+                      height: "32px",
+                      backgroundColor: `${cellColor}28`,
+                      border: `1px solid ${cellColor}55`,
+                      color: cellColor,
+                    }}
+                  >
+                    {s}
+                  </div>
+                  <span
+                    className="text-[9px] text-muted-foreground text-center leading-tight w-full truncate px-0.5"
+                    title={sig.label}
+                  >
+                    {sig.label.replace(" Risk", "\u00a0⚠").replace("AI ", "")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </button>
