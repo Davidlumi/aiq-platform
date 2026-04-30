@@ -418,7 +418,7 @@ export default function LearnerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-4xl">
+      <div className="space-y-6 max-w-4xl">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-40" />
         <div className="grid lg:grid-cols-2 gap-4">
@@ -433,7 +433,7 @@ export default function LearnerDashboard() {
   const hasAssessment = (data?.totalAssessmentsCompleted ?? 0) > 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl">
 
       {/* -- Page header -- */}
       <div className="flex items-start justify-between">

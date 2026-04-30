@@ -237,7 +237,7 @@ export default function AIStrategyPage() {
 
   if (isLoading) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+      <div className="max-w-4xl mx-auto space-y-5">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-64 w-full rounded-xl" />
         <Skeleton className="h-48 w-full rounded-xl" />
@@ -246,7 +246,7 @@ export default function AIStrategyPage() {
   }
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+    <div className="max-w-4xl mx-auto space-y-5">
 
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-border">

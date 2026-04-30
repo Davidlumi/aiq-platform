@@ -456,7 +456,7 @@ export default function ReportsPage() {
   const activeJob = activeJobId ? jobs.find(j => j.id === activeJobId) : jobs[0];
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Reports</h1>
         <p className="text-sm text-muted-foreground mt-1">

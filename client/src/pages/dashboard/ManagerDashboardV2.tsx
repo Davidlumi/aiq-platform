@@ -341,13 +341,13 @@ export default function ManagerDashboardV2() {
 
   if (isLoading) return <ManagerDashboardSkeleton />;
   if (!data) return (
-    <div className="px-5 py-6 md:px-8">
+    <div className="">
       <EmptyState title="No team data" description="You don't have any team members assigned yet." />
     </div>
   );
 
   return (
-    <div className="px-5 py-6 md:px-8 space-y-6">
+    <div className="space-y-6">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">

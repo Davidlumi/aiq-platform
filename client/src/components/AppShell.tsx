@@ -525,7 +525,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               background: 'oklch(13% 0.035 220 / 0.16)',
             }}
           />
-          <div key={location} className="aiq-fade-in relative z-10" style={{ animationDuration: '0.2s' }}>
+          <div key={location} className="aiq-fade-in relative z-10 px-6 md:px-10 py-6" style={{ animationDuration: '0.2s' }}>
             {children}
           </div>
         </main>

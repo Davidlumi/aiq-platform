@@ -160,7 +160,7 @@ export default function AuditLogPage() {
 
   if (error?.data?.code === 'FORBIDDEN') {
     return (
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Shield className="w-12 h-12 text-muted-foreground mb-4" />
           <h2 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h2>
@@ -172,7 +172,7 @@ export default function AuditLogPage() {
     );
   }
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>

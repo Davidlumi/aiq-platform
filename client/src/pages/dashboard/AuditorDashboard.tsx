@@ -35,7 +35,7 @@ export default function AuditorDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28" />)}
@@ -68,7 +68,7 @@ export default function AuditorDashboard() {
   );
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl">
+    <div className="space-y-6 max-w-7xl">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Audit Intelligence</h1>

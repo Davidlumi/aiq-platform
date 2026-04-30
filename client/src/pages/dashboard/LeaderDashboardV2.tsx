@@ -379,7 +379,7 @@ export default function LeaderDashboardV2() {
 
   if (isLoading) return <LeaderDashboardSkeleton />;
   if (!main) return (
-    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <EmptyState title="No function data" description="No assessment data available for your function yet." />
     </div>
   );
@@ -389,7 +389,7 @@ export default function LeaderDashboardV2() {
   const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
 
   return (
-    <div className="px-5 py-6 md:px-8 space-y-6">
+    <div className="space-y-6">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">

@@ -150,7 +150,7 @@ export default function ContentCMSPage() {
   const contentTypes = Array.from(new Set(allItems.map((i: any) => i.contentType as string))).sort();
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

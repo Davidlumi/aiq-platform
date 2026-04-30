@@ -277,7 +277,7 @@ export default function OrgContextPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 max-w-3xl">
+      <div className="space-y-4 max-w-3xl">
         <div className="space-y-2">
           <div className="h-7 w-48 rounded-md aiq-shimmer" />
           <div className="h-3.5 w-72 rounded-md aiq-shimmer" />
@@ -296,7 +296,7 @@ export default function OrgContextPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-3xl">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Organisation Context</h1>

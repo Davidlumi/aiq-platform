@@ -109,7 +109,7 @@ export default function UsersPage() {
   const totalPages = 1; // single page for now
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

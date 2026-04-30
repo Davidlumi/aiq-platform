@@ -224,7 +224,7 @@ export default function TeamDashboardPage() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Nudge dialog */}
       {nudgeMember && (
         <NudgeDialog member={nudgeMember} onClose={() => setNudgeMember(null)} />

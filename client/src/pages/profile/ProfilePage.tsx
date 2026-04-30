@@ -81,7 +81,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-3xl mx-auto">
+      <div className="space-y-6 max-w-3xl mx-auto">
         <ProfileHeaderSkeleton />
         <CardSkeleton rows={3} />
         <CardSkeleton rows={4} />
@@ -95,7 +95,7 @@ export default function ProfilePage() {
     : "?";
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="aiq-h1 text-foreground">My Profile</h1>

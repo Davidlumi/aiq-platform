@@ -44,7 +44,7 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-28" />)}
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const activity = data?.recentActivity ?? [];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl">
+    <div className="space-y-6 max-w-7xl">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Platform Administration</h1>

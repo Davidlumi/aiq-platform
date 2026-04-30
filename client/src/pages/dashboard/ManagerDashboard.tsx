@@ -626,7 +626,7 @@ export default function ManagerDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-20 w-full" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -673,7 +673,7 @@ export default function ManagerDashboard() {
         <MemberDetailPanel member={selectedMember} onClose={() => setSelectedMember(null)} />
       )}
 
-      <div className="p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         {/* Page header */}
         <div className="flex items-start justify-between">
           <div>

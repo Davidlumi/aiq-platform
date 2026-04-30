@@ -149,7 +149,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
   if (isLoading) return <IndividualDashboardSkeleton />;
   if (!data) return (
-    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <EmptyState
         title="No data available"
         description="Complete an assessment to see your capability dashboard."
@@ -183,7 +183,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     : data.user.firstName;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
 
       {/* -- Page header -- */}
       <div className="flex items-center justify-between pb-3 border-b border-border">

@@ -333,7 +333,7 @@ export default function LearningPlanPage() {
 
   if (isLoading) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-4">
         <Skeleton className="h-16 rounded-2xl" />
         <Skeleton className="h-14 rounded-xl" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -345,7 +345,7 @@ export default function LearningPlanPage() {
 
   if (!plan) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center py-20 space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
             <BookOpen className="h-8 w-8 text-primary" />
@@ -365,7 +365,7 @@ export default function LearningPlanPage() {
   }
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
 
       {/* ── Page header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

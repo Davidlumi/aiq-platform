@@ -405,7 +405,7 @@ export default function HRDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-7xl">
+      <div className="space-y-6 max-w-7xl">
         <Skeleton className="h-10 w-72" />
         <Skeleton className="h-32 w-full" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -432,7 +432,7 @@ export default function HRDashboard() {
   // No assessments yet - onboarding empty state
   if (total === 0) {
     return (
-      <div className="p-6 max-w-3xl">
+      <div className="max-w-3xl">
         <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <BarChart3 className="w-8 h-8 text-primary" />
@@ -487,7 +487,7 @@ export default function HRDashboard() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="p-6 space-y-8 max-w-7xl">
+    <div className="space-y-8 max-w-7xl">
 
       {/* -- Page header -- */}
       <div className="flex items-start justify-between">

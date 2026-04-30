@@ -87,7 +87,7 @@ export default function ConversationPromptsPage() {
   const { data, isLoading } = trpc.dashboardV2.manager.conversationPrompts.useQuery();
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto space-y-5">
 
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-border">

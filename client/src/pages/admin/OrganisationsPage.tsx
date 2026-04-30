@@ -352,14 +352,14 @@ export default function OrganisationsPage() {
 
   if (selectedOrgId) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <OrgDetailPanel orgId={selectedOrgId} onBack={() => setSelectedOrgId(null)} />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Organisations</h1>

@@ -187,7 +187,7 @@ export default function ContentLibraryPage() {
   const completedCount = 0; // progress tracked separately via learning plan
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

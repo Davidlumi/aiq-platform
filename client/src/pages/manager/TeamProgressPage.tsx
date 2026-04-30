@@ -69,7 +69,7 @@ export default function TeamProgressPage() {
   const noActivity = members.filter(m => !m.plan || ((m.streak?.currentStreak ?? 0) === 0)).length;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+    <div className="max-w-4xl mx-auto space-y-5">
 
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-border">

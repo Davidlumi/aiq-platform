@@ -22,7 +22,7 @@ export default function SimulationListPage() {
   const completedIds = new Set(((history as any[]) ?? []).filter((h: any) => h.state === "completed").map((h: any) => h.simulationId));
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Simulations</h1>
         <p className="text-muted-foreground mt-1">

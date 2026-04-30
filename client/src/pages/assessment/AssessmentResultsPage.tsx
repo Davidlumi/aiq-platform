@@ -590,7 +590,7 @@ function DomainSheet({
 
 function ResultsSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
         <Skeleton className="h-24 w-24 rounded-full" />
         <div className="space-y-2 flex-1">
@@ -713,7 +713,7 @@ export default function AssessmentResultsPage() {
   const inProgressSession = allSessions?.find((s: any) => s.state === "in_progress" && s.id !== sessionId);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* History dropdown + in-progress banner */}
       <div className="space-y-3">
         {allSessions && allSessions.length > 1 && (

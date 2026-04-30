@@ -2000,7 +2000,7 @@ export default function ModulePlayerPage() {
 
   if (!mod) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto text-center py-16">
+      <div className="max-w-3xl mx-auto text-center py-16">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-40" />
         <p className="font-semibold mb-2">Module not found</p>
         <Button variant="outline" onClick={handleBack} className="gap-2">
@@ -2016,7 +2016,7 @@ export default function ModulePlayerPage() {
   const ModalIcon = modal.icon;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-foreground hover:text-foreground/80" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />Learning Plan
       </Button>

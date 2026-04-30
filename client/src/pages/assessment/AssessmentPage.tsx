@@ -317,7 +317,7 @@ export default function AssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 max-w-3xl">
+      <div className="space-y-4 max-w-3xl">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
         <Skeleton className="h-40 w-full" />

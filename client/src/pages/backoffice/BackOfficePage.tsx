@@ -1785,7 +1785,7 @@ export default function BackOfficePage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

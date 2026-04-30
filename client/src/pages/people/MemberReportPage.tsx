@@ -109,7 +109,7 @@ export default function MemberReportPage() {
 
   if (!userId) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <p className="text-sm text-muted-foreground">No user ID provided.</p>
       </div>
     );
@@ -117,7 +117,7 @@ export default function MemberReportPage() {
 
   if (isLoading) {
     return (
-      <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-4">
+      <div className="max-w-4xl mx-auto space-y-4">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-48 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
@@ -128,7 +128,7 @@ export default function MemberReportPage() {
   if (error || !data) {
     const isForbidden = (error as any)?.data?.code === "FORBIDDEN";
     return (
-      <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <Link href="/people"><Button variant="ghost" size="sm" className="gap-1.5 mb-4"><ArrowLeft className="w-3.5 h-3.5" />Back</Button></Link>
         <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: "oklch(18% 0.040 27)", border: "0.5px solid oklch(30% 0.090 27)" }}>
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#F87171" }} />
@@ -145,7 +145,7 @@ export default function MemberReportPage() {
   const chipStyle = level !== null ? getLevelChipStyle(level) : null;
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-4xl mx-auto space-y-5">
+    <div className="max-w-4xl mx-auto space-y-5">
 
       {/* Back nav */}
       <div className="flex items-center justify-between">
