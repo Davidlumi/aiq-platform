@@ -24,6 +24,7 @@ import {
   Users, Search, Filter, UserCog, X, Plus, Loader2,
   ChevronLeft, ChevronRight, Building2, UserCheck,
 } from "lucide-react";
+import PersonProfileSheet from "@/components/PersonProfileSheet";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -275,6 +276,8 @@ export default function PeopleManagementPage() {
 
   // Manage Team sheet state
   const [teamSheetManager, setTeamSheetManager] = useState<{ id: string; name: string; email: string } | null>(null);
+  // Person profile sheet state
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
   // Local overrides for optimistic inline edits
   const [localOverrides, setLocalOverrides] = useState<Record<string, { roleFamily?: string | null; managerId?: string | null; managerName?: string | null }>>({});
@@ -431,10 +434,17 @@ export default function PeopleManagementPage() {
                       const fullName = `${u.firstName} ${u.lastName}`.trim();
                       const isManager = u.roleKeys.includes("manager");
                       return (
-                        <tr key={u.id} className="hover:bg-background/40 transition-colors">
-                          {/* Person */}
+                        <tr
+                          key={u.id}
+                          className="hover:bg-background/40 transition-colors"
+                        >
+                          {/* Person — click name/avatar to open profile */}
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              className="flex items-center gap-3 text-left w-full group"
+                              onClick={() => setSelectedPersonId(u.id)}
+                            >
                               <Avatar className="w-8 h-8 shrink-0">
                                 <AvatarFallback
                                   style={{ backgroundColor: avatarColour(fullName), color: "#fff" }}
@@ -444,10 +454,10 @@ export default function PeopleManagementPage() {
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="font-medium text-foreground truncate">{fullName}</p>
+                                <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">{fullName}</p>
                                 <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                               </div>
-                            </div>
+                            </button>
                           </td>
                           {/* Platform Role */}
                           <td className="px-4 py-3">
@@ -541,6 +551,11 @@ export default function PeopleManagementPage() {
         <ManageTeamSheet
           manager={teamSheetManager}
           onClose={() => setTeamSheetManager(null)}
+        />
+        {/* Person Profile Sheet */}
+        <PersonProfileSheet
+          userId={selectedPersonId}
+          onClose={() => setSelectedPersonId(null)}
         />
       </div>
     </TooltipProvider>

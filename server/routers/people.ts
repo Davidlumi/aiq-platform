@@ -264,11 +264,15 @@ export const peopleRouter = router({
               : (score[0].scoreBreakdownJson ?? {})) as Record<string, unknown>;
           } catch {}
 
-          const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, number>;
+          const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, unknown>;
           const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string }> = {};
           for (const [key, val] of Object.entries(rawCapScores)) {
+            // val may be a plain number OR an object {band, score, signalCount} (0-100 scale)
+            const rawScore = typeof val === "object" && val !== null && "score" in val
+              ? (val as { score: number }).score / 10
+              : typeof val === "number" ? val : 0;
             enrichedCapScores[key] = {
-              score: val as number,
+              score: rawScore,
               displayName: CAPABILITY_DISPLAY[key] ?? key,
               colour: CAPABILITY_COLOURS[key] ?? "#888888",
             };
@@ -281,7 +285,7 @@ export const peopleRouter = router({
           return {
             sessionId: s.id,
             completedAt: s.completedAt ? Number(s.completedAt) : null,
-            overallScore: parseFloat(String(score[0].overallScore)),
+            overallScore: parseFloat(String(score[0].overallScore)) / 10,
             readinessState: readiness.state ?? "unknown",
             readinessLabel: readiness.label ?? "Unknown",
             readinessDescription: readiness.description ?? null,
