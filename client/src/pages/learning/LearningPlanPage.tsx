@@ -13,11 +13,10 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DownloadPdfButton } from "@/components/DownloadPdfButton";
 import { toast } from "sonner";
 import {
   BookOpen, FileText, HelpCircle, Layers, Video, MessageSquare,
-  Users, Clock, CheckCircle2, Lock, Play, RotateCcw,
+  Users, Clock, CheckCircle2, Lock, Play,
   Brain, BarChart3, Target, Sparkles, ArrowRight,
   ChevronDown, ChevronUp, TrendingUp,
 } from "lucide-react";
@@ -125,12 +124,9 @@ function ModuleRow({
 
       {/* Action */}
       {isCompleted ? (
-        <button
-          onClick={onStart}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted flex-shrink-0"
-        >
-          <RotateCcw className="h-3 w-3" />Review
-        </button>
+        <span className="flex items-center gap-1 text-xs font-medium text-[#047857] flex-shrink-0">
+            <CheckCircle2 className="h-3.5 w-3.5" />Completed
+          </span>
       ) : isLocked ? null : (
         <button
           onClick={onStart}
@@ -221,7 +217,7 @@ function DomainCard({
                 />
               </div>
               <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                {completedCount}/{totalCount}
+                {completedCount} of {totalCount} modules
               </span>
             </div>
           </div>
@@ -229,12 +225,9 @@ function DomainCard({
           {/* Score */}
           <div className="flex-shrink-0 text-right ml-2">
             {domainScore !== null && domainScore > 0 ? (
-              <>
-                <p className="text-xl font-bold tabular-nums" style={{ color: colour }}>
-                  {(domainScore / 10).toFixed(1)}
-                </p>
-                <p className="text-xs text-muted-foreground">/10</p>
-              </>
+              <p className="text-xl font-bold tabular-nums" style={{ color: colour }}>
+                {(domainScore / 10).toFixed(1)}
+              </p>
             ) : (
               <p className="text-xs text-muted-foreground mt-1">—</p>
             )}
@@ -406,7 +399,7 @@ export default function LearningPlanPage() {
           </div>
         </div>
 
-        <DownloadPdfButton type="learning_plan" label="Download PDF" variant="outline" size="sm" className="shrink-0 text-foreground border-border hover:bg-accent" />
+
       </div>
 
       {/* ── Continue Learning strip ──────────────────────────────────────────── */}
