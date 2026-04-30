@@ -188,15 +188,15 @@ function ModuleProgressBar({
 
       {/* Step indicators */}
       {total > 1 && (
-        <div className="flex items-start gap-0.5 overflow-x-auto pb-0.5 scrollbar-none">
+        <div className="flex items-start gap-0.5 overflow-x-auto pt-1 pb-1 scrollbar-none">
           {steps.map((step, i) => {
             const isDone = completed || i < currentStepIdx;
             const isCurrent = !completed && i === currentStepIdx;
             return (
               <div key={step.id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
                 <div className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
-                  isDone ? "bg-primary" : isCurrent ? "bg-primary/20 ring-2 ring-primary ring-offset-1" : "bg-muted"
+                  "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                  isDone ? "bg-primary" : isCurrent ? "bg-primary/20 ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-muted"
                 )}>
                   {isDone ? (
                     <CheckCircle2 className="h-3 w-3 text-white" />
@@ -1913,9 +1913,11 @@ function CompletionScreen({
         </div>
       )}
 
-      <Button className="gap-2" onClick={onContinue}>
-        <ArrowLeft className="h-4 w-4" />Back to Learning Plan
-      </Button>
+      <div className="flex flex-col gap-3 pt-2">
+        <Button className="w-full gap-2" onClick={onContinue}>
+          <ArrowLeft className="h-4 w-4" />Back to Learning Plan
+        </Button>
+      </div>
     </div>
   );
 }
@@ -2015,7 +2017,7 @@ export default function ModulePlayerPage() {
 
   return (
     <div className="px-5 py-6 md:px-8 max-w-3xl mx-auto space-y-6">
-      <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground" onClick={handleBack}>
+      <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-foreground hover:text-foreground/80" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />Learning Plan
       </Button>
 
@@ -2118,7 +2120,7 @@ export default function ModulePlayerPage() {
             currentStepIdx={progressSteps.length - 1}
             completed={true}
           />
-          <div className="p-5 rounded-2xl border border-border bg-card">
+          <div className="p-5 pt-8 rounded-2xl border border-border bg-card">
           <CompletionScreen
             score={finalScore}
             title={mod.title}
