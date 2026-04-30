@@ -713,9 +713,9 @@ export default function AssessmentResultsPage() {
   const inProgressSession = allSessions?.find((s: any) => s.state === "in_progress" && s.id !== sessionId);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-8">
       {/* History dropdown + in-progress banner */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {allSessions && allSessions.length > 1 && (
           <HistoryDropdown sessions={allSessions} currentSessionId={sessionId!} />
         )}
@@ -723,9 +723,9 @@ export default function AssessmentResultsPage() {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-8 mb-2">
         {/* Score ring */}
-        <div className="relative w-24 h-24 shrink-0">
+        <div className="relative w-28 h-28 shrink-0">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
             <circle cx="50" cy="50" r="38" fill="none" stroke="oklch(0.30 0.05 264)" strokeWidth="10" />
             <circle
@@ -753,7 +753,7 @@ export default function AssessmentResultsPage() {
               {readinessConfig.label}
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">Your AI Capability Profile</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Your AI Capability Profile</h1>
           {completedAt && (
             <p className="text-sm text-muted-foreground mb-2">Completed {completedAt}</p>
           )}
@@ -786,7 +786,7 @@ export default function AssessmentResultsPage() {
 
       {/* Progress vs previous assessment */}
       {prevSession && (
-        <div className="rounded-2xl border border-border bg-card p-5 mb-8" style={{ boxShadow: "var(--card-shadow)" }}>
+        <div className="rounded-2xl border border-border bg-card p-7 mb-0" style={{ boxShadow: "var(--card-shadow)" }}>
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-4 h-4 text-primary shrink-0" />
             <h2 className="text-xs font-semibold text-primary uppercase tracking-widest">Progress Since Last Assessment</h2>
@@ -798,7 +798,7 @@ export default function AssessmentResultsPage() {
           </div>
 
           {/* Overall delta */}
-          <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-background/40 border border-border">
+          <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-background/40 border border-border">
             <div className="flex-1">
               <p className="text-xs text-muted-foreground mb-0.5">Overall Score</p>
               <div className="flex items-baseline gap-2">
@@ -821,12 +821,12 @@ export default function AssessmentResultsPage() {
           </div>
 
           {/* Per-domain deltas */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {domains.map(domain => {
               const prev = prevSession.capabilityScores[domain.key];
               const delta = prev !== undefined ? domain.score - prev : null;
               return (
-                <div key={domain.key} className="p-2.5 rounded-lg bg-background/40 border border-border">
+                <div key={domain.key} className="p-4 rounded-lg bg-background/40 border border-border">
                   <p className="text-[10px] text-muted-foreground truncate mb-1" title={domain.displayName}>{domain.displayName}</p>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold text-foreground tabular-nums">{Math.round(domain.score)}</span>
@@ -852,13 +852,13 @@ export default function AssessmentResultsPage() {
       {/* Spider chart */}
       {domains.length > 0 && (
         <div
-          className="rounded-2xl border border-border bg-card p-6 mb-8 aiq-chart-mount"
+          className="rounded-2xl border border-border bg-card p-8 aiq-chart-mount"
           style={{ boxShadow: "var(--card-shadow)" }}
         >
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
             Capability Profile
           </h2>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground mb-6">
             Your scores across all {domains.length} capability domains
           </p>
           <SpiderChart domains={domains} />
@@ -868,10 +868,10 @@ export default function AssessmentResultsPage() {
       {/* Domain cards */}
       {domains.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
             Domain Scores
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {domains.map(domain => {
               const matrix = (competenceConfidenceMatrix as any[])?.find((m: any) => m.domain === domain.key);
               return (
