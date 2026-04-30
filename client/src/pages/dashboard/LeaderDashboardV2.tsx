@@ -49,13 +49,75 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string |
   );
 }
 
-function LevelLegendRow({ level, count, pct }: { level: number; count: number; pct: number }) {
-  const s = getLevelChipStyle(level);
+// Heatmap-aligned colours for each readiness level (5 → 1)
+const LEVEL_DONUT_COLOURS: Record<number, { fill: string; text: string }> = {
+  5: { fill: "#22c55e", text: "#86efac" },   // AI Ready — green
+  4: { fill: "#10b981", text: "#6ee7b7" },   // Strong — teal
+  3: { fill: "#f59e0b", text: "#fde68a" },   // Capable — amber
+  2: { fill: "#f97316", text: "#fdba74" },   // Developing — orange
+  1: { fill: "#ef4444", text: "#fca5a5" },   // Emerging/Gap — red
+};
+
+function ReadinessDonut({ distribution }: { distribution: Array<{ level: number; count: number; pct: number }> }) {
+  const R = 54; // outer radius
+  const r = 34; // inner radius
+  const cx = 70; const cy = 70;
+  const total = distribution.reduce((s, d) => s + d.count, 0);
+  if (total === 0) return null;
+
+  // Build arc paths
+  let cumAngle = -Math.PI / 2; // start at top
+  const slices = distribution
+    .filter(d => d.count > 0)
+    .map(d => {
+      const angle = (d.count / total) * 2 * Math.PI;
+      const startAngle = cumAngle;
+      cumAngle += angle;
+      const endAngle = cumAngle;
+      const x1 = cx + R * Math.cos(startAngle);
+      const y1 = cy + R * Math.sin(startAngle);
+      const x2 = cx + R * Math.cos(endAngle);
+      const y2 = cy + R * Math.sin(endAngle);
+      const ix1 = cx + r * Math.cos(endAngle);
+      const iy1 = cy + r * Math.sin(endAngle);
+      const ix2 = cx + r * Math.cos(startAngle);
+      const iy2 = cy + r * Math.sin(startAngle);
+      const large = angle > Math.PI ? 1 : 0;
+      const path = `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${r} ${r} 0 ${large} 0 ${ix2} ${iy2} Z`;
+      return { ...d, path, colour: LEVEL_DONUT_COLOURS[d.level]?.fill ?? "#6b7280" };
+    });
+
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-semibold flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{level}</span>
-      <span className="text-sm text-foreground flex-1">{getLevelLabel(level)}</span>
-      <span className="text-sm tabular-nums text-foreground">{count > 0 ? `${count} · ${pct}%` : "0"}</span>
+    <div className="flex items-center gap-6">
+      {/* Donut SVG */}
+      <div className="flex-shrink-0">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          {slices.map(s => (
+            <path key={s.level} d={s.path} fill={s.colour} opacity={0.9} />
+          ))}
+          {/* Centre label */}
+          <text x={cx} y={cy - 6} textAnchor="middle" className="fill-foreground" fontSize="18" fontWeight="700">{total}</text>
+          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground" fontSize="10">assessed</text>
+        </svg>
+      </div>
+      {/* Legend */}
+      <div className="flex-1 space-y-2">
+        {[5, 4, 3, 2, 1].map(lv => {
+          const d = distribution.find(x => x.level === lv);
+          const count = d?.count ?? 0;
+          const pct = d?.pct ?? 0;
+          const col = LEVEL_DONUT_COLOURS[lv];
+          return (
+            <div key={lv} className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: col.fill }} />
+              <span className="text-xs text-foreground flex-1">{getLevelLabel(lv)}</span>
+              <span className="text-xs tabular-nums font-semibold" style={{ color: count > 0 ? col.fill : "var(--muted-foreground)" }}>
+                {count > 0 ? `${pct}%` : "0%"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -313,12 +375,7 @@ export default function LeaderDashboardV2() {
         {/* Level distribution */}
         <div className="bg-card rounded-xl border border-border p-5">
           <p className="text-sm font-semibold text-foreground mb-4">Readiness distribution</p>
-          <div className="space-y-0">
-            {[5, 4, 3, 2, 1].map(lv => {
-              const d = levelDistribution.find(x => x.level === lv);
-              return <LevelLegendRow key={lv} level={lv} count={d?.count ?? 0} pct={d?.pct ?? 0} />;
-            })}
-          </div>
+          <ReadinessDonut distribution={levelDistribution} />
           <Link href="/dashboard/strategic">
             <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-4 inline-block">Strategic view →</span>
           </Link>
