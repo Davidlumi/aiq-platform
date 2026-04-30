@@ -13,7 +13,7 @@
  * v10 changes from v9.2:
  * - 15 interaction types (4 preserved + 11 new)
  * - Foundation-first routing (baseline must establish foundation domains)
- * - Pressure-test mechanic for AI Ethics & Employee Trust
+ * - Pressure-test mechanic for AI Ethics & Trust
  * - 26 signals across 6 new capability domains
  * - Immersive scenario presentation context fields
  */
@@ -426,7 +426,7 @@ const INTERACTION_TYPE_INSTRUCTIONS: Record<InteractionType, string> = {
 
   leader_advisory: `Present a scenario where a senior leader has asked for advice about an AI-related people decision (e.g. "Should we mandate AI tool usage?", "How do we handle employees who refuse to use AI?", "What AI skills should we hire for?"). The leader's question should be reasonable but contain an implicit assumption that a good advisor would challenge. Test whether the person can provide nuanced, evidence-based advice rather than simply agreeing with the leader's framing.`,
 
-  // ── Strategic: AI Ethics & Employee Trust ───────────────────────────────────
+  // ── Strategic: AI Ethics & Trust ───────────────────────────────────
   ethical_pressure_test: `Present a scenario involving an ethical tension in AI use within HR — for example, using AI monitoring for productivity, using AI to predict employee behaviour, or using AI in a way that affects employee privacy or autonomy. The scenario should present a genuine ethical dilemma where the "right" answer is not obvious and where there are legitimate business reasons to proceed. Test whether the person can hold an ethical position under pressure, or whether they drift toward compliance when the pressure increases.`,
 
   stakeholder_impact: `Present a proposed AI implementation in HR and ask the person to identify which stakeholders would be most affected and what the most significant impact would be. The scenario should involve multiple stakeholder groups (employees, managers, HR team, candidates, unions, regulators) with different and potentially conflicting interests. Test whether the person can see beyond the immediate business case to understand the broader human impact of AI decisions.`,

@@ -1,48 +1,33 @@
 /**
- * AiQ Dashboard Specification v1.1 — Shared Constants
+ * AiQ Dashboard Specification v1.2 — Shared Constants
  *
- * Single source of truth for readiness ratings, domain definitions,
- * role family taxonomy, and display mappings used across all three dashboards.
+ * Domain labels, colours, and keys are now sourced from brand.ts.
+ * This file adds dashboard-specific types (ratings, role families, heatmap utils).
  */
 
-// ─── Capability Domains (fixed order per spec §1.2) ─────────────────────────
-export const DOMAIN_KEYS = [
-  "ai_interaction",
-  "ai_output_evaluation",
-  "ai_workflow_design",
-  "workforce_ai_readiness",
-  "ai_ethics_trust",
-  "ai_change_leadership",
-] as const;
-export type DomainKey = (typeof DOMAIN_KEYS)[number];
+// ─── Re-export canonical domain constants from brand.ts ──────────────────────
+export type { DomainKey } from "./brand";
+export {
+  DOMAIN_KEYS,
+  DOMAIN_LABELS,
+  DOMAIN_SHORT_LABELS,
+  DOMAIN_COLOURS,
+  DOMAIN_BG_COLOURS,
+  DOMAIN_DESCRIPTIONS,
+  LEVEL_LABELS,
+  LEVEL_COLOURS,
+  HEATMAP_THRESHOLDS,
+  scoreToLevel,
+  rawScoreToLevel,
+  scoreColours,
+  READINESS_COLOURS,
+  READINESS_LABELS,
+} from "./brand";
 
-export const DOMAIN_LABELS: Record<DomainKey, string> = {
-  ai_interaction: "AI Interaction",
-  ai_output_evaluation: "AI Output Evaluation",
-  ai_workflow_design: "AI Workflow Design",
-  workforce_ai_readiness: "Workforce AI Readiness",
-  ai_ethics_trust: "AI Ethics & Trust",
-  ai_change_leadership: "AI Change Leadership",
-};
-
-export const DOMAIN_DESCRIPTIONS: Record<DomainKey, string> = {
-  ai_interaction: "How effectively you communicate with and direct AI systems to achieve intended outcomes.",
-  ai_output_evaluation: "Your ability to critically assess AI-generated outputs for accuracy, bias, and fitness for purpose.",
-  ai_workflow_design: "How well you design human-AI workflows that balance efficiency with appropriate oversight.",
-  workforce_ai_readiness: "Your preparedness to lead and support teams through AI-driven workplace transformation.",
-  ai_ethics_trust: "Your capability to navigate ethical considerations and build trust in AI-augmented processes.",
-  ai_change_leadership: "Your ability to lead organisational change in the context of AI adoption and transformation.",
-};
-
-/** Domain colours per Design System v2.2 §6.3 */
-export const DOMAIN_COLOURS: Record<DomainKey, string> = {
-  ai_interaction: "#3B82F6",
-  ai_output_evaluation: "#8B5CF6",
-  ai_workflow_design: "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust: "#EF4444",
-  ai_change_leadership: "#06B6D4",
-};
+// Legacy alias
+export { DOMAIN_KEYS as CAPABILITY_KEYS } from "./brand";
+// Legacy CapabilityKey alias
+export type { DomainKey as CapabilityKey } from "./brand";
 
 // ─── Readiness Ratings (5-state per spec §1.2) ──────────────────────────────
 export const RATING_KEYS = [
@@ -151,40 +136,35 @@ export function archetypeToRoleFamily(archetype: string | null | undefined): Rol
 export function roleFamilyFromUserField(roleFamily: string | null | undefined): RoleFamilyKey {
   if (!roleFamily) return "business_partnering";
   const lower = roleFamily.toLowerCase().replace(/[\s&-]+/g, "_");
-  // Check if it's already a key
   if (ROLE_FAMILY_LABELS[lower as RoleFamilyKey]) return lower as RoleFamilyKey;
-  // Check display labels
   for (const [key, label] of Object.entries(ROLE_FAMILY_LABELS)) {
     if (label.toLowerCase().replace(/[\s&-]+/g, "_") === lower) return key as RoleFamilyKey;
   }
-  // Check archetype mapping
   return ARCHETYPE_TO_FAMILY[lower] ?? "business_partnering";
 }
 
 // ─── Sequential Navy Palette (for heatmap cell backgrounds) ──────────────────
-/** Score-based background colour using sequential navy palette per Design System v2.2 */
 export function scoreToNavyBg(score: number): string {
-  if (score >= 80) return "#0F172A"; // navy-900 — strong
-  if (score >= 70) return "#1E293B"; // navy-800
-  if (score >= 60) return "#334155"; // navy-700
-  if (score >= 50) return "#475569"; // navy-600
-  if (score >= 40) return "#64748B"; // navy-500
-  if (score >= 30) return "#94A3B8"; // navy-400
-  return "#CBD5E1"; // navy-300 — weak
+  if (score >= 80) return "#0F172A";
+  if (score >= 70) return "#1E293B";
+  if (score >= 60) return "#334155";
+  if (score >= 50) return "#475569";
+  if (score >= 40) return "#64748B";
+  if (score >= 30) return "#94A3B8";
+  return "#CBD5E1";
 }
 
 export function scoreToNavyText(score: number): string {
   return score >= 50 ? "#F8FAFC" : "#1E293B";
 }
 
-/** Gap-based background colour (higher gap = stronger colour to draw attention) */
 export function gapToColour(gap: number): string {
-  if (gap >= 20) return "#7F1D1D"; // red-900
-  if (gap >= 15) return "#991B1B"; // red-800
-  if (gap >= 10) return "#B91C1C"; // red-700
-  if (gap >= 5) return "#DC2626"; // red-600
-  if (gap > 0) return "#F59E0B"; // amber-500
-  return "#10B981"; // green-500 — at or above target
+  if (gap >= 20) return "#7F1D1D";
+  if (gap >= 15) return "#991B1B";
+  if (gap >= 10) return "#B91C1C";
+  if (gap >= 5) return "#DC2626";
+  if (gap > 0) return "#F59E0B";
+  return "#10B981";
 }
 
 export function gapToTextColour(gap: number): string {

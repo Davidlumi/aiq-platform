@@ -15,6 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { DOMAIN_COLOURS as BRAND_DOMAIN_COLOURS, LEVEL_COLOURS } from "@shared/brand";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -28,14 +29,8 @@ const ROLE_FAMILY_OPTIONS = [
   { value: "hr_leadership",        label: "HR Leadership" },
 ];
 
-const DOMAIN_COLOURS: Record<string, string> = {
-  ai_interaction:         "#3B82F6",
-  ai_output_evaluation:   "#8B5CF6",
-  ai_workflow_design:     "#10B981",
-  workforce_ai_readiness: "#F59E0B",
-  ai_ethics_trust:        "#EF4444",
-  ai_change_leadership:   "#06B6D4",
-};
+// Domain colours from canonical brand.ts
+const DOMAIN_COLOURS = BRAND_DOMAIN_COLOURS as Record<string, string>;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -49,13 +44,13 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string |
   );
 }
 
-// Heatmap-aligned colours for each readiness level (5 → 1)
+// Level colours from canonical brand.ts
 const LEVEL_DONUT_COLOURS: Record<number, { fill: string; text: string }> = {
-  5: { fill: "#22c55e", text: "#86efac" },   // AI Ready — green
-  4: { fill: "#10b981", text: "#6ee7b7" },   // Strong — teal
-  3: { fill: "#f59e0b", text: "#fde68a" },   // Capable — amber
-  2: { fill: "#f97316", text: "#fdba74" },   // Developing — orange
-  1: { fill: "#ef4444", text: "#fca5a5" },   // Emerging/Gap — red
+  5: { fill: LEVEL_COLOURS[5].hex, text: LEVEL_COLOURS[5].text },
+  4: { fill: LEVEL_COLOURS[4].hex, text: LEVEL_COLOURS[4].text },
+  3: { fill: LEVEL_COLOURS[3].hex, text: LEVEL_COLOURS[3].text },
+  2: { fill: LEVEL_COLOURS[2].hex, text: LEVEL_COLOURS[2].text },
+  1: { fill: LEVEL_COLOURS[1].hex, text: LEVEL_COLOURS[1].text },
 };
 
 function ReadinessDonut({ distribution }: { distribution: Array<{ level: number; count: number; pct: number }> }) {

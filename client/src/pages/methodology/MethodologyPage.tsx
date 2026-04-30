@@ -79,7 +79,7 @@ const CAPABILITY_DOMAINS = [
   },
   {
     key: "ai_ethics_trust",
-    name: "AI Ethics & Employee Trust",
+    name: "AI Ethics & Trust",
     colour: "#b91c1c",
     foundation: false,
     description:

@@ -682,7 +682,7 @@ function SixDomains() {
       Icon: Users,
     },
     {
-      name: "AI Ethics & Employee Trust",
+      name: "AI Ethics & Trust",
       tier: "Strategic",
       color: "#F87171",
       desc: "Governing AI deployment in ways that protect employee rights, maintain trust, and satisfy regulatory obligations.",

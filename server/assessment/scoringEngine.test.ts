@@ -60,7 +60,7 @@ function makeCapScores(overrides: Partial<Record<CapabilityKey, Partial<Capabili
     ai_output_evaluation: { score: 65, signalCount: 5, displayName: "AI Output Evaluation", band: "developing" },
     ai_workflow_design: { score: 60, signalCount: 4, displayName: "AI Workflow Design", band: "developing" },
     workforce_ai_readiness: { score: 55, signalCount: 4, displayName: "Workforce AI Readiness", band: "developing" },
-    ai_ethics_trust: { score: 60, signalCount: 4, displayName: "AI Ethics & Employee Trust", band: "developing" },
+    ai_ethics_trust: { score: 60, signalCount: 4, displayName: "AI Ethics & Trust", band: "developing" },
     ai_change_leadership: { score: 50, signalCount: 3, displayName: "AI Change Leadership", band: "needs_work" },
   };
   for (const [k, v] of Object.entries(overrides)) {

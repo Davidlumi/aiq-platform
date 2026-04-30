@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { DOMAIN_COLOURS as _BRAND_DOMAIN_COLOURS } from "@shared/brand";
 
 // --- Rating Badge ------------------------------------------------------------
 
@@ -318,16 +319,9 @@ export function HeatmapCell({
   );
 }
 
-// --- Domain Colour Dot ------------------------------------------------------
+// --- Domain Colour Dot (canonical — from brand.ts) --------------------------
 
-const DOMAIN_COLOUR_MAP: Record<string, string> = {
-  ai_interaction: "#4477AA",
-  ai_output_evaluation:  "#EE6677",   // Paul Tol rose
-  ai_workflow_design:    "#228833",   // Paul Tol green
-  workforce_ai_readiness:"#CCBB44",   // Paul Tol yellow
-  ai_ethics_trust:       "#AA3377",   // Paul Tol purple
-  ai_change_leadership:  "#66CCEE",   // Paul Tol cyan
-};
+const DOMAIN_COLOUR_MAP: Record<string, string> = _BRAND_DOMAIN_COLOURS as Record<string, string>;
 
 export function DomainDot({ domain, size = 8 }: { domain: string; size?: number }) {
   return (

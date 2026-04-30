@@ -118,7 +118,7 @@ const CAPABILITY_META: Record<CapabilityKey, { label: string; description: strin
     improvementTip: "Conduct a skills audit of your team's current AI capabilities — identify specific gaps rather than assuming everyone needs the same training.",
   },
   ai_ethics_trust: {
-    label: "AI Ethics & Employee Trust",
+    label: "AI Ethics & Trust",
     description: "Skill in navigating ethical dilemmas involving AI in HR, maintaining employee trust and transparency, distinguishing legal compliance from genuine fairness, and resisting pressure to compromise ethical standards.",
     improvementTip: "Review your organisation's AI policy through the lens of employee trust — would your team feel comfortable if they knew exactly how AI was being used in decisions that affect them?",
   },

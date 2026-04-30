@@ -10,6 +10,7 @@
  */
 
 import { TRPCError } from "@trpc/server";
+import { DOMAIN_COLOURS as BRAND_DOMAIN_COLOURS } from "@shared/brand";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -28,17 +29,12 @@ const CAPABILITY_DISPLAY: Record<string, string> = {
   ai_output_evaluation:   "AI Output Evaluation",
   ai_workflow_design:     "AI Workflow Design",
   workforce_ai_readiness: "Workforce AI Readiness",
-  ai_ethics_trust:        "AI Ethics & Employee Trust",
+  ai_ethics_trust:        "AI Ethics & Trust",
   ai_change_leadership:   "AI Change Leadership",
 };
 
 const CAPABILITY_COLOURS: Record<string, string> = {
-  ai_interaction:         "#4477AA",
-  ai_output_evaluation:   "#EE6677",
-  ai_workflow_design:     "#228833",
-  workforce_ai_readiness: "#CCBB44",
-  ai_ethics_trust:        "#AA3377",
-  ai_change_leadership:   "#66CCEE",
+  ...(BRAND_DOMAIN_COLOURS as Record<string, string>),
 };
 
 const LEADER_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];

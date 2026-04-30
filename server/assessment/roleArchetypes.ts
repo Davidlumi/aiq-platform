@@ -5,7 +5,7 @@
  * for the v10 six-domain taxonomy:
  *   Foundation: AI Interaction, AI Output Evaluation
  *   Operational: AI Workflow Design
- *   Strategic: Workforce AI Readiness, AI Ethics & Employee Trust, AI Change Leadership
+ *   Strategic: Workforce AI Readiness, AI Ethics & Trust, AI Change Leadership
  *
  * 11 archetypes preserved from v9.2, weights recalibrated for new domains.
  */

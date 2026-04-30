@@ -42,7 +42,7 @@ export const DOMAIN_DISPLAY: Record<CapabilityKey, string> = {
   ai_output_evaluation:   "AI Output Evaluation",
   ai_workflow_design:     "AI Workflow Design",
   workforce_ai_readiness: "Workforce AI Readiness",
-  ai_ethics_trust:        "AI Ethics & Employee Trust",
+  ai_ethics_trust:        "AI Ethics & Trust",
   ai_change_leadership:   "AI Change Leadership",
 };
 
@@ -87,7 +87,7 @@ export type SignalKey =
   | "intervention_design_quality"
   | "leader_advisory_quality"
   | "generic_prescription_risk"
-  // AI Ethics & Employee Trust (5 signals)
+  // AI Ethics & Trust (5 signals)
   | "ethics_under_pressure"
   | "stakeholder_impact_awareness"
   | "employee_transparency_advocacy"
@@ -123,7 +123,7 @@ export const SIGNAL_TO_DOMAIN: Record<SignalKey, CapabilityKey> = {
   intervention_design_quality:     "workforce_ai_readiness",
   leader_advisory_quality:         "workforce_ai_readiness",
   generic_prescription_risk:       "workforce_ai_readiness",
-  // AI Ethics & Employee Trust
+  // AI Ethics & Trust
   ethics_under_pressure:           "ai_ethics_trust",
   stakeholder_impact_awareness:    "ai_ethics_trust",
   employee_transparency_advocacy:  "ai_ethics_trust",
@@ -281,7 +281,7 @@ export function detectFailureModes(
       (blockingDeltas["critical_failure"] ??= []).push(baseThr);
     }
 
-    // Pressure drift (AI Ethics & Employee Trust domain) — v10 NEW blocking failure
+    // Pressure drift (AI Ethics & Trust domain) — v10 NEW blocking failure
     if ((deltas.pressure_drift_risk ?? 0) < -baseThr || codes.includes("PRESSURE_DRIFT")) {
       modes.push("pressure_drift");
       governanceFlag = true;

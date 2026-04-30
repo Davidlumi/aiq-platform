@@ -12,6 +12,7 @@
  * - CB-11: Conversation starters for ALL members (not just at-risk)
  * - CB-12: Design language pass - consistent brand tokens throughout
  */
+import { DOMAIN_COLOURS as BRAND_DC } from "@shared/brand";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
@@ -44,7 +45,7 @@ const READINESS_META: Record<string, { label: string; color: string; bg: string;
 };
 
 const CAP_COLORS: Record<string, string> = {
-  ai_interaction: "#4477AA", ai_output_evaluation: "#047857", ai_workflow_design: "#0D9488",
+  ai_interaction: BRAND_DC.ai_interaction, ai_output_evaluation: BRAND_DC.ai_output_evaluation, ai_workflow_design: BRAND_DC.ai_workflow_design,
   workforce_ai_readiness: "var(--primary)", ai_ethics_trust: "#b91c1c", ai_change_leadership: "#99882A",
 };
 

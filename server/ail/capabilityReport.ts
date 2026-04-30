@@ -107,7 +107,7 @@ const SIGNAL_TO_CAPABILITY: Record<string, { domain: string; label: string; isPo
   intervention_design_quality:     { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: true },
   leader_advisory_quality:         { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: true },
   generic_prescription_risk:       { domain: "workforce_ai_readiness", label: "Workforce AI Readiness", isPositive: false },
-  // AI Ethics & Employee Trust
+  // AI Ethics & Trust
   ethics_under_pressure:           { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
   stakeholder_impact_awareness:    { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
   employee_transparency_advocacy:  { domain: "ai_ethics_trust", label: "AI Ethics & Trust", isPositive: true },
@@ -125,7 +125,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   ai_output_evaluation: "AI Output Evaluation",
   ai_workflow_design: "AI Workflow Design",
   workforce_ai_readiness: "Workforce AI Readiness",
-  ai_ethics_trust: "AI Ethics & Employee Trust",
+  ai_ethics_trust: "AI Ethics & Trust",
   ai_change_leadership: "AI Change Leadership",
 };
 

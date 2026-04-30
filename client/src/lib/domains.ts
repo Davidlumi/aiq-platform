@@ -25,7 +25,7 @@ export const DOMAIN_LABELS: Record<CapabilityKey, string> = {
   ai_output_evaluation:  "AI Output Evaluation",
   ai_workflow_design:    "AI Workflow Design",
   workforce_ai_readiness:"Workforce AI Readiness",
-  ai_ethics_trust:       "AI Ethics & Employee Trust",
+  ai_ethics_trust:       "AI Ethics & Trust",
   ai_change_leadership:  "AI Change Leadership",
 };
 
@@ -34,18 +34,18 @@ export const DOMAIN_SHORT_LABELS: Record<CapabilityKey, string> = {
   ai_output_evaluation:  "Output Eval",
   ai_workflow_design:    "Workflow",
   workforce_ai_readiness:"Readiness",
-  ai_ethics_trust:       "Ethics",
+  ai_ethics_trust:       "Ethics & Trust",
   ai_change_leadership:  "Change",
 };
 
-/** Colorblind-safe palette - Tol Bright scheme */
+/** Colorblind-safe palette - Paul Tol Bright scheme (canonical — matches brand.ts) */
 export const DOMAIN_COLOURS: Record<CapabilityKey, string> = {
-  ai_interaction:        "#4477AA",
-  ai_output_evaluation:  "#DC2626",
-  ai_workflow_design:    "#047857",
-  workforce_ai_readiness:"#D97706",
-  ai_ethics_trust:       "#b91c1c",
-  ai_change_leadership:  "#66CCEE",
+  ai_interaction:         "#4477AA",  // Tol blue
+  ai_output_evaluation:   "#EE6677",  // Tol rose
+  ai_workflow_design:     "#228833",  // Tol green
+  workforce_ai_readiness: "#CCBB44",  // Tol yellow
+  ai_ethics_trust:        "#AA3377",  // Tol purple
+  ai_change_leadership:   "#66CCEE",  // Tol cyan
 };
 
 /** Background-safe versions (with opacity) */

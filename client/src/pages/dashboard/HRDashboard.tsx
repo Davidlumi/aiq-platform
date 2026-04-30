@@ -75,13 +75,24 @@ function readinessLabel(r: string | null) {
   if (r === "unsafe")  return "Not Yet Ready";
   return "Not assessed";
 }
+// scoreToHeatClass replaced by brand.ts scoreColours — kept as inline style helper
 function scoreToHeatClass(score: number | null): string {
   if (score === null) return "bg-muted/40 text-muted-foreground";
-  if (score >= 75) return "bg-primary/80/10 text-primary dark:text-primary";
-  if (score >= 65) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400";
-  if (score >= 55) return "bg-[#D97706]/80/10 text-[#99882A] dark:text-[#D97706]";
-  if (score >= 45) return "bg-orange-500/10 text-orange-600 dark:text-orange-400";
-  return "bg-[#DC2626]/80/10 text-[#CC3344] dark:text-[#DC2626]";
+  // Delegate to brand.ts thresholds (scores here are 0-100)
+  if (score >= 75) return "";  // AI Ready
+  if (score >= 60) return "";  // Strong
+  if (score >= 50) return "";  // Capable
+  if (score >= 35) return "";  // Developing
+  return "";                   // Emerging
+}
+function scoreToHeatStyle(score: number | null): { backgroundColor: string; color: string } | undefined {
+  if (score === null) return undefined;
+  const s = score / 10;
+  if (s >= 7.5) return { backgroundColor: "rgba(22,163,74,0.15)",  color: "#4ade80" };
+  if (s >= 6.0) return { backgroundColor: "rgba(16,185,129,0.15)", color: "#6ee7b7" };
+  if (s >= 5.0) return { backgroundColor: "rgba(34,197,94,0.10)",  color: "#86efac" };
+  if (s >= 3.5) return { backgroundColor: "rgba(245,158,11,0.15)", color: "#fcd34d" };
+  return { backgroundColor: "rgba(239,68,68,0.15)", color: "#fca5a5" };
 }
 
 // --- CSV export ---------------------------------------------------------------
