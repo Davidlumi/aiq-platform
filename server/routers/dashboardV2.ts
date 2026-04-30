@@ -1983,6 +1983,68 @@ const leaderRouter = router({
     return { teams };
   }),
 
+  /** Team × Domain heatmap — returns per-team per-domain average scores */
+  teamsHeatmap: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rfFilter = input?.roleFamily ?? null;
+    let filteredUserIds: Set<string> | null = null;
+    if (rfFilter) {
+      const allUsersRf = await db.select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction }).from(users).where(eq(users.tenantId, ctx.user.tenantId));
+      filteredUserIds = new Set(allUsersRf.filter(u => roleFamilyFromUserField(u.roleFamily ?? u.jobFunction) === rfFilter).map(u => u.id));
+    }
+    const allLinks = await db.select().from(managerTeamMembers);
+    const managerIds = Array.from(new Set(allLinks.map(l => l.managerId)));
+    const rows: Array<{
+      managerId: string;
+      managerName: string;
+      teamSize: number;
+      domainScores: Record<string, number | null>;
+      overallAvg: number | null;
+    }> = [];
+    for (const managerId of managerIds) {
+      const managerRow = await db.select().from(users).where(eq(users.id, managerId)).limit(1);
+      if (!managerRow[0]) continue;
+      const memberLinks = allLinks.filter(l => l.managerId === managerId);
+      let memberIds = memberLinks.map(l => l.memberId);
+      if (filteredUserIds) {
+        memberIds = memberIds.filter(id => filteredUserIds!.has(id));
+        if (memberIds.length === 0) continue;
+      }
+      const domainTotals: Record<string, { sum: number; count: number }> = {};
+      for (const key of DOMAIN_KEYS) domainTotals[key] = { sum: 0, count: 0 };
+      let overallSum = 0; let overallCount = 0;
+      for (const memberId of memberIds) {
+        const scoreData = await getLatestScoreData(db, memberId);
+        if (scoreData) {
+          const ds = extractCapabilityScores(scoreData.scoreBreakdownJson);
+          overallSum += scoreData.overallScore; overallCount++;
+          if (ds) {
+            for (const key of DOMAIN_KEYS) {
+              if (ds[key] != null) { domainTotals[key].sum += ds[key]; domainTotals[key].count++; }
+            }
+          }
+        }
+      }
+      const domainScores: Record<string, number | null> = {};
+      for (const key of DOMAIN_KEYS) {
+        domainScores[key] = domainTotals[key].count > 0 ? Math.round(domainTotals[key].sum / domainTotals[key].count) : null;
+      }
+      rows.push({
+        managerId,
+        managerName: `${managerRow[0].firstName} ${managerRow[0].lastName}`,
+        teamSize: memberIds.length,
+        domainScores,
+        overallAvg: overallCount > 0 ? Math.round(overallSum / overallCount) : null,
+      });
+    }
+    return { teams: rows, domains: DOMAIN_KEYS.map(k => ({ key: k, label: DOMAIN_LABELS[k] })) };
+  }),
+
   /** BA-01/BA-02: Readiness vs Ambition gap — org-level and per-priority */
   ambitionGap: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);

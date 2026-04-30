@@ -17,6 +17,7 @@ import {
   ailNarrativeState, ailStakeholderRelationships, ailNarrativeEvents, ailNarrativeThreads,
   ailDifficultyProfiles, simulationSessions, simulationSessionEvents, simulationResults,
   tenantSettings,
+  managerTeamMembers,
 } from "../../drizzle/schema";
 import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -1162,4 +1163,50 @@ export const backofficeRouter = router({
 
       return { success: true, sessionId, deletedCount: sessionIds.length };
     }),
+
+  /**
+   * Seed realistic manager-team-member links from existing users.
+   * Groups users by roleFamily and assigns the first user in each group as manager.
+   */
+  seedManagerTeams: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const callerRoles = await db.select({ key: roles.key }).from(roles)
+      .innerJoin(userRoles, eq(userRoles.roleId, roles.id))
+      .where(and(eq(userRoles.userId, ctx.user.id), eq(userRoles.tenantId, ctx.user.tenantId)));
+    const callerKeys = callerRoles.map(r => r.key);
+    if (!callerKeys.some(k => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(k))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    // Delete existing links for this tenant's users
+    const tenantUsers = await db.select({ id: users.id, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+      .from(users).where(eq(users.tenantId, ctx.user.tenantId));
+    const tenantUserIds = tenantUsers.map(u => u.id);
+    if (tenantUserIds.length > 0) {
+      for (const uid of tenantUserIds) {
+        await db.delete(managerTeamMembers).where(eq(managerTeamMembers.managerId, uid));
+      }
+    }
+    // Group by roleFamily
+    const groups: Record<string, string[]> = {};
+    for (const u of tenantUsers) {
+      const rf = u.roleFamily ?? u.jobFunction ?? "general";
+      if (!groups[rf]) groups[rf] = [];
+      groups[rf].push(u.id);
+    }
+    let totalLinks = 0;
+    for (const [, memberIds] of Object.entries(groups)) {
+      if (memberIds.length < 2) continue;
+      const managerId = memberIds[0];
+      for (const memberId of memberIds.slice(1)) {
+        await db.insert(managerTeamMembers).values({
+          id: nanoid(),
+          managerId,
+          memberId,
+        }).onDuplicateKeyUpdate({ set: { managerId } });
+        totalLinks++;
+      }
+    }
+    return { success: true, totalLinks, groups: Object.keys(groups).length };
+  }),
 });

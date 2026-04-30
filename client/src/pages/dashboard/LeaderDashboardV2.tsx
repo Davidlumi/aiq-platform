@@ -1,93 +1,177 @@
 /**
- * CPO / Leader Dashboard - Wireframe C1 visual language
- * Dark navy brand theme (AiQ Design System)
- *
- * Hero narrative · 4 KPI tiles · Level distribution donut + legend ·
- * Segment comparison bars · "Worth your attention" insight cards ·
- * Domain distribution table · Teams overview
+ * CPO / Leader Dashboard — redesigned for consistency with the AiQ design system.
+ * Clean card-based layout, consistent border/card/foreground tokens, team × domain heatmap.
  */
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/dashboard/DashboardUI";
 import { getLevelFromScore, getLevelChipStyle, getLevelLabel } from "@/lib/level-utils";
-import { Users, UserCircle, ChevronRight, Filter, Target } from "lucide-react";
+import { Users, UserCircle, Filter, Target, TrendingUp, AlertTriangle, ChevronRight } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_FAMILY_OPTIONS = [
-  { value: "business_partnering", label: "Business Partnering" },
-  { value: "talent_acquisition", label: "Talent Acquisition" },
+  { value: "business_partnering",  label: "Business Partnering" },
+  { value: "talent_acquisition",   label: "Talent Acquisition" },
   { value: "learning_development", label: "Learning & Development" },
-  { value: "reward_analytics", label: "Reward & Analytics" },
-  { value: "er_specialists", label: "ER & Specialists" },
-  { value: "operations_tech", label: "Operations & Tech" },
-  { value: "hr_leadership", label: "HR Leadership" },
+  { value: "reward_analytics",     label: "Reward & Analytics" },
+  { value: "er_specialists",       label: "ER & Specialists" },
+  { value: "operations_tech",      label: "Operations & Tech" },
+  { value: "hr_leadership",        label: "HR Leadership" },
 ];
 
-function KpiTile({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+const DOMAIN_COLOURS: Record<string, string> = {
+  ai_interaction:         "#3B82F6",
+  ai_output_evaluation:   "#8B5CF6",
+  ai_workflow_design:     "#10B981",
+  workforce_ai_readiness: "#F59E0B",
+  ai_ethics_trust:        "#EF4444",
+  ai_change_leadership:   "#06B6D4",
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
-    <div className="bg-card rounded-xl border border-border shadow-md p-5">
-      <p className="text-xs font-medium uppercase tracking-widest mb-2 text-muted-foreground">{label}</p>
-      <p className="text-3xl font-medium mb-1 text-foreground">{value}</p>
+    <div className="bg-card rounded-xl border border-border p-5 flex flex-col gap-1">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-3xl font-semibold text-foreground" style={accent ? { color: accent } : undefined}>{value}</p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
 
-function LevelDistributionDonut({ distribution, avgScore }: { distribution: Array<{ level: number; count: number; pct: number }>; avgScore: number | null }) {
-  const size = 200; const cx = 100; const cy = 100; const r = 72; const sw = 28;
-  const circ = 2 * Math.PI * r;
-  let offset = 0;
-  const segments = distribution.map(d => { const arc = (d.pct / 100) * circ; const seg = { level: d.level, arc, offset }; offset += arc; return seg; });
-  const preciseAvg = avgScore !== null ? (avgScore / 10).toFixed(1) : "-";
+function LevelLegendRow({ level, count, pct }: { level: number; count: number; pct: number }) {
+  const s = getLevelChipStyle(level);
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: "100%", height: "100%" }}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
-      {segments.map(seg => { if (seg.arc <= 0) return null; const s = getLevelChipStyle(seg.level); return (<circle key={seg.level} cx={cx} cy={cy} r={r} fill="none" stroke={s.bg} strokeWidth={sw} strokeDasharray={`${seg.arc} ${circ}`} strokeDashoffset={-seg.offset} transform={`rotate(-90 ${cx} ${cy})`} />); })}
-      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontSize: 28, fontWeight: 500, fill: "var(--foreground)", fontFamily: "Sora, system-ui, sans-serif" }}>{preciseAvg}</text>
-      <text x={cx} y={cy + 10} textAnchor="middle" style={{ fontSize: 10, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}>FUNCTION AVG</text>
-    </svg>
-  );
-}
-
-function SegmentBar({ label, score, count, maxScore, isHighlighted }: { label: string; score: number | null; count: number; maxScore: number; isHighlighted?: boolean }) {
-  if (score === null) {
-    return (
-      <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "0.5px solid oklch(22% 0.030 240)" }}>
-        <div style={{ width: 160, flexShrink: 0 }}>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground">{count} people · no data</p>
-        </div>
-        <div className="flex-1 h-6 rounded" style={{ background: "oklch(22% 0.030 240)" }} />
-        <span className="text-sm text-muted-foreground" style={{ width: 36, textAlign: "right" }}>-</span>
-      </div>
-    );
-  }
-  const level = getLevelFromScore(score);
-  const chipStyle = getLevelChipStyle(level);
-  const barWidth = maxScore > 0 ? (score / maxScore) * 100 : 0;
-  return (
-    <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "0.5px solid oklch(22% 0.030 240)" }}>
-      <div style={{ width: 160, flexShrink: 0 }}>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground">{count} people · Level {(score / 10).toFixed(1)}</p>
-      </div>
-      <div className="flex-1 relative h-7 rounded overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
-        <div className="h-full rounded transition-all duration-700" style={{ width: `${barWidth}%`, background: chipStyle.bg }} />
-        {isHighlighted && <div className="absolute inset-0 flex items-center pl-2"><span className="text-xs font-semibold text-foreground">Highest</span></div>}
-      </div>
-      <span className="text-sm font-medium tabular-nums text-foreground" style={{ width: 36, textAlign: "right" }}>{(score / 10).toFixed(1)}</span>
+    <div className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-semibold flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{level}</span>
+      <span className="text-sm text-foreground flex-1">{getLevelLabel(level)}</span>
+      <span className="text-sm tabular-nums text-foreground">{count > 0 ? `${count} · ${pct}%` : "0"}</span>
     </div>
   );
 }
+
+function DomainBar({ label, score, count, colour }: { label: string; score: number | null; count: number; colour: string }) {
+  const pct = score != null ? Math.round(score / 10) * 10 : 0;
+  return (
+    <div className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
+      <div className="w-40 flex-shrink-0">
+        <p className="text-sm font-medium text-foreground truncate">{label}</p>
+        <p className="text-xs text-muted-foreground">{count} assessed</p>
+      </div>
+      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: colour }} />
+      </div>
+      <span className="text-sm font-semibold tabular-nums w-8 text-right" style={{ color: score != null ? colour : "var(--muted-foreground)" }}>
+        {score != null ? (score / 10).toFixed(1) : "—"}
+      </span>
+    </div>
+  );
+}
+
+// ─── Team × Domain Heatmap ────────────────────────────────────────────────────
+
+function heatmapCellStyle(score: number | null): { bg: string; text: string } {
+  if (score == null) return { bg: "var(--muted)", text: "var(--muted-foreground)" };
+  const s = score / 10; // 0–10
+  if (s >= 7.5) return { bg: "#14532d", text: "#86efac" };
+  if (s >= 6.0) return { bg: "#166534", text: "#bbf7d0" };
+  if (s >= 5.0) return { bg: "#713f12", text: "#fde68a" };
+  if (s >= 3.5) return { bg: "#7c2d12", text: "#fdba74" };
+  return { bg: "#450a0a", text: "#fca5a5" };
+}
+
+function TeamDomainHeatmap({
+  teams, domains,
+}: {
+  teams: Array<{ managerId: string; managerName: string; teamSize: number; domainScores: Record<string, number | null>; overallAvg: number | null }>;
+  domains: Array<{ key: string; label: string }>;
+}) {
+  if (teams.length === 0) return null;
+  // Abbreviate domain labels to 2-word max for column headers
+  const abbr = (label: string) => {
+    const words = label.replace("AI ", "").split(" ");
+    return words.length > 2 ? words.slice(0, 2).join(" ") : label.replace("AI ", "");
+  };
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr>
+            <th className="text-left py-2 pr-3 text-muted-foreground font-semibold uppercase tracking-widest text-xs w-36 sticky left-0 bg-card">Team</th>
+            {domains.map(d => (
+              <th key={d.key} className="text-center py-2 px-1 font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap min-w-[72px]">
+                <span className="block" style={{ color: DOMAIN_COLOURS[d.key] ?? "var(--foreground)" }}>{abbr(d.label)}</span>
+              </th>
+            ))}
+            <th className="text-center py-2 px-1 font-semibold text-muted-foreground uppercase tracking-widest min-w-[56px]">Overall</th>
+          </tr>
+        </thead>
+        <tbody>
+          {teams.map(team => (
+            <tr key={team.managerId} className="border-t border-border">
+              <td className="py-2 pr-3 sticky left-0 bg-card">
+                <p className="font-medium text-foreground truncate max-w-[128px]">{team.managerName}</p>
+                <p className="text-muted-foreground">{team.teamSize} people</p>
+              </td>
+              {domains.map(d => {
+                const score = team.domainScores[d.key] ?? null;
+                const cell = heatmapCellStyle(score);
+                return (
+                  <td key={d.key} className="py-1.5 px-1 text-center">
+                    <span
+                      className="inline-flex items-center justify-center w-14 h-7 rounded-md text-xs font-semibold tabular-nums"
+                      style={{ background: cell.bg, color: cell.text }}
+                    >
+                      {score != null ? (score / 10).toFixed(1) : "—"}
+                    </span>
+                  </td>
+                );
+              })}
+              <td className="py-1.5 px-1 text-center">
+                {(() => {
+                  const cell = heatmapCellStyle(team.overallAvg);
+                  return (
+                    <span className="inline-flex items-center justify-center w-14 h-7 rounded-md text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                      {team.overallAvg != null ? (team.overallAvg / 10).toFixed(1) : "—"}
+                    </span>
+                  );
+                })()}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-4 flex-wrap">
+        <span className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">Score key</span>
+        {[
+          { label: "≥7.5 AI Ready",   bg: "#14532d", text: "#86efac" },
+          { label: "6.0–7.4 Strong",  bg: "#166534", text: "#bbf7d0" },
+          { label: "5.0–5.9 Capable", bg: "#713f12", text: "#fde68a" },
+          { label: "3.5–4.9 Dev",     bg: "#7c2d12", text: "#fdba74" },
+          { label: "<3.5 Gap",        bg: "#450a0a", text: "#fca5a5" },
+        ].map(l => (
+          <span key={l.label} className="inline-flex items-center gap-1.5 text-xs">
+            <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: l.bg }} />
+            <span style={{ color: l.text }}>{l.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderDashboardV2() {
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
@@ -96,7 +180,7 @@ export default function LeaderDashboardV2() {
   const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
   const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
   const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
-  const { data: teams } = trpc.dashboardV2.leader.teams.useQuery(queryInput);
+  const { data: heatmapData } = trpc.dashboardV2.leader.teamsHeatmap.useQuery(queryInput);
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
@@ -118,77 +202,67 @@ export default function LeaderDashboardV2() {
     ];
   }, [main]);
 
-  const segmentComparison = useMemo(() => {
-    if (!teams?.teams || teams.teams.length === 0) return [];
-    return [...teams.teams].filter(t => t.avgScore !== null).sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0));
-  }, [teams]);
-
-  const maxSegmentScore = useMemo(() => Math.max(...segmentComparison.map(s => s.avgScore ?? 0), 100), [segmentComparison]);
-
   const heroNarrative = useMemo(() => {
     if (!main || !hero) return null;
     const preciseAvg = main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "-";
     const aiReadyPct = main.assessedCount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.assessedCount) * 100) : 0;
     const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
     return {
-      text: hero.statement ?? `Your function averages Level ${preciseAvg}. ${aiReadyPct}% are AI Ready.${atRiskCount > 0 ? ` ${atRiskCount} employees have a foundation gap or are not yet ready.` : ""}`,
+      text: hero.statement ?? `Your function averages ${preciseAvg}. ${aiReadyPct}% are AI Ready.${atRiskCount > 0 ? ` ${atRiskCount} employees need urgent support.` : ""}`,
       cta: hero.cta,
     };
   }, [main, hero]);
 
   const worthAttention = useMemo(() => {
     if (!main) return [];
-    const result: Array<{ priority: string; title: string; body: string; linkLabel: string; linkHref: string }> = [];
+    const result: Array<{ priority: string; title: string; body: string; linkLabel: string; linkHref: string; type: "high" | "medium" | "strategic" }> = [];
     const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
     if (atRiskCount > 0) {
-      result.push({ priority: "High priority · function-wide", title: `${atRiskCount} employees have a capability gap that needs urgent attention`, body: `${main.ratingCounts.foundation_gap ?? 0} have a foundation gap and ${main.ratingCounts.not_yet_ready ?? 0} are not yet ready. These employees need targeted development to reach minimum capability threshold.`, linkLabel: "View at-risk employees", linkHref: "/people" });
+      result.push({ type: "high", priority: "High priority", title: `${atRiskCount} employees have a capability gap`, body: `${main.ratingCounts.foundation_gap ?? 0} foundation gap · ${main.ratingCounts.not_yet_ready ?? 0} not yet ready.`, linkLabel: "View employees", linkHref: "/people" });
     }
     const weakestDomain = (main.domainDistribution ?? []).filter((d: any) => d.avgScore !== null).sort((a: any, b: any) => (a.avgScore ?? 0) - (b.avgScore ?? 0))[0];
     if (weakestDomain) {
-      result.push({ priority: "Medium priority · domain pattern", title: `${weakestDomain.domainName} is the weakest domain across your function`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} in ${weakestDomain.domainName}. ${weakestDomain.totalAssessed} employees assessed. Consider a function-wide learning sprint.`, linkLabel: "View domain breakdown", linkHref: "/admin/org-context" });
+      result.push({ type: "medium", priority: "Domain gap", title: `${weakestDomain.domainName} is the weakest domain`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} · ${weakestDomain.totalAssessed} assessed.`, linkLabel: "View breakdown", linkHref: "/admin/org-context" });
     }
     if (ambitionGap?.configured && ambitionGap.gapRaw !== null && ambitionGap.gapRaw > 0) {
-      result.push({ priority: "Strategic · ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} levels below your AI ambition target`, body: `Current average ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.${ambitionGap.ambitionTargetLabel ? ` Goal: "${ambitionGap.ambitionTargetLabel}".` : ""}`, linkLabel: "View strategic roadmap", linkHref: "/dashboard/strategic" });
+      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/dashboard/strategic" });
     }
-    if (findings?.findings?.length) {
-      const top = findings.findings[0];
-      result.push({ priority: `${top.priority} priority · strategic finding`, title: top.observation, body: top.strategicImplication ?? top.supportingData ?? "", linkLabel: "View all strategic findings", linkHref: "/dashboard/strategic" });
-    }
-    return result.slice(0, 4);
-  }, [main, ambitionGap, findings]);
+    return result.slice(0, 3);
+  }, [main, ambitionGap]);
 
   if (isLoading) return <LeaderDashboardSkeleton />;
-  if (!main) return <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto"><EmptyState title="No function data" description="No assessment data available for your function yet." /></div>;
+  if (!main) return (
+    <div className="px-5 py-6 md:px-8 max-w-7xl mx-auto">
+      <EmptyState title="No function data" description="No assessment data available for your function yet." />
+    </div>
+  );
 
   const aiReadyPct = main.assessedCount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.assessedCount) * 100) : 0;
   const assessedPct = main.totalHeadcount > 0 ? Math.round((main.assessedCount / main.totalHeadcount) * 100) : 0;
+  const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-5">
+    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-6">
 
-      {/* Page header */}
-      <div className="flex items-center justify-between pb-3 border-b border-border">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">CPO dashboard</p>
-          <h1 className="text-lg font-semibold text-foreground">HR Function Overview</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Users className="w-3.5 h-3.5" />
-              {main.totalHeadcount} employees · {main.assessedCount} assessed ({assessedPct}%)
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">CPO Dashboard</p>
+          <h1 className="text-xl font-bold text-foreground">HR Function Overview</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <Users className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+            {main.totalHeadcount} employees · {main.assessedCount} assessed ({assessedPct}%)
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-            <Select value={roleFamily ?? "__all__"} onValueChange={(v) => setRoleFamily(v === "__all__" ? undefined : v)}>
-              <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="All departments" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">All departments</SelectItem>
-                {ROLE_FAMILY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+          <Select value={roleFamily ?? "__all__"} onValueChange={(v) => setRoleFamily(v === "__all__" ? undefined : v)}>
+            <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="All departments" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All departments</SelectItem>
+              {ROLE_FAMILY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Link href="/dashboard/personal">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs">
               <UserCircle className="w-3.5 h-3.5" />My profile
@@ -197,25 +271,25 @@ export default function LeaderDashboardV2() {
         </div>
       </div>
 
-      {/* Active filter */}
+      {/* Active filter chip */}
       {roleFamily && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "oklch(18% 0.040 250)", border: "0.5px solid oklch(30% 0.080 250)" }}>
-          <Filter className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-          <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+          <Filter className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs text-foreground">
             Filtered to <strong>{ROLE_FAMILY_OPTIONS.find(o => o.value === roleFamily)?.label ?? roleFamily}</strong>
           </span>
-          <button onClick={() => setRoleFamily(undefined)} className="ml-auto text-xs font-medium" style={{ color: "var(--primary)" }}>Clear filter</button>
+          <button onClick={() => setRoleFamily(undefined)} className="ml-auto text-xs font-semibold text-primary hover:text-primary/80">Clear</button>
         </div>
       )}
 
-      {/* Hero narrative */}
+      {/* ── Hero narrative ── */}
       {heroNarrative && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-xs font-medium uppercase tracking-widest mb-2 text-muted-foreground">Where the function is</p>
-          <p className="text-lg font-medium leading-snug mb-4 text-foreground">{heroNarrative.text}</p>
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="bg-card rounded-xl border border-border p-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Function snapshot</p>
+          <p className="text-base font-medium text-foreground leading-relaxed mb-4">{heroNarrative.text}</p>
+          <div className="flex items-center gap-2 flex-wrap">
             <Link href="/dashboard/strategic">
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">View strategic roadmap</Button>
+              <Button size="sm">View strategic roadmap</Button>
             </Link>
             {heroNarrative.cta && (
               <Link href={heroNarrative.cta.route}>
@@ -226,153 +300,116 @@ export default function LeaderDashboardV2() {
         </div>
       )}
 
-      {/* 4 KPI tiles */}
+      {/* ── 4 KPI tiles ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiTile label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "-"} sub="Capability level" />
-        <KpiTile label="AI Ready" value={`${aiReadyPct}%`} sub={`${main.ratingCounts.ai_ready ?? 0} of ${main.assessedCount} assessed`} />
-        <KpiTile label="Foundation gap" value={main.ratingCounts.foundation_gap ?? 0} sub="Need urgent support" />
-        <KpiTile label="Assessment coverage" value={`${assessedPct}%`} sub={`${main.assessedCount} of ${main.totalHeadcount} assessed`} />
+        <KpiCard label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"} sub="Capability level" />
+        <KpiCard label="AI Ready" value={`${aiReadyPct}%`} sub={`${main.ratingCounts.ai_ready ?? 0} of ${main.assessedCount}`} accent="#22c55e" />
+        <KpiCard label="Capability gaps" value={atRiskCount} sub="Need urgent support" accent={atRiskCount > 0 ? "#ef4444" : undefined} />
+        <KpiCard label="Assessment coverage" value={`${assessedPct}%`} sub={`${main.assessedCount} of ${main.totalHeadcount}`} />
       </div>
 
-      {/* Level distribution */}
-      <div className="bg-card rounded-xl border border-border shadow-md p-6">
-        <div className="flex items-center justify-between mb-5">
-          <p className="text-sm font-medium text-foreground">Where the function is on the journey</p>
-          <Link href="/dashboard/strategic">
-            <span className="text-xs text-primary hover:text-primary/80 transition-colors">Strategic view →</span>
-          </Link>
-        </div>
-        <div className="grid gap-8 items-center" style={{ gridTemplateColumns: "200px 1fr" }}>
-          <div style={{ position: "relative", width: 200, height: 200 }}>
-            <LevelDistributionDonut distribution={levelDistribution} avgScore={main.functionScore} />
-          </div>
-          <div className="flex flex-col gap-2">
+      {/* ── Two-column: Level distribution + Domain breakdown ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Level distribution */}
+        <div className="bg-card rounded-xl border border-border p-5">
+          <p className="text-sm font-semibold text-foreground mb-4">Readiness distribution</p>
+          <div className="space-y-0">
             {[5, 4, 3, 2, 1].map(lv => {
               const d = levelDistribution.find(x => x.level === lv);
-              const s = getLevelChipStyle(lv);
+              return <LevelLegendRow key={lv} level={lv} count={d?.count ?? 0} pct={d?.pct ?? 0} />;
+            })}
+          </div>
+          <Link href="/dashboard/strategic">
+            <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-4 inline-block">Strategic view →</span>
+          </Link>
+        </div>
+
+        {/* Domain breakdown */}
+        {main.domainDistribution && main.domainDistribution.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <p className="text-sm font-semibold text-foreground mb-4">Domain breakdown</p>
+            <div>
+              {[...main.domainDistribution]
+                .sort((a: any, b: any) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
+                .map((d: any) => (
+                  <DomainBar
+                    key={d.domain}
+                    label={d.domainName}
+                    score={d.avgScore}
+                    count={d.totalAssessed}
+                    colour={DOMAIN_COLOURS[d.domain] ?? "var(--primary)"}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Team × Domain Heatmap ── */}
+      {heatmapData && heatmapData.teams.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Team capability heatmap</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Average score per team across all six domains</p>
+            </div>
+            <Badge variant="outline" className="text-xs">{heatmapData.teams.length} teams</Badge>
+          </div>
+          <TeamDomainHeatmap teams={heatmapData.teams} domains={heatmapData.domains} />
+        </div>
+      )}
+
+      {/* ── Worth your attention ── */}
+      {worthAttention.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <p className="text-sm font-semibold text-foreground mb-4">Worth your attention</p>
+          <div className="space-y-4">
+            {worthAttention.map((ins, i) => {
+              const iconColour = ins.type === "high" ? "#ef4444" : ins.type === "medium" ? "#f59e0b" : "var(--primary)";
+              const Icon = ins.type === "high" ? AlertTriangle : ins.type === "strategic" ? Target : TrendingUp;
               return (
-                <div key={lv} className="flex items-center justify-between py-1.5" style={{ borderBottom: lv > 1 ? "0.5px solid oklch(22% 0.030 240)" : undefined }}>
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: s.bg, color: s.text }}>{lv}</span>
-                    <span className="text-sm font-medium text-foreground">{getLevelLabel(lv)}</span>
+                <div key={i} className={cn("flex items-start gap-3 pb-4", i < worthAttention.length - 1 && "border-b border-border")}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${iconColour}18` }}>
+                    <Icon className="w-4 h-4" style={{ color: iconColour }} />
                   </div>
-                  <span className="text-sm" style={{ color: (d?.count ?? 0) > 0 ? "var(--foreground)" : "var(--muted-foreground)" }}>
-                    {(d?.count ?? 0) > 0 ? `${d!.count} · ${d!.pct}%` : "0"}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: iconColour }}>{ins.priority}</p>
+                    <p className="text-sm font-medium text-foreground mb-0.5">{ins.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-1.5">{ins.body}</p>
+                    <Link href={ins.linkHref}>
+                      <span className="text-xs font-semibold text-primary hover:text-primary/80">{ins.linkLabel} →</span>
+                    </Link>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
-      </div>
-
-      {/* Segment comparison bars */}
-      {segmentComparison.length > 0 && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-sm font-medium text-foreground">Team comparison</p>
-            <span className="text-xs text-muted-foreground">Sorted by capability level</span>
-          </div>
-          {segmentComparison.map((seg, i) => (
-            <SegmentBar key={seg.managerId} label={seg.managerName} score={seg.avgScore} count={seg.teamSize} maxScore={maxSegmentScore} isHighlighted={i === 0} />
-          ))}
-        </div>
       )}
 
-      {/* Domain comparison bars */}
-      {main.domainDistribution && main.domainDistribution.length > 0 && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-sm font-medium text-foreground">Domain comparison</p>
-            <span className="text-xs text-muted-foreground">Sorted by capability level</span>
-          </div>
-          {[...main.domainDistribution].sort((a: any, b: any) => (b.avgScore ?? 0) - (a.avgScore ?? 0)).map((d: any, i: number) => (
-            <SegmentBar key={d.domain} label={d.domainName} score={d.avgScore} count={d.totalAssessed} maxScore={100} isHighlighted={i === 0} />
-          ))}
-        </div>
-      )}
-
-      {/* Worth your attention */}
-      {worthAttention.length > 0 && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-sm font-medium mb-1 text-foreground">Worth your attention</p>
-          {worthAttention.map((ins, i) => (
-            <div key={i} style={{ padding: "14px 0", borderBottom: i < worthAttention.length - 1 ? "0.5px solid oklch(22% 0.030 240)" : undefined }}>
-              <p className="text-xs font-medium uppercase tracking-widest mb-1.5 text-primary">{ins.priority}</p>
-              <p className="text-sm font-medium mb-1.5 text-foreground">{ins.title}</p>
-              <p className="text-xs leading-relaxed mb-2 text-muted-foreground">{ins.body}</p>
-              <Link href={ins.linkHref}>
-                <span className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">{ins.linkLabel} →</span>
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Ambition gap banner */}
+      {/* ── Ambition gap ── */}
       {ambitionGap?.configured && ambitionGap.gapRaw !== null && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
+        <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "oklch(18% 0.040 250)" }}>
-              <Target className="w-5 h-5" style={{ color: "var(--primary)" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10">
+              <Target className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium uppercase tracking-widest mb-1 text-primary">AI ambition gap</p>
-              <p className="text-sm font-medium mb-1 text-foreground">
-                Current Level {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target Level {ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">AI ambition gap</p>
+              <p className="text-sm font-medium text-foreground mb-0.5">
+                Current {ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "—"} vs target {ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—"}
               </p>
               {ambitionGap.ambitionTargetLabel && (
                 <p className="text-xs text-muted-foreground">Goal: "{ambitionGap.ambitionTargetLabel}"</p>
               )}
               <Link href="/dashboard/strategic">
-                <span className="text-xs font-medium mt-2 inline-block text-primary hover:text-primary/80 transition-colors">View strategic roadmap →</span>
+                <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-2 inline-block">View strategic roadmap →</span>
               </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* Teams overview */}
-      {teams && teams.teams.length > 0 && (
-        <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-foreground">Teams</p>
-            <span className="text-xs text-muted-foreground">{teams.teams.length} teams</span>
-          </div>
-          <div className="space-y-2">
-            {teams.teams.map((team: any) => {
-              const level = team.avgScore !== null ? getLevelFromScore(team.avgScore) : null;
-              const chipStyle = level !== null ? getLevelChipStyle(level) : null;
-              return (
-                <div key={team.managerId} className="flex items-center justify-between p-3 rounded-xl border border-border" style={{ background: "oklch(17% 0.028 240)" }}>
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>
-                      {team.managerName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                    </span>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{team.managerName}</p>
-                      <p className="text-xs text-muted-foreground">{team.teamSize} people</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {chipStyle && (
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-medium" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>
-                        {level}
-                      </span>
-                    )}
-                    {team.avgScore !== null && (
-                      <span className="text-sm font-medium tabular-nums text-foreground">
-                        {(team.avgScore / 10).toFixed(1)}
-                      </span>
-                    )}
-                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
