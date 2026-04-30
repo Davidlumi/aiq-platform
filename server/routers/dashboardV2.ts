@@ -2170,6 +2170,125 @@ const leaderRouter = router({
       functionAvgRaw, gapRaw, verdict, assessedCount, priorityGaps,
     };
   }),
+
+  /**
+   * Function-level heatmap: groups users by role_family, returns avg domain scores
+   * per function + individual member scores for drill-down.
+   */
+  functionHeatmap: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Fetch all users in this tenant
+    const allUsers = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        jobFunction: users.jobFunction,
+        roleFamily: users.roleFamily,
+      })
+      .from(users)
+      .where(eq(users.tenantId, ctx.user.tenantId));
+
+    // Fetch latest completed assessment score for each user
+    const allScores = await db
+      .select({
+        userId: assessmentSessions.userId,
+        scoreBreakdownJson: assessmentScores.scoreBreakdownJson,
+        overallScore: assessmentScores.overallScore,
+        completedAt: assessmentSessions.completedAt,
+      })
+      .from(assessmentSessions)
+      .innerJoin(assessmentScores, eq(assessmentScores.sessionId, assessmentSessions.id))
+      .where(
+        and(
+          eq(assessmentSessions.tenantId, ctx.user.tenantId),
+          eq(assessmentSessions.state, "completed")
+        )
+      )
+      .orderBy(desc(assessmentSessions.completedAt));
+
+    // Keep only the latest score per user
+    const latestScoreByUser = new Map<string, { overallScore: number | null; domainScores: Record<string, number> }>();
+    for (const s of allScores) {
+      if (latestScoreByUser.has(s.userId)) continue;
+      const domainScores: Record<string, number> = {};
+      try {
+        const raw = s.scoreBreakdownJson; const breakdown = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {});
+        const caps = breakdown.capabilityScores ?? {};
+        for (const [k, v] of Object.entries(caps)) {
+          domainScores[k] = typeof v === "number" ? v : ((v as any)?.score ?? 0);
+        }
+      } catch { /* ignore */ }
+      latestScoreByUser.set(s.userId, {
+        overallScore: s.overallScore ? Number(s.overallScore) : null,
+        domainScores,
+      });
+    }
+
+    // Group users by role_family
+    const functionMap = new Map<string, {
+      key: string;
+      label: string;
+      members: Array<{
+        id: string;
+        name: string;
+        jobFunction: string | null;
+        domainScores: Record<string, number>;
+        overallScore: number | null;
+      }>;
+    }>();
+
+    for (const u of allUsers) {
+      const rf = u.roleFamily ?? "other";
+      if (!functionMap.has(rf)) {
+        functionMap.set(rf, {
+          key: rf,
+          label: ROLE_FAMILY_LABELS[rf as RoleFamilyKey] ?? rf.replace(/_/g, " "),
+          members: [],
+        });
+      }
+      const scoreData = latestScoreByUser.get(u.id) ?? { overallScore: null, domainScores: {} };
+      functionMap.get(rf)!.members.push({
+        id: u.id,
+        name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(),
+        jobFunction: u.jobFunction,
+        domainScores: scoreData.domainScores,
+        overallScore: scoreData.overallScore,
+      });
+    }
+
+    // Compute function-level averages
+    const functions = Array.from(functionMap.values()).map(fn => {
+      const assessed = fn.members.filter(m => m.overallScore !== null);
+      const domainAvgs: Record<string, number | null> = {};
+      for (const dk of DOMAIN_KEYS) {
+        const vals = assessed.map(m => m.domainScores[dk]).filter((v): v is number => v != null && !isNaN(v));
+        domainAvgs[dk] = vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+      }
+      const overallVals = assessed.map(m => m.overallScore).filter((v): v is number => v != null);
+      const overallAvg = overallVals.length > 0 ? Math.round((overallVals.reduce((a, b) => a + b, 0) / overallVals.length) * 10) / 10 : null;
+      return {
+        key: fn.key,
+        label: fn.label,
+        memberCount: fn.members.length,
+        assessedCount: assessed.length,
+        domainAvgs,
+        overallAvg,
+        members: fn.members,
+      };
+    }).sort((a, b) => b.memberCount - a.memberCount);
+
+    return {
+      functions,
+      domains: DOMAIN_KEYS.map(k => ({ key: k, label: DOMAIN_LABELS[k] })),
+    };
+  }),
 });
 
 // ─── Export combined router ──────────────────────────────────────────────────

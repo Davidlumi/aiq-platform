@@ -2,7 +2,7 @@
  * CPO / Leader Dashboard — redesigned for consistency with the AiQ design system.
  * Clean card-based layout, consistent border/card/foreground tokens, team × domain heatmap.
  */
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/dashboard/DashboardUI";
 import { getLevelFromScore, getLevelChipStyle, getLevelLabel } from "@/lib/level-utils";
-import { Users, UserCircle, Filter, Target, TrendingUp, AlertTriangle, ChevronRight } from "lucide-react";
+import { Users, UserCircle, Filter, Target, TrendingUp, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -143,21 +143,43 @@ function heatmapCellStyle(score: number | null): { bg: string; text: string } {
   return { bg: "#450a0a", text: "#fca5a5" };
 }
 
-function TeamDomainHeatmap({
-  teams, domains,
+function FunctionHeatmap({
+  functions, domains,
 }: {
-  teams: Array<{ managerId: string; managerName: string; teamSize: number; domainScores: Record<string, number | null>; overallAvg: number | null }>;
+  functions: Array<{
+    key: string;
+    label: string;
+    memberCount: number;
+    assessedCount: number;
+    domainAvgs: Record<string, number | null>;
+    overallAvg: number | null;
+    members: Array<{
+      id: string;
+      name: string;
+      jobFunction: string | null;
+      domainScores: Record<string, number>;
+      overallScore: number | null;
+    }>;
+  }>;
   domains: Array<{ key: string; label: string }>;
 }) {
-  if (teams.length === 0) return null;
-  // Short domain labels for column headers
+  const [expandedFns, setExpandedFns] = useState<Set<string>>(new Set());
+  if (functions.length === 0) return null;
   const abbr = (label: string) => label.replace(/^AI /, "").split(" ").slice(0, 2).join(" ");
+  const toggleFn = (key: string) => {
+    setExpandedFns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr>
-            <th className="text-left pb-3 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest w-36 sticky left-0 bg-card">Team</th>
+            <th className="text-left pb-3 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest sticky left-0 bg-card" style={{ minWidth: "180px" }}>Function</th>
             {domains.map(d => (
               <th key={d.key} className="text-center pb-3 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap min-w-[64px]">
                 {abbr(d.label)}
@@ -167,48 +189,114 @@ function TeamDomainHeatmap({
           </tr>
         </thead>
         <tbody>
-          {teams.map((team, ti) => (
-            <tr key={team.managerId} className={ti % 2 === 0 ? "" : "bg-muted/20"}>
-              <td className="py-2 pr-4 sticky left-0" style={{ background: ti % 2 === 0 ? "var(--card)" : "color-mix(in srgb, var(--muted) 20%, var(--card))" }}>
-                <p className="font-medium text-foreground text-xs truncate max-w-[128px]">{team.managerName}</p>
-                <p className="text-muted-foreground text-xs">{team.teamSize} people</p>
-              </td>
-              {domains.map(d => {
-                const score = team.domainScores[d.key] ?? null;
-                const cell = heatmapCellStyle(score);
-                return (
-                  <td key={d.key} className="py-1 px-1 text-center">
-                    <span
-                      className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums"
-                      style={{ background: cell.bg, color: cell.text }}
-                    >
-                      {score != null ? (score / 10).toFixed(1) : "—"}
-                    </span>
+          {functions.map((fn, fi) => {
+            const isExpanded = expandedFns.has(fn.key);
+            const rowBg = fi % 2 === 0 ? "var(--card)" : "color-mix(in srgb, var(--muted) 20%, var(--card))";
+            return (
+              <React.Fragment key={fn.key}>
+                {/* Function summary row */}
+                <tr
+                  className="cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => toggleFn(fn.key)}
+                >
+                  <td className="py-2.5 pr-4 sticky left-0" style={{ background: rowBg }}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 flex-shrink-0 text-muted-foreground">
+                        {isExpanded
+                          ? <ChevronDown className="w-4 h-4" />
+                          : <ChevronRight className="w-4 h-4" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground text-xs truncate max-w-[148px]">{fn.label}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {fn.memberCount} members · {fn.assessedCount} assessed
+                        </p>
+                      </div>
+                    </div>
                   </td>
-                );
-              })}
-              <td className="py-1 px-1 text-center">
-                {(() => {
-                  const cell = heatmapCellStyle(team.overallAvg);
+                  {domains.map(d => {
+                    const score = fn.domainAvgs[d.key] ?? null;
+                    const cell = heatmapCellStyle(score);
+                    return (
+                      <td key={d.key} className="py-1 px-1 text-center">
+                        <span
+                          className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums"
+                          style={{ background: cell.bg, color: cell.text }}
+                        >
+                          {score != null ? (score / 10).toFixed(1) : "—"}
+                        </span>
+                      </td>
+                    );
+                  })}
+                  <td className="py-1 px-1 text-center">
+                    {(() => {
+                      const cell = heatmapCellStyle(fn.overallAvg);
+                      return (
+                        <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                          {fn.overallAvg != null ? (fn.overallAvg / 10).toFixed(1) : "—"}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                </tr>
+                {/* Expanded member sub-rows */}
+                {isExpanded && fn.members.map((member) => {
+                  const assessed = member.overallScore !== null;
                   return (
-                    <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
-                      {team.overallAvg != null ? (team.overallAvg / 10).toFixed(1) : "—"}
-                    </span>
+                    <tr key={member.id} className="border-l-2 border-primary/20" style={{ background: "color-mix(in srgb, var(--primary) 5%, var(--card))" }}>
+                      <td className="py-1.5 pr-4 pl-8 sticky left-0" style={{ background: "color-mix(in srgb, var(--primary) 5%, var(--card))" }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <UserCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground text-xs truncate max-w-[140px]">{member.name || "Unknown"}</p>
+                            {member.jobFunction && (
+                              <p className="text-muted-foreground text-xs truncate max-w-[140px]">{member.jobFunction}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      {domains.map(d => {
+                        const score = assessed ? (member.domainScores[d.key] ?? null) : null;
+                        const cell = heatmapCellStyle(score);
+                        return (
+                          <td key={d.key} className="py-1 px-1 text-center">
+                            <span
+                              className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-medium tabular-nums"
+                              style={{ background: cell.bg, color: cell.text }}
+                            >
+                              {score != null ? (score / 10).toFixed(1) : "—"}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td className="py-1 px-1 text-center">
+                        {(() => {
+                          const cell = heatmapCellStyle(member.overallScore);
+                          return (
+                            <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                              {member.overallScore != null ? (member.overallScore / 10).toFixed(1) : "—"}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                    </tr>
                   );
-                })()}
-              </td>
-            </tr>
-          ))}
+                })}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
       {/* Legend — clean pill row */}
       <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border flex-wrap">
         {[
-          { label: "AI Ready",  range: "≥7.5", bg: "#14532d", text: "#86efac" },
-          { label: "Strong",    range: "6.0–7.4", bg: "#166534", text: "#bbf7d0" },
-          { label: "Capable",   range: "5.0–5.9", bg: "#713f12", text: "#fde68a" },
-          { label: "Developing",range: "3.5–4.9", bg: "#7c2d12", text: "#fdba74" },
-          { label: "Gap",       range: "<3.5",    bg: "#450a0a", text: "#fca5a5" },
+          { label: "AI Ready",   range: "≥7.5",    bg: "#14532d", text: "#86efac" },
+          { label: "Strong",     range: "6.0–7.4",  bg: "#166534", text: "#bbf7d0" },
+          { label: "Capable",    range: "5.0–5.9",  bg: "#713f12", text: "#fde68a" },
+          { label: "Developing", range: "3.5–4.9",  bg: "#7c2d12", text: "#fdba74" },
+          { label: "Gap",        range: "<3.5",     bg: "#450a0a", text: "#fca5a5" },
         ].map(l => (
           <span key={l.label} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: l.bg, color: l.text }}>
             {l.label} <span className="opacity-70">{l.range}</span>
@@ -218,7 +306,6 @@ function TeamDomainHeatmap({
     </div>
   );
 }
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderDashboardV2() {
@@ -228,7 +315,7 @@ export default function LeaderDashboardV2() {
   const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
   const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
   const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
-  const { data: heatmapData } = trpc.dashboardV2.leader.teamsHeatmap.useQuery(queryInput);
+  const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery();
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
@@ -388,17 +475,17 @@ export default function LeaderDashboardV2() {
         )}
       </div>
 
-      {/* ── Team × Domain Heatmap ── */}
-      {heatmapData && heatmapData.teams.length > 0 && (
+      {/* ── Function × Domain Heatmap ── */}
+      {heatmapData && heatmapData.functions.length > 0 && (
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <p className="text-sm font-semibold text-foreground">Team capability heatmap</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Average score per team across all six domains</p>
+              <p className="text-sm font-semibold text-foreground">Function capability heatmap</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Average score per function across all six domains · click a row to expand members</p>
             </div>
-            <Badge variant="outline" className="text-xs">{heatmapData.teams.length} teams</Badge>
+            <Badge variant="outline" className="text-xs">{heatmapData.functions.length} functions</Badge>
           </div>
-          <TeamDomainHeatmap teams={heatmapData.teams} domains={heatmapData.domains} />
+          <FunctionHeatmap functions={heatmapData.functions} domains={heatmapData.domains} />
         </div>
       )}
 
