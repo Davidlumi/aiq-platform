@@ -8,7 +8,7 @@
  *   4. Clicking a domain card → slide-out Sheet with detail + dev link
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -26,9 +26,156 @@ import {
   CheckCircle2, AlertTriangle, ShieldAlert, HelpCircle,
   ChevronRight, BookOpen, Target, Brain,
   Shield, Workflow, Database, Gavel, TrendingUp, TrendingDown,
-  RotateCcw,
+  RotateCcw, Clock, ChevronDown,
 } from "lucide-react";
 import { Sparkles, BarChart2, AlertCircle } from "lucide-react";
+import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
+
+// ── Assessment History Dropdown ────────────────────────────────────────────────
+
+function HistoryDropdown({
+  sessions,
+  currentSessionId,
+}: {
+  sessions: any[];
+  currentSessionId: string;
+}) {
+  const [, navigate] = useLocation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const current = sessions.find(s => s.id === currentSessionId);
+  const completedSessions = sessions.filter(s => s.state === "completed");
+  const inProgressSession = sessions.find(s => s.state === "in_progress");
+
+  const label = current
+    ? current.state === "completed" && current.completedAt
+      ? `Completed ${new Date(current.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+      : `Started ${new Date(current.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+    : "Select assessment";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors text-sm font-medium text-foreground"
+      >
+        <span className="text-muted-foreground text-xs font-normal mr-1">Assessment:</span>
+        {label}
+        <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-[280px] rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+          {inProgressSession && (
+            <button
+              onClick={() => { setOpen(false); navigate(`/assessment/${inProgressSession.id}`); }}
+              className={cn(
+                "w-full text-left px-4 py-3 hover:bg-accent/50 transition-colors flex items-center justify-between gap-3 border-b border-border",
+                inProgressSession.id === currentSessionId && "bg-accent/30"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">In Progress</p>
+                  <p className="text-xs text-muted-foreground">
+                    {inProgressSession.answeredCount ?? 0}/{inProgressSession.totalTarget ?? 49} answered
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-amber-400/12 text-amber-400 border-amber-400/25">Resume</span>
+            </button>
+          )}
+          {completedSessions.map((s: any, i: number) => {
+            const isActive = s.id === currentSessionId;
+            const date = s.completedAt
+              ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+              : "—";
+            const scoreVal = s.score?.overallScore;
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setOpen(false); navigate(`/assessment/${s.id}/results`); }}
+                className={cn(
+                  "w-full text-left px-4 py-3 hover:bg-accent/50 transition-colors flex items-center justify-between gap-3",
+                  i < completedSessions.length - 1 && "border-b border-border",
+                  isActive && "bg-accent/30"
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {i === 0 ? "Latest assessment" : `Assessment ${completedSessions.length - i}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Completed {date}</p>
+                  </div>
+                </div>
+                {scoreVal !== undefined && (
+                  <span
+                    className="text-sm font-bold tabular-nums px-2 py-0.5 rounded-lg text-white shrink-0"
+                    style={{ backgroundColor: scoreToColor(scoreVal).bg }}
+                  >
+                    {formatPeakonScore(scoreVal)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          <div className="border-t border-border px-4 py-2.5">
+            <button
+              onClick={() => { setOpen(false); navigate("/assessment?new=1"); }}
+              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+            >
+              + Start new assessment
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── In-Progress Banner ─────────────────────────────────────────────────────────
+
+function InProgressBanner({ session }: { session: any }) {
+  const [, navigate] = useLocation();
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  const answered = session.answeredCount ?? 0;
+  const total = session.totalTarget ?? 49;
+  const pct = Math.round((answered / total) * 100);
+  return (
+    <div className="rounded-xl border border-amber-400/30 bg-amber-400/8 p-4 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
+          <p className="text-xs text-muted-foreground">{answered} of {total} questions answered · {pct}% complete</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => navigate(`/assessment/${session.id}`)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 text-amber-400 text-xs font-semibold hover:bg-amber-400/25 transition-colors border border-amber-400/30"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          Resume
+        </button>
+        <button onClick={() => setDismissed(true)} className="text-muted-foreground hover:text-foreground text-xs px-1">✕</button>
+      </div>
+    </div>
+  );
+}
 
 // ── Signal Breakdown Chart ─────────────────────────────────────────────────────
 
@@ -471,6 +618,7 @@ export default function AssessmentResultsPage() {
   const [isStartingReassess, setIsStartingReassess] = useState(false);
 
   const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
+  const { data: allSessions } = trpc.assessment.history.useQuery({});
   const startMutation = trpc.assessment.startSession.useMutation({
     onSuccess: result => {
       navigate(`/assessment/${result.sessionId}`);
@@ -562,10 +710,20 @@ export default function AssessmentResultsPage() {
     : null;
   const overallDelta = prevSession ? overallScore - prevSession.overallScore : null;
 
+  const inProgressSession = allSessions?.find((s: any) => s.state === "in_progress" && s.id !== sessionId);
+
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      {/* History dropdown + in-progress banner */}
+      <div className="space-y-3">
+        {allSessions && allSessions.length > 1 && (
+          <HistoryDropdown sessions={allSessions} currentSessionId={sessionId!} />
+        )}
+        {inProgressSession && <InProgressBanner session={inProgressSession} />}
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-2">
         {/* Score ring */}
         <div className="relative w-24 h-24 shrink-0">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">

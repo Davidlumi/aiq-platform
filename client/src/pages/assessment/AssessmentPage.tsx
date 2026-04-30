@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -250,7 +250,10 @@ function StartScreen({
 // --- Main Component -----------------------------------------------------------
 export default function AssessmentPage() {
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const forceNew = new URLSearchParams(search).get("new") === "1";
   const [showProfiling, setShowProfiling] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
   const { data: defaultBlueprint } = trpc.assessment.defaultBlueprint.useQuery();
   const { data: sessions, isLoading } = trpc.assessment.history.useQuery({});
   const onboardingMutation = trpc.auth.completeOnboarding.useMutation();
@@ -297,6 +300,21 @@ export default function AssessmentPage() {
     startMutation.mutate({ blueprintId, roleHint });
   };
 
+  // Auto-redirect to latest session (completed → results, in_progress → session)
+  useEffect(() => {
+    if (forceNew || hasRedirected || isLoading || !sessions) return;
+    const inProgress = sessions.find((s: any) => s.state === "in_progress");
+    const lastCompleted = sessions.find((s: any) => s.state === "completed");
+    if (lastCompleted) {
+      setHasRedirected(true);
+      navigate(`/assessment/${lastCompleted.id}/results`);
+    } else if (inProgress) {
+      setHasRedirected(true);
+      navigate(`/assessment/${inProgress.id}`);
+    }
+    // else: no sessions → show start screen below
+  }, [sessions, isLoading, hasRedirected, navigate]);
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-4 max-w-3xl">
@@ -305,6 +323,11 @@ export default function AssessmentPage() {
         <Skeleton className="h-40 w-full" />
       </div>
     );
+  }
+
+  // If sessions exist, we're redirecting — show nothing while navigating
+  if (!forceNew && sessions && sessions.length > 0 && !hasRedirected) {
+    return null;
   }
 
   return (
