@@ -59,14 +59,13 @@ const LEVEL_DONUT_COLOURS: Record<number, { fill: string; text: string }> = {
 };
 
 function ReadinessDonut({ distribution }: { distribution: Array<{ level: number; count: number; pct: number }> }) {
-  const R = 54; // outer radius
-  const r = 34; // inner radius
-  const cx = 70; const cy = 70;
+  const R = 80; // outer radius — bigger donut
+  const r = 52; // inner radius
+  const cx = 100; const cy = 100;
   const total = distribution.reduce((s, d) => s + d.count, 0);
   if (total === 0) return null;
 
-  // Build arc paths
-  let cumAngle = -Math.PI / 2; // start at top
+  let cumAngle = -Math.PI / 2;
   const slices = distribution
     .filter(d => d.count > 0)
     .map(d => {
@@ -88,31 +87,28 @@ function ReadinessDonut({ distribution }: { distribution: Array<{ level: number;
     });
 
   return (
-    <div className="flex items-center gap-6">
-      {/* Donut SVG */}
-      <div className="flex-shrink-0">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          {slices.map(s => (
-            <path key={s.level} d={s.path} fill={s.colour} opacity={0.9} />
-          ))}
-          {/* Centre label */}
-          <text x={cx} y={cy - 6} textAnchor="middle" className="fill-foreground" fontSize="18" fontWeight="700">{total}</text>
-          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground" fontSize="10">assessed</text>
-        </svg>
-      </div>
-      {/* Legend */}
-      <div className="flex-1 space-y-2">
+    <div className="flex flex-col items-center gap-5">
+      {/* Donut SVG — centred, larger */}
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        {slices.map(s => (
+          <path key={s.level} d={s.path} fill={s.colour} opacity={0.9} />
+        ))}
+        <text x={cx} y={cy - 8} textAnchor="middle" fill="currentColor" fontSize="24" fontWeight="700">{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="#94a3b8" fontSize="11">assessed</text>
+      </svg>
+      {/* Legend — horizontal row of pills below the donut */}
+      <div className="grid grid-cols-5 gap-2 w-full">
         {[5, 4, 3, 2, 1].map(lv => {
           const d = distribution.find(x => x.level === lv);
           const count = d?.count ?? 0;
           const pct = d?.pct ?? 0;
           const col = LEVEL_DONUT_COLOURS[lv];
           return (
-            <div key={lv} className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: col.fill }} />
-              <span className="text-xs text-foreground flex-1">{getLevelLabel(lv)}</span>
-              <span className="text-xs tabular-nums font-semibold" style={{ color: count > 0 ? col.fill : "var(--muted-foreground)" }}>
-                {count > 0 ? `${pct}%` : "0%"}
+            <div key={lv} className="flex flex-col items-center gap-1">
+              <span className="w-3 h-3 rounded-full" style={{ background: col.fill }} />
+              <span className="text-xs text-muted-foreground text-center leading-tight">{getLevelLabel(lv)}</span>
+              <span className="text-sm font-bold tabular-nums" style={{ color: count > 0 ? col.fill : "var(--muted-foreground)" }}>
+                {pct}%
               </span>
             </div>
           );
@@ -159,39 +155,36 @@ function TeamDomainHeatmap({
   domains: Array<{ key: string; label: string }>;
 }) {
   if (teams.length === 0) return null;
-  // Abbreviate domain labels to 2-word max for column headers
-  const abbr = (label: string) => {
-    const words = label.replace("AI ", "").split(" ");
-    return words.length > 2 ? words.slice(0, 2).join(" ") : label.replace("AI ", "");
-  };
+  // Short domain labels for column headers
+  const abbr = (label: string) => label.replace(/^AI /, "").split(" ").slice(0, 2).join(" ");
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr>
-            <th className="text-left py-2 pr-3 text-muted-foreground font-semibold uppercase tracking-widest text-xs w-36 sticky left-0 bg-card">Team</th>
+            <th className="text-left pb-3 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest w-36 sticky left-0 bg-card">Team</th>
             {domains.map(d => (
-              <th key={d.key} className="text-center py-2 px-1 font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap min-w-[72px]">
-                <span className="block" style={{ color: DOMAIN_COLOURS[d.key] ?? "var(--foreground)" }}>{abbr(d.label)}</span>
+              <th key={d.key} className="text-center pb-3 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap min-w-[64px]">
+                {abbr(d.label)}
               </th>
             ))}
-            <th className="text-center py-2 px-1 font-semibold text-muted-foreground uppercase tracking-widest min-w-[56px]">Overall</th>
+            <th className="text-center pb-3 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest min-w-[52px]">Avg</th>
           </tr>
         </thead>
         <tbody>
-          {teams.map(team => (
-            <tr key={team.managerId} className="border-t border-border">
-              <td className="py-2 pr-3 sticky left-0 bg-card">
-                <p className="font-medium text-foreground truncate max-w-[128px]">{team.managerName}</p>
-                <p className="text-muted-foreground">{team.teamSize} people</p>
+          {teams.map((team, ti) => (
+            <tr key={team.managerId} className={ti % 2 === 0 ? "" : "bg-muted/20"}>
+              <td className="py-2 pr-4 sticky left-0" style={{ background: ti % 2 === 0 ? "var(--card)" : "color-mix(in srgb, var(--muted) 20%, var(--card))" }}>
+                <p className="font-medium text-foreground text-xs truncate max-w-[128px]">{team.managerName}</p>
+                <p className="text-muted-foreground text-xs">{team.teamSize} people</p>
               </td>
               {domains.map(d => {
                 const score = team.domainScores[d.key] ?? null;
                 const cell = heatmapCellStyle(score);
                 return (
-                  <td key={d.key} className="py-1.5 px-1 text-center">
+                  <td key={d.key} className="py-1 px-1 text-center">
                     <span
-                      className="inline-flex items-center justify-center w-14 h-7 rounded-md text-xs font-semibold tabular-nums"
+                      className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums"
                       style={{ background: cell.bg, color: cell.text }}
                     >
                       {score != null ? (score / 10).toFixed(1) : "—"}
@@ -199,11 +192,11 @@ function TeamDomainHeatmap({
                   </td>
                 );
               })}
-              <td className="py-1.5 px-1 text-center">
+              <td className="py-1 px-1 text-center">
                 {(() => {
                   const cell = heatmapCellStyle(team.overallAvg);
                   return (
-                    <span className="inline-flex items-center justify-center w-14 h-7 rounded-md text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                    <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
                       {team.overallAvg != null ? (team.overallAvg / 10).toFixed(1) : "—"}
                     </span>
                   );
@@ -213,19 +206,17 @@ function TeamDomainHeatmap({
           ))}
         </tbody>
       </table>
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 flex-wrap">
-        <span className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">Score key</span>
+      {/* Legend — clean pill row */}
+      <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border flex-wrap">
         {[
-          { label: "≥7.5 AI Ready",   bg: "#14532d", text: "#86efac" },
-          { label: "6.0–7.4 Strong",  bg: "#166534", text: "#bbf7d0" },
-          { label: "5.0–5.9 Capable", bg: "#713f12", text: "#fde68a" },
-          { label: "3.5–4.9 Dev",     bg: "#7c2d12", text: "#fdba74" },
-          { label: "<3.5 Gap",        bg: "#450a0a", text: "#fca5a5" },
+          { label: "AI Ready",  range: "≥7.5", bg: "#14532d", text: "#86efac" },
+          { label: "Strong",    range: "6.0–7.4", bg: "#166534", text: "#bbf7d0" },
+          { label: "Capable",   range: "5.0–5.9", bg: "#713f12", text: "#fde68a" },
+          { label: "Developing",range: "3.5–4.9", bg: "#7c2d12", text: "#fdba74" },
+          { label: "Gap",       range: "<3.5",    bg: "#450a0a", text: "#fca5a5" },
         ].map(l => (
-          <span key={l.label} className="inline-flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: l.bg }} />
-            <span style={{ color: l.text }}>{l.label}</span>
+          <span key={l.label} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: l.bg, color: l.text }}>
+            {l.label} <span className="opacity-70">{l.range}</span>
           </span>
         ))}
       </div>
