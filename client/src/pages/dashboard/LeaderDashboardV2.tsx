@@ -168,7 +168,15 @@ function FunctionHeatmap({
 }) {
   const [expandedFns, setExpandedFns] = useState<Set<string>>(new Set());
   if (functions.length === 0) return null;
-  const abbr = (label: string) => label.replace(/^AI /, "").split(" ").slice(0, 2).join(" ");
+  const DOMAIN_ABBR: Record<string, string> = {
+    ai_interaction: "Interaction",
+    ai_output_evaluation: "Output Eval",
+    ai_workflow_design: "Workflow",
+    workforce_ai_readiness: "Workforce AI",
+    ai_ethics_trust: "Ethics",
+    ai_change_leadership: "Change Lead",
+  };
+  const abbr = (key: string, label: string) => DOMAIN_ABBR[key] ?? label.replace(/^AI /, "").split(" ").slice(0, 2).join(" ");
   const toggleFn = (key: string) => {
     setExpandedFns(prev => {
       const next = new Set(prev);
@@ -186,17 +194,16 @@ function FunctionHeatmap({
   ];
   return (
     <div>
-      <div className="overflow-x-auto">
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr>
-            <th className="text-left pb-3 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest sticky left-0 bg-card" style={{ minWidth: "180px" }}>Function</th>
+            <th className="text-left pb-3 pr-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest sticky left-0 bg-card" style={{ minWidth: "160px" }}>Function</th>
             {domains.map(d => (
-              <th key={d.key} className="text-center pb-3 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap min-w-[64px]">
-                {abbr(d.label)}
+              <th key={d.key} className="text-center pb-3 px-1 text-xs font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap" style={{ minWidth: "72px" }}>
+                {abbr(d.key, d.label)}
               </th>
             ))}
-            <th className="text-center pb-3 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest min-w-[52px]">Avg</th>
+            <th className="text-center pb-3 px-1 text-xs font-semibold text-muted-foreground uppercase tracking-widest" style={{ minWidth: "56px" }}>Avg</th>
           </tr>
         </thead>
         <tbody>
@@ -218,7 +225,7 @@ function FunctionHeatmap({
                           : <ChevronRight className="w-4 h-4" />}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground text-xs truncate max-w-[148px]">{fn.label}</p>
+                        <p className="font-semibold text-foreground text-xs truncate max-w-[130px]">{fn.label}</p>
                         <p className="text-muted-foreground text-xs">
                           {fn.memberCount} members · {fn.assessedCount} assessed
                         </p>
@@ -231,7 +238,7 @@ function FunctionHeatmap({
                     return (
                       <td key={d.key} className="py-1 px-1 text-center">
                         <span
-                          className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums"
+                          className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums"
                           style={{ background: cell.bg, color: cell.text }}
                         >
                           {score != null ? (score / 10).toFixed(1) : "—"}
@@ -243,7 +250,7 @@ function FunctionHeatmap({
                     {(() => {
                       const cell = heatmapCellStyle(fn.overallAvg);
                       return (
-                        <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                        <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
                           {fn.overallAvg != null ? (fn.overallAvg / 10).toFixed(1) : "—"}
                         </span>
                       );
@@ -261,9 +268,9 @@ function FunctionHeatmap({
                             <UserCircle className="w-3.5 h-3.5 text-muted-foreground" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium text-foreground text-xs truncate max-w-[140px]">{member.name || "Unknown"}</p>
+                            <p className="font-medium text-foreground text-xs truncate max-w-[120px]">{member.name || "Unknown"}</p>
                             {member.jobFunction && (
-                              <p className="text-muted-foreground text-xs truncate max-w-[140px]">{member.jobFunction}</p>
+                              <p className="text-muted-foreground text-xs truncate max-w-[120px]">{member.jobFunction}</p>
                             )}
                           </div>
                         </div>
@@ -274,7 +281,7 @@ function FunctionHeatmap({
                         return (
                           <td key={d.key} className="py-1 px-1 text-center">
                             <span
-                              className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-medium tabular-nums"
+                              className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-medium tabular-nums"
                               style={{ background: cell.bg, color: cell.text }}
                             >
                               {score != null ? (score / 10).toFixed(1) : "—"}
@@ -286,7 +293,7 @@ function FunctionHeatmap({
                         {(() => {
                           const cell = heatmapCellStyle(member.overallScore);
                           return (
-                            <span className="inline-flex items-center justify-center w-12 h-6 rounded text-xs font-semibold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                            <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
                               {member.overallScore != null ? (member.overallScore / 10).toFixed(1) : "—"}
                             </span>
                           );
@@ -300,7 +307,6 @@ function FunctionHeatmap({
           })}
         </tbody>
       </table>
-      </div>
       {/* Legend — outside scroll container so scrollbar doesn't bleed through */}
       <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border flex-wrap">
         {legendItems.map(l => (
@@ -383,7 +389,7 @@ export default function LeaderDashboardV2() {
   const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
 
   return (
-    <div className="px-5 py-6 md:px-8 max-w-6xl mx-auto space-y-6">
+    <div className="px-5 py-6 md:px-8 space-y-6">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
@@ -556,7 +562,7 @@ export default function LeaderDashboardV2() {
 
       {/* ── Function × Domain Heatmap ── */}
       {heatmapData && heatmapData.functions.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-5">
+        <div className="bg-card rounded-xl border border-border p-5 max-w-none">
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="text-sm font-semibold text-foreground">Function capability heatmap</p>
