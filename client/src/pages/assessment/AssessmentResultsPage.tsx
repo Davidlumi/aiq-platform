@@ -528,26 +528,30 @@ function DomainCard({
         />
       </div>
 
-      {/* Sub-domain signal bars */}
+      {/* Sub-domain signal dots */}
       {topSignals.length > 0 && (
-        <div className="space-y-2 pt-3 border-t border-border/60">
+        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border/60">
           {topSignals.map(sig => {
-            const barColor = sig.isRisk
-              ? sig.normScore >= 70 ? "oklch(0.72 0.19 142)" : sig.normScore >= 50 ? "oklch(0.75 0.18 60)" : "oklch(0.65 0.22 25)"
-              : `${colour}${sig.normScore >= 70 ? "" : sig.normScore >= 50 ? "aa" : "66"}`;
+            const dotScore = sig.normScore;
+            const dotColor = sig.isRisk
+              ? dotScore >= 70 ? "#22c55e" : dotScore >= 50 ? "#f59e0b" : "#ef4444"
+              : colour;
+            const opacity = dotScore >= 70 ? "ff" : dotScore >= 50 ? "bb" : "77";
+            const bg = sig.isRisk ? `${dotColor}22` : `${colour}18`;
             return (
-              <div key={sig.key}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[11px] text-muted-foreground truncate mr-2">
-                    {sig.isRisk && <span className="text-amber-400 mr-1">▲</span>}
-                    {sig.label}
-                  </span>
-                  <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: barColor }}>{sig.normScore}</span>
-                </div>
-                <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${sig.normScore}%`, backgroundColor: barColor }} />
-                </div>
-              </div>
+              <span
+                key={sig.key}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                style={{ backgroundColor: bg, border: `1px solid ${dotColor}${opacity}`, color: dotColor }}
+                title={`${sig.label}: ${dotScore}/100`}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: dotColor }}
+                />
+                {sig.label}
+                <span className="font-bold ml-0.5">{dotScore}</span>
+              </span>
             );
           })}
         </div>
