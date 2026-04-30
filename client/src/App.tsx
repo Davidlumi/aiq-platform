@@ -109,9 +109,6 @@ function Router() {
       <Route path="/onboarding" component={OnboardingWizard} />
 
       {/* Protected routes */}
-      <Route path="/dashboard/personal">
-        <ProtectedRoute component={PersonalDashboard} />
-      </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={RoleDashboard} />
       </Route>
@@ -229,9 +226,6 @@ function RootRedirect() {
   return <Redirect to="/dashboard" />;
 }
 
-function PersonalDashboard() {
-  return <IndividualDashboardV2 />;
-}
 function RoleDashboard() {
   const { user } = useAuth();
   const { viewAs } = useViewAs();

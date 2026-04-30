@@ -199,7 +199,7 @@ export default function ManagerDashboardV2() {
           <Link href="/manager/team-learning">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs">Team development plans</Button>
           </Link>
-          <Link href="/dashboard/personal">
+          <Link href="/dashboard">
             <Button size="sm" variant="outline" className="gap-1.5 text-xs">
               <UserCircle className="w-3.5 h-3.5" />My profile
             </Button>

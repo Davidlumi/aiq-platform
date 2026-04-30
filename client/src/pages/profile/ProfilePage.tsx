@@ -283,7 +283,7 @@ export default function ProfilePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Link href="/dashboard/personal">
+          <Link href="/dashboard">
             <div className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
