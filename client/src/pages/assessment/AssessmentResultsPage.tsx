@@ -849,7 +849,7 @@ export default function AssessmentResultsPage() {
         </div>
       )}
 
-      {/* Spider chart */}
+      {/* Capability Profile — two-column: spider left, domain bars right */}
       {domains.length > 0 && (
         <div
           className="rounded-2xl border border-border bg-card p-8 aiq-chart-mount"
@@ -861,7 +861,52 @@ export default function AssessmentResultsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Your scores across all {domains.length} capability domains
           </p>
-          <SpiderChart domains={domains} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Left: spider chart */}
+            <div>
+              <SpiderChart domains={domains} />
+            </div>
+            {/* Right: domain score bars */}
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">Domain Breakdown</p>
+              {[...domains].sort((a, b) => b.score - a.score).map(domain => {
+                const level = scoreToLevel(domain.score);
+                return (
+                  <div key={domain.key}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-foreground">{domain.displayName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
+                        <span className="text-sm font-bold text-foreground tabular-nums w-8 text-right">
+                          {Math.round(domain.score)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${Math.round(domain.score)}%`, backgroundColor: domain.colour }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Legend */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-3 border-t border-border">
+                {[
+                  { label: "Expert", color: "text-primary", min: 80 },
+                  { label: "Proficient", color: "text-emerald-400", min: 65 },
+                  { label: "Developing", color: "text-amber-400", min: 50 },
+                  { label: "Beginner", color: "text-orange-400", min: 35 },
+                  { label: "Novice", color: "text-red-400", min: 0 },
+                ].map(tier => (
+                  <span key={tier.label} className={cn("text-[11px] font-medium", tier.color)}>
+                    {tier.label} {tier.min > 0 ? `≥${tier.min}` : `<35`}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
