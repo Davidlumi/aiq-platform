@@ -2191,6 +2191,12 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           : "Your confidence was well-calibrated — your certainty levels broadly matched the quality of your answers.",
       };
 
+      // Parse signal scores for sub-domain display in domain cards
+      let signalScores: Record<string, { sum: number; count: number }> = {};
+      try {
+        const rawSig = score[0].signalScoresJson;
+        signalScores = (typeof rawSig === "string" ? JSON.parse(rawSig) : (rawSig ?? {})) as Record<string, { sum: number; count: number }>;
+      } catch {}
       return {
         session: session[0],
         score: {
@@ -2201,6 +2207,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
             capabilityScores: enrichedCapScores,
           },
         },
+        signalScores,
         longitudinalData: longitudinalData.filter(Boolean),
         scenarioCallbacks,
         confidenceCalibration,

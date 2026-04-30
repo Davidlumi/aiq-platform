@@ -259,6 +259,94 @@ function SignalBreakdownChart({ signals, domainColour }: { signals: SignalItem[]
 
 // ── Domain icons ───────────────────────────────────────────────────────────────
 
+// ── Signal metadata (mirrors server scoring engine) ──────────────────────────
+
+const SIGNAL_TO_DOMAIN: Record<string, string> = {
+  prompt_construction_quality: "ai_interaction",
+  prompt_iteration_quality: "ai_interaction",
+  output_direction_skill: "ai_interaction",
+  tool_fluency_index: "ai_interaction",
+  output_evaluation_quality: "ai_output_evaluation",
+  error_detection_accuracy: "ai_output_evaluation",
+  fitness_for_purpose_judgement: "ai_output_evaluation",
+  blind_acceptance_risk: "ai_output_evaluation",
+  hallucination_acceptance_risk: "ai_output_evaluation",
+  bias_detection_skill: "ai_output_evaluation",
+  data_interpretation_quality: "ai_output_evaluation",
+  workflow_redesign_quality: "ai_workflow_design",
+  handoff_design_quality: "ai_workflow_design",
+  human_oversight_preservation: "ai_workflow_design",
+  automation_expansion_risk: "ai_workflow_design",
+  capability_diagnosis_accuracy: "workforce_ai_readiness",
+  intervention_design_quality: "workforce_ai_readiness",
+  leader_advisory_quality: "workforce_ai_readiness",
+  generic_prescription_risk: "workforce_ai_readiness",
+  ethics_under_pressure: "ai_ethics_trust",
+  stakeholder_impact_awareness: "ai_ethics_trust",
+  employee_transparency_advocacy: "ai_ethics_trust",
+  pressure_drift_risk: "ai_ethics_trust",
+  legal_vs_fair_distinction: "ai_ethics_trust",
+  resistance_response_quality: "ai_change_leadership",
+  legitimate_concern_recognition: "ai_change_leadership",
+  change_pace_calibration: "ai_change_leadership",
+  dismissive_of_concern_risk: "ai_change_leadership",
+};
+
+const SIGNAL_DISPLAY: Record<string, string> = {
+  prompt_construction_quality: "Prompt Construction",
+  prompt_iteration_quality: "Prompt Iteration",
+  output_direction_skill: "Output Direction",
+  tool_fluency_index: "Tool Fluency",
+  output_evaluation_quality: "Output Evaluation",
+  error_detection_accuracy: "Error Detection",
+  fitness_for_purpose_judgement: "Fitness for Purpose",
+  blind_acceptance_risk: "Blind Acceptance Risk",
+  hallucination_acceptance_risk: "Hallucination Risk",
+  bias_detection_skill: "Bias Detection",
+  data_interpretation_quality: "Data Interpretation",
+  workflow_redesign_quality: "Workflow Redesign",
+  handoff_design_quality: "Handoff Design",
+  human_oversight_preservation: "Human Oversight",
+  automation_expansion_risk: "Automation Risk",
+  capability_diagnosis_accuracy: "Capability Diagnosis",
+  intervention_design_quality: "Intervention Design",
+  leader_advisory_quality: "Leader Advisory",
+  generic_prescription_risk: "Generic Prescription Risk",
+  ethics_under_pressure: "Ethics Under Pressure",
+  stakeholder_impact_awareness: "Stakeholder Impact",
+  employee_transparency_advocacy: "Transparency Advocacy",
+  pressure_drift_risk: "Pressure Drift Risk",
+  legal_vs_fair_distinction: "Legal vs Fair",
+  resistance_response_quality: "Resistance Response",
+  legitimate_concern_recognition: "Concern Recognition",
+  change_pace_calibration: "Change Pace",
+  dismissive_of_concern_risk: "Dismissive Risk",
+};
+
+const RISK_SIGNALS = new Set([
+  "blind_acceptance_risk", "hallucination_acceptance_risk",
+  "automation_expansion_risk", "generic_prescription_risk",
+  "pressure_drift_risk", "dismissive_of_concern_risk",
+]);
+
+function computeDomainSignals(
+  signalScores: Record<string, { sum: number; count: number }>,
+  domainKey: string
+): Array<{ key: string; label: string; normScore: number; isRisk: boolean }> {
+  const result: Array<{ key: string; label: string; normScore: number; isRisk: boolean }> = [];
+  for (const [sigKey, sv] of Object.entries(signalScores)) {
+    if (SIGNAL_TO_DOMAIN[sigKey] !== domainKey) continue;
+    if (!sv || typeof sv.sum !== "number" || !sv.count) continue;
+    const avg = sv.sum / sv.count;
+    const isRisk = RISK_SIGNALS.has(sigKey);
+    const normScore = isRisk
+      ? Math.max(0, Math.min(100, Math.round(50 - avg * 25)))
+      : Math.max(0, Math.min(100, Math.round(50 + avg * 25)));
+    result.push({ key: sigKey, label: SIGNAL_DISPLAY[sigKey] ?? sigKey.replace(/_/g, " "), normScore, isRisk });
+  }
+  return result.sort((a, b) => b.normScore - a.normScore);
+}
+
 const DOMAIN_ICONS: Record<string, React.ElementType> = {
   ai_interaction: Target,
   ai_output_evaluation: Brain,
@@ -376,30 +464,41 @@ function SpiderChart({ domains }: {
 // ── Domain Card ────────────────────────────────────────────────────────────────
 
 function DomainCard({
-  domainKey, displayName, score, colour, quadrant, onClick,
+  domainKey, displayName, score, colour, quadrant, signals, onClick,
 }: {
   domainKey: string; displayName: string; score: number;
-  colour: string; quadrant?: string; onClick: () => void;
+  colour: string; quadrant?: string;
+  signals?: Array<{ key: string; label: string; normScore: number; isRisk: boolean }>;
+  onClick: () => void;
 }) {
   const Icon = DOMAIN_ICONS[domainKey] ?? Target;
   const level = scoreToLevel(score);
   const isBlindSpot = quadrant === "unconscious_incompetence";
   const isStrength = score >= 70;
 
+  // Show top 3 signals (best + worst to give a balanced view)
+  const topSignals = signals && signals.length > 0
+    ? signals.slice(0, Math.min(3, signals.length))
+    : [];
+
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-xl border bg-card p-4 hover:bg-accent/30 transition-all duration-200 hover:border-primary/30 group"
+      className="w-full text-left rounded-xl border bg-card p-5 hover:bg-accent/30 transition-all duration-200 hover:border-primary/30 group"
       style={{ boxShadow: "var(--card-shadow)" }}
     >
+      {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${colour}20` }}
-        >
-          <Icon className="w-4 h-4" style={{ color: colour }} />
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${colour}20` }}
+          >
+            <Icon className="w-4 h-4" style={{ color: colour }} />
+          </div>
+          <p className="text-sm font-semibold text-foreground leading-tight">{displayName}</p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {isBlindSpot && (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 border border-amber-400/25">
               Blind spot
@@ -414,22 +513,45 @@ function DomainCard({
         </div>
       </div>
 
-      <p className="text-sm font-semibold text-foreground mb-1">{displayName}</p>
-
-      <div className="flex items-center justify-between mb-2">
+      {/* Overall score row */}
+      <div className="flex items-center justify-between mb-1.5">
         <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
         <span className="text-lg font-bold text-foreground tabular-nums">
           {Math.round(score)}
           <span className="text-xs text-muted-foreground font-normal">/100</span>
         </span>
       </div>
-
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-4">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.round(score)}%`, backgroundColor: colour }}
         />
       </div>
+
+      {/* Sub-domain signal bars */}
+      {topSignals.length > 0 && (
+        <div className="space-y-2 pt-3 border-t border-border/60">
+          {topSignals.map(sig => {
+            const barColor = sig.isRisk
+              ? sig.normScore >= 70 ? "oklch(0.72 0.19 142)" : sig.normScore >= 50 ? "oklch(0.75 0.18 60)" : "oklch(0.65 0.22 25)"
+              : `${colour}${sig.normScore >= 70 ? "" : sig.normScore >= 50 ? "aa" : "66"}`;
+            return (
+              <div key={sig.key}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] text-muted-foreground truncate mr-2">
+                    {sig.isRisk && <span className="text-amber-400 mr-1">▲</span>}
+                    {sig.label}
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums shrink-0" style={{ color: barColor }}>{sig.normScore}</span>
+                </div>
+                <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${sig.normScore}%`, backgroundColor: barColor }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </button>
   );
 }
@@ -666,7 +788,8 @@ export default function AssessmentResultsPage() {
     );
   }
 
-  const { session, score, competenceConfidenceMatrix } = data as any;
+  const { session, score, competenceConfidenceMatrix, signalScores: rawSignalScores } = data as any;
+  const signalScores: Record<string, { sum: number; count: number }> = rawSignalScores ?? {};
   const overallScore: number = score.overallScore;
   const breakdown = score.breakdown as {
     readiness?: { state?: string };
@@ -861,14 +984,14 @@ export default function AssessmentResultsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Your scores across all {domains.length} capability domains
           </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             {/* Left: spider chart */}
-            <div>
+            <div className="pt-2">
               <SpiderChart domains={domains} />
             </div>
             {/* Right: domain score bars */}
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">Domain Breakdown</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Domain Breakdown</p>
               {[...domains].sort((a, b) => b.score - a.score).map(domain => {
                 const level = scoreToLevel(domain.score);
                 return (
@@ -919,6 +1042,7 @@ export default function AssessmentResultsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {domains.map(domain => {
               const matrix = (competenceConfidenceMatrix as any[])?.find((m: any) => m.domain === domain.key);
+              const domainSignals = computeDomainSignals(signalScores, domain.key);
               return (
                 <DomainCard
                   key={domain.key}
@@ -927,6 +1051,7 @@ export default function AssessmentResultsPage() {
                   score={domain.score}
                   colour={domain.colour}
                   quadrant={matrix?.quadrant}
+                  signals={domainSignals}
                   onClick={() => setSelectedDomain(domain.key)}
                 />
               );
