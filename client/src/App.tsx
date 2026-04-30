@@ -22,6 +22,7 @@ import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
 import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
 import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
+import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
 // Legacy dashboards (admin/auditor fallback)
 import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
@@ -155,7 +156,7 @@ function Router() {
         <ProtectedRoute component={ReportsPage} />
       </Route>
       <Route path="/ai-strategy">
-        <ProtectedRoute component={AIStrategyPage} />
+        <ProtectedRoute component={StrategyBuilderPage} />
       </Route>
       <Route path="/audit">
         <ProtectedRoute component={AuditLogPage} />

@@ -19,6 +19,7 @@ import { adaptiveLearningRouter } from "./routers/adaptiveLearning";
 import { organisationRouter } from "./routers/organisation";
 import { dashboardV2Router } from "./routers/dashboardV2";
 import { peopleRouter } from "./routers/people";
+import { strategyRouter } from "./routers/strategy";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -40,6 +41,7 @@ export const appRouter = router({
   organisation: organisationRouter,
   dashboardV2: dashboardV2Router,
   people: peopleRouter,
+  strategy: strategyRouter,
 });
 
 export type AppRouter = typeof appRouter;

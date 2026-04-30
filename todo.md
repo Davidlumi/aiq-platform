@@ -1906,3 +1906,27 @@
 - [x] PM-05: Build ManageTeamSheet — slide-out panel per manager showing their current members with remove button, plus add-by-email form
 - [x] PM-06: Wire /admin/people route and add nav link in AppShell under ADMIN section
 - [x] PM-07: Checkpoint and test
+
+## AI Strategy Builder (Spec v1.0)
+
+### Wave 1 — Foundation
+- [x] DB schema: industries, hr_segments, initiative_library, strategies, strategy_initiatives, risk_register tables
+- [x] Seed initiative library (23 initiatives), industries (10), default HR segments (6)
+- [x] Server: listIndustries, listInitiatives, getSegments, createStrategy, updateStrategy, listStrategies procedures
+- [x] Server: calculation engine (baseline, domain targets, segment demand, risk items)
+- [x] Builder page: context controls (industry, business ambition, people ambition)
+- [x] Builder page: initiative picker (category filters, toggle select, criticality, quarter dropdowns)
+- [x] Builder page: capability radar (baseline solid + target dashed) + gap by domain table
+- [x] Builder page: segment demand table
+
+### Wave 2 — Strategic depth
+- [x] Builder page: selected initiatives panel with criticality selector
+- [x] Builder page: risk register (auto-generated from regulatory flags, severity, mitigation, owner, review cadence)
+- [x] Builder page: strategic patterns (5 patterns with domain tags and matched/unmatched states)
+- [x] Builder page: promote to roadmap button + commit flow (locks strategy, shows committed badge)
+- [x] Builder page: compare mode toggle (appears when 2+ strategies exist)
+
+### Wave 3 — Custom & compare
+- [x] Custom initiative modal: name, description, category, AI type, decision authority, domain impact weights
+- [x] Compare mode: overlaid radar legend (Baseline/Target/Compare), side-by-side gap table, Compare Strategy panel
+- [x] Strategy tabs (A/B/C) + new strategy creation (up to 3 strategies)

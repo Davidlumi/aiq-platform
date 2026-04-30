@@ -1,12 +1,14 @@
 import {
   boolean,
   decimal,
+  double,
   int,
   json,
   mysqlEnum,
   mysqlTable,
   text,
   timestamp,
+  tinyint,
   varchar,
   index,
   unique,
@@ -1426,3 +1428,116 @@ export const orgWorkflowAnchorUsage = mysqlTable("org_workflow_anchor_usage", {
   tenantRoleIdx: index("idx_org_workflow_anchor_tenant_role").on(t.tenantId, t.roleArchetypeId),
 }));
 export type OrgWorkflowAnchorUsage = typeof orgWorkflowAnchorUsage.$inferSelect;
+
+// ─── Strategy Builder ─────────────────────────────────────────────────────────
+
+export const strategyIndustries = mysqlTable("strategy_industries", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 60 }).notNull().unique(),
+  ethicsBaseline: double("ethics_baseline").notNull().default(0),
+  governancePriority: double("governance_priority").notNull().default(1.0),
+  regulatoryWeight: double("regulatory_weight").notNull().default(1.0),
+  isRegulated: tinyint("is_regulated").notNull().default(0),
+  peerInitCountMin: int("peer_init_count_min").notNull().default(3),
+  peerInitCountMax: int("peer_init_count_max").notNull().default(8),
+  peerGovShareMin: double("peer_gov_share_min").notNull().default(0.15),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const strategyHrSegments = mysqlTable("strategy_hr_segments", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 60 }).notNull(),
+  size: int("size").notNull().default(10),
+  currentCapability: double("current_capability").notNull().default(2.0),
+  isDefault: tinyint("is_default").notNull().default(0),
+  sortOrder: int("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_hr_segments_tenant").on(t.tenantId),
+}));
+
+export const strategyInitiativeLibrary = mysqlTable("strategy_initiative_library", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).notNull(),
+  aiType: varchar("ai_type", { length: 60 }).notNull(),
+  decisionAuthority: varchar("decision_authority", { length: 60 }).notNull().default("recommends_to_human"),
+  regulatoryFlag: varchar("regulatory_flag", { length: 100 }),
+  owningSegmentsJson: json("owning_segments_json").$type<string[]>().notNull(),
+  weightsJson: json("weights_json").$type<number[]>().notNull(),
+  baseTarget: double("base_target").notNull().default(3.0),
+  complexity: int("complexity").notNull().default(3),
+  keywordsJson: json("keywords_json").$type<string[]>().notNull(),
+  forkedFromId: varchar("forked_from_id", { length: 36 }),
+  isUserDefined: tinyint("is_user_defined").notNull().default(0),
+  frameworkVersion: varchar("framework_version", { length: 20 }).notNull().default("v1"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_initiative_lib_tenant").on(t.tenantId),
+  categoryIdx: index("idx_initiative_lib_category").on(t.category),
+}));
+
+export const strategies = mysqlTable("strategies", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  createdByUserId: varchar("created_by_user_id", { length: 36 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull().default("Strategy A"),
+  description: text("description"),
+  industryId: varchar("industry_id", { length: 36 }).notNull(),
+  businessAmbition: int("business_ambition").notNull().default(2),
+  peopleAmbition: int("people_ambition").notNull().default(2),
+  status: mysqlEnum("status", ["draft", "committed", "archived"]).notNull().default("draft"),
+  committedAt: timestamp("committed_at"),
+  committedByUserId: varchar("committed_by_user_id", { length: 36 }),
+  frameworkVersion: varchar("framework_version", { length: 20 }).notNull().default("v1"),
+  slot: varchar("slot", { length: 1 }).notNull().default("A"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_strategies_tenant").on(t.tenantId),
+  userIdx: index("idx_strategies_user").on(t.createdByUserId),
+}));
+
+export const strategyInitiatives = mysqlTable("strategy_initiatives", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  strategyId: varchar("strategy_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }).notNull(),
+  criticality: int("criticality").notNull().default(1),
+  targetQuarter: varchar("target_quarter", { length: 20 }).notNull().default("Q2 26"),
+  targetQuarterOffset: int("target_quarter_offset").notNull().default(6),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  strategyIdx: index("idx_strategy_initiatives_strategy").on(t.strategyId),
+  initiativeIdx: index("idx_strategy_initiatives_initiative").on(t.initiativeId),
+}));
+
+export const strategyRiskRegister = mysqlTable("strategy_risk_register", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  strategyId: varchar("strategy_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }).notNull(),
+  regulatoryFlag: varchar("regulatory_flag", { length: 100 }).notNull(),
+  severity: mysqlEnum("severity", ["high", "medium"]).notNull().default("medium"),
+  mitigation: text("mitigation"),
+  ownerRole: varchar("owner_role", { length: 100 }),
+  reviewCadence: varchar("review_cadence", { length: 100 }),
+  launchQuarter: varchar("launch_quarter", { length: 20 }),
+  status: mysqlEnum("status", ["open", "mitigated", "accepted", "closed"]).notNull().default("open"),
+  isUserDefined: tinyint("is_user_defined").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  strategyIdx: index("idx_risk_register_strategy").on(t.strategyId),
+}));
+
+export type StrategyIndustry = typeof strategyIndustries.$inferSelect;
+export type StrategyHrSegment = typeof strategyHrSegments.$inferSelect;
+export type StrategyInitiativeLibrary = typeof strategyInitiativeLibrary.$inferSelect;
+export type Strategy = typeof strategies.$inferSelect;
+export type StrategyInitiative = typeof strategyInitiatives.$inferSelect;
+export type StrategyRiskRegister = typeof strategyRiskRegister.$inferSelect;
