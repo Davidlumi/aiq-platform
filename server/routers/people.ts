@@ -11,7 +11,9 @@
 
 import { TRPCError } from "@trpc/server";
 import { DOMAIN_COLOURS as BRAND_DOMAIN_COLOURS } from "@shared/brand";
+import { ROLE_FAMILY_KEYS, ROLE_FAMILY_LABELS } from "../../shared/dashboard";
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb, getUserRoleKeys } from "../db";
@@ -20,6 +22,8 @@ import {
   assessmentSessions,
   assessmentScores,
   managerTeamMembers,
+  roles,
+  userRoles,
 } from "../../drizzle/schema";
 
 // ─── Shared constants ─────────────────────────────────────────────────────────
@@ -317,5 +321,223 @@ export const peopleRouter = router({
         isLeader,
         totalSessions: sessions.length,
       };
+    }),
+
+  // ─── Org Setup: list all users with org fields for the People Management table ─
+  listForOrgSetup: protectedProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      functionFilter: z.string().optional(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(200).default(50),
+    }))
+    .query(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => LEADER_ROLES.includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const allUsers = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          status: users.status,
+          jobFunction: users.jobFunction,
+          roleFamily: users.roleFamily,
+          seniorityLevel: users.seniorityLevel,
+        })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+      const allUserIds = allUsers.map(u => u.id);
+      const teamRows = allUserIds.length > 0
+        ? await db.select().from(managerTeamMembers).where(inArray(managerTeamMembers.memberId, allUserIds))
+        : [];
+      const memberToManager = new Map<string, string>();
+      for (const row of teamRows) {
+        if (!memberToManager.has(row.memberId)) memberToManager.set(row.memberId, row.managerId);
+      }
+      const roleRows = allUserIds.length > 0
+        ? await db
+            .select({ userId: userRoles.userId, roleKey: roles.key })
+            .from(userRoles)
+            .innerJoin(roles, eq(userRoles.roleId, roles.id))
+            .where(inArray(userRoles.userId, allUserIds))
+        : [];
+      const userRoleMap = new Map<string, string[]>();
+      for (const r of roleRows) {
+        const arr = userRoleMap.get(r.userId) ?? [];
+        arr.push(r.roleKey);
+        userRoleMap.set(r.userId, arr);
+      }
+      const userById = new Map(allUsers.map(u => [u.id, u]));
+      const search = input.search?.toLowerCase();
+      const funcFilter = input.functionFilter;
+      let filtered = allUsers.filter(u => {
+        if (search) {
+          const full = `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase();
+          if (!full.includes(search)) return false;
+        }
+        if (funcFilter && funcFilter !== "all") {
+          if ((u.roleFamily ?? "") !== funcFilter) return false;
+        }
+        return true;
+      });
+      filtered.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+      const total = filtered.length;
+      const page = input.page ?? 1;
+      const pageSize = input.pageSize ?? 50;
+      const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+      const result = paginated.map(u => {
+        const managerId = memberToManager.get(u.id) ?? null;
+        const managerUser = managerId ? userById.get(managerId) : null;
+        return {
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          status: u.status,
+          roleFamily: u.roleFamily ?? null,
+          jobFunction: u.jobFunction ?? null,
+          seniorityLevel: u.seniorityLevel ?? null,
+          roleKeys: userRoleMap.get(u.id) ?? [],
+          managerId: managerId,
+          managerName: managerUser ? `${managerUser.firstName} ${managerUser.lastName}`.trim() : null,
+        };
+      });
+      return { users: result, total, page, pageSize };
+    }),
+
+  // ─── Org Setup: list all users with manager role ─────────────────────────────
+  listManagers: protectedProcedure
+    .query(async ({ ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => LEADER_ROLES.includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const managerRoleRow = await db.select({ id: roles.id }).from(roles).where(eq(roles.key, "manager")).limit(1);
+      if (!managerRoleRow[0]) return [];
+      const managerUserIds = await db
+        .select({ userId: userRoles.userId })
+        .from(userRoles)
+        .where(and(eq(userRoles.roleId, managerRoleRow[0].id), eq(userRoles.tenantId, ctx.user.tenantId)));
+      if (!managerUserIds.length) return [];
+      const ids = managerUserIds.map(r => r.userId);
+      const managerUsers = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+        .from(users)
+        .where(and(eq(users.tenantId, ctx.user.tenantId), inArray(users.id, ids)));
+      return managerUsers.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}`.trim(), email: u.email }));
+    }),
+
+  // ─── Org Setup: get team members for a specific manager ──────────────────────
+  getTeamMembers: protectedProcedure
+    .input(z.object({ managerId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      const isSelf = input.managerId === ctx.user.id;
+      const isLeaderRole = myRoles.some(r => LEADER_ROLES.includes(r));
+      const isManagerRole = myRoles.includes("manager");
+      if (!isLeaderRole && !(isManagerRole && isSelf)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const memberRows = await db
+        .select({ memberId: managerTeamMembers.memberId, addedAt: managerTeamMembers.addedAt })
+        .from(managerTeamMembers)
+        .where(eq(managerTeamMembers.managerId, input.managerId));
+      if (!memberRows.length) return [];
+      const memberIds = memberRows.map(r => r.memberId);
+      const memberUsers = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email, roleFamily: users.roleFamily, jobFunction: users.jobFunction })
+        .from(users)
+        .where(and(eq(users.tenantId, ctx.user.tenantId), inArray(users.id, memberIds)));
+      const addedAtMap = new Map(memberRows.map(r => [r.memberId, r.addedAt]));
+      return memberUsers.map(u => ({
+        id: u.id,
+        name: `${u.firstName} ${u.lastName}`.trim(),
+        email: u.email,
+        roleFamily: u.roleFamily ?? null,
+        jobFunction: u.jobFunction ?? null,
+        addedAt: addedAtMap.get(u.id) ?? 0,
+      }));
+    }),
+
+  // ─── Org Setup: update a user's role_family ───────────────────────────────────
+  updateRoleFamily: protectedProcedure
+    .input(z.object({ userId: z.string(), roleFamily: z.string().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => LEADER_ROLES.includes(r))) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [target] = await db.select({ id: users.id }).from(users)
+        .where(and(eq(users.id, input.userId), eq(users.tenantId, ctx.user.tenantId))).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.update(users).set({ roleFamily: input.roleFamily }).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
+
+  // ─── Org Setup: assign or remove a user's manager ────────────────────────────
+  updateManager: protectedProcedure
+    .input(z.object({ userId: z.string(), managerId: z.string().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => LEADER_ROLES.includes(r))) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [target] = await db.select({ id: users.id }).from(users)
+        .where(and(eq(users.id, input.userId), eq(users.tenantId, ctx.user.tenantId))).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.delete(managerTeamMembers).where(eq(managerTeamMembers.memberId, input.userId));
+      if (input.managerId) {
+        const [mgr] = await db.select({ id: users.id }).from(users)
+          .where(and(eq(users.id, input.managerId), eq(users.tenantId, ctx.user.tenantId))).limit(1);
+        if (!mgr) throw new TRPCError({ code: "NOT_FOUND", message: "Manager not found" });
+        await db.insert(managerTeamMembers).values({
+          id: nanoid(), managerId: input.managerId, memberId: input.userId, addedAt: Date.now(),
+        }).onDuplicateKeyUpdate({ set: { addedAt: Date.now() } });
+      }
+      return { success: true };
+    }),
+
+  // ─── Org Setup: remove a specific member from a manager's team ───────────────
+  removeTeamMember: protectedProcedure
+    .input(z.object({ managerId: z.string(), memberId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      const isSelf = input.managerId === ctx.user.id;
+      if (!myRoles.some(r => LEADER_ROLES.includes(r)) && !isSelf) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.delete(managerTeamMembers).where(and(
+        eq(managerTeamMembers.managerId, input.managerId),
+        eq(managerTeamMembers.memberId, input.memberId),
+      ));
+      return { success: true };
+    }),
+
+  // ─── Org Setup: add a member to a manager's team by email ────────────────────
+  addTeamMemberByEmail: protectedProcedure
+    .input(z.object({ managerId: z.string(), memberEmail: z.string().email() }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      const isSelf = input.managerId === ctx.user.id;
+      if (!myRoles.some(r => LEADER_ROLES.includes(r)) && !isSelf) throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [member] = await db.select().from(users)
+        .where(and(eq(users.email, input.memberEmail.toLowerCase()), eq(users.tenantId, ctx.user.tenantId))).limit(1);
+      if (!member) throw new TRPCError({ code: "NOT_FOUND", message: "User not found in your organisation" });
+      if (member.id === input.managerId) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot add manager to their own team" });
+      await db.insert(managerTeamMembers).values({
+        id: nanoid(), managerId: input.managerId, memberId: member.id, addedAt: Date.now(),
+      }).onDuplicateKeyUpdate({ set: { addedAt: Date.now() } });
+      return { success: true, memberName: `${member.firstName} ${member.lastName}`.trim(), memberId: member.id };
     }),
 });

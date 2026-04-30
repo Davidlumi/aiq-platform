@@ -50,6 +50,7 @@ import AssessmentContentPage from "./pages/admin/AssessmentContentPage";
 import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
 import OrganisationsPage from "./pages/admin/OrganisationsPage";
+import PeopleManagementPage from "./pages/admin/PeopleManagementPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
@@ -167,6 +168,9 @@ function Router() {
       </Route>
       <Route path="/profile">
         <ProtectedRoute component={ProfilePage} />
+      </Route>
+      <Route path="/admin/people">
+        <ProtectedRoute component={PeopleManagementPage} />
       </Route>
       <Route path="/admin/users">
         <ProtectedRoute component={UsersPage} />

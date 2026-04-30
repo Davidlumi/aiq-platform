@@ -100,6 +100,13 @@ const NAV_ITEMS: NavItem[] = [
 
   // -- Admin (CPO only) ---------------------------------------------------------
   {
+    label: "People & Org",
+    path: "/admin/people",
+    icon: Building2,
+    roles: CPO_ROLES,
+    section: "admin",
+  },
+  {
     label: "Users",
     path: "/admin/users",
     icon: Users,

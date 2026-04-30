@@ -1886,14 +1886,23 @@
 
 ## Domain Deep Dive Panel (Apr 29 2026)
 
-- [ ] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM with domain score, quadrant, and session context
-- [ ] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, 2-3 key strengths, 2-3 development areas, 1 specific next step
-- [ ] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
-- [ ] DEEPDIVE-04: Ensure deep dive is cached (staleTime: Infinity) to avoid repeated LLM calls
+- [x] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM with domain score, quadrant, and session context
+- [x] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, 2-3 key strengths, 2-3 development areas, 1 specific next step
+- [x] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
+- [x] DEEPDIVE-04: Ensure deep dive is cached (staleTime: Infinity) to avoid repeated LLM calls
 
 ## Domain Deep Dive Panel (Apr 29 2026)
 
-- [ ] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM
-- [ ] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, strengths, gaps, next step
-- [ ] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
-- [ ] DEEPDIVE-04: Cache deep dive (staleTime: Infinity)
+- [x] DEEPDIVE-01: Add generateDomainDeepDive tRPC procedure using invokeLLM
+- [x] DEEPDIVE-02: Deep dive returns: domain description, score interpretation, strengths, gaps, next step
+- [x] DEEPDIVE-03: Update DomainSheet to display AI deep dive content with loading skeleton
+- [x] DEEPDIVE-04: Cache deep dive (staleTime: Infinity)
+
+## People Management — Org Setup (Apr 30 2026)
+- [x] PM-01: Add server procedures — updateRoleFamily, updateManager (set/clear), removeTeamMember, listManagers
+- [x] PM-02: Build PeopleManagementPage — searchable/filterable table of all users with inline role_family and manager selects
+- [x] PM-03: Inline role_family select per row (all 7 functions, saves on change)
+- [x] PM-04: Inline manager select per row (dropdown of all users with manager role, saves on change)
+- [x] PM-05: Build ManageTeamSheet — slide-out panel per manager showing their current members with remove button, plus add-by-email form
+- [x] PM-06: Wire /admin/people route and add nav link in AppShell under ADMIN section
+- [ ] PM-07: Checkpoint and test
