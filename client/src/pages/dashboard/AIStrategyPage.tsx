@@ -254,7 +254,7 @@ export default function AIStrategyPage() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">Strategic dashboard</p>
           <h1 className="text-lg font-semibold text-foreground">HR capability vs AI roadmap</h1>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowWizard(true)}>
+        <Button size="sm" className="gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setShowWizard(true)}>
           <Edit2 className="w-3.5 h-3.5" />{ambitionGap?.configured ? "Edit strategy" : "Set AI strategy"}
         </Button>
       </div>

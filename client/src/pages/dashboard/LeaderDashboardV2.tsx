@@ -177,8 +177,16 @@ function FunctionHeatmap({
       return next;
     });
   };
+  const legendItems = [
+    { label: "AI Ready",   range: "≥7.5",    bg: "#14532d", text: "#86efac" },
+    { label: "Strong",     range: "6.0–7.4",  bg: "#166534", text: "#bbf7d0" },
+    { label: "Capable",    range: "5.0–5.9",  bg: "#713f12", text: "#fde68a" },
+    { label: "Developing", range: "3.5–4.9",  bg: "#7c2d12", text: "#fdba74" },
+    { label: "Gap",        range: "<3.5",     bg: "#450a0a", text: "#fca5a5" },
+  ];
   return (
-    <div className="overflow-x-auto">
+    <div>
+      <div className="overflow-x-auto">
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr>
@@ -292,15 +300,10 @@ function FunctionHeatmap({
           })}
         </tbody>
       </table>
-      {/* Legend — clean pill row */}
+      </div>
+      {/* Legend — outside scroll container so scrollbar doesn't bleed through */}
       <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border flex-wrap">
-        {[
-          { label: "AI Ready",   range: "≥7.5",    bg: "#14532d", text: "#86efac" },
-          { label: "Strong",     range: "6.0–7.4",  bg: "#166534", text: "#bbf7d0" },
-          { label: "Capable",    range: "5.0–5.9",  bg: "#713f12", text: "#fde68a" },
-          { label: "Developing", range: "3.5–4.9",  bg: "#7c2d12", text: "#fdba74" },
-          { label: "Gap",        range: "<3.5",     bg: "#450a0a", text: "#fca5a5" },
-        ].map(l => (
+        {legendItems.map(l => (
           <span key={l.label} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: l.bg, color: l.text }}>
             {l.label} <span className="opacity-70">{l.range}</span>
           </span>
