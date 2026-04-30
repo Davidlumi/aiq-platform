@@ -8,7 +8,7 @@
  *   4. Clicking a domain card → slide-out Sheet with detail + dev link
  */
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -792,6 +792,26 @@ export default function AssessmentResultsPage() {
     if (summaryQuery.data?.summary) setSummary(summaryQuery.data.summary);
   }, [summaryQuery.data]);
 
+  // Must be before early returns to satisfy Rules of Hooks
+  const storedNarrative = (data as any)?.llmNarrative as { strengths: string; gaps: string; priorities: string } | null ?? null;
+  // Build domain scores array from data for the narrative prompt
+  // Handles both legacy (Record<string, number>) and enriched ({ score, displayName }) shapes
+  const narrativeDomainScores = useMemo(() => {
+    const caps = (data as any)?.score?.breakdown?.capabilityScores ?? {};
+    return Object.entries(caps).map(([key, v]: [string, any]) => {
+      const isEnriched = v !== null && typeof v === "object" && "score" in v;
+      return {
+        name: isEnriched ? (v.displayName ?? key) : key,
+        score: isEnriched ? (v.score ?? 0) : (typeof v === "number" ? v : 0),
+      };
+    }).filter(d => d.score > 0);
+  }, [data]);
+  const { data: generatedNarrativeData, isLoading: narrativeLoading } = trpc.assessment.generateNarrative.useQuery(
+    { sessionId: sessionId!, domainScores: narrativeDomainScores },
+    { enabled: !!sessionId && !!data && !storedNarrative && narrativeDomainScores.length > 0, staleTime: Infinity }
+  );
+  const narrative = storedNarrative ?? generatedNarrativeData?.narrative ?? null;
+
   if (isLoading) return <ResultsSkeleton />;
 
   if (error || !data) {
@@ -1074,6 +1094,60 @@ export default function AssessmentResultsPage() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* AI-generated narrative feedback */}
+      {(narrative || narrativeLoading) && (
+        <div className="rounded-xl border border-border/50 overflow-hidden" style={{ background: "linear-gradient(135deg, oklch(0.18 0.04 264) 0%, oklch(0.16 0.03 264) 100%)" }}>
+          <div className="px-7 py-5 border-b border-border/40 flex items-center gap-3">
+            <span className="text-base">✦</span>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Your Development Narrative</p>
+              <p className="text-[11px] text-muted-foreground/60 mt-0.5">AI-generated feedback based on your assessment results</p>
+            </div>
+          </div>
+          {narrativeLoading && !narrative ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/40">
+              {["Strengths", "Development Areas", "Next Priorities"].map(label => (
+                <div key={label} className="px-7 py-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0 animate-pulse" />
+                    <span className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider">{label}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-muted/30 rounded animate-pulse w-full" />
+                    <div className="h-3 bg-muted/30 rounded animate-pulse w-5/6" />
+                    <div className="h-3 bg-muted/30 rounded animate-pulse w-4/6" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : narrative ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/40">
+              <div className="px-7 py-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Strengths</span>
+                </div>
+                <p className="text-sm text-foreground/80 leading-relaxed">{narrative.strengths}</p>
+              </div>
+              <div className="px-7 py-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                  <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Development Areas</span>
+                </div>
+                <p className="text-sm text-foreground/80 leading-relaxed">{narrative.gaps}</p>
+              </div>
+              <div className="px-7 py-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+                  <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Next Priorities</span>
+                </div>
+                <p className="text-sm text-foreground/80 leading-relaxed">{narrative.priorities}</p>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

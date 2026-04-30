@@ -1992,15 +1992,23 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           : (score[0].scoreBreakdownJson ?? {})) as Record<string, unknown>;
       } catch {}
 
-      const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, number>;
+      // capabilityScores in scoreBreakdownJson may be either:
+      //   legacy: Record<string, number>  (raw score value)
+      //   current: Record<string, CapabilityScore>  ({ score, band, signalCount, signalSum, displayName })
+      const rawCapScores = (breakdown.capabilityScores ?? {}) as Record<string, unknown>;
       const rawSignalCounts = (breakdown.capabilitySignalCounts ?? {}) as Record<string, number>;
       const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string; signalCount: number }> = {};
       for (const [key, val] of Object.entries(rawCapScores)) {
+        const isObj = val !== null && typeof val === "object" && "score" in (val as object);
+        const scoreNum = isObj ? ((val as { score: number }).score ?? 0) : (typeof val === "number" ? val : 0);
+        const signalCount = isObj
+          ? ((val as { signalCount?: number }).signalCount ?? (rawSignalCounts[key] ?? 0))
+          : (rawSignalCounts[key] ?? 0);
         enrichedCapScores[key] = {
-          score: val as number,
+          score: scoreNum,
           displayName: CAPABILITY_DISPLAY[key] ?? key,
           colour: CAPABILITY_COLOURS[key] ?? "#4477AA",
-          signalCount: (rawSignalCounts[key] as number) ?? 0,
+          signalCount,
         };
       }
 
@@ -2197,6 +2205,9 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         const rawSig = score[0].signalScoresJson;
         signalScores = (typeof rawSig === "string" ? JSON.parse(rawSig) : (rawSig ?? {})) as Record<string, { sum: number; count: number }>;
       } catch {}
+      // Extract llmNarrative from scoreBreakdownJson if present
+      const llmNarrativeFromBreakdown = (breakdown.llmNarrative as { strengths: string; gaps: string; priorities: string } | null) ?? null;
+
       return {
         session: session[0],
         score: {
@@ -2213,6 +2224,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         confidenceCalibration,
         competenceConfidenceMatrix,
         blindSpots,
+        llmNarrative: llmNarrativeFromBreakdown,
       };
     }),
   // ── Get user's assessment history ──────────────────────────────────────────
@@ -2694,7 +2706,12 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         readinessState === "unsafe" ? "Needs Development" : "Not yet assessed";
 
       const domainLines = Object.entries(capabilityScores)
-        .map(([, v]: [string, any]) => `${v.displayName}: ${Math.round(v.score)}/100`)
+        .map(([key, v]: [string, any]) => {
+          const isObj = v !== null && typeof v === "object" && "score" in v;
+          const scoreNum = isObj ? (v.score ?? 0) : (typeof v === "number" ? v : 0);
+          const name = isObj ? (v.displayName ?? key.replace(/_/g, " ")) : key.replace(/_/g, " ");
+          return `${name}: ${Math.round(scoreNum)}/100`;
+        })
         .join(", ");
 
       try {
@@ -2714,6 +2731,102 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         return { summary };
       } catch {
         return { summary: null };
+      }
+    }),
+
+  // ── AI-generated 3-part development narrative ─────────────────────────────────
+  generateNarrative: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      domainScores: z.array(z.object({ name: z.string(), score: z.number() })).optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { narrative: null };
+
+      const sessionRows = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)))
+        .limit(1);
+      const session = sessionRows[0];
+      if (!session || !session.completedAt) return { narrative: null };
+
+      const scoreRows = await db
+        .select({ overallScore: assessmentScores.overallScore, breakdown: assessmentScores.scoreBreakdownJson, signalScoresJson: assessmentScores.signalScoresJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, input.sessionId))
+        .limit(1);
+      const scoreRow = scoreRows[0];
+      if (!scoreRow) return { narrative: null };
+
+      const breakdown = scoreRow.breakdown as any;
+      const overallScore = parseFloat(String(scoreRow.overallScore));
+      const readinessState = breakdown?.readiness?.state ?? "unknown";
+      const capabilityScores = breakdown?.capabilityScores ?? {};
+
+      // If already stored in breakdown, return it
+      if (breakdown?.llmNarrative?.strengths) {
+        return { narrative: breakdown.llmNarrative as { strengths: string; gaps: string; priorities: string } };
+      }
+
+      const readinessLabel =
+        readinessState === "safe" ? "AI-Ready" :
+        readinessState === "at_risk" ? "Developing" :
+        readinessState === "unsafe" ? "Needs Development" : "Not yet assessed";
+
+      // Prefer frontend-passed domain scores (more reliable), fall back to breakdown
+      let domainLines: string;
+      if (input.domainScores && input.domainScores.length > 0) {
+        domainLines = input.domainScores
+          .sort((a, b) => b.score - a.score)
+          .map(d => `${d.name}: ${Math.round(d.score)}/100`)
+          .join("\n");
+      } else {
+        domainLines = Object.entries(capabilityScores)
+          .sort(([, a]: any, [, b]: any) => (b.score ?? 0) - (a.score ?? 0))
+          .map(([, v]: [string, any]) => `${v.displayName ?? v}: ${Math.round(v.score ?? 0)}/100`)
+          .join("\n");
+      }
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert AI capability coach with deep HR expertise. Write personalised, specific, encouraging feedback for an HR professional based on their AI capability assessment results. Be warm, professional, and concrete — reference specific domains and scores. Never use bullet points or headers in your response. Return ONLY a JSON object with exactly three keys: "strengths", "gaps", "priorities". Each value must be a single flowing paragraph of 2-3 sentences.`,
+            },
+            {
+              role: "user",
+              content: `Write personalised development feedback for this HR professional's AI capability assessment.\n\nOverall score: ${(overallScore / 10).toFixed(1)}/10 (${readinessLabel})\n\nDomain scores (highest to lowest):\n${domainLines}\n\nReturn a JSON object with keys: strengths (what they're doing well), gaps (specific areas to develop), priorities (concrete next steps). Each value is 2-3 sentences, encouraging and specific.`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "development_narrative",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  strengths: { type: "string", description: "What the person is doing well — 2-3 encouraging sentences referencing specific domains" },
+                  gaps: { type: "string", description: "Specific capability gaps to address — 2-3 sentences, constructive and specific" },
+                  priorities: { type: "string", description: "Concrete next priorities for development — 2-3 actionable sentences" },
+                },
+                required: ["strengths", "gaps", "priorities"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = (response as any)?.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = typeof content === "string" ? JSON.parse(content) : content;
+          return { narrative: parsed as { strengths: string; gaps: string; priorities: string } };
+        }
+        return { narrative: null };
+      } catch {
+        return { narrative: null };
       }
     }),
 
