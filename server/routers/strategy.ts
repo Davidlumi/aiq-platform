@@ -37,23 +37,51 @@ const DEFAULT_SEGMENTS = [
 
 // ─── Calculation engine ─────────────────────────────────────────────────────
 
+/**
+ * Compute ambition-adjusted baseline from two-axis ambition.
+ * Business AI ambition: 1=Conservative, 2=Cautious, 3=Augmenter, 4=Pioneer
+ * People AI ambition:   1=Compliance, 2=Embedding, 3=Capability-led, 4=Transformative
+ * Formula: baseline = clamp(1.5 + (business-1)*0.4 + (people-1)*0.4, 1.0, 5.0)
+ */
+function computeAmbitionBaseline(businessAmbition: number, peopleAmbition: number): number[] {
+  const base = 1.5 + (businessAmbition - 1) * 0.4 + (peopleAmbition - 1) * 0.4;
+  const domainMods = [
+    (peopleAmbition - 1) * 0.05,   // AI Interaction — people-led
+    (peopleAmbition - 1) * 0.04,   // AI Output Evaluation — people-led
+    (businessAmbition - 1) * 0.06, // AI Workflow Design — business-led
+    (businessAmbition - 1) * 0.05, // Workforce AI Readiness — business-led
+    (peopleAmbition - 1) * 0.03 + (businessAmbition - 1) * 0.03, // Ethics — both
+    (businessAmbition - 1) * 0.06, // AI Change Leadership — business-led
+  ];
+  return domainMods.map(mod =>
+    Math.round(Math.max(1.0, Math.min(5.0, base + mod)) * 10) / 10
+  );
+}
+
 function computeTargets(
   baselineScores: number[],
   selectedInitiatives: Array<{ weightsJson: number[]; baseTarget: number; criticality: number }>,
-  businessAmbition: number, // 1-3
-  peopleAmbition: number,   // 1-3
+  businessAmbition: number, // 1-4
+  peopleAmbition: number,   // 1-4
 ): number[] {
-  const ambitionMultiplier = 0.8 + ((businessAmbition + peopleAmbition) / 6) * 0.4; // 0.8–1.2
+  // Ambition multiplier: 0.85 (Conservative) → 1.15 (Pioneer)
+  const ambitionMultiplier = 0.85 + ((businessAmbition + peopleAmbition - 2) / 6) * 0.30;
   const targets = [...baselineScores];
 
   for (const init of selectedInitiatives) {
-    const critMultiplier = 0.7 + init.criticality * 0.15; // 0.85–1.15
+    const critMultiplier = 0.85 + (init.criticality - 1) * 0.15; // 0.85–1.15
     for (let i = 0; i < 6; i++) {
       const weight = (init.weightsJson[i] ?? 0) * critMultiplier * ambitionMultiplier;
-      targets[i] = Math.min(5, targets[i] + weight * (init.baseTarget - baselineScores[i]));
+      // Delta always positive: target moves toward baseTarget, never below baseline
+      const delta = weight * Math.max(0, init.baseTarget - baselineScores[i]);
+      targets[i] = Math.max(targets[i], baselineScores[i] + delta);
     }
   }
-  return targets.map(t => Math.round(t * 10) / 10);
+  // Clamp to 1.0–5.0 and ensure target >= baseline
+  return targets.map((t, i) => {
+    const clamped = Math.max(1.0, Math.min(5.0, t));
+    return Math.round(Math.max(baselineScores[i], clamped) * 10) / 10;
+  });
 }
 
 function computeSegmentDemand(
@@ -281,8 +309,8 @@ export const strategyRouter = router({
       tenantId: z.string(),
       name: z.string().default("Strategy A"),
       industryId: z.string(),
-      businessAmbition: z.number().int().min(1).max(3).default(2),
-      peopleAmbition: z.number().int().min(1).max(3).default(2),
+      businessAmbition: z.number().int().min(1).max(4).default(2),
+      peopleAmbition: z.number().int().min(1).max(4).default(2),
       slot: z.enum(["A", "B", "C"]).default("A"),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -310,8 +338,8 @@ export const strategyRouter = router({
       strategyId: z.string(),
       name: z.string().optional(),
       industryId: z.string().optional(),
-      businessAmbition: z.number().int().min(1).max(3).optional(),
-      peopleAmbition: z.number().int().min(1).max(3).optional(),
+      businessAmbition: z.number().int().min(1).max(4).optional(),
+      peopleAmbition: z.number().int().min(1).max(4).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -447,8 +475,14 @@ export const strategyRouter = router({
         .where(eq(strategyHrSegments.tenantId, strategy.tenantId))
         .orderBy(strategyHrSegments.sortOrder);
 
+      // Ambition-adjusted baseline: use higher of passed-in scores or ambition floor
+      const ambitionBaseline = computeAmbitionBaseline(strategy.businessAmbition, strategy.peopleAmbition);
+      const effectiveBaseline = input.baselineScores.map((s, i) =>
+        Math.round(Math.max(s, ambitionBaseline[i]) * 10) / 10
+      );
+
       const targetScores = computeTargets(
-        input.baselineScores,
+        effectiveBaseline,
         items.map((i: any) => ({
           weightsJson: i.weightsJson as number[],
           baseTarget: i.baseTarget,
@@ -461,9 +495,9 @@ export const strategyRouter = router({
       const gaps = DOMAINS.map((d, i) => ({
         domain: d.label,
         key: d.key,
-        baseline: input.baselineScores[i],
+        baseline: effectiveBaseline[i],
         target: targetScores[i],
-        gap: Math.round((targetScores[i] - input.baselineScores[i]) * 10) / 10,
+        gap: Math.round(Math.max(0, targetScores[i] - effectiveBaseline[i]) * 10) / 10,
       }));
 
       const segmentDemand = computeSegmentDemand(
@@ -499,7 +533,7 @@ export const strategyRouter = router({
 
       return {
         domains: DOMAINS,
-        baselineScores: input.baselineScores,
+        baselineScores: effectiveBaseline,
         targetScores,
         gaps,
         segmentDemand,

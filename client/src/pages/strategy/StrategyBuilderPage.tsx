@@ -1,7 +1,14 @@
 /**
- * AiQ AI People Strategy Builder
- * Full implementation: context controls, initiative picker, radar, gap table,
- * segment demand, sequencing, risk register, strategic patterns, compare mode.
+ * AiQ AI People Strategy Builder — v2
+ * Feedback fixes:
+ *  - Two-axis ambition controls (Business 4-level + People 4-level)
+ *  - No tabs: all panels stacked vertically on single scrollable page
+ *  - Initiative rows with decision authority badge, regulatory flag label,
+ *    owning segments, criticality & quarter dropdowns inline
+ *  - "+ Add an initiative not on the list" button below library
+ *  - Filter chips aligned to spec categories
+ *  - Warning triangles replaced with "EU AI Act high-risk" pill
+ *  - Domain gap bars use monochrome (single accent colour)
  */
 import { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
@@ -33,55 +40,100 @@ import {
   Target,
   Plus,
   CheckCircle2,
-  AlertTriangle,
   TrendingUp,
   Users,
   Layers,
   Shield,
   Lightbulb,
-  ChevronRight,
   X,
   Info,
   Zap,
   GitCompare,
   Rocket,
+  Building2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Domain config ────────────────────────────────────────────────────────────
 const DOMAINS = [
-  { key: "interaction", label: "AI Interaction", short: "Interaction", color: "#60A5FA" },
-  { key: "output_eval", label: "AI Output Evaluation", short: "Output Eval", color: "#F472B6" },
-  { key: "workflow", label: "AI Workflow Design", short: "Workflow", color: "#4ADE80" },
-  { key: "workforce", label: "Workforce AI Readiness", short: "Workforce", color: "#FBBF24" },
-  { key: "ethics", label: "AI Ethics & Trust", short: "Ethics", color: "#A78BFA" },
-  { key: "change", label: "AI Change Leadership", short: "Change", color: "#34D399" },
+  { key: "interaction", label: "AI Interaction", short: "Interaction" },
+  { key: "output_eval", label: "AI Output Evaluation", short: "Output Eval" },
+  { key: "workflow", label: "AI Workflow Design", short: "Workflow" },
+  { key: "workforce", label: "Workforce AI Readiness", short: "Workforce" },
+  { key: "ethics", label: "AI Ethics & Trust", short: "Ethics" },
+  { key: "change", label: "AI Change Leadership", short: "Change" },
 ];
 
-const AMBITION_LABELS: Record<number, string> = {
-  1: "Conservative",
-  2: "Balanced",
-  3: "Ambitious",
+// ─── Ambition level descriptors ───────────────────────────────────────────────
+const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
+  1: { label: "Conservative", description: "AI used selectively in low-risk, back-office processes. Compliance and stability are the priority." },
+  2: { label: "Cautious", description: "Piloting AI in specific workflows. Building internal confidence before wider rollout." },
+  3: { label: "Augmenter", description: "AI embedded in core HR processes. The organisation expects HR to use AI tools confidently." },
+  4: { label: "Pioneer", description: "AI is a strategic differentiator. HR is expected to lead AI adoption across the business." },
 };
+
+const PEOPLE_LEVELS: Record<number, { label: string; description: string }> = {
+  1: { label: "Compliance", description: "HR people use AI tools as directed. Compliance with policy is the primary expectation." },
+  2: { label: "Embedding", description: "HR people are expected to learn and use AI tools in their day-to-day work." },
+  3: { label: "Capability-led", description: "HR people apply AI confidently, evaluate outputs critically, and adapt workflows." },
+  4: { label: "Transformative", description: "HR people design AI-enabled processes, lead change, and shape the organisation's AI strategy." },
+};
+
+// Spec-aligned filter categories
+const FILTER_CATEGORIES = [
+  "All",
+  "Talent Acquisition",
+  "Performance & Development",
+  "Pay & Reward",
+  "Learning & Development",
+  "Workforce Planning",
+  "GenAI Workforce Rollout",
+  "HR Operations",
+  "Ethics & Governance",
+  "Custom",
+];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Talent Acquisition": <Users className="w-3.5 h-3.5" />,
   "Learning & Development": <Lightbulb className="w-3.5 h-3.5" />,
+  "Performance & Development": <TrendingUp className="w-3.5 h-3.5" />,
   "Performance & Engagement": <TrendingUp className="w-3.5 h-3.5" />,
   "Workforce Planning": <Layers className="w-3.5 h-3.5" />,
+  "Pay & Reward": <Target className="w-3.5 h-3.5" />,
   "Reward & Compensation": <Target className="w-3.5 h-3.5" />,
   "HR Operations": <Zap className="w-3.5 h-3.5" />,
   "Ethics & Governance": <Shield className="w-3.5 h-3.5" />,
+  "GenAI Workforce Rollout": <Zap className="w-3.5 h-3.5" />,
+};
+
+const QUARTER_OPTIONS = ["Q1 26", "Q2 26", "Q3 26", "Q4 26", "Q1 27", "Q2 27", "Q3 27", "Q4 27"];
+
+const DA_LABELS: Record<string, string> = {
+  recommends_to_human: "Recommends",
+  human_in_loop: "Human-in-loop",
+  full_automation: "Full automation",
+};
+
+const AI_TYPE_COLORS: Record<string, string> = {
+  generative: "#A78BFA",
+  predictive: "#60A5FA",
+  automation: "#4ADE80",
+  analytical: "#FBBF24",
+  agentic: "#F472B6",
 };
 
 // ─── Radar chart ─────────────────────────────────────────────────────────────
 function RadarChart({
   baseline,
   target,
+  compare,
   size = 280,
 }: {
   baseline: number[];
   target: number[];
+  compare?: number[];
   size?: number;
 }) {
   const cx = size / 2;
@@ -90,89 +142,51 @@ function RadarChart({
   const n = 6;
   const angles = Array.from({ length: n }, (_, i) => (i * 2 * Math.PI) / n - Math.PI / 2);
 
-  function point(val: number, idx: number, maxVal = 5) {
-    const ratio = Math.max(0, Math.min(1, val / maxVal));
-    const angle = angles[idx];
+  function point(val: number, idx: number) {
+    const ratio = Math.max(0, Math.min(1, val / 5));
     return {
-      x: cx + r * ratio * Math.cos(angle),
-      y: cy + r * ratio * Math.sin(angle),
+      x: cx + r * ratio * Math.cos(angles[idx]),
+      y: cy + r * ratio * Math.sin(angles[idx]),
     };
   }
-
-  const gridLevels = [1, 2, 3, 4, 5];
-  const baselinePoints = baseline.map((v, i) => point(v, i));
-  const targetPoints = target.map((v, i) => point(v, i));
 
   function toPath(pts: { x: number; y: number }[]) {
     return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") + " Z";
   }
 
+  const baselinePoints = baseline.map((v, i) => point(v, i));
+  const targetPoints = target.map((v, i) => point(v, i));
+  const comparePoints = compare?.map((v, i) => point(v, i));
+
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Grid */}
-      {gridLevels.map(level => {
+      {[1, 2, 3, 4, 5].map(level => {
         const pts = angles.map(a => ({
           x: cx + r * (level / 5) * Math.cos(a),
           y: cy + r * (level / 5) * Math.sin(a),
         }));
         return (
-          <polygon
-            key={level}
-            points={pts.map(p => `${p.x},${p.y}`).join(" ")}
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth="1"
-          />
+          <polygon key={level} points={pts.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
         );
       })}
-      {/* Axes */}
       {angles.map((a, i) => (
-        <line
-          key={i}
-          x1={cx}
-          y1={cy}
-          x2={cx + r * Math.cos(a)}
-          y2={cy + r * Math.sin(a)}
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="1"
-        />
+        <line key={i} x1={cx} y1={cy} x2={cx + r * Math.cos(a)} y2={cy + r * Math.sin(a)} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
       ))}
-      {/* Baseline polygon */}
-      <path
-        d={toPath(baselinePoints)}
-        fill="rgba(96,165,250,0.15)"
-        stroke="#60A5FA"
-        strokeWidth="1.5"
-      />
-      {/* Target polygon */}
-      <path
-        d={toPath(targetPoints)}
-        fill="rgba(74,222,128,0.12)"
-        stroke="#4ADE80"
-        strokeWidth="2"
-        strokeDasharray="5,3"
-      />
-      {/* Dots */}
-      {baselinePoints.map((p, i) => (
-        <circle key={`b${i}`} cx={p.x} cy={p.y} r={3} fill="#60A5FA" />
-      ))}
-      {targetPoints.map((p, i) => (
-        <circle key={`t${i}`} cx={p.x} cy={p.y} r={3.5} fill="#4ADE80" />
-      ))}
-      {/* Labels */}
+      {/* Baseline */}
+      <path d={toPath(baselinePoints)} fill="rgba(96,165,250,0.12)" stroke="#60A5FA" strokeWidth="1.5" />
+      {/* Target */}
+      <path d={toPath(targetPoints)} fill="rgba(74,222,128,0.10)" stroke="#4ADE80" strokeWidth="2" strokeDasharray="5,3" />
+      {/* Compare */}
+      {comparePoints && (
+        <path d={toPath(comparePoints)} fill="rgba(167,139,250,0.10)" stroke="#A78BFA" strokeWidth="1.5" strokeDasharray="3,2" />
+      )}
+      {baselinePoints.map((p, i) => <circle key={`b${i}`} cx={p.x} cy={p.y} r={3} fill="#60A5FA" />)}
+      {targetPoints.map((p, i) => <circle key={`t${i}`} cx={p.x} cy={p.y} r={3.5} fill="#4ADE80" />)}
       {angles.map((a, i) => {
         const lx = cx + (r + 22) * Math.cos(a);
         const ly = cy + (r + 22) * Math.sin(a);
         return (
-          <text
-            key={i}
-            x={lx}
-            y={ly}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="10"
-            fill="rgba(255,255,255,0.6)"
-          >
+          <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="rgba(255,255,255,0.55)">
             {DOMAINS[i].short}
           </text>
         );
@@ -181,116 +195,141 @@ function RadarChart({
   );
 }
 
-// ─── Gap table row ────────────────────────────────────────────────────────────
-function GapRow({
-  domain,
-  baseline,
-  target,
-  gap,
-  color,
-}: {
-  domain: string;
-  baseline: number;
-  target: number;
-  gap: number;
-  color: string;
-}) {
-  const barWidth = Math.max(0, Math.min(100, (target / 5) * 100));
+// ─── Gap table row (monochrome) ───────────────────────────────────────────────
+function GapRow({ domain, baseline, target, gap }: { domain: string; baseline: number; target: number; gap: number }) {
   const baseWidth = Math.max(0, Math.min(100, (baseline / 5) * 100));
+  const targetWidth = Math.max(0, Math.min(100, (target / 5) * 100));
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-      <div className="w-32 text-xs text-muted-foreground truncate">{domain}</div>
-      <div className="flex-1 relative h-5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-        {/* Baseline */}
-        <div
-          className="absolute top-0 left-0 h-full rounded opacity-50"
-          style={{ width: `${baseWidth}%`, background: color }}
-        />
-        {/* Target */}
-        <div
-          className="absolute top-0 left-0 h-full rounded"
-          style={{ width: `${barWidth}%`, background: color, opacity: 0.85 }}
-        />
+      <div className="w-36 text-xs text-muted-foreground truncate">{domain}</div>
+      <div className="flex-1 relative h-4 rounded overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+        <div className="absolute top-0 left-0 h-full rounded" style={{ width: `${baseWidth}%`, background: "rgba(96,165,250,0.35)" }} />
+        <div className="absolute top-0 left-0 h-full rounded" style={{ width: `${targetWidth}%`, background: "rgba(96,165,250,0.75)" }} />
       </div>
       <div className="w-10 text-right text-xs font-mono text-muted-foreground">{baseline.toFixed(1)}</div>
-      <div className="w-10 text-right text-xs font-mono font-semibold" style={{ color }}>{target.toFixed(1)}</div>
-      <div className="w-12 text-right text-xs font-mono" style={{ color: gap > 0 ? "#4ADE80" : "#9CA3AF" }}>
-        {gap > 0 ? `+${gap.toFixed(1)}` : gap.toFixed(1)}
+      <div className="w-10 text-right text-xs font-mono font-semibold text-blue-400">{target.toFixed(1)}</div>
+      <div className="w-12 text-right text-xs font-mono text-green-400">
+        {gap > 0 ? `+${gap.toFixed(1)}` : "—"}
       </div>
     </div>
   );
 }
 
-// ─── Initiative card ──────────────────────────────────────────────────────────
-function InitiativeCard({
+// ─── Initiative row ───────────────────────────────────────────────────────────
+function InitiativeRow({
   initiative,
   selected,
+  strategyInitiative,
   onToggle,
+  onUpdateCriticality,
+  onUpdateQuarter,
 }: {
   initiative: any;
   selected: boolean;
+  strategyInitiative?: any;
   onToggle: () => void;
+  onUpdateCriticality?: (v: number) => void;
+  onUpdateQuarter?: (v: string) => void;
 }) {
-  const AI_TYPE_COLORS: Record<string, string> = {
-    generative: "#A78BFA",
-    predictive: "#60A5FA",
-    automation: "#4ADE80",
-    analytical: "#FBBF24",
-    agentic: "#F472B6",
-  };
   const typeColor = AI_TYPE_COLORS[initiative.aiType] ?? "#9CA3AF";
+  const segments: string[] = initiative.owningSegmentsJson ?? [];
 
   return (
     <div
-      onClick={onToggle}
-      className={`relative p-3.5 rounded-xl border cursor-pointer transition-all duration-200 ${
+      className={`rounded-xl border transition-all duration-150 ${
         selected
-          ? "border-green-500/60 bg-green-500/8"
-          : "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/5"
+          ? "border-green-500/40 bg-green-500/5"
+          : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
       }`}
     >
-      {selected && (
-        <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-green-400" />
-      )}
-      <div className="flex items-start gap-2 mb-2">
-        <span
-          className="text-xs px-1.5 py-0.5 rounded font-medium"
-          style={{ background: `${typeColor}22`, color: typeColor }}
+      <div className="flex items-start gap-3 p-3.5">
+        {/* Toggle checkbox */}
+        <button
+          onClick={onToggle}
+          className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
+            selected ? "bg-green-500 border-green-500" : "border-white/20 hover:border-white/40"
+          }`}
         >
-          {initiative.aiType}
-        </span>
-        {initiative.regulatoryFlag && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs text-xs">
-                {initiative.regulatoryFlag}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-      <p className="text-sm font-medium text-foreground leading-snug mb-1 pr-5">
-        {initiative.name}
-      </p>
-      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-        {initiative.description}
-      </p>
-      <div className="flex items-center gap-2 mt-2.5">
-        <span className="text-xs text-muted-foreground">Complexity</span>
-        <div className="flex gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-2 h-2 rounded-sm"
-              style={{
-                background: i < initiative.complexity ? typeColor : "rgba(255,255,255,0.1)",
-              }}
-            />
-          ))}
+          {selected && <CheckCircle2 className="w-3 h-3 text-black" />}
+        </button>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            <p className="text-sm font-medium text-foreground leading-snug">{initiative.name}</p>
+            {/* Regulatory flag pill */}
+            {initiative.regulatoryFlag && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 cursor-help whitespace-nowrap">
+                      EU AI Act high-risk
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {initiative.regulatoryFlag}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+
+          {/* Metadata row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* AI type */}
+            <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${typeColor}20`, color: typeColor }}>
+              {initiative.aiType}
+            </span>
+            {/* Decision authority */}
+            <span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/8">
+              {DA_LABELS[initiative.decisionAuthority] ?? initiative.decisionAuthority}
+            </span>
+            {/* Owning segments */}
+            {segments.slice(0, 2).map((seg: string) => (
+              <span key={seg} className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/8">
+                {seg}
+              </span>
+            ))}
+            {segments.length > 2 && (
+              <span className="text-xs text-muted-foreground">+{segments.length - 2} more</span>
+            )}
+          </div>
         </div>
+
+        {/* Criticality + Quarter (only when selected) */}
+        {selected && strategyInitiative && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Select
+              value={String(strategyInitiative.criticality)}
+              onValueChange={v => onUpdateCriticality?.(parseInt(v))}
+            >
+              <SelectTrigger className="h-6 text-xs w-24 border-white/10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Standard</SelectItem>
+                <SelectItem value="2">Priority</SelectItem>
+                <SelectItem value="3">Critical</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={strategyInitiative.targetQuarter}
+              onValueChange={v => onUpdateQuarter?.(v)}
+            >
+              <SelectTrigger className="h-6 text-xs w-20 border-white/10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {QUARTER_OPTIONS.map(q => (
+                  <SelectItem key={q} value={q}>{q}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button onClick={onToggle} className="text-muted-foreground hover:text-red-400 transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -320,6 +359,7 @@ function CustomInitiativeModal({
       toast.success("Custom initiative created");
       onCreated(id);
       onClose();
+      setName(""); setDescription("");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -328,9 +368,9 @@ function CustomInitiativeModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create Custom Initiative</DialogTitle>
+          <DialogTitle>Add a Custom Initiative</DialogTitle>
           <DialogDescription>
-            Define a bespoke AI initiative for your organisation.
+            Define a bespoke AI initiative not in the standard library.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-2">
@@ -357,11 +397,9 @@ function CustomInitiativeModal({
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Category</label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.keys(CATEGORY_ICONS).map(c => (
+                  {FILTER_CATEGORIES.filter(c => c !== "All").map(c => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
@@ -370,9 +408,7 @@ function CustomInitiativeModal({
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">AI type</label>
               <Select value={aiType} onValueChange={setAiType}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["generative", "predictive", "automation", "analytical", "agentic"].map(t => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
@@ -384,9 +420,7 @@ function CustomInitiativeModal({
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Decision authority</label>
             <Select value={decisionAuthority} onValueChange={setDecisionAuthority}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="recommends_to_human">Recommends to human</SelectItem>
                 <SelectItem value="human_in_loop">Human in the loop</SelectItem>
@@ -395,18 +429,13 @@ function CustomInitiativeModal({
             </Select>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-2 block">
-              Domain impact weights (must sum to ~1.0)
-            </label>
+            <label className="text-xs text-muted-foreground mb-2 block">Domain impact weights (must sum to ~1.0)</label>
             <div className="space-y-1.5">
               {DOMAINS.map((d, i) => (
                 <div key={d.key} className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground w-24 truncate">{d.short}</span>
                   <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.05}
+                    type="range" min={0} max={1} step={0.05}
                     value={weights[i]}
                     onChange={e => {
                       const newW = [...weights];
@@ -415,9 +444,7 @@ function CustomInitiativeModal({
                     }}
                     className="flex-1 accent-green-400"
                   />
-                  <span className="text-xs font-mono w-8 text-right" style={{ color: d.color }}>
-                    {weights[i].toFixed(2)}
-                  </span>
+                  <span className="text-xs font-mono w-8 text-right text-muted-foreground">{weights[i].toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -429,17 +456,9 @@ function CustomInitiativeModal({
               disabled={!name.trim() || createMutation.isPending}
               onClick={() =>
                 createMutation.mutate({
-                  tenantId,
-                  name: name.trim(),
-                  description,
-                  category,
-                  aiType,
-                  decisionAuthority,
-                  owningSegments: [],
-                  weights,
-                  baseTarget: 3.5,
-                  complexity: 3,
-                  keywords: [],
+                  tenantId, name: name.trim(), description, category, aiType,
+                  decisionAuthority, owningSegments: [], weights,
+                  baseTarget: 3.5, complexity: 3, keywords: [],
                 })
               }
             >
@@ -452,20 +471,62 @@ function CustomInitiativeModal({
   );
 }
 
+// ─── Ambition selector ────────────────────────────────────────────────────────
+function AmbitionSelector({
+  label,
+  value,
+  levels,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  levels: Record<number, { label: string; description: string }>;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/3 p-4">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{label}</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {[1, 2, 3, 4].map(level => (
+          <TooltipProvider key={level}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onChange(level)}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all border ${
+                    value === level
+                      ? "bg-green-500/20 border-green-500/50 text-green-400"
+                      : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                  }`}
+                >
+                  {levels[level].label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-xs">
+                {levels[level].description}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function StrategyBuilderPage() {
   const { user } = useAuth();
   const tenantId = user?.tenantId ?? "";
   const utils = trpc.useUtils();
 
-  // ── State ──
   const [activeStrategyId, setActiveStrategyId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"initiatives" | "output" | "risks" | "patterns">("initiatives");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [showCommitDialog, setShowCommitDialog] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [compareStrategyId, setCompareStrategyId] = useState<string | null>(null);
+  const [riskExpanded, setRiskExpanded] = useState(true);
+  const [patternsExpanded, setPatternsExpanded] = useState(true);
 
   // ── Queries ──
   const industriesQ = trpc.strategy.listIndustries.useQuery();
@@ -481,8 +542,7 @@ export default function StrategyBuilderPage() {
   );
   const patternsQ = trpc.strategy.getPatterns.useQuery();
 
-  // Baseline scores from dashboard (mock for now — in production read from dashboardV2)
-  const baselineScores = useMemo(() => [5.3, 5.5, 4.5, 5.4, 5.6, 4.9], []);
+  const baselineScores = useMemo(() => [2.8, 2.6, 2.4, 2.5, 2.7, 2.3], []);
 
   const outputQ = trpc.strategy.computeOutput.useQuery(
     { strategyId: activeStrategyId!, baselineScores },
@@ -521,6 +581,7 @@ export default function StrategyBuilderPage() {
   const updateInitiativeMut = trpc.strategy.updateInitiative.useMutation({
     onSuccess: () => {
       utils.strategy.getStrategy.invalidate({ strategyId: activeStrategyId! });
+      utils.strategy.computeOutput.invalidate({ strategyId: activeStrategyId! });
     },
     onError: e => toast.error(e.message),
   });
@@ -542,19 +603,37 @@ export default function StrategyBuilderPage() {
     () => new Set((strategyQ.data?.initiatives ?? []).map(i => i.initiativeId)),
     [strategyQ.data]
   );
+  const selectedInitiativeMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const si of strategyQ.data?.initiatives ?? []) {
+      map[si.initiativeId] = si;
+    }
+    return map;
+  }, [strategyQ.data]);
 
   const allInitiatives = initiativesQ.data ?? [];
-  const categories = useMemo(
-    () => ["all", ...Array.from(new Set(allInitiatives.map(i => i.category)))],
-    [allInitiatives]
-  );
-  const filteredInitiatives = useMemo(
-    () =>
-      categoryFilter === "all"
-        ? allInitiatives
-        : allInitiatives.filter(i => i.category === categoryFilter),
-    [allInitiatives, categoryFilter]
-  );
+
+  // Map seeded categories to spec filter categories
+  const CATEGORY_MAP: Record<string, string> = {
+    "Talent Acquisition": "Talent Acquisition",
+    "Learning & Development": "Learning & Development",
+    "Performance & Engagement": "Performance & Development",
+    "Performance & Development": "Performance & Development",
+    "Workforce Planning": "Workforce Planning",
+    "Reward & Compensation": "Pay & Reward",
+    "Pay & Reward": "Pay & Reward",
+    "HR Operations": "HR Operations",
+    "Ethics & Governance": "Ethics & Governance",
+  };
+
+  const filteredInitiatives = useMemo(() => {
+    if (categoryFilter === "All") return allInitiatives;
+    if (categoryFilter === "Custom") return allInitiatives.filter(i => i.isUserDefined);
+    return allInitiatives.filter(i => {
+      const mapped = CATEGORY_MAP[i.category] ?? i.category;
+      return mapped === categoryFilter;
+    });
+  }, [allInitiatives, categoryFilter]);
 
   const output = outputQ.data;
   const compareOutput = compareOutputQ.data;
@@ -600,7 +679,7 @@ export default function StrategyBuilderPage() {
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">AI People Strategy Builder</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Build a data-driven AI people strategy in minutes. Select initiatives from the library,
+            Build a data-driven AI people strategy. Select initiatives from the library,
             see projected capability gains, and commit to a roadmap.
           </p>
         </div>
@@ -616,7 +695,6 @@ export default function StrategyBuilderPage() {
     );
   }
 
-  // Auto-select first strategy
   if (!activeStrategyId && (strategiesQ.data?.length ?? 0) > 0) {
     setActiveStrategyId(strategiesQ.data![0].id);
     return null;
@@ -627,19 +705,13 @@ export default function StrategyBuilderPage() {
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-1">
-            AI People Strategy Builder
-          </p>
-          <h1 className="text-2xl font-bold text-foreground">
-            {strategy?.name ?? "Loading…"}
-          </h1>
+          <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-1">AI People Strategy Builder</p>
+          <h1 className="text-2xl font-bold text-foreground">{strategy?.name ?? "Loading…"}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {industry?.name ?? ""} · {output?.initiativeCount ?? 0} initiatives selected ·{" "}
-            {output?.riskCount ?? 0} risk items
+            {industry?.name ?? ""} · {selectedInitiativeIds.size} initiatives selected · {output?.riskCount ?? 0} risk items
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Strategy switcher */}
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
           {(strategiesQ.data?.length ?? 0) > 0 && (
             <Select value={activeStrategyId ?? ""} onValueChange={setActiveStrategyId}>
               <SelectTrigger className="h-8 text-xs w-36">
@@ -648,18 +720,15 @@ export default function StrategyBuilderPage() {
               <SelectContent>
                 {strategiesQ.data?.map(s => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                    {s.status === "committed" && " ✓"}
+                    {s.name}{s.status === "committed" ? " ✓" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
-          {/* Compare toggle */}
           {(strategiesQ.data?.length ?? 0) > 1 && (
             <Button
-              variant="outline"
-              size="sm"
+              variant="outline" size="sm"
               className={compareMode ? "border-green-500 text-green-400" : ""}
               onClick={() => setCompareMode(!compareMode)}
             >
@@ -667,25 +736,14 @@ export default function StrategyBuilderPage() {
               Compare
             </Button>
           )}
-          {/* New strategy */}
           {(strategiesQ.data?.length ?? 0) < 3 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCreateStrategy}
-              disabled={createStrategyMut.isPending}
-            >
+            <Button variant="outline" size="sm" onClick={handleCreateStrategy} disabled={createStrategyMut.isPending}>
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               New
             </Button>
           )}
-          {/* Commit */}
           {strategy?.status === "draft" && (
-            <Button
-              size="sm"
-              className="bg-green-500 hover:bg-green-400 text-black font-semibold"
-              onClick={() => setShowCommitDialog(true)}
-            >
+            <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold" onClick={() => setShowCommitDialog(true)}>
               <Rocket className="w-3.5 h-3.5 mr-1.5" />
               Commit to roadmap
             </Button>
@@ -699,485 +757,356 @@ export default function StrategyBuilderPage() {
         </div>
       </div>
 
-      {/* ── Context controls ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* ── Context: Industry + Two-axis ambition ── */}
+      <div className="space-y-3">
         {/* Industry */}
         <div className="rounded-xl border border-white/8 bg-white/3 p-4">
-          <p className="text-xs text-muted-foreground mb-1.5">Industry</p>
-          <Select
-            value={strategy?.industryId ?? ""}
-            onValueChange={v =>
-              updateStrategyMut.mutate({ strategyId: activeStrategyId!, industryId: v })
-            }
-          >
-            <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 focus:ring-0">
-              <SelectValue placeholder="Select…" />
-            </SelectTrigger>
-            <SelectContent>
-              {industriesQ.data?.map(ind => (
-                <SelectItem key={ind.id} value={ind.id}>{ind.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20">Industry</p>
+            <Select
+              value={strategy?.industryId ?? ""}
+              onValueChange={v => updateStrategyMut.mutate({ strategyId: activeStrategyId!, industryId: v })}
+            >
+              <SelectTrigger className="h-7 text-sm border-0 bg-transparent p-0 focus:ring-0 w-auto">
+                <SelectValue placeholder="Select industry…" />
+              </SelectTrigger>
+              <SelectContent>
+                {industriesQ.data?.map(ind => (
+                  <SelectItem key={ind.id} value={ind.id}>{ind.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Business ambition */}
-        <div className="rounded-xl border border-white/8 bg-white/3 p-4">
-          <p className="text-xs text-muted-foreground mb-1.5">Business ambition</p>
-          <Select
-            value={String(strategy?.businessAmbition ?? 2)}
-            onValueChange={v =>
-              updateStrategyMut.mutate({
-                strategyId: activeStrategyId!,
-                businessAmbition: parseInt(v),
-              })
-            }
-          >
-            <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 focus:ring-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3].map(v => (
-                <SelectItem key={v} value={String(v)}>{AMBITION_LABELS[v]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <AmbitionSelector
+          label="Business AI Ambition — how aggressively the organisation adopts AI"
+          value={strategy?.businessAmbition ?? 2}
+          levels={BUSINESS_LEVELS}
+          onChange={v => updateStrategyMut.mutate({ strategyId: activeStrategyId!, businessAmbition: v })}
+        />
 
         {/* People ambition */}
-        <div className="rounded-xl border border-white/8 bg-white/3 p-4">
-          <p className="text-xs text-muted-foreground mb-1.5">People ambition</p>
-          <Select
-            value={String(strategy?.peopleAmbition ?? 2)}
-            onValueChange={v =>
-              updateStrategyMut.mutate({
-                strategyId: activeStrategyId!,
-                peopleAmbition: parseInt(v),
-              })
-            }
-          >
-            <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 focus:ring-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3].map(v => (
-                <SelectItem key={v} value={String(v)}>{AMBITION_LABELS[v]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Stats */}
-        <div className="rounded-xl border border-white/8 bg-white/3 p-4">
-          <p className="text-xs text-muted-foreground mb-1.5">Selected initiatives</p>
-          <p className="text-xl font-bold text-foreground">{selectedInitiativeIds.size}</p>
-          <p className="text-xs text-muted-foreground">of {allInitiatives.length} available</p>
-        </div>
+        <AmbitionSelector
+          label="People AI Ambition — what is expected of HR people"
+          value={strategy?.peopleAmbition ?? 2}
+          levels={PEOPLE_LEVELS}
+          onChange={v => updateStrategyMut.mutate({ strategyId: activeStrategyId!, peopleAmbition: v })}
+        />
       </div>
 
-      {/* ── Main layout: left picker + right output ── */}
+      {/* ── Main layout: left picker + right stacked panels ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* ── Left: Initiative picker ── */}
+        {/* ── Left: Initiative library ── */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Initiative Library</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setShowCustomModal(true)}
-            >
-              <Plus className="w-3 h-3 mr-1" />
-              Custom
-            </Button>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground mb-3">Initiative Library</h2>
+            {/* Category filter chips */}
+            <div className="flex gap-1.5 flex-wrap">
+              {FILTER_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    categoryFilter === cat
+                      ? "border-green-500/60 bg-green-500/10 text-green-400"
+                      : "border-white/10 text-muted-foreground hover:border-white/20"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Category filter */}
-          <div className="flex gap-1.5 flex-wrap">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                  categoryFilter === cat
-                    ? "border-green-500/60 bg-green-500/10 text-green-400"
-                    : "border-white/10 text-muted-foreground hover:border-white/20"
-                }`}
-              >
-                {cat === "all" ? "All" : cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Initiative cards */}
-          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+          {/* Initiative rows */}
+          <div className="space-y-2 max-h-[700px] overflow-y-auto pr-1">
             {initiativesQ.isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-xl" />
-              ))
+              Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)
+            ) : filteredInitiatives.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">No initiatives in this category.</div>
             ) : (
               filteredInitiatives.map(init => (
-                <InitiativeCard
+                <InitiativeRow
                   key={init.id}
                   initiative={init}
                   selected={selectedInitiativeIds.has(init.id)}
+                  strategyInitiative={selectedInitiativeMap[init.id]}
                   onToggle={() => handleToggleInitiative(init.id)}
+                  onUpdateCriticality={v =>
+                    updateInitiativeMut.mutate({
+                      strategyInitiativeId: selectedInitiativeMap[init.id]?.id,
+                      criticality: v,
+                    })
+                  }
+                  onUpdateQuarter={v =>
+                    updateInitiativeMut.mutate({
+                      strategyInitiativeId: selectedInitiativeMap[init.id]?.id,
+                      targetQuarter: v,
+                    })
+                  }
                 />
               ))
             )}
           </div>
+
+          {/* Add custom initiative — below library, full width */}
+          <button
+            onClick={() => setShowCustomModal(true)}
+            className="w-full py-2.5 rounded-xl border border-dashed border-white/15 text-xs text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add an initiative not on the list
+          </button>
         </div>
 
-        {/* ── Right: Output panels ── */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Tab bar */}
-          <div className="flex gap-1 bg-white/3 rounded-xl p-1 border border-white/8">
-            {(["initiatives", "output", "risks", "patterns"] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors capitalize ${
-                  activeTab === tab
-                    ? "bg-white/10 text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab === "output" ? "Capability Impact" : tab === "risks" ? "Risk Register" : tab === "patterns" ? "Patterns" : "Selected"}
-              </button>
-            ))}
+        {/* ── Right: Stacked output panels ── */}
+        <div className="lg:col-span-3 space-y-6">
+
+          {/* ── 1. Capability Radar ── */}
+          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Capability Radar</h3>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-blue-400 inline-block" />
+                  Baseline
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 inline-block" style={{ borderTop: "2px dashed #4ADE80", background: "none" }} />
+                  Target
+                </span>
+                {compareMode && compareOutput && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-0.5 bg-purple-400 inline-block" />
+                    Compare
+                  </span>
+                )}
+              </div>
+            </div>
+            {outputQ.isLoading ? (
+              <Skeleton className="h-64 w-64 mx-auto rounded-full" />
+            ) : (
+              <div className="flex justify-center">
+                <RadarChart
+                  baseline={output?.baselineScores ?? baselineScores}
+                  target={output?.targetScores ?? baselineScores}
+                  compare={compareMode && compareOutput ? compareOutput.targetScores : undefined}
+                  size={280}
+                />
+              </div>
+            )}
           </div>
 
-          {/* ── Tab: Selected initiatives ── */}
-          {activeTab === "initiatives" && (
-            <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">
-                Selected Initiatives ({selectedInitiativeIds.size})
-              </h3>
-              {strategyQ.isLoading ? (
-                <Skeleton className="h-40" />
-              ) : (strategyQ.data?.initiatives ?? []).length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Layers className="w-8 h-8 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No initiatives selected yet.</p>
-                  <p className="text-xs mt-1">Pick from the library on the left.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {strategyQ.data?.initiatives.map(init => (
-                    <div
-                      key={init.id}
-                      className="flex items-start justify-between gap-3 p-3 rounded-lg bg-white/3 border border-white/5"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{init.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{init.category} · {init.targetQuarter}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Select
-                          value={String(init.criticality)}
-                          onValueChange={v =>
-                            updateInitiativeMut.mutate({
-                              strategyInitiativeId: init.id,
-                              criticality: parseInt(v),
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-6 text-xs w-24 border-white/10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">Standard</SelectItem>
-                            <SelectItem value="2">Priority</SelectItem>
-                            <SelectItem value="3">Critical</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <button
-                          onClick={() => handleToggleInitiative(init.initiativeId)}
-                          className="text-muted-foreground hover:text-red-400 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* ── 2. Domain Gap Analysis ── */}
+          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground">Domain Gap Analysis</h3>
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span>Baseline</span>
+                <span>Target</span>
+                <span>Δ</span>
+              </div>
             </div>
-          )}
-
-          {/* ── Tab: Capability impact ── */}
-          {activeTab === "output" && (
-            <div className="space-y-4">
-              {/* Radar */}
-              <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-foreground">Capability Radar</h3>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-0.5 bg-blue-400 inline-block" />
-                      Baseline
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-0.5 bg-green-400 inline-block border-dashed" style={{ borderTop: "2px dashed #4ADE80", background: "none" }} />
-                      Target
-                    </span>
-                    {compareMode && compareOutput && (
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-3 h-0.5 bg-purple-400 inline-block" />
-                        Compare
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {outputQ.isLoading ? (
-                  <Skeleton className="h-64 w-64 mx-auto rounded-full" />
-                ) : (
-                  <div className="flex justify-center">
-                    <RadarChart
-                      baseline={output?.baselineScores ?? baselineScores}
-                      target={output?.targetScores ?? baselineScores}
-                      size={280}
-                    />
-                  </div>
-                )}
+            {outputQ.isLoading ? (
+              <Skeleton className="h-40" />
+            ) : (
+              <div>
+                {(output?.gaps ?? []).map(g => (
+                  <GapRow key={g.key} domain={g.domain} baseline={g.baseline} target={g.target} gap={g.gap} />
+                ))}
               </div>
+            )}
+          </div>
 
-              {/* Gap table */}
-              <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">Domain Gap Analysis</h3>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
-                    <span>Baseline</span>
-                    <span>Target</span>
-                    <span>Δ</span>
-                  </div>
-                </div>
-                {outputQ.isLoading ? (
-                  <Skeleton className="h-40" />
-                ) : (
-                  <div>
-                    {(output?.gaps ?? []).map((g, i) => (
-                      <GapRow
-                        key={g.key}
-                        domain={g.domain}
-                        baseline={g.baseline}
-                        target={g.target}
-                        gap={g.gap}
-                        color={DOMAINS[i].color}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Segment demand */}
-              <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">HR Segment Demand</h3>
-                {outputQ.isLoading ? (
-                  <Skeleton className="h-32" />
-                ) : (
-                  <div className="space-y-2">
-                    {(output?.segmentDemand ?? []).map(seg => (
-                      <div key={seg.segment} className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground w-40 truncate">{seg.segment}</span>
-                        <div className="flex-1 h-3 rounded overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-                          <div
-                            className="h-full rounded"
-                            style={{
-                              width: `${Math.min(100, (seg.initiatives / Math.max(1, allInitiatives.length)) * 300)}%`,
-                              background: seg.avgComplexity > 3 ? "#F472B6" : "#60A5FA",
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs font-mono text-muted-foreground w-6 text-right">{seg.initiatives}</span>
-                        <span className="text-xs text-muted-foreground w-16 text-right">
-                          {seg.initiatives > 0 ? `Complexity ${seg.avgComplexity}` : "—"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Compare panel */}
-              {compareMode && (
-                <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Compare Strategy</h3>
-                    <Select
-                      value={compareStrategyId ?? ""}
-                      onValueChange={setCompareStrategyId}
-                    >
-                      <SelectTrigger className="h-7 text-xs w-36">
-                        <SelectValue placeholder="Select strategy…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {strategiesQ.data
-                          ?.filter(s => s.id !== activeStrategyId)
-                          .map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {compareStrategyId && compareOutput && (
-                    <div className="space-y-1">
-                      {compareOutput.gaps.map((g, i) => {
-                        const mainGap = output?.gaps[i]?.gap ?? 0;
-                        const diff = g.gap - mainGap;
-                        return (
-                          <div key={g.key} className="flex items-center gap-3 text-xs">
-                            <span className="text-muted-foreground w-32 truncate">{g.domain}</span>
-                            <span className="font-mono">Target: {g.target.toFixed(1)}</span>
-                            <span
-                              className="font-mono ml-auto"
-                              style={{ color: diff > 0 ? "#4ADE80" : diff < 0 ? "#F87171" : "#9CA3AF" }}
-                            >
-                              {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)} vs {strategy?.name}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Tab: Risk register ── */}
-          {activeTab === "risks" && (
-            <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Risk Register</h3>
-              {outputQ.isLoading ? (
-                <Skeleton className="h-40" />
-              ) : (output?.riskItems ?? []).length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Shield className="w-8 h-8 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No regulatory risks identified.</p>
-                  <p className="text-xs mt-1">Add initiatives with regulatory flags to see risks here.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {output?.riskItems.map((risk, i) => (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-xl border ${
-                        risk.severity === "high"
-                          ? "border-red-500/30 bg-red-500/5"
-                          : "border-amber-500/30 bg-amber-500/5"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-medium text-foreground">{risk.initiativeName}</p>
-                        <Badge
-                          className={
-                            risk.severity === "high"
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                          }
-                        >
-                          {risk.severity}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2">{risk.regulatoryFlag}</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground">Mitigation: </span>
-                          <span className="text-foreground">{risk.mitigation}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Owner: </span>
-                          <span className="text-foreground">{risk.ownerRole}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Review: </span>
-                          <span className="text-foreground">{risk.reviewCadence}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Launch: </span>
-                          <span className="text-foreground">{risk.launchQuarter}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Tab: Strategic patterns ── */}
-          {activeTab === "patterns" && (
-            <div className="rounded-xl border border-white/8 bg-white/3 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Strategic Patterns</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs">
-                      Patterns are pre-defined initiative bundles that deliver a coherent strategic outcome.
-                      Matched patterns appear when you have selected all required initiatives.
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              {patternsQ.isLoading ? (
-                <Skeleton className="h-40" />
-              ) : (
-                <div className="space-y-3">
-                  {(patternsQ.data ?? []).map(pattern => {
-                    const isMatched = output?.matchedPatterns.some(p => p.id === pattern.id);
-                    const missingCount = pattern.minInitiatives.filter(
-                      id => !selectedInitiativeIds.has(id)
-                    ).length;
-                    return (
+          {/* ── 3. HR Segment Demand ── */}
+          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-3">HR Segment Demand</h3>
+            {outputQ.isLoading ? (
+              <Skeleton className="h-32" />
+            ) : (
+              <div className="space-y-2">
+                {(output?.segmentDemand ?? []).map(seg => (
+                  <div key={seg.segment} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-44 truncate">{seg.segment}</span>
+                    <div className="flex-1 h-3 rounded overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                       <div
-                        key={pattern.id}
-                        className={`p-4 rounded-xl border transition-all ${
-                          isMatched
-                            ? "border-green-500/40 bg-green-500/5"
-                            : "border-white/8 bg-white/2"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="text-sm font-medium text-foreground">{pattern.name}</p>
-                          {isMatched ? (
-                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Matched
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              {missingCount} more needed
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {pattern.description}
-                        </p>
-                        <div className="flex gap-1.5 mt-2 flex-wrap">
-                          {pattern.domains.map(d => {
-                            const dom = DOMAINS.find(x => x.key === d);
-                            return dom ? (
-                              <span
-                                key={d}
-                                className="text-xs px-2 py-0.5 rounded-full"
-                                style={{ background: `${dom.color}22`, color: dom.color }}
-                              >
-                                {dom.short}
-                              </span>
-                            ) : null;
-                          })}
-                        </div>
+                        className="h-full rounded"
+                        style={{
+                          width: `${Math.min(100, (seg.initiatives / Math.max(1, allInitiatives.length)) * 300)}%`,
+                          background: "#60A5FA",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground w-6 text-right">{seg.initiatives}</span>
+                    <span className="text-xs text-muted-foreground w-20 text-right">
+                      {seg.initiatives > 0 ? `Complexity ${seg.avgComplexity}` : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── 4. Compare panel (only when compare mode active) ── */}
+          {compareMode && (
+            <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground">Compare Strategy</h3>
+                <Select value={compareStrategyId ?? ""} onValueChange={setCompareStrategyId}>
+                  <SelectTrigger className="h-7 text-xs w-36">
+                    <SelectValue placeholder="Select strategy…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategiesQ.data?.filter(s => s.id !== activeStrategyId).map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {compareStrategyId && compareOutput ? (
+                <div className="space-y-1">
+                  {compareOutput.gaps.map((g, i) => {
+                    const mainGap = output?.gaps[i]?.gap ?? 0;
+                    const diff = g.gap - mainGap;
+                    return (
+                      <div key={g.key} className="flex items-center gap-3 text-xs">
+                        <span className="text-muted-foreground w-36 truncate">{g.domain}</span>
+                        <span className="font-mono">Target: {g.target.toFixed(1)}</span>
+                        <span className="font-mono ml-auto" style={{ color: diff > 0 ? "#4ADE80" : diff < 0 ? "#F87171" : "#9CA3AF" }}>
+                          {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)} vs {strategy?.name}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Select a strategy to compare.</p>
               )}
             </div>
           )}
+
+          {/* ── 5. Risk Register ── */}
+          <div className="rounded-xl border border-white/8 bg-white/3">
+            <button
+              className="w-full flex items-center justify-between p-5 text-left"
+              onClick={() => setRiskExpanded(!riskExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">Risk Register</h3>
+                {(output?.riskItems?.length ?? 0) > 0 && (
+                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                    {output!.riskItems.length}
+                  </Badge>
+                )}
+              </div>
+              {riskExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+            {riskExpanded && (
+              <div className="px-5 pb-5">
+                {outputQ.isLoading ? (
+                  <Skeleton className="h-40" />
+                ) : (output?.riskItems ?? []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Shield className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No regulatory risks identified.</p>
+                    <p className="text-xs mt-1">Add initiatives with regulatory flags to see risks here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {output!.riskItems.map((risk, i) => (
+                      <div key={i} className={`p-4 rounded-xl border ${risk.severity === "high" ? "border-red-500/30 bg-red-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-sm font-medium text-foreground">{risk.initiativeName}</p>
+                          <Badge className={risk.severity === "high" ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-amber-500/20 text-amber-400 border-amber-500/30"}>
+                            {risk.severity}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">{risk.regulatoryFlag}</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div><span className="text-muted-foreground">Mitigation: </span><span className="text-foreground">{risk.mitigation}</span></div>
+                          <div><span className="text-muted-foreground">Owner: </span><span className="text-foreground">{risk.ownerRole}</span></div>
+                          <div><span className="text-muted-foreground">Review: </span><span className="text-foreground">{risk.reviewCadence}</span></div>
+                          <div><span className="text-muted-foreground">Launch: </span><span className="text-foreground">{risk.launchQuarter}</span></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── 6. Strategic Patterns ── */}
+          <div className="rounded-xl border border-white/8 bg-white/3">
+            <button
+              className="w-full flex items-center justify-between p-5 text-left"
+              onClick={() => setPatternsExpanded(!patternsExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">Strategic Patterns</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs">
+                      Patterns are pre-defined initiative bundles that deliver a coherent strategic outcome. Matched patterns appear when you have selected all required initiatives.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {(output?.matchedPatterns?.length ?? 0) > 0 && (
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                    {output!.matchedPatterns.length} matched
+                  </Badge>
+                )}
+              </div>
+              {patternsExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+            {patternsExpanded && (
+              <div className="px-5 pb-5">
+                {patternsQ.isLoading ? (
+                  <Skeleton className="h-40" />
+                ) : (
+                  <div className="space-y-3">
+                    {(patternsQ.data ?? []).map(pattern => {
+                      const isMatched = output?.matchedPatterns.some(p => p.id === pattern.id);
+                      const missingCount = pattern.minInitiatives.filter(id => !selectedInitiativeIds.has(id)).length;
+                      return (
+                        <div key={pattern.id} className={`p-4 rounded-xl border transition-all ${isMatched ? "border-green-500/40 bg-green-500/5" : "border-white/8 bg-white/2"}`}>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-sm font-medium text-foreground">{pattern.name}</p>
+                            {isMatched ? (
+                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Matched
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{missingCount} more needed</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{pattern.description}</p>
+                          <div className="flex gap-1.5 mt-2 flex-wrap">
+                            {pattern.domains.map(d => {
+                              const dom = DOMAINS.find(x => x.key === d);
+                              return dom ? (
+                                <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400">
+                                  {dom.short}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
@@ -1187,22 +1116,18 @@ export default function StrategyBuilderPage() {
           <DialogHeader>
             <DialogTitle>Commit Strategy to Roadmap</DialogTitle>
             <DialogDescription>
-              This will lock the strategy and create a committed roadmap. You can still create new
-              strategy variants to compare.
+              This will lock the strategy and create a committed roadmap. You can still create new strategy variants to compare.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="rounded-xl border border-white/8 bg-white/3 p-4 text-sm">
               <p className="font-medium text-foreground mb-1">{strategy?.name}</p>
               <p className="text-xs text-muted-foreground">
-                {selectedInitiativeIds.size} initiatives · {output?.riskCount ?? 0} risk items ·{" "}
-                {industry?.name}
+                {selectedInitiativeIds.size} initiatives · {output?.riskCount ?? 0} risk items · {industry?.name}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setShowCommitDialog(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowCommitDialog(false)}>Cancel</Button>
               <Button
                 className="flex-1 bg-green-500 hover:bg-green-400 text-black font-semibold"
                 disabled={commitMut.isPending}

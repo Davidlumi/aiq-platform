@@ -1930,3 +1930,22 @@
 - [x] Custom initiative modal: name, description, category, AI type, decision authority, domain impact weights
 - [x] Compare mode: overlaid radar legend (Baseline/Target/Compare), side-by-side gap table, Compare Strategy panel
 - [x] Strategy tabs (A/B/C) + new strategy creation (up to 3 strategies)
+
+## Strategy Builder Feedback Fixes (from AiQ_Strategy_Builder_Feedback.docx)
+
+### Blockers
+- [x] SB-1.1: Fix baseline/target inversion — target must always be ≥ baseline, delta always positive; clamp formula to max(baseline, init_target)
+- [x] SB-1.2: Clamp all capability values to 1.0–5.0 range; no values above 5.0 or below 1.0 in display
+- [x] SB-1.3: Implement two-axis ambition controls — Business AI ambition (Conservative/Cautious/Augmenter/Pioneer 1–4) and People AI ambition (Compliance/Embedding/Capability-led/Transformative 1–4); formula: baseline = 1.5 + (business−1)×0.4 + (people−1)×0.4; default both at level 2
+
+### Major Issues
+- [x] SB-2.1: Remove tabs (Selected/Capability Impact/Risk Register/Patterns), stack all panels vertically on single scrollable page in spec order
+- [x] SB-2.2: Rebuild initiative cards as rows with: decision authority badge, explicit regulatory flag label, owning segments, criticality dropdown, target quarter dropdown inline
+- [x] SB-2.3: Move "+ Custom" button to below initiative library, full-width, label "+ Add an initiative not on the list"
+- [x] SB-2.4: Removed tile; selected count shown in header subtitle — label explicitly as "Initiatives selected" or replace with peer fit insight
+- [x] SB-2.5: Align filter chips to spec categories: Talent Acquisition, Performance & Development, Pay & Reward, Learning & Development, Workforce Planning, GenAI Workforce Rollout, HR Operations, Ethics & Governance, Custom
+
+### Minor Issues
+- [x] SB-3.1: Warning triangles replaced with EU AI Act high-risk pill — replace with "EU AI Act high-risk" pill or add tooltip on hover
+- [ ] SB-3.2: Verify Education industry calibration values are correct (or restore spec's 6 industries)
+- [x] SB-3.3: Domain Gap Analysis bars now use monochrome blue — use monochrome or semantically meaningful colours (not arbitrary multicolour)
