@@ -1354,32 +1354,28 @@ export default function AssessmentSessionPage() {
           {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className={cn("text-xs font-semibold uppercase tracking-widest", nextItem.reasoningRequired ? "text-foreground" : "text-muted-foreground")}>
+                <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Explain your thinking
-                  {nextItem.reasoningRequired ? (
-                    <span className="ml-1 text-[#CC3344]">*</span>
-                  ) : (
-                    <span className="font-normal normal-case text-muted-foreground"> (optional)</span>
-                  )}
+                  <span className="font-normal normal-case text-muted-foreground"> — optional</span>
                 </Label>
                 <span className={cn(
                   "text-xs tabular-nums",
-                  reasoningText.length > 1800 ? "text-[#99882A]" : nextItem.reasoningRequired && reasoningText.trim().length < 40 ? "text-[#CC3344]" : "text-muted-foreground"
+                  reasoningText.length > 1800 ? "text-[#99882A]" : "text-muted-foreground"
                 )}>
-                  {nextItem.reasoningRequired ? `${reasoningText.trim().length}/40 min` : `${reasoningText.length}/2000`}
+                  {reasoningText.length}/2000
                 </span>
               </div>
               <Textarea
                 value={reasoningText}
                 onChange={e => setReasoningText(e.target.value)}
                 maxLength={2000}
-                rows={nextItem.reasoningRequired ? 4 : 3}
-                placeholder={nextItem.reasoningRequired ? "Required: explain your reasoning (at least 40 characters). What factors shaped your decision?" : "What factors shaped your decision? What would you want to verify or challenge?"}
-                className={cn("text-sm resize-none", nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 ? "border-destructive" : "")}
+                rows={3}
+                placeholder="What factors shaped your decision? What would you want to verify or challenge?"
+                className="text-sm resize-none"
               />
-              {nextItem.reasoningRequired && reasoningText.trim().length < 40 && reasoningText.length > 0 && (
-                <p className="text-xs text-[#CC3344]">{40 - reasoningText.trim().length} more characters needed</p>
-              )}
+              <p className="text-xs text-muted-foreground/60">
+                Adding your reasoning enriches your AI-generated feedback and development narrative.
+              </p>
             </div>
           )}
 
@@ -1420,7 +1416,7 @@ export default function AssessmentSessionPage() {
 
           <Button
             onClick={handleSubmit}
-            disabled={submitMutation.isPending || !selectedValue || (nextItem.reasoningRequired && reasoningText.trim().length < 40)}
+            disabled={submitMutation.isPending || !selectedValue}
             className="w-full gap-2"
           >
             {submitMutation.isPending ? (
