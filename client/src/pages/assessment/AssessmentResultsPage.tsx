@@ -883,7 +883,7 @@ export default function AssessmentResultsPage() {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-8 mb-8">
+      <div className="rounded-2xl border border-border bg-card p-8 flex flex-col sm:flex-row sm:items-start gap-8" style={{ boxShadow: "var(--card-shadow)" }}>
         {/* Score ring */}
         <div className="relative w-28 h-28 shrink-0">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
