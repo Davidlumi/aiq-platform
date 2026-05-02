@@ -5,7 +5,6 @@
 import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useParams, useLocation } from "wouter";
 import {
   Building2,
@@ -35,25 +34,28 @@ const CONFIDENCE_OPTIONS = [
     value: "guessing",
     label: "Guessing",
     sub: "Not sure at all",
-    multiplier: "0.25×",
-    color: "text-rose-400",
-    selectedBg: "bg-rose-500/10 border-rose-500",
+    multiplier: "score 0.25×",
+    ringColor: "ring-rose-500",
+    bgSelected: "bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/40",
+    textSelected: "text-rose-300",
   },
   {
     value: "fairly_sure",
     label: "Fairly sure",
     sub: "I think this is right",
-    multiplier: "0.65×",
-    color: "text-white/70",
-    selectedBg: "bg-white/10 border-white/40",
+    multiplier: "score 0.65×",
+    ringColor: "ring-amber-500",
+    bgSelected: "bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/40",
+    textSelected: "text-amber-300",
   },
   {
     value: "certain",
     label: "Certain",
     sub: "Confident in my answer",
-    multiplier: "1.0×",
-    color: "text-emerald-400",
-    selectedBg: "bg-emerald-500/10 border-emerald-500",
+    multiplier: "score 1.0×",
+    ringColor: "ring-emerald-500",
+    bgSelected: "bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/40",
+    textSelected: "text-emerald-300",
   },
 ];
 
@@ -65,7 +67,7 @@ export default function CompanyAssessmentSessionPage() {
   const [, navigate] = useLocation();
 
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [confidence, setConfidence] = useState<"guessing" | "fairly_sure" | "certain">("fairly_sure");
+  const [confidence, setConfidence] = useState<"guessing" | "fairly_sure" | "certain" | null>(null);
   const [evidence, setEvidence] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,19 +82,20 @@ export default function CompanyAssessmentSessionPage() {
   // Reset selection when question changes
   useEffect(() => {
     setSelectedIdx(null);
-    setConfidence("fairly_sure");
+    setConfidence(null);
     setEvidence("");
   }, [nextQ?.question?.id]);
 
   const handleSubmit = async () => {
     if (selectedIdx === null || !nextQ?.question) return;
+    const finalConfidence = confidence ?? "fairly_sure";
     setIsSubmitting(true);
     try {
       await submitResponse.mutateAsync({
         assessmentId,
         questionId: nextQ.question.id,
         selectedOption: OPTION_KEYS[selectedIdx],
-        confidence,
+        confidence: finalConfidence,
         evidence: evidence.trim() || undefined,
       });
 
@@ -112,7 +115,7 @@ export default function CompanyAssessmentSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
       </div>
     );
@@ -121,7 +124,7 @@ export default function CompanyAssessmentSessionPage() {
   if (!nextQ || nextQ.done || !nextQ.question) {
     // Shouldn't normally reach here — completeAssessment handles redirect
     return (
-      <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <CheckCircle2 className="w-10 h-10 text-emerald-400" />
         <p className="text-white/60">Assessment complete. Generating results…</p>
         <Button
@@ -150,39 +153,39 @@ export default function CompanyAssessmentSessionPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-      {/* Header */}
-      <div className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Building2 className="w-4 h-4 text-violet-400" />
-          <span className="text-sm text-white/60">Company HR AI Assessment</span>
+    <div className="text-white space-y-0">
+      {/* Progress header bar */}
+      <div className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 mb-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Building2 className="w-4 h-4 text-violet-400 shrink-0" />
+          <span className="text-sm font-medium text-white/70 truncate">Company HR AI Assessment</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-white/40">
-            {progress?.answered ?? 0} of {progress?.total ?? 14} questions
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-sm font-semibold text-white">
+            Question {(progress?.answered ?? 0) + 1}
+            <span className="text-white/40 font-normal"> of {progress?.total ?? 14}</span>
           </span>
-          <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-36 h-2 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-violet-500 rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="text-xs text-violet-400 font-medium">{progressPct}%</span>
+          <span className="text-xs font-semibold text-violet-400 w-8 text-right">{progressPct}%</span>
         </div>
       </div>
 
-      {/* Dimension progress bar */}
+      {/* Dimension progress dots */}
       {progress?.dimensionProgress && (
-        <div className="border-b border-white/5 px-6 py-2 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 mb-6">
           {progress.dimensionProgress.map((dp) => {
-            const meta = DIMENSION_META[dp.key];
             const isActive = dp.key === progress.currentDimension;
             const isDone = dp.answered >= dp.total;
             return (
               <div
                 key={dp.key}
-                title={dp.label}
-                className={`flex-1 h-1 rounded-full transition-all ${
+                title={`${dp.label}: ${dp.answered}/${dp.total}`}
+                className={`flex-1 h-1.5 rounded-full transition-all ${
                   isDone
                     ? "bg-emerald-500"
                     : isActive
@@ -195,8 +198,8 @@ export default function CompanyAssessmentSessionPage() {
         </div>
       )}
 
-      {/* Main content */}
-      <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+      {/* Main question card */}
+      <div className="rounded-2xl border border-white/10 bg-white/3 p-6 md:p-8 space-y-6">
         {/* Dimension badge */}
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center">
@@ -208,9 +211,7 @@ export default function CompanyAssessmentSessionPage() {
         </div>
 
         {/* Question */}
-        <div>
-          <h2 className="text-xl font-semibold leading-relaxed text-white">{question.stem}</h2>
-        </div>
+        <h2 className="text-xl font-semibold leading-relaxed text-white">{question.stem}</h2>
 
         {/* Options */}
         <div className="space-y-3">
@@ -220,7 +221,7 @@ export default function CompanyAssessmentSessionPage() {
               onClick={() => setSelectedIdx(i)}
               className={`w-full text-left px-5 py-4 rounded-xl border transition-all ${
                 selectedIdx === i
-                  ? "bg-violet-500/15 border-violet-500 text-white"
+                  ? "bg-violet-500/15 border-violet-500 text-white ring-2 ring-violet-500/30"
                   : "bg-white/5 border-white/10 text-white/70 hover:border-white/20 hover:bg-white/8"
               }`}
             >
@@ -241,70 +242,82 @@ export default function CompanyAssessmentSessionPage() {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Confidence */}
-        {selectedIdx !== null && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+      {/* Confidence selector — shown after an answer is selected */}
+      {selectedIdx !== null && (
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200 mt-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-white/70 uppercase tracking-wider text-xs">
               How confident are you in this answer?
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {CONFIDENCE_OPTIONS.map((c) => (
+            </span>
+            {confidence === null && (
+              <span className="text-xs text-amber-400/80 italic">Select your confidence level</span>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {CONFIDENCE_OPTIONS.map((c) => {
+              const isSelected = confidence === c.value;
+              return (
                 <button
                   key={c.value}
                   onClick={() => setConfidence(c.value as typeof confidence)}
-                  className={`px-3 py-3 rounded-xl border text-center transition-all ${
-                    confidence === c.value ? c.selectedBg : "bg-white/5 border-white/10"
+                  className={`px-3 py-4 rounded-xl border text-center transition-all duration-150 ${
+                    isSelected
+                      ? c.bgSelected
+                      : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                   }`}
                 >
-                  <div className={`font-semibold text-sm ${confidence === c.value ? c.color : "text-white/70"}`}>
+                  <div className={`font-semibold text-sm mb-0.5 ${isSelected ? c.textSelected : "text-white/70"}`}>
                     {c.label}
                   </div>
-                  <div className="text-xs text-white/40 mt-0.5">{c.sub}</div>
-                  <div className="text-[10px] text-white/30 mt-1">score {c.multiplier}</div>
+                  <div className="text-xs text-white/40">{c.sub}</div>
+                  <div className={`text-[11px] mt-1.5 font-mono ${isSelected ? c.textSelected : "text-white/25"}`}>
+                    {c.multiplier}
+                  </div>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
-
-        {/* Optional evidence */}
-        {selectedIdx !== null && (
-          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
-              Add evidence{" "}
-              <span className="text-white/30 font-normal normal-case">(optional — enriches your results narrative)</span>
-            </div>
-            <textarea
-              value={evidence}
-              onChange={(e) => setEvidence(e.target.value)}
-              placeholder="What evidence, data, or examples support this answer?"
-              rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none"
-            />
-          </div>
-        )}
-
-        {/* Submit */}
-        <div className="flex justify-end pt-2">
-          <Button
-            onClick={handleSubmit}
-            disabled={selectedIdx === null || isSubmitting}
-            className="bg-violet-600 hover:bg-violet-700 text-white px-8 py-2.5"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                Next question
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </>
-            )}
-          </Button>
         </div>
+      )}
+
+      {/* Optional evidence */}
+      {selectedIdx !== null && (
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300 mt-4">
+          <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+            Add evidence{" "}
+            <span className="text-white/30 font-normal normal-case">(optional — enriches your results narrative)</span>
+          </div>
+          <textarea
+            value={evidence}
+            onChange={(e) => setEvidence(e.target.value)}
+            placeholder="What evidence, data, or examples support this answer?"
+            rows={3}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none"
+          />
+        </div>
+      )}
+
+      {/* Submit */}
+      <div className="flex justify-end pt-4">
+        <Button
+          onClick={handleSubmit}
+          disabled={selectedIdx === null || isSubmitting}
+          className="bg-violet-600 hover:bg-violet-700 text-white px-8 py-2.5"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            <>
+              Next question
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );

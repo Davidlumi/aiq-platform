@@ -38,47 +38,54 @@ const DIMENSION_META: Record<
   string,
   { label: string; shortLabel: string; color: string; bg: string; icon: React.ElementType }
 > = {
-  strategy_governance: {
-    label: "Strategy & Governance",
+  strategy: {
+    label: "AI Strategy",
     shortLabel: "Strategy",
     color: "text-violet-400",
     bg: "bg-violet-500/10",
     icon: Target,
   },
-  data_infrastructure: {
+  governance: {
+    label: "Governance & Ethics",
+    shortLabel: "Governance",
+    color: "text-rose-400",
+    bg: "bg-rose-500/10",
+    icon: Shield,
+  },
+  data: {
     label: "Data & Infrastructure",
     shortLabel: "Data",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
     icon: Layers,
   },
-  talent_capability: {
-    label: "Talent & Capability",
-    shortLabel: "Talent",
+  technology: {
+    label: "Technology & Tools",
+    shortLabel: "Technology",
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+    icon: BarChart3,
+  },
+  workforce: {
+    label: "Workforce Capability",
+    shortLabel: "Workforce",
     color: "text-emerald-400",
     bg: "bg-emerald-500/10",
     icon: Users,
   },
-  process_adoption: {
-    label: "Process & Adoption",
-    shortLabel: "Process",
+  hr_function: {
+    label: "HR Function Readiness",
+    shortLabel: "HR Function",
     color: "text-amber-400",
     bg: "bg-amber-500/10",
-    icon: BarChart3,
-  },
-  ethics_trust: {
-    label: "Ethics & Trust",
-    shortLabel: "Ethics",
-    color: "text-rose-400",
-    bg: "bg-rose-500/10",
-    icon: Shield,
-  },
-  value_impact: {
-    label: "Value & Impact",
-    shortLabel: "Value",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
     icon: Lightbulb,
+  },
+  culture: {
+    label: "Culture & Change",
+    shortLabel: "Culture",
+    color: "text-pink-400",
+    bg: "bg-pink-500/10",
+    icon: Brain,
   },
 };
 
@@ -156,7 +163,10 @@ export default function CompanyAssessmentResultsPage() {
     );
   }
 
-  const overallScore = results.overallScore ?? 0;
+  // Server scores are on 1.0–5.0 scale; convert to 0–100 for display
+  const toDisplay = (s: number) => Math.round(((s - 1) / 4) * 100);
+  const overallScoreRaw = results.overallScore ?? 1;
+  const overallScore = toDisplay(overallScoreRaw);
   const maturity = getMaturityLevel(overallScore);
   // Convert dimensions array to a Record for easy lookup
   type DimItem = { key: string; label: string; score: number; weight: number; description: string; researchBasis: string };
@@ -164,18 +174,18 @@ export default function CompanyAssessmentResultsPage() {
   const dimensionScores: Record<string, number> = Object.fromEntries(
     dimensionsArr.map((d) => [d.key, d.score])
   );
-  // Compute top gaps (distance from max score of 5.0)
+  // Compute top gaps (distance from max score of 5.0) — use raw 1-5 scale
   const topGaps = dimensionsArr
     .map((d) => ({ dimension: d.key, score: d.score, gap: Math.max(0, 5 - d.score), priority: d.score < 2 ? "critical" : d.score < 3 ? "high" : "medium" }))
     .sort((a, b) => b.gap - a.gap)
     .slice(0, 4);
   const executiveSummary = results.executiveSummary ?? "";
 
-  // Build radar data
+  // Build radar data — convert 1-5 scores to 0-100 for display
   const radarData = Object.entries(DIMENSION_META).map(([key, meta]) => ({
     dimension: meta.shortLabel,
-    score: Math.round((dimensionScores[key] ?? 0) * 10) / 10,
-    benchmark: 55, // sector benchmark placeholder
+    score: toDisplay(dimensionScores[key] ?? 1),
+    benchmark: results.sectorAverage ? toDisplay(results.sectorAverage as number) : 50,
   }));
 
   return (
@@ -334,7 +344,8 @@ export default function CompanyAssessmentResultsPage() {
             </div>
             <div className="space-y-3">
               {Object.entries(DIMENSION_META).map(([key, meta]) => {
-                const score = Math.round(dimensionScores[key] ?? 0);
+                const rawScore = dimensionScores[key] ?? 1;
+                const score = toDisplay(rawScore);
                 const isExpanded = expandedDim === key;
                 return (
                   <div key={key}>
@@ -402,7 +413,7 @@ export default function CompanyAssessmentResultsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-white">{meta.label}</div>
                       <div className="text-xs text-white/40 mt-0.5">
-                        Current: {Math.round(gap.score)} · Gap to leading: {Math.round(gap.gap)} points
+                        Current: {toDisplay(gap.score)}/100 · Gap to leading: {Math.round(gap.gap * 25)} points
                       </div>
                     </div>
                     <Badge

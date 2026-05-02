@@ -2003,3 +2003,10 @@
 - [x] CORP-19: Pre-populate context from org profile (industry, ambition suggestion from maturity score)
 - [x] CORP-20: Company initiative library (6 categories, 30+ initiatives)
 - [x] CORP-21: Gap-to-initiative mapping: auto-surface initiatives for critical gaps
+
+## QA Stress Test Fixes (May 2026)
+- [x] BUG 2: Confidence button visual state — fixed with clear color-coded selected states (green/amber/blue/red)
+- [x] BUG 3: Progress indicator prominence — fixed with full-width header bar showing "Question N of M" + progress bar
+- [x] BUG 4: Company assessment results dimension scores showing 0 — fixed dimension key mismatch (strategy_governance → strategy, etc.) and scale conversion (1-5 → 0-100)
+- [x] BUG 5: Learning module capability keys mismatch — migrated DB from old keys (execution/judgement/governance/appropriateness/data_interpretation/workflow) to new domain keys (ai_interaction/ai_output_evaluation/ai_ethics_trust/ai_change_leadership/workforce_ai_readiness/ai_workflow_design)
+- [x] BUG 6: "0 of 0 modules" display for proficient domains — now shows "Proficient — no gaps" when no modules assigned

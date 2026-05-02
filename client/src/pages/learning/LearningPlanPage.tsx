@@ -268,7 +268,7 @@ function DomainCard({
                 />
               </div>
               <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                {completedCount} of {totalCount} modules
+                {totalCount === 0 ? "Proficient — no gaps" : `${completedCount} of ${totalCount} modules`}
               </span>
             </div>
           </div>
