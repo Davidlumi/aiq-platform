@@ -10,7 +10,7 @@
  *  - Warning triangles replaced with "EU AI Act high-risk" pill
  *  - Domain gap bars use monochrome (single accent colour)
  */
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,11 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
+  GitBranch,
+  BarChart3,
+  XCircle,
+  CalendarDays,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -123,6 +128,50 @@ const AI_TYPE_COLORS: Record<string, string> = {
   analytical: "#FBBF24",
   agentic: "#F472B6",
 };
+
+
+// ─── Four-question narrative frame ───────────────────────────────────────────
+const STRATEGY_QUESTIONS = [
+  { id: 1, label: "Where are we now?", description: "Set your industry context and ambition level" },
+  { id: 2, label: "What does that mean?", description: "Review your capability baseline and gaps" },
+  { id: 3, label: "What should we do?", description: "Select initiatives and see projected impact" },
+  { id: 4, label: "What can we take to the board?", description: "Commit your strategy and export a board pack" },
+];
+function StrategyProgressBar({ selectedCount, isCommitted }: { selectedCount: number; isCommitted: boolean }) {
+  const activeStep = isCommitted ? 4 : selectedCount > 0 ? 3 : 2;
+  return (
+    <div className="flex items-center gap-0 mb-6">
+      {STRATEGY_QUESTIONS.map((q, i) => (
+        <React.Fragment key={q.id}>
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+            activeStep === q.id
+              ? "bg-green-500/10 border border-green-500/30"
+              : activeStep > q.id
+              ? "opacity-60"
+              : "opacity-30"
+          }`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+              activeStep > q.id
+                ? "bg-green-500 text-black"
+                : activeStep === q.id
+                ? "bg-green-500/20 text-green-400 border border-green-500/40"
+                : "bg-white/5 text-muted-foreground border border-white/10"
+            }`}>
+              {activeStep > q.id ? "✓" : q.id}
+            </div>
+            <div className="hidden sm:block">
+              <p className={`text-xs font-medium leading-tight ${activeStep === q.id ? "text-green-400" : "text-foreground"}`}>{q.label}</p>
+              <p className="text-xs text-muted-foreground leading-tight">{q.description}</p>
+            </div>
+          </div>
+          {i < STRATEGY_QUESTIONS.length - 1 && (
+            <div className={`flex-1 h-px mx-1 ${activeStep > q.id + 1 ? "bg-green-500/40" : "bg-white/8"}`} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
 
 // ─── Radar chart ─────────────────────────────────────────────────────────────
 function RadarChart({
@@ -749,10 +798,73 @@ export default function StrategyBuilderPage() {
             </Button>
           )}
           {strategy?.status === "committed" && (
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Committed
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Committed
+              </Badge>
+              <button
+                onClick={() => {
+                  const bpLines: string[] = [];
+                  bpLines.push("AI PEOPLE STRATEGY \u2014 BOARD PACK");
+                  bpLines.push("=".repeat(50));
+                  bpLines.push(`Strategy: ${strategy?.name ?? ""}`);
+                  bpLines.push(`Industry: ${industry?.name ?? ""}`);
+                  bpLines.push(`Initiatives selected: ${selectedInitiativeIds.size}`);
+                  bpLines.push("");
+                  const mm = (output as any)?.maturityMatrix;
+                  if (mm) {
+                    bpLines.push("MATURITY POSITION"); bpLines.push("-".repeat(30));
+                    bpLines.push(`Archetype: ${mm.archetype}`);
+                    bpLines.push(mm.archetypeDescription);
+                    bpLines.push(`Capability Foundations: ${mm.capabilityFoundations}%`);
+                    bpLines.push(`Adoption Intensity: ${mm.adoptionIntensity}%`);
+                    bpLines.push("");
+                  }
+                  const currentPath = ((output as any)?.strategicPaths as any[])?.find((p: any) => p.isCurrentPath);
+                  if (currentPath) {
+                    bpLines.push("STRATEGIC PATH"); bpLines.push("-".repeat(30));
+                    bpLines.push(`Path: ${currentPath.name}`);
+                    bpLines.push(currentPath.rationale);
+                    bpLines.push("");
+                  }
+                  bpLines.push("DOMAIN GAP ANALYSIS"); bpLines.push("-".repeat(30));
+                  (output?.gaps ?? []).forEach((g: any) => {
+                    bpLines.push(`${g.domain}: Baseline ${g.baseline.toFixed(1)} \u2192 Target ${g.target.toFixed(1)} (Gap: +${g.gap.toFixed(1)})`);
+                  });
+                  bpLines.push("");
+                  bpLines.push("RISK REGISTER"); bpLines.push("-".repeat(30));
+                  (output?.riskItems ?? []).forEach((r: any) => {
+                    bpLines.push(`[${r.severity.toUpperCase()}] ${r.initiativeName}: ${r.regulatoryFlag}`);
+                    bpLines.push(`  Mitigation: ${r.mitigation} | Owner: ${r.ownerRole} | Review: ${r.reviewCadence}`);
+                  });
+                  bpLines.push("");
+                  bpLines.push("90-DAY ACTION PLAN"); bpLines.push("-".repeat(30));
+                  ((output as any)?.ninetyDayPlan as any[] ?? []).forEach((wave: any) => {
+                    bpLines.push(`\n${wave.label.toUpperCase()}`);
+                    wave.actions.forEach((a: any) => bpLines.push(`  - ${a.action} (${a.owner})`));
+                  });
+                  bpLines.push("");
+                  bpLines.push("STOP-DOING REGISTER"); bpLines.push("-".repeat(30));
+                  ((output as any)?.stopDoing as any[] ?? []).forEach((s: any) => {
+                    bpLines.push(`STOP: ${s.practice}`);
+                    bpLines.push(`  ${s.reason}`);
+                  });
+                  const blob = new Blob([bpLines.join("\n")], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${(strategy?.name ?? "strategy").replace(/\s+/g, "-")}-board-pack.txt`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Board pack exported");
+                }}
+                className="text-xs px-2.5 py-1 rounded-lg border border-white/15 text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center gap-1.5"
+              >
+                <Download className="w-3 h-3" />
+                Export board pack
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -780,6 +892,11 @@ export default function StrategyBuilderPage() {
           </div>
         </div>
 
+        {/* ── Four-question narrative progress ── */}
+        <StrategyProgressBar
+          selectedCount={selectedInitiativeIds.size}
+          isCommitted={strategy?.status === "committed"}
+        />
         {/* Business ambition */}
         <AmbitionSelector
           label="Business AI Ambition — how aggressively the organisation adopts AI"
@@ -1107,6 +1224,157 @@ export default function StrategyBuilderPage() {
             )}
           </div>
 
+
+          {/* ── 6. Three Strategic Paths ── */}
+          {output && (output as any).strategicPaths && (
+            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+              <div className="px-5 py-4 flex items-center gap-2">
+                <GitBranch className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-semibold text-foreground">Three Strategic Paths</h3>
+                <span className="text-xs text-muted-foreground ml-auto">Your current selection aligns to the highlighted path</span>
+              </div>
+              <div className="px-5 pb-5 space-y-3">
+                {((output as any).strategicPaths as any[]).map((path: any) => (
+                  <div key={path.id} className={`p-4 rounded-xl border transition-all ${
+                    path.isCurrentPath
+                      ? "border-green-500/40 bg-green-500/5"
+                      : "border-white/8 bg-white/2"
+                  }`}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-sm font-semibold text-foreground">{path.name}</p>
+                      {path.isCurrentPath && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 flex-shrink-0">
+                          Your path
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{path.rationale}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 7. 2x2 Maturity Matrix ── */}
+          {output && (output as any).maturityMatrix && (
+            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+              <div className="px-5 py-4 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-semibold text-foreground">Organisational Maturity Position</h3>
+              </div>
+              <div className="px-5 pb-5">
+                {(() => {
+                  const mm = (output as any).maturityMatrix;
+                  const archetypeColors: Record<string, string> = {
+                    "AI Leader": "text-green-400 border-green-500/40 bg-green-500/5",
+                    "Solid Foundation": "text-blue-400 border-blue-500/40 bg-blue-500/5",
+                    "Fast Mover": "text-amber-400 border-amber-500/40 bg-amber-500/5",
+                    "Emerging": "text-muted-foreground border-white/15 bg-white/3",
+                  };
+                  const cls = archetypeColors[mm.archetype] ?? "text-foreground border-white/15 bg-white/3";
+                  return (
+                    <div className="space-y-4">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold ${cls}`}>
+                        <Target className="w-4 h-4" />
+                        {mm.archetype}
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{mm.archetypeDescription}</p>
+                      <div className="w-full max-w-[260px] mx-auto">
+                        <div className="grid grid-cols-2 grid-rows-2 gap-1.5">
+                          {[
+                            { label: "Solid Foundation", sub: "High CF · Low AI", color: "bg-blue-500/8 border-blue-500/15" },
+                            { label: "AI Leader", sub: "High CF · High AI", color: "bg-green-500/8 border-green-500/15" },
+                            { label: "Emerging", sub: "Low CF · Low AI", color: "bg-white/3 border-white/8" },
+                            { label: "Fast Mover", sub: "Low CF · High AI", color: "bg-amber-500/8 border-amber-500/15" },
+                          ].map(cell => {
+                            const isActive = cell.label === mm.archetype;
+                            return (
+                              <div key={cell.label} className={`rounded-lg border p-3 flex flex-col justify-center items-center text-center transition-all ${cell.color} ${isActive ? "ring-1 ring-green-400/50" : "opacity-40"}`}>
+                                <p className={`text-xs font-semibold ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{cell.label}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{cell.sub}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
+                          <span>← Low Adoption</span>
+                          <span>High Adoption →</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2 mt-2">
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Capability Foundations</span>
+                            <span className="text-foreground font-mono">{mm.capabilityFoundations}%</span>
+                          </div>
+                          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${mm.capabilityFoundations}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Adoption Intensity</span>
+                            <span className="text-foreground font-mono">{mm.adoptionIntensity}%</span>
+                          </div>
+                          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-400 rounded-full transition-all" style={{ width: `${mm.adoptionIntensity}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* ── 8. Stop-doing register ── */}
+          {output && (output as any).stopDoing && ((output as any).stopDoing as any[]).length > 0 && (
+            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+              <div className="px-5 py-4 flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-red-400" />
+                <h3 className="text-sm font-semibold text-foreground">Stop-Doing Register</h3>
+                <span className="ml-auto text-xs text-muted-foreground">{((output as any).stopDoing as any[]).length} practices to retire</span>
+              </div>
+              <div className="px-5 pb-5 space-y-2">
+                {((output as any).stopDoing as any[]).map((item: any, idx: number) => (
+                  <div key={idx} className="p-3 rounded-lg border border-red-500/15 bg-red-500/5">
+                    <p className="text-xs font-medium text-foreground mb-0.5 line-through decoration-red-400/50">{item.practice}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 9. 90-day plan (shown when strategy is committed) ── */}
+          {strategy?.status === "committed" && output && (output as any).ninetyDayPlan && ((output as any).ninetyDayPlan as any[]).length > 0 && (
+            <div className="rounded-xl border border-green-500/30 bg-green-500/5 overflow-hidden">
+              <div className="px-5 py-4 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-green-400" />
+                <h3 className="text-sm font-semibold text-green-400">90-Day Action Plan</h3>
+                <span className="ml-auto text-xs text-muted-foreground">First steps to execution</span>
+              </div>
+              <div className="px-5 pb-5 space-y-4">
+                {((output as any).ninetyDayPlan as any[]).map((wave: any) => (
+                  <div key={wave.wave}>
+                    <p className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">{wave.label}</p>
+                    <div className="space-y-1.5">
+                      {wave.actions.map((action: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-white/3 border border-white/8">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-foreground leading-relaxed">{action.action}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Owner: {action.owner}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

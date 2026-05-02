@@ -1960,3 +1960,13 @@
 - [x] LM-6: Add CIPD Profession Map alignment label (Associate / Chartered Member / Chartered Fellow / Honorary Fellow) to results page
 - [ ] LM-7: Add research citations section to advanced module detail views (Level 7-10 modules)
 - [ ] LM-8: Add domain floor rules explanation to results page when a floor rule has been triggered
+
+## Lumi Strategy Builder Enhancements
+
+- [ ] SBL-1: Four-question narrative progress indicator (Where are we now? / What does it mean? / What should we do? / What can we take to the board?)
+- [ ] SBL-2: 2×2 maturity matrix panel (Capability Foundations vs Adoption Intensity) with four archetype labels
+- [ ] SBL-3: Build type badge (Buy / Adapt / Build) on each initiative row in library and selected panel
+- [ ] SBL-4: Stop-doing register panel — context-aware suggestions based on selected initiatives
+- [ ] SBL-5: 90-day plan panel — shown after strategy is committed, grouped by Immediate / Month 1 / Months 2–3
+- [ ] SBL-6: Three strategic paths framing (Governance-First / Capability-Led / Adoption-Accelerated) with current selection highlighted
+- [ ] SBL-7: Board Pack export button on committed strategies — structured document with executive summary, maturity position, initiatives, 90-day plan, risk register, assumption log

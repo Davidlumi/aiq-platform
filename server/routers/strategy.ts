@@ -162,6 +162,155 @@ const STRATEGIC_PATTERNS = [
   { id: "p08", name: "Pay Equity & Reward Intelligence", description: "Continuously audit pay equity and model reward scenarios to stay competitive and compliant.", domains: ["ethics", "output_eval"], minInitiatives: ["init-10", "init-11", "init-12"] },
 ];
 
+// ─── Build type derivation (Lumi V4 Decision & Investment System) ────────────
+function deriveBuildType(aiType: string, complexity: number, decisionAuthority: string): "buy" | "adapt" | "build" {
+  if (decisionAuthority === "full_automation" && complexity <= 2) return "buy";
+  if (aiType === "automation" && complexity <= 3) return "buy";
+  if (complexity >= 4 || decisionAuthority === "full_automation") return "build";
+  return "adapt";
+}
+const BUILD_TYPE_LABELS: Record<string, { label: string; description: string }> = {
+  buy:   { label: "Buy",   description: "Standard off-the-shelf solution — low customisation, fast to deploy" },
+  adapt: { label: "Adapt", description: "Configured platform — existing vendor, significant configuration required" },
+  build: { label: "Build", description: "Bespoke development — custom build, highest investment and longest lead time" },
+};
+
+// ─── 2x2 Maturity matrix ──────────────────────────────────────────────────────
+function computeMaturityMatrix(
+  baselineScores: number[],
+  selectedInitiatives: Array<{ category: string; complexity: number }>,
+  businessAmbition: number,
+  peopleAmbition: number,
+): {
+  capabilityFoundations: number;
+  adoptionIntensity: number;
+  archetype: string;
+  archetypeDescription: string;
+} {
+  const cfScore = (baselineScores[4] + baselineScores[5] + baselineScores[3]) / 3;
+  const cfNorm = Math.round(((cfScore - 1) / 4) * 100);
+  const adoptionBase = Math.min(100, (selectedInitiatives.length / 23) * 80 + (businessAmbition - 1) * 7);
+  const aiNorm = Math.round(adoptionBase);
+  const highCF = cfNorm >= 50;
+  const highAI = aiNorm >= 50;
+  let archetype: string;
+  let archetypeDescription: string;
+  if (highCF && highAI) {
+    archetype = "AI Leader";
+    archetypeDescription = "High capability foundations and strong adoption — a benchmark organisation. Focus on sustaining governance and scaling best practice.";
+  } else if (highCF && !highAI) {
+    archetype = "Solid Foundation";
+    archetypeDescription = "Strong governance and capability foundations with lower adoption intensity — ready to scale. Prioritise use case deployment with confidence.";
+  } else if (!highCF && highAI) {
+    archetype = "Fast Mover";
+    archetypeDescription = "High adoption intensity but weaker capability foundations — a governance risk. Invest in ethics, oversight, and HR AI literacy before scaling further.";
+  } else {
+    archetype = "Emerging";
+    archetypeDescription = "Early stage on both dimensions. Build foundations first: governance, literacy, and a small number of high-confidence use cases to generate momentum.";
+  }
+  return { capabilityFoundations: cfNorm, adoptionIntensity: aiNorm, archetype, archetypeDescription };
+}
+
+// ─── Three strategic paths ────────────────────────────────────────────────────
+function computeStrategicPaths(
+  archetype: string,
+  businessAmbition: number,
+  peopleAmbition: number,
+  _selectedInitiativeIds: string[],
+): Array<{ id: string; name: string; rationale: string; isCurrentPath: boolean; initiatives: string[] }> {
+  const paths = [
+    {
+      id: "governance_first",
+      name: "Governance-First",
+      rationale: "Establish AI governance, ethics frameworks, and bias monitoring before scaling adoption. Reduces regulatory risk and builds board confidence. Ideal for regulated industries or organisations with low AI maturity.",
+      initiatives: ["init-19", "init-20", "init-21", "init-22"],
+    },
+    {
+      id: "capability_led",
+      name: "Capability-Led",
+      rationale: "Invest in HR team AI literacy and skills before deploying use cases. Ensures sustainable adoption and reduces change management risk. Ideal for organisations where HR capability gaps are the primary constraint.",
+      initiatives: ["init-06", "init-13", "init-22", "init-04"],
+    },
+    {
+      id: "adoption_accelerated",
+      name: "Adoption-Accelerated",
+      rationale: "Deploy high-impact, low-risk use cases quickly to generate momentum and demonstrate ROI. Ideal for organisations with strong foundations that need to show business value fast.",
+      initiatives: ["init-01", "init-03", "init-07", "init-16", "init-17"],
+    },
+  ];
+  let currentPathId = "capability_led";
+  if (archetype === "Fast Mover") currentPathId = "governance_first";
+  else if (archetype === "AI Leader" || archetype === "Solid Foundation") currentPathId = "adoption_accelerated";
+  else if (businessAmbition >= 3 && peopleAmbition >= 3) currentPathId = "adoption_accelerated";
+  else if (peopleAmbition >= 3) currentPathId = "capability_led";
+  return paths.map(p => ({ ...p, isCurrentPath: p.id === currentPathId }));
+}
+
+// ─── Stop-doing register ──────────────────────────────────────────────────────
+const STOP_DOING_MAP: Record<string, Array<{ practice: string; reason: string }>> = {
+  "init-01": [{ practice: "Manual CV sifting as a standalone process", reason: "AI-assisted screening replaces the need for unstructured manual review at the top of the funnel." }],
+  "init-02": [{ practice: "Reactive job board posting without talent intelligence", reason: "Predictive sourcing identifies passive candidates before roles are open." }],
+  "init-03": [{ practice: "Manual interview scheduling via email chains", reason: "AI scheduling eliminates coordination overhead entirely." }],
+  "init-04": [{ practice: "Generic L&D catalogues assigned by job title", reason: "Personalised learning paths replace one-size-fits-all content allocation." }],
+  "init-05": [{ practice: "Outsourcing all L&D content creation to external vendors", reason: "AI content generation enables in-house production at scale." }],
+  "init-06": [{ practice: "Annual skills audits as a standalone exercise", reason: "Continuous skills intelligence replaces point-in-time snapshots." }],
+  "init-07": [{ practice: "Exit interviews as the primary attrition signal", reason: "Predictive modelling surfaces flight risk before resignation." }],
+  "init-08": [{ practice: "Performance reviews without data-informed preparation", reason: "AI-augmented conversations give managers evidence before they walk in the room." }],
+  "init-13": [{ practice: "Spreadsheet-based people analytics reporting", reason: "Automated analytics platforms replace manual data aggregation." }],
+  "init-16": [{ practice: "Tier 0 HR queries handled by HR advisors", reason: "AI self-service handles routine queries, freeing HR for higher-value work." }],
+  "init-17": [{ practice: "Paper-based or manual onboarding checklists", reason: "Automated onboarding workflows replace manual coordination." }],
+  "init-19": [{ practice: "Ad hoc AI governance decisions made case-by-case", reason: "A formal AI ethics framework replaces reactive, inconsistent governance." }],
+  "init-20": [{ practice: "Manual bias monitoring or no monitoring at all", reason: "Automated bias detection provides continuous, systematic oversight." }],
+};
+
+function computeStopDoing(
+  selectedInitiativeIds: string[],
+): Array<{ practice: string; reason: string; initiativeId: string }> {
+  const items: Array<{ practice: string; reason: string; initiativeId: string }> = [];
+  for (const id of selectedInitiativeIds) {
+    const mapped = STOP_DOING_MAP[id];
+    if (mapped) {
+      for (const item of mapped) {
+        items.push({ ...item, initiativeId: id });
+      }
+    }
+  }
+  return items;
+}
+
+// ─── 90-day plan ──────────────────────────────────────────────────────────────
+function computeNinetyDayPlan(
+  selectedInitiatives: Array<{ id: string; name: string; targetQuarter: string; complexity: number; category: string }>,
+): Array<{ wave: string; label: string; actions: Array<{ action: string; owner: string; initiativeId: string }> }> {
+  const immediate: Array<{ action: string; owner: string; initiativeId: string }> = [];
+  const month1: Array<{ action: string; owner: string; initiativeId: string }> = [];
+  const months23: Array<{ action: string; owner: string; initiativeId: string }> = [];
+
+  for (const init of selectedInitiatives) {
+    if (init.complexity <= 2) {
+      immediate.push({ action: `Kick off vendor selection for ${init.name}`, owner: "HR Technology Lead", initiativeId: init.id });
+      month1.push({ action: `Pilot ${init.name} with a single team or cohort`, owner: "HR Project Lead", initiativeId: init.id });
+    } else if (init.complexity === 3) {
+      immediate.push({ action: `Define business case and success metrics for ${init.name}`, owner: "HRBP / CPO", initiativeId: init.id });
+      month1.push({ action: `Complete vendor shortlist and stakeholder alignment for ${init.name}`, owner: "HR Technology Lead", initiativeId: init.id });
+      months23.push({ action: `Begin phased rollout of ${init.name}`, owner: "HR Project Lead", initiativeId: init.id });
+    } else {
+      immediate.push({ action: `Appoint programme lead and steering group for ${init.name}`, owner: "CPO / HR Director", initiativeId: init.id });
+      months23.push({ action: `Complete discovery and architecture design for ${init.name}`, owner: "HR Technology Lead", initiativeId: init.id });
+    }
+  }
+
+  immediate.push({ action: "Establish AI governance working group with HR, Legal, and IT", owner: "CPO / General Counsel", initiativeId: "governance" });
+  month1.push({ action: "Publish internal AI in HR policy and acceptable use guidelines", owner: "HR Compliance Lead", initiativeId: "governance" });
+  months23.push({ action: "Conduct first AI ethics and bias review across all live initiatives", owner: "AI Ethics Lead", initiativeId: "governance" });
+
+  return [
+    { wave: "immediate", label: "Immediate (Weeks 1-2)", actions: immediate.slice(0, 6) },
+    { wave: "month1", label: "Month 1", actions: month1.slice(0, 5) },
+    { wave: "months23", label: "Months 2-3", actions: months23.slice(0, 5) },
+  ];
+}
+
 // ─── Router ─────────────────────────────────────────────────────────────────
 
 export const strategyRouter = router({
@@ -461,6 +610,8 @@ export const strategyRouter = router({
           complexity: strategyInitiativeLibrary.complexity,
           regulatoryFlag: strategyInitiativeLibrary.regulatoryFlag,
           decisionAuthority: strategyInitiativeLibrary.decisionAuthority,
+          aiType: strategyInitiativeLibrary.aiType,
+          category: strategyInitiativeLibrary.category,
         })
         .from(strategyInitiatives)
         .innerJoin(
@@ -531,6 +682,47 @@ export const strategyRouter = router({
         p.minInitiatives.every(id => selectedIds.has(id))
       );
 
+      // Build type per initiative
+      const initiativesWithBuildType = items.map((i: any) => ({
+        id: i.initiativeId,
+        name: i.name,
+        buildType: deriveBuildType(i.aiType ?? "generative", i.complexity, i.decisionAuthority),
+        buildTypeLabel: BUILD_TYPE_LABELS[deriveBuildType(i.aiType ?? "generative", i.complexity, i.decisionAuthority)],
+        targetQuarter: i.targetQuarter,
+        category: i.category,
+        complexity: i.complexity,
+      }));
+
+      // 2×2 maturity matrix
+      const maturityMatrix = computeMaturityMatrix(
+        effectiveBaseline,
+        items.map((i: any) => ({ category: i.category, complexity: i.complexity })),
+        strategy.businessAmbition,
+        strategy.peopleAmbition,
+      );
+
+      // Three strategic paths
+      const strategicPaths = computeStrategicPaths(
+        maturityMatrix.archetype,
+        strategy.businessAmbition,
+        strategy.peopleAmbition,
+        items.map((i: any) => i.initiativeId),
+      );
+
+      // Stop-doing register
+      const stopDoing = computeStopDoing(items.map((i: any) => i.initiativeId));
+
+      // 90-day plan
+      const ninetyDayPlan = computeNinetyDayPlan(
+        items.map((i: any) => ({
+          id: i.initiativeId,
+          name: i.name,
+          targetQuarter: i.targetQuarter,
+          complexity: i.complexity,
+          category: i.category,
+        }))
+      );
+
       return {
         domains: DOMAINS,
         baselineScores: effectiveBaseline,
@@ -541,6 +733,12 @@ export const strategyRouter = router({
         matchedPatterns,
         initiativeCount: items.length,
         riskCount: riskItems.length,
+        // Lumi enhancements
+        initiativesWithBuildType,
+        maturityMatrix,
+        strategicPaths,
+        stopDoing,
+        ninetyDayPlan,
       };
     }),
 
