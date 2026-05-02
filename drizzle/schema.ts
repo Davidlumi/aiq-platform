@@ -1541,3 +1541,111 @@ export type StrategyInitiativeLibrary = typeof strategyInitiativeLibrary.$inferS
 export type Strategy = typeof strategies.$inferSelect;
 export type StrategyInitiative = typeof strategyInitiatives.$inferSelect;
 export type StrategyRiskRegister = typeof strategyRiskRegister.$inferSelect;
+
+// ─── Company HR AI Assessment ─────────────────────────────────────────────────
+
+export const companies = mysqlTable("companies", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  createdByUserId: varchar("created_by_user_id", { length: 36 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  sector: varchar("sector", { length: 100 }).notNull().default(""),
+  headcountBand: varchar("headcount_band", { length: 50 }).notNull().default(""),
+  hrTeamSize: varchar("hr_team_size", { length: 50 }).notNull().default(""),
+  hrisPlatform: varchar("hris_platform", { length: 100 }).notNull().default(""),
+  existingAiToolsJson: json("existing_ai_tools_json").$type<string[]>().notNull().default([]),
+  assessmentMotivation: varchar("assessment_motivation", { length: 100 }).notNull().default(""),
+  resultsAudience: varchar("results_audience", { length: 100 }).notNull().default(""),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_companies_tenant").on(t.tenantId),
+  userIdx: index("idx_companies_user").on(t.createdByUserId),
+}));
+
+export const companyQuestions = mysqlTable("company_questions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  dimension: varchar("dimension", { length: 60 }).notNull(),
+  dimensionLabel: varchar("dimension_label", { length: 100 }).notNull(),
+  questionCode: varchar("question_code", { length: 20 }).notNull().unique(),
+  isCalibration: tinyint("is_calibration").notNull().default(0),
+  difficulty: int("difficulty").notNull().default(2),
+  stem: text("stem").notNull(),
+  optionA: text("option_a").notNull(),
+  optionB: text("option_b").notNull(),
+  optionC: text("option_c").notNull(),
+  optionD: text("option_d").notNull(),
+  scoreA: double("score_a").notNull().default(1.0),
+  scoreB: double("score_b").notNull().default(2.0),
+  scoreC: double("score_c").notNull().default(3.5),
+  scoreD: double("score_d").notNull().default(5.0),
+  frameworkVersion: varchar("framework_version", { length: 20 }).notNull().default("v1"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  dimensionIdx: index("idx_company_q_dimension").on(t.dimension),
+  codeIdx: index("idx_company_q_code").on(t.questionCode),
+}));
+
+export const companyAssessments = mysqlTable("company_assessments", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  companyId: varchar("company_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  createdByUserId: varchar("created_by_user_id", { length: 36 }).notNull(),
+  status: mysqlEnum("status", ["in_progress", "completed", "abandoned"]).notNull().default("in_progress"),
+  currentDimension: varchar("current_dimension", { length: 60 }),
+  questionsAnswered: int("questions_answered").notNull().default(0),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+}, (t) => ({
+  companyIdx: index("idx_company_assessments_company").on(t.companyId),
+  tenantIdx: index("idx_company_assessments_tenant").on(t.tenantId),
+}));
+
+export const companyAssessmentResponses = mysqlTable("company_assessment_responses", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  assessmentId: varchar("assessment_id", { length: 36 }).notNull(),
+  questionId: varchar("question_id", { length: 36 }).notNull(),
+  selectedOption: varchar("selected_option", { length: 1 }).notNull(),
+  confidence: varchar("confidence", { length: 20 }).notNull().default("fairly_sure"),
+  evidence: text("evidence"),
+  rawScore: double("raw_score").notNull(),
+  adjustedScore: double("adjusted_score").notNull(),
+  answeredAt: timestamp("answered_at").defaultNow().notNull(),
+}, (t) => ({
+  assessmentIdx: index("idx_company_responses_assessment").on(t.assessmentId),
+  questionIdx: index("idx_company_responses_question").on(t.questionId),
+}));
+
+export const companyAssessmentResults = mysqlTable("company_assessment_results", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  assessmentId: varchar("assessment_id", { length: 36 }).notNull().unique(),
+  companyId: varchar("company_id", { length: 36 }).notNull(),
+  scoreStrategy: double("score_strategy").notNull().default(0),
+  scoreGovernance: double("score_governance").notNull().default(0),
+  scoreData: double("score_data").notNull().default(0),
+  scoreTechnology: double("score_technology").notNull().default(0),
+  scoreWorkforce: double("score_workforce").notNull().default(0),
+  scoreHrFunction: double("score_hr_function").notNull().default(0),
+  scoreCulture: double("score_culture").notNull().default(0),
+  overallScore: double("overall_score").notNull().default(0),
+  maturityLabel: varchar("maturity_label", { length: 60 }).notNull().default(""),
+  sectorPercentile: int("sector_percentile"),
+  overallPercentile: int("overall_percentile"),
+  executiveSummary: text("executive_summary"),
+  gapAnalysisJson: json("gap_analysis_json").$type<{
+    critical: string[];
+    developing: string[];
+    strengths: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  assessmentIdx: index("idx_company_results_assessment").on(t.assessmentId),
+  companyIdx: index("idx_company_results_company").on(t.companyId),
+}));
+
+export type Company = typeof companies.$inferSelect;
+export type CompanyQuestion = typeof companyQuestions.$inferSelect;
+export type CompanyAssessment = typeof companyAssessments.$inferSelect;
+export type CompanyAssessmentResponse = typeof companyAssessmentResponses.$inferSelect;
+export type CompanyAssessmentResult = typeof companyAssessmentResults.$inferSelect;

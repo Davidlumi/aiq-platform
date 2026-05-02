@@ -77,6 +77,13 @@ const NAV_ITEMS: NavItem[] = [
     section: "myteam",
   },
   {
+    label: "Company Assessment",
+    path: "/company-assessment/new",
+    icon: Building2,
+    roles: CPO_ROLES,
+    section: "myteam",
+  },
+  {
     label: "People",
     path: "/people",
     icon: UserSearch,

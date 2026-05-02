@@ -23,6 +23,9 @@ import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
 import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
 import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
+import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
+import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
+import CompanyAssessmentResultsPage from "./pages/company/CompanyAssessmentResultsPage";
 // Legacy dashboards (admin/auditor fallback)
 import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
@@ -206,6 +209,16 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <Route path="/beta" component={BetaApplicationPage} />
       <Route path="/methodology" component={MethodologyPage} />
+      {/* Company HR AI Assessment routes */}
+      <Route path="/company-assessment/new">
+        <ProtectedRoute component={CompanyOnboardingPage} />
+      </Route>
+      <Route path="/company-assessment/:assessmentId/results">
+        <ProtectedRoute component={CompanyAssessmentResultsPage} />
+      </Route>
+      <Route path="/company-assessment/:assessmentId">
+        <ProtectedRoute component={CompanyAssessmentSessionPage} />
+      </Route>
       {/* 404 */}
       <Route component={NotFound} />
     </Switch>

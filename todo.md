@@ -1970,3 +1970,36 @@
 - [ ] SBL-5: 90-day plan panel — shown after strategy is committed, grouped by Immediate / Month 1 / Months 2–3
 - [ ] SBL-6: Three strategic paths framing (Governance-First / Capability-Led / Adoption-Accelerated) with current selection highlighted
 - [ ] SBL-7: Board Pack export button on committed strategies — structured document with executive summary, maturity position, initiatives, 90-day plan, risk register, assumption log
+
+## Company HR AI Strategy Assessment
+
+### Phase 1 — DB Schema & Server
+- [ ] CORP-1: DB tables: companies, company_assessments, company_assessment_responses, company_assessment_results
+- [ ] CORP-2: DB table: company_org_profiles (sector, headcount, HR team size, HRIS, existing AI tools, motivation)
+- [ ] CORP-3: Seed company question bank (52 questions across 7 dimensions)
+- [ ] CORP-4: Server procedures: createCompany, getCompany, saveOrgProfile, startCompanyAssessment, submitCompanyResponse, getCompanyResults
+- [ ] CORP-5: Adaptive branching engine for company assessment (dimension-level branching, 28-35 questions)
+- [ ] CORP-6: Scoring engine: dimension scores (1-5), weighted composite, maturity label, sector benchmark
+
+### Phase 2 — CPO Onboarding & Org Profile
+- [ ] CORP-7: CPO onboarding page: 5-step wizard (org profile → briefing → assessment → results → strategy)
+- [ ] CORP-8: Org profile form: sector, headcount, HR team size, HRIS, existing AI tools, motivation, audience
+- [ ] CORP-9: Assessment briefing screen: 7 dimensions explained, completion time, adaptive branching note
+
+### Phase 3 — Adaptive Assessment Engine
+- [ ] CORP-10: Company assessment session page (mirrors individual assessment UX)
+- [ ] CORP-11: Adaptive branching: calibration question first, branch up/down based on response
+- [ ] CORP-12: Progress indicator by dimension
+- [ ] CORP-13: Save and resume functionality
+
+### Phase 4 — Results Page
+- [ ] CORP-14: Company results page: 7 dimension scores, radar chart, maturity label
+- [ ] CORP-15: Sector benchmark positioning (sector-adjusted percentile)
+- [ ] CORP-16: Gap analysis: critical gaps, development priorities, strengths
+- [ ] CORP-17: Team cascade panel: sub-function briefs, recommended learning pathways
+
+### Phase 5 — Company Strategy Builder
+- [ ] CORP-18: Company-level strategy builder (extends existing builder with org-level initiatives)
+- [ ] CORP-19: Pre-populate context from org profile (industry, ambition suggestion from maturity score)
+- [ ] CORP-20: Company initiative library (6 categories, 30+ initiatives)
+- [ ] CORP-21: Gap-to-initiative mapping: auto-surface initiatives for critical gaps
