@@ -23,9 +23,9 @@ import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
 import { getDb, getUserRoleKeys } from "../db";
-import { auditLogs, ailOrgContext } from "../../drizzle/schema";
+import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 import {
   generateCapabilityReport,
@@ -307,6 +307,32 @@ export const intelligenceRouter = router({
     if (row.domainTargetsJson) {
       try { domainTargets = typeof row.domainTargetsJson === "string" ? JSON.parse(row.domainTargetsJson) : row.domainTargetsJson as Record<string, number>; } catch {}
     }
+    // Compute current function-level domain scores from real assessment data
+    const DOMAIN_KEYS_STRAT = ["ai_interaction","ai_output_evaluation","ai_workflow_design","workforce_ai_readiness","ai_ethics_trust","ai_change_leadership"] as const;
+    const domainTotals: Record<string, { total: number; count: number }> = {};
+    for (const k of DOMAIN_KEYS_STRAT) domainTotals[k] = { total: 0, count: 0 };
+    const tenantUsers = await db.select({ id: users.id }).from(users).where(eq(users.tenantId, ctx.user.tenantId));
+    for (const u of tenantUsers) {
+      const latestSession = await db.select({ id: assessmentSessions.id }).from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt)).limit(1);
+      if (!latestSession[0]) continue;
+      const score = await db.select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson }).from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, latestSession[0].id)).limit(1);
+      if (!score[0]?.scoreBreakdownJson) continue;
+      const bd = score[0].scoreBreakdownJson as Record<string, unknown>;
+      const cap = bd.capabilityScores as Record<string, unknown> | undefined;
+      if (!cap) continue;
+      for (const k of DOMAIN_KEYS_STRAT) {
+        const v = cap[k];
+        const num = typeof v === "number" ? v : (v && typeof v === "object" && "score" in (v as any)) ? Number((v as any).score) : null;
+        if (num !== null && !isNaN(num)) { domainTotals[k].total += num; domainTotals[k].count++; }
+      }
+    }
+    const currentDomainScores: Record<string, number | null> = {};
+    for (const k of DOMAIN_KEYS_STRAT) {
+      currentDomainScores[k] = domainTotals[k].count > 0 ? Math.round(domainTotals[k].total / domainTotals[k].count) : null;
+    }
     return {
       configured: !!(row.businessAmbitionLevel && row.peopleAmbitionLevel),
       businessAmbitionLevel: row.businessAmbitionLevel,
@@ -317,6 +343,7 @@ export const intelligenceRouter = router({
       ambitionTargetScore: row.ambitionTargetScore,
       ambitionTargetDate: row.ambitionTargetDate,
       ambitionTargetLabel: row.ambitionTargetLabel,
+      currentDomainScores,
     };
   }),
 

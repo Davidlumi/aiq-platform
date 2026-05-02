@@ -333,6 +333,7 @@ export default function CompanyAssessmentResultsPage() {
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-0.5 bg-white/20 border-dashed" />
                 <span className="text-[10px] text-white/40">Sector benchmark</span>
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Benchmarks are currently based on synthetic reference data. They will be replaced with empirical norms once sufficient real-world data is collected.">Beta reference</span>
               </div>
             </div>
           </div>

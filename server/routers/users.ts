@@ -206,6 +206,78 @@ export const usersRouter = router({
       return { success: true };
     }),
 
+  // Bulk invite users from CSV data
+  bulkInvite: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        email: z.string().email(),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        roleKey: z.string().default("hr_professional"),
+      })).min(1).max(200),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const allRoles = await db.select().from(roles);
+      const roleMap = Object.fromEntries(allRoles.map(r => [r.key, r.id]));
+      const results: { email: string; status: "created" | "skipped"; reason?: string }[] = [];
+      const tempPassword = "AiQ-Beta-2025!";
+      for (const row of input.rows) {
+        const email = row.email.toLowerCase().trim();
+        const existing = await db.select({ id: users.id }).from(users)
+          .where(and(eq(users.tenantId, ctx.user.tenantId), eq(users.email, email))).limit(1);
+        if (existing[0]) {
+          results.push({ email, status: "skipped", reason: "Already exists" });
+          continue;
+        }
+        const passwordHash = await hashPassword(tempPassword);
+        const userId = nanoid();
+        await db.insert(users).values({
+          id: userId,
+          tenantId: ctx.user.tenantId,
+          email,
+          firstName: row.firstName.trim(),
+          lastName: row.lastName.trim(),
+          passwordHash,
+          status: "active",
+        });
+        const roleKey = row.roleKey || "hr_professional";
+        const roleId = roleMap[roleKey] ?? roleMap["hr_professional"];
+        if (roleId) {
+          await db.insert(userRoles).values({
+            id: nanoid(),
+            tenantId: ctx.user.tenantId,
+            userId,
+            roleId,
+            assignedBy: ctx.user.id,
+          });
+        }
+        results.push({ email, status: "created" });
+      }
+      const created = results.filter(r => r.status === "created").length;
+      const skipped = results.filter(r => r.status === "skipped").length;
+      return { created, skipped, results, tempPassword };
+    }),
+
+  // Export users as CSV-ready data
+  exportCsv: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      status: users.status,
+      createdAt: users.createdAt,
+    }).from(users).where(eq(users.tenantId, ctx.user.tenantId)).orderBy(users.lastName);
+    return rows;
+  }),
+
   // Get all available roles
   availableRoles: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);

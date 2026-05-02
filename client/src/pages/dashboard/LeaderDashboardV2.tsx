@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/dashboard/DashboardUI";
 import { getLevelFromScore, getLevelChipStyle, getLevelLabel } from "@/lib/level-utils";
-import { Users, UserCircle, Filter, Target, TrendingUp, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
+import { Users, UserCircle, Filter, Target, TrendingUp, AlertTriangle, ChevronRight, ChevronDown, MapPin, Info, Sparkles } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -377,7 +377,7 @@ export default function LeaderDashboardV2() {
       result.push({ type: "medium", priority: "Domain gap", title: `${weakestDomain.domainName} is the weakest domain`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} · ${weakestDomain.totalAssessed} assessed.`, linkLabel: "View breakdown", linkHref: "/admin/org-context" });
     }
     if (ambitionGap?.configured && ambitionGap.gapRaw !== null && ambitionGap.gapRaw > 0) {
-      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/dashboard/strategic" });
+      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/ai-strategy" });
     }
     return result.slice(0, 3);
   }, [main, ambitionGap]);
@@ -443,6 +443,49 @@ export default function LeaderDashboardV2() {
         </div>
       )}
 
+      {/* ── Strategic intelligence onboarding card (shown when AI roadmap not configured) ── */}
+      {!ambitionGap?.configured && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm font-semibold text-foreground">Unlock strategic intelligence</p>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Step 2 of 2</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                Your function capability data is live — {main.assessedCount} of {main.totalHeadcount} assessed, function average {main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"}.
+                {" "}Configure your AI roadmap to unlock gap analysis, trajectory projections, and board-ready strategic intelligence.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Link href="/admin/org-context">
+                  <Button size="sm" className="gap-1.5"><MapPin className="w-3.5 h-3.5" />Configure AI roadmap</Button>
+                </Link>
+                <Link href="/ai-strategy">
+                  <Button size="sm" variant="outline" className="gap-1.5">Preview strategy builder</Button>
+                </Link>
+              </div>
+              <div className="mt-3 pt-3 border-t border-primary/10 grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Gap-to-initiative mapping</p>
+                  <p className="text-xs font-medium text-foreground mt-0.5">Unlocks after setup</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">90-day trajectory</p>
+                  <p className="text-xs font-medium text-foreground mt-0.5">Unlocks after setup</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Board-ready export</p>
+                  <p className="text-xs font-medium text-foreground mt-0.5">Unlocks after setup</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 5 KPI tiles ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"} sub="Capability level" />
@@ -452,7 +495,7 @@ export default function LeaderDashboardV2() {
         <KpiCard
           label="Strategy gap score"
           value={ambitionGap?.configured ? (ambitionGap.gapRaw !== null ? (ambitionGap.gapRaw > 0 ? `+${(ambitionGap.gapRaw / 10).toFixed(1)}` : (ambitionGap.gapRaw / 10).toFixed(1)) : "—") : "—"}
-          sub={ambitionGap?.configured ? (ambitionGap.ambitionTargetLabel ?? "vs. target") : "No target set"}
+          sub={ambitionGap?.configured ? (ambitionGap.ambitionTargetLabel ?? "vs. target") : "Configure roadmap"}
           accent={ambitionGap?.gapRaw != null ? (ambitionGap.gapRaw > 10 ? "#ef4444" : ambitionGap.gapRaw > 0 ? "#f59e0b" : "#22c55e") : undefined}
         />
       </div>
@@ -463,7 +506,7 @@ export default function LeaderDashboardV2() {
         <div className="bg-card rounded-xl border border-border p-5">
           <p className="text-sm font-semibold text-foreground mb-4">Readiness distribution</p>
           <ReadinessDonut distribution={levelDistribution} />
-          <Link href="/dashboard/strategic">
+          <Link href="/ai-strategy">
             <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-4 inline-block">Strategic view →</span>
           </Link>
         </div>

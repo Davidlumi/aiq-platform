@@ -2018,3 +2018,15 @@
 - [x] BUG 12: Assessment Blueprints shows 0 questions — updated assessment.blueprints query to enrich each blueprint with its assessmentItems count
 - [x] QA COMPLETE: TypeScript 0 errors, vitest 710/710 tests passing across 29 test files
 - [x] QA COMPLETE: All pages tested — Individual/Manager/CPO Dashboards, Assessment, Learning Plan, Content Library, Knowledge Base, AI Strategy Builder, People Reports, Team Progress, Conversation Prompts, Admin (People, Users, Content CMS, Blueprints, Scenarios, Organisations), Simulations, Marketing pages
+
+## Pre-Beta CPO Objection Fixes
+
+- [x] FIX-CPO-1: Synthetic norm disclosure — add "Beta benchmark" label + tooltip on every percentile display explaining norms are synthetic until real population data is collected
+- [x] FIX-CPO-2: Strategic intelligence day-one state — replace blank "Strategic context not yet captured" with rich onboarding card showing available data (function avg, domain breakdown, coverage %) + prominent "Configure your AI roadmap" CTA
+- [x] FIX-CPO-3: CPO dashboard domain scores showing 0.0 — investigate and fix domain score display in leader view (all six domains show 0.0 despite individual having scores)
+- [x] FIX-CPO-4: Wire strategy builder current capability inputs from real org assessment scores instead of DEFAULT_SEGMENTS hardcoded values
+- [x] FIX-CPO-5: CSV bulk user import — allow admins to upload CSV (name, email, role, department, seniority) to onboard users in bulk
+- [x] FIX-CPO-6: Add indicative pricing page to marketing site with per-seat tiers and a simple ROI calculator
+- [x] FIX-CPO-7: Add "What's in beta" transparency page — honest list of what works now vs what's coming (norm validation, integrations, board exports)
+- [ ] FIX-CPO-8: LLM item quality monitoring — surface item quality gate pass rate in backoffice admin panel
+- [ ] FIX-CPO-9: Demo/preview mode — seed a realistic demo view with populated multi-user data so beta prospects can see enterprise features working

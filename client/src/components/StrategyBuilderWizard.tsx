@@ -32,6 +32,7 @@ interface WizardProps {
     strategyNarrative: string | null;
     ambitionTargetDate: string | null;
     ambitionTargetLabel: string | null;
+    currentDomainScores?: Record<string, number | null> | null;
   } | null;
   onSaved: () => void;
   onCancel: () => void;
@@ -86,14 +87,23 @@ function overallFromDomains(targets: Record<DomainKey, number>): number {
 }
 
 // ─── Slider row ───────────────────────────────────────────────────────────────
-function DomainSliderRow({ domainKey, value, onChange }: { domainKey: DomainKey; value: number; onChange: (v: number) => void }) {
+function DomainSliderRow({ domainKey, value, onChange, currentScore }: { domainKey: DomainKey; value: number; onChange: (v: number) => void; currentScore?: number | null }) {
   const colour = DOMAIN_COLOURS[domainKey];
   const level = (value / 10).toFixed(1);
+  const gap = (currentScore !== null && currentScore !== undefined) ? value - currentScore : null;
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">{DOMAIN_LABELS[domainKey]}</span>
-        <span className="text-sm font-semibold tabular-nums" style={{ color: colour }}>Level {level}</span>
+        <div className="flex items-center gap-2">
+          {currentScore !== null && currentScore !== undefined && (
+            <span className="text-xs text-muted-foreground">Now: {(currentScore / 10).toFixed(1)}</span>
+          )}
+          {gap !== null && gap > 0 && (
+            <span className="text-xs font-medium text-amber-400">+{(gap / 10).toFixed(1)} gap</span>
+          )}
+          <span className="text-sm font-semibold tabular-nums" style={{ color: colour }}>Target: {level}</span>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <Slider
@@ -144,6 +154,7 @@ function AmbitionCard({ level, levels, value, onChange, label }: {
 
 // ─── Main wizard ──────────────────────────────────────────────────────────────
 export default function StrategyBuilderWizard({ initialData, onSaved, onCancel }: WizardProps) {
+  const currentDomainScores = initialData?.currentDomainScores ?? null;
   const utils = trpc.useUtils();
   const [step, setStep] = useState(0);
   const [businessLevel, setBusinessLevel] = useState<number>(initialData?.businessAmbitionLevel ?? 3);
@@ -262,6 +273,7 @@ export default function StrategyBuilderWizard({ initialData, onSaved, onCancel }
                   domainKey={key}
                   value={domainTargets[key]}
                   onChange={v => handleDomainChange(key, v)}
+                  currentScore={currentDomainScores?.[key] ?? null}
                 />
               ))}
             </div>

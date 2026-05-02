@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, MoreHorizontal, Eye, UserCog, ArrowUpDown } from "lucide-react";
+import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, MoreHorizontal, Eye, UserCog, ArrowUpDown, Upload, Download, FileText } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   platform_super_admin: "Super Admin",
@@ -49,6 +49,11 @@ export default function UsersPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [csvText, setCsvText] = useState("");
+  const [csvPreview, setCsvPreview] = useState<Array<{ email: string; firstName: string; lastName: string; roleKey: string }>>([]);
+  const [csvError, setCsvError] = useState("");
+  const [importResult, setImportResult] = useState<{ created: number; skipped: number; tempPassword: string } | null>(null);
   const [changeRoleTarget, setChangeRoleTarget] = useState<{ id: string; name: string; currentRole: string } | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [newUser, setNewUser] = useState({
@@ -85,6 +90,44 @@ export default function UsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const bulkInviteMutation = trpc.users.bulkInvite.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.created} users created, ${result.skipped} skipped`);
+      utils.users.list.invalidate();
+      setImportResult({ created: result.created, skipped: result.skipped, tempPassword: result.tempPassword });
+      setCsvPreview([]);
+      setCsvText("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const { refetch: refetchExport } = trpc.users.exportCsv.useQuery(undefined, { enabled: false });
+  function handleExportCsv() {
+    refetchExport().then(({ data }) => {
+      if (!data) return;
+      const header = "email,firstName,lastName,status,createdAt";
+      const rows = (data as any[]).map((r: any) => `${r.email},${r.firstName},${r.lastName},${r.status},${new Date(r.createdAt).toISOString().split("T")[0]}`);
+      const csv = [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "aiq-users.csv"; a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+  function parseCsvText(text: string) {
+    setCsvError("");
+    const lines = text.trim().split("\n").map(l => l.trim()).filter(Boolean);
+    if (!lines.length) { setCsvPreview([]); return; }
+    const dataLines = lines[0].toLowerCase().includes("email") ? lines.slice(1) : lines;
+    const parsed: Array<{ email: string; firstName: string; lastName: string; roleKey: string }> = [];
+    for (const line of dataLines) {
+      const parts = line.split(",").map((p: string) => p.trim().replace(/^"|"$/g, ""));
+      if (parts.length < 3) { setCsvError(`Invalid row: "${line}" — expected email,firstName,lastName[,role]`); setCsvPreview([]); return; }
+      const [email, firstName, lastName, roleKey = "hr_professional"] = parts;
+      if (!email.includes("@")) { setCsvError(`Invalid email: ${email}`); setCsvPreview([]); return; }
+      parsed.push({ email, firstName, lastName, roleKey });
+    }
+    setCsvPreview(parsed);
+  }
   const updateStatusMutation = trpc.users.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("User status updated");
@@ -118,7 +161,83 @@ export default function UsersPage() {
             Manage users, roles, and access within your tenant
           </p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCsv}>
+            <Download className="h-3.5 w-3.5" /> Export CSV
+          </Button>
+          <Dialog open={csvImportOpen} onOpenChange={(o) => { setCsvImportOpen(o); if (!o) { setCsvPreview([]); setCsvText(""); setCsvError(""); setImportResult(null); } }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Upload className="h-3.5 w-3.5" /> Import CSV
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="font-semibold">Bulk Import Users from CSV</DialogTitle>
+              </DialogHeader>
+              {importResult ? (
+                <div className="space-y-4 py-2">
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{importResult.created} users created, {importResult.skipped} skipped</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Temporary password for all new accounts:</p>
+                      <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded mt-1 inline-block">{importResult.tempPassword}</code>
+                      <p className="text-xs text-amber-500 mt-1">Share this with your team and ask them to change it on first login.</p>
+                    </div>
+                  </div>
+                  <Button className="w-full" onClick={() => { setImportResult(null); setCsvImportOpen(false); }}>Done</Button>
+                </div>
+              ) : (
+                <div className="space-y-4 py-2">
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Expected CSV format:</p>
+                    <code className="text-xs font-mono text-foreground">email,firstName,lastName,role</code>
+                    <p className="text-xs text-muted-foreground mt-1">Role options: hr_professional, hr_leader, manager, learner (default: hr_professional)</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Paste CSV data</Label>
+                    <textarea
+                      className="w-full mt-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      rows={8}
+                      placeholder={"alice@company.com,Alice,Smith,hr_professional\nbob@company.com,Bob,Jones,manager"}
+                      value={csvText}
+                      onChange={e => { setCsvText(e.target.value); parseCsvText(e.target.value); }}
+                    />
+                    {csvError && <p className="text-xs text-red-500 mt-1">{csvError}</p>}
+                  </div>
+                  {csvPreview.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">{csvPreview.length} users ready to import:</p>
+                      <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border">
+                        {csvPreview.slice(0, 10).map((r, i) => (
+                          <div key={i} className="flex items-center gap-3 px-3 py-2">
+                            <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="text-xs text-foreground flex-1">{r.firstName} {r.lastName}</span>
+                            <span className="text-xs text-muted-foreground">{r.email}</span>
+                            <span className="text-xs text-muted-foreground">{r.roleKey}</span>
+                          </div>
+                        ))}
+                        {csvPreview.length > 10 && <div className="px-3 py-2 text-xs text-muted-foreground">+{csvPreview.length - 10} more…</div>}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setCsvImportOpen(false)}>Cancel</Button>
+                    <Button
+                      className="flex-1 gap-2"
+                      disabled={csvPreview.length === 0 || !!csvError || bulkInviteMutation.isPending}
+                      onClick={() => bulkInviteMutation.mutate({ rows: csvPreview })}
+                    >
+                      {bulkInviteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Import {csvPreview.length > 0 ? csvPreview.length : ""} Users
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-[var(--primary)] text-white gap-2">
               <Plus className="h-4 w-4" /> Add User
@@ -198,9 +317,9 @@ export default function UsersPage() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
