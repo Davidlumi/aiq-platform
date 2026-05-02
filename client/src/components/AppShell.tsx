@@ -510,7 +510,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto relative">
+        <main className="flex-1 min-h-0 overflow-y-auto relative">
           {/* Ambient glow blobs for depth */}
           <div
             className="aiq-glow-blob"

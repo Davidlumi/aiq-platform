@@ -2,28 +2,25 @@
  * Admin Content CMS Page - AiQ Enterprise Platform
  *
  * Canonical admin content management from the build bible:
- * - Browse all 80 real learning modules
+ * - Browse all 145 real learning modules
  * - Filter by status, type, capability
- * - Publish / archive modules
  * - View module metadata and stats
  * - Brand-compliant design
  */
 import { useState } from "react";
-import { DOMAIN_COLOURS } from "@/lib/domains";
+import { DOMAIN_COLOURS, DOMAIN_LABELS } from "@/lib/domains";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ListSkeleton } from "@/components/ui/loading";
 import { toast } from "sonner";
 import {
   Search, FolderOpen, CheckCircle2, Clock, Archive, Eye,
-  FileText, Play, Target, Layers, BookOpen, Filter, RefreshCw
+  FileText, Play, Target, Layers, BookOpen, RefreshCw
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React.ElementType }> = {
   published: { label: "Published", colour: "#047857", icon: CheckCircle2 },
@@ -31,7 +28,7 @@ const STATUS_CONFIG: Record<string, { label: string; colour: string; icon: React
   archived:  { label: "Archived",  colour: "#9CA3AF", icon: Archive },
 };
 
-const TYPE_ICONS: Record<string, React.ElementType> = {
+const MODALITY_ICONS: Record<string, React.ElementType> = {
   article:           FileText,
   video:             Play,
   scenario_practice: Target,
@@ -42,16 +39,18 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   checklist:         CheckCircle2,
   micro_lesson:      BookOpen,
   worked_example:    BookOpen,
+  coaching:          BookOpen,
+  workshop:          BookOpen,
 };
 
-// Capability colours imported from @/lib/domains
 const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS as Record<string, string>;
+const CAPABILITY_LABELS: Record<string, string> = DOMAIN_LABELS as Record<string, string>;
 
 function ContentRow({ item, onRefresh }: { item: any; onRefresh: () => void }) {
-  const meta = typeof item.metadataJson === "object" ? item.metadataJson as Record<string, any> : {};
-  const capability = meta?.capability_area ?? meta?.capabilityKey ?? "";
+  const capability = item.capability ?? "";
   const capColour = CAPABILITY_COLOURS[capability] ?? "#9CA3AF";
-  const TypeIcon = TYPE_ICONS[item.contentType] ?? FileText;
+  const capLabel = CAPABILITY_LABELS[capability] ?? capability.replace(/_/g, " ");
+  const TypeIcon = MODALITY_ICONS[item.modality] ?? FileText;
   const statusCfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.draft;
   const StatusIcon = statusCfg.icon;
 
@@ -71,22 +70,22 @@ function ContentRow({ item, onRefresh }: { item: any; onRefresh: () => void }) {
                 <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <Badge variant="outline" className="text-xs capitalize">
-                    {item.contentType.replace(/_/g, " ")}
+                    {(item.modality ?? "module").replace(/_/g, " ")}
                   </Badge>
                   {capability && (
                     <span
                       className="text-xs font-medium px-1.5 py-0.5 rounded"
                       style={{ color: capColour, backgroundColor: `${capColour}15` }}
                     >
-                      {capability.replace(/-/g, " ")}
+                      {capLabel}
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    Difficulty {item.difficulty ?? 1}/5
+                    Level {item.difficulty ?? 1}/5
                   </span>
-                  {item.durationSeconds > 0 && (
+                  {item.durationMins > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      {Math.round(item.durationSeconds / 60)} min
+                      {item.durationMins} min
                     </span>
                   )}
                 </div>
@@ -125,29 +124,30 @@ export default function ContentCMSPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [capabilityFilter, setCapabilityFilter] = useState("all");
 
-  const { data, isLoading, refetch } = trpc.learning.contentLibrary.useQuery({
+  // Use adaptiveLearning.listModules which queries the learningModules table (145 modules)
+  const { data, isLoading, refetch } = trpc.adaptiveLearning.listModules.useQuery({
     page: 1,
     pageSize: 200,
   });
 
-  const items = (data?.items ?? []).filter((item: any) => {
-    const meta = typeof item.metadataJson === "object" ? item.metadataJson as Record<string, any> : {};
-    const capability = meta?.capability_area ?? meta?.capabilityKey ?? "";
+  const allItems = data?.items ?? [];
+
+  const items = allItems.filter((item: any) => {
+    const capability = item.capability ?? "";
     const matchSearch = !search || item.title.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || item.status === statusFilter;
-    const matchType = typeFilter === "all" || item.contentType === typeFilter;
+    const matchType = typeFilter === "all" || item.modality === typeFilter;
     const matchCap = capabilityFilter === "all" || capability === capabilityFilter;
     return matchSearch && matchStatus && matchType && matchCap;
   });
 
   // Stats
-  const allItems = data?.items ?? [];
   const published = allItems.filter((i: any) => i.status === "published").length;
   const draft = allItems.filter((i: any) => i.status === "draft").length;
   const archived = allItems.filter((i: any) => i.status === "archived").length;
 
-  // Unique content types
-  const contentTypes = Array.from(new Set(allItems.map((i: any) => i.contentType as string))).sort();
+  // Unique modalities
+  const modalities = Array.from(new Set(allItems.map((i: any) => (i.modality ?? "") as string).filter(Boolean))).sort() as string[];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -211,7 +211,7 @@ export default function ContentCMSPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
-            {contentTypes.map((t: string) => (
+            {modalities.map((t: string) => (
               <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
             ))}
           </SelectContent>
@@ -223,7 +223,7 @@ export default function ContentCMSPage() {
           <SelectContent>
             <SelectItem value="all">All capabilities</SelectItem>
             {Object.keys(CAPABILITY_COLOURS).map(k => (
-              <SelectItem key={k} value={k}>{k.replace(/-/g, " ")}</SelectItem>
+              <SelectItem key={k} value={k}>{CAPABILITY_LABELS[k] ?? k.replace(/_/g, " ")}</SelectItem>
             ))}
           </SelectContent>
         </Select>

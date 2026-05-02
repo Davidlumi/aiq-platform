@@ -179,7 +179,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const plan = data.planSummary;
 
   const firstName = isOwnDashboard
-    ? ((user as any)?.name?.split(" ")[0] ?? "there")
+    ? ((user as any)?.firstName ?? (user as any)?.name?.split(" ")[0] ?? "there")
     : data.user.firstName;
 
   return (

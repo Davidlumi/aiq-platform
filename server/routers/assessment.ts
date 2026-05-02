@@ -558,14 +558,20 @@ async function getEmergencyFallbackItem(
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 export const assessmentRouter = router({
-  // ── List published blueprints ──────────────────────────────────────────────
+  // ── List all blueprints with item counts ──────────────────────────────────
   blueprints: protectedProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    return db
-      .select()
-      .from(assessmentBlueprints)
-      .where(eq(assessmentBlueprints.status, "published"));
+    const bps = await db.select().from(assessmentBlueprints);
+    // Enrich each blueprint with its question count
+    const enriched = await Promise.all(bps.map(async (bp) => {
+      const items = await db
+        .select({ id: assessmentItems.id })
+        .from(assessmentItems)
+        .where(eq(assessmentItems.blueprintId, bp.id));
+      return { ...bp, itemCount: items.length };
+    }));
+    return enriched;
   }),
 
   // ── Get default blueprint ──────────────────────────────────────────────────

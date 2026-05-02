@@ -1287,6 +1287,8 @@ const leaderRouter = router({
     const ratingCounts: Record<RatingKey, number> = {
       ai_ready: 0, developing: 0, not_yet_ready: 0, foundation_gap: 0, insufficient_evidence: 0,
     };
+    // 5-level distribution (1=Emerging, 2=Developing, 3=Capable, 4=Strong, 5=AI Ready)
+    const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
     // Per-domain aggregation
     const domainTotals: Record<DomainKey, { total: number; count: number }> = {} as any;
@@ -1321,6 +1323,11 @@ const leaderRouter = router({
       const state = extractReadinessState(scoreData.scoreBreakdownJson);
       const rating = stateToRating(state);
       ratingCounts[rating]++;
+
+      // 5-level bucket from raw score (0-100 scale)
+      const rawS = scoreData.overallScore / 10;
+      const lv = rawS >= 7.5 ? 5 : rawS >= 6.0 ? 4 : rawS >= 5.0 ? 3 : rawS >= 3.5 ? 2 : 1;
+      levelCounts[lv]++;
 
       const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
       if (domainScores) {
@@ -1393,6 +1400,13 @@ const leaderRouter = router({
       })),
     }));
 
+    // Build 5-level distribution array
+    const levelDistribution = [5, 4, 3, 2, 1].map(lv => ({
+      level: lv,
+      count: levelCounts[lv],
+      pct: assessedCount > 0 ? Math.round((levelCounts[lv] / assessedCount) * 100) : 0,
+    }));
+
     return {
       functionScore,
       functionRating,
@@ -1403,6 +1417,7 @@ const leaderRouter = router({
       totalHeadcount: allUsers.length,
       assessedCount,
       ratingCounts,
+      levelDistribution,
       domainDistribution,
       heatmap,
     };

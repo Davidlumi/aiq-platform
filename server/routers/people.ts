@@ -268,9 +268,10 @@ export const peopleRouter = router({
           const enrichedCapScores: Record<string, { score: number; displayName: string; colour: string }> = {};
           for (const [key, val] of Object.entries(rawCapScores)) {
             // val may be a plain number OR an object {band, score, signalCount} (0-100 scale)
+            // Keep on 0-100 scale — frontend display functions expect 0-100
             const rawScore = typeof val === "object" && val !== null && "score" in val
-              ? (val as { score: number }).score / 10
-              : typeof val === "number" ? val : 0;
+              ? (val as { score: number }).score
+              : typeof val === "number" ? val * 10 : 0;
             enrichedCapScores[key] = {
               score: rawScore,
               displayName: CAPABILITY_DISPLAY[key] ?? key,
@@ -285,7 +286,7 @@ export const peopleRouter = router({
           return {
             sessionId: s.id,
             completedAt: s.completedAt ? Number(s.completedAt) : null,
-            overallScore: parseFloat(String(score[0].overallScore)) / 10,
+            overallScore: parseFloat(String(score[0].overallScore)), // 0-100 scale
             readinessState: readiness.state ?? "unknown",
             readinessLabel: readiness.label ?? "Unknown",
             readinessDescription: readiness.description ?? null,

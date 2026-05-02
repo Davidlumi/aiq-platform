@@ -334,6 +334,11 @@ export default function LeaderDashboardV2() {
 
   const levelDistribution = useMemo(() => {
     if (!main) return [];
+    // Prefer server-computed 5-level distribution (accurate Strong/Capable split)
+    if ((main as any).levelDistribution?.length > 0) {
+      return (main as any).levelDistribution as Array<{ level: number; count: number; pct: number }>;
+    }
+    // Fallback: derive from ratingCounts (no Strong/Capable split)
     const total = main.assessedCount || 1;
     const level5 = main.ratingCounts.ai_ready ?? 0;
     const level3 = main.ratingCounts.developing ?? 0;

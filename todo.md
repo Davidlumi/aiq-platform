@@ -2010,3 +2010,11 @@
 - [x] BUG 4: Company assessment results dimension scores showing 0 — fixed dimension key mismatch (strategy_governance → strategy, etc.) and scale conversion (1-5 → 0-100)
 - [x] BUG 5: Learning module capability keys mismatch — migrated DB from old keys (execution/judgement/governance/appropriateness/data_interpretation/workflow) to new domain keys (ai_interaction/ai_output_evaluation/ai_ethics_trust/ai_change_leadership/workforce_ai_readiness/ai_workflow_design)
 - [x] BUG 6: "0 of 0 modules" display for proficient domains — now shows "Proficient — no gaps" when no modules assigned
+- [x] BUG 7: CPO Dashboard Readiness Distribution "Strong 0%" — fixed by adding levelCounts to dashboardV2.ts and updating LeaderDashboardV2.tsx to use server-provided 5-level distribution
+- [x] BUG 8: Individual Dashboard greeting "Good morning, there" — fixed to use user.firstName in IndividualDashboardV2.tsx
+- [x] BUG 9: Member Report score scale (showing 0.6 instead of 6.2) — removed /10 division in getMemberReport in people.ts
+- [x] BUG 10: Company Onboarding form not scrollable — removed min-h-screen from CompanyOnboardingPage.tsx and added min-h-0 to main element in AppShell.tsx
+- [x] BUG 11: Content CMS shows 0 modules — updated ContentCMSPage.tsx to use adaptiveLearning.listModules (queries learningModules table) instead of learning.contentLibrary
+- [x] BUG 12: Assessment Blueprints shows 0 questions — updated assessment.blueprints query to enrich each blueprint with its assessmentItems count
+- [x] QA COMPLETE: TypeScript 0 errors, vitest 710/710 tests passing across 29 test files
+- [x] QA COMPLETE: All pages tested — Individual/Manager/CPO Dashboards, Assessment, Learning Plan, Content Library, Knowledge Base, AI Strategy Builder, People Reports, Team Progress, Conversation Prompts, Admin (People, Users, Content CMS, Blueprints, Scenarios, Organisations), Simulations, Marketing pages
