@@ -930,6 +930,69 @@ export default function AssessmentResultsPage() {
               <p className="text-sm text-muted-foreground leading-relaxed">{summary}</p>
             </div>
           )}
+          {/* ── Lumi methodology: secondary indices, CIPD alignment, confidence calibration ── */}
+          {(() => {
+            const caps = (data as any)?.score?.breakdown?.capabilityScores ?? {};
+            const getScore = (key: string): number | null => {
+              const v = caps[key];
+              if (!v) return null;
+              return typeof v === "object" && "score" in v ? (v as any).score : (typeof v === "number" ? v : null);
+            };
+            // Secondary indices derived from domain scores
+            const ethicsScore = getScore("ai_ethics_trust") ?? getScore("governance");
+            const appScore = getScore("ai_interaction") ?? getScore("ai_workflow_design");
+            const leadScore = getScore("ai_change_leadership") ?? getScore("workforce_ai_readiness");
+            const indices = [
+              { label: "Knowledge & Ethics", score: ethicsScore, icon: "⚖️" },
+              { label: "Application", score: appScore, icon: "⚡" },
+              { label: "Leadership", score: leadScore, icon: "🎯" },
+            ].filter(i => i.score !== null);
+            // CIPD Profession Map alignment
+            const cipdLevel = overallScore >= 75 ? "Chartered Fellow" : overallScore >= 55 ? "Chartered Member" : "Associate";
+            const cipdColor = overallScore >= 75 ? "text-primary" : overallScore >= 55 ? "text-emerald-400" : "text-amber-400";
+            // Confidence calibration: compare avg stated confidence vs actual score
+            const confVals = Object.values(signalScores as Record<string, { sum: number; count: number }>)
+              .map(sv => sv.count > 0 ? sv.sum / sv.count : 0.5);
+            const avgConf = confVals.length > 0 ? confVals.reduce((a, b) => a + b, 0) / confVals.length : 0.5;
+            const confDiff = avgConf - (overallScore / 100);
+            const calibLabel = Math.abs(confDiff) < 0.15 ? "Well Calibrated" : confDiff > 0.15 ? "Optimistic" : "Cautious";
+            const calibColor = Math.abs(confDiff) < 0.15 ? "text-emerald-400" : "text-amber-400";
+            const calibDesc = Math.abs(confDiff) < 0.15
+              ? "Your confidence matched your performance"
+              : confDiff > 0.15
+              ? "You rated confidence higher than your scores suggest"
+              : "You underestimated your own capability";
+            if (indices.length === 0) return null;
+            return (
+              <div className="mt-5 pt-4 border-t border-border/40 space-y-3">
+                {/* Secondary indices */}
+                <div className="flex flex-wrap gap-2">
+                  {indices.map(idx => (
+                    <div key={idx.label} className="flex items-center gap-1.5 bg-muted/20 rounded-lg px-3 py-1.5">
+                      <span className="text-sm">{idx.icon}</span>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5">{idx.label}</p>
+                        <p className="text-xs font-bold text-foreground tabular-nums">
+                          {(idx.score! / 10).toFixed(1)}<span className="text-muted-foreground font-normal">/10</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* CIPD alignment + confidence calibration */}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">CIPD alignment:</span>
+                    <span className={`font-semibold ${cipdColor}`}>{cipdLevel}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5" title={calibDesc}>
+                    <span className="text-muted-foreground">Confidence profile:</span>
+                    <span className={`font-semibold ${calibColor}`}>{calibLabel}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <Button

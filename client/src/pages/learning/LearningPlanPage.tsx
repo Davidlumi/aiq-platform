@@ -49,13 +49,37 @@ const READINESS: Record<string, { label: string; color: string; bg: string }> = 
 // ── Modality icons ─────────────────────────────────────────────────────────────
 
 const MODALITY_ICONS: Record<string, React.ElementType> = {
-  tutorial:  BookOpen,
-  video:     Video,
-  scenario:  FileText,
-  coaching:  MessageSquare,
-  quiz:      HelpCircle,
-  workshop:  Users,
+  tutorial:   BookOpen,
+  video:      Video,
+  scenario:   FileText,
+  coaching:   MessageSquare,
+  quiz:       HelpCircle,
+  workshop:   Users,
+  practical:  Target,
+  case_study: Layers,
+  reflection: Brain,
 };
+
+// ── Lesson format labels (Lumi methodology) ────────────────────────────────────
+const LESSON_FORMAT_LABELS: Record<string, string> = {
+  tutorial:   "Explainer",
+  practical:  "Practical Activity",
+  case_study: "Case Study",
+  quiz:       "Knowledge Check",
+  scenario:   "Scenario Practice",
+  video:      "Video Lesson",
+  reflection: "Guided Reflection",
+  coaching:   "AI Coaching",
+};
+
+// ── Learning phase (derived from levelLabel) ───────────────────────────────────
+function getLearningPhase(levelLabel: string): { label: string; color: string; bg: string } {
+  const l = (levelLabel ?? "").toLowerCase();
+  if (l === "foundation" || l === "beginner") return { label: "Foundation", color: "#6366F1", bg: "#6366F118" };
+  if (l === "developing" || l === "practitioner") return { label: "Building", color: "#C8B07A", bg: "#C8B07A18" };
+  if (l === "advanced" || l === "expert") return { label: "Leading", color: "#047857", bg: "#04785718" };
+  return { label: "Foundation", color: "#6366F1", bg: "#6366F118" };
+}
 
 // ── Module row ─────────────────────────────────────────────────────────────────
 
@@ -104,8 +128,7 @@ function ModuleRow({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <ModalityIcon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           <span className={cn(
             "text-sm font-medium leading-snug truncate",
             isCompleted && "text-muted-foreground line-through decoration-muted-foreground/40"
@@ -115,11 +138,39 @@ function ModuleRow({
           {isNext && <span className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1 flex-shrink-0">Next</span>}
           {isInProgress && !isNext && <span className="text-[10px] font-medium text-[#C8B07A] flex-shrink-0">In progress</span>}
         </div>
-        {mod.durationMins && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="h-2.5 w-2.5" />{mod.durationMins} min
-          </span>
-        )}
+        {/* Hook text from bodyJson */}
+        {(() => {
+          const body = typeof mod.bodyJson === "string" ? (() => { try { return JSON.parse(mod.bodyJson); } catch { return {}; } })() : (mod.bodyJson ?? {});
+          const hook = body?.introduction?.hook;
+          return hook ? (
+            <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2 pr-2">{hook}</p>
+          ) : null;
+        })()}
+        {/* Metadata row: lesson format + learning phase + duration */}
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          {mod.modality && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+              <ModalityIcon className="h-2.5 w-2.5" />
+              {LESSON_FORMAT_LABELS[mod.modality] ?? mod.modality}
+            </span>
+          )}
+          {mod.levelLabel && (() => {
+            const phase = getLearningPhase(mod.levelLabel);
+            return (
+              <span
+                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{ color: phase.color, backgroundColor: phase.bg }}
+              >
+                {phase.label}
+              </span>
+            );
+          })()}
+          {mod.durationMins && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+              <Clock className="h-2.5 w-2.5" />{mod.durationMins} min
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Action */}
