@@ -2028,5 +2028,5 @@
 - [x] FIX-CPO-5: CSV bulk user import — allow admins to upload CSV (name, email, role, department, seniority) to onboard users in bulk
 - [x] FIX-CPO-6: Add indicative pricing page to marketing site with per-seat tiers and a simple ROI calculator
 - [x] FIX-CPO-7: Add "What's in beta" transparency page — honest list of what works now vs what's coming (norm validation, integrations, board exports)
-- [ ] FIX-CPO-8: LLM item quality monitoring — surface item quality gate pass rate in backoffice admin panel
-- [ ] FIX-CPO-9: Demo/preview mode — seed a realistic demo view with populated multi-user data so beta prospects can see enterprise features working
+- [x] FIX-CPO-8: LLM item quality monitoring — surface item quality gate pass rate in backoffice admin panel
+- [x] FIX-CPO-9: Demo/preview mode — seed a realistic demo view with populated multi-user data so beta prospects can see enterprise features working

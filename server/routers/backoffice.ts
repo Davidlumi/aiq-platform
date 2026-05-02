@@ -681,6 +681,56 @@ export const backofficeRouter = router({
         .where(eq(llmItemReviewQueue.id, input.id));
       return { success: true };
     }),
+
+  // ── WS3.1: LLM Quality Gate Stats ────────────────────────────────────────────
+  qualityGateStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
+
+      const rows = await db.select().from(llmItemReviewQueue);
+      const total = rows.length;
+      const pending = rows.filter(r => r.status === "pending").length;
+      const approved = rows.filter(r => r.status === "approved").length;
+      const autoApproved = rows.filter(r => r.status === "auto_approved").length;
+      const rejected = rows.filter(r => r.status === "rejected").length;
+      const reviewed = approved + autoApproved + rejected;
+      const passRate = reviewed > 0 ? Math.round(((approved + autoApproved) / reviewed) * 100) : null;
+      const rejectionRate = reviewed > 0 ? Math.round((rejected / reviewed) * 100) : null;
+
+      // Last 7 days daily trend
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recent = rows.filter(r => new Date(r.createdAt) >= sevenDaysAgo);
+      const dailyMap: Record<string, { generated: number; passed: number; rejected: number }> = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const key = d.toISOString().slice(0, 10);
+        dailyMap[key] = { generated: 0, passed: 0, rejected: 0 };
+      }
+      for (const r of recent) {
+        const key = new Date(r.createdAt).toISOString().slice(0, 10);
+        if (!dailyMap[key]) continue;
+        dailyMap[key].generated++;
+        if (r.status === "approved" || r.status === "auto_approved") dailyMap[key].passed++;
+        if (r.status === "rejected") dailyMap[key].rejected++;
+      }
+      const trend = Object.entries(dailyMap).map(([date, counts]) => ({ date, ...counts }));
+
+      // Top failure reasons (from pending + rejected)
+      const failureCounts: Record<string, number> = {};
+      for (const r of rows.filter(r => r.status === "rejected" || r.status === "pending")) {
+        const reason = (r.failureReason ?? "Unknown").slice(0, 80);
+        failureCounts[reason] = (failureCounts[reason] ?? 0) + 1;
+      }
+      const topFailures = Object.entries(failureCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([reason, count]) => ({ reason, count }));
+
+      return { total, pending, approved, autoApproved, rejected, reviewed, passRate, rejectionRate, trend, topFailures };
+    }),
+
   // ── WS4.3: Session review flags queue ────────────────────────────────────────
   listSessionReviewFlags: protectedProcedure
     .input(z.object({

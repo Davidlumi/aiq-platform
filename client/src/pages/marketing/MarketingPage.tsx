@@ -56,6 +56,7 @@ export function MarketingNav() {
             ["How it works", "/how-it-works"],
             ["The product", "/product"],
             ["Pricing", "/pricing"],
+            ["See demo", "/demo"],
             ["Methodology", "/methodology"],
             ["About", "/about"],
           ] as [string, string][]).map(([label, href]) => (

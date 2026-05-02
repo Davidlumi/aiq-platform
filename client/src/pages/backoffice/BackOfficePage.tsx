@@ -78,11 +78,14 @@ import {
   ToggleLeft,
   ToggleRight,
   Info,
+  TrendingDown,
+  Zap,
+  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // --- Types --------------------------------------------------------------------
-type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "session_flags" | "feature_flags";
+type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "quality_gate" | "session_flags" | "feature_flags";
 
 // --- Beta Applications Tab ----------------------------------------------------
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
@@ -1601,6 +1604,134 @@ function LlmReviewQueueTab() {
   );
 }
 
+// --- WS3.1: Quality Gate Monitoring Tab -------------------------------------
+function QualityGateTab() {
+  const { data: stats, isLoading } = trpc.backoffice.qualityGateStats.useQuery();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  const s = stats;
+  const passRateColor = s?.passRate == null ? "text-muted-foreground" : s.passRate >= 90 ? "text-primary" : s.passRate >= 75 ? "text-[#D97706]" : "text-[#DC2626]";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">LLM Quality Gate Monitoring</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Pass rate, rejection trends, and failure analysis for AI-generated assessment items.</p>
+      </div>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="border-border">
+          <CardContent className="p-4 text-center">
+            <p className={cn("text-2xl font-bold", passRateColor)}>{s?.passRate != null ? `${s.passRate}%` : "—"}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Pass Rate</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{s?.total ?? 0}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Total Generated</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-[#D97706]">{s?.pending ?? 0}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Pending Review</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-[#DC2626]">{s?.rejected ?? 0}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Rejected</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Status breakdown */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">Status Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { label: "Auto-approved", value: s?.autoApproved ?? 0, total: s?.total ?? 1, color: "bg-primary" },
+            { label: "Manually approved", value: s?.approved ?? 0, total: s?.total ?? 1, color: "bg-primary/60" },
+            { label: "Pending review", value: s?.pending ?? 0, total: s?.total ?? 1, color: "bg-[#D97706]" },
+            { label: "Rejected", value: s?.rejected ?? 0, total: s?.total ?? 1, color: "bg-[#DC2626]" },
+          ].map(row => (
+            <div key={row.label}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="font-medium text-foreground">{row.value} <span className="text-muted-foreground">({row.total > 0 ? Math.round((row.value / row.total) * 100) : 0}%)</span></span>
+              </div>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all", row.color)} style={{ width: `${row.total > 0 ? (row.value / row.total) * 100 : 0}%` }} />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* 7-day trend */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">7-Day Generation Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!s?.trend?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No data yet</p>
+          ) : (
+            <div className="space-y-2">
+              {s.trend.map(day => (
+                <div key={day.date} className="flex items-center gap-3 text-xs">
+                  <span className="text-muted-foreground w-24 flex-shrink-0">{new Date(day.date).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}</span>
+                  <div className="flex-1 flex items-center gap-1">
+                    <div className="h-5 bg-primary/20 rounded flex items-center justify-end pr-1" style={{ width: `${Math.max(4, (day.generated / Math.max(...(s.trend?.map(d => d.generated) ?? [1]))) * 100)}%`, minWidth: day.generated > 0 ? "2rem" : "0" }}>
+                      <span className="text-primary font-medium">{day.generated}</span>
+                    </div>
+                    {day.rejected > 0 && (
+                      <span className="text-[#DC2626] font-medium">{day.rejected} rejected</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Top failure reasons */}
+      {s?.topFailures && s.topFailures.length > 0 && (
+        <Card className="border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">Top Failure Reasons</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {s.topFailures.map((f, i) => (
+              <div key={i} className="flex items-start gap-3 text-sm">
+                <span className="text-[#DC2626] font-bold flex-shrink-0 w-5">{i + 1}.</span>
+                <span className="text-foreground flex-1">{f.reason}</span>
+                <span className="text-muted-foreground flex-shrink-0">{f.count}×</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {s?.total === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <Zap className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">No items generated yet</p>
+          <p className="text-xs mt-1">Quality gate data will appear once LLM-generated assessment items are created.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- WS4.3: Session Review Flags Tab -----------------------------------------
 function SessionFlagsTab() {
   const utils = trpc.useUtils();
@@ -1780,6 +1911,7 @@ export default function BackOfficePage() {
     { id: "reasoning",     label: "Reasoning Review",   icon: MessageSquare },
     { id: "gaming",        label: "Anti-Gaming",         icon: Shield },
     { id: "llm_queue",    label: "LLM Review Queue",    icon: ListChecks },
+    { id: "quality_gate",  label: "Quality Gate",         icon: Zap },
     { id: "session_flags", label: "Session Flags",       icon: Flag },
     { id: "feature_flags",  label: "Feature Flags",       icon: ToggleLeft },
   ];
@@ -1824,6 +1956,7 @@ export default function BackOfficePage() {
       {tab === "reasoning"     && <ReasoningTab />}
       {tab === "gaming"          && <AntiGamingTab />}
       {tab === "llm_queue"       && <LlmReviewQueueTab />}
+      {tab === "quality_gate"     && <QualityGateTab />}
       {tab === "session_flags"   && <SessionFlagsTab />}
       {tab === "feature_flags"   && <FeatureFlagsTab />}
     </div>
