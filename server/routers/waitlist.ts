@@ -154,8 +154,9 @@ export const waitlistRouter = router({
           `**HR Team Size:** ${input.hrTeamSize}\n` +
           `**Email:** ${input.contactEmail}\n\n` +
           `**Use Case:** ${input.useCase.substring(0, 200)}${input.useCase.length > 200 ? "…" : ""}`,
-      }).catch(() => {
+      }).catch((err: unknown) => {
         // Non-critical — don't fail the application if notification fails
+        console.error("[waitlist] notifyOwner failed:", err instanceof Error ? err.message : String(err));
       });
 
       // Send confirmation email to applicant (non-critical)
@@ -163,7 +164,9 @@ export const waitlistRouter = router({
         to:          input.contactEmail.toLowerCase().trim(),
         firstName:   input.contactFirstName.trim(),
         companyName: input.companyName.trim(),
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[waitlist] sendApplicationConfirmation failed:", err instanceof Error ? err.message : String(err));
+      });
 
       // Send owner alert email (non-critical)
       sendOwnerApplicationAlert({
@@ -177,7 +180,9 @@ export const waitlistRouter = router({
         contactEmail: input.contactEmail.toLowerCase().trim(),
         useCase:      input.useCase.trim(),
         linkedinUrl:  input.linkedinUrl?.trim() || null,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        console.error("[waitlist] sendOwnerApplicationAlert failed:", err instanceof Error ? err.message : String(err));
+      });
 
       return {
         eligible: true,
@@ -202,7 +207,7 @@ export const waitlistRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin"].includes(r))) {
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -237,7 +242,7 @@ export const waitlistRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin"].includes(r))) {
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -281,7 +286,7 @@ export const waitlistRouter = router({
    */
   stats: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin"].includes(r))) {
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
 

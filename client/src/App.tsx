@@ -47,6 +47,7 @@ import AuditLogPage from "./pages/audit/AuditLogPage";
 import PolicyPage from "./pages/policy/PolicyPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import UsersPage from "./pages/admin/UsersPage";
+import BetaApplicationsPage from "./pages/admin/BetaApplicationsPage";
 import TenantsPage from "./pages/admin/TenantsPage";
 import ContentCMSPage from "./pages/admin/ContentCMSPage";
 import AssessmentBlueprintsPage from "./pages/admin/AssessmentBlueprintsPage";
@@ -177,6 +178,9 @@ function Router() {
       </Route>
       <Route path="/admin/users">
         <ProtectedRoute component={UsersPage} />
+      </Route>
+      <Route path="/beta-applications">
+        <ProtectedRoute component={BetaApplicationsPage} />
       </Route>
       <Route path="/admin/tenants">
         <ProtectedRoute component={TenantsPage} />

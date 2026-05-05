@@ -39,6 +39,7 @@ import {
   UserSearch,
   Eye,
   ChevronDown,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +118,13 @@ const NAV_ITEMS: NavItem[] = [
     label: "Users",
     path: "/admin/users",
     icon: Users,
+    roles: CPO_ROLES,
+    section: "admin",
+  },
+  {
+    label: "Beta Applications",
+    path: "/beta-applications",
+    icon: FlaskConical,
     roles: CPO_ROLES,
     section: "admin",
   },
