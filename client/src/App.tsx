@@ -163,7 +163,7 @@ function Router() {
         <ProtectedRoute component={ReportsPage} />
       </Route>
       <Route path="/ai-strategy">
-        <ProtectedRoute component={StrategyBuilderPage} />
+        <ProtectedRoute component={AIStrategyPage} />
       </Route>
       <Route path="/audit">
         <ProtectedRoute component={AuditLogPage} />
