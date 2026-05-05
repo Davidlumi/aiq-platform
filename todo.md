@@ -2060,3 +2060,18 @@
 - [x] Initiative library on right with category filter chips and pop-out detail modal
 - [x] Single plan — no A/B/C tabs
 - [x] Save strategy persists sector + ambition levels
+
+## Initiative Library Modal & Selected-Only Display
+- [ ] Add selectedInitiativeIds (JSON array) to ailOrgContext schema and saveStrategy procedure
+- [ ] Generate and apply migration SQL for the new column
+- [ ] Move initiative library into a full-screen modal (opened via "Add Initiatives" button)
+- [ ] Modal: category filter chips, select/deselect checkboxes, click card to view detail
+- [ ] Main page: show only selected initiatives inline; "No initiatives selected" empty state
+- [ ] Save selected initiative IDs when saving strategy
+
+## Initiative Library Modal (Complete)
+- [x] Move initiative library to a full-screen selector modal (opened via "Manage Initiatives" button)
+- [x] Show only selected initiatives inline on the main page
+- [x] Add selectedInitiativesJson column to ailOrgContext schema and apply migration
+- [x] Update saveStrategy and getStrategy procedures to persist and return selectedInitiativeIds
+- [x] Allow removing individual initiatives from the inline selected list

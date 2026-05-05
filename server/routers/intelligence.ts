@@ -294,6 +294,7 @@ export const intelligenceRouter = router({
       ambitionTargetScore: ailOrgContext.ambitionTargetScore,
       ambitionTargetDate: ailOrgContext.ambitionTargetDate,
       ambitionTargetLabel: ailOrgContext.ambitionTargetLabel,
+      selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -302,6 +303,7 @@ export const intelligenceRouter = router({
       configured: false, businessAmbitionLevel: null, peopleAmbitionLevel: null,
       domainTargets: null, strategyNarrative: null, strategySavedAt: null,
       ambitionTargetScore: null, ambitionTargetDate: null, ambitionTargetLabel: null,
+      selectedInitiativeIds: [] as string[],
     };
     let domainTargets: Record<string, number> | null = null;
     if (row.domainTargetsJson) {
@@ -344,6 +346,7 @@ export const intelligenceRouter = router({
       ambitionTargetDate: row.ambitionTargetDate,
       ambitionTargetLabel: row.ambitionTargetLabel,
       currentDomainScores,
+      selectedInitiativeIds: (() => { try { return JSON.parse(row.selectedInitiativesJson ?? "[]") as string[]; } catch { return [] as string[]; } })(),
     };
   }),
 
@@ -359,6 +362,7 @@ export const intelligenceRouter = router({
       ambitionTargetScore: z.number().int().min(0).max(100),
       ambitionTargetDate: z.string().max(10).nullable().optional(),
       ambitionTargetLabel: z.string().max(200).nullable().optional(),
+      selectedInitiativeIds: z.array(z.string()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -372,6 +376,7 @@ export const intelligenceRouter = router({
         .from(ailOrgContext)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
+      const selectedInitiativesJson = JSON.stringify(input.selectedInitiativeIds ?? []);
       if (existing.length > 0) {
         await db.update(ailOrgContext).set({
           businessAmbitionLevel: input.businessAmbitionLevel,
@@ -382,6 +387,7 @@ export const intelligenceRouter = router({
           ambitionTargetScore: input.ambitionTargetScore,
           ambitionTargetDate: input.ambitionTargetDate ?? null,
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+          selectedInitiativesJson,
           updatedAt: new Date(),
         }).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       } else {
@@ -396,6 +402,7 @@ export const intelligenceRouter = router({
           ambitionTargetScore: input.ambitionTargetScore,
           ambitionTargetDate: input.ambitionTargetDate ?? null,
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,
+          selectedInitiativesJson,
         });
       }
       return { success: true };
