@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Target, Save, CheckCircle2, ChevronDown, Info } from "lucide-react";
+import { Target, Save, CheckCircle2, ChevronDown, Info, Download } from "lucide-react";
 import { getLevelChipStyle, getLevelFromScore, getPreciseLevel } from "@/lib/level-utils";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
@@ -494,9 +494,22 @@ export default function AIStrategyPage() {
     <div className="max-w-4xl mx-auto space-y-5">
 
       {/* Page header */}
-      <div className="pb-3 border-b border-border">
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">Strategic dashboard</p>
-        <h1 className="text-lg font-semibold text-foreground">HR capability vs AI roadmap</h1>
+      <div className="pb-3 border-b border-border flex items-end justify-between">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">Strategic dashboard</p>
+          <h1 className="text-lg font-semibold text-foreground">HR capability vs AI roadmap</h1>
+        </div>
+        {ambitionGap?.configured && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => window.open('/api/pdf/ai_strategy', '_blank')}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export PDF
+          </Button>
+        )}
       </div>
 
       {/* ── CONTROL PANEL ─────────────────────────────────────────────────────── */}

@@ -2030,3 +2030,9 @@
 - [x] FIX-CPO-7: Add "What's in beta" transparency page — honest list of what works now vs what's coming (norm validation, integrations, board exports)
 - [x] FIX-CPO-8: LLM item quality monitoring — surface item quality gate pass rate in backoffice admin panel
 - [x] FIX-CPO-9: Demo/preview mode — seed a realistic demo view with populated multi-user data so beta prospects can see enterprise features working
+
+## AI Strategy PDF Export
+
+- [ ] FEAT-PDF-1: Add server-side PDF generation endpoint (strategy report: KPIs, domain bars, findings, board options, trajectory summary)
+- [ ] FEAT-PDF-2: Add Export PDF button to AI Strategy page with loading state and download trigger
+- [ ] FEAT-PDF-3: Write vitest for the PDF generation endpoint

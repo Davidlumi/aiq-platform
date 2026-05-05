@@ -17,7 +17,7 @@ import PDFDocument from "pdfkit";
 import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
-import { getUserById, getDb } from "./db";
+import { getUserById, getDb, getTenantById } from "./db";
 import {
   assessmentSessions,
   assessmentScores,
@@ -28,8 +28,17 @@ import {
   managerTeamMembers,
   learningStreaks,
   users,
+  ailOrgContext,
 } from "../drizzle/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
+import {
+  DOMAIN_KEYS,
+  DOMAIN_LABELS,
+  roleFamilyFromUserField,
+  ROLE_FAMILY_LABELS,
+  type DomainKey,
+  type RoleFamilyKey,
+} from "../shared/dashboard";
 
 // ─── Colours ──────────────────────────────────────────────────────────────────
 const BRAND = {
@@ -629,6 +638,344 @@ async function generateCapabilityProfilePDF(doc: PDFKit.PDFDocument, userId: str
   addFooter(doc, pageCounter.n);
 }
 
+// ─── AI Strategy Report ─────────────────────────────────────────────────────
+
+async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string, tenantId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+
+  // ── Fetch org context (strategy config) ──────────────────────────────────
+  const orgCtxRows = await db.select().from(ailOrgContext)
+    .where(eq(ailOrgContext.tenantId, tenantId)).limit(1);
+  const orgCtx = orgCtxRows[0] ?? null;
+
+  const businessAmbitionLevel: number = (orgCtx as any)?.businessAmbitionLevel ?? 3;
+  const peopleAmbitionLevel: number = (orgCtx as any)?.peopleAmbitionLevel ?? 3;
+  const ambitionTargetScore: number | null = (orgCtx as any)?.ambitionTargetScore ?? null;
+  const ambitionTargetDate: string | null = (orgCtx as any)?.ambitionTargetDate ?? null;
+  const ambitionTargetLabel: string | null = (orgCtx as any)?.ambitionTargetLabel ?? null;
+  const strategyNarrative: string | null = (orgCtx as any)?.strategyNarrative ?? null;
+
+  let domainTargets: Record<DomainKey, number> = {} as Record<DomainKey, number>;
+  try {
+    const raw = (orgCtx as any)?.domainTargetsJson;
+    if (raw) domainTargets = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {}
+  // Fall back to computed targets if not stored
+  if (!Object.keys(domainTargets).length) {
+    const base = Math.round((businessAmbitionLevel * 0.55 + peopleAmbitionLevel * 0.45) * 20);
+    for (const dk of DOMAIN_KEYS) domainTargets[dk] = Math.max(20, Math.min(100, base));
+  }
+
+  // ── Fetch tenant name ─────────────────────────────────────────────────────
+  const tenant = await getTenantById(tenantId);
+  const orgName = tenant?.name ?? "Your Organisation";
+
+  // ── Compute function averages from latest assessment per user ─────────────
+  const allUsers = await db
+    .select({
+      id: users.id,
+      roleFamily: users.roleFamily,
+      jobFunction: users.jobFunction,
+      scoreBreakdownJson: assessmentScores.scoreBreakdownJson,
+      overallScore: assessmentScores.overallScore,
+      completedAt: assessmentSessions.completedAt,
+    })
+    .from(users)
+    .innerJoin(assessmentSessions, and(
+      eq(assessmentSessions.userId, users.id),
+      eq(assessmentSessions.tenantId, users.tenantId),
+      eq(assessmentSessions.state, "completed"),
+    ))
+    .innerJoin(assessmentScores, eq(assessmentScores.sessionId, assessmentSessions.id))
+    .where(eq(users.tenantId, tenantId))
+    .orderBy(desc(assessmentSessions.completedAt));
+
+  const seenUsers = new Set<string>();
+  const userData: { id: string; overallScore: number; domainScores: Record<DomainKey, number>; roleFamily: RoleFamilyKey }[] = [];
+  for (const u of allUsers) {
+    if (seenUsers.has(u.id)) continue;
+    seenUsers.add(u.id);
+    const domainScores: Record<DomainKey, number> = {} as Record<DomainKey, number>;
+    try {
+      const raw = u.scoreBreakdownJson;
+      const breakdown = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {});
+      const caps = (breakdown as any).capabilityScores ?? breakdown;
+      for (const dk of DOMAIN_KEYS) domainScores[dk] = (caps as any)[dk] ?? 50;
+    } catch { for (const dk of DOMAIN_KEYS) domainScores[dk] = 50; }
+    if (u.overallScore !== null) {
+      userData.push({
+        id: u.id,
+        overallScore: parseFloat(String(u.overallScore)),
+        domainScores,
+        roleFamily: roleFamilyFromUserField(u.roleFamily ?? u.jobFunction),
+      });
+    }
+  }
+
+  const assessedCount = userData.length;
+  const functionAvgRaw = assessedCount > 0
+    ? Math.round(userData.reduce((s, u) => s + u.overallScore, 0) / assessedCount)
+    : null;
+  const domainAvgs: Record<DomainKey, number | null> = {} as Record<DomainKey, number | null>;
+  for (const dk of DOMAIN_KEYS) {
+    const vals = userData.map(u => u.domainScores[dk]);
+    domainAvgs[dk] = vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+  }
+  const gapRaw = (functionAvgRaw !== null && ambitionTargetScore !== null)
+    ? ambitionTargetScore - functionAvgRaw : null;
+
+  // ── Compute strategic findings (top 3) ────────────────────────────────────
+  type FindingPriority = "critical" | "high" | "medium" | "low";
+  const findings: Array<{ observation: string; supportingData: string; strategicImplication: string; priority: FindingPriority }> = [];
+
+  if (assessedCount > 0) {
+    const notReadyCount = userData.filter(u => u.overallScore < 40).length;
+    const notReadyPct = Math.round((notReadyCount / assessedCount) * 100);
+    if (notReadyPct > 10) {
+      findings.push({
+        observation: `${notReadyPct}% of assessed HR professionals (${notReadyCount} people) are below the minimum readiness threshold.`,
+        supportingData: `${notReadyCount} of ${assessedCount} assessed staff score below 40/100.`,
+        strategicImplication: "Prioritise these individuals for immediate foundation-level development before expanding AI tool access.",
+        priority: "high",
+      });
+    }
+    // Weakest domain
+    const domainRanked = DOMAIN_KEYS.map(dk => ({ dk, avg: domainAvgs[dk] ?? 0 })).sort((a, b) => a.avg - b.avg);
+    const weakest = domainRanked[0];
+    const strongest = domainRanked[domainRanked.length - 1];
+    if (weakest && strongest && strongest.avg - weakest.avg > 3) {
+      findings.push({
+        observation: `${DOMAIN_LABELS[weakest.dk]} is the weakest domain at ${weakest.avg} avg — ${strongest.avg - weakest.avg} points below ${DOMAIN_LABELS[strongest.dk]} (${strongest.avg}).`,
+        supportingData: `Domain averages range from ${weakest.avg} (${DOMAIN_LABELS[weakest.dk]}) to ${strongest.avg} (${DOMAIN_LABELS[strongest.dk]}).`,
+        strategicImplication: `If ${DOMAIN_LABELS[weakest.dk]} is critical to your AI roadmap, this gap requires targeted intervention.`,
+        priority: "high",
+      });
+    }
+    // Gap vs target
+    if (gapRaw !== null && gapRaw > 10) {
+      findings.push({
+        observation: `The function average (${functionAvgRaw}) is ${gapRaw} points below the ambition target (${ambitionTargetScore}).`,
+        supportingData: `Assessed: ${assessedCount} people. Function avg: ${functionAvgRaw}. Target: ${ambitionTargetScore}.`,
+        strategicImplication: "Accelerated development investment is required to meet the AI roadmap timeline.",
+        priority: gapRaw > 20 ? "high" : "medium",
+      });
+    }
+    // Role family disparity
+    const rfScores: Record<string, { total: number; count: number }> = {};
+    for (const u of userData) {
+      if (!rfScores[u.roleFamily]) rfScores[u.roleFamily] = { total: 0, count: 0 };
+      rfScores[u.roleFamily].total += u.overallScore;
+      rfScores[u.roleFamily].count++;
+    }
+    const rfAvgs = Object.entries(rfScores)
+      .filter(([, v]) => v.count >= 2)
+      .map(([rf, v]) => ({ rf, avg: Math.round(v.total / v.count) }))
+      .sort((a, b) => a.avg - b.avg);
+    if (rfAvgs.length >= 2) {
+      const lo = rfAvgs[0]; const hi = rfAvgs[rfAvgs.length - 1];
+      const gap = hi.avg - lo.avg;
+      if (gap > 5) {
+        findings.push({
+          observation: `${gap}-point gap between highest role family (${ROLE_FAMILY_LABELS[lo.rf as RoleFamilyKey] ?? lo.rf}: ${hi.avg}) and lowest (${ROLE_FAMILY_LABELS[lo.rf as RoleFamilyKey] ?? lo.rf}: ${lo.avg}).`,
+          supportingData: `${hi.rf}: ${hi.avg} avg. ${lo.rf}: ${lo.avg} avg.`,
+          strategicImplication: "Investigate whether the lower-performing role family has different development needs or less access to AI tools.",
+          priority: gap > 10 ? "high" : "medium",
+        });
+      }
+    }
+  }
+  findings.sort((a, b) => ({ critical: 0, high: 1, medium: 2, low: 3 }[a.priority] - { critical: 0, high: 1, medium: 2, low: 3 }[b.priority]));
+
+  // ── Board options ─────────────────────────────────────────────────────────
+  const targetDateStr = ambitionTargetDate
+    ? new Date(ambitionTargetDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : "the target date";
+  const boardOptions = gapRaw !== null && gapRaw > 0 ? [
+    `Invest in accelerated development to meet the ${targetDateStr} target`,
+    "Extend the AI roadmap timeline to align with the current learning pace",
+    "Reduce capability bar for non-customer-facing roles and focus investment on high-impact functions",
+  ] : [];
+
+  // ── Ambition level labels ─────────────────────────────────────────────────
+  const BUSINESS_LEVEL_LABELS: Record<number, string> = {
+    1: "Cautious", 2: "Exploratory", 3: "Progressive", 4: "Ambitious", 5: "Transformative",
+  };
+  const PEOPLE_LEVEL_LABELS: Record<number, string> = {
+    1: "Followers", 2: "Adopters", 3: "Practitioners", 4: "Champions", 5: "Innovators",
+  };
+
+  // ── PDF generation ────────────────────────────────────────────────────────
+  const pageCounter = { n: 1 };
+  const reportDate = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  // Page 1: Cover / executive summary
+  addBrandedHeader(doc, "AI Strategy Report", `${orgName} · ${reportDate}`);
+
+  // Strategy label banner
+  if (ambitionTargetLabel) {
+    doc.rect(40, doc.y, doc.page.width - 80, 28).fill(BRAND.navy);
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(BRAND.gold)
+       .text(ambitionTargetLabel, 52, doc.y - 20, { width: doc.page.width - 104 });
+    doc.moveDown(0.8);
+  }
+
+  // Strategy configuration summary
+  addSectionHeading(doc, "Strategy Configuration");
+  const configY = doc.y;
+  const colW = (doc.page.width - 80) / 2 - 8;
+  // Left column
+  doc.rect(40, configY, colW, 64).fill(BRAND.light).stroke(BRAND.border);
+  doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+     .text("BUSINESS AMBITION", 52, configY + 6, { width: colW - 24 });
+  doc.fontSize(14).font("Helvetica-Bold").fillColor(BRAND.navy)
+     .text(`${businessAmbitionLevel} — ${BUSINESS_LEVEL_LABELS[businessAmbitionLevel] ?? ""}`, 52, configY + 18, { width: colW - 24 });
+  doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+     .text("How aggressively the business adopts AI", 52, configY + 38, { width: colW - 24 });
+  // Right column
+  const rColX = 40 + colW + 16;
+  doc.rect(rColX, configY, colW, 64).fill(BRAND.light).stroke(BRAND.border);
+  doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+     .text("PEOPLE AMBITION", rColX + 12, configY + 6, { width: colW - 24 });
+  doc.fontSize(14).font("Helvetica-Bold").fillColor(BRAND.navy)
+     .text(`${peopleAmbitionLevel} — ${PEOPLE_LEVEL_LABELS[peopleAmbitionLevel] ?? ""}`, rColX + 12, configY + 18, { width: colW - 24 });
+  doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+     .text("How much HR people lead vs follow AI adoption", rColX + 12, configY + 38, { width: colW - 24 });
+  doc.y = configY + 72;
+
+  // Strategy narrative
+  if (strategyNarrative) {
+    doc.moveDown(0.5);
+    doc.fontSize(8).font("Helvetica-Oblique").fillColor(BRAND.slate)
+       .text(`"${strategyNarrative}"`, 48, doc.y, { width: doc.page.width - 96 });
+    doc.moveDown(0.5);
+  }
+
+  // KPI tiles: Current / Target / Gap
+  checkPageBreak(doc, 80, pageCounter);
+  addSectionHeading(doc, "Readiness KPIs");
+  const kpiY = doc.y;
+  const kpiW = (doc.page.width - 80) / 3 - 6;
+  const kpis = [
+    { label: "Current Avg", value: functionAvgRaw !== null ? `${functionAvgRaw}` : "—", sub: `${assessedCount} assessed`, colour: BRAND.teal },
+    { label: "Target Score", value: ambitionTargetScore !== null ? `${ambitionTargetScore}` : "—", sub: ambitionTargetDate ? `By ${targetDateStr}` : "No date set", colour: BRAND.navy },
+    { label: "Gap", value: gapRaw !== null ? (gapRaw > 0 ? `+${gapRaw}` : `${gapRaw}`) : "—", sub: gapRaw !== null ? (gapRaw <= 0 ? "On track" : "Behind target") : "No target set", colour: gapRaw !== null && gapRaw <= 0 ? BRAND.safe : BRAND.risk },
+  ];
+  for (let i = 0; i < kpis.length; i++) {
+    const kpi = kpis[i];
+    const kpiX = 40 + i * (kpiW + 9);
+    doc.rect(kpiX, kpiY, kpiW, 56).fill(BRAND.light).stroke(BRAND.border);
+    doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+       .text(kpi.label.toUpperCase(), kpiX + 10, kpiY + 6, { width: kpiW - 20 });
+    doc.fontSize(22).font("Helvetica-Bold").fillColor(kpi.colour)
+       .text(kpi.value, kpiX + 10, kpiY + 18, { width: kpiW - 20 });
+    doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+       .text(kpi.sub, kpiX + 10, kpiY + 42, { width: kpiW - 20 });
+  }
+  doc.y = kpiY + 64;
+
+  // Domain capability vs target bars
+  checkPageBreak(doc, 180, pageCounter);
+  addSectionHeading(doc, "Domain Capability vs Roadmap Targets");
+  for (const dk of DOMAIN_KEYS) {
+    checkPageBreak(doc, 32, pageCounter);
+    const current = domainAvgs[dk];
+    const target = domainTargets[dk] ?? null;
+    const barY = doc.y;
+    const barAreaW = doc.page.width - 80;
+    const trackW = barAreaW - 160;
+    // Label
+    doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+       .text(DOMAIN_LABELS[dk], 40, barY, { width: 150 });
+    // Target label
+    if (target !== null) {
+      doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+         .text(`Target: ${target}`, 40, barY + 12, { width: 150 });
+    }
+    // Bar track
+    const barX = 200;
+    doc.rect(barX, barY + 2, trackW, 8).fill(BRAND.border);
+    // Current fill
+    if (current !== null) {
+      const filled = Math.round((current / 100) * trackW);
+      const colour = current >= 75 ? BRAND.safe : current >= 50 ? BRAND.risk : BRAND.unsafe;
+      if (filled > 0) doc.rect(barX, barY + 2, filled, 8).fill(colour);
+      // Current score label
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(current >= 75 ? BRAND.safe : current >= 50 ? BRAND.risk : BRAND.unsafe)
+         .text(`${current}`, barX + trackW + 6, barY, { width: 30 });
+    } else {
+      doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+         .text("No data", barX + trackW + 6, barY, { width: 40 });
+    }
+    // Target marker line
+    if (target !== null) {
+      const targetX = barX + Math.round((target / 100) * trackW);
+      doc.rect(targetX - 1, barY - 2, 2, 14).fill(BRAND.gold);
+    }
+    doc.y = barY + 26;
+  }
+
+  // Legend for bars
+  doc.moveDown(0.3);
+  doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+     .text("Score guide: ", 40, doc.y, { continued: true });
+  doc.fillColor(BRAND.safe).text("75+ Strong  ", { continued: true });
+  doc.fillColor(BRAND.risk).text("50–74 Developing  ", { continued: true });
+  doc.fillColor(BRAND.unsafe).text("0–49 Gap  ", { continued: true });
+  doc.fillColor(BRAND.gold).text("| Target");
+  doc.moveDown(0.5);
+
+  // Strategic findings
+  if (findings.length > 0) {
+    checkPageBreak(doc, 60, pageCounter);
+    addSectionHeading(doc, "Strategic Findings");
+    const priorityColour: Record<FindingPriority, string> = {
+      critical: BRAND.unsafe, high: BRAND.risk, medium: BRAND.teal, low: BRAND.slate,
+    };
+    for (const f of findings.slice(0, 5)) {
+      checkPageBreak(doc, 70, pageCounter);
+      const fY = doc.y;
+      doc.rect(40, fY, doc.page.width - 80, 4).fill(priorityColour[f.priority]);
+      doc.y = fY + 8;
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text(f.observation, 48, doc.y, { width: doc.page.width - 96 });
+      doc.moveDown(0.3);
+      doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+         .text(f.strategicImplication, 48, doc.y, { width: doc.page.width - 96 });
+      doc.moveDown(0.3);
+      doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
+         .text(`Data: ${f.supportingData}`, 48, doc.y, { width: doc.page.width - 96 });
+      doc.moveDown(0.8);
+    }
+  }
+
+  // Board options
+  if (boardOptions.length > 0) {
+    checkPageBreak(doc, 80, pageCounter);
+    addSectionHeading(doc, "Board Options");
+    doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+       .text("Three strategic options for board consideration:", 48, doc.y, { width: doc.page.width - 96 });
+    doc.moveDown(0.5);
+    boardOptions.forEach((opt, i) => {
+      checkPageBreak(doc, 24, pageCounter);
+      doc.rect(48, doc.y, 16, 16).fill(BRAND.navy);
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.white)
+         .text(`${i + 1}`, 48, doc.y - 12, { width: 16, align: "center" });
+      doc.fontSize(9).font("Helvetica").fillColor(BRAND.navy)
+         .text(opt, 72, doc.y - 12, { width: doc.page.width - 120 });
+      doc.moveDown(0.9);
+    });
+  }
+
+  // Disclosure note
+  checkPageBreak(doc, 40, pageCounter);
+  doc.moveDown(0.5);
+  doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
+     .text("Capability scores are derived from AiQ adaptive assessments. Benchmarks are based on synthetic norms calibrated against the AiQ question bank. This report is confidential and intended for internal strategic planning purposes only.", 40, doc.y, { width: doc.page.width - 80 });
+
+  addFooter(doc, pageCounter.n);
+}
+
 // ─── Route registration ───────────────────────────────────────────────────────
 
 export function registerPdfRoutes(app: Express) {
@@ -650,6 +997,7 @@ export function registerPdfRoutes(app: Express) {
         module:             `aiq-module-${moduleId ?? "content"}.pdf`,
         team_dashboard:     "aiq-team-dashboard.pdf",
         capability_profile: "aiq-capability-profile.pdf",
+        ai_strategy:        "aiq-ai-strategy-report.pdf",
       };
 
       const filename = filenames[type];
@@ -680,6 +1028,9 @@ export function registerPdfRoutes(app: Express) {
           break;
         case "capability_profile":
           await generateCapabilityProfilePDF(doc, user.id);
+          break;
+        case "ai_strategy":
+          await generateAIStrategyReport(doc, user.id, user.tenantId);
           break;
       }
 
