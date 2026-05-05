@@ -2051,3 +2051,12 @@
 - [x] Remove multi-strategy A/B/C tabs — show single live plan only
 - [x] Plan section (findings, capability bars, board options, trajectory) updates live as ambition buttons are clicked
 - [x] Show description text below each ambition row that updates as selection changes
+
+## AIStrategyPage Final Rebuild (Narrative + Initiative Library)
+- [x] Industry dropdown at top (from orgContext.sector)
+- [x] Business AI Ambition dropdown (Cautious/Exploratory/Progressive/Ambitious/Transformative)
+- [x] People AI Ambition dropdown (Followers/Adopters/Practitioners/Champions/Innovators)
+- [x] Four narrative sections: Company Maturity, Company Ambition, People Strategy, The Gap
+- [x] Initiative library on right with category filter chips and pop-out detail modal
+- [x] Single plan — no A/B/C tabs
+- [x] Save strategy persists sector + ambition levels
