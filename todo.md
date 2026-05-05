@@ -2044,3 +2044,10 @@
 - [x] Update DashboardLayout.tsx to add AI_STRATEGY section with AI Strategy and Company Assessment items
 - [x] Enforce single strategy: ensure Company Assessment page links to existing assessment or starts a new one (no list of multiple)
 - [x] Fix filter UI visibility in LeaderDashboardV2 (buttons with dropdown selects not visible)
+
+## AIStrategyPage Redesign
+- [x] Replace dropdown selects with button-style ambition selectors (Business: Cautious/Exploratory/Progressive/Ambitious/Transformative; People: Followers/Adopters/Practitioners/Champions/Innovators)
+- [x] Move control panel to a clean top section with button groups, target date, strategy label, and Save button
+- [x] Remove multi-strategy A/B/C tabs — show single live plan only
+- [x] Plan section (findings, capability bars, board options, trajectory) updates live as ambition buttons are clicked
+- [x] Show description text below each ambition row that updates as selection changes

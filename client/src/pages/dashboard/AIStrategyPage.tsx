@@ -3,46 +3,45 @@
  *
  * Layout:
  *   ┌─────────────────────────────────────────────────────────┐
- *   │  STRATEGY CONTROL PANEL  (sticky top bar)               │
- *   │  Business Ambition ▾  People Ambition ▾  Target Date    │
- *   │  Strategy Label                          [Save]         │
+ *   │  CONTROL PANEL (top)                                    │
+ *   │  Business Ambition  [button group]                      │
+ *   │  People Ambition    [button group]                      │
+ *   │  Target Date · Strategy Label · [Save]                  │
  *   └─────────────────────────────────────────────────────────┘
  *   ┌─────────────────────────────────────────────────────────┐
- *   │  OUTPUT DASHBOARD                                        │
+ *   │  SINGLE LIVE PLAN (updates as buttons are clicked)      │
  *   │  Strategic finding hero · KPI tiles · Board options     │
- *   │  Capability vs roadmap bars                             │
- *   │  Trajectory chart                                       │
- *   │  Strategic findings                                     │
+ *   │  Capability vs roadmap bars · Trajectory · Findings     │
  *   └─────────────────────────────────────────────────────────┘
  */
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Target, Save, CheckCircle2, ChevronDown, Info, Download } from "lucide-react";
 import { getLevelChipStyle, getLevelFromScore, getPreciseLevel } from "@/lib/level-utils";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
-  1: { label: "Cautious",      description: "AI used selectively in low-risk back-office processes" },
-  2: { label: "Exploratory",   description: "Piloting AI in specific workflows" },
-  3: { label: "Progressive",   description: "AI embedded in core HR processes" },
-  4: { label: "Ambitious",     description: "AI is a strategic differentiator" },
-  5: { label: "Transformative",description: "AI is central to the business model" },
+  1: { label: "Cautious",       description: "AI used selectively in low-risk back-office processes only" },
+  2: { label: "Exploratory",    description: "Piloting AI in specific workflows with limited scale" },
+  3: { label: "Progressive",    description: "AI embedded in core HR processes across the function" },
+  4: { label: "Ambitious",      description: "AI is a strategic differentiator, driving competitive advantage" },
+  5: { label: "Transformative", description: "AI is central to the business model and people strategy" },
 };
 
 const PEOPLE_LEVELS: Record<number, { label: string; description: string }> = {
-  1: { label: "Followers",    description: "HR people use AI tools as directed" },
-  2: { label: "Adopters",     description: "Learning and using AI tools day-to-day" },
-  3: { label: "Practitioners",description: "Apply AI confidently, evaluate outputs critically" },
-  4: { label: "Champions",    description: "Advocate for AI, coach others, contribute to governance" },
-  5: { label: "Innovators",   description: "Design AI-enabled processes, lead change" },
+  1: { label: "Followers",     description: "HR people use AI tools as directed, limited independent judgement" },
+  2: { label: "Adopters",      description: "Learning and using AI tools day-to-day with growing confidence" },
+  3: { label: "Practitioners", description: "Apply AI confidently, evaluate outputs critically, coach peers" },
+  4: { label: "Champions",     description: "Advocate for AI, coach others, contribute to governance and policy" },
+  5: { label: "Innovators",    description: "Design AI-enabled processes, lead organisation-wide change" },
 };
 
 type DomainKey = typeof DOMAIN_KEYS[number];
@@ -67,7 +66,49 @@ function overallFromDomains(targets: Record<DomainKey, number>): number {
   return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Ambition Button Group ────────────────────────────────────────────────────
+
+function AmbitionButtonGroup({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: Record<number, { label: string; description: string }>;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground italic">{options[value]?.description}</p>
+      </div>
+      <div className="grid grid-cols-5 gap-1.5">
+        {[1, 2, 3, 4, 5].map(n => {
+          const active = value === n;
+          return (
+            <button
+              key={n}
+              onClick={() => onChange(n)}
+              className={cn(
+                "h-10 rounded-lg text-sm font-medium transition-all duration-150 border",
+                active
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              {options[n].label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Roadmap Bar ──────────────────────────────────────────────────────────────
 
 function RoadmapBar({ label, sub, currentScore, targetScore, status }: {
   label: string; sub?: string; currentScore: number | null; targetScore: number | null;
@@ -110,6 +151,8 @@ function RoadmapBar({ label, sub, currentScore, targetScore, status }: {
     </div>
   );
 }
+
+// ─── Trajectory Chart ─────────────────────────────────────────────────────────
 
 function TrajectoryChart({ domains, targetScore, targetDate }: {
   domains: Array<{ domain: string; timeSeries: Array<{ date: string; avgScore: number | null }>; currentValue: number | null; delta90d: number | null }>;
@@ -182,11 +225,11 @@ function TrajectoryChart({ domains, targetScore, targetDate }: {
       </svg>
       <div className="flex gap-5 mt-3 pt-3" style={{ borderTop: "0.5px solid oklch(22% 0.030 240)" }}>
         <div className="flex items-center gap-1.5">
-          <span style={{ width: 18, height: 2.5, background: "#60A5FA", display: "inline-block" }} />
+          <span style={{ width: 18, height: 2.5, background: "var(--primary)", display: "inline-block" }} />
           <span className="text-xs text-muted-foreground">Actual</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span style={{ width: 18, height: 2, background: "#557DAE", display: "inline-block" }} />
+          <span style={{ width: 18, height: 2, background: "var(--primary)", opacity: 0.5, display: "inline-block" }} />
           <span className="text-xs text-muted-foreground">Projected at current pace</span>
         </div>
         {targetY !== null && (
@@ -200,137 +243,7 @@ function TrajectoryChart({ domains, targetScore, targetDate }: {
   );
 }
 
-// ─── Strategy Control Panel ───────────────────────────────────────────────────
-
-function StrategyControlPanel({
-  businessLevel, setBusinessLevel,
-  peopleLevel, setPeopleLevel,
-  targetDate, setTargetDate,
-  targetLabel, setTargetLabel,
-  overallTarget,
-  isDirty,
-  isSaving,
-  onSave,
-  configured,
-}: {
-  businessLevel: number; setBusinessLevel: (v: number) => void;
-  peopleLevel: number; setPeopleLevel: (v: number) => void;
-  targetDate: string; setTargetDate: (v: string) => void;
-  targetLabel: string; setTargetLabel: (v: string) => void;
-  overallTarget: number;
-  isDirty: boolean;
-  isSaving: boolean;
-  onSave: () => void;
-  configured: boolean;
-}) {
-  return (
-    <div
-      className="rounded-xl border border-border bg-card shadow-md mb-5"
-      style={{ background: "oklch(14% 0.025 240)" }}
-    >
-      {/* Panel header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">AI People Strategy Controls</span>
-          {configured && !isDirty && (
-            <Badge variant="outline" className="text-xs text-green-400 border-green-400/30 bg-green-400/10 ml-1">
-              <CheckCircle2 className="w-3 h-3 mr-1" />Saved
-            </Badge>
-          )}
-          {isDirty && (
-            <Badge variant="outline" className="text-xs text-amber-400 border-amber-400/30 bg-amber-400/10 ml-1">
-              Unsaved changes
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Overall target:</span>
-          <span className="text-sm font-bold text-primary">Level {(overallTarget / 10).toFixed(1)}</span>
-          <Button
-            size="sm"
-            disabled={!isDirty || isSaving}
-            onClick={onSave}
-            className="gap-1.5 text-xs h-7 px-3 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
-          >
-            <Save className="w-3 h-3" />
-            {isSaving ? "Saving…" : "Save"}
-          </Button>
-        </div>
-      </div>
-
-      {/* Controls row */}
-      <div className="px-5 py-4 grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4">
-
-        {/* Business Ambition */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Business Ambition</label>
-          <Select value={String(businessLevel)} onValueChange={v => setBusinessLevel(Number(v))}>
-            <SelectTrigger className="h-9 text-sm bg-background border-border/80 w-full text-foreground font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map(n => (
-                <SelectItem key={n} value={String(n)}>
-                  <span className="font-medium">{n} — {BUSINESS_LEVELS[n].label}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground leading-snug">{BUSINESS_LEVELS[businessLevel]?.description}</p>
-        </div>
-
-        {/* People Ambition */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">People Ambition</label>
-          <Select value={String(peopleLevel)} onValueChange={v => setPeopleLevel(Number(v))}>
-            <SelectTrigger className="h-9 text-sm bg-background border-border/80 w-full text-foreground font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map(n => (
-                <SelectItem key={n} value={String(n)}>
-                  <span className="font-medium">{n} — {PEOPLE_LEVELS[n].label}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground leading-snug">{PEOPLE_LEVELS[peopleLevel]?.description}</p>
-        </div>
-
-        {/* Target Date */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Target Date</label>
-          <input
-            type="date"
-            value={targetDate}
-            onChange={e => setTargetDate(e.target.value)}
-            className="h-9 w-full rounded-md border border-border bg-background/60 px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <p className="text-xs text-muted-foreground">When should HR reach this level?</p>
-        </div>
-
-        {/* Strategy Label */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Strategy Label</label>
-          <input
-            type="text"
-            placeholder="e.g. AI-Ready HR by 2026"
-            value={targetLabel}
-            onChange={e => setTargetLabel(e.target.value)}
-            className="h-9 w-full rounded-md border border-border bg-background/60 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <p className="text-xs text-muted-foreground">Short name for this strategy</p>
-        </div>
-      </div>
-
-      {/* Domain targets row — collapsible */}
-      <DomainTargetsRow businessLevel={businessLevel} peopleLevel={peopleLevel} />
-    </div>
-  );
-}
-
-// ─── Domain targets expandable row ───────────────────────────────────────────
+// ─── Domain Targets Expandable ────────────────────────────────────────────────
 
 function DomainTargetsRow({ businessLevel, peopleLevel }: { businessLevel: number; peopleLevel: number }) {
   const [open, setOpen] = useState(false);
@@ -367,7 +280,7 @@ function DomainTargetsRow({ businessLevel, peopleLevel }: { businessLevel: numbe
           <div className="col-span-2 md:col-span-3 flex items-start gap-1.5 mt-1">
             <Info className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              Targets are auto-calculated from your ambition settings. To fine-tune individual domain targets, use the advanced strategy builder.
+              Targets are auto-calculated from your ambition settings. They update live as you change the selections above.
             </p>
           </div>
         </div>
@@ -483,7 +396,7 @@ export default function AIStrategyPage() {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-5">
-        <Skeleton className="h-36 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
         <Skeleton className="h-48 w-full rounded-xl" />
       </div>
@@ -493,11 +406,11 @@ export default function AIStrategyPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
 
-      {/* Page header */}
+      {/* ── PAGE HEADER ─────────────────────────────────────────────────────── */}
       <div className="pb-3 border-b border-border flex items-end justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">Strategic dashboard</p>
-          <h1 className="text-lg font-semibold text-foreground">HR capability vs AI roadmap</h1>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-0.5">AI Strategy</p>
+          <h1 className="text-lg font-semibold text-foreground">Strategy Dashboard</h1>
         </div>
         {ambitionGap?.configured && (
           <Button
@@ -513,23 +426,86 @@ export default function AIStrategyPage() {
       </div>
 
       {/* ── CONTROL PANEL ─────────────────────────────────────────────────────── */}
-      <StrategyControlPanel
-        businessLevel={businessLevel}
-        setBusinessLevel={setBusinessLevel}
-        peopleLevel={peopleLevel}
-        setPeopleLevel={setPeopleLevel}
-        targetDate={targetDate}
-        setTargetDate={setTargetDate}
-        targetLabel={targetLabel}
-        setTargetLabel={setTargetLabel}
-        overallTarget={overallTarget}
-        isDirty={isDirty}
-        isSaving={saveStrategy.isPending}
-        onSave={handleSave}
-        configured={!!strategyData?.configured}
-      />
+      <div
+        className="rounded-xl border border-border shadow-md"
+        style={{ background: "oklch(14% 0.025 240)" }}
+      >
+        {/* Panel header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">AI People Strategy</span>
+            {strategyData?.configured && !isDirty && (
+              <Badge variant="outline" className="text-xs text-green-400 border-green-400/30 bg-green-400/10 ml-1">
+                <CheckCircle2 className="w-3 h-3 mr-1" />Saved
+              </Badge>
+            )}
+            {isDirty && (
+              <Badge variant="outline" className="text-xs text-amber-400 border-amber-400/30 bg-amber-400/10 ml-1">
+                Unsaved changes
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              Overall target: <span className="font-bold text-primary">Level {(overallTarget / 10).toFixed(1)}</span>
+            </span>
+            <Button
+              size="sm"
+              disabled={!isDirty || saveStrategy.isPending}
+              onClick={handleSave}
+              className="gap-1.5 text-xs h-7 px-3 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+            >
+              <Save className="w-3 h-3" />
+              {saveStrategy.isPending ? "Saving…" : "Save strategy"}
+            </Button>
+          </div>
+        </div>
 
-      {/* ── OUTPUT DASHBOARD ──────────────────────────────────────────────────── */}
+        {/* Ambition selectors */}
+        <div className="px-5 py-5 space-y-5">
+          <AmbitionButtonGroup
+            label="Business AI Ambition — how aggressively the organisation adopts AI"
+            options={BUSINESS_LEVELS}
+            value={businessLevel}
+            onChange={setBusinessLevel}
+          />
+          <AmbitionButtonGroup
+            label="People AI Ambition — what is expected of HR people"
+            options={PEOPLE_LEVELS}
+            value={peopleLevel}
+            onChange={setPeopleLevel}
+          />
+
+          {/* Target date + label row */}
+          <div className="grid grid-cols-2 gap-4 pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Target Date</label>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={e => setTargetDate(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background/60 px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Strategy Label</label>
+              <input
+                type="text"
+                placeholder="e.g. AI-Ready HR by 2026"
+                value={targetLabel}
+                onChange={e => setTargetLabel(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background/60 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Domain targets expandable */}
+        <DomainTargetsRow businessLevel={businessLevel} peopleLevel={peopleLevel} />
+      </div>
+
+      {/* ── SINGLE LIVE PLAN ──────────────────────────────────────────────────── */}
 
       {/* Strategic finding hero */}
       <div className="bg-card rounded-xl border border-border shadow-md p-7">
@@ -580,7 +556,7 @@ export default function AIStrategyPage() {
         {!ambitionGap?.configured && (
           <div className="flex items-center gap-3 p-4 rounded-lg border border-border" style={{ background: "oklch(17% 0.028 240)" }}>
             <Target className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Configure your strategy in the control panel above to generate your strategic finding and roadmap analysis.</p>
+            <p className="text-sm text-muted-foreground">Configure your strategy above to generate your strategic finding and roadmap analysis.</p>
           </div>
         )}
       </div>
@@ -588,7 +564,8 @@ export default function AIStrategyPage() {
       {/* Capability vs roadmap bars — priority gaps */}
       {ambitionGap?.priorityGaps && ambitionGap.priorityGaps.length > 0 && (
         <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-sm font-medium mb-5 text-foreground">Capability against AI roadmap</p>
+          <p className="text-sm font-semibold mb-1 text-foreground">Capability against AI roadmap</p>
+          <p className="text-xs text-muted-foreground mb-5">How each priority area compares to your selected ambition targets</p>
           <div className="flex flex-col gap-8">
             {ambitionGap.priorityGaps.map((pg: any, i: number) => (
               <RoadmapBar
@@ -607,11 +584,12 @@ export default function AIStrategyPage() {
       {/* Capability vs roadmap bars — domain-level fallback */}
       {(!ambitionGap?.priorityGaps || ambitionGap.priorityGaps.length === 0) && ambitionGap?.configured && (
         <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-sm font-medium mb-5 text-foreground">Capability against AI roadmap</p>
+          <p className="text-sm font-semibold mb-1 text-foreground">Capability against AI roadmap</p>
+          <p className="text-xs text-muted-foreground mb-5">How each capability domain compares to your selected ambition targets</p>
           <div className="flex flex-col gap-8">
             {DOMAIN_KEYS.map(key => {
               const domainData = trajectory?.domains?.find((d: any) => d.domain === key);
-              const perDomainTarget = strategyData?.domainTargets?.[key] ?? ambitionGap.ambitionTargetScore;
+              const perDomainTarget = domainTargets[key] ?? ambitionGap.ambitionTargetScore;
               return (
                 <RoadmapBar
                   key={key}
@@ -631,7 +609,8 @@ export default function AIStrategyPage() {
       {/* Trajectory chart */}
       {trajectory?.domains && trajectory.domains.length > 0 && (
         <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-sm font-medium mb-4 text-foreground">Trajectory · function average</p>
+          <p className="text-sm font-semibold mb-1 text-foreground">Capability trajectory</p>
+          <p className="text-xs text-muted-foreground mb-4">Function average over time vs your target threshold</p>
           <TrajectoryChart
             domains={trajectory.domains}
             targetScore={ambitionGap?.ambitionTargetScore ?? null}
@@ -643,7 +622,8 @@ export default function AIStrategyPage() {
       {/* Strategic findings */}
       {findings?.findings && findings.findings.length > 0 && (
         <div className="bg-card rounded-xl border border-border shadow-md p-6">
-          <p className="text-sm font-medium mb-4 text-foreground">Strategic findings</p>
+          <p className="text-sm font-semibold mb-1 text-foreground">Strategic findings</p>
+          <p className="text-xs text-muted-foreground mb-4">Auto-generated insights based on your team's current capability data</p>
           <div className="flex flex-col gap-3">
             {findings.findings.slice(0, 5).map((f: any, i: number) => {
               const isHighPriority = f.priority === "high" || f.type === "risk" || f.type === "governance";
