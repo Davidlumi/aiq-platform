@@ -12,7 +12,7 @@ import {
 } from "../auth";
 import { COOKIE_NAME } from "../../shared/const";
 import { users, tenants } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { applyColdStart } from "../ail/coldStart";
 
@@ -97,15 +97,19 @@ export const authRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Resolve tenant
+      // Resolve tenant (case-insensitive slug lookup)
       let tenantId: string;
       if (input.tenantSlug) {
+        const normalised = input.tenantSlug.trim().toLowerCase();
         const tenant = await db
           .select()
           .from(tenants)
-          .where(eq(tenants.slug, input.tenantSlug))
+          .where(sql`LOWER(${tenants.slug}) = ${normalised}`)
           .limit(1);
-        if (!tenant[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant not found" });
+        if (!tenant[0]) throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Organisation code not recognised. Please check the code provided by your administrator.",
+        });
         tenantId = tenant[0].id;
       } else {
         // No tenant slug provided — require it
@@ -180,12 +184,16 @@ export const authRouter = router({
       if (!input.tenantSlug) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Organisation code is required" });
       }
+      const normalisedSlug = input.tenantSlug.trim().toLowerCase();
       const tenantRow = await db
         .select()
         .from(tenants)
-        .where(eq(tenants.slug, input.tenantSlug))
+        .where(sql`LOWER(${tenants.slug}) = ${normalisedSlug}`)
         .limit(1);
-      if (!tenantRow[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Organisation not found" });
+      if (!tenantRow[0]) throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Organisation code not recognised. Please check the code provided by your administrator.",
+      });
       const tenantId = tenantRow[0].id;
 
       const existing = await getUserByEmail(tenantId, input.email);
