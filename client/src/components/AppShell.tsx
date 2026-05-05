@@ -70,19 +70,21 @@ const NAV_ITEMS: NavItem[] = [
     roles: [...CPO_ROLES, ...MANAGER_ROLES],
     section: "myteam",
   },
+
+  // -- AI Strategy (CPO only) ---------------------------------------------------
   {
-    label: "AI Strategy",
+    label: "Strategy Dashboard",
     path: "/ai-strategy",
     icon: Target,
     roles: CPO_ROLES,
-    section: "myteam",
+    section: "aistrategy",
   },
   {
     label: "Company Assessment",
-    path: "/company-assessment/new",
+    path: "/company-assessment",
     icon: Building2,
     roles: CPO_ROLES,
-    section: "myteam",
+    section: "aistrategy",
   },
   {
     label: "People",
@@ -131,9 +133,10 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-  mydev:  "My Development",
-  myteam: "My Team",
-  admin:  "Admin",
+  mydev:       "My Development",
+  myteam:      "My Team",
+  aistrategy:  "AI Strategy",
+  admin:       "Admin",
 };
 
 /** AiQ logo mark - dark slate circle, white A+Q, primary i dot */

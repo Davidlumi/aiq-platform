@@ -29,7 +29,7 @@ import {
   companyAssessmentResponses,
   companyAssessmentResults,
 } from "../../drizzle/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
@@ -1100,4 +1100,20 @@ Write the executive summary.`,
         .where(eq(companyAssessments.id, input.assessmentId));
       return assessment || null;
     }),
+
+  // Get the tenant's single current assessment (latest by startedAt)
+  getMyAssessment: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    const rows = await db.select({
+      id: companyAssessments.id,
+      status: companyAssessments.status,
+      companyId: companyAssessments.companyId,
+      startedAt: companyAssessments.startedAt,
+    }).from(companyAssessments)
+      .where(eq(companyAssessments.tenantId, ctx.user.tenantId))
+      .orderBy(desc(companyAssessments.startedAt))
+      .limit(1);
+    return rows[0] ?? null;
+  }),
 });

@@ -31,6 +31,7 @@ import {
   ClipboardList,
   Target,
   BookMarked,
+  Building2,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -66,8 +67,15 @@ const MY_TEAM_CPO: NavSection = {
   section: "My Team",
   items: [
     { icon: LayoutDashboard, label: "Overview",     path: "/dashboard" },
-    { icon: Target,          label: "AI Strategy",  path: "/ai-strategy" },
     { icon: Users,           label: "People",       path: "/people" },
+  ],
+};
+
+const AI_STRATEGY: NavSection = {
+  section: "AI Strategy",
+  items: [
+    { icon: Target,    label: "Strategy Dashboard", path: "/ai-strategy" },
+    { icon: Building2, label: "Company Assessment",  path: "/company-assessment" },
   ],
 };
 
@@ -88,7 +96,7 @@ const ADMIN: NavSection = {
 
 function getNavSections(roles: string[]): NavSection[] {
   if (isCpo(roles)) {
-    return [MY_DEVELOPMENT, MY_TEAM_CPO, ADMIN];
+    return [MY_DEVELOPMENT, MY_TEAM_CPO, AI_STRATEGY, ADMIN];
   }
   if (isManager(roles)) {
     return [MY_DEVELOPMENT, MY_TEAM_MANAGER];

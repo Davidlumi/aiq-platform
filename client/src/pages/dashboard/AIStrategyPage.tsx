@@ -266,7 +266,7 @@ function StrategyControlPanel({
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Business Ambition</label>
           <Select value={String(businessLevel)} onValueChange={v => setBusinessLevel(Number(v))}>
-            <SelectTrigger className="h-9 text-sm bg-background/60 border-border w-full">
+            <SelectTrigger className="h-9 text-sm bg-background border-border/80 w-full text-foreground font-medium">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -284,7 +284,7 @@ function StrategyControlPanel({
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">People Ambition</label>
           <Select value={String(peopleLevel)} onValueChange={v => setPeopleLevel(Number(v))}>
-            <SelectTrigger className="h-9 text-sm bg-background/60 border-border w-full">
+            <SelectTrigger className="h-9 text-sm bg-background border-border/80 w-full text-foreground font-medium">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

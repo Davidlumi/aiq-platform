@@ -2036,3 +2036,11 @@
 - [ ] FEAT-PDF-1: Add server-side PDF generation endpoint (strategy report: KPIs, domain bars, findings, board options, trajectory summary)
 - [ ] FEAT-PDF-2: Add Export PDF button to AI Strategy page with loading state and download trigger
 - [ ] FEAT-PDF-3: Write vitest for the PDF generation endpoint
+
+## AI Strategy Sidebar Restructure
+- [x] Add "AI Strategy" section to AppShell sidebar (both AppShell.tsx and DashboardLayout.tsx)
+- [x] Move "AI Strategy" nav item from "My Team" section to new "AI Strategy" section in AppShell
+- [x] Move "Company Assessment" nav item from "My Team" section to new "AI Strategy" section in AppShell
+- [x] Update DashboardLayout.tsx to add AI_STRATEGY section with AI Strategy and Company Assessment items
+- [x] Enforce single strategy: ensure Company Assessment page links to existing assessment or starts a new one (no list of multiple)
+- [x] Fix filter UI visibility in LeaderDashboardV2 (buttons with dropdown selects not visible)
