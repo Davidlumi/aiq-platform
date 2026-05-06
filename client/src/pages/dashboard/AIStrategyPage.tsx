@@ -1,12 +1,13 @@
 /**
  * AIStrategyPage — HR AI Strategy Executive Paper
  *
- * Layout:
- *   1. Control panel: Industry / Business AI Ambition / People AI Ambition dropdowns + Save
- *   2. Executive Summary: Vision statement — how AI will change ways of work
- *   3. Initiative Roadmap: visual timeline of selected initiatives by phase
- *   4. Capability Gap: per-domain gap analysis — what the HR team needs to deliver the vision
- *   5. Manage Initiatives modal (full-screen library)
+ * Narrative arc (From → To → Gap → How → What it takes):
+ *   Control panel: Configure Industry / Business AI Ambition / People AI Ambition
+ *   Part 1 — WHERE WE ARE: Company AI maturity (from Company Assessment) + current HR capability
+ *   Part 2 — WHERE WE NEED TO BE: Our AI vision — what the ambition requires of HR
+ *   Part 3 — THE GAP: Company maturity gap + HR capability gap
+ *   Part 4 — HOW WE GET THERE: Initiative roadmap (phased timeline)
+ *   Part 5 — WHAT IT TAKES FROM HR: Domain capability investment required
  */
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
@@ -49,6 +50,10 @@ import {
   Map,
   ArrowRight,
   AlertTriangle,
+  Compass,
+  GitMerge,
+  BookOpen,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS } from "@/lib/domains";
@@ -67,31 +72,36 @@ const SECTORS = [
 ];
 
 // ─── Ambition level descriptors ───────────────────────────────────────────────
-const BUSINESS_LEVELS: Record<number, { label: string; description: string; waysOfWork: string }> = {
+const BUSINESS_LEVELS: Record<number, { label: string; description: string; waysOfWork: string; requiredMaturity: number }> = {
   1: {
     label: "Cautious",
     description: "AI used selectively in low-risk, back-office processes. Compliance and stability are the priority.",
     waysOfWork: "HR processes remain largely human-led. AI assists with administrative tasks and reporting. The focus is on risk management and regulatory compliance rather than transformation.",
+    requiredMaturity: 1.0,
   },
   2: {
     label: "Exploratory",
     description: "Piloting AI in specific workflows. Building internal confidence before wider rollout.",
     waysOfWork: "HR is beginning to pilot AI in targeted areas — screening, scheduling, and analytics. Ways of working are evolving as teams build confidence and establish governance frameworks for responsible AI use.",
+    requiredMaturity: 1.875,
   },
   3: {
     label: "Progressive",
     description: "AI embedded in core HR processes. The organisation expects HR to use AI tools confidently.",
     waysOfWork: "AI is embedded across core HR processes. HR professionals are expected to use AI tools as a standard part of their workflow — from talent decisions to workforce planning — and to critically evaluate AI outputs before acting.",
+    requiredMaturity: 2.75,
   },
   4: {
     label: "Ambitious",
     description: "AI is a strategic differentiator. HR is expected to lead AI adoption across the business.",
     waysOfWork: "AI is a strategic differentiator. HR leads AI adoption across the business — designing AI-enabled processes, coaching leaders, and shaping governance. Ways of working are fundamentally redesigned around human-AI collaboration.",
+    requiredMaturity: 3.625,
   },
   5: {
     label: "Transformative",
     description: "AI is central to the business model. HR people are expected to be AI-native practitioners.",
     waysOfWork: "AI is central to the business model. HR professionals are AI-native — they design, govern, and continuously improve AI-enabled people systems. The function operates as an AI centre of excellence for the wider organisation.",
+    requiredMaturity: 4.5,
   },
 };
 
@@ -162,7 +172,6 @@ const DA_LABELS: Record<string, string> = {
   full_automation:     "Full automation",
 };
 
-// Category colours for the roadmap timeline
 const CATEGORY_COLOURS: Record<string, string> = {
   "Talent Acquisition":        "#60A5FA",
   "Performance & Development": "#A78BFA",
@@ -187,13 +196,12 @@ const CATEGORY_MAP: Record<string, string> = {
   "Ethics & Governance":       "Ethics & Governance",
 };
 
-// Phase labels for the roadmap
 const PHASE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  "Q1": { label: "Phase 1 — Foundation",    color: "#60A5FA", bg: "rgba(96,165,250,0.08)" },
-  "Q2": { label: "Phase 2 — Build",         color: "#A78BFA", bg: "rgba(167,139,250,0.08)" },
-  "Q3": { label: "Phase 3 — Scale",         color: "#4ADE80", bg: "rgba(74,222,128,0.08)" },
-  "Q4": { label: "Phase 4 — Optimise",      color: "#FBBF24", bg: "rgba(251,191,36,0.08)" },
-  "unknown": { label: "Ongoing",            color: "#9CA3AF", bg: "rgba(156,163,175,0.08)" },
+  "Q1":      { label: "Phase 1 — Foundation", color: "#60A5FA", bg: "rgba(96,165,250,0.08)" },
+  "Q2":      { label: "Phase 2 — Build",      color: "#A78BFA", bg: "rgba(167,139,250,0.08)" },
+  "Q3":      { label: "Phase 3 — Scale",      color: "#4ADE80", bg: "rgba(74,222,128,0.08)" },
+  "Q4":      { label: "Phase 4 — Optimise",   color: "#FBBF24", bg: "rgba(251,191,36,0.08)" },
+  "unknown": { label: "Ongoing",              color: "#9CA3AF", bg: "rgba(156,163,175,0.08)" },
 };
 
 type DomainKey = typeof DOMAIN_KEYS[number];
@@ -219,70 +227,35 @@ function overallFromDomains(targets: Record<DomainKey, number>): number {
   return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
 }
 
-// ─── Executive narrative generators ──────────────────────────────────────────
-function buildVisionStatement(sector: string, businessLevel: number, peopleLevel: number): string {
-  const sectorLabel = SECTORS.find(s => s.value === sector)?.label ?? "our sector";
-  const bLevel = BUSINESS_LEVELS[businessLevel];
-  const pLevel = PEOPLE_LEVELS[peopleLevel];
-  if (!bLevel || !pLevel) return "";
-
-  return `In ${sectorLabel}, the integration of artificial intelligence into HR is no longer a future consideration — it is a present-day imperative. Our organisation has set a ${bLevel.label} AI ambition: ${bLevel.waysOfWork}
-
-To deliver this vision, every HR professional must operate at the ${pLevel.label} level. ${pLevel.expectation}
-
-This strategy defines the initiatives, development priorities, and capability investments required to close the gap between where our HR function is today and where it needs to be to deliver on this ambition.`;
+// ─── Part section header ──────────────────────────────────────────────────────
+function PartHeader({
+  partNum, color, icon, eyebrow, title,
+}: {
+  partNum: string; color: string; icon: React.ReactNode; eyebrow: string; title: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 mb-5">
+      <div
+        className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0"
+        style={{ background: `${color}18`, border: `1px solid ${color}30` }}
+      >
+        <span style={{ color }}>{icon}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold tracking-widest uppercase mb-0.5" style={{ color }}>{eyebrow}</p>
+        <h2 className="text-lg font-bold text-foreground leading-tight">{title}</h2>
+      </div>
+      <div
+        className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold flex-shrink-0"
+        style={{ background: `${color}15`, color }}
+      >
+        {partNum}
+      </div>
+    </div>
+  );
 }
 
-function buildGapNarrative(
-  ambitionGap: any,
-  businessLevel: number,
-  peopleLevel: number,
-  domainTargets: Record<DomainKey, number>,
-  currentDomainScores: Record<string, number> | null | undefined
-): string {
-  const bLabel = BUSINESS_LEVELS[businessLevel]?.label ?? "";
-  const pLabel = PEOPLE_LEVELS[peopleLevel]?.label ?? "";
-
-  if (!ambitionGap?.configured) {
-    return `To deliver a ${bLabel} business AI ambition with ${pLabel} HR people, the function must develop capability across all six AI domains. Save your strategy to generate a live gap analysis against your current team baseline.`;
-  }
-
-  const current = ambitionGap.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
-  const target  = ambitionGap.ambitionTargetScore != null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : null;
-  const gap     = ambitionGap.gapRaw != null ? (ambitionGap.gapRaw / 10).toFixed(1) : null;
-
-  if (!current || !target) {
-    return `The ${bLabel} / ${pLabel} ambition combination sets a clear capability bar for the HR function. Complete team assessments to generate a live gap analysis showing the distance between current capability and what is required.`;
-  }
-
-  if (ambitionGap.verdict === "exceeds") {
-    return `The HR function is currently performing at Level ${current} — exceeding the Level ${target} target set by the ${bLabel} / ${pLabel} ambition combination. The function is well-positioned to deliver the AI vision. Consider raising the ambition bar to maintain strategic stretch and drive continued development.`;
-  }
-
-  const highGapDomains = (Object.entries(domainTargets) as [DomainKey, number][])
-    .map(([key, target]) => ({
-      key,
-      label: DOMAIN_LABELS[key as CapabilityKey],
-      target,
-      current: currentDomainScores?.[key] ?? null,
-      gap: currentDomainScores?.[key] != null ? target - (currentDomainScores[key] ?? 0) : null,
-    }))
-    .filter(d => d.gap !== null && d.gap > 0)
-    .sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0))
-    .slice(0, 3);
-
-  const priorityDomains = highGapDomains.map(d => d.label).join(", ");
-
-  return `The HR function is currently at Level ${current} against a Level ${target} target — a gap of ${gap} levels. ${
-    ambitionGap.monthsToTarget
-      ? `At the current pace of development, this gap closes in approximately ${ambitionGap.monthsToTarget} months.`
-      : "Closing this gap will require a structured, accelerated development programme."
-  } The highest-priority capability areas to address are ${priorityDomains || "across all domains"} — these represent the greatest distance from the level required to deliver the ${bLabel} AI ambition. Development investment should be concentrated here in the first two phases of the roadmap.`;
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-// Initiative detail modal
+// ─── Initiative detail modal ──────────────────────────────────────────────────
 function InitiativeDetailModal({ initiative, open, onClose }: { initiative: any | null; open: boolean; onClose: () => void }) {
   if (!initiative) return null;
   const typeColor = AI_TYPE_COLORS[initiative.aiType] ?? "#9CA3AF";
@@ -342,7 +315,7 @@ function InitiativeDetailModal({ initiative, open, onClose }: { initiative: any 
   );
 }
 
-// Initiative selector modal (full-screen library)
+// ─── Initiative selector modal ────────────────────────────────────────────────
 function InitiativeSelectorModal({
   open, onClose, allInitiatives, selectedIds, onToggle, onDone,
 }: {
@@ -368,84 +341,96 @@ function InitiativeSelectorModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col p-0 gap-0">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/8 flex-shrink-0">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Initiative Library</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{selectedIds.size} selected · click to select or deselect · arrow to view details</p>
-            </div>
-            <div className="flex items-center gap-2">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-white/8 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base font-semibold">Initiative Library</DialogTitle>
               <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold" onClick={onDone}>
                 <Check className="w-3.5 h-3.5 mr-1.5" />
                 Done ({selectedIds.size})
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
             </div>
-          </div>
-          <div className="px-6 py-3 border-b border-white/8 flex-shrink-0">
-            <div className="flex gap-1.5 flex-wrap">
+            {/* Category filter chips */}
+            <div className="flex flex-wrap gap-2 mt-3">
               {FILTER_CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 ${
+                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     categoryFilter === cat
-                      ? "border-green-500/60 bg-green-500/10 text-green-400"
-                      : "border-white/10 bg-white/3 text-muted-foreground hover:border-white/20"
+                      ? "bg-green-500/20 border-green-500/40 text-green-400"
+                      : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
                   }`}
                 >
-                  {CATEGORY_ICONS[cat] && <span>{CATEGORY_ICONS[cat]}</span>}
+                  {CATEGORY_ICONS[cat]}
                   {cat}
                 </button>
               ))}
             </div>
-          </div>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            {filtered.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">No initiatives in this category.</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {filtered.map((init: any) => {
-                  const isSelected = selectedIds.has(init.id);
-                  const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
-                  return (
-                    <div
-                      key={init.id}
-                      onClick={() => onToggle(init.id)}
-                      className={`relative rounded-xl border p-3.5 cursor-pointer transition-all ${
-                        isSelected ? "border-green-500/50 bg-green-500/8" : "border-white/8 bg-white/3 hover:border-white/15 hover:bg-white/5"
-                      }`}
-                    >
-                      <div className={`absolute top-3 right-10 w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                        isSelected ? "border-green-500 bg-green-500" : "border-white/20 bg-transparent"
-                      }`}>
-                        {isSelected && <Check className="w-2.5 h-2.5 text-black" />}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDetailInitiative(init); }}
-                        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                      <p className="text-sm font-medium text-foreground pr-12 mb-2">{init.name}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {init.aiType && (
-                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: `${typeColor}22`, color: typeColor }}>{init.aiType}</span>
-                        )}
-                        {init.decisionAuthority && (
-                          <span className="text-xs px-1.5 py-0.5 rounded border border-white/10 text-muted-foreground">{DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}</span>
-                        )}
-                        {init.regulatoryFlag && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">EU AI Act</span>
-                        )}
-                      </div>
+          </DialogHeader>
+
+          <div className="overflow-y-auto flex-1 p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filtered.map((init: any) => {
+                const isSelected = selectedIds.has(init.id);
+                const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
+                const catColor = CATEGORY_COLOURS[CATEGORY_MAP[init.category] ?? init.category] ?? "#9CA3AF";
+                return (
+                  <div
+                    key={init.id}
+                    className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-green-500/40 bg-green-500/8"
+                        : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
+                    }`}
+                    onClick={() => onToggle(init.id)}
+                    style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
+                  >
+                    {/* Selection indicator */}
+                    <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${
+                      isSelected ? "bg-green-500 border-green-500" : "border-white/20"
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-black" />}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    <p className="text-sm font-semibold text-foreground pr-7 mb-2 leading-snug">{init.name}</p>
+                    {init.category && (
+                      <p className="text-xs mb-2 font-medium" style={{ color: catColor }}>
+                        {CATEGORY_MAP[init.category] ?? init.category}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {init.aiType && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${typeColor}18`, color: typeColor }}>
+                          {init.aiType}
+                        </span>
+                      )}
+                      {init.decisionAuthority && (
+                        <span className="text-xs px-2 py-0.5 rounded-full border border-white/10 text-muted-foreground">
+                          {DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}
+                        </span>
+                      )}
+                      {init.regulatoryFlag && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">EU AI Act</span>
+                      )}
+                    </div>
+                    {/* Detail link */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDetailInitiative(init); }}
+                      className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronRight className="w-3 h-3" />
+                      View details
+                    </button>
+                  </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <div className="col-span-2 text-center py-12 text-muted-foreground">
+                  <p className="text-sm">No initiatives in this category.</p>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -461,30 +446,30 @@ export default function AIStrategyPage() {
 
   // ── Local state ──────────────────────────────────────────────────────────────
   const [businessLevel, setBusinessLevelRaw] = useState(3);
-  const [peopleLevel, setPeopleLevelRaw] = useState(3);
-  const [sector, setSectorRaw] = useState("");
-  const [isDirty, setIsDirty] = useState(false);
+  const [peopleLevel, setPeopleLevelRaw]     = useState(3);
+  const [sector, setSectorRaw]               = useState("");
+  const [isDirty, setIsDirty]                = useState(false);
   const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<Set<string>>(new Set());
-  const [showSelectorModal, setShowSelectorModal] = useState(false);
-  const [detailInitiative, setDetailInitiative] = useState<any | null>(null);
+  const [showSelectorModal, setShowSelectorModal]         = useState(false);
+  const [detailInitiative, setDetailInitiative]           = useState<any | null>(null);
 
   // ── Queries ──────────────────────────────────────────────────────────────────
-  const strategyQ    = trpc.intelligence.getStrategy.useQuery();
-  const orgContextQ  = trpc.intelligence.orgContext.useQuery();
-  const initiativesQ = trpc.strategy.listInitiatives.useQuery(
+  const strategyQ           = trpc.intelligence.getStrategy.useQuery();
+  const orgContextQ         = trpc.intelligence.orgContext.useQuery();
+  const initiativesQ        = trpc.strategy.listInitiatives.useQuery(
     { tenantId: user?.tenantId ?? "" },
     { enabled: !!user?.tenantId }
   );
-  const ambitionGapQ       = trpc.dashboardV2.leader.ambitionGap.useQuery();
+  const ambitionGapQ        = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const companyAssessmentQ  = trpc.companyAssessment.getMyAssessmentResults.useQuery();
 
-  const strategyData     = strategyQ.data;
-  const orgContext       = orgContextQ.data;
-  const ambitionGap      = ambitionGapQ.data;
-  const allInitiatives   = initiativesQ.data ?? [];
-  const companyResults   = companyAssessmentQ.data;
+  const strategyData   = strategyQ.data;
+  const orgContext     = orgContextQ.data;
+  const ambitionGap    = ambitionGapQ.data;
+  const allInitiatives = initiativesQ.data ?? [];
+  const companyResults = companyAssessmentQ.data;
 
-  // ── Sync saved strategy into local state ─────────────────────────────────────
+  // ── Sync saved strategy ──────────────────────────────────────────────────────
   useEffect(() => {
     if (strategyData?.configured) {
       setBusinessLevelRaw(strategyData.businessAmbitionLevel ?? 3);
@@ -516,7 +501,6 @@ export default function AIStrategyPage() {
   const overallTarget  = useMemo(() => overallFromDomains(domainTargets), [domainTargets]);
   const selectedInits  = useMemo(() => allInitiatives.filter((i: any) => selectedInitiativeIds.has(i.id)), [allInitiatives, selectedInitiativeIds]);
 
-  // Group selected initiatives by phase/quarter
   const initiativesByPhase = useMemo(() => {
     const groups: Record<string, any[]> = {};
     for (const init of selectedInits) {
@@ -524,22 +508,11 @@ export default function AIStrategyPage() {
       if (!groups[phase]) groups[phase] = [];
       groups[phase].push(init);
     }
-    // Sort phases: Q1, Q2, Q3, Q4, unknown
     const order = ["Q1", "Q2", "Q3", "Q4", "unknown"];
     return order.filter(p => groups[p]?.length > 0).map(p => ({ phase: p, items: groups[p] }));
   }, [selectedInits]);
 
-  // Vision statement
-  const visionStatement = useMemo(() => buildVisionStatement(sector, businessLevel, peopleLevel), [sector, businessLevel, peopleLevel]);
-
-  // Gap narrative
-  const gapNarrative = useMemo(
-    () => buildGapNarrative(ambitionGap, businessLevel, peopleLevel, domainTargets, strategyData?.currentDomainScores as Record<string, number> | null | undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ambitionGap, businessLevel, peopleLevel, domainTargets, strategyData]
-  );
-
-  // Domain gap rows
+  // Domain gap rows (sorted by largest gap first)
   const domainGapRows = useMemo(() => {
     const clamp = (v: number) => Math.min(100, Math.max(0, v));
     const scores = strategyData?.currentDomainScores as Record<string, number> | null | undefined;
@@ -547,7 +520,17 @@ export default function AIStrategyPage() {
       const target  = domainTargets[key];
       const current = scores?.[key] ?? null;
       const gap     = current !== null ? target - current : null;
-      return { key, label: DOMAIN_LABELS[key as CapabilityKey], description: DOMAIN_DESCRIPTIONS?.[key as CapabilityKey] ?? "", target, current, gap, color: DOMAIN_COLOURS[key as CapabilityKey] ?? "#60A5FA", targetPct: clamp(target), currentPct: current !== null ? clamp(current) : null };
+      return {
+        key,
+        label: DOMAIN_LABELS[key as CapabilityKey],
+        description: DOMAIN_DESCRIPTIONS?.[key as CapabilityKey] ?? "",
+        target,
+        current,
+        gap,
+        color: DOMAIN_COLOURS[key as CapabilityKey] ?? "#60A5FA",
+        targetPct: clamp(target),
+        currentPct: current !== null ? clamp(current) : null,
+      };
     }).sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0));
   }, [domainTargets, strategyData]);
 
@@ -559,7 +542,7 @@ export default function AIStrategyPage() {
 
   const saveStrategyMut = trpc.intelligence.saveStrategy.useMutation({
     onSuccess: () => {
-      toast.success("AI People Strategy saved.");
+      toast.success("HR AI Strategy saved.");
       setIsDirty(false);
       utils.intelligence.getStrategy.invalidate();
       utils.dashboardV2.leader.ambitionGap.invalidate();
@@ -594,10 +577,18 @@ export default function AIStrategyPage() {
     );
   }
 
-  const sectorLabel = SECTORS.find(s => s.value === sector)?.label;
+  const sectorLabel      = SECTORS.find(s => s.value === sector)?.label;
+  const bLevel           = BUSINESS_LEVELS[businessLevel];
+  const pLevel           = PEOPLE_LEVELS[peopleLevel];
+  const requiredMaturity = bLevel?.requiredMaturity ?? 2.75;
+
+  // Company gap vs ambition
+  const companyGap = companyResults ? requiredMaturity - companyResults.overallScore : null;
+  const weakDims   = companyResults ? [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 3) : [];
+  const strongDims = companyResults ? [...companyResults.dimensions].sort((a, b) => b.score - a.score).slice(0, 2) : [];
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto pb-16">
+    <div className="space-y-10 max-w-4xl mx-auto pb-20">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4 pt-2">
@@ -606,7 +597,7 @@ export default function AIStrategyPage() {
           <h1 className="text-2xl font-bold text-foreground">HR AI Strategy</h1>
           {sectorLabel && (
             <p className="text-sm text-muted-foreground mt-1">
-              {sectorLabel} · {BUSINESS_LEVELS[businessLevel]?.label} business ambition · {PEOPLE_LEVELS[peopleLevel]?.label} people ambition
+              {sectorLabel} · {bLevel?.label} business ambition · {pLevel?.label} people ambition
             </p>
           )}
         </div>
@@ -634,7 +625,6 @@ export default function AIStrategyPage() {
 
       {/* ── Control panel ── */}
       <div className="rounded-xl border border-white/8 bg-white/3 divide-y divide-white/6">
-        {/* Industry */}
         <div className="flex items-center gap-4 px-5 py-3.5">
           <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-44 flex-shrink-0">Industry</p>
@@ -647,8 +637,6 @@ export default function AIStrategyPage() {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Business AI Ambition */}
         <div className="flex items-center gap-4 px-5 py-3.5 flex-wrap">
           <BarChart3 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-44 flex-shrink-0">Business AI Ambition</p>
@@ -662,10 +650,8 @@ export default function AIStrategyPage() {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground hidden sm:block flex-1">{BUSINESS_LEVELS[businessLevel]?.description}</p>
+          <p className="text-xs text-muted-foreground hidden sm:block flex-1">{bLevel?.description}</p>
         </div>
-
-        {/* People AI Ambition */}
         <div className="flex items-center gap-4 px-5 py-3.5 flex-wrap">
           <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-44 flex-shrink-0">People AI Ambition</p>
@@ -679,235 +665,194 @@ export default function AIStrategyPage() {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground hidden sm:block flex-1">{PEOPLE_LEVELS[peopleLevel]?.description}</p>
+          <p className="text-xs text-muted-foreground hidden sm:block flex-1">{pLevel?.description}</p>
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 0 — COMPANY CONTEXT (from Company Assessment)
+          PART 1 — WHERE WE ARE
+          Company AI maturity (from Company Assessment) + current HR capability
       ══════════════════════════════════════════════════════════════════════ */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/15 flex-shrink-0">
-            <Building2 className="w-3.5 h-3.5 text-amber-400" />
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest text-amber-400 uppercase">Company Context</p>
-            <h2 className="text-base font-semibold text-foreground leading-tight">Where the Organisation Is Today</h2>
-          </div>
-        </div>
+        <PartHeader
+          partNum="1"
+          color="#F59E0B"
+          icon={<Building2 className="w-4 h-4" />}
+          eyebrow="Part 1 — Where We Are"
+          title="Our Current State"
+        />
 
         {!companyResults ? (
-          <div className="rounded-xl border border-dashed border-amber-500/20 bg-amber-500/4 p-8 text-center">
-            <Building2 className="w-7 h-7 text-amber-400/50 mx-auto mb-3" />
-            <p className="text-sm font-medium text-foreground mb-1">No company assessment completed</p>
-            <p className="text-xs text-muted-foreground mb-4">Complete the Company Assessment to ground this strategy in your organisation's actual AI maturity. The assessment evaluates 7 dimensions and produces a maturity score, sector benchmark, and executive summary that feeds directly into this strategy.</p>
-            <a href="/company-assessment">
-              <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
-                <Building2 className="w-3.5 h-3.5 mr-1.5" />
-                Go to Company Assessment
-              </Button>
-            </a>
+          <div className="rounded-xl border border-dashed border-amber-500/20 bg-amber-500/4 p-8">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground mb-1">No Company Assessment completed</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                  The Company Assessment evaluates your organisation across 7 AI readiness dimensions — Strategy & Leadership, Data & Infrastructure, Technology & Tools, Process & Operations, People & Culture, Ethics & Governance, and Customer & Value. Completing it grounds this strategy in your organisation's actual AI maturity and provides the baseline for the gap analysis below.
+                </p>
+                <a href="/company-assessment">
+                  <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                    <Building2 className="w-3.5 h-3.5 mr-1.5" />
+                    Complete Company Assessment
+                  </Button>
+                </a>
+              </div>
+            </div>
           </div>
-        ) : (() => {
-          // Compute required maturity for selected business ambition
-          const requiredMaturity = 1.0 + (businessLevel - 1) * 0.875;
-          const companyGap = requiredMaturity - companyResults.overallScore;
-          const weakDims = [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 3);
-          const strongDims = [...companyResults.dimensions].sort((a, b) => b.score - a.score).slice(0, 2);
-          const bLabel = BUSINESS_LEVELS[businessLevel]?.label ?? "";
-          const pLabel = PEOPLE_LEVELS[peopleLevel]?.label ?? "";
+        ) : (
+          <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 overflow-hidden">
 
-          // HR priority narrative based on company maturity vs ambition gap
-          const hrPriorityNarrative = (() => {
-            const weakNames = weakDims.slice(0, 2).map(d => d.label).join(" and ");
-            if (companyGap > 1.5) {
-              return `There is a significant gap between the company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) and what a ${bLabel} business ambition requires (${requiredMaturity.toFixed(1)}/5). The HR AI strategy must act as an accelerator — building the company's AI capability from the ground up. The priority dimensions to address are ${weakNames}. HR must lead by example, demonstrating responsible AI adoption and building organisation-wide confidence before the business can achieve its ambition.`;
-            } else if (companyGap > 0.5) {
-              return `The company is on a credible AI journey but needs to close a gap of ${companyGap.toFixed(1)} points to reach the maturity required for a ${bLabel} business ambition. The HR AI strategy must focus on scaling what is working, closing the gaps in ${weakNames}, and positioning HR as the function that enables the organisation to cross the threshold. The ${pLabel} people expectation requires a structured development programme to bring the HR team up to the required level.`;
-            } else if (companyGap > -0.3) {
-              return `The company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) is well-aligned with the ${bLabel} business ambition. The HR AI strategy should focus on maintaining momentum, deepening capability in ${weakNames}, and ensuring the HR function operates at the frontier of AI-enabled practice. With a ${pLabel} people expectation, the HR team must model the AI behaviours the organisation expects from all its people.`;
-            } else {
-              return `The company is ahead of the maturity level required for a ${bLabel} business ambition — a strong position. The HR AI strategy should focus on innovation, maintaining the competitive advantage in ${weakNames}, and contributing to industry standards. With a ${pLabel} people expectation, the HR function is expected to shape the organisation's AI future and influence sector practice.`;
-            }
-          })();
-
-          return (
-            <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 divide-y divide-white/6">
-
-              {/* ── Row 1: Maturity header + Company vs Ambition gap ── */}
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-6 mb-5">
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground mb-0.5">
+            {/* Company identity + overall maturity */}
+            <div className="p-6 border-b border-white/6">
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs text-muted-foreground">
                       {companyResults.companyName ?? "Your Organisation"}
                       {companyResults.companySector ? ` · ${companyResults.companySector}` : ""}
                     </p>
-                    <h3 className="text-base font-semibold text-foreground mb-1">
-                      AI Maturity: <span className="text-amber-400">{companyResults.maturityLabel}</span>
-                    </h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{companyResults.maturityDescription}</p>
                   </div>
-                  {/* Three KPI tiles */}
-                  <div className="flex gap-3 flex-shrink-0">
-                    <div className="text-center px-4 py-2.5 rounded-lg bg-white/4 border border-white/8">
-                      <p className="text-lg font-bold text-amber-400">{companyResults.overallScore.toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">Current</p>
-                    </div>
-                    <div className="text-center px-4 py-2.5 rounded-lg bg-white/4 border border-white/8">
-                      <p className="text-lg font-bold text-blue-400">{requiredMaturity.toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">Required</p>
-                    </div>
-                    <div className={`text-center px-4 py-2.5 rounded-lg border ${
-                      companyGap > 0.5 ? "bg-red-500/8 border-red-500/20" : companyGap > -0.3 ? "bg-green-500/8 border-green-500/20" : "bg-green-500/8 border-green-500/20"
-                    }`}>
-                      <p className={`text-lg font-bold ${
-                        companyGap > 0.5 ? "text-red-400" : "text-green-400"
-                      }`}>{companyGap > 0 ? "+" : ""}{companyGap.toFixed(1)}</p>
-                      <p className="text-xs text-muted-foreground">Gap</p>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-1">
+                    AI Maturity: <span className="text-amber-400">{companyResults.maturityLabel}</span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">{companyResults.maturityDescription}</p>
                 </div>
-
-                {/* Company vs Ambition maturity bar */}
-                <div className="relative">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Foundational</span><span>Developing</span><span>Scaling</span><span>Leading</span><span>Pioneering</span>
+                {/* Score ring */}
+                <div className="flex-shrink-0 text-center">
+                  <div className="w-20 h-20 rounded-full border-4 border-amber-400/40 flex items-center justify-center bg-amber-500/8">
+                    <div>
+                      <p className="text-2xl font-bold text-amber-400">{companyResults.overallScore.toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">/ 5.0</p>
+                    </div>
                   </div>
-                  <div className="h-3 rounded-full bg-white/8 relative overflow-visible">
-                    {/* Current score fill */}
-                    <div className="h-full rounded-full bg-amber-400/70 transition-all" style={{ width: `${(companyResults.overallScore / 5) * 100}%` }} />
-                    {/* Required maturity marker */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-full"
-                      style={{ left: `${(requiredMaturity / 5) * 100}%` }}
-                    />
-                    {/* Sector average marker */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-white/40 rounded-full"
-                      style={{ left: `${(companyResults.sectorAverage / 5) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-amber-400/70 inline-block" /> Current ({companyResults.overallScore.toFixed(1)})</span>
-                    <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-blue-400 inline-block" /> Required for {bLabel} ambition ({requiredMaturity.toFixed(1)})</span>
-                    <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-white/40 inline-block" /> Sector avg ({companyResults.sectorAverage.toFixed(1)})</span>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5">Overall</p>
                 </div>
               </div>
 
-              {/* ── Row 2: 7 Dimension breakdown with sector benchmarks ── */}
-              <div className="p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">7 Dimension Breakdown — Current vs Sector Benchmark</p>
-                <div className="space-y-3">
-                  {[...companyResults.dimensions].sort((a, b) => (a.score - (a as any).sectorBenchmark) - (b.score - (b as any).sectorBenchmark)).map(dim => {
-                    const pct = (dim.score / 5) * 100;
-                    const benchmarkPct = ((dim as any).sectorBenchmark / 5) * 100;
-                    const vsAvg = dim.score - (dim as any).sectorBenchmark;
-                    const isWeak = weakDims.some(w => w.key === dim.key);
-                    return (
-                      <div key={dim.key}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-1.5">
-                            {isWeak && <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />}
-                            <span className={`text-xs font-medium ${isWeak ? "text-amber-300" : "text-foreground"}`}>{dim.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-xs font-mono text-foreground">{dim.score.toFixed(1)}/5</span>
-                            <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                              vsAvg >= 0.2 ? "bg-green-500/15 text-green-400" :
-                              vsAvg <= -0.2 ? "bg-red-500/15 text-red-400" :
-                              "bg-white/8 text-muted-foreground"
-                            }`}>
-                              {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)} vs sector
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-2 rounded-full bg-white/8 relative">
-                          <div className="h-full rounded-full transition-all" style={{
-                            width: `${pct}%`,
-                            background: isWeak ? "rgba(251,191,36,0.6)" : "rgba(96,165,250,0.6)"
-                          }} />
-                          {/* Sector benchmark marker */}
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 bg-white/50 rounded-full"
-                            style={{ left: `${benchmarkPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-blue-400/60 inline-block" /> Your score</span>
-                  <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-white/50 inline-block" /> Sector benchmark</span>
-                  <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-400" /> Priority gap</span>
-                </div>
-              </div>
-
-              {/* ── Row 3: Executive summary ── */}
-              {companyResults.executiveSummary && (
-                <div className="p-5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Company Assessment — Executive Summary</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{companyResults.executiveSummary}</p>
-                </div>
-              )}
-
-              {/* ── Row 4: What HR must prioritise ── */}
-              <div className="p-5">
-                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">What the HR AI Strategy Must Address</p>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{hrPriorityNarrative}</p>
-                {/* Strength / gap summary pills */}
-                <div className="flex flex-wrap gap-2">
-                  {weakDims.map(d => (
-                    <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-300">
-                      <AlertTriangle className="w-3 h-3" />
-                      {d.label} — gap
-                    </span>
+              {/* Maturity scale bar */}
+              <div className="mt-5">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                  {["Foundational", "Developing", "Scaling", "Leading", "Pioneering"].map(l => (
+                    <span key={l} className="text-center" style={{ width: "20%" }}>{l}</span>
                   ))}
-                  {strongDims.map(d => (
-                    <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {d.label} — strength
-                    </span>
-                  ))}
+                </div>
+                <div className="h-2.5 rounded-full bg-white/8 relative overflow-visible">
+                  <div className="h-full rounded-full bg-amber-400/70" style={{ width: `${(companyResults.overallScore / 5) * 100}%` }} />
+                  <div className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-full" style={{ left: `${(requiredMaturity / 5) * 100}%` }} />
+                  <div className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-white/35 rounded-full" style={{ left: `${(companyResults.sectorAverage / 5) * 100}%` }} />
+                </div>
+                <div className="flex items-center gap-5 mt-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full bg-amber-400/70 inline-block" />Current ({companyResults.overallScore.toFixed(1)})</span>
+                  <span className="flex items-center gap-1.5"><span className="w-0.5 h-3 rounded-full bg-blue-400 inline-block" />Required for {bLevel?.label} ambition ({requiredMaturity.toFixed(1)})</span>
+                  <span className="flex items-center gap-1.5"><span className="w-0.5 h-3 rounded-full bg-white/35 inline-block" />Sector avg ({companyResults.sectorAverage.toFixed(1)})</span>
                 </div>
               </div>
             </div>
-          );
-        })()}
+
+            {/* 7 Dimension breakdown */}
+            <div className="p-6 border-b border-white/6">
+              <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4">7 Dimension Breakdown — Your Score vs Sector Benchmark</p>
+              <div className="space-y-3.5">
+                {[...companyResults.dimensions].sort((a, b) => a.score - b.score).map(dim => {
+                  const pct = (dim.score / 5) * 100;
+                  const benchmarkPct = ((dim as any).sectorBenchmark / 5) * 100;
+                  const vsAvg = dim.score - (dim as any).sectorBenchmark;
+                  const isWeak = weakDims.some(w => w.key === dim.key);
+                  return (
+                    <div key={dim.key}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          {isWeak && <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />}
+                          <span className={`text-xs font-medium ${isWeak ? "text-amber-300" : "text-foreground"}`}>{dim.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs font-mono text-foreground">{dim.score.toFixed(1)}/5</span>
+                          <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+                            vsAvg >= 0.2 ? "bg-green-500/15 text-green-400" :
+                            vsAvg <= -0.2 ? "bg-red-500/15 text-red-400" :
+                            "bg-white/8 text-muted-foreground"
+                          }`}>
+                            {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)} vs sector
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/8 relative">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: isWeak ? "rgba(251,191,36,0.6)" : "rgba(96,165,250,0.6)" }} />
+                        <div className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 bg-white/45 rounded-full" style={{ left: `${benchmarkPct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-blue-400/60 inline-block" />Your score</span>
+                <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-white/45 inline-block" />Sector benchmark</span>
+                <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-400" />Below sector</span>
+              </div>
+            </div>
+
+            {/* Company assessment executive summary */}
+            {companyResults.executiveSummary && (
+              <div className="p-6">
+                <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Assessment Executive Summary</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{companyResults.executiveSummary}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Current HR capability summary (from ambitionGap) */}
+        {ambitionGap?.configured && ambitionGap.functionAvgRaw != null && (
+          <div className="mt-4 rounded-xl border border-white/8 bg-white/3 p-5">
+            <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Current HR Team AI Capability</p>
+            <div className="flex items-center gap-6">
+              <div className="text-center px-5 py-3 rounded-lg bg-white/4 border border-white/8">
+                <p className="text-2xl font-bold text-blue-400">{(ambitionGap.functionAvgRaw / 10).toFixed(1)}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">HR Team Level</p>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                The HR function is currently operating at an average AI capability level of <strong className="text-foreground">{(ambitionGap.functionAvgRaw / 10).toFixed(1)}</strong> out of 10. This is the baseline from which the strategy must build to reach the <strong className="text-foreground">{bLevel?.label}</strong> ambition target.
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 1 — EXECUTIVE SUMMARY
+          PART 2 — WHERE WE NEED TO BE
+          Our AI vision — what the ambition requires of HR
       ══════════════════════════════════════════════════════════════════════ */}
       <section>
-        {/* Section header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/15 flex-shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest text-blue-400 uppercase">Section 1</p>
-            <h2 className="text-base font-semibold text-foreground leading-tight">Executive Summary</h2>
-          </div>
-        </div>
+        <PartHeader
+          partNum="2"
+          color="#60A5FA"
+          icon={<Compass className="w-4 h-4" />}
+          eyebrow="Part 2 — Where We Need to Be"
+          title="Our AI Vision"
+        />
 
         <div className="rounded-xl border border-blue-500/15 bg-blue-500/5 p-6">
-          {/* Vision headline */}
           <div className="mb-5 pb-5 border-b border-white/8">
-            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Our AI Vision</p>
+            <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">The Vision</p>
             <h3 className="text-lg font-semibold text-foreground leading-snug">
               How AI will change our ways of work in {sectorLabel ?? "our sector"}
             </h3>
           </div>
 
-          {/* Vision body */}
-          {visionStatement ? (
+          {sector ? (
             <div className="space-y-4">
-              {visionStatement.split("\n\n").map((para, i) => (
-                <p key={i} className="text-sm text-muted-foreground leading-relaxed">{para}</p>
-              ))}
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                In {sectorLabel}, the integration of artificial intelligence into HR is no longer a future consideration — it is a present-day imperative. Our organisation has set a <strong className="text-foreground">{bLevel?.label}</strong> AI ambition: {bLevel?.waysOfWork}
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                To deliver this vision, every HR professional must operate at the <strong className="text-foreground">{pLevel?.label}</strong> level. {pLevel?.expectation}
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                This strategy defines the initiatives, development priorities, and capability investments required to close the gap between where our HR function is today and where it needs to be to deliver on this ambition.
+              </p>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -916,49 +861,139 @@ export default function AIStrategyPage() {
             </div>
           )}
 
-          {/* Ambition summary pills */}
+          {/* Ambition summary */}
           {sector && (
-            <div className="mt-5 pt-4 border-t border-white/8 flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/4 px-3 py-2">
-                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Industry:</span>
-                <span className="text-xs font-semibold text-foreground">{sectorLabel}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/4 px-3 py-2">
-                <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Business:</span>
-                <span className="text-xs font-semibold text-foreground">{BUSINESS_LEVELS[businessLevel]?.label}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/4 px-3 py-2">
-                <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">People:</span>
-                <span className="text-xs font-semibold text-foreground">{PEOPLE_LEVELS[peopleLevel]?.label}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/4 px-3 py-2">
-                <Target className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Capability target:</span>
-                <span className="text-xs font-semibold text-foreground">{(overallTarget / 10).toFixed(1)} / 10</span>
-              </div>
+            <div className="mt-5 pt-4 border-t border-white/8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { icon: <Building2 className="w-3.5 h-3.5" />, label: "Industry", value: sectorLabel ?? "—" },
+                { icon: <BarChart3 className="w-3.5 h-3.5" />, label: "Business Ambition", value: bLevel?.label ?? "—" },
+                { icon: <Users className="w-3.5 h-3.5" />, label: "People Ambition", value: pLevel?.label ?? "—" },
+                { icon: <Target className="w-3.5 h-3.5" />, label: "Capability Target", value: `${(overallTarget / 10).toFixed(1)} / 10` },
+              ].map(item => (
+                <div key={item.label} className="flex items-start gap-2 rounded-lg border border-white/8 bg-white/3 px-3 py-2.5">
+                  <span className="text-muted-foreground mt-0.5 flex-shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{item.label}</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{item.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 2 — INITIATIVE ROADMAP
+          PART 3 — THE GAP
+          Company maturity gap + HR capability gap
       ══════════════════════════════════════════════════════════════════════ */}
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-500/15 flex-shrink-0">
-              <Map className="w-3.5 h-3.5 text-purple-400" />
+        <PartHeader
+          partNum="3"
+          color="#F472B6"
+          icon={<GitMerge className="w-4 h-4" />}
+          eyebrow="Part 3 — The Gap"
+          title="What Needs to Change"
+        />
+
+        <div className="rounded-xl border border-pink-500/15 bg-pink-500/4 divide-y divide-white/6">
+
+          {/* Company gap */}
+          {companyResults && companyGap !== null && (
+            <div className="p-6">
+              <p className="text-xs font-bold text-pink-400 uppercase tracking-wider mb-3">Company AI Maturity Gap</p>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[
+                  { label: "Company Now",    value: companyResults.overallScore.toFixed(1), color: "#F59E0B", sub: companyResults.maturityLabel },
+                  { label: "Required",       value: requiredMaturity.toFixed(1),             color: "#60A5FA", sub: `for ${bLevel?.label} ambition` },
+                  { label: "Company Gap",    value: companyGap > 0 ? `+${companyGap.toFixed(1)}` : companyGap.toFixed(1), color: companyGap > 0.5 ? "#F87171" : "#4ADE80", sub: companyGap > 0.5 ? "needs investment" : "aligned" },
+                ].map(tile => (
+                  <div key={tile.label} className="rounded-lg border border-white/8 bg-black/20 p-4 text-center">
+                    <p className="text-2xl font-bold" style={{ color: tile.color }}>{tile.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{tile.label}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">{tile.sub}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {companyGap > 1.5
+                  ? `There is a significant gap between the company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) and what a ${bLevel?.label} business ambition requires (${requiredMaturity.toFixed(1)}/5). The HR AI strategy must act as an accelerator — building the company's AI capability from the ground up. The priority dimensions to address are ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}. HR must lead by example, demonstrating responsible AI adoption and building organisation-wide confidence.`
+                  : companyGap > 0.5
+                  ? `The company is on a credible AI journey but needs to close a gap of ${companyGap.toFixed(1)} points to reach the maturity required for a ${bLevel?.label} business ambition. The HR AI strategy must focus on scaling what is working and closing the gaps in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}.`
+                  : companyGap > -0.3
+                  ? `The company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) is well-aligned with the ${bLevel?.label} business ambition. The HR AI strategy should focus on maintaining momentum and deepening capability in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}.`
+                  : `The company is ahead of the maturity level required for a ${bLevel?.label} business ambition. The HR AI strategy should focus on innovation and maintaining the competitive advantage in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}.`
+                }
+              </p>
+              {/* Strength/gap pills */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {weakDims.map(d => (
+                  <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-300">
+                    <AlertTriangle className="w-3 h-3" />{d.label} — gap
+                  </span>
+                ))}
+                {strongDims.map(d => (
+                  <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">
+                    <CheckCircle2 className="w-3 h-3" />{d.label} — strength
+                  </span>
+                ))}
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-bold tracking-widest text-purple-400 uppercase">Section 2</p>
-              <h2 className="text-base font-semibold text-foreground leading-tight">Initiative Roadmap</h2>
-            </div>
+          )}
+
+          {/* HR capability gap */}
+          <div className="p-6">
+            <p className="text-xs font-bold text-pink-400 uppercase tracking-wider mb-3">HR Capability Gap</p>
+            {ambitionGap?.configured && ambitionGap.functionAvgRaw != null ? (
+              <>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[
+                    { label: "HR Team Now",   value: (ambitionGap.functionAvgRaw / 10).toFixed(1),                                                                    color: "#60A5FA" },
+                    { label: "Target",        value: ambitionGap.ambitionTargetScore != null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—",                color: "#4ADE80" },
+                    { label: "HR Gap",        value: ambitionGap.gapRaw != null && ambitionGap.gapRaw > 0 ? `${(ambitionGap.gapRaw / 10).toFixed(1)}` : "None",       color: ambitionGap.gapRaw != null && ambitionGap.gapRaw > 0 ? "#FCD34D" : "#4ADE80" },
+                  ].map(tile => (
+                    <div key={tile.label} className="rounded-lg border border-white/8 bg-black/20 p-4 text-center">
+                      <p className="text-2xl font-bold" style={{ color: tile.color }}>{tile.value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{tile.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {ambitionGap.verdict === "exceeds"
+                    ? `The HR function is currently performing at Level ${(ambitionGap.functionAvgRaw / 10).toFixed(1)} — exceeding the Level ${(ambitionGap.ambitionTargetScore! / 10).toFixed(1)} target set by the ${bLevel?.label} / ${pLevel?.label} ambition combination. Consider raising the ambition bar to maintain strategic stretch.`
+                    : `The HR function is currently at Level ${(ambitionGap.functionAvgRaw / 10).toFixed(1)} against a Level ${(ambitionGap.ambitionTargetScore! / 10).toFixed(1)} target — a gap of ${((ambitionGap.gapRaw ?? 0) / 10).toFixed(1)} levels. Closing this gap will require a structured, accelerated development programme.`
+                  }
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-3 p-4 rounded-lg border border-white/8 bg-white/3">
+                <Info className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  {isDirty
+                    ? "Save your strategy to generate a live HR capability gap analysis against your current team baseline."
+                    : "Complete team AI assessments to generate a live HR capability gap analysis."
+                  }
+                </p>
+              </div>
+            )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowSelectorModal(true)} className="flex-shrink-0">
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          PART 4 — HOW WE GET THERE
+          Initiative roadmap (phased timeline)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section>
+        <div className="flex items-center justify-between mb-5">
+          <PartHeader
+            partNum="4"
+            color="#A78BFA"
+            icon={<Map className="w-4 h-4" />}
+            eyebrow="Part 4 — How We Get There"
+            title="Initiative Roadmap"
+          />
+          <Button variant="outline" size="sm" onClick={() => setShowSelectorModal(true)} className="flex-shrink-0 ml-4">
             <ListPlus className="w-3.5 h-3.5 mr-1.5" />
             {selectedInits.length > 0 ? `Manage (${selectedInits.length})` : "Add Initiatives"}
           </Button>
@@ -971,87 +1006,57 @@ export default function AIStrategyPage() {
           >
             <Map className="w-8 h-8 text-purple-400/50 mx-auto mb-3" />
             <p className="text-sm font-medium text-foreground mb-1">No initiatives selected</p>
-            <p className="text-xs text-muted-foreground">Open the initiative library to select the AI initiatives that will deliver your vision.</p>
-            <Button size="sm" variant="outline" className="mt-4 border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+            <p className="text-xs text-muted-foreground mb-4">Open the initiative library to select the AI initiatives that will deliver your vision.</p>
+            <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
               <ListPlus className="w-3.5 h-3.5 mr-1.5" />
               Open Initiative Library
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Intro line */}
             <p className="text-sm text-muted-foreground">
-              {selectedInits.length} initiative{selectedInits.length !== 1 ? "s" : ""} selected to deliver the <strong className="text-foreground">{BUSINESS_LEVELS[businessLevel]?.label}</strong> AI vision — sequenced across four phases to build capability progressively and manage organisational change.
+              {selectedInits.length} initiative{selectedInits.length !== 1 ? "s" : ""} selected to deliver the <strong className="text-foreground">{bLevel?.label}</strong> AI vision — sequenced across four phases to build capability progressively and manage organisational change.
             </p>
 
-            {/* ── Horizontal timeline ── */}
             <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
-
-              {/* Vision thread bar */}
+              {/* Vision thread */}
               <div className="relative px-6 pt-5 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                   <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">AI Vision Thread</span>
                 </div>
-                {/* Continuous vision bar */}
                 <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "linear-gradient(90deg, #60A5FA 0%, #A78BFA 33%, #4ADE80 66%, #FBBF24 100%)" }}>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 </div>
-                {/* Phase labels above the bar */}
-                <div className="grid mt-1" style={{ gridTemplateColumns: `repeat(${Math.max(1, initiativesByPhase.filter(p => p.phase !== "unknown").length || 4)}, 1fr)` }}>
-                  {["Q1", "Q2", "Q3", "Q4"].map((q) => {
-                    const cfg = PHASE_LABELS[q];
-                    return (
-                      <div key={q} className="text-center">
-                        <span className="text-xs font-semibold" style={{ color: cfg.color }}>
-                          {cfg.label.split(" — ")[1]}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div className="grid mt-1" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+                  {["Q1", "Q2", "Q3", "Q4"].map(q => (
+                    <div key={q} className="text-center">
+                      <span className="text-xs font-semibold" style={{ color: PHASE_LABELS[q].color }}>
+                        {PHASE_LABELS[q].label.split(" — ")[1]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Phase columns — horizontal scroll */}
+              {/* Phase columns */}
               <div className="overflow-x-auto pb-5 px-4">
-                <div className="flex gap-3" style={{ minWidth: `${Math.max(4, initiativesByPhase.length) * 220}px` }}>
+                <div className="flex gap-3" style={{ minWidth: "800px" }}>
                   {["Q1", "Q2", "Q3", "Q4"].map((q, colIdx) => {
                     const cfg = PHASE_LABELS[q];
-                    const phaseGroup = initiativesByPhase.find(p => p.phase === q);
-                    const items: any[] = phaseGroup?.items ?? [];
-                    const isEmpty = items.length === 0;
+                    const items: any[] = initiativesByPhase.find(p => p.phase === q)?.items ?? [];
                     return (
-                      <div key={q} className="flex-1 min-w-[200px] flex flex-col gap-2">
-                        {/* Phase column header */}
-                        <div
-                          className="rounded-lg px-3 py-2 flex items-center gap-2"
-                          style={{ background: `${cfg.color}12`, borderLeft: `3px solid ${cfg.color}` }}
-                        >
-                          <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                            style={{ background: cfg.color, color: "#0E1726" }}
-                          >
-                            {colIdx + 1}
-                          </div>
+                      <div key={q} className="flex-1 min-w-[190px] flex flex-col gap-2">
+                        <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${cfg.color}12`, borderLeft: `3px solid ${cfg.color}` }}>
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: cfg.color, color: "#0E1726" }}>{colIdx + 1}</div>
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold leading-tight" style={{ color: cfg.color }}>
-                              {cfg.label.split(" — ")[1]}
-                            </p>
+                            <p className="text-xs font-semibold leading-tight" style={{ color: cfg.color }}>{cfg.label.split(" — ")[1]}</p>
                             <p className="text-xs text-muted-foreground leading-tight">{items.length} initiative{items.length !== 1 ? "s" : ""}</p>
                           </div>
                         </div>
-
-                        {/* Connector line from vision bar */}
-                        <div className="flex justify-center">
-                          <div className="w-px h-3" style={{ background: `${cfg.color}50` }} />
-                        </div>
-
-                        {/* Initiative cards */}
-                        {isEmpty ? (
-                          <div
-                            className="flex-1 rounded-lg border border-dashed border-white/8 flex items-center justify-center p-4 cursor-pointer hover:border-white/15 transition-colors"
-                            onClick={() => setShowSelectorModal(true)}
-                          >
+                        <div className="flex justify-center"><div className="w-px h-3" style={{ background: `${cfg.color}50` }} /></div>
+                        {items.length === 0 ? (
+                          <div className="flex-1 rounded-lg border border-dashed border-white/8 flex items-center justify-center p-4 cursor-pointer hover:border-white/15 transition-colors" onClick={() => setShowSelectorModal(true)}>
                             <p className="text-xs text-muted-foreground text-center">No initiatives<br/>in this phase</p>
                           </div>
                         ) : (
@@ -1060,46 +1065,17 @@ export default function AIStrategyPage() {
                               const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
                               const catColor = CATEGORY_COLOURS[CATEGORY_MAP[init.category] ?? init.category] ?? "#9CA3AF";
                               return (
-                                <div
-                                  key={init.id}
-                                  className="relative rounded-lg border border-white/10 bg-black/25 p-3 cursor-pointer hover:border-white/20 hover:bg-black/35 transition-all group"
-                                  style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
-                                  onClick={() => setDetailInitiative(init)}
-                                >
-                                  {/* Remove button */}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); toggleInitiative(init.id); }}
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </button>
-
-                                  {/* Initiative name */}
+                                <div key={init.id} className="relative rounded-lg border border-white/10 bg-black/25 p-3 cursor-pointer hover:border-white/20 hover:bg-black/35 transition-all group" style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }} onClick={() => setDetailInitiative(init)}>
+                                  <button onClick={(e) => { e.stopPropagation(); toggleInitiative(init.id); }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"><X className="w-3 h-3" /></button>
                                   <p className="text-xs font-semibold text-foreground pr-5 mb-2 leading-snug">{init.name}</p>
-
-                                  {/* Category */}
-                                  {init.category && (
-                                    <p className="text-xs mb-1.5" style={{ color: catColor }}>
-                                      {CATEGORY_MAP[init.category] ?? init.category}
-                                    </p>
-                                  )}
-
-                                  {/* Badges */}
+                                  {init.category && <p className="text-xs mb-1.5" style={{ color: catColor }}>{CATEGORY_MAP[init.category] ?? init.category}</p>}
                                   <div className="flex flex-wrap gap-1">
-                                    {init.aiType && (
-                                      <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${typeColor}20`, color: typeColor }}>
-                                        {init.aiType}
-                                      </span>
-                                    )}
-                                    {init.regulatoryFlag && (
-                                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">EU AI Act</span>
-                                    )}
+                                    {init.aiType && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${typeColor}20`, color: typeColor }}>{init.aiType}</span>}
+                                    {init.regulatoryFlag && <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">EU AI Act</span>}
                                   </div>
-
-                                  {/* Vision link */}
                                   <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                                     <ArrowRight className="w-2.5 h-2.5 flex-shrink-0" style={{ color: cfg.color }} />
-                                    <span className="truncate">{BUSINESS_LEVELS[businessLevel]?.label} vision</span>
+                                    <span className="truncate">{bLevel?.label} vision</span>
                                   </div>
                                 </div>
                               );
@@ -1109,13 +1085,12 @@ export default function AIStrategyPage() {
                       </div>
                     );
                   })}
-
-                  {/* Ongoing / unphased column */}
+                  {/* Ongoing column */}
                   {initiativesByPhase.some(p => p.phase === "unknown") && (() => {
                     const cfg = PHASE_LABELS["unknown"];
                     const items = initiativesByPhase.find(p => p.phase === "unknown")?.items ?? [];
                     return (
-                      <div className="flex-1 min-w-[200px] flex flex-col gap-2">
+                      <div className="flex-1 min-w-[190px] flex flex-col gap-2">
                         <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${cfg.color}12`, borderLeft: `3px solid ${cfg.color}` }}>
                           <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: cfg.color, color: "#0E1726" }}>∞</div>
                           <div className="min-w-0">
@@ -1147,9 +1122,8 @@ export default function AIStrategyPage() {
                 </div>
               </div>
 
-              {/* Category colour legend */}
+              {/* Legend */}
               <div className="px-6 pb-4 pt-1 border-t border-white/6">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Category</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                   {Object.entries(CATEGORY_COLOURS).map(([cat, color]) => {
                     const hasAny = selectedInits.some((i: any) => (CATEGORY_MAP[i.category] ?? i.category) === cat);
@@ -1169,108 +1143,79 @@ export default function AIStrategyPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 3 — CAPABILITY GAP
+          PART 5 — WHAT IT TAKES FROM HR
+          Domain capability investment required
       ══════════════════════════════════════════════════════════════════════ */}
       <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/15 flex-shrink-0">
-            <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest text-amber-400 uppercase">Section 3</p>
-            <h2 className="text-base font-semibold text-foreground leading-tight">Capability Gap to Deliver the Vision</h2>
-          </div>
-        </div>
+        <PartHeader
+          partNum="5"
+          color="#4ADE80"
+          icon={<BookOpen className="w-4 h-4" />}
+          eyebrow="Part 5 — What It Takes from HR"
+          title="HR Capability Investment Required"
+        />
 
-        <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-6 space-y-6">
-          {/* Gap narrative */}
-          <p className="text-sm text-muted-foreground leading-relaxed">{gapNarrative}</p>
+        <div className="rounded-xl border border-green-500/15 bg-green-500/4 p-6 space-y-6">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {ambitionGap?.configured && ambitionGap.gapRaw != null && ambitionGap.gapRaw > 0
+              ? `Delivering the ${bLevel?.label} AI vision requires the HR function to close a capability gap of ${((ambitionGap.gapRaw) / 10).toFixed(1)} levels. The domain-level analysis below shows where the greatest investment is needed — these are the specific capability areas the HR team must develop to deliver the selected initiatives and support the organisation's AI ambition.`
+              : `Delivering the ${bLevel?.label} AI vision requires the HR function to develop capability across all six AI domains. The targets below are calculated from your selected ambition levels. Complete team assessments to generate a live gap analysis showing the distance from current capability to what is required.`
+            }
+          </p>
 
-          {/* KPI tiles — only when configured */}
-          {ambitionGap?.configured && ambitionGap.functionAvgRaw != null && (
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Current Level",  value: (ambitionGap.functionAvgRaw / 10).toFixed(1),                                                                   color: "#60A5FA" },
-                { label: "Target Level",   value: ambitionGap.ambitionTargetScore != null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "—",               color: "#4ADE80" },
-                { label: "Gap",            value: ambitionGap.gapRaw != null && ambitionGap.gapRaw > 0 ? `${(ambitionGap.gapRaw / 10).toFixed(1)}` : "None",      color: ambitionGap.gapRaw != null && ambitionGap.gapRaw > 0 ? "#FCD34D" : "#4ADE80" },
-              ].map(tile => (
-                <div key={tile.label} className="rounded-lg border border-white/8 bg-black/20 p-4 text-center">
-                  <p className="text-2xl font-bold" style={{ color: tile.color }}>{tile.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{tile.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Per-domain gap bars */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Domain-level Gap Analysis</p>
-            <div className="space-y-4">
-              {domainGapRows.map(row => {
-                const isHighGap = row.gap !== null && row.gap > 20;
-                return (
-                  <div key={row.key}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{row.label}</span>
-                        {isHighGap && (
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs font-mono">
-                        <span className="text-muted-foreground">{row.current !== null ? (row.current / 10).toFixed(1) : "—"}</span>
-                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                        <span style={{ color: row.color }}>{(row.target / 10).toFixed(1)}</span>
+          <div className="space-y-5">
+            {domainGapRows.map(row => {
+              const isHighGap = row.gap !== null && row.gap > 20;
+              return (
+                <div key={row.key}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: row.color }} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-semibold text-foreground">{row.label}</span>
+                          {isHighGap && <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs h-4 px-1.5">Priority</Badge>}
+                        </div>
+                        {row.description && <p className="text-xs text-muted-foreground leading-relaxed">{row.description}</p>}
                       </div>
                     </div>
-                    {/* Track */}
-                    <div className="relative h-2 rounded-full bg-white/8 overflow-visible">
-                      {row.currentPct !== null && (
-                        <div
-                          className="absolute top-0 left-0 h-full rounded transition-all duration-700"
-                          style={{ width: `${row.currentPct}%`, background: "rgba(96,165,250,0.45)" }}
-                        />
-                      )}
-                      {/* Target marker */}
-                      <div
-                        className="absolute top-[-3px] w-0.5 h-[calc(100%+6px)] rounded-full"
-                        style={{ left: `${row.targetPct}%`, background: row.color }}
-                      />
+                    <div className="flex items-center gap-2 text-xs font-mono flex-shrink-0 ml-4">
+                      <span className="text-muted-foreground">{row.current !== null ? (row.current / 10).toFixed(1) : "—"}</span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <span className="font-semibold" style={{ color: row.color }}>{(row.target / 10).toFixed(1)}</span>
                     </div>
-                    {row.gap !== null && row.gap > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Gap of <span className="font-semibold" style={{ color: isHighGap ? "#FBBF24" : "#9CA3AF" }}>{(row.gap / 10).toFixed(1)}</span> — {isHighGap ? "priority investment required" : "manageable through standard development"}
-                      </p>
-                    )}
-                    {row.gap !== null && row.gap <= 0 && row.current !== null && (
-                      <p className="text-xs text-green-400 mt-1">On target or above</p>
-                    )}
                   </div>
-                );
-              })}
-            </div>
-            {/* Legend */}
-            <div className="flex items-center gap-5 mt-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full bg-blue-400/45 inline-block" />Current</span>
-              <span className="flex items-center gap-1.5"><span className="w-0.5 h-3 bg-green-400 inline-block" />Target</span>
-              <span className="flex items-center gap-1.5"><AlertTriangle className="w-3 h-3 text-amber-400" />Priority gap</span>
-            </div>
+                  <div className="relative h-2 rounded-full bg-white/8 overflow-visible ml-3.5">
+                    {row.currentPct !== null && (
+                      <div className="absolute top-0 left-0 h-full rounded transition-all duration-700" style={{ width: `${row.currentPct}%`, background: "rgba(96,165,250,0.45)" }} />
+                    )}
+                    <div className="absolute top-[-3px] w-0.5 h-[calc(100%+6px)] rounded-full" style={{ left: `${row.targetPct}%`, background: row.color }} />
+                  </div>
+                  {row.gap !== null && row.gap > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 ml-3.5">
+                      Gap of <span className="font-semibold" style={{ color: isHighGap ? "#FBBF24" : "#9CA3AF" }}>{(row.gap / 10).toFixed(1)}</span> — {isHighGap ? "priority investment required" : "manageable through standard development"}
+                    </p>
+                  )}
+                  {row.gap !== null && row.gap <= 0 && row.current !== null && (
+                    <p className="text-xs text-green-400 mt-1 ml-3.5">On target or above</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Prompt to save if not yet configured */}
-          {!ambitionGap?.configured && !isDirty && (
-            <div className="flex items-center gap-2 p-3 rounded-lg border border-white/8 bg-white/3">
-              <Info className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <p className="text-xs text-muted-foreground">Save your strategy to generate a live gap analysis against your current team baseline.</p>
-            </div>
-          )}
+          <div className="flex items-center gap-5 text-xs text-muted-foreground pt-2 border-t border-white/6">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full bg-blue-400/45 inline-block" />Current</span>
+            <span className="flex items-center gap-1.5"><span className="w-0.5 h-3 bg-green-400 inline-block" />Target</span>
+            <span className="flex items-center gap-1.5"><Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs h-4 px-1.5">Priority</Badge>High-gap domain</span>
+          </div>
         </div>
       </section>
 
       {/* ── Sticky save CTA ── */}
       {isDirty && (
-        <div className="sticky bottom-4 flex justify-center">
-          <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-6 py-3 flex items-center gap-4 shadow-lg">
+        <div className="sticky bottom-4 flex justify-center z-10">
+          <div className="rounded-xl border border-green-500/30 bg-green-500/10 backdrop-blur px-6 py-3 flex items-center gap-4 shadow-lg">
             <p className="text-sm text-green-400">You have unsaved changes to your strategy.</p>
             <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold" onClick={handleSave} disabled={saveStrategyMut.isPending}>
               <Save className="w-3.5 h-3.5 mr-1.5" />
