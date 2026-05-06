@@ -162,6 +162,19 @@ const DA_LABELS: Record<string, string> = {
   full_automation:     "Full automation",
 };
 
+// Category colours for the roadmap timeline
+const CATEGORY_COLOURS: Record<string, string> = {
+  "Talent Acquisition":        "#60A5FA",
+  "Performance & Development": "#A78BFA",
+  "Pay & Reward":              "#FBBF24",
+  "Learning & Development":    "#4ADE80",
+  "Workforce Planning":        "#F472B6",
+  "GenAI Workforce Rollout":   "#FB923C",
+  "HR Operations":             "#22D3EE",
+  "Ethics & Governance":       "#F87171",
+  "Custom":                    "#9CA3AF",
+};
+
 const CATEGORY_MAP: Record<string, string> = {
   "Talent Acquisition":        "Talent Acquisition",
   "Learning & Development":    "Learning & Development",
@@ -889,70 +902,189 @@ export default function AIStrategyPage() {
           <div className="space-y-4">
             {/* Intro line */}
             <p className="text-sm text-muted-foreground">
-              The following {selectedInits.length} initiative{selectedInits.length !== 1 ? "s" : ""} have been selected to deliver the {BUSINESS_LEVELS[businessLevel]?.label} AI vision. They are sequenced across four phases to build capability progressively and manage organisational change.
+              {selectedInits.length} initiative{selectedInits.length !== 1 ? "s" : ""} selected to deliver the <strong className="text-foreground">{BUSINESS_LEVELS[businessLevel]?.label}</strong> AI vision — sequenced across four phases to build capability progressively and manage organisational change.
             </p>
 
-            {/* Phase timeline */}
-            <div className="space-y-4">
-              {initiativesByPhase.map(({ phase, items }, phaseIdx) => {
-                const phaseConfig = PHASE_LABELS[phase] ?? PHASE_LABELS["unknown"];
-                return (
-                  <div key={phase} className="rounded-xl border p-5" style={{ borderColor: `${phaseConfig.color}25`, background: phaseConfig.bg }}>
-                    {/* Phase header */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-black" style={{ background: phaseConfig.color }}>
-                        {phaseIdx + 1}
+            {/* ── Horizontal timeline ── */}
+            <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
+
+              {/* Vision thread bar */}
+              <div className="relative px-6 pt-5 pb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <span className="text-xs font-bold tracking-widest text-purple-400 uppercase">AI Vision Thread</span>
+                </div>
+                {/* Continuous vision bar */}
+                <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "linear-gradient(90deg, #60A5FA 0%, #A78BFA 33%, #4ADE80 66%, #FBBF24 100%)" }}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                </div>
+                {/* Phase labels above the bar */}
+                <div className="grid mt-1" style={{ gridTemplateColumns: `repeat(${Math.max(1, initiativesByPhase.filter(p => p.phase !== "unknown").length || 4)}, 1fr)` }}>
+                  {["Q1", "Q2", "Q3", "Q4"].map((q) => {
+                    const cfg = PHASE_LABELS[q];
+                    return (
+                      <div key={q} className="text-center">
+                        <span className="text-xs font-semibold" style={{ color: cfg.color }}>
+                          {cfg.label.split(" — ")[1]}
+                        </span>
                       </div>
-                      <h3 className="text-sm font-semibold" style={{ color: phaseConfig.color }}>{phaseConfig.label}</h3>
-                      <span className="text-xs text-muted-foreground ml-auto">{items.length} initiative{items.length !== 1 ? "s" : ""}</span>
-                    </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                    {/* Initiative cards in this phase */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {items.map((init: any, idx: number) => {
-                        const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
-                        return (
-                          <React.Fragment key={init.id}>
-                            <div
-                              className="relative rounded-lg border border-white/8 bg-black/20 p-3.5 cursor-pointer hover:border-white/15 transition-colors"
-                              onClick={() => setDetailInitiative(init)}
-                            >
-                              {/* Remove */}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); toggleInitiative(init.id); }}
-                                className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-red-400 transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                              <p className="text-sm font-medium text-foreground pr-6 mb-2 leading-snug">{init.name}</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {init.aiType && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: `${typeColor}22`, color: typeColor }}>{init.aiType}</span>
-                                )}
-                                {init.decisionAuthority && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded border border-white/10 text-muted-foreground">{DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}</span>
-                                )}
-                                {init.regulatoryFlag && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">EU AI Act</span>
-                                )}
+              {/* Phase columns — horizontal scroll */}
+              <div className="overflow-x-auto pb-5 px-4">
+                <div className="flex gap-3" style={{ minWidth: `${Math.max(4, initiativesByPhase.length) * 220}px` }}>
+                  {["Q1", "Q2", "Q3", "Q4"].map((q, colIdx) => {
+                    const cfg = PHASE_LABELS[q];
+                    const phaseGroup = initiativesByPhase.find(p => p.phase === q);
+                    const items: any[] = phaseGroup?.items ?? [];
+                    const isEmpty = items.length === 0;
+                    return (
+                      <div key={q} className="flex-1 min-w-[200px] flex flex-col gap-2">
+                        {/* Phase column header */}
+                        <div
+                          className="rounded-lg px-3 py-2 flex items-center gap-2"
+                          style={{ background: `${cfg.color}12`, borderLeft: `3px solid ${cfg.color}` }}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                            style={{ background: cfg.color, color: "#0E1726" }}
+                          >
+                            {colIdx + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold leading-tight" style={{ color: cfg.color }}>
+                              {cfg.label.split(" — ")[1]}
+                            </p>
+                            <p className="text-xs text-muted-foreground leading-tight">{items.length} initiative{items.length !== 1 ? "s" : ""}</p>
+                          </div>
+                        </div>
+
+                        {/* Connector line from vision bar */}
+                        <div className="flex justify-center">
+                          <div className="w-px h-3" style={{ background: `${cfg.color}50` }} />
+                        </div>
+
+                        {/* Initiative cards */}
+                        {isEmpty ? (
+                          <div
+                            className="flex-1 rounded-lg border border-dashed border-white/8 flex items-center justify-center p-4 cursor-pointer hover:border-white/15 transition-colors"
+                            onClick={() => setShowSelectorModal(true)}
+                          >
+                            <p className="text-xs text-muted-foreground text-center">No initiatives<br/>in this phase</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {items.map((init: any) => {
+                              const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
+                              const catColor = CATEGORY_COLOURS[CATEGORY_MAP[init.category] ?? init.category] ?? "#9CA3AF";
+                              return (
+                                <div
+                                  key={init.id}
+                                  className="relative rounded-lg border border-white/10 bg-black/25 p-3 cursor-pointer hover:border-white/20 hover:bg-black/35 transition-all group"
+                                  style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
+                                  onClick={() => setDetailInitiative(init)}
+                                >
+                                  {/* Remove button */}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); toggleInitiative(init.id); }}
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+
+                                  {/* Initiative name */}
+                                  <p className="text-xs font-semibold text-foreground pr-5 mb-2 leading-snug">{init.name}</p>
+
+                                  {/* Category */}
+                                  {init.category && (
+                                    <p className="text-xs mb-1.5" style={{ color: catColor }}>
+                                      {CATEGORY_MAP[init.category] ?? init.category}
+                                    </p>
+                                  )}
+
+                                  {/* Badges */}
+                                  <div className="flex flex-wrap gap-1">
+                                    {init.aiType && (
+                                      <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${typeColor}20`, color: typeColor }}>
+                                        {init.aiType}
+                                      </span>
+                                    )}
+                                    {init.regulatoryFlag && (
+                                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">EU AI Act</span>
+                                    )}
+                                  </div>
+
+                                  {/* Vision link */}
+                                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                                    <ArrowRight className="w-2.5 h-2.5 flex-shrink-0" style={{ color: cfg.color }} />
+                                    <span className="truncate">{BUSINESS_LEVELS[businessLevel]?.label} vision</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Ongoing / unphased column */}
+                  {initiativesByPhase.some(p => p.phase === "unknown") && (() => {
+                    const cfg = PHASE_LABELS["unknown"];
+                    const items = initiativesByPhase.find(p => p.phase === "unknown")?.items ?? [];
+                    return (
+                      <div className="flex-1 min-w-[200px] flex flex-col gap-2">
+                        <div className="rounded-lg px-3 py-2 flex items-center gap-2" style={{ background: `${cfg.color}12`, borderLeft: `3px solid ${cfg.color}` }}>
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: cfg.color, color: "#0E1726" }}>∞</div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold leading-tight" style={{ color: cfg.color }}>Ongoing</p>
+                            <p className="text-xs text-muted-foreground leading-tight">{items.length} initiative{items.length !== 1 ? "s" : ""}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-center"><div className="w-px h-3" style={{ background: `${cfg.color}50` }} /></div>
+                        <div className="flex flex-col gap-2">
+                          {items.map((init: any) => {
+                            const typeColor = AI_TYPE_COLORS[init.aiType] ?? "#9CA3AF";
+                            const catColor = CATEGORY_COLOURS[CATEGORY_MAP[init.category] ?? init.category] ?? "#9CA3AF";
+                            return (
+                              <div key={init.id} className="relative rounded-lg border border-white/10 bg-black/25 p-3 cursor-pointer hover:border-white/20 transition-all group" style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }} onClick={() => setDetailInitiative(init)}>
+                                <button onClick={(e) => { e.stopPropagation(); toggleInitiative(init.id); }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"><X className="w-3 h-3" /></button>
+                                <p className="text-xs font-semibold text-foreground pr-5 mb-2 leading-snug">{init.name}</p>
+                                {init.category && <p className="text-xs mb-1.5" style={{ color: catColor }}>{CATEGORY_MAP[init.category] ?? init.category}</p>}
+                                <div className="flex flex-wrap gap-1">
+                                  {init.aiType && <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${typeColor}20`, color: typeColor }}>{init.aiType}</span>}
+                                  {init.regulatoryFlag && <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">EU AI Act</span>}
+                                </div>
                               </div>
-                              {/* Vision link */}
-                              <div className="mt-2.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <ArrowRight className="w-3 h-3 flex-shrink-0" style={{ color: phaseConfig.color }} />
-                                <span>Contributes to {BUSINESS_LEVELS[businessLevel]?.label} vision</span>
-                              </div>
-                            </div>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Category colour legend */}
+              <div className="px-6 pb-4 pt-1 border-t border-white/6">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Category</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                  {Object.entries(CATEGORY_COLOURS).map(([cat, color]) => {
+                    const hasAny = selectedInits.some((i: any) => (CATEGORY_MAP[i.category] ?? i.category) === cat);
+                    if (!hasAny) return null;
+                    return (
+                      <div key={cat} className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
+                        <span className="text-xs text-muted-foreground">{cat}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-
-            {/* Unphased initiatives */}
-            {selectedInits.filter((i: any) => !i.targetQuarter).length > 0 && initiativesByPhase.some(p => p.phase === "unknown") && null}
           </div>
         )}
       </section>
