@@ -2146,3 +2146,35 @@
 - [x] CPO sidebar shows "Build Strategy" link with Sparkles icon
 - [x] HR AI Strategy dashboard shows "Begin Assessment" CTA when no assessment completed
 - [x] HR AI Strategy dashboard shows vision + principles banner when assessment completed
+
+## AiQ Coach — Phase 0: Cross-cutting Infrastructure
+- [x] Add coach DB schema: coach_sessions, coach_messages, user_capability_memory, coach_audit_log tables
+- [x] Apply migration SQL for coach tables (6 tables: coach_sessions, coach_messages, user_capability_memory, coach_memory_proposals, coach_audit_log, coach_telemetry)
+- [x] Create server/coach/ directory structure (engine, modes, classifier, memory, telemetry)
+- [x] Implement CoachMode enum and session state machine (types.ts)
+- [x] Implement ModeHandler base interface (process, getSystemPrompt, isComplete, onComplete)
+- [x] Implement ClassifierService interface + V1 LLM implementation (constrained structured output, confidence thresholds)
+- [x] Implement MemoryService with governed write path (proposeMemoryWrite, evidence validation, conflict resolution, decay)
+- [x] Implement TelemetryService (per-turn structured events)
+- [x] Implement AuditLogWriter (immutable event log)
+- [x] Implement CoachEngine orchestrator (turn loop, mode registry, prompt composer, streaming pipeline)
+- [x] Create server/routers/coach.ts with tRPC procedures (createOrResumeSession, getOpeningMessage, sendMessage, getHistory, pauseSession, resumeSession)
+- [x] Register coachRouter in server/routers.ts
+
+## AiQ Coach — Phase 1: Diagnostic Mode
+- [x] Implement DiagnosticModeHandler (onboarding → baseline → adaptive → validation acts)
+- [x] Wire DiagnosticModeHandler to existing adaptiveEngine, antiGamingEngine, contradictionEngine, scoringEngine, sessionController
+- [x] Implement item translation cache (structured item → conversational prompt)
+- [x] Implement classifier confidence handling (≥0.65 commit, 0.45–0.65 probe, <0.45 human review flag)
+- [x] Implement foundation gate check in diagnostic mode
+- [x] Implement gaming-flagged turn suppression (no memory writes on flagged turns)
+
+## AiQ Coach — Phase 1: UI
+- [x] Build /coach page with CoachInterface component (streaming chat, message list, input, suggested starters)
+- [x] Implement streaming message rendering (token-by-token with Streamdown markdown)
+- [x] Add mode indicator and progress bar to coach UI
+- [x] Add "Help" button that triggers a clarification from the Coach
+- [x] Add session pause/resume UI
+- [x] Add /coach route to App.tsx (ProtectedRouteFullscreen — no AppShell wrapper)
+- [x] Add "AiQ Coach" nav item to AppShell and DashboardLayout sidebars (MessageSquare icon)
+- [x] 710/710 tests passing · 0 TypeScript errors

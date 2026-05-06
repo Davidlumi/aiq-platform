@@ -1656,3 +1656,134 @@ export type CompanyQuestion = typeof companyQuestions.$inferSelect;
 export type CompanyAssessment = typeof companyAssessments.$inferSelect;
 export type CompanyAssessmentResponse = typeof companyAssessmentResponses.$inferSelect;
 export type CompanyAssessmentResult = typeof companyAssessmentResults.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AiQ COACH — Phase 0 Schema
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── coach_sessions ────────────────────────────────────────────────────────────
+export const coachSessions = mysqlTable("coach_sessions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  mode: varchar("mode", { length: 32 }).notNull().default("diagnostic"),
+  state: varchar("state", { length: 32 }).notNull().default("idle"),
+  assessmentSessionId: varchar("assessment_session_id", { length: 36 }),
+  modeContextJson: json("mode_context_json"),
+  currentAct: varchar("current_act", { length: 64 }),
+  turnCount: int("turn_count").notNull().default(0),
+  promptVersion: varchar("prompt_version", { length: 32 }).notNull().default("1.0.0"),
+  classifierVersion: varchar("classifier_version", { length: 32 }).notNull().default("1.0.0"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  pausedAt: timestamp("paused_at"),
+  completedAt: timestamp("completed_at"),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_coach_sessions_tenant").on(t.tenantId),
+  userIdx: index("idx_coach_sessions_user").on(t.userId),
+}));
+
+// ── coach_messages ────────────────────────────────────────────────────────────
+export const coachMessages = mysqlTable("coach_messages", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sessionId: varchar("session_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  role: varchar("role", { length: 16 }).notNull(),
+  content: text("content").notNull(),
+  clientTurnId: varchar("client_turn_id", { length: 64 }),
+  classificationJson: json("classification_json"),
+  flagsJson: json("flags_json"),
+  llmFirstTokenMs: int("llm_first_token_ms"),
+  llmCompletionMs: int("llm_completion_ms"),
+  classifierMs: int("classifier_ms"),
+  llmInputTokens: int("llm_input_tokens"),
+  llmOutputTokens: int("llm_output_tokens"),
+  classifierTokens: int("classifier_tokens"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  sessionIdx: index("idx_coach_messages_session").on(t.sessionId),
+  tenantIdx: index("idx_coach_messages_tenant").on(t.tenantId),
+}));
+
+// ── user_capability_memory ────────────────────────────────────────────────────
+export const userCapabilityMemory = mysqlTable("user_capability_memory", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  capabilityDomain: varchar("capability_domain", { length: 64 }).notNull(),
+  signalKey: varchar("signal_key", { length: 64 }).notNull(),
+  memoryType: varchar("memory_type", { length: 32 }).notNull(),
+  confidence: int("confidence").notNull().default(80),
+  sourceTurnId: varchar("source_turn_id", { length: 36 }),
+  sourceSessionId: varchar("source_session_id", { length: 36 }),
+  sourceMode: varchar("source_mode", { length: 32 }),
+  summary: text("summary"),
+  evidenceJson: json("evidence_json"),
+  conflictStatus: varchar("conflict_status", { length: 32 }).default("none"),
+  supersededById: varchar("superseded_by_id", { length: 36 }),
+  lastReinforcedAt: timestamp("last_reinforced_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userDomainIdx: index("idx_ucm_user_domain").on(t.userId, t.capabilityDomain),
+  tenantIdx: index("idx_ucm_tenant").on(t.tenantId),
+}));
+
+// ── coach_audit_log ───────────────────────────────────────────────────────────
+export const coachAuditLog = mysqlTable("coach_audit_log", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }),
+  eventType: varchar("event_type", { length: 64 }).notNull(),
+  sessionId: varchar("session_id", { length: 36 }),
+  turnId: varchar("turn_id", { length: 36 }),
+  payloadJson: json("payload_json").notNull(),
+  classifierVersion: varchar("classifier_version", { length: 32 }),
+  promptVersion: varchar("prompt_version", { length: 32 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  userTimeIdx: index("idx_coach_audit_user_time").on(t.userId, t.createdAt),
+  tenantEventIdx: index("idx_coach_audit_tenant_event").on(t.tenantId, t.eventType, t.createdAt),
+}));
+
+// ── apply_commitments ─────────────────────────────────────────────────────────
+export const applyCommitments = mysqlTable("apply_commitments", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  sessionId: varchar("session_id", { length: 36 }).notNull(),
+  capabilityDomain: varchar("capability_domain", { length: 64 }).notNull(),
+  commitmentText: text("commitment_text").notNull(),
+  dueDate: timestamp("due_date"),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_apply_commitments_user").on(t.userId),
+  tenantIdx: index("idx_apply_commitments_tenant").on(t.tenantId),
+}));
+
+// ── apply_evidence ────────────────────────────────────────────────────────────
+export const applyEvidence = mysqlTable("apply_evidence", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  commitmentId: varchar("commitment_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  evidenceText: text("evidence_text").notNull(),
+  qualityScore: int("quality_score"),
+  classificationJson: json("classification_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  commitmentIdx: index("idx_apply_evidence_commitment").on(t.commitmentId),
+  userIdx: index("idx_apply_evidence_user").on(t.userId),
+}));
+
+// ── Exported types ─────────────────────────────────────────────────────────────
+export type CoachSession = typeof coachSessions.$inferSelect;
+export type CoachMessage = typeof coachMessages.$inferSelect;
+export type UserCapabilityMemory = typeof userCapabilityMemory.$inferSelect;
+export type CoachAuditLog = typeof coachAuditLog.$inferSelect;
+export type ApplyCommitment = typeof applyCommitments.$inferSelect;
+export type ApplyEvidence = typeof applyEvidence.$inferSelect;

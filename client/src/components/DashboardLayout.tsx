@@ -34,6 +34,7 @@ import {
   BookMarked,
   Building2,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -58,6 +59,7 @@ function isManager(roles: string[]) {
 const MY_DEVELOPMENT: NavSection = {
   section: "My Development",
   items: [
+    { icon: MessageSquare,  label: "AiQ Coach",       path: "/coach" },
     { icon: ClipboardList,  label: "Assessment",     path: "/assessment" },
     { icon: BookOpen,       label: "Learning Plan",  path: "/learning" },
     { icon: Library,        label: "Content Library",path: "/library" },

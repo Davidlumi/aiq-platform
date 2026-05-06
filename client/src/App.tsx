@@ -33,6 +33,7 @@ import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 
 // Feature pages
+import CoachPage from "./pages/CoachPage";
 import AssessmentPage from "./pages/assessment/AssessmentPage";
 import AssessmentSessionPage from "./pages/assessment/AssessmentSessionPage";
 import AssessmentResultsPage from "./pages/assessment/AssessmentResultsPage";
@@ -101,6 +102,29 @@ function ProtectedRoute({
   );
 }
 
+/** Full-screen protected route — no AppShell wrapper (used for immersive experiences like the Coach) */
+function ProtectedRouteFullscreen({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -118,6 +142,9 @@ function Router() {
       <Route path="/onboarding" component={OnboardingWizard} />
 
       {/* Protected routes */}
+      <Route path="/coach">
+        <ProtectedRouteFullscreen component={CoachPage} />
+      </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={RoleDashboard} />
       </Route>

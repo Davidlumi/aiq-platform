@@ -41,6 +41,7 @@ import {
   ChevronDown,
   FlaskConical,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +59,7 @@ const MANAGER_ROLES = ["manager"];
 
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (all roles) ----------------------------------------------
+  { label: "AiQ Coach",       path: "/coach",          icon: MessageSquare, section: "mydev" },
   { label: "Assessment",      path: "/assessment",     icon: ClipboardList, section: "mydev" },
   { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
