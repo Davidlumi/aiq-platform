@@ -2075,3 +2075,20 @@
 - [x] Add selectedInitiativesJson column to ailOrgContext schema and apply migration
 - [x] Update saveStrategy and getStrategy procedures to persist and return selectedInitiativeIds
 - [x] Allow removing individual initiatives from the inline selected list
+
+## HR AI Strategy Exec Paper Redesign
+- [ ] Move "People" nav item below "Overview" in My Team section (AppShell + DashboardLayout)
+- [ ] Rename "Strategy Dashboard" nav label to "HR AI Strategy" (AppShell + DashboardLayout)
+- [ ] Rebuild AIStrategyPage output as executive paper with three sections:
+  - [ ] Exec Summary: vision statement — how AI will change ways of work based on industry + ambition selections
+  - [ ] Visual Initiative Roadmap: timeline/phases showing selected initiatives and how they integrate to the vision
+  - [ ] Capability Gap: narrative gap analysis showing what the HR team needs to develop to deliver the vision
+
+## HR AI Strategy Exec Paper (Complete)
+- [x] Rename Strategy Dashboard to HR AI Strategy in sidebar (AppShell and DashboardLayout)
+- [x] Move People nav item below Overview in My Team section
+- [x] Add Section 1 — Executive Summary: vision statement narrative (how AI changes ways of work)
+- [x] Add Section 2 — Initiative Roadmap: visual timeline by phase with category colour-coding
+- [x] Add Section 3 — Capability Gap: per-domain gap bars with narrative and priority flags
+- [x] Initiative library moved to full-screen modal; only selected initiatives shown on main page
+- [x] Single plan only — no A/B/C strategy tabs

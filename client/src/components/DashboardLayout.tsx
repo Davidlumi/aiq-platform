@@ -26,6 +26,7 @@ import {
   LogOut,
   PanelLeft,
   Users,
+  UserSearch,
   BookOpen,
   Library,
   ClipboardList,
@@ -67,14 +68,14 @@ const MY_TEAM_CPO: NavSection = {
   section: "My Team",
   items: [
     { icon: LayoutDashboard, label: "Overview",     path: "/dashboard" },
-    { icon: Users,           label: "People",       path: "/people" },
+    { icon: UserSearch,      label: "People",       path: "/people" },
   ],
 };
 
 const AI_STRATEGY: NavSection = {
   section: "AI Strategy",
   items: [
-    { icon: Target,    label: "Strategy Dashboard", path: "/ai-strategy" },
+    { icon: Target,    label: "HR AI Strategy",     path: "/ai-strategy" },
     { icon: Building2, label: "Company Assessment",  path: "/company-assessment" },
   ],
 };
@@ -83,7 +84,7 @@ const MY_TEAM_MANAGER: NavSection = {
   section: "My Team",
   items: [
     { icon: LayoutDashboard, label: "Overview",     path: "/dashboard" },
-    { icon: Users,           label: "People",       path: "/people" },
+    { icon: UserSearch,      label: "People",       path: "/people" },
   ],
 };
 

@@ -70,10 +70,17 @@ const NAV_ITEMS: NavItem[] = [
     roles: [...CPO_ROLES, ...MANAGER_ROLES],
     section: "myteam",
   },
+  {
+    label: "People",
+    path: "/people",
+    icon: UserSearch,
+    roles: [...CPO_ROLES, ...MANAGER_ROLES],
+    section: "myteam",
+  },
 
   // -- AI Strategy (CPO only) ---------------------------------------------------
   {
-    label: "Strategy Dashboard",
+    label: "HR AI Strategy",
     path: "/ai-strategy",
     icon: Target,
     roles: CPO_ROLES,
@@ -85,13 +92,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Building2,
     roles: CPO_ROLES,
     section: "aistrategy",
-  },
-  {
-    label: "People",
-    path: "/people",
-    icon: UserSearch,
-    roles: [...CPO_ROLES, ...MANAGER_ROLES],
-    section: "myteam",
   },
   {
     label: "Team Progress",
