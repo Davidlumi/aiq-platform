@@ -865,7 +865,13 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   domainTargetsJson: text("domain_targets_json"),                                          // JSON: { ai_interaction: 65, ... } stored as 0-100 raw
   strategyNarrative: text("strategy_narrative"),                                           // CPO free-text strategic intent
   strategySavedAt: timestamp("strategy_saved_at"),                                         // when strategy was last saved
-  selectedInitiativesJson: text("selected_initiatives_json"),                               // JSON: string[] of selected initiative IDs
+  selectedInitiativesJson: text("selected_initiatives_json"),               // JSON: string[] of selected initiative IDs
+  // Phase 5: HR AI Strategy Assessment
+  aspirationAnswersJson: text("aspiration_answers_json"),                    // JSON: answers to business AI aspiration questions
+  hrRoleAnswersJson: text("hr_role_answers_json"),                           // JSON: answers to HR role questions
+  visionStatement: text("vision_statement"),                                // AI-drafted + user-edited vision statement
+  guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
+  strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

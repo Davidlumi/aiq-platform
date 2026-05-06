@@ -2108,3 +2108,18 @@
 - [ ] Feed company maturity into the Executive Summary vision statement
 - [ ] Show a "Company Gap vs Ambition" section that compares company current state to the selected business ambition level
 - [ ] If no assessment completed, show a clear CTA to complete it
+
+## HR AI Strategy Assessment Wizard
+- [x] Add aspirationAnswers, hrRoleAnswers, visionStatement, guidingPrinciplesJson fields to ailOrgContext schema
+- [x] Apply migration SQL for new columns
+- [x] Add generateVisionAndPrinciples LLM procedure to intelligence router
+- [x] Add saveStrategyAssessment and getStrategyAssessment procedures
+- [x] Build /ai-strategy/assessment wizard page (4 steps)
+- [x] Step 1: Business AI Aspiration (5 guided questions about org AI goals)
+- [x] Step 2: HR Role (what HR must do to enable the vision)
+- [x] Step 3: AI-drafted Vision Statement + 5 Principles (editable inline)
+- [x] Step 4: Initiative selection with phase/quarter timeline assignment
+- [x] Add /ai-strategy/assessment route to App.tsx
+- [x] Add "Build Strategy" nav item under AI Strategy section in sidebar
+- [x] Add "Begin Assessment" / "Edit Strategy" CTA to HR AI Strategy dashboard
+- [x] Wire vision statement and principles into dashboard as top anchor section

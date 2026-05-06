@@ -24,6 +24,7 @@ import {
 } from "../ail/narrativeEngine";
 import { getDb, getUserRoleKeys } from "../db";
 import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users } from "../../drizzle/schema";
+import { invokeLLM } from "../_core/llm";
 import { nanoid } from "nanoid";
 import { eq, desc, and } from "drizzle-orm";
 
@@ -404,6 +405,168 @@ export const intelligenceRouter = router({
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,
           selectedInitiativesJson,
         });
+      }
+      return { success: true };
+    }),
+
+  /**
+   * Get the strategy assessment (vision, principles, answers).
+   */
+  getStrategyAssessment: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({
+      aspirationAnswersJson: ailOrgContext.aspirationAnswersJson,
+      hrRoleAnswersJson: ailOrgContext.hrRoleAnswersJson,
+      visionStatement: ailOrgContext.visionStatement,
+      guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
+      strategyAssessmentCompletedAt: ailOrgContext.strategyAssessmentCompletedAt,
+      businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
+      peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
+      selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+    }).from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const row = rows[0] ?? null;
+    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[] };
+    const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
+    return {
+      completed: !!row.strategyAssessmentCompletedAt,
+      aspirationAnswers: parse(row.aspirationAnswersJson),
+      hrRoleAnswers: parse(row.hrRoleAnswersJson),
+      visionStatement: row.visionStatement ?? null,
+      guidingPrinciples: parse(row.guidingPrinciplesJson) as Array<{ title: string; description: string }> | null,
+      completedAt: row.strategyAssessmentCompletedAt ?? null,
+      businessAmbitionLevel: row.businessAmbitionLevel ?? null,
+      peopleAmbitionLevel: row.peopleAmbitionLevel ?? null,
+      selectedInitiativeIds: parse(row.selectedInitiativesJson) as string[] ?? [] as string[],
+    };
+  }),
+
+  /**
+   * Generate AI-drafted vision statement and guiding principles from assessment answers.
+   */
+  generateVisionAndPrinciples: protectedProcedure
+    .input(z.object({
+      sector: z.string(),
+      businessAmbitionLabel: z.string(),
+      peopleAmbitionLabel: z.string(),
+      aspirationAnswers: z.record(z.string(), z.string()),
+      hrRoleAnswers: z.record(z.string(), z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const prompt = `You are an expert HR strategy consultant. Based on the following inputs from an HR leader, generate:
+1. A concise, board-ready AI vision statement (2-3 sentences) that articulates how AI will transform the organisation's ways of working and what HR's role is in enabling that.
+2. Exactly 5 guiding principles for the HR AI strategy. Each principle should have a short title (3-5 words) and a 1-2 sentence description.
+
+INPUTS:
+Sector: ${input.sector}
+Business AI Ambition: ${input.businessAmbitionLabel}
+People AI Ambition: ${input.peopleAmbitionLabel}
+
+Business AI Aspiration Answers:
+${Object.entries(input.aspirationAnswers).map(([q, a]) => `Q: ${q}\nA: ${a}`).join('\n\n')}
+
+HR Role Answers:
+${Object.entries(input.hrRoleAnswers).map(([q, a]) => `Q: ${q}\nA: ${a}`).join('\n\n')}
+
+Return JSON with this exact structure:
+{
+  "visionStatement": "string",
+  "principles": [
+    { "title": "string", "description": "string" },
+    { "title": "string", "description": "string" },
+    { "title": "string", "description": "string" },
+    { "title": "string", "description": "string" },
+    { "title": "string", "description": "string" }
+  ]
+}`;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are an expert HR strategy consultant. Always respond with valid JSON only, no markdown fences." },
+          { role: "user", content: prompt },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "vision_and_principles",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                visionStatement: { type: "string" },
+                principles: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      description: { type: "string" },
+                    },
+                    required: ["title", "description"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["visionStatement", "principles"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const content = response.choices[0].message.content;
+      const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content)) as { visionStatement: string; principles: Array<{ title: string; description: string }> };
+      return parsed;
+    }),
+
+  /**
+   * Save the strategy assessment answers, vision statement, and guiding principles.
+   */
+  saveStrategyAssessment: protectedProcedure
+    .input(z.object({
+      aspirationAnswers: z.record(z.string(), z.string()),
+      hrRoleAnswers: z.record(z.string(), z.string()),
+      visionStatement: z.string(),
+      guidingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })),
+      businessAmbitionLevel: z.number().int().min(1).max(5),
+      peopleAmbitionLevel: z.number().int().min(1).max(5),
+      selectedInitiativeIds: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const payload = {
+        aspirationAnswersJson: JSON.stringify(input.aspirationAnswers),
+        hrRoleAnswersJson: JSON.stringify(input.hrRoleAnswers),
+        visionStatement: input.visionStatement,
+        guidingPrinciplesJson: JSON.stringify(input.guidingPrinciples),
+        businessAmbitionLevel: input.businessAmbitionLevel,
+        peopleAmbitionLevel: input.peopleAmbitionLevel,
+        selectedInitiativesJson: JSON.stringify(input.selectedInitiativeIds ?? []),
+        strategyAssessmentCompletedAt: new Date(),
+        strategySavedAt: new Date(),
+        updatedAt: new Date(),
+      };
+      if (existing.length > 0) {
+        await db.update(ailOrgContext).set(payload).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      } else {
+        await db.insert(ailOrgContext).values({ id: nanoid(), tenantId: ctx.user.tenantId, ...payload });
       }
       return { success: true };
     }),

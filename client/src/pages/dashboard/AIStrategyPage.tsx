@@ -455,6 +455,7 @@ export default function AIStrategyPage() {
 
   // ── Queries ──────────────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
+  const strategyAssessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
   const orgContextQ         = trpc.intelligence.orgContext.useQuery();
   const initiativesQ        = trpc.strategy.listInitiatives.useQuery(
     { tenantId: user?.tenantId ?? "" },
@@ -463,8 +464,9 @@ export default function AIStrategyPage() {
   const ambitionGapQ        = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const companyAssessmentQ  = trpc.companyAssessment.getMyAssessmentResults.useQuery();
 
-  const strategyData   = strategyQ.data;
-  const orgContext     = orgContextQ.data;
+  const strategyData       = strategyQ.data;
+  const strategyAssessment = strategyAssessmentQ.data;
+  const orgContext         = orgContextQ.data;
   const ambitionGap    = ambitionGapQ.data;
   const allInitiatives = initiativesQ.data ?? [];
   const companyResults = companyAssessmentQ.data;
@@ -566,7 +568,7 @@ export default function AIStrategyPage() {
   }
 
   // ── Loading ──────────────────────────────────────────────────────────────────
-  const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading;
+  const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
   if (isLoading) {
     return (
       <div className="space-y-4 max-w-4xl mx-auto">
@@ -668,6 +670,67 @@ export default function AIStrategyPage() {
           <p className="text-xs text-muted-foreground hidden sm:block flex-1">{pLevel?.description}</p>
         </div>
       </div>
+
+      {/* ── Vision & Principles banner (from assessment) ── */}
+      {strategyAssessment?.completed && strategyAssessment.visionStatement ? (
+        <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-green-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold tracking-widest uppercase text-green-400">HR AI Vision</p>
+                <p className="text-xs text-muted-foreground">From your strategy assessment</p>
+              </div>
+            </div>
+            <a href="/ai-strategy/assessment">
+              <Button variant="outline" size="sm" className="text-xs">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Edit Strategy
+              </Button>
+            </a>
+          </div>
+          <blockquote className="text-base font-medium text-foreground leading-relaxed italic border-l-2 border-green-500/40 pl-4 mb-5">
+            &ldquo;{strategyAssessment.visionStatement}&rdquo;
+          </blockquote>
+          {strategyAssessment.guidingPrinciples && strategyAssessment.guidingPrinciples.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">5 Guiding Principles</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(strategyAssessment.guidingPrinciples as Array<{ title: string; description: string }>).map((p, i) => {
+                  const colors = ["#60A5FA", "#A78BFA", "#4ADE80", "#FBBF24", "#F472B6"];
+                  const color = colors[i % colors.length];
+                  return (
+                    <div key={i} className="rounded-lg border p-3" style={{ borderColor: `${color}25`, borderLeftColor: color, borderLeftWidth: "3px" }}>
+                      <p className="text-xs font-bold mb-1" style={{ color }}>{p.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-green-500/20 bg-green-500/4 p-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4.5 h-4.5 text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Build your HR AI Strategy</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Complete the 4-step assessment to generate your vision statement and guiding principles.</p>
+            </div>
+          </div>
+          <a href="/ai-strategy/assessment" className="flex-shrink-0">
+            <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Begin Assessment
+            </Button>
+          </a>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           PART 1 — WHERE WE ARE

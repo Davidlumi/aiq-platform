@@ -33,6 +33,7 @@ import {
   Target,
   BookMarked,
   Building2,
+  Sparkles,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -76,6 +77,7 @@ const AI_STRATEGY: NavSection = {
   section: "AI Strategy",
   items: [
     { icon: Target,    label: "HR AI Strategy",     path: "/ai-strategy" },
+    { icon: Sparkles,  label: "Build Strategy",      path: "/ai-strategy/assessment" },
     { icon: Building2, label: "Company Assessment",  path: "/company-assessment" },
   ],
 };

@@ -40,6 +40,7 @@ import {
   Eye,
   ChevronDown,
   FlaskConical,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,13 @@ const NAV_ITEMS: NavItem[] = [
     label: "HR AI Strategy",
     path: "/ai-strategy",
     icon: Target,
+    roles: CPO_ROLES,
+    section: "aistrategy",
+  },
+  {
+    label: "Build Strategy",
+    path: "/ai-strategy/assessment",
+    icon: Sparkles,
     roles: CPO_ROLES,
     section: "aistrategy",
   },

@@ -22,6 +22,7 @@ import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
 import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
 import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
+import HRAIStrategyAssessmentPage from "./pages/dashboard/HRAIStrategyAssessmentPage";
 import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
 import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
 import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
@@ -164,6 +165,9 @@ function Router() {
       </Route>
       <Route path="/ai-strategy">
         <ProtectedRoute component={AIStrategyPage} />
+      </Route>
+      <Route path="/ai-strategy/assessment">
+        <ProtectedRoute component={HRAIStrategyAssessmentPage} />
       </Route>
       <Route path="/audit">
         <ProtectedRoute component={AuditLogPage} />
