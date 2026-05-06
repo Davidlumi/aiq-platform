@@ -2100,3 +2100,11 @@
 - [ ] Update Executive Summary narrative to reference company assessment findings
 - [ ] Update Capability Gap section to show what HR must develop to support the company's AI ambition
 - [ ] Show a clear "HR must support this" bridge between company gap and HR capability requirements
+
+## Company Assessment Deep Integration into HR AI Strategy
+- [ ] Show company maturity score prominently in the strategy header/context section
+- [ ] Show all 7 dimension scores as visual bars with sector benchmark comparison
+- [ ] Generate narrative: "What the company gap means for HR" — linking company maturity to HR strategy priorities
+- [ ] Feed company maturity into the Executive Summary vision statement
+- [ ] Show a "Company Gap vs Ambition" section that compares company current state to the selected business ambition level
+- [ ] If no assessment completed, show a clear CTA to complete it

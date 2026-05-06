@@ -709,94 +709,173 @@ export default function AIStrategyPage() {
               </Button>
             </a>
           </div>
-        ) : (
-          <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 divide-y divide-white/6">
-            {/* Company maturity header */}
-            <div className="p-5">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">
-                    {companyResults.companyName ?? "Your Organisation"}
-                    {companyResults.companySector ? ` · ${companyResults.companySector}` : ""}
-                  </p>
-                  <h3 className="text-base font-semibold text-foreground">
-                    AI Maturity: <span className="text-amber-400">{companyResults.maturityLabel}</span>
-                  </h3>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-2xl font-bold text-amber-400">{companyResults.overallScore.toFixed(1)}<span className="text-sm font-normal text-muted-foreground">/5</span></p>
-                  <p className="text-xs text-muted-foreground">Sector avg: {companyResults.sectorAverage.toFixed(1)}/5</p>
-                </div>
-              </div>
-              {/* Maturity bar */}
-              <div className="h-2 rounded-full bg-white/8 mb-1.5">
-                <div className="h-full rounded-full bg-amber-400/70 transition-all" style={{ width: `${(companyResults.overallScore / 5) * 100}%` }} />
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Foundational</span><span>Developing</span><span>Scaling</span><span>Leading</span><span>Pioneering</span>
-              </div>
-            </div>
+        ) : (() => {
+          // Compute required maturity for selected business ambition
+          const requiredMaturity = 1.0 + (businessLevel - 1) * 0.875;
+          const companyGap = requiredMaturity - companyResults.overallScore;
+          const weakDims = [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 3);
+          const strongDims = [...companyResults.dimensions].sort((a, b) => b.score - a.score).slice(0, 2);
+          const bLabel = BUSINESS_LEVELS[businessLevel]?.label ?? "";
+          const pLabel = PEOPLE_LEVELS[peopleLevel]?.label ?? "";
 
-            {/* Dimension scores */}
-            <div className="p-5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">7 Dimension Breakdown</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5">
-                {companyResults.dimensions.map(dim => {
-                  const pct = (dim.score / 5) * 100;
-                  const vsAvg = dim.score - companyResults.sectorAverage;
-                  return (
-                    <div key={dim.key}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-foreground font-medium truncate pr-2">{dim.label}</span>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-xs font-mono text-foreground">{dim.score.toFixed(1)}</span>
-                          <span className={`text-xs font-mono ${vsAvg >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)}
-                          </span>
+          // HR priority narrative based on company maturity vs ambition gap
+          const hrPriorityNarrative = (() => {
+            const weakNames = weakDims.slice(0, 2).map(d => d.label).join(" and ");
+            if (companyGap > 1.5) {
+              return `There is a significant gap between the company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) and what a ${bLabel} business ambition requires (${requiredMaturity.toFixed(1)}/5). The HR AI strategy must act as an accelerator — building the company's AI capability from the ground up. The priority dimensions to address are ${weakNames}. HR must lead by example, demonstrating responsible AI adoption and building organisation-wide confidence before the business can achieve its ambition.`;
+            } else if (companyGap > 0.5) {
+              return `The company is on a credible AI journey but needs to close a gap of ${companyGap.toFixed(1)} points to reach the maturity required for a ${bLabel} business ambition. The HR AI strategy must focus on scaling what is working, closing the gaps in ${weakNames}, and positioning HR as the function that enables the organisation to cross the threshold. The ${pLabel} people expectation requires a structured development programme to bring the HR team up to the required level.`;
+            } else if (companyGap > -0.3) {
+              return `The company's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) is well-aligned with the ${bLabel} business ambition. The HR AI strategy should focus on maintaining momentum, deepening capability in ${weakNames}, and ensuring the HR function operates at the frontier of AI-enabled practice. With a ${pLabel} people expectation, the HR team must model the AI behaviours the organisation expects from all its people.`;
+            } else {
+              return `The company is ahead of the maturity level required for a ${bLabel} business ambition — a strong position. The HR AI strategy should focus on innovation, maintaining the competitive advantage in ${weakNames}, and contributing to industry standards. With a ${pLabel} people expectation, the HR function is expected to shape the organisation's AI future and influence sector practice.`;
+            }
+          })();
+
+          return (
+            <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 divide-y divide-white/6">
+
+              {/* ── Row 1: Maturity header + Company vs Ambition gap ── */}
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-6 mb-5">
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      {companyResults.companyName ?? "Your Organisation"}
+                      {companyResults.companySector ? ` · ${companyResults.companySector}` : ""}
+                    </p>
+                    <h3 className="text-base font-semibold text-foreground mb-1">
+                      AI Maturity: <span className="text-amber-400">{companyResults.maturityLabel}</span>
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{companyResults.maturityDescription}</p>
+                  </div>
+                  {/* Three KPI tiles */}
+                  <div className="flex gap-3 flex-shrink-0">
+                    <div className="text-center px-4 py-2.5 rounded-lg bg-white/4 border border-white/8">
+                      <p className="text-lg font-bold text-amber-400">{companyResults.overallScore.toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">Current</p>
+                    </div>
+                    <div className="text-center px-4 py-2.5 rounded-lg bg-white/4 border border-white/8">
+                      <p className="text-lg font-bold text-blue-400">{requiredMaturity.toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">Required</p>
+                    </div>
+                    <div className={`text-center px-4 py-2.5 rounded-lg border ${
+                      companyGap > 0.5 ? "bg-red-500/8 border-red-500/20" : companyGap > -0.3 ? "bg-green-500/8 border-green-500/20" : "bg-green-500/8 border-green-500/20"
+                    }`}>
+                      <p className={`text-lg font-bold ${
+                        companyGap > 0.5 ? "text-red-400" : "text-green-400"
+                      }`}>{companyGap > 0 ? "+" : ""}{companyGap.toFixed(1)}</p>
+                      <p className="text-xs text-muted-foreground">Gap</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Company vs Ambition maturity bar */}
+                <div className="relative">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Foundational</span><span>Developing</span><span>Scaling</span><span>Leading</span><span>Pioneering</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-white/8 relative overflow-visible">
+                    {/* Current score fill */}
+                    <div className="h-full rounded-full bg-amber-400/70 transition-all" style={{ width: `${(companyResults.overallScore / 5) * 100}%` }} />
+                    {/* Required maturity marker */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-full"
+                      style={{ left: `${(requiredMaturity / 5) * 100}%` }}
+                    />
+                    {/* Sector average marker */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-white/40 rounded-full"
+                      style={{ left: `${(companyResults.sectorAverage / 5) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-amber-400/70 inline-block" /> Current ({companyResults.overallScore.toFixed(1)})</span>
+                    <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-blue-400 inline-block" /> Required for {bLabel} ambition ({requiredMaturity.toFixed(1)})</span>
+                    <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-white/40 inline-block" /> Sector avg ({companyResults.sectorAverage.toFixed(1)})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Row 2: 7 Dimension breakdown with sector benchmarks ── */}
+              <div className="p-5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">7 Dimension Breakdown — Current vs Sector Benchmark</p>
+                <div className="space-y-3">
+                  {[...companyResults.dimensions].sort((a, b) => (a.score - (a as any).sectorBenchmark) - (b.score - (b as any).sectorBenchmark)).map(dim => {
+                    const pct = (dim.score / 5) * 100;
+                    const benchmarkPct = ((dim as any).sectorBenchmark / 5) * 100;
+                    const vsAvg = dim.score - (dim as any).sectorBenchmark;
+                    const isWeak = weakDims.some(w => w.key === dim.key);
+                    return (
+                      <div key={dim.key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5">
+                            {isWeak && <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />}
+                            <span className={`text-xs font-medium ${isWeak ? "text-amber-300" : "text-foreground"}`}>{dim.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-xs font-mono text-foreground">{dim.score.toFixed(1)}/5</span>
+                            <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+                              vsAvg >= 0.2 ? "bg-green-500/15 text-green-400" :
+                              vsAvg <= -0.2 ? "bg-red-500/15 text-red-400" :
+                              "bg-white/8 text-muted-foreground"
+                            }`}>
+                              {vsAvg >= 0 ? "+" : ""}{vsAvg.toFixed(1)} vs sector
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/8 relative">
+                          <div className="h-full rounded-full transition-all" style={{
+                            width: `${pct}%`,
+                            background: isWeak ? "rgba(251,191,36,0.6)" : "rgba(96,165,250,0.6)"
+                          }} />
+                          {/* Sector benchmark marker */}
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 bg-white/50 rounded-full"
+                            style={{ left: `${benchmarkPct}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="h-1.5 rounded-full bg-white/8">
-                        <div className="h-full rounded-full bg-amber-400/60" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1"><span className="w-3 h-1.5 rounded-full bg-blue-400/60 inline-block" /> Your score</span>
+                  <span className="flex items-center gap-1"><span className="w-0.5 h-3 rounded-full bg-white/50 inline-block" /> Sector benchmark</span>
+                  <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-400" /> Priority gap</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2.5">Score vs sector average shown in green/red.</p>
-            </div>
 
-            {/* Executive summary from assessment */}
-            {companyResults.executiveSummary && (
+              {/* ── Row 3: Executive summary ── */}
+              {companyResults.executiveSummary && (
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Company Assessment — Executive Summary</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{companyResults.executiveSummary}</p>
+                </div>
+              )}
+
+              {/* ── Row 4: What HR must prioritise ── */}
               <div className="p-5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Assessment Executive Summary</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{companyResults.executiveSummary}</p>
+                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">What the HR AI Strategy Must Address</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{hrPriorityNarrative}</p>
+                {/* Strength / gap summary pills */}
+                <div className="flex flex-wrap gap-2">
+                  {weakDims.map(d => (
+                    <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-300">
+                      <AlertTriangle className="w-3 h-3" />
+                      {d.label} — gap
+                    </span>
+                  ))}
+                  {strongDims.map(d => (
+                    <span key={d.key} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-300">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {d.label} — strength
+                    </span>
+                  ))}
+                </div>
               </div>
-            )}
-
-            {/* What this means for the HR AI Strategy */}
-            <div className="p-5">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">What This Means for the HR AI Strategy</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {(() => {
-                  const score = companyResults.overallScore;
-                  const bLabel = BUSINESS_LEVELS[businessLevel]?.label ?? "";
-                  const pLabel = PEOPLE_LEVELS[peopleLevel]?.label ?? "";
-                  const weakDims = [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 2);
-                  const weakNames = weakDims.map(d => d.label).join(" and ");
-                  if (score < 2) {
-                    return `The organisation is at an early stage of AI maturity. The HR AI strategy must prioritise building foundational awareness, governance, and data infrastructure before scaling AI tools. With a ${bLabel} business ambition and ${pLabel} people expectation, the HR function must lead by example — demonstrating responsible AI adoption and building confidence across the organisation. Priority areas to address are ${weakNames}.`;
-                  } else if (score < 3) {
-                    return `The organisation is developing its AI capability but adoption remains uneven. The HR AI strategy must focus on scaling successful pilots, strengthening governance, and closing capability gaps in ${weakNames}. With a ${bLabel} business ambition, the HR function is expected to move beyond early experiments and embed AI into core people processes. The ${pLabel} people expectation requires a structured development programme to bring the HR team up to the required level.`;
-                  } else if (score < 4) {
-                    return `The organisation has a solid AI foundation and is scaling adoption. The HR AI strategy should focus on embedding AI deeply into people processes, strengthening the ${weakNames} dimensions, and positioning HR as a strategic AI leader. With a ${bLabel} business ambition and ${pLabel} people expectation, the HR function must operate at the frontier of AI-enabled HR practice.`;
-                  } else {
-                    return `The organisation is an AI leader in its sector. The HR AI strategy should focus on maintaining the competitive advantage, innovating in ${weakNames}, and contributing to industry standards. With a ${bLabel} business ambition and ${pLabel} people expectation, the HR function is expected to shape the organisation's AI future.`;
-                  }
-                })()}
-              </p>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════

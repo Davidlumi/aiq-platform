@@ -1124,6 +1124,28 @@ Write the executive summary.`,
       .where(eq(companies.id, result.companyId));
     const maturity = getMaturityLabel(result.overallScore);
     const sectorAvg = SECTOR_BENCHMARKS[company?.sector || "Other"] || 2.5;
+    // Per-dimension sector benchmarks (scaled from overall sector avg)
+    const dimBenchmarkScale: Record<string, number> = {
+      strategy:    1.05, // strategy tends to be higher in advanced sectors
+      governance:  0.95,
+      data:        1.00,
+      technology:  1.08,
+      workforce:   0.98,
+      hr_function: 0.90, // hr_function tends to lag
+      culture:     0.97,
+    };
+    const dimScores: Record<string, number> = {
+      strategy:    result.scoreStrategy,
+      governance:  result.scoreGovernance,
+      data:        result.scoreData,
+      technology:  result.scoreTechnology,
+      workforce:   result.scoreWorkforce,
+      hr_function: result.scoreHrFunction,
+      culture:     result.scoreCulture,
+    };
+    // Ambition level → required company maturity mapping
+    // Business ambition 1-5 maps to required company maturity 1.5-4.5
+    const ambitionToRequiredMaturity = (level: number) => 1.0 + (level - 1) * 0.875;
     return {
       assessmentId: assessment.id,
       overallScore: result.overallScore,
@@ -1133,17 +1155,18 @@ Write the executive summary.`,
       sectorAverage: sectorAvg,
       companyName: company?.name ?? null,
       companySector: company?.sector ?? null,
+      ambitionToRequiredMaturity,
       dimensions: DIMENSIONS.map(d => {
-        const score = ({
-          strategy:    result.scoreStrategy,
-          governance:  result.scoreGovernance,
-          data:        result.scoreData,
-          technology:  result.scoreTechnology,
-          workforce:   result.scoreWorkforce,
-          hr_function: result.scoreHrFunction,
-          culture:     result.scoreCulture,
-        } as Record<string, number>)[d.key] ?? 0;
-        return { key: d.key, label: d.label, weight: d.weight, score };
+        const score = dimScores[d.key] ?? 0;
+        const dimBenchmark = Math.min(5, sectorAvg * (dimBenchmarkScale[d.key] ?? 1.0));
+        return {
+          key: d.key,
+          label: d.label,
+          weight: d.weight,
+          score,
+          sectorBenchmark: Math.round(dimBenchmark * 10) / 10,
+          description: d.description,
+        };
       }),
     };
   }),
