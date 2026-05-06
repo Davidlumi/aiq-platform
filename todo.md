@@ -2123,3 +2123,26 @@
 - [x] Add "Build Strategy" nav item under AI Strategy section in sidebar
 - [x] Add "Begin Assessment" / "Edit Strategy" CTA to HR AI Strategy dashboard
 - [x] Wire vision statement and principles into dashboard as top anchor section
+
+## QA & Polish — Wizard (v2)
+- [x] Scroll-to-top on every step transition
+- [x] Unsaved-progress guard (beforeunload)
+- [x] Step indicator connector line fixed alignment
+- [x] Question cards show inline character-count hint when too short
+- [x] Question cards show green checkmark when valid
+- [x] Question cards include contextual hint text below label
+- [x] Step 3 generate button is a large centred CTA panel
+- [x] Step 3 shows "Regenerate with AI" button after generation
+- [x] Step 4 commit button is size="lg" with more prominent styling
+- [x] Step 4 empty-state has dashed border and clearer CTA
+- [x] Step 4 selected list has "Add more initiatives" dashed button
+- [x] Initiative library modal has search input
+- [x] Initiative library modal shows count of selected + filtered
+- [x] Retake mode shows "Strategy active" badge in header
+- [x] Loading state is centered in page area (not full-screen)
+- [x] Wizard page uses Link-based navigation (wouter)
+- [x] 710/710 tests passing
+- [x] 0 TypeScript errors
+- [x] CPO sidebar shows "Build Strategy" link with Sparkles icon
+- [x] HR AI Strategy dashboard shows "Begin Assessment" CTA when no assessment completed
+- [x] HR AI Strategy dashboard shows vision + principles banner when assessment completed

@@ -7,8 +7,19 @@
  *   Step 2 — HR's Role in the AI Vision
  *   Step 3 — AI-Drafted Vision & Principles (editable)
  *   Step 4 — Initiative Selection + Commit
+ *
+ * QA polish (v2):
+ *   - scroll-to-top on every step transition
+ *   - unsaved-progress guard (beforeunload + wouter navigation)
+ *   - step indicator connector line fixed alignment
+ *   - "Regenerate" button made more prominent
+ *   - Commit step has a richer summary card
+ *   - Sector label properly capitalised from orgContext
+ *   - Empty-state for initiatives is more actionable
+ *   - Validation messages are inline (not floating)
+ *   - Loading state covers the full wizard area, not full-screen
  */
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -46,25 +57,27 @@ import {
   Edit3,
   CheckCircle2,
   ListPlus,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
-  1: { label: "Cautious",      description: "AI used selectively in low-risk, back-office processes." },
-  2: { label: "Exploratory",   description: "Piloting AI in specific workflows, building internal confidence." },
-  3: { label: "Progressive",   description: "AI embedded in core HR processes; confident, critical use expected." },
-  4: { label: "Ambitious",     description: "AI is a strategic differentiator; HR leads adoption across the business." },
+  1: { label: "Cautious",       description: "AI used selectively in low-risk, back-office processes." },
+  2: { label: "Exploratory",    description: "Piloting AI in specific workflows, building internal confidence." },
+  3: { label: "Progressive",    description: "AI embedded in core HR processes; confident, critical use expected." },
+  4: { label: "Ambitious",      description: "AI is a strategic differentiator; HR leads adoption across the business." },
   5: { label: "Transformative", description: "AI is central to the business model; HR professionals are AI-native." },
 };
 
 const PEOPLE_LEVELS: Record<number, { label: string; description: string }> = {
-  1: { label: "Followers",    description: "HR people use AI tools as directed; compliance is the primary expectation." },
-  2: { label: "Adopters",     description: "HR people learn and use AI tools in their day-to-day work." },
+  1: { label: "Followers",     description: "HR people use AI tools as directed; compliance is the primary expectation." },
+  2: { label: "Adopters",      description: "HR people learn and use AI tools in their day-to-day work." },
   3: { label: "Practitioners", description: "HR people apply AI confidently and evaluate outputs critically." },
-  4: { label: "Champions",    description: "HR people advocate for AI, coach others, and contribute to governance." },
-  5: { label: "Innovators",   description: "HR people design AI-enabled processes and shape the organisation's AI strategy." },
+  4: { label: "Champions",     description: "HR people advocate for AI, coach others, and contribute to governance." },
+  5: { label: "Innovators",    description: "HR people design AI-enabled processes and shape the organisation's AI strategy." },
 };
 
 const FILTER_CATEGORIES = [
@@ -135,26 +148,31 @@ const ASPIRATION_QUESTIONS = [
     id: "ai_outcomes",
     label: "What AI outcomes matter most to your organisation?",
     placeholder: "e.g. Reducing operational costs, improving customer experience, accelerating product development...",
+    hint: "Think about the top 2–3 business outcomes that AI is expected to deliver in the next 12–24 months.",
   },
   {
     id: "business_problems",
     label: "What business problems should AI solve in the next 1–3 years?",
     placeholder: "e.g. High employee turnover, slow hiring cycles, inconsistent performance management...",
+    hint: "Focus on problems that are costing the business time, money, or talent.",
   },
   {
     id: "timeline",
     label: "What is your organisation's timeline for AI adoption?",
     placeholder: "e.g. We want to be AI-enabled within 18 months, with full transformation by 2027...",
+    hint: "Include any board-level commitments or strategic planning horizons.",
   },
   {
     id: "risk_appetite",
     label: "How would you describe your organisation's risk appetite for AI?",
     placeholder: "e.g. Conservative — we want to pilot carefully before scaling. Or: Bold — we're prepared to move fast and iterate...",
+    hint: "Consider your regulatory environment, culture, and leadership appetite for change.",
   },
   {
     id: "success_definition",
     label: "What does AI success look like for your organisation?",
     placeholder: "e.g. Every HR decision is data-informed, employees have AI-powered career tools, HR operates at 30% lower cost...",
+    hint: "Describe the measurable outcomes or cultural shifts that would signal success.",
   },
 ];
 
@@ -164,21 +182,25 @@ const HR_ROLE_QUESTIONS = [
     id: "lead_vs_support",
     label: "Should HR lead AI adoption or play a supporting role?",
     placeholder: "e.g. HR should be a strategic partner, leading workforce AI readiness and governance. Or: HR should focus on enabling the business rather than leading...",
+    hint: "Consider your CHRO's mandate and the organisation's expectations of the HR function.",
   },
   {
     id: "hr_processes_first",
     label: "Which HR processes should AI transform first?",
     placeholder: "e.g. Recruitment screening, performance reviews, learning recommendations, workforce planning...",
+    hint: "Prioritise processes with the highest volume, cost, or strategic importance.",
   },
   {
     id: "hr_capabilities",
     label: "What HR capabilities need to be built to enable the AI vision?",
     placeholder: "e.g. Data literacy, AI ethics knowledge, change management, human-AI collaboration skills...",
+    hint: "Think about the skills gaps that would prevent HR from delivering the AI strategy.",
   },
   {
     id: "governance_principles",
     label: "What governance principles matter most to your HR function?",
     placeholder: "e.g. Transparency in AI decisions, human oversight for all people decisions, employee consent and data privacy...",
+    hint: "Consider your regulatory obligations and the ethical standards your organisation holds itself to.",
   },
 ];
 
@@ -191,7 +213,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
     { label: "Initiatives",         icon: <ListPlus className="w-4 h-4" /> },
   ];
   return (
-    <div className="flex items-center gap-0 mb-8">
+    <div className="flex items-start gap-0 mb-8">
       {steps.map((step, i) => {
         const stepNum = i + 1;
         const isComplete = stepNum < current;
@@ -211,7 +233,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                 {isComplete ? <Check className="w-4 h-4" /> : step.icon}
               </div>
               <span
-                className={`text-xs font-medium hidden sm:block ${
+                className={`text-xs font-medium hidden sm:block text-center max-w-[80px] leading-tight ${
                   isCurrent ? "text-green-400" : isComplete ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
@@ -220,7 +242,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             </div>
             {i < steps.length - 1 && (
               <div
-                className={`flex-1 h-0.5 mx-2 mt-[-14px] rounded-full transition-all ${
+                className={`flex-1 h-0.5 mx-2 mt-[18px] rounded-full transition-all ${
                   stepNum < current ? "bg-green-500" : "bg-white/10"
                 }`}
               />
@@ -239,18 +261,33 @@ function QuestionCard({
   onChange,
   index,
 }: {
-  question: { id: string; label: string; placeholder: string };
+  question: { id: string; label: string; placeholder: string; hint?: string };
   value: string;
   onChange: (val: string) => void;
   index: number;
 }) {
+  const isValid = value.trim().length >= 10;
   return (
-    <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+    <div className={`rounded-xl border p-5 transition-colors ${
+      isValid ? "border-white/10 bg-white/2" : "border-white/8 bg-white/2"
+    }`}>
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-6 h-6 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span className="text-xs font-bold text-green-400">{index + 1}</span>
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border transition-colors ${
+          isValid
+            ? "bg-green-500 border-green-500"
+            : "bg-green-500/15 border-green-500/30"
+        }`}>
+          {isValid
+            ? <Check className="w-3.5 h-3.5 text-black" />
+            : <span className="text-xs font-bold text-green-400">{index + 1}</span>
+          }
         </div>
-        <p className="text-sm font-semibold text-foreground leading-snug">{question.label}</p>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground leading-snug mb-0.5">{question.label}</p>
+          {question.hint && (
+            <p className="text-xs text-muted-foreground/70 leading-relaxed">{question.hint}</p>
+          )}
+        </div>
       </div>
       <Textarea
         value={value}
@@ -259,6 +296,12 @@ function QuestionCard({
         rows={3}
         className="resize-none bg-white/4 border-white/10 text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
       />
+      {value.trim().length > 0 && value.trim().length < 10 && (
+        <p className="text-xs text-amber-400/80 mt-1.5 flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          Please add a bit more detail ({10 - value.trim().length} more characters needed)
+        </p>
+      )}
     </div>
   );
 }
@@ -326,22 +369,39 @@ function InitiativeLibraryModal({
 }) {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [detailInitiative, setDetailInitiative] = useState<any | null>(null);
+  const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
-    if (categoryFilter === "All") return allInitiatives;
-    return allInitiatives.filter(i => {
-      const mapped = CATEGORY_MAP[i.category] ?? i.category;
-      return mapped === categoryFilter || i.category === categoryFilter;
-    });
-  }, [allInitiatives, categoryFilter]);
+    let list = allInitiatives;
+    if (categoryFilter !== "All") {
+      list = list.filter(i => {
+        const mapped = CATEGORY_MAP[i.category] ?? i.category;
+        return mapped === categoryFilter || i.category === categoryFilter;
+      });
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(i =>
+        i.name?.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q) ||
+        (CATEGORY_MAP[i.category] ?? i.category)?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allInitiatives, categoryFilter, search]);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <DialogContent className="max-w-4xl h-[88vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-5 pb-3 border-b border-white/8 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-base font-semibold">Initiative Library</DialogTitle>
+              <div>
+                <DialogTitle className="text-base font-semibold">Initiative Library</DialogTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedIds.size} selected · {filtered.length} shown
+                </p>
+              </div>
               <Button
                 size="sm"
                 className="bg-green-500 hover:bg-green-400 text-black font-semibold"
@@ -351,7 +411,18 @@ function InitiativeLibraryModal({
                 Done ({selectedIds.size})
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-3">
+            {/* Search */}
+            <div className="mt-3 mb-2">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search initiatives..."
+                className="w-full bg-white/4 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
+              />
+            </div>
+            {/* Category filters */}
+            <div className="flex flex-wrap gap-1.5">
               {FILTER_CATEGORIES.map(cat => (
                 <button
                   key={cat}
@@ -423,7 +494,15 @@ function InitiativeLibraryModal({
               })}
               {filtered.length === 0 && (
                 <div className="col-span-2 text-center py-12 text-muted-foreground">
-                  <p className="text-sm">No initiatives in this category.</p>
+                  <p className="text-sm">No initiatives found.</p>
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="text-xs text-green-400 hover:text-green-300 mt-2 transition-colors"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -454,6 +533,25 @@ function InitiativeLibraryModal({
             {detailInitiative.description && (
               <p className="text-sm text-muted-foreground leading-relaxed">{detailInitiative.description}</p>
             )}
+            <div className="flex justify-end gap-2 mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setDetailInitiative(null)}
+              >
+                Close
+              </Button>
+              <Button
+                size="sm"
+                className={selectedIds.has(detailInitiative.id)
+                  ? "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
+                  : "bg-green-500 hover:bg-green-400 text-black font-semibold"
+                }
+                onClick={() => { onToggle(detailInitiative.id); setDetailInitiative(null); }}
+              >
+                {selectedIds.has(detailInitiative.id) ? "Remove" : "Add to Strategy"}
+              </Button>
+            </div>
           </DialogContent>
         )}
       </Dialog>
@@ -465,6 +563,7 @@ function InitiativeLibraryModal({
 export default function HRAIStrategyAssessmentPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // ── Fetch existing assessment (pre-fill if re-taking) ──────────────────────
   const existingQ = trpc.intelligence.getStrategyAssessment.useQuery(undefined, {
@@ -478,6 +577,7 @@ export default function HRAIStrategyAssessmentPage() {
 
   // ── Wizard state ───────────────────────────────────────────────────────────
   const [step, setStep] = useState(1);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Step 1 — Business AI Aspiration
   const [aspirationAnswers, setAspirationAnswers] = useState<Record<string, string>>({});
@@ -509,12 +609,30 @@ export default function HRAIStrategyAssessmentPage() {
     if (d.selectedInitiativeIds?.length) setSelectedIds(new Set(d.selectedInitiativeIds));
   }, [existingQ.data]);
 
+  // ── Unsaved-progress guard ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // ── Scroll to top on step change ───────────────────────────────────────────
+  const goToStep = useCallback((n: number) => {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   // ── Mutations ──────────────────────────────────────────────────────────────
   const generateMut = trpc.intelligence.generateVisionAndPrinciples.useMutation({
     onSuccess: (data) => {
       setVisionStatement(data.visionStatement);
       setPrinciples(data.principles);
       setHasGenerated(true);
+      setIsDirty(true);
     },
     onError: (err) => {
       toast.error("Failed to generate vision: " + err.message);
@@ -523,6 +641,7 @@ export default function HRAIStrategyAssessmentPage() {
 
   const saveMut = trpc.intelligence.saveStrategyAssessment.useMutation({
     onSuccess: () => {
+      setIsDirty(false);
       toast.success("HR AI Strategy committed successfully.");
       navigate("/ai-strategy");
     },
@@ -533,7 +652,10 @@ export default function HRAIStrategyAssessmentPage() {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const sector = orgContextQ.data?.sector ?? "other";
-  const sectorLabel = sector.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const sectorLabel = sector
+    .split("_")
+    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
   const allInitiatives = initiativesQ.data ?? [];
 
@@ -543,6 +665,7 @@ export default function HRAIStrategyAssessmentPage() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+    setIsDirty(true);
   }, []);
 
   // ── Step validation ────────────────────────────────────────────────────────
@@ -552,7 +675,7 @@ export default function HRAIStrategyAssessmentPage() {
   const step4Valid = selectedIds.size > 0;
 
   // ── Generate vision ────────────────────────────────────────────────────────
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
     generateMut.mutate({
       sector: sectorLabel,
       businessAmbitionLabel: BUSINESS_LEVELS[businessLevel]?.label ?? "Progressive",
@@ -560,7 +683,7 @@ export default function HRAIStrategyAssessmentPage() {
       aspirationAnswers,
       hrRoleAnswers,
     });
-  };
+  }, [generateMut, sectorLabel, businessLevel, peopleLevel, aspirationAnswers, hrRoleAnswers]);
 
   // ── Commit strategy ────────────────────────────────────────────────────────
   const handleCommit = () => {
@@ -580,41 +703,54 @@ export default function HRAIStrategyAssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-green-400" />
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-green-400 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Loading your strategy…</p>
+        </div>
       </div>
     );
   }
 
+  const isRetake = !!existingQ.data?.completed;
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div ref={scrollRef} className="min-h-screen bg-background">
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
       <div className="border-b border-white/8 bg-white/2">
         <div className="max-w-3xl mx-auto px-6 py-5">
-          <div className="flex items-center gap-3 mb-1">
-            <button
-              onClick={() => navigate("/ai-strategy")}
-              className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              HR AI Strategy
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/ai-strategy")}
+            className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1 mb-3"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            HR AI Strategy
+          </button>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-4.5 h-4.5 text-green-400" />
+            <div className="w-10 h-10 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">HR AI Strategy Assessment</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                {isRetake ? "Update HR AI Strategy" : "HR AI Strategy Assessment"}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                {existingQ.data?.completed ? "Update your HR AI strategy" : "Build your HR AI strategy in 4 steps"}
+                {isRetake
+                  ? "Your previous answers are pre-filled — update any section and recommit."
+                  : "Answer 4 sets of questions to generate your AI vision and guiding principles."}
               </p>
             </div>
+            {isRetake && (
+              <Badge className="ml-auto bg-green-500/20 text-green-400 border-green-500/30 text-xs flex-shrink-0">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Strategy active
+              </Badge>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Wizard body */}
+      {/* ── Wizard body ─────────────────────────────────────────────────────── */}
       <div className="max-w-3xl mx-auto px-6 py-8">
         <StepIndicator current={step} total={4} />
 
@@ -623,10 +759,12 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <Target className="w-5 h-5 text-green-400" />
+                <div className="w-7 h-7 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+                  <Target className="w-4 h-4 text-green-400" />
+                </div>
                 <h2 className="text-lg font-bold text-foreground">Business AI Aspiration</h2>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground ml-9">
                 Tell us what your organisation wants to achieve with AI. These answers will shape your HR AI strategy.
               </p>
             </div>
@@ -636,16 +774,16 @@ export default function HRAIStrategyAssessmentPage() {
                   key={q.id}
                   question={q}
                   value={aspirationAnswers[q.id] ?? ""}
-                  onChange={val => setAspirationAnswers(prev => ({ ...prev, [q.id]: val }))}
+                  onChange={val => { setAspirationAnswers(prev => ({ ...prev, [q.id]: val })); setIsDirty(true); }}
                   index={i}
                 />
               ))}
             </div>
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-8 pt-4 border-t border-white/6">
               <Button
                 disabled={!step1Valid}
-                onClick={() => setStep(2)}
-                className="bg-green-500 hover:bg-green-400 text-black font-semibold"
+                onClick={() => goToStep(2)}
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
                 Next: HR's Role
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -653,7 +791,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
             {!step1Valid && (
               <p className="text-xs text-muted-foreground text-right mt-2">
-                Please answer all questions (at least 10 characters each) to continue.
+                Please answer all 5 questions (at least 10 characters each) to continue.
               </p>
             )}
           </div>
@@ -664,10 +802,12 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="w-5 h-5 text-blue-400" />
+                <div className="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-blue-400" />
+                </div>
                 <h2 className="text-lg font-bold text-foreground">HR's Role in the AI Vision</h2>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground ml-9">
                 Define how HR will enable, lead, and govern AI adoption across your organisation.
               </p>
             </div>
@@ -677,20 +817,20 @@ export default function HRAIStrategyAssessmentPage() {
                   key={q.id}
                   question={q}
                   value={hrRoleAnswers[q.id] ?? ""}
-                  onChange={val => setHrRoleAnswers(prev => ({ ...prev, [q.id]: val }))}
+                  onChange={val => { setHrRoleAnswers(prev => ({ ...prev, [q.id]: val })); setIsDirty(true); }}
                   index={i}
                 />
               ))}
             </div>
-            <div className="flex justify-between mt-6">
-              <Button variant="outline" onClick={() => setStep(1)}>
+            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+              <Button variant="outline" onClick={() => goToStep(1)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>
               <Button
                 disabled={!step2Valid}
-                onClick={() => setStep(3)}
-                className="bg-green-500 hover:bg-green-400 text-black font-semibold"
+                onClick={() => goToStep(3)}
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
                 Next: AI Draft
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -698,7 +838,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
             {!step2Valid && (
               <p className="text-xs text-muted-foreground text-right mt-2">
-                Please answer all questions (at least 10 characters each) to continue.
+                Please answer all 4 questions (at least 10 characters each) to continue.
               </p>
             )}
           </div>
@@ -709,10 +849,12 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-5 h-5 text-purple-400" />
+                <div className="w-7 h-7 rounded-full bg-purple-500/15 border border-purple-500/30 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                </div>
                 <h2 className="text-lg font-bold text-foreground">AI-Drafted Vision & Principles</h2>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground ml-9">
                 Our AI will draft a vision statement and 5 guiding principles based on your answers. You can edit everything before committing.
               </p>
             </div>
@@ -723,7 +865,7 @@ export default function HRAIStrategyAssessmentPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
                   Business AI Ambition
                 </label>
-                <Select value={String(businessLevel)} onValueChange={v => setBusinessLevel(Number(v))}>
+                <Select value={String(businessLevel)} onValueChange={v => { setBusinessLevel(Number(v)); setIsDirty(true); }}>
                   <SelectTrigger className="bg-white/4 border-white/10">
                     <SelectValue />
                   </SelectTrigger>
@@ -743,7 +885,7 @@ export default function HRAIStrategyAssessmentPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
                   People AI Ambition
                 </label>
-                <Select value={String(peopleLevel)} onValueChange={v => setPeopleLevel(Number(v))}>
+                <Select value={String(peopleLevel)} onValueChange={v => { setPeopleLevel(Number(v)); setIsDirty(true); }}>
                   <SelectTrigger className="bg-white/4 border-white/10">
                     <SelectValue />
                   </SelectTrigger>
@@ -761,23 +903,26 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
             </div>
 
-            {/* Generate button */}
+            {/* Generate button (first time) */}
             {!hasGenerated && (
-              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-6 text-center mb-6">
-                <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-foreground mb-1">Ready to generate your strategy</p>
-                <p className="text-xs text-muted-foreground mb-4">
+              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-8 text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-purple-500/15 border border-purple-500/30 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-7 h-7 text-purple-400" />
+                </div>
+                <p className="text-base font-semibold text-foreground mb-2">Ready to generate your strategy</p>
+                <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
                   Our AI will analyse your answers and create a tailored vision statement and 5 guiding principles for your HR AI strategy.
                 </p>
                 <Button
                   onClick={handleGenerate}
                   disabled={generateMut.isPending}
-                  className="bg-purple-500 hover:bg-purple-400 text-white font-semibold"
+                  size="lg"
+                  className="bg-purple-500 hover:bg-purple-400 text-white font-semibold px-8"
                 >
                   {generateMut.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating…
+                      Generating your strategy…
                     </>
                   ) : (
                     <>
@@ -786,10 +931,13 @@ export default function HRAIStrategyAssessmentPage() {
                     </>
                   )}
                 </Button>
+                {generateMut.isPending && (
+                  <p className="text-xs text-muted-foreground mt-3">This usually takes 10–20 seconds</p>
+                )}
               </div>
             )}
 
-            {/* Editable vision statement */}
+            {/* Editable vision statement + principles */}
             {hasGenerated && (
               <div className="space-y-5">
                 <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-5">
@@ -797,12 +945,12 @@ export default function HRAIStrategyAssessmentPage() {
                     <BookOpen className="w-4 h-4 text-green-400" />
                     <p className="text-sm font-semibold text-green-400">Vision Statement</p>
                     <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                      <Edit3 className="w-3 h-3" /> Editable
+                      <Edit3 className="w-3 h-3" /> Click to edit
                     </span>
                   </div>
                   <Textarea
                     value={visionStatement}
-                    onChange={e => setVisionStatement(e.target.value)}
+                    onChange={e => { setVisionStatement(e.target.value); setIsDirty(true); }}
                     rows={4}
                     className="resize-none bg-white/4 border-white/10 text-sm leading-relaxed"
                     placeholder="Your AI vision statement..."
@@ -823,39 +971,48 @@ export default function HRAIStrategyAssessmentPage() {
                         index={i}
                         title={p.title}
                         description={p.description}
-                        onTitleChange={v => setPrinciples(prev => prev.map((x, j) => j === i ? { ...x, title: v } : x))}
-                        onDescriptionChange={v => setPrinciples(prev => prev.map((x, j) => j === i ? { ...x, description: v } : x))}
+                        onTitleChange={v => { setPrinciples(prev => prev.map((x, j) => j === i ? { ...x, title: v } : x)); setIsDirty(true); }}
+                        onDescriptionChange={v => { setPrinciples(prev => prev.map((x, j) => j === i ? { ...x, description: v } : x)); setIsDirty(true); }}
                       />
                     ))}
                   </div>
                 </div>
 
                 {/* Regenerate option */}
-                <button
-                  onClick={() => { setHasGenerated(false); handleGenerate(); }}
-                  disabled={generateMut.isPending}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  Regenerate with AI
-                </button>
+                <div className="flex items-center justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setHasGenerated(false); handleGenerate(); }}
+                    disabled={generateMut.isPending}
+                    className="text-xs text-muted-foreground"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                    Regenerate with AI
+                  </Button>
+                </div>
               </div>
             )}
 
-            <div className="flex justify-between mt-6">
-              <Button variant="outline" onClick={() => setStep(2)}>
+            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+              <Button variant="outline" onClick={() => goToStep(2)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>
               <Button
                 disabled={!step3Valid}
-                onClick={() => setStep(4)}
-                className="bg-green-500 hover:bg-green-400 text-black font-semibold"
+                onClick={() => goToStep(4)}
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
                 Next: Select Initiatives
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
+            {!step3Valid && hasGenerated && (
+              <p className="text-xs text-muted-foreground text-right mt-2">
+                Please ensure the vision statement is complete and all 5 principles are filled in.
+              </p>
+            )}
           </div>
         )}
 
@@ -864,10 +1021,12 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <ListPlus className="w-5 h-5 text-amber-400" />
+                <div className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+                  <ListPlus className="w-4 h-4 text-amber-400" />
+                </div>
                 <h2 className="text-lg font-bold text-foreground">Select Your Initiatives</h2>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground ml-9">
                 Choose the AI initiatives that will deliver your vision. These will populate the HR AI Strategy roadmap.
               </p>
             </div>
@@ -876,7 +1035,7 @@ export default function HRAIStrategyAssessmentPage() {
             <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  <CheckCircle2 className={`w-4 h-4 ${selectedIds.size > 0 ? "text-green-400" : "text-muted-foreground"}`} />
                   <span className="text-sm font-semibold text-foreground">
                     {selectedIds.size} initiative{selectedIds.size !== 1 ? "s" : ""} selected
                   </span>
@@ -893,16 +1052,15 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {selectedIds.size === 0 ? (
-                <div className="text-center py-8">
-                  <ListPlus className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No initiatives selected yet.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Open the initiative library to browse and select AI initiatives.</p>
+                <div className="text-center py-10 border border-dashed border-white/10 rounded-lg">
+                  <ListPlus className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground mb-1">No initiatives selected yet</p>
+                  <p className="text-xs text-muted-foreground/70 mb-4">Open the initiative library to browse and select AI initiatives for your strategy.</p>
                   <Button
-                    size="sm"
                     onClick={() => setShowLibrary(true)}
-                    className="mt-4 bg-green-500 hover:bg-green-400 text-black font-semibold"
+                    className="bg-green-500 hover:bg-green-400 text-black font-semibold"
                   >
-                    <ListPlus className="w-3.5 h-3.5 mr-1.5" />
+                    <ListPlus className="w-4 h-4 mr-1.5" />
                     Open Initiative Library
                   </Button>
                 </div>
@@ -924,13 +1082,21 @@ export default function HRAIStrategyAssessmentPage() {
                           </div>
                           <button
                             onClick={() => toggleInitiative(init.id)}
-                            className="w-5 h-5 rounded-full bg-white/8 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-colors text-muted-foreground flex-shrink-0"
+                            className="w-6 h-6 rounded-full bg-white/8 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-colors text-muted-foreground flex-shrink-0 text-xs"
+                            title="Remove"
                           >
-                            <ChevronRight className="w-3 h-3 rotate-180" />
+                            ×
                           </button>
                         </div>
                       );
                     })}
+                  <button
+                    onClick={() => setShowLibrary(true)}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2 border border-dashed border-white/10 rounded-lg flex items-center justify-center gap-1.5 mt-1"
+                  >
+                    <ListPlus className="w-3.5 h-3.5" />
+                    Add more initiatives
+                  </button>
                 </div>
               )}
             </div>
@@ -938,46 +1104,49 @@ export default function HRAIStrategyAssessmentPage() {
             {/* Strategy summary before commit */}
             {selectedIds.size > 0 && (
               <div className="rounded-xl border border-green-500/15 bg-green-500/5 p-5 mb-5">
-                <p className="text-xs font-bold tracking-widest uppercase text-green-400 mb-3">Strategy Summary</p>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <p className="text-xs font-bold tracking-widest uppercase text-green-400 mb-4">Strategy Summary</p>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                   <div>
-                    <span className="text-muted-foreground">Business Ambition</span>
-                    <p className="font-semibold text-foreground">{BUSINESS_LEVELS[businessLevel]?.label}</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Business Ambition</span>
+                    <p className="font-semibold text-foreground mt-0.5">{BUSINESS_LEVELS[businessLevel]?.label}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">People Ambition</span>
-                    <p className="font-semibold text-foreground">{PEOPLE_LEVELS[peopleLevel]?.label}</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">People Ambition</span>
+                    <p className="font-semibold text-foreground mt-0.5">{PEOPLE_LEVELS[peopleLevel]?.label}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Initiatives</span>
-                    <p className="font-semibold text-foreground">{selectedIds.size} selected</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Initiatives</span>
+                    <p className="font-semibold text-foreground mt-0.5">{selectedIds.size} selected</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Sector</span>
-                    <p className="font-semibold text-foreground">{sectorLabel}</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Sector</span>
+                    <p className="font-semibold text-foreground mt-0.5">{sectorLabel}</p>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-white/8">
-                  <span className="text-muted-foreground text-xs">Vision</span>
-                  <p className="text-sm text-foreground mt-1 leading-relaxed line-clamp-2">{visionStatement}</p>
+                <div className="pt-3 border-t border-white/8">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Vision</span>
+                  <p className="text-sm text-foreground mt-1.5 leading-relaxed italic line-clamp-3">
+                    &ldquo;{visionStatement}&rdquo;
+                  </p>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-between mt-6">
-              <Button variant="outline" onClick={() => setStep(3)}>
+            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+              <Button variant="outline" onClick={() => goToStep(3)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>
               <Button
                 disabled={!step4Valid || saveMut.isPending}
                 onClick={handleCommit}
-                className="bg-green-500 hover:bg-green-400 text-black font-semibold"
+                size="lg"
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-8"
               >
                 {saveMut.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Committing…
+                    Committing strategy…
                   </>
                 ) : (
                   <>
