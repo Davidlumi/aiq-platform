@@ -2092,3 +2092,11 @@
 - [x] Add Section 3 — Capability Gap: per-domain gap bars with narrative and priority flags
 - [x] Initiative library moved to full-screen modal; only selected initiatives shown on main page
 - [x] Single plan only — no A/B/C strategy tabs
+
+## Company Assessment → HR AI Strategy Integration
+- [ ] Read company assessment results (7-dimension scores + maturity level) in AIStrategyPage
+- [ ] Add "Company Context" section at top of exec paper: company maturity level, 7-dimension scores, overall AI readiness
+- [ ] Add "Company Gap" section: what the company needs vs where it is now, per dimension
+- [ ] Update Executive Summary narrative to reference company assessment findings
+- [ ] Update Capability Gap section to show what HR must develop to support the company's AI ambition
+- [ ] Show a clear "HR must support this" bridge between company gap and HR capability requirements

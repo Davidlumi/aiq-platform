@@ -1101,6 +1101,53 @@ Write the executive summary.`,
       return assessment || null;
     }),
 
+  // Get the tenant's latest completed assessment results (for HR AI Strategy page)
+  getMyAssessmentResults: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    // Find the latest completed assessment for this tenant
+    const assessments = await db.select({
+      id: companyAssessments.id,
+      status: companyAssessments.status,
+      companyId: companyAssessments.companyId,
+      startedAt: companyAssessments.startedAt,
+    }).from(companyAssessments)
+      .where(and(eq(companyAssessments.tenantId, ctx.user.tenantId), eq(companyAssessments.status, "completed")))
+      .orderBy(desc(companyAssessments.startedAt))
+      .limit(1);
+    const assessment = assessments[0];
+    if (!assessment) return null;
+    const [result] = await db.select().from(companyAssessmentResults)
+      .where(eq(companyAssessmentResults.assessmentId, assessment.id));
+    if (!result) return null;
+    const [company] = await db.select().from(companies)
+      .where(eq(companies.id, result.companyId));
+    const maturity = getMaturityLabel(result.overallScore);
+    const sectorAvg = SECTOR_BENCHMARKS[company?.sector || "Other"] || 2.5;
+    return {
+      assessmentId: assessment.id,
+      overallScore: result.overallScore,
+      maturityLabel: result.maturityLabel,
+      maturityDescription: maturity.description,
+      executiveSummary: result.executiveSummary,
+      sectorAverage: sectorAvg,
+      companyName: company?.name ?? null,
+      companySector: company?.sector ?? null,
+      dimensions: DIMENSIONS.map(d => {
+        const score = ({
+          strategy:    result.scoreStrategy,
+          governance:  result.scoreGovernance,
+          data:        result.scoreData,
+          technology:  result.scoreTechnology,
+          workforce:   result.scoreWorkforce,
+          hr_function: result.scoreHrFunction,
+          culture:     result.scoreCulture,
+        } as Record<string, number>)[d.key] ?? 0;
+        return { key: d.key, label: d.label, weight: d.weight, score };
+      }),
+    };
+  }),
+
   // Get the tenant's single current assessment (latest by startedAt)
   getMyAssessment: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
