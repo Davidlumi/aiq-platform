@@ -112,7 +112,7 @@ function getNavSections(roles: string[]): NavSection[] {
 
 // --- Width persistence --------------------------------------------------------
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
-const DEFAULT_WIDTH = 260;
+const DEFAULT_WIDTH = 240; // v2.2 spec: 240px default
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
@@ -148,8 +148,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // v2.2 spec: 240px expanded, 56px collapsed
   return (
-    <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
+    <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px`, "--sidebar-width-icon": "56px" } as React.CSSProperties & Record<string, string>}>
       <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
         {children}
       </DashboardLayoutContent>
@@ -209,7 +210,8 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
+        {/* v2.2: sunken sidebar background */}
+        <Sidebar collapsible="icon" className="border-r-0 bg-[var(--sidebar-bg,hsl(var(--muted)/0.4))]" disableTransition={isResizing}>
           {/* Header */}
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
@@ -250,7 +252,11 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className="h-9 transition-all font-normal"
+                          className={`h-9 transition-all font-normal relative ${
+                            isActive
+                              ? "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:rounded-full before:bg-primary"  /* v2.2: 3px left active border */
+                              : ""
+                          }`}
                         >
                           <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                           <span>{item.label}</span>

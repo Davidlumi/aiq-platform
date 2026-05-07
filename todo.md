@@ -1297,7 +1297,7 @@
 
 - [x] DS-1: Rewrite index.css with v2.2 token architecture — navy/warm-grey palette, Graphik font stack, dual-audience state tokens, spacing/radius/elevation/motion tokens
 - [x] DS-2: Update AppShell.tsx to v2.2 sidebar spec — 240px width, 56px collapsed, 3px left active border, section labels, sunken sidebar background
-- [ ] DS-3: Update DashboardLayout.tsx to match v2.2 sidebar spec (deferred — not used in active routing; custom AppShell used instead)
+- [x] DS-3: Update DashboardLayout.tsx to match v2.2 sidebar spec — 240px/56px widths, 3px left active border, sunken sidebar background applied
 - [x] DS-4: Update button.tsx — 44px min target, aria-disabled pattern, loading state, icon spacing, sentence case
 - [x] DS-5: Update badge.tsx — dual-audience state tokens, rectangular radius-xs, individual/org variants
 - [x] DS-6: Update card.tsx — elevated/default/sunken variants, CardDivider, v2.2 padding tokens
