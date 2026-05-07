@@ -14,11 +14,15 @@ import { coachEngine } from "../coach/engine";
 import { diagnosticModeHandler } from "../coach/modes/diagnostic";
 import { debriefModeHandler } from "../coach/modes/debrief";
 import { learningModeHandler } from "../coach/modes/learning";
+import { applyModeHandler } from "../coach/modes/apply";
+import { strategyCoachModeHandler } from "../coach/modes/strategy";
 
 // Register all AiQ Coach mode handlers at startup
 coachEngine.registerMode(diagnosticModeHandler);
 coachEngine.registerMode(debriefModeHandler);
 coachEngine.registerMode(learningModeHandler);
+coachEngine.registerMode(applyModeHandler);
+coachEngine.registerMode(strategyCoachModeHandler);
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {

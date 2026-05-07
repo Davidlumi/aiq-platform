@@ -31,7 +31,7 @@ export const coachRouter = router({
   createOrResumeSession: protectedProcedure
     .input(
       z.object({
-        mode: z.enum(["diagnostic", "debrief", "learning", "practice", "apply", "manager"]).default("diagnostic"),
+        mode: z.enum(["diagnostic", "debrief", "learning", "practice", "apply", "strategy", "manager"]).default("diagnostic"),
         assessmentSessionId: z.string().optional(),
         forceNew: z.boolean().optional().default(false),
       })
@@ -259,7 +259,7 @@ export const coachRouter = router({
   listSessions: protectedProcedure
     .input(
       z.object({
-        mode: z.enum(["diagnostic", "debrief", "learning", "practice", "apply", "manager"]).optional(),
+        mode: z.enum(["diagnostic", "debrief", "learning", "practice", "apply", "strategy", "manager"]).optional(),
       }).optional()
     )
     .query(async ({ ctx, input }) => {

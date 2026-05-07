@@ -54,13 +54,16 @@ import {
   ArrowRight,
   CircleDot,
   Circle,
+  Target,
+  Lightbulb,
+  Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type CoachMode = "diagnostic" | "debrief" | "learning" | "practice" | "apply" | "manager";
+type CoachMode = "diagnostic" | "debrief" | "learning" | "practice" | "apply" | "strategy" | "manager";
 
 type CoachAct =
   | "onboarding"
@@ -90,6 +93,7 @@ const MODE_LABELS: Record<CoachMode, string> = {
   learning: "Learning Coach",
   practice: "Practice & Apply",
   apply: "Apply Coaching",
+  strategy: "Strategy Coach",
   manager: "Manager View",
 };
 
@@ -99,6 +103,7 @@ const MODE_DESCRIPTIONS: Record<CoachMode, string> = {
   learning: "I'll guide you through your personalised learning plan, one module at a time.",
   practice: "I'll give you practice scenarios to build and reinforce specific skills.",
   apply: "I'll help you commit to applying what you've learned and check in on your progress.",
+  strategy: "I'll guide you through building your HR AI Strategy — vision, principles, and initiatives — through conversation.",
   manager: "I'll help you understand your team's AI capability and plan targeted development.",
 };
 
@@ -819,7 +824,77 @@ export default function CoachPage() {
               </div>
             )}
 
-            {(mode === "diagnostic" || mode === "debrief" || mode === "learning") && (
+            {/* Apply mode panel */}
+            {mode === "apply" && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
+                  Apply Coaching
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { key: "apply_commitment", label: "Commitment", icon: Target, desc: "What will you apply?" },
+                    { key: "apply_checkin", label: "Check-in", icon: Clock, desc: "How did it go?" },
+                    { key: "apply_evidence", label: "Evidence", icon: CheckCircle2, desc: "Reflecting on impact" },
+                  ].map(({ key, label, icon: Icon, desc }) => {
+                    const acts: CoachAct[] = ["apply_commitment", "apply_checkin", "apply_evidence"];
+                    const idx = acts.indexOf(key as CoachAct);
+                    const curIdx = acts.indexOf(currentAct as CoachAct);
+                    const done = curIdx > idx;
+                    const active = currentAct === key;
+                    return (
+                      <div
+                        key={key}
+                        className={cn(
+                          "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5 transition-colors",
+                          done && "text-[var(--color-brand)]",
+                          active && "text-[var(--color-neutral-100)] bg-[var(--color-navy-card)] border border-[var(--color-navy-border)]",
+                          !done && !active && "text-[var(--color-neutral-500)]"
+                        )}
+                      >
+                        <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", active && "text-[var(--color-brand)]")} />
+                        <div>
+                          <p className="font-medium">{label}</p>
+                          <p className="text-[10px] opacity-70">{desc}</p>
+                        </div>
+                        {active && (
+                          <span className="ml-auto text-[10px] text-[var(--color-brand)] font-medium">Now</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Strategy mode panel */}
+            {mode === "strategy" && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
+                  Strategy Builder
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Business Aspiration", icon: Lightbulb, desc: "What AI means for your org" },
+                    { label: "HR's Role", icon: Users, desc: "How HR enables the vision" },
+                    { label: "Vision & Principles", icon: Sparkles, desc: "Your AI strategy statement" },
+                    { label: "Initiatives", icon: Map, desc: "Phased roadmap" },
+                  ].map(({ label, icon: Icon, desc }) => (
+                    <div key={label} className="flex items-center gap-2 text-xs rounded-lg px-2 py-1.5 text-[var(--color-neutral-500)]">
+                      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium">{label}</p>
+                        <p className="text-[10px] opacity-70">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-[var(--color-neutral-500)] leading-relaxed">
+                  The coach will guide you through each section conversationally.
+                </p>
+              </div>
+            )}
+
+            {(mode === "diagnostic" || mode === "debrief" || mode === "learning" || mode === "apply" || mode === "strategy") && (
               <Separator className="bg-[var(--color-navy-border)]" />
             )}
 
@@ -1016,6 +1091,52 @@ export default function CoachPage() {
                             Continue learning
                           </Button>
                         </Link>
+                      </div>
+                    </>
+                  )}
+                  {mode === "apply" && (
+                    <>
+                      <p className="text-sm text-[var(--color-neutral-400)] text-center">
+                        Apply cycle complete. Your evidence has been recorded.
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href="/learning">
+                          <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Back to learning
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          className="border-[var(--color-navy-border)] text-[var(--color-neutral-300)]"
+                          onClick={() => setShowNewSessionConfirm(true)}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          New commitment
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                  {mode === "strategy" && (
+                    <>
+                      <p className="text-sm text-[var(--color-neutral-400)] text-center">
+                        Your HR AI Strategy has been saved.
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href="/ai-strategy">
+                          <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            View strategy dashboard
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          className="border-[var(--color-navy-border)] text-[var(--color-neutral-300)]"
+                          onClick={() => setShowNewSessionConfirm(true)}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Rebuild strategy
+                        </Button>
                       </div>
                     </>
                   )}

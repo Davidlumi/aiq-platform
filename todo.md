@@ -2201,3 +2201,16 @@
 - [x] Suggested reply chips above input area (clickable, auto-fill)
 - [x] Mode-specific session-complete CTAs (diagnostic/debrief/learning)
 - [x] 710/710 tests passing · 0 TypeScript errors
+
+## AiQ Coach — Phase 3: Apply Mode & Strategy Coach Mode
+- [x] Build ApplyModeHandler (server/coach/modes/apply.ts): commitment capture, check-in, evidence collection, memory write
+- [x] Build StrategyCoachModeHandler (server/coach/modes/strategy.ts): conversational HR AI Strategy Builder (aspiration → HR role → vision/principles → initiatives)
+- [x] Add strategy as a proper CoachMode in types.ts (alongside diagnostic/debrief/learning/practice/apply/manager)
+- [x] Register apply and strategy mode handlers at server startup (server/_core/index.ts)
+- [x] Add strategy to mode enum in coach router (server/routers/coach.ts)
+- [x] Add apply mode sidebar panel to CoachPage (commitment/check-in/evidence act tracker with icons)
+- [x] Add strategy mode sidebar panel to CoachPage (aspiration/role/vision/initiatives sections)
+- [x] Add apply session-complete CTA (back to learning + new commitment)
+- [x] Add strategy session-complete CTA (view strategy dashboard + rebuild strategy)
+- [x] Add Target, Lightbulb, Map icons to CoachPage imports
+- [x] 710/710 tests passing · 0 TypeScript errors

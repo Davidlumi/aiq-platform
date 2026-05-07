@@ -11,6 +11,7 @@ export type CoachMode =
   | "learning"
   | "practice"
   | "apply"
+  | "strategy"
   | "manager";
 
 export type CoachSessionState =
@@ -33,7 +34,18 @@ export type CoachAct =
   | "debrief_plan"
   | "apply_commitment"
   | "apply_checkin"
-  | "apply_evidence";
+  | "apply_evidence"
+  | "apply_intro"
+  | "apply_commit"
+  | "apply_refine"
+  | "apply_reflect"
+  | "apply_complete"
+  | "strategy_intro"
+  | "strategy_aspiration"
+  | "strategy_hr_role"
+  | "strategy_vision"
+  | "strategy_initiatives"
+  | "strategy_complete";
 
 // ─── Session Context ──────────────────────────────────────────────────────────
 
