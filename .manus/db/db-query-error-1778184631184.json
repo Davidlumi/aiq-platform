@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, name, category, target_quarter FROM strategy_initiative_library LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT id, name, category, target_quarter FROM strategy_initiative_library LIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'target_quarter' in 'field list'"
+  ]
+}

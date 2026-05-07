@@ -2216,13 +2216,13 @@
 - [x] 710/710 tests passing · 0 TypeScript errors
 
 ## AI Strategy Page Rebuild (v3)
-- [ ] Sticky compact header: logo, 3 editable pill inputs (industry, business ambition, people ambition), Save + Export PDF actions
-- [ ] Above-the-fold hero: one sentence + 3 KPI numbers (current score, required score, gap) + initiative count + timeline
-- [ ] Section 1 — Diagnostic (Where we are): move up from old Section 3; fix scale consistency; demote 3 of 6 Priority tags; third-person voice
-- [ ] Section 2 — Ambition (Where we're going): move from old Section 1; keep vision + principles; add "What we won't do" out-of-scope list
-- [ ] Section 3 — Plan (How we get there): pre-sequence initiatives by AI; Executive/Operational view toggle; re-tag by HR function + outcome type
-- [ ] Section 4 — Investment & Risk (new): cost envelope by phase, top 3 delivery risks with mitigations, dependencies on IT/Legal/Finance
-- [ ] Appendix — Methodology (collapsed): scoring methodology, benchmark sources, confidence intervals
+- [x] Sticky compact header: logo, 3 editable pill inputs (industry, business ambition, people ambition), Save + Export PDF actions
+- [x] Above-the-fold hero: one sentence + 3 KPI numbers (current score, required score, gap) + initiative count + timeline
+- [x] Section 1 — Diagnostic (Where we are): move up from old Section 3; fix scale consistency; demote 3 of 6 Priority tags; third-person voice
+- [x] Section 2 — Ambition (Where we're going): move from old Section 1; keep vision + principles; add "What we won't do" out-of-scope list
+- [x] Section 3 — Plan (How we get there): pre-sequence initiatives by AI; Executive/Operational view toggle; re-tag by HR function + outcome type
+- [x] Section 4 — Investment & Risk (new): cost envelope by phase, top 3 delivery risks with mitigations, dependencies on IT/Legal/Finance
+- [x] Appendix — Methodology (collapsed): scoring methodology, benchmark sources, confidence intervals
 
 ## AI Strategy Page Rebuild (v3) — Completed
 - [x] Sticky compact header: logo, 3 editable pill inputs (industry, business ambition, people ambition), Save + Export PDF actions

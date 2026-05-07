@@ -1,0 +1,171 @@
+{
+  "query": "SELECT id, name, category, complexity, base_target FROM strategy_initiative_library ORDER BY category, name LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT id, name, category, complexity, base_target FROM strategy_initiative_library ORDER BY category, name LIMIT 30;",
+  "rows": [
+    {
+      "id": "init-22",
+      "name": "AI Literacy Programme for HR",
+      "category": "Change & Capability",
+      "complexity": "2",
+      "base_target": "3.5"
+    },
+    {
+      "id": "init-23",
+      "name": "Change Management & Adoption Playbook",
+      "category": "Change & Capability",
+      "complexity": "3",
+      "base_target": "3"
+    },
+    {
+      "id": "init-19",
+      "name": "AI Ethics & Governance Framework",
+      "category": "Governance & Ethics",
+      "complexity": "3",
+      "base_target": "4"
+    },
+    {
+      "id": "init-20",
+      "name": "Bias Monitoring & Algorithmic Auditing",
+      "category": "Governance & Ethics",
+      "complexity": "4",
+      "base_target": "4.5"
+    },
+    {
+      "id": "init-21",
+      "name": "Data Privacy & Consent Management",
+      "category": "Governance & Ethics",
+      "complexity": "3",
+      "base_target": "3.5"
+    },
+    {
+      "id": "init-08",
+      "name": "AI-Augmented Performance Conversations",
+      "category": "HR Business Partnering",
+      "complexity": "2",
+      "base_target": "3"
+    },
+    {
+      "id": "init-07",
+      "name": "Predictive Attrition Modelling",
+      "category": "HR Business Partnering",
+      "complexity": "3",
+      "base_target": "4"
+    },
+    {
+      "id": "init-09",
+      "name": "Workforce Scenario Planning",
+      "category": "HR Business Partnering",
+      "complexity": "4",
+      "base_target": "4"
+    },
+    {
+      "id": "init-17",
+      "name": "Automated Onboarding Orchestration",
+      "category": "HR Operations",
+      "complexity": "2",
+      "base_target": "3"
+    },
+    {
+      "id": "init-18",
+      "name": "Document Intelligence & Compliance",
+      "category": "HR Operations",
+      "complexity": "3",
+      "base_target": "3"
+    },
+    {
+      "id": "init-16",
+      "name": "Intelligent HR Helpdesk (Tier 0)",
+      "category": "HR Operations",
+      "complexity": "2",
+      "base_target": "2.5"
+    },
+    {
+      "id": "init-05",
+      "name": "AI-Powered Content Creation",
+      "category": "Learning & Development",
+      "complexity": "2",
+      "base_target": "3"
+    },
+    {
+      "id": "init-04",
+      "name": "Personalised Learning Path Generation",
+      "category": "Learning & Development",
+      "complexity": "2",
+      "base_target": "3.5"
+    },
+    {
+      "id": "init-06",
+      "name": "Skills Gap Analysis & Workforce Planning",
+      "category": "Learning & Development",
+      "complexity": "3",
+      "base_target": "4"
+    },
+    {
+      "id": "init-13",
+      "name": "Integrated People Data Platform",
+      "category": "People Analytics",
+      "complexity": "4",
+      "base_target": "4.5"
+    },
+    {
+      "id": "init-14",
+      "name": "Predictive Workforce Demand Forecasting",
+      "category": "People Analytics",
+      "complexity": "4",
+      "base_target": "4"
+    },
+    {
+      "id": "init-15",
+      "name": "Real-Time Engagement Pulse",
+      "category": "People Analytics",
+      "complexity": "2",
+      "base_target": "3"
+    },
+    {
+      "id": "init-10",
+      "name": "AI-Driven Pay Equity Analysis",
+      "category": "Reward & Compensation",
+      "complexity": "2",
+      "base_target": "3.5"
+    },
+    {
+      "id": "init-11",
+      "name": "Dynamic Total Reward Modelling",
+      "category": "Reward & Compensation",
+      "complexity": "3",
+      "base_target": "3"
+    },
+    {
+      "id": "init-12",
+      "name": "Market Benchmarking Automation",
+      "category": "Reward & Compensation",
+      "complexity": "2",
+      "base_target": "2.5"
+    },
+    {
+      "id": "init-03",
+      "name": "AI Interview Scheduling & Logistics",
+      "category": "Talent Acquisition",
+      "complexity": "1",
+      "base_target": "2.5"
+    },
+    {
+      "id": "init-01",
+      "name": "AI-Assisted CV Screening",
+      "category": "Talent Acquisition",
+      "complexity": "2",
+      "base_target": "3.5"
+    },
+    {
+      "id": "init-02",
+      "name": "Predictive Candidate Sourcing",
+      "category": "Talent Acquisition",
+      "complexity": "3",
+      "base_target": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcategory\tcomplexity\tbase_target\ninit-22\tAI Literacy Programme for HR\tChange & Capability\t2\t3.5\ninit-23\tChange Management & Adoption Playbook\tChange & Capability\t3\t3\ninit-19\tAI Ethics & Governance Framework\tGovernance & Ethics\t3\t4\ninit-20\tBias Monitoring & Algorithmic Auditing\tGovernance & Ethics\t4\t4.5\ninit-21\tData Privacy & Consent Management\tGovernance & Ethics\t3\t3.5\ninit-08\tAI-Augmented Performance Conversations\tHR Business Partnering\t2\t3\ninit-07\tPredictive Attrition Modelling\tHR Business Partnering\t3\t4\ninit-09\tWorkforce Scenario Planning\tHR Business Partnering\t4\t4\ninit-17\tAutomated Onboarding Orchestration\tHR Operations\t2\t3\ninit-18\tDocument Intelligence & Compliance\tHR Operations\t3\t3\ninit-16\tIntelligent HR Helpdesk (Tier 0)\tHR Operations\t2\t2.5\ninit-05\tAI-Powered Content Creation\tLearning & Development\t2\t3\ninit-04\tPersonalised Learning Path Generation\tLearning & Development\t2\t3.5\ninit-06\tSkills Gap Analysis & Workforce Planning\tLearning & Development\t3\t4\ninit-13\tIntegrated People Data Platform\tPeople Analytics\t4\t4.5\ninit-14\tPredictive Workforce Demand Forecasting\tPeople Analytics\t4\t4\ninit-15\tReal-Time Engagement Pulse\tPeople Analytics\t2\t3\ninit-10\tAI-Driven Pay Equity Analysis\tReward & Compensation\t2\t3.5\ninit-11\tDynamic Total Reward Modelling\tReward & Compensation\t3\t3\ninit-12\tMarket Benchmarking Automation\tReward & Compensation\t2\t2.5\ninit-03\tAI Interview Scheduling & Logistics\tTalent Acquisition\t1\t2.5\ninit-01\tAI-Assisted CV Screening\tTalent Acquisition\t2\t3.5\ninit-02\tPredictive Candidate Sourcing\tTalent Acquisition\t3\t3\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

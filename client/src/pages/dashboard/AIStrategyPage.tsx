@@ -109,6 +109,25 @@ const OUT_OF_SCOPE: Record<number, string[]> = {
   ],
 };
 
+// ─── Phase sequencing — deterministic, dependency-aware ─────────────────────
+const FOUNDATION_CATEGORIES = new Set(["Change & Capability", "Governance & Ethics", "HR Operations"]);
+const SCALE_CATEGORIES      = new Set(["People Analytics", "HR Business Partnering"]);
+
+function assignPhase(initiative: { category: string; complexity: number | string; name: string }): string {
+  const complexity = Number(initiative.complexity);
+  const cat = initiative.category ?? "";
+  if (initiative.name.toLowerCase().includes("literacy")) return "Q1";
+  if (initiative.name.toLowerCase().includes("ethics & governance")) return "Q1";
+  if (complexity <= 2 && FOUNDATION_CATEGORIES.has(cat)) return "Q1";
+  if (complexity <= 2) return "Q2";
+  if (complexity === 3 && FOUNDATION_CATEGORIES.has(cat)) return "Q2";
+  if (complexity === 3 && SCALE_CATEGORIES.has(cat)) return "Q3";
+  if (complexity === 3) return "Q2";
+  if (complexity >= 4 && SCALE_CATEGORIES.has(cat)) return "Q3";
+  if (complexity >= 4) return "Q3";
+  return "Q2";
+}
+
 // ─── Category / initiative metadata ──────────────────────────────────────────
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Talent Acquisition":        <Users className="w-3.5 h-3.5" />,
@@ -197,18 +216,25 @@ const DA_LABELS: Record<string, string> = {
 type DomainKey = typeof DOMAIN_KEYS[number];
 
 // ─── Domain target computation ────────────────────────────────────────────────
+// Ambition-tier realistic targets (0-100 scale, NOT the absolute ceiling).
+// Transformative → ~73, Ambitious → ~63, Progressive → ~55, Exploratory → ~46, Cautious → ~38
+const AMBITION_TIER_BASE: Record<number, number> = {
+  1: 38, 2: 46, 3: 55, 4: 63, 5: 73,
+};
+
 function computeDomainTargets(businessLevel: number, peopleLevel: number): Record<DomainKey, number> {
-  const base = Math.round((businessLevel * 0.55 + peopleLevel * 0.45) * 20);
+  const base = AMBITION_TIER_BASE[businessLevel] ?? 55;
   const adj: Record<DomainKey, number> = {
-    ai_interaction:         Math.round(base + (peopleLevel - 3) * 3),
-    ai_output_evaluation:   Math.round(base + (peopleLevel - 3) * 4),
-    ai_workflow_design:     Math.round(base + (businessLevel - 3) * 5),
-    workforce_ai_readiness: Math.round(base + (businessLevel - 3) * 3),
-    ai_ethics_trust:        Math.round(base + (peopleLevel - 3) * 2 + (businessLevel - 3) * 2),
-    ai_change_leadership:   Math.round(base + (businessLevel - 3) * 4 + (peopleLevel - 3) * 2),
+    ai_interaction:         Math.round(base + (peopleLevel - 3) * 2),
+    ai_output_evaluation:   Math.round(base + (peopleLevel - 3) * 3),
+    ai_workflow_design:     Math.round(base + (businessLevel - 3) * 4),
+    workforce_ai_readiness: Math.round(base + (businessLevel - 3) * 2),
+    ai_ethics_trust:        Math.round(base + (peopleLevel - 3) * 1 + (businessLevel - 3) * 1),
+    ai_change_leadership:   Math.round(base + (businessLevel - 3) * 3 + (peopleLevel - 3) * 1),
   };
   const result = {} as Record<DomainKey, number>;
-  for (const key of DOMAIN_KEYS) result[key] = Math.max(20, Math.min(100, adj[key]));
+  // Cap at 85 — 100 is the absolute ceiling, not a realistic target
+  for (const key of DOMAIN_KEYS) result[key] = Math.max(20, Math.min(85, adj[key]));
   return result;
 }
 
@@ -591,11 +617,11 @@ export default function AIStrategyPage() {
   const initiativesByPhase = useMemo(() => {
     const groups: Record<string, any[]> = {};
     for (const init of selectedInits) {
-      const phase = (init as any).targetQuarter ?? "unknown";
+      const phase = assignPhase(init as { category: string; complexity: number | string; name: string });
       if (!groups[phase]) groups[phase] = [];
       groups[phase].push(init);
     }
-    const order = ["Q1", "Q2", "Q3", "Q4", "unknown"];
+    const order = ["Q1", "Q2", "Q3", "Q4"];
     return order.filter(p => groups[p]?.length > 0).map(p => ({ phase: p, items: groups[p] }));
   }, [selectedInits]);
 
@@ -645,9 +671,11 @@ export default function AIStrategyPage() {
   const hrTarget = (overallTarget / 10).toFixed(1);
   const hrGap    = hrNow != null ? ((overallTarget - ambitionGap!.functionAvgRaw!) / 10).toFixed(1) : null;
 
-  // Diagnostic takeaway: count domains with gap > 5
-  const domainsWithGap    = domainGapRows.filter(r => r.gap !== null && r.gap > 5);
-  const domainsWithoutGap = domainGapRows.filter(r => r.gap === null || r.gap <= 5);
+  // Diagnostic takeaway: cap priority domains at 3 even if all 6 have gaps
+  const allDomainsWithGap  = domainGapRows.filter(r => r.gap !== null && r.gap > 5);
+  const priorityDomainCount = Math.min(3, allDomainsWithGap.length);
+  const domainsWithGap     = allDomainsWithGap.slice(0, priorityDomainCount);
+  const domainsWithoutGap  = domainGapRows.filter(r => r.gap === null || r.gap <= 5);
 
   // Cost envelope
   const totalCostLow  = initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.low ?? 20), 0);
@@ -732,7 +760,7 @@ export default function AIStrategyPage() {
               </span>
             )}
             <a href="/api/pdf/ai_strategy" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="h-7 text-xs px-3">
+              <Button variant="outline" size="sm" className="h-7 text-xs px-3 border-white/15 text-foreground hover:bg-white/8">
                 <Download className="w-3 h-3 mr-1" />
                 Export PDF
               </Button>
@@ -756,10 +784,10 @@ export default function AIStrategyPage() {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "HR Capability Now",   value: hrNow ?? "—",    sub: "out of 10",          color: "#60A5FA" },
-            { label: "Capability Target",   value: hrTarget,         sub: `${bLevel?.label} ambition`, color: "#4ADE80" },
-            { label: "Gap to Close",        value: hrGap != null && Number(hrGap) > 0 ? hrGap : "—", sub: "points",  color: "#FBBF24" },
-            { label: "Initiatives",         value: String(selectedInitiativeIds.size || "—"), sub: "over 18 months", color: "#A78BFA" },
+            { label: "HR Capability Now",   value: hrNow ?? "—",    sub: "out of 10",          color: "#94A3B8" },
+            { label: "Capability Target",   value: hrTarget,         sub: `${bLevel?.label} ambition`, color: "#94A3B8" },
+            { label: "Gap to Close",        value: hrGap != null && Number(hrGap) > 0 ? hrGap : "—", sub: "points to close",  color: "#FBBF24" },
+            { label: "Initiatives",         value: String(selectedInitiativeIds.size || "—"), sub: "over 18 months", color: "#94A3B8" },
           ].map(kpi => (
             <div key={kpi.label} className="rounded-xl border border-white/8 bg-white/3 p-4 text-center">
               <p className="text-3xl font-bold mb-0.5" style={{ color: kpi.color }}>{kpi.value}</p>
@@ -784,21 +812,21 @@ export default function AIStrategyPage() {
         />
 
         {/* One-line takeaway — the sentence that travels */}
-        {domainsWithGap.length > 0 && (
-          <div className="rounded-xl border border-blue-500/20 bg-blue-500/6 px-5 py-4 mb-6 flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-foreground leading-relaxed">
-              Closing this gap requires investment in{" "}
-              <strong className="text-blue-400">{domainsWithGap.length} of 6 capabilities</strong>
-              {domainsWithoutGap.length > 0 && (
-                <>; the other <strong className="text-green-400">{domainsWithoutGap.length}</strong> will follow naturally from the initiative programme.</>
-              )}
-              {domainsWithGap.length > 0 && (
-                <> The highest-priority capability is <strong className="text-blue-400">{domainsWithGap[0].label}</strong>.</>
-              )}
-            </p>
-          </div>
-        )}
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/6 px-5 py-4 mb-6 flex items-start gap-3">
+          <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm font-medium text-foreground leading-relaxed">
+            {priorityDomainCount > 0 ? (
+              <>
+                <strong className="text-blue-400">
+                  {priorityDomainCount === 1 ? "One capability needs" : priorityDomainCount === 2 ? "Two capabilities need" : "Three capabilities need"} priority investment
+                </strong>: {domainsWithGap.map(d => d.label).join(", ")}.
+                {" "}The other {6 - priorityDomainCount} will move with the system as the initiative programme builds momentum.
+              </>
+            ) : (
+              <>The HR function's capability profile is well-aligned with the {bLevel?.label} ambition. The strategy should focus on maintaining momentum and deepening capability.</>
+            )}
+          </p>
+        </div>
 
         {/* Company maturity panel */}
         {companyResults ? (
@@ -849,21 +877,22 @@ export default function AIStrategyPage() {
                     : `The organisation is ahead of the maturity level required for a ${bLevel?.label} ambition. The strategy should focus on innovation and maintaining competitive advantage.`
                   }
                 </p>
-                {/* Dimension breakdown — top 3 gaps only flagged as priority */}
+                {/* Dimension breakdown — top 3 gaps only flagged as priority, unified 2-colour system */}
                 <div className="space-y-2">
                   {[...companyResults.dimensions].sort((a, b) => a.score - b.score).map((dim, idx) => {
                     const isPriority = idx < 3;
                     const pct = (dim.score / 5) * 100;
+                    const barColor = isPriority ? "#F87171" : "#4ADE80";
                     return (
                       <div key={dim.key} className="flex items-center gap-3">
                         <span className="text-xs text-muted-foreground w-36 truncate flex-shrink-0">{dim.label}</span>
                         <div className="flex-1 h-1.5 rounded-full bg-white/8 relative">
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: isPriority ? "#F87171" : "#60A5FA", opacity: 0.7 }} />
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: barColor, opacity: 0.75 }} />
                           {dim.sectorBenchmark != null && (
                             <div className="absolute top-[-2px] w-0.5 h-[calc(100%+4px)] bg-white/30 rounded-full" style={{ left: `${(dim.sectorBenchmark / 5) * 100}%` }} />
                           )}
                         </div>
-                        <span className="text-xs font-mono w-8 text-right" style={{ color: isPriority ? "#F87171" : "#60A5FA" }}>{dim.score.toFixed(1)}</span>
+                        <span className="text-xs font-mono w-8 text-right" style={{ color: isPriority ? "#F87171" : "#4ADE80" }}>{dim.score.toFixed(1)}</span>
                         {isPriority && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 flex-shrink-0">Priority</span>
                         )}
@@ -872,8 +901,8 @@ export default function AIStrategyPage() {
                   })}
                 </div>
                 <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-red-400/70 inline-block" />Priority gap</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-blue-400/70 inline-block" />On track</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-red-400/70 inline-block" />Priority gap (bottom 3)</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-green-400/70 inline-block" />On track</span>
                   <span className="flex items-center gap-1"><span className="w-0.5 h-3 bg-white/30 inline-block" />Sector avg</span>
                 </div>
               </div>
@@ -1035,7 +1064,7 @@ export default function AIStrategyPage() {
           <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
             {/* View toggle */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/8">
-              <p className="text-xs text-muted-foreground">{selectedInits.length} initiatives across {initiativesByPhase.length} phases</p>
+              <p className="text-xs text-muted-foreground">{selectedInits.length} {selectedInits.length === 1 ? "initiative" : "initiatives"} across {initiativesByPhase.length} {initiativesByPhase.length === 1 ? "phase" : "phases"}</p>
               <div className="flex items-center gap-1 bg-white/5 rounded-lg p-0.5">
                 <button
                   onClick={() => setRoadmapView("executive")}

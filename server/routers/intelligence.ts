@@ -463,9 +463,12 @@ export const intelligenceRouter = router({
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const prompt = `You are an expert HR strategy consultant. Based on the following inputs from an HR leader, generate:
-1. A concise, board-ready AI vision statement (2-3 sentences) that articulates how AI will transform the organisation's ways of working and what HR's role is in enabling that.
-2. Exactly 5 guiding principles for the HR AI strategy. Each principle should have a short title (3-5 words) and a 1-2 sentence description.
+      const prompt = `You are an expert HR strategy consultant writing for a CHRO audience. Based on the following inputs, generate:
+1. A board-ready AI vision statement (2-3 sentences) that is SPECIFIC to this sector and ambition level. It must name the specific outcomes AI will deliver for this organisation — not generic phrases like "reduce administrative burden" or "speed up decision-making". Make a real claim about what will be different.
+2. Exactly 5 guiding principles. Each principle must:
+   - Have a short title (3-5 words) that is specific and falsifiable — NOT generic values-poster language like "People-Centric AI Innovation"
+   - Force a real trade-off or be specific enough to be falsifiable (e.g. "We will prefer accuracy over speed when triaging ER cases" or "Every model in employment decisions passes an annual external bias audit")
+   - Have a 1-2 sentence description that explains the trade-off or commitment in concrete terms
 
 INPUTS:
 Sector: ${input.sector}
