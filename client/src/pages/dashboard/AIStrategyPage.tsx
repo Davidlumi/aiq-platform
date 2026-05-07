@@ -40,6 +40,8 @@ import {
   Sparkles, ArrowRight, AlertTriangle, Compass, GitMerge, BookOpen,
   FileText, Quote, ChevronDown, ChevronUp, Pencil, X, DollarSign,
   AlertCircle, Link2, LayoutGrid, List, Eye, Settings2, Ban,
+  Lock, Unlock, Calendar, Share2, UserCheck, Clock, ExternalLink,
+  TrendingDown, Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS } from "@/lib/domains";
@@ -172,16 +174,17 @@ const CATEGORY_MAP: Record<string, string> = {
   "Ethics & Governance":       "Ethics & Governance",
 };
 
-// HR function outcome tags for re-labelling initiatives
+// HR function outcome tags — real business outcomes, not category echoes
+// Rule: max 3 words, must be a measurable result not a function name
 const OUTCOME_TAGS: Record<string, string> = {
   "Talent Acquisition":        "Quality of Hire",
-  "Performance & Development": "Performance Uplift",
+  "Performance & Development": "Manager Effectiveness",
   "Pay & Reward":              "Pay Equity",
-  "Learning & Development":    "Capability Growth",
+  "Learning & Development":    "Faster Uplift",
   "Workforce Planning":        "Workforce Agility",
-  "GenAI Workforce Rollout":   "AI Adoption",
-  "HR Operations":             "Efficiency",
-  "Ethics & Governance":       "Risk Reduction",
+  "GenAI Workforce Rollout":   "AI Adoption Rate",
+  "HR Operations":             "Cost Efficiency",
+  "Ethics & Governance":       "Compliance Risk",
 };
 
 const PHASE_LABELS: Record<string, { label: string; color: string; months: string }> = {
@@ -315,8 +318,10 @@ function SectionDivider({ num, color, eyebrow, title, icon }: {
 // ─── Horizontal domain bar chart ─────────────────────────────────────────────
 function DomainBarChart({
   rows,
+  onDomainClick,
 }: {
   rows: Array<{ key: string; label: string; current: number | null; target: number; gap: number | null; color: string }>;
+  onDomainClick?: (key: string) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -327,7 +332,7 @@ function DomainBarChart({
         const gapPts     = row.gap !== null ? row.gap : null;
         const isGap      = gapPts !== null && gapPts > 5;
         return (
-          <div key={row.key} className="group">
+          <div key={row.key} className={`group ${onDomainClick ? "cursor-pointer" : ""}`} onClick={() => onDomainClick?.(row.key)}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-foreground">{row.label}</span>
               <div className="flex items-center gap-2">
@@ -538,6 +543,8 @@ export default function AIStrategyPage() {
   const [detailInitiative, setDetailInitiative]           = useState<any | null>(null);
   const [roadmapView, setRoadmapView]                     = useState<"executive" | "operational">("executive");
   const [methodologyOpen, setMethodologyOpen]             = useState(false);
+  const [strategyLocked, setStrategyLocked]               = useState(false);
+  const [drillDownDomain, setDrillDownDomain]             = useState<string | null>(null);
 
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
   const strategyAssessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
@@ -562,6 +569,8 @@ export default function AIStrategyPage() {
       setPeopleLevelRaw(strategyData.peopleAmbitionLevel ?? 3);
       setSelectedInitiativeIds(new Set(strategyData.selectedInitiativeIds ?? []));
       setIsDirty(false);
+      // Lock strategy if it has been saved at least once
+      if (strategyData.strategySavedAt) setStrategyLocked(true);
     }
   }, [strategyData]);
 
@@ -569,9 +578,10 @@ export default function AIStrategyPage() {
     if (orgContext?.sector) setSectorRaw(orgContext.sector);
   }, [orgContext]);
 
-  const setBusinessLevel = useCallback((v: number) => { setBusinessLevelRaw(v); setIsDirty(true); }, []);
-  const setPeopleLevel   = useCallback((v: number) => { setPeopleLevelRaw(v); setIsDirty(true); }, []);
-  const setSector        = useCallback((v: string) => { setSectorRaw(v); setIsDirty(true); }, []);
+  // Locked strategy: pills are read-only until user explicitly unlocks
+  const setBusinessLevel = useCallback((v: number) => { if (!strategyLocked) { setBusinessLevelRaw(v); setIsDirty(true); } }, [strategyLocked]);
+  const setPeopleLevel   = useCallback((v: number) => { if (!strategyLocked) { setPeopleLevelRaw(v); setIsDirty(true); } }, [strategyLocked]);
+  const setSector        = useCallback((v: string) => { if (!strategyLocked) { setSectorRaw(v); setIsDirty(true); } }, [strategyLocked]);
   const toggleInitiative = useCallback((id: string) => {
     setSelectedInitiativeIds(prev => {
       const next = new Set(prev);
@@ -609,6 +619,12 @@ export default function AIStrategyPage() {
       selectedInitiativeIds: Array.from(selectedInitiativeIds),
     });
   }
+
+  // Drill-down query — lazy, only fires when a domain is clicked
+  const drillDownQ = trpc.dashboardV2.individual.domainDetail.useQuery(
+    { domainKey: drillDownDomain ?? "ai_interaction" },
+    { enabled: !!drillDownDomain }
+  );
 
   const domainTargets  = useMemo(() => computeDomainTargets(businessLevel, peopleLevel), [businessLevel, peopleLevel]);
   const overallTarget  = useMemo(() => overallFromDomains(domainTargets), [domainTargets]);
@@ -682,34 +698,65 @@ export default function AIStrategyPage() {
   const totalCostHigh = initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.high ?? 60), 0);
 
   // Delivery risks
+  const hasRegFlag = selectedInits.some((i: any) => i.regulatoryFlag);
   const deliveryRisks = [
     {
       risk: "HR capability gap slows adoption",
-      likelihood: "High",
+      likelihood: "High" as const,
       mitigation: `Prioritise Phase 1 learning investment; target ${domainsWithGap.length > 0 ? domainsWithGap[0].label : "AI Interaction"} as the first capability sprint.`,
       dependency: "L&D",
     },
     {
       risk: "Data infrastructure not ready for AI tools",
-      likelihood: companyResults && companyResults.overallScore < 2.5 ? "High" : "Medium",
+      likelihood: (companyResults && companyResults.overallScore < 2.5 ? "High" : "Medium") as "High" | "Medium" | "Low",
       mitigation: "Conduct a data readiness audit in Month 1; gate Phase 2 initiatives on audit sign-off.",
       dependency: "IT / Data",
     },
     {
       risk: "Regulatory non-compliance (EU AI Act)",
-      likelihood: selectedInits.some((i: any) => i.regulatoryFlag) ? "Medium" : "Low",
+      likelihood: (hasRegFlag ? "Medium" : "Low") as "High" | "Medium" | "Low",
       mitigation: "Engage Legal in Phase 1; map all flagged initiatives to EU AI Act risk categories before deployment.",
       dependency: "Legal / Compliance",
     },
   ];
+  type RiskLevel = "High" | "Medium" | "Low";
+  const RISK_STYLE: Record<RiskLevel, { pill: string; border: string }> = {
+    High:   { pill: "bg-red-500/20 text-red-400",    border: "border-red-500/30" },
+    Medium: { pill: "bg-amber-500/20 text-amber-400", border: "border-amber-500/30" },
+    Low:    { pill: "bg-slate-500/20 text-slate-400", border: "border-slate-500/30" },
+  };
+
+  // TOC sections for sticky left nav
+  const TOC_ITEMS = [
+    { id: "hero",        label: "Hero",        color: "#94A3B8" },
+    { id: "diagnostic", label: "Diagnostic",   color: "#60A5FA" },
+    { id: "ambition",   label: "Ambition",     color: "#4ADE80" },
+    { id: "plan",       label: "Plan",         color: "#A78BFA" },
+    { id: "investment", label: "Investment",   color: "#FBBF24" },
+    { id: "methodology",label: "Methodology",  color: "#9CA3AF" },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto pb-24">
+    <div className="max-w-5xl mx-auto pb-24 relative">
+
+      {/* ── Sticky left TOC ─────────────────────────────────────────────── */}
+      <nav className="hidden xl:flex flex-col gap-1 fixed left-4 top-1/2 -translate-y-1/2 z-20">
+        {TOC_ITEMS.map(item => (
+          <button
+            key={item.id}
+            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex items-center gap-2 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: item.color }} />
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
       {/* ══════════════════════════════════════════════════════════════════════
           STICKY HEADER — breadcrumb pills + actions
       ══════════════════════════════════════════════════════════════════════ */}
-      <div className="sticky top-0 z-30 bg-[#0E1726]/95 backdrop-blur-sm border-b border-white/8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-6">
+      <div id="hero" className="sticky top-0 z-30 bg-[#0E1726]/95 backdrop-blur-sm border-b border-white/8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-6">
         <div className="flex items-center justify-between gap-3 max-w-5xl mx-auto">
           {/* Breadcrumb pills */}
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
@@ -748,21 +795,42 @@ export default function AIStrategyPage() {
           </div>
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {isDirty && (
-              <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold h-7 text-xs px-3" onClick={handleSave} disabled={saveStrategyMut.isPending}>
-                <Save className="w-3 h-3 mr-1" />
-                {saveStrategyMut.isPending ? "Saving…" : "Save"}
-              </Button>
+            {/* Persistence model: lock/unlock */}
+            {strategyLocked ? (
+              <>
+                {strategyData?.strategySavedAt && (
+                  <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    Saved {new Date(strategyData.strategySavedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs px-3 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                  onClick={() => { setStrategyLocked(false); setIsDirty(false); }}
+                >
+                  <Unlock className="w-3 h-3 mr-1" />Edit strategy
+                </Button>
+              </>
+            ) : (
+              <>
+                {isDirty && (
+                  <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold h-7 text-xs px-3" onClick={handleSave} disabled={saveStrategyMut.isPending}>
+                    <Save className="w-3 h-3 mr-1" />
+                    {saveStrategyMut.isPending ? "Saving…" : "Save & lock"}
+                  </Button>
+                )}
+                {!isDirty && !strategyData?.configured && (
+                  <span className="text-[10px] text-muted-foreground">Configure inputs to generate</span>
+                )}
+              </>
             )}
-            {!isDirty && strategyData?.configured && (
-              <span className="flex items-center gap-1 text-xs text-green-400">
-                <CheckCircle2 className="w-3 h-3" />Saved
-              </span>
-            )}
+            {/* Export PDF — Executive view only */}
             <a href="/api/pdf/ai_strategy" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="h-7 text-xs px-3 border-white/15 text-foreground hover:bg-white/8">
                 <Download className="w-3 h-3 mr-1" />
-                Export PDF
+                Export (Executive PDF)
               </Button>
             </a>
           </div>
@@ -772,7 +840,7 @@ export default function AIStrategyPage() {
       {/* ══════════════════════════════════════════════════════════════════════
           HERO — one sentence + 3 KPI numbers
       ══════════════════════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-white/8 bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8 mb-8">
+      <div id="hero-content" className="rounded-2xl border border-white/8 bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8 mb-8">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">HR AI Strategy</p>
         <p className="text-xl font-semibold text-foreground leading-relaxed mb-6 max-w-3xl">
           {companyResults && hrNow && hrGap && Number(hrGap) > 0
@@ -802,7 +870,7 @@ export default function AIStrategyPage() {
           SECTION 1 — DIAGNOSTIC (anchor section, heavyweight)
           Where we are — company maturity + HR capability
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="mb-10">
+      <section id="diagnostic" className="mb-10">
         <SectionDivider
           num="1"
           color="#60A5FA"
@@ -923,12 +991,13 @@ export default function AIStrategyPage() {
           </div>
         )}
 
-        {/* HR capability gap — the single chart */}
+        {/* HR capability gap — the single chart, clickable for drill-down */}
         <div className="rounded-2xl border border-white/10 bg-white/3 p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">HR Team Capability</p>
               <p className="text-sm font-semibold text-foreground">Six-Domain Gap Profile</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Click any domain bar to see the evidence behind the score</p>
             </div>
             {ambitionGap?.configured && ambitionGap.functionAvgRaw != null && (
               <div className="flex items-center gap-3">
@@ -944,7 +1013,7 @@ export default function AIStrategyPage() {
               </div>
             )}
           </div>
-          <DomainBarChart rows={domainGapRows} />
+          <DomainBarChart rows={domainGapRows} onDomainClick={(key) => setDrillDownDomain(key)} />
           {!ambitionGap?.configured && (
             <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5" />
@@ -958,7 +1027,7 @@ export default function AIStrategyPage() {
           SECTION 2 — AMBITION (lighter weight)
           Where we're going — vision + principles + what we won't do
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="mb-10">
+      <section id="ambition" className="mb-10">
         <SectionDivider
           num="2"
           color="#4ADE80"
@@ -969,23 +1038,44 @@ export default function AIStrategyPage() {
 
         {strategyAssessment?.completed && strategyAssessment.visionStatement ? (
           <div className="space-y-5">
-            {/* Vision statement */}
+            {/* Vision statement + 3 specific commitments */}
             <div className="rounded-xl border border-green-500/15 bg-green-500/5 p-6">
               <div className="flex items-start gap-2 mb-3">
                 <Quote className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Vision Statement</p>
               </div>
-              <blockquote className="text-base font-semibold text-foreground leading-relaxed italic">
+              <blockquote className="text-base font-semibold text-foreground leading-relaxed italic mb-5">
                 &ldquo;{strategyAssessment.visionStatement}&rdquo;
               </blockquote>
+              {/* 3 specific commitments — the grammar of strategy */}
+              <div className="border-t border-green-500/15 pt-4">
+                <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-3">By the end of this strategy period, HR will:</p>
+                <div className="space-y-2">
+                  {[
+                    `Design and deploy AI in any people process without external dependency — measured by zero externally-led AI implementations in Year 2.`,
+                    `Reduce administrative work in Talent Acquisition and HR Operations by 30%+ through AI tooling — measured by time-to-hire and HR cost-per-head.`,
+                    `Ensure every people leader can decide when AI is and isn't appropriate — measured by annual AI decision-making assessment completion rate above 90%.`,
+                  ].map((commitment, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{commitment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Ways of work — condensed */}
+            {/* Ways of work — condensed, fixed sentence template */}
             {sector && (
               <div className="rounded-xl border border-white/8 bg-white/2 p-5">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">How AI Will Change Ways of Work</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  In {sectorLabel}, the HR function is moving from a <strong className="text-foreground">{pLevel?.label}</strong> to an <strong className="text-foreground">{bLevel?.label}</strong> operating model. {bLevel?.waysOfWork} {pLevel?.expectation}
+                  In {sectorLabel}, {companyResults?.companyName ?? "the organisation"}'s business is set on a{" "}
+                  <strong className="text-foreground">{bLevel?.label}</strong> AI ambition, and HR is expected to operate at the{" "}
+                  <strong className="text-foreground">{pLevel?.label}</strong> tier to deliver it.{" "}
+                  {bLevel?.waysOfWork} {pLevel?.expectation}
                 </p>
               </div>
             )}
@@ -1051,7 +1141,7 @@ export default function AIStrategyPage() {
           SECTION 3 — PLAN (lighter weight)
           How we get there — pre-sequenced roadmap with view toggle
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="mb-10">
+      <section id="plan" className="mb-10">
         <SectionDivider
           num="3"
           color="#A78BFA"
@@ -1198,7 +1288,7 @@ export default function AIStrategyPage() {
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 4 — INVESTMENT & RISK (new)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="mb-10">
+      <section id="investment" className="mb-10">
         <SectionDivider
           num="4"
           color="#FBBF24"
@@ -1251,18 +1341,21 @@ export default function AIStrategyPage() {
               <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Top 3 Delivery Risks</p>
             </div>
             <div className="space-y-4">
-              {deliveryRisks.map((r, i) => (
-                <div key={i} className="border-l-2 border-red-500/30 pl-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs font-semibold text-foreground flex-1">{r.risk}</p>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${r.likelihood === "High" ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"}`}>
-                      {r.likelihood}
-                    </span>
+              {deliveryRisks.map((r, i) => {
+                const style = RISK_STYLE[r.likelihood as RiskLevel] ?? RISK_STYLE.Low;
+                return (
+                  <div key={i} className={`border-l-2 pl-3 ${style.border}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-xs font-semibold text-foreground flex-1">{r.risk}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${style.pill}`}>
+                        {r.likelihood}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-1">{r.mitigation}</p>
+                    <p className="text-[10px] text-muted-foreground">Dependency: <strong className="text-foreground">{r.dependency}</strong></p>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-1">{r.mitigation}</p>
-                  <p className="text-[10px] text-muted-foreground">Dependency: <strong className="text-foreground">{r.dependency}</strong></p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1308,9 +1401,83 @@ export default function AIStrategyPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
+          PAGE-END CTA — What's next?
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="mb-10">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 text-green-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">What's Next</p>
+              <h2 className="text-lg font-bold text-foreground">Turn this strategy into action</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                icon: <Share2 className="w-4 h-4" />,
+                color: "#60A5FA",
+                title: "Share with stakeholders",
+                description: "Export the Executive PDF and share with your CHRO, CPO, or board sponsor before the next leadership cycle.",
+                action: "Export PDF",
+                href: "/api/pdf/ai_strategy",
+                external: true,
+              },
+              {
+                icon: <UserCheck className="w-4 h-4" />,
+                color: "#A78BFA",
+                title: "Assign initiative owners",
+                description: "Each initiative needs a named owner and a target date. Use the Operational view to assign and track.",
+                action: "View initiatives",
+                href: "#plan",
+                external: false,
+              },
+              {
+                icon: <Calendar className="w-4 h-4" />,
+                color: "#4ADE80",
+                title: "Schedule a kickoff",
+                description: "Block time with your HR leadership team to review Phase 1 initiatives and confirm the first 90-day sprint.",
+                action: "View Phase 1",
+                href: "#plan",
+                external: false,
+              },
+            ].map((item, i) => (
+              <div key={i} className="rounded-xl border border-white/8 bg-white/3 p-5 flex flex-col gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}18`, color: item.color }}>
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
+                </div>
+                {item.external ? (
+                  <a href={item.href} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="w-full h-7 text-xs border-white/15 hover:bg-white/8" style={{ color: item.color }}>
+                      {item.action} <ExternalLink className="w-3 h-3 ml-1" />
+                    </Button>
+                  </a>
+                ) : (
+                  <Button
+                    size="sm" variant="outline"
+                    className="w-full h-7 text-xs border-white/15 hover:bg-white/8"
+                    style={{ color: item.color }}
+                    onClick={() => document.querySelector(item.href)?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    {item.action}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
           APPENDIX — Methodology (collapsed)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section>
+      <section id="methodology">
         <Collapsible open={methodologyOpen} onOpenChange={setMethodologyOpen}>
           <CollapsibleTrigger asChild>
             <button className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-white/8 bg-white/2 hover:bg-white/4 transition-colors">
@@ -1367,6 +1534,70 @@ export default function AIStrategyPage() {
           </CollapsibleContent>
         </Collapsible>
       </section>
+
+      {/* Score drill-down modal */}
+      <Dialog open={!!drillDownDomain} onOpenChange={() => setDrillDownDomain(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold pr-6">
+              {drillDownDomain ? DOMAIN_LABELS[drillDownDomain as typeof DOMAIN_KEYS[number]] ?? drillDownDomain : ""} — Evidence
+            </DialogTitle>
+          </DialogHeader>
+          {drillDownQ.isLoading ? (
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          ) : drillDownQ.data ? (
+            <div className="space-y-5 pt-1">
+              {/* Score + confidence */}
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold" style={{ color: drillDownQ.data.domainColour }}>
+                    {drillDownQ.data.score ?? "—"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">/ 100</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground leading-relaxed">{drillDownQ.data.narrativeExplanation}</p>
+                  {drillDownQ.data.gapStatement && (
+                    <p className="text-xs text-amber-400 mt-2 leading-relaxed">{drillDownQ.data.gapStatement}</p>
+                  )}
+                </div>
+              </div>
+              {/* Signal breakdown */}
+              {drillDownQ.data.signals.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Signal Breakdown</p>
+                  <div className="space-y-2">
+                    {drillDownQ.data.signals.slice(0, 8).map((s: any) => (
+                      <div key={s.signalKey} className="flex items-center gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
+                          s.level === "Strong" ? "bg-green-500/20 text-green-400" :
+                          s.level === "Critical" ? "bg-red-500/20 text-red-400" :
+                          "bg-amber-500/20 text-amber-400"
+                        }`}>{s.level}</span>
+                        <span className="text-xs text-foreground flex-1 truncate">{s.name}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{s.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Weighting note */}
+              <div className="rounded-lg border border-white/8 bg-white/2 p-3">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">How this score is calculated</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Domain scores are computed by the AiQ Assessment Engine v10.7 using a sum-and-clip formula across signals mapped to this domain. Scores are deterministic — no LLM is involved. Confidence band: <strong className="text-foreground capitalize">{drillDownQ.data.confidenceBand}</strong>.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">No assessment data available for this domain yet. Complete an assessment to see the evidence.</p>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modals */}
       <InitiativeSelectorModal
