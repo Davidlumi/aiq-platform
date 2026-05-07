@@ -1094,11 +1094,21 @@ export default function AssessmentResultsPage() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Domain Breakdown</p>
               {[...domains].sort((a, b) => b.score - a.score).map(domain => {
                 const level = scoreToLevel(domain.score);
+                // LM-8: Domain floor rule — fewer than 3 signals means score is provisional
+                const isFloorTriggered = (domain.signalCount ?? 0) < 3;
                 return (
                   <div key={domain.key}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium text-foreground">{domain.displayName}</span>
                       <div className="flex items-center gap-2">
+                        {isFloorTriggered && (
+                          <span
+                            className="text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5"
+                            title={`Only ${domain.signalCount ?? 0} signal${(domain.signalCount ?? 0) === 1 ? '' : 's'} collected — score is provisional. Complete more questions to confirm this domain.`}
+                          >
+                            Provisional
+                          </span>
+                        )}
                         <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
                         <span className="text-sm font-bold text-foreground tabular-nums w-8 text-right">
                           {Math.round(domain.score)}
@@ -1108,9 +1118,14 @@ export default function AssessmentResultsPage() {
                     <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${Math.round(domain.score)}%`, backgroundColor: domain.colour }}
+                        style={{ width: `${Math.round(domain.score)}%`, backgroundColor: isFloorTriggered ? `${domain.colour}80` : domain.colour }}
                       />
                     </div>
+                    {isFloorTriggered && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Based on {domain.signalCount ?? 0} signal{(domain.signalCount ?? 0) === 1 ? '' : 's'} — 3 required for a confirmed score. Retake to strengthen this domain.
+                      </p>
+                    )}
                   </div>
                 );
               })}

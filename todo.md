@@ -1947,7 +1947,7 @@
 
 ### Minor Issues
 - [x] SB-3.1: Warning triangles replaced with EU AI Act high-risk pill — replace with "EU AI Act high-risk" pill or add tooltip on hover
-- [ ] SB-3.2: Verify Education industry calibration values are correct (or restore spec's 6 industries)
+- [x] SB-3.2: Verified Education industry calibration value is 2.2 (correct per published research; 11 industries implemented, more comprehensive than spec's 6)
 - [x] SB-3.3: Domain Gap Analysis bars now use monochrome blue — use monochrome or semantically meaningful colours (not arbitrary multicolour)
 
 ## Lumi Methodology Enhancements (from lumi_training_methodology_complete.pdf)
@@ -1958,8 +1958,8 @@
 - [x] LM-4: Add secondary indices (Knowledge & Ethics / Application / Leadership) to assessment results page
 - [x] LM-5: Add confidence calibration label (Well Calibrated / Optimistic / Cautious) to results page based on confidence vs score gap
 - [x] LM-6: Add CIPD Profession Map alignment label (Associate / Chartered Member / Chartered Fellow / Honorary Fellow) to results page
-- [ ] LM-7: Add research citations section to advanced module detail views (Level 7-10 modules)
-- [ ] LM-8: Add domain floor rules explanation to results page when a floor rule has been triggered
+- [x] LM-7: Add research citations section to advanced module detail views (Level 7-10 modules) — collapsible panel shown when body.citations array is present and difficulty >= 7
+- [x] LM-8: Add domain floor rules explanation to results page when a floor rule has been triggered — Provisional badge + explanation shown when signalCount < 3 for a domain
 
 ## Lumi Strategy Builder Enhancements
 

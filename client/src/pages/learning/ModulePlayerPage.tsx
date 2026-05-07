@@ -2111,6 +2111,27 @@ export default function ModulePlayerPage() {
             {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
             {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
           </div>
+          {/* LM-7: Research citations for advanced modules (Level 7–10) */}
+          {(mod.difficulty ?? 0) >= 7 && Array.isArray(body?.citations) && (body.citations as string[]).length > 0 && (
+            <details className="group rounded-xl border border-border bg-muted/10 overflow-hidden">
+              <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none list-none">
+                <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-semibold text-foreground flex-1">Research &amp; Sources</span>
+                <span className="text-xs text-muted-foreground mr-2">{(body.citations as string[]).length} citation{(body.citations as string[]).length === 1 ? '' : 's'}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="px-4 pb-4 border-t border-border">
+                <ol className="mt-3 space-y-2 list-decimal list-inside">
+                  {(body.citations as string[]).map((cite: string, i: number) => (
+                    <li key={i} className="text-xs text-muted-foreground leading-relaxed">{cite}</li>
+                  ))}
+                </ol>
+                <p className="text-[11px] text-muted-foreground/60 mt-3 italic">
+                  Advanced module (Level {mod.difficulty}). Citations support further reading and academic verification.
+                </p>
+              </div>
+            </details>
+          )}
         </>
       ) : (
         <>
