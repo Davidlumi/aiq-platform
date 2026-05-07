@@ -2032,6 +2032,8 @@ export default function ModulePlayerPage() {
     onError: err => toast.error(err.message),
   });
 
+  const trackEngagement = trpc.adaptiveLearning.trackSectionEngagement.useMutation();
+
   const recordNoTransfer = trpc.adaptiveLearning.recordNoTransfer.useMutation({
     onSuccess: (data) => {
       setNoTransferResult(data);
@@ -2049,6 +2051,12 @@ export default function ModulePlayerPage() {
   const handleNoTransfer = (reason: "no_engagement" | "partial_engagement" | "completed_no_change" | "regression") => {
     if (!planItemId || !mod) return;
     recordNoTransfer.mutate({ planItemId, moduleId: params.moduleId ?? "", capability: mod.capability, noTransferReason: reason, attemptCount: 1 });
+  };
+
+  // AL-08: section engagement tracking helper
+  const handleSectionEngagement = (sectionIndex: number, sectionType: string, timeOnSectionMs: number, scrollDepthPct: number, completedSection: boolean, quizCorrect?: boolean) => {
+    if (!params.moduleId) return;
+    trackEngagement.mutate({ moduleId: params.moduleId, sectionIndex, sectionType, timeOnSectionMs, scrollDepthPct, completedSection, quizCorrect });
   };
 
   const handleBack = () => setLocation("/learning");

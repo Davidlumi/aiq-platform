@@ -29,6 +29,7 @@ import { eq, and, desc, lte, asc, gte, inArray, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { computeGapAnalysis, type CapabilityKey } from "../learning/gapAnalysisEngine";
 import { notifyOwner } from "../_core/notification";
+import { pushNotification } from "../sse";
 import { generateAdaptivePlan, computeNextReview, type ModuleCandidate } from "../learning/learningPathGenerator";
 import { getUserRoleKeys } from "../db";
 import {
@@ -42,6 +43,7 @@ import {
   userStates,
   ailOrgContext,
   auditLogs,
+  moduleEngagementEvents,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
@@ -576,6 +578,15 @@ export const adaptiveLearningRouter = router({
         });
       }
 
+      // SSE real-time notification: milestone or completion event
+      if (!masteryGateBlocked) {
+        pushNotification(ctx.user.id, {
+          type: "milestone",
+          title: "Module completed!",
+          body: input.score >= 80 ? `Great score: ${input.score}%` : `Score: ${input.score}%`,
+          link: "/learning",
+        });
+      }
       return {
         success: true,
         masteryGateBlocked,
@@ -1629,13 +1640,84 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         status: "sent",
       });
 
-      // Notify the platform owner
+       // Notify the platform owner
       await notifyOwner({
         title: `Team Learning Share: ${input.moduleTitle}`,
         content: nudgeContent,
       }).catch(() => { /* non-blocking */ });
-
+      // SSE real-time nudge notification to the sharer
+      pushNotification(ctx.user.id, {
+        type: "nudge",
+        title: "Shared with your team!",
+        body: `"${input.moduleTitle}" — your reflection has been shared.`,
+        link: "/learning",
+      });
       return { shared: true, message: nudgeContent };
+    }),
+
+  // AL-08: Track per-section engagement for adaptive difficulty (data collection layer)
+  trackSectionEngagement: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      sectionIndex: z.number().int().min(0),
+      sectionType: z.string().optional(),
+      timeOnSectionMs: z.number().int().min(0),
+      scrollDepthPct: z.number().int().min(0).max(100),
+      quizCorrect: z.boolean().optional(),
+      completedSection: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { tracked: false };
+      await db.insert(moduleEngagementEvents).values({
+        id: nanoid(),
+        userId: ctx.user.id,
+        moduleId: input.moduleId,
+        sectionIndex: input.sectionIndex,
+        sectionType: input.sectionType ?? null,
+        timeOnSectionMs: input.timeOnSectionMs,
+        scrollDepthPct: input.scrollDepthPct,
+        quizCorrect: input.quizCorrect ?? null,
+        completedSection: input.completedSection,
+        recordedAt: Date.now(),
+      });
+      return { tracked: true };
+    }),
+
+  // AL-10: Content Freshness — flag modules older than 6 months for review
+  // LLM-based auto-generation is Phase 3; this is the data layer.
+  getStaleModules: protectedProcedure
+    .input(z.object({
+      staleDays: z.number().int().min(1).default(180), // 6 months
+      limit: z.number().int().min(1).max(100).default(20),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { modules: [], total: 0 };
+      const cutoff = Date.now() - input.staleDays * 24 * 60 * 60 * 1000;
+      const stale = await db
+        .select({
+          id: learningModules.id,
+          title: learningModules.title,
+          modality: learningModules.modality,
+          capability: learningModules.capability,
+          difficulty: learningModules.difficulty,
+          updatedAt: learningModules.updatedAt,
+          createdAt: learningModules.createdAt,
+        })
+        .from(learningModules)
+        .where(lte(learningModules.updatedAt, cutoff))
+        .orderBy(asc(learningModules.updatedAt))
+        .limit(input.limit);
+      return {
+        modules: stale.map(m => ({
+          ...m,
+          staleDays: Math.floor((Date.now() - m.updatedAt) / (24 * 60 * 60 * 1000)),
+          flaggedForReview: true,
+        })),
+        total: stale.length,
+        cutoffDate: new Date(cutoff).toISOString(),
+      };
     }),
 
 });

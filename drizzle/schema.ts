@@ -1808,3 +1808,23 @@ export const normDataPoints = mysqlTable("norm_data_points", {
   collectedAtIdx: index("idx_norm_data_collected_at").on(t.collectedAt),
 }));
 export type NormDataPoint = typeof normDataPoints.$inferSelect;
+
+// ── Module Engagement Events (AL-08: per-section engagement tracking) ─────────
+// Tracks time-on-section and scroll depth for adaptive difficulty (Phase 3).
+// Data collection layer — adaptive content injection is Phase 3.
+export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }).notNull(),
+  sectionIndex: int("section_index").notNull(),
+  sectionType: varchar("section_type", { length: 50 }),
+  timeOnSectionMs: int("time_on_section_ms").notNull().default(0),
+  scrollDepthPct: int("scroll_depth_pct").notNull().default(0),
+  quizCorrect: boolean("quiz_correct"),
+  completedSection: boolean("completed_section").notNull().default(false),
+  recordedAt: bigint("recorded_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userModuleIdx: index("idx_mee_user_module").on(t.userId, t.moduleId),
+  moduleIdx: index("idx_mee_module").on(t.moduleId),
+}));
+export type ModuleEngagementEvent = typeof moduleEngagementEvents.$inferSelect;

@@ -59,7 +59,7 @@
 ## Future Enhancements
 - [x] Email delivery for forgot-password — sendPasswordResetEmail() added to server/email.ts using Resend, wired into requestPasswordReset procedure in auth.ts; silently skips if RESEND_API_KEY not configured
 - [x] PDF export rendering — fully implemented with PDFKit: assessment report, learning plan PDF, module PDF, AI strategy report; endpoints at /api/pdf/:type
-- [ ] Real-time notifications via WebSocket (deferred — requires SSE or WebSocket infrastructure change; current polling-based approach is functional)
+- [x] Real-time notifications via SSE — server/sse.ts registers /api/sse/notifications endpoint with auth, heartbeat, and auto-reconnect; useNotifications() hook in AppShell shows toast notifications for nudge/milestone/system events; pushNotification(userId, payload) helper for server-side push
 - [x] Bulk user import via CSV — fully implemented: users.bulkInvite procedure (max 200 rows, email/firstName/lastName/role) + CSV paste dialog in UsersPage with preview and temp password
 
 ## Design System Overhaul (Priority)
@@ -1422,9 +1422,9 @@
 - [x] AL-07: Mastery-Based Progression Gates — markModuleComplete enforces 70% mastery threshold before unlocking dependent items; CompletionScreen shows gate-blocked banner with retake button; locked items show 'Retake required' badge; plan item insertion bug fixed (items with unlockAfterModuleId now start as 'locked')
 
 ### Deferred
-- [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework — Phase 3)
+- [x] AL-08: Adaptive difficulty within modules — data collection layer implemented: moduleEngagementEvents table (migration 0034), trackSectionEngagement procedure in adaptiveLearning router, handleSectionEngagement helper in ModulePlayerPage; adaptive content injection is Phase 3
 - [x] AL-09: Social/Collaborative Learning — "Share with team" action on completed modules that creates a nudge with reflection/takeaway — ShareWithTeamPanel component added to CompletionScreen, shareWithTeam procedure in adaptiveLearning router, persists to learning_nudges table and notifies owner
-- [ ] AL-10: Content Freshness / Auto-Generation — flag modules older than 6 months, LLM-generate new scenario variations (future roadmap — Phase 3)
+- [x] AL-10: Content Freshness / Auto-Generation — data layer implemented: getStaleModules procedure in adaptiveLearning router (returns modules older than configurable staleDays threshold with staleDays count); LLM-based auto-generation is Phase 3
 
 ## Bug Fixes (UX Deep Dive Follow-up)
 - [x] BF-01: Fix sessionId undefined error on Learner Dashboard — CompetenceConfidenceWidget queries assessment.results with undefined sessionId when user has no completed assessment

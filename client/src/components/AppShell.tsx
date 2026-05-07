@@ -4,6 +4,7 @@
  * Sidebar: 240px expanded, 56px collapsed.
  */
 import { useState } from "react";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useViewAs, VIEW_AS_LABELS, type ViewAsRole } from "@/contexts/ViewAsContext";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -201,6 +202,8 @@ function AiQWordmark({ collapsed }: { collapsed: boolean }) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  // SSE real-time notifications (replaces WebSocket requirement)
+  useNotifications();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
