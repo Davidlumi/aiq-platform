@@ -1828,3 +1828,27 @@ export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
   moduleIdx: index("idx_mee_module").on(t.moduleId),
 }));
 export type ModuleEngagementEvent = typeof moduleEngagementEvents.$inferSelect;
+
+// ── Content Feedback (Relevance & Update Engine — data collection layer) ──────
+// Collects user ratings on assessment scenarios after completion.
+// Feeds the trigger-based content update pipeline (Phase 3 full implementation).
+export const contentFeedback = mysqlTable("content_feedback", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  scenarioId: varchar("scenario_id", { length: 36 }).notNull(),
+  sessionId: varchar("session_id", { length: 36 }),
+  // 1-5 star rating: 1=very poor, 3=neutral, 5=excellent
+  relevanceRating: int("relevance_rating"),
+  clarityRating: int("clarity_rating"),
+  difficultyRating: int("difficulty_rating"),
+  // Free-text feedback
+  comment: text("comment"),
+  // Computed: flag for review when avg rating < 2.5 across 5+ responses
+  flaggedForReview: boolean("flagged_for_review").notNull().default(false),
+  submittedAt: bigint("submitted_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  scenarioIdx: index("idx_content_feedback_scenario").on(t.scenarioId),
+  userIdx: index("idx_content_feedback_user").on(t.userId),
+  flaggedIdx: index("idx_content_feedback_flagged").on(t.flaggedForReview),
+}));
+export type ContentFeedback = typeof contentFeedback.$inferSelect;

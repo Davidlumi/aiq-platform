@@ -131,7 +131,7 @@
 - [x] Content versioning: version tracking, auditability, comparability (content_versions table + router)
 - [x] Seed all content into DB and wire to adaptive assessment engine (baseline phase now pulls from content_scenarios)
 - [x] Content Management System UI: scenario browser with filters, version history, admin CRUD (AssessmentContentPage)
-- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future roadmap — Phase 3)
+- [x] Relevance & Update Engine: data collection layer implemented — content_feedback table, submitScenarioFeedback procedure (trigger-based auto-flagging when avg rating < 2.5), getFeedbackSummary admin procedure; full trigger-based content updates are Phase 3
 
 ## Bug Fixes
 - [x] Assessment session page: answer options bug — deferred (old dataset wiped, clean slate)

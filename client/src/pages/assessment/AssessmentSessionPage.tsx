@@ -578,11 +578,13 @@ function CompletionScreen({
         </div>
       )}
 
+      {/* Scenario feedback widget — Relevance & Update Engine data collection */}
+      <ScenarioFeedbackWidget sessionId={sessionId} />
       <div className="space-y-2">
         <Button
           onClick={() => onNavigate(`/assessment/${sessionId}/results`)}
-className="w-full gap-2"
-          >
+          className="w-full gap-2"
+        >
           View full results <ChevronRight className="w-4 h-4" />
         </Button>
         <div className="grid grid-cols-2 gap-2">
@@ -594,6 +596,79 @@ className="w-full gap-2"
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Scenario Feedback Widget ────────────────────────────────────────────────────
+// Shown on the CompletionScreen to collect user ratings on the assessment scenarios.
+// Data feeds the Relevance & Update Engine for trigger-based content review.
+function ScenarioFeedbackWidget({ sessionId }: { sessionId: string }) {
+  const [submitted, setSubmitted] = useState(false);
+  const [relevance, setRelevance] = useState(0);
+  const [clarity, setClarity] = useState(0);
+  const [difficulty, setDifficulty] = useState(0);
+  const [comment, setComment] = useState("");
+  const submitFeedback = trpc.assessment.submitScenarioFeedback.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      toast.success("Thank you for your feedback!");
+    },
+    onError: () => toast.error("Failed to submit feedback"),
+  });
+  function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-20 shrink-0">{label}</span>
+        <div className="flex gap-0.5">
+          {[1,2,3,4,5].map(i => (
+            <button key={i} type="button" onClick={() => onChange(i)}
+              className={cn("h-6 w-6 text-lg leading-none rounded transition-colors",
+                i <= value ? "text-amber-400" : "text-muted-foreground/30 hover:text-amber-300")}>
+              ★
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (submitted) {
+    return (
+      <div className="rounded-xl border border-border bg-muted/20 p-4 text-center">
+        <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto mb-1.5" />
+        <p className="text-sm text-muted-foreground">Feedback submitted. Thank you!</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border bg-muted/10 p-4 space-y-3">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Rate this assessment</p>
+      <StarRating value={relevance} onChange={setRelevance} label="Relevance" />
+      <StarRating value={clarity} onChange={setClarity} label="Clarity" />
+      <StarRating value={difficulty} onChange={setDifficulty} label="Difficulty" />
+      <Textarea
+        placeholder="Optional: any comments about the scenarios?"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        className="text-xs min-h-[60px] resize-none"
+        maxLength={500}
+      />
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full"
+        disabled={submitFeedback.isPending || (relevance === 0 && clarity === 0 && difficulty === 0)}
+        onClick={() => submitFeedback.mutate({
+          scenarioId: sessionId,
+          sessionId,
+          relevanceRating: relevance > 0 ? relevance : undefined,
+          clarityRating: clarity > 0 ? clarity : undefined,
+          difficultyRating: difficulty > 0 ? difficulty : undefined,
+          comment: comment || undefined,
+        })}
+      >
+        {submitFeedback.isPending ? "Submitting..." : "Submit feedback"}
+      </Button>
     </div>
   );
 }

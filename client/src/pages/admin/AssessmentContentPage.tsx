@@ -48,6 +48,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AlertTriangle, MessageSquare, Star } from "lucide-react";
 
 const DOMAIN_COLOURS: Record<string, string> = {
   "Candidate Screening & Evaluation":    "#4477AA",
@@ -392,6 +393,8 @@ export default function AssessmentContentPage() {
 
       <StatsBar />
 
+      <ReviewQueue />
+
       <Card className="border-border">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 flex-wrap">
@@ -550,5 +553,96 @@ export default function AssessmentContentPage() {
         )}
       </Dialog>
     </div>
+  );
+}
+
+// ─── Review Queue Component ────────────────────────────────────────────────────
+// Surfaced in the Assessment Content CMS page for admin review of flagged scenarios.
+export function ReviewQueue() {
+  const [showFlagged, setShowFlagged] = useState(false);
+  const { data, isLoading, refetch } = trpc.assessment.getFeedbackSummary.useQuery({
+    flaggedOnly: showFlagged,
+    limit: 50,
+  });
+  const summary = data as any;
+  return (
+    <Card className="border-border">
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-foreground">Content Review Queue</span>
+          {summary?.flaggedCount > 0 && (
+            <Badge variant="destructive" className="text-xs">{summary.flaggedCount} flagged</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showFlagged ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFlagged(!showFlagged)}
+          >
+            <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+            {showFlagged ? "All Feedback" : "Flagged Only"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="p-6"><TableSkeleton columns={4} rows={5} /></div>
+      ) : !summary || summary.total === 0 ? (
+        <div className="p-8 text-center text-muted-foreground text-sm">
+          <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          No feedback submitted yet. Users can rate scenarios after completing assessments.
+        </div>
+      ) : (
+        <div>
+          <div className="grid grid-cols-3 gap-4 p-4 border-b border-border">
+            {[
+              { label: "Avg Relevance", value: summary.avgRelevance },
+              { label: "Avg Clarity", value: summary.avgClarity },
+              { label: "Avg Difficulty", value: summary.avgDifficulty },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center">
+                <div className="text-2xl font-bold text-foreground">{(value as number).toFixed(1)}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+                <div className="flex justify-center mt-1">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className={cn("h-3 w-3", i <= Math.round(value as number) ? "text-amber-400 fill-amber-400" : "text-muted")} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="divide-y divide-border">
+            {summary.items.slice(0, 20).map((item: any) => (
+              <div key={item.id} className="px-6 py-3 flex items-start gap-3">
+                <div className="shrink-0 mt-0.5">
+                  {item.flaggedForReview ? (
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-mono text-muted-foreground">{item.scenarioId.slice(0,8)}</span>
+                    {item.flaggedForReview && <Badge variant="destructive" className="text-xs">Low Rating</Badge>}
+                    {item.relevanceRating != null && <span className="text-xs text-muted-foreground">Relevance: {item.relevanceRating}/5</span>}
+                    {item.clarityRating != null && <span className="text-xs text-muted-foreground">Clarity: {item.clarityRating}/5</span>}
+                    {item.difficultyRating != null && <span className="text-xs text-muted-foreground">Difficulty: {item.difficultyRating}/5</span>}
+                  </div>
+                  {item.comment && <p className="text-xs text-foreground/80 mt-1 line-clamp-2">{item.comment}</p>}
+                </div>
+                <div className="text-xs text-muted-foreground shrink-0">
+                  {new Date(item.submittedAt).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }

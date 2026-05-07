@@ -43,6 +43,7 @@ import {
   users,
   organisationCapabilityThresholds,
   orgWorkflowAnchorUsage,
+  contentFeedback,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -3076,5 +3077,80 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       } catch {
         return { deepDive: null, signals: signalBreakdownForFrontend };
       }
+    }),
+
+  // ─── Relevance & Update Engine: Submit Scenario Feedback ──────────────────────
+  // Collects user ratings on assessment scenarios after completion.
+  // Data collection layer for the Phase 3 trigger-based content update pipeline.
+  submitScenarioFeedback: protectedProcedure
+    .input(z.object({
+      scenarioId: z.string(),
+      sessionId: z.string().optional(),
+      relevanceRating: z.number().int().min(1).max(5).optional(),
+      clarityRating: z.number().int().min(1).max(5).optional(),
+      difficultyRating: z.number().int().min(1).max(5).optional(),
+      comment: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const feedbackId = nanoid();
+      await db.insert(contentFeedback).values({
+        id: feedbackId,
+        userId: ctx.user.id,
+        scenarioId: input.scenarioId,
+        sessionId: input.sessionId ?? null,
+        relevanceRating: input.relevanceRating ?? null,
+        clarityRating: input.clarityRating ?? null,
+        difficultyRating: input.difficultyRating ?? null,
+        comment: input.comment ?? null,
+        flaggedForReview: false,
+        submittedAt: Date.now(),
+      });
+      // Auto-flag scenario if avg rating is low (trigger-based update rule)
+      const ratings = [input.relevanceRating, input.clarityRating, input.difficultyRating].filter((r): r is number => r !== undefined);
+      if (ratings.length > 0) {
+        const avgRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+        if (avgRating < 2.5) {
+          await db.update(contentFeedback)
+            .set({ flaggedForReview: true })
+            .where(eq(contentFeedback.scenarioId, input.scenarioId));
+        }
+      }
+      return { submitted: true, feedbackId };
+    }),
+
+  // ─── Relevance & Update Engine: Get Feedback Summary (admin) ─────────────────
+  getFeedbackSummary: protectedProcedure
+    .input(z.object({
+      scenarioId: z.string().optional(),
+      flaggedOnly: z.boolean().optional().default(false),
+      limit: z.number().int().min(1).max(100).optional().default(50),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const conditions: ReturnType<typeof eq>[] = [];
+      if (input.scenarioId) conditions.push(eq(contentFeedback.scenarioId, input.scenarioId));
+      if (input.flaggedOnly) conditions.push(eq(contentFeedback.flaggedForReview, true));
+      const rows = await db.select().from(contentFeedback)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(contentFeedback.submittedAt)
+        .limit(input.limit);
+      const total = rows.length;
+      const withRelevance = rows.filter(r => r.relevanceRating !== null);
+      const withClarity = rows.filter(r => r.clarityRating !== null);
+      const withDifficulty = rows.filter(r => r.difficultyRating !== null);
+      const avgRelevance = withRelevance.length > 0 ? withRelevance.reduce((a, r) => a + r.relevanceRating!, 0) / withRelevance.length : 0;
+      const avgClarity = withClarity.length > 0 ? withClarity.reduce((a, r) => a + r.clarityRating!, 0) / withClarity.length : 0;
+      const avgDifficulty = withDifficulty.length > 0 ? withDifficulty.reduce((a, r) => a + r.difficultyRating!, 0) / withDifficulty.length : 0;
+      return {
+        total,
+        flaggedCount: rows.filter(r => r.flaggedForReview).length,
+        avgRelevance: Math.round(avgRelevance * 10) / 10,
+        avgClarity: Math.round(avgClarity * 10) / 10,
+        avgDifficulty: Math.round(avgDifficulty * 10) / 10,
+        items: rows,
+      };
     }),
 });
