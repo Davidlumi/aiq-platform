@@ -2257,30 +2257,30 @@
 
 ## Content System Build (Brief v2)
 - [x] Create hr-aiq-content/ repository structure
-- [ ] JSON schemas: source, framework, initiative, risk_rule, template
-- [ ] Layer 1: 6 capability domains (with level descriptors 1-10)
-- [ ] Layer 1: 7 maturity dimensions (with 1-5 rubrics + sector ranges)
-- [ ] Layer 1: 3 ambition tiers (Embracers / Innovators / Transformative)
-- [ ] Layer 1: outcome taxonomy (closed list with stable IDs)
-- [ ] Layer 1: 7 personas (HRBP, TA, L&D, ER, Reward, CHRO, HR Manager)
-- [ ] Layer 1: 4 phase definitions (Foundation / Build / Scale / Optimise)
-- [ ] Layer 2: 30 initiatives with full metadata (cost, risks, deps, regulatory)
-- [ ] Layer 2: 10 risk rules (conditional trigger → risk → mitigation)
-- [ ] Layer 2: sector benchmarks (8 sectors)
-- [ ] Layer 2: EU AI Act + GDPR regulatory mappings
-- [ ] Layer 3: vision statement template with golden examples
-- [ ] Layer 3: guiding principles template
-- [ ] Layer 3: what-we-won't-do template
-- [ ] Layer 3: risk statement patterns
-- [ ] Layer 3: narrative copy templates
-- [ ] tools/validate.py: schema + cross-ref + URL validator
-- [ ] tools/build.py: produces library.json with semver + git SHA
-- [ ] Platform: library.json loaded at server boot
-- [ ] Platform: tRPC procedures to serve library content
-- [ ] Platform: library_version stored on strategy artefacts
-- [ ] Admin UI: Content Library page with review queue
-- [ ] Admin UI: entry viewer with source drill-down
-- [ ] Admin UI: approve/reject workflow
-- [ ] Trust: click-to-source on cost numbers in AI Strategy page
-- [ ] Trust: risk trigger explanation modal
-- [ ] Trust: library version footer on strategy artefact
+- [x] JSON schemas: source, framework, initiative, risk_rule, template
+- [x] Layer 1: 6 capability domains (with level descriptors 1-10)
+- [x] Layer 1: 7 maturity dimensions (with 1-5 rubrics + sector ranges)
+- [x] Layer 1: 3 ambition tiers (Embracers / Innovators / Transformative)
+- [x] Layer 1: outcome taxonomy (closed list with stable IDs)
+- [x] Layer 1: 7 personas (HRBP, TA, L&D, ER, Reward, CHRO, HR Manager)
+- [x] Layer 1: 4 phase definitions (Foundation / Build / Scale / Optimise)
+- [x] Layer 2: 30 initiatives with full metadata (cost, risks, deps, regulatory)
+- [x] Layer 2: 10 risk rules (conditional trigger → risk → mitigation)
+- [x] Layer 2: sector benchmarks (8 sectors)
+- [x] Layer 2: EU AI Act + GDPR regulatory mappings
+- [x] Layer 3: vision statement template with golden examples
+- [x] Layer 3: guiding principles template
+- [x] Layer 3: what-we-won't-do template
+- [x] Layer 3: risk statement patterns
+- [x] Layer 3: narrative copy templates
+- [x] tools/validate.py: schema + cross-ref + URL validator
+- [x] tools/build.py: produces library.json with semver + git SHA
+- [x] Platform: library.json loaded at server boot
+- [x] Platform: tRPC procedures to serve library content
+- [x] Platform: library_version stored on strategy artefacts
+- [x] Admin UI: Content Library page with review queue
+- [x] Admin UI: entry viewer with source drill-down
+- [x] Admin UI: approve/reject workflow
+- [x] Trust: click-to-source on cost numbers in AI Strategy page
+- [x] Trust: risk trigger explanation modal
+- [x] Trust: library version footer on strategy artefact

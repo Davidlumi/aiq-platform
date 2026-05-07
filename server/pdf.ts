@@ -18,6 +18,7 @@ import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
 import { getUserById, getDb, getTenantById } from "./db";
+import { getLibraryMeta } from "./contentLibrary";
 import {
   assessmentSessions,
   assessmentScores,
@@ -128,13 +129,14 @@ function addCapabilityBar(doc: PDFKit.PDFDocument, label: string, score: number,
      .text(`${Math.round(score)}`, x + 125 + barW + 6, y, { width: 30 });
 }
 
-function addFooter(doc: PDFKit.PDFDocument, pageNum: number) {
+function addFooter(doc: PDFKit.PDFDocument, pageNum: number, libraryVersion?: string) {
   const y = doc.page.height - 36;
   doc.rect(0, y - 6, doc.page.width, 42).fill(BRAND.light);
   doc.rect(0, y - 6, doc.page.width, 1).fill(BRAND.border);
   const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const versionSuffix = libraryVersion ? ` · Content Library v${libraryVersion}` : "";
   doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
-     .text(`Generated ${date} · AiQ Enterprise HR Capability Intelligence · Confidential`, 40, y + 4, { width: doc.page.width - 120 });
+     .text(`Generated ${date} · AiQ Enterprise HR Capability Intelligence · Confidential${versionSuffix}`, 40, y + 4, { width: doc.page.width - 120 });
   doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
      .text(`Page ${pageNum}`, doc.page.width - 80, y + 4, { width: 40, align: "right" });
 }
@@ -439,11 +441,9 @@ async function generateModulePDF(doc: PDFKit.PDFDocument, moduleId: string) {
       }
       doc.moveDown(0.6);
     });
+    addFooter(doc, pageCounter.n);
   }
-
-  addFooter(doc, pageCounter.n);
 }
-
 async function generateTeamDashboardPDF(doc: PDFKit.PDFDocument, userId: string, _tenantId: string) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
@@ -805,12 +805,22 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
     1: "Followers", 2: "Adopters", 3: "Practitioners", 4: "Champions", 5: "Innovators",
   };
 
+  // ── Content library version ──────────────────────────────────────────────
+  const libMeta = getLibraryMeta();
+  const libVersion = libMeta.version;
+  const libBuiltAt = new Date(libMeta.built_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
   // ── PDF generation ────────────────────────────────────────────────────────
   const pageCounter = { n: 1 };
   const reportDate = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   // Page 1: Cover / executive summary
   addBrandedHeader(doc, "AI Strategy Report", `${orgName} · ${reportDate}`);
+
+  // Library version badge (small, below header)
+  doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+     .text(`Content Library v${libVersion} · Built ${libBuiltAt} · ${libMeta.content_counts?.initiatives ?? 0} initiatives`, 40, doc.y, { width: doc.page.width - 80 });
+  doc.moveDown(0.4);
 
   // Strategy label banner
   if (ambitionTargetLabel) {
