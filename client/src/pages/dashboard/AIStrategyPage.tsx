@@ -1613,6 +1613,25 @@ export default function AIStrategyPage() {
         open={!!detailInitiative}
         onClose={() => setDetailInitiative(null)}
       />
+      <LibraryVersionFooter />
+    </div>
+  );
+}
+
+// ── Library Version Footer ────────────────────────────────────────────────────
+function LibraryVersionFooter() {
+  const { data: meta } = trpc.contentLibrary.meta.useQuery();
+  if (!meta) return null;
+  return (
+    <div className="fixed bottom-4 right-4 z-30">
+      <a
+        href="/admin/content-library"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 backdrop-blur text-xs text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-all shadow-lg"
+        title={`Content Library v${meta.version} — built ${new Date(meta.built_at).toLocaleDateString()} · ${meta.git_sha}`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        Content Library v{meta.version}
+      </a>
     </div>
   );
 }

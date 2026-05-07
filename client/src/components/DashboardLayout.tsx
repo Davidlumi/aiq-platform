@@ -96,6 +96,7 @@ const ADMIN: NavSection = {
   section: "Admin",
   items: [
     { icon: Users, label: "Users", path: "/admin/users" },
+    { icon: BookOpen, label: "Content Library", path: "/admin/content-library" },
   ],
 };
 

@@ -59,6 +59,7 @@ import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
 import OrganisationsPage from "./pages/admin/OrganisationsPage";
 import PeopleManagementPage from "./pages/admin/PeopleManagementPage";
+import ContentLibraryAdminPage from "./pages/admin/ContentLibraryPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
@@ -231,6 +232,9 @@ function Router() {
       </Route>
        <Route path="/admin/scenarios">
         <ProtectedRoute component={AssessmentContentPage} />
+      </Route>
+      <Route path="/admin/content-library">
+        <ProtectedRoute component={ContentLibraryAdminPage} />
       </Route>
       <Route path="/backoffice">
         <ProtectedRoute component={BackOfficePage} />

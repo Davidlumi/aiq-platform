@@ -1,0 +1,528 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  BookOpen,
+  AlertTriangle,
+  BarChart2,
+  FileText,
+  Globe,
+  ExternalLink,
+  Search,
+  ChevronRight,
+  Shield,
+  Cpu,
+  Users,
+  TrendingUp,
+  Info,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const PHASE_COLOURS: Record<string, string> = {
+  foundation: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  build: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  scale: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+  optimise: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+};
+
+const SEVERITY_COLOURS: Record<string, string> = {
+  low: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+  medium: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  high: "bg-red-500/20 text-red-300 border-red-500/30",
+  very_high: "bg-red-700/30 text-red-200 border-red-600/40",
+};
+
+const CONFIDENCE_COLOURS: Record<string, string> = {
+  high: "text-emerald-400",
+  medium: "text-amber-400",
+  low: "text-slate-400",
+};
+
+const REGULATORY_COLOURS: Record<string, string> = {
+  none: "text-slate-500",
+  low: "text-emerald-400",
+  medium: "text-amber-400",
+  high: "text-red-400",
+  very_high: "text-red-300",
+};
+
+function PhaseTag({ phase }: { phase: string }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${PHASE_COLOURS[phase] ?? "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}>
+      {phase}
+    </span>
+  );
+}
+
+function SeverityTag({ severity }: { severity: string }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${SEVERITY_COLOURS[severity] ?? "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}>
+      {severity.replace("_", " ")}
+    </span>
+  );
+}
+
+// ── Initiative Detail Modal ───────────────────────────────────────────────────
+
+function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const { data, isLoading } = trpc.contentLibrary.getInitiative.useQuery({ initiative_id: id });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 text-slate-100 max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-white text-lg">
+            {isLoading ? "Loading…" : data?.display_name}
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading && <div className="py-8 text-center text-slate-400">Loading…</div>}
+        {data && (
+          <div className="space-y-5">
+            {/* Phase + Confidence */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <PhaseTag phase={data.typical_phase} />
+              <span className={`text-xs font-medium ${CONFIDENCE_COLOURS[data.confidence]}`}>
+                ● {data.confidence} confidence
+              </span>
+              <span className="text-xs text-slate-500">Reviewed {data.last_reviewed} · {data.reviewer}</span>
+            </div>
+
+            {/* Description */}
+            <p className="text-sm text-slate-300 leading-relaxed">{data.short_description}</p>
+
+            {/* Regulatory exposure */}
+            <div className="rounded-lg border border-slate-700 p-4 space-y-2">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Regulatory Exposure</p>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-slate-500 text-xs">EU AI Act</p>
+                  <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.eu_ai_act]}`}>
+                    {data.regulatory_exposure.eu_ai_act}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs">GDPR</p>
+                  <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.gdpr]}`}>
+                    {data.regulatory_exposure.gdpr}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs">Employment Law</p>
+                  <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.employment_law]}`}>
+                    {data.regulatory_exposure.employment_law}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Cost */}
+            {data.cost?.base_range_gbp && (
+              <div className="rounded-lg border border-slate-700 p-4 space-y-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cost Range (Base)</p>
+                <p className="text-sm text-white font-medium">
+                  £{data.cost.base_range_gbp[0].toLocaleString()} – £{data.cost.base_range_gbp[1].toLocaleString()}
+                </p>
+                {data.cost.caveat && (
+                  <p className="text-xs text-slate-400 italic">{data.cost.caveat}</p>
+                )}
+              </div>
+            )}
+
+            {/* Risks */}
+            {data.typical_risks?.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Typical Risks</p>
+                {data.typical_risks.map((r: any, i: number) => (
+                  <div key={i} className="rounded-lg border border-slate-700 p-3 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <SeverityTag severity={r.severity} />
+                      <span className="text-xs text-slate-400">{r.risk_id}</span>
+                    </div>
+                    <p className="text-sm text-slate-300">{r.statement}</p>
+                    <p className="text-xs text-slate-500">Mitigation: {r.mitigation}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Sources */}
+            {data.resolved_sources?.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sources</p>
+                {data.resolved_sources.map((s: any) => (
+                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-slate-400">
+                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
+                    <span>
+                      {s.citation}
+                      {s.url && (
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-400 hover:text-blue-300">
+                          <ExternalLink className="inline w-3 h-3" />
+                        </a>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Risk Rule Detail Modal ────────────────────────────────────────────────────
+
+function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const { data, isLoading } = trpc.contentLibrary.getRiskRule.useQuery({ rule_id: id });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 text-slate-100 max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-white text-lg">
+            {isLoading ? "Loading…" : data?.display_name}
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading && <div className="py-8 text-center text-slate-400">Loading…</div>}
+        {data && (
+          <div className="space-y-5">
+            <SeverityTag severity={data.severity} />
+
+            <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 space-y-2">
+              <p className="text-xs font-semibold text-red-400 uppercase tracking-wider">Risk Statement</p>
+              <p className="text-sm text-slate-300 leading-relaxed">{data.risk_statement}</p>
+            </div>
+
+            <div className="rounded-lg border border-slate-700 p-4 space-y-2">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trigger Condition</p>
+              <p className="text-sm text-slate-400 leading-relaxed font-mono text-xs">{data.trigger_condition}</p>
+            </div>
+
+            <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4 space-y-2">
+              <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Recommended Action</p>
+              <p className="text-sm text-slate-300 leading-relaxed">{data.recommended_action}</p>
+            </div>
+
+            {data.resolved_sources?.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sources</p>
+                {data.resolved_sources.map((s: any) => (
+                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-slate-400">
+                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
+                    <span>
+                      {s.citation}
+                      {s.url && (
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-400 hover:text-blue-300">
+                          <ExternalLink className="inline w-3 h-3" />
+                        </a>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function ContentLibraryPage() {
+  const [search, setSearch] = useState("");
+  const [selectedInitiative, setSelectedInitiative] = useState<string | null>(null);
+  const [selectedRiskRule, setSelectedRiskRule] = useState<string | null>(null);
+  const [phaseFilter, setPhaseFilter] = useState<string>("all");
+
+  const { data: meta } = trpc.contentLibrary.meta.useQuery();
+  const { data: initiatives, isLoading: loadingInit } = trpc.contentLibrary.listInitiatives.useQuery({ phase: "all" });
+  const { data: riskRules, isLoading: loadingRisk } = trpc.contentLibrary.listRiskRules.useQuery();
+  const { data: benchmarks, isLoading: loadingBench } = trpc.contentLibrary.listSectorBenchmarks.useQuery();
+  const { data: sources, isLoading: loadingSrc } = trpc.contentLibrary.listSources.useQuery();
+
+  const filteredInitiatives = (initiatives ?? []).filter(i => {
+    const matchSearch = !search || i.display_name.toLowerCase().includes(search.toLowerCase()) ||
+      i.short_description?.toLowerCase().includes(search.toLowerCase()) ||
+      i.category.toLowerCase().includes(search.toLowerCase());
+    const matchPhase = phaseFilter === "all" || i.typical_phase === phaseFilter;
+    return matchSearch && matchPhase;
+  });
+
+  const filteredRiskRules = (riskRules ?? []).filter(r =>
+    !search || r.display_name.toLowerCase().includes(search.toLowerCase()) ||
+    r.risk_statement.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Header */}
+      <div className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Content Library</h1>
+            {meta && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                v{meta.version} · built {new Date(meta.built_at).toLocaleDateString()} · {meta.git_sha}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search library…"
+                className="pl-9 bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 w-64"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats row */}
+        {meta && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
+            {[
+              { label: "Initiatives", value: meta.content_counts.initiatives, icon: Cpu, colour: "text-blue-400" },
+              { label: "Risk Rules", value: meta.content_counts.risk_rules, icon: AlertTriangle, colour: "text-red-400" },
+              { label: "Sector Benchmarks", value: meta.content_counts.sector_benchmarks, icon: BarChart2, colour: "text-violet-400" },
+              { label: "Templates", value: meta.content_counts.templates, icon: FileText, colour: "text-amber-400" },
+              { label: "Sources", value: meta.content_counts.sources, icon: BookOpen, colour: "text-emerald-400" },
+            ].map(stat => (
+              <Card key={stat.label} className="bg-slate-900 border-slate-800">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <stat.icon className={`w-5 h-5 ${stat.colour}`} />
+                  <div>
+                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <p className="text-xs text-slate-400">{stat.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <Tabs defaultValue="initiatives">
+          <TabsList className="bg-slate-800 border border-slate-700 mb-6">
+            <TabsTrigger value="initiatives" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <Cpu className="w-4 h-4 mr-2" />Initiatives
+            </TabsTrigger>
+            <TabsTrigger value="risk-rules" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+              <AlertTriangle className="w-4 h-4 mr-2" />Risk Rules
+            </TabsTrigger>
+            <TabsTrigger value="benchmarks" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+              <BarChart2 className="w-4 h-4 mr-2" />Sector Benchmarks
+            </TabsTrigger>
+            <TabsTrigger value="sources" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <BookOpen className="w-4 h-4 mr-2" />Sources
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ── Initiatives ── */}
+          <TabsContent value="initiatives">
+            {/* Phase filter */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {["all", "foundation", "build", "scale", "optimise"].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPhaseFilter(p)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize ${
+                    phaseFilter === p
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+              <span className="text-xs text-slate-500 ml-2">{filteredInitiatives.length} shown</span>
+            </div>
+
+            {loadingInit ? (
+              <div className="py-12 text-center text-slate-400">Loading initiatives…</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredInitiatives.map(i => (
+                  <Card
+                    key={i.initiative_id}
+                    className="bg-slate-900 border-slate-800 hover:border-slate-600 cursor-pointer transition-all group"
+                    onClick={() => setSelectedInitiative(i.initiative_id)}
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-white leading-tight group-hover:text-blue-300 transition-colors">
+                          {i.display_name}
+                        </p>
+                        <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-0.5 group-hover:text-blue-400 transition-colors" />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <PhaseTag phase={i.typical_phase} />
+                        <span className="text-xs text-slate-500 capitalize">{i.category.replace(/_/g, " ")}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {i.short_description}
+                      </p>
+                      {/* Regulatory flags */}
+                      <div className="flex items-center gap-3 text-xs">
+                        {i.regulatory_exposure.eu_ai_act !== "none" && i.regulatory_exposure.eu_ai_act !== "low" && (
+                          <span className={`flex items-center gap-1 ${REGULATORY_COLOURS[i.regulatory_exposure.eu_ai_act]}`}>
+                            <Shield className="w-3 h-3" /> EU AI Act: {i.regulatory_exposure.eu_ai_act}
+                          </span>
+                        )}
+                        {i.cost_range && (
+                          <span className="text-slate-500">
+                            £{(i.cost_range[0] / 1000).toFixed(0)}k–£{(i.cost_range[1] / 1000).toFixed(0)}k
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Risk Rules ── */}
+          <TabsContent value="risk-rules">
+            {loadingRisk ? (
+              <div className="py-12 text-center text-slate-400">Loading risk rules…</div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRiskRules.map(r => (
+                  <Card
+                    key={r.rule_id}
+                    className="bg-slate-900 border-slate-800 hover:border-slate-600 cursor-pointer transition-all group"
+                    onClick={() => setSelectedRiskRule(r.rule_id)}
+                  >
+                    <CardContent className="p-4 flex items-start gap-4">
+                      <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
+                        r.severity === "very_high" ? "text-red-300" :
+                        r.severity === "high" ? "text-red-400" :
+                        r.severity === "medium" ? "text-amber-400" : "text-slate-400"
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <p className="text-sm font-semibold text-white group-hover:text-red-300 transition-colors">
+                            {r.display_name}
+                          </p>
+                          <SeverityTag severity={r.severity} />
+                        </div>
+                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{r.risk_statement}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-1 group-hover:text-red-400 transition-colors" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Sector Benchmarks ── */}
+          <TabsContent value="benchmarks">
+            {loadingBench ? (
+              <div className="py-12 text-center text-slate-400">Loading benchmarks…</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(benchmarks ?? []).map(b => (
+                  <Card key={b.sector_id} className="bg-slate-900 border-slate-800">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base text-white flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-violet-400" />
+                        {b.display_name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        {[
+                          { label: "P25", value: b.overall_individual_benchmark.p25 },
+                          { label: "Median", value: b.overall_individual_benchmark.p50 },
+                          { label: "P75", value: b.overall_individual_benchmark.p75 },
+                        ].map(stat => (
+                          <div key={stat.label} className="rounded-lg bg-slate-800 p-2">
+                            <p className="text-lg font-bold text-white">{stat.value.toFixed(1)}</p>
+                            <p className="text-xs text-slate-400">{stat.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {b.notes && (
+                        <p className="text-xs text-slate-500 italic leading-relaxed">{b.notes}</p>
+                      )}
+                      <p className="text-xs text-slate-600">Reviewed {b.last_reviewed}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Sources ── */}
+          <TabsContent value="sources">
+            {loadingSrc ? (
+              <div className="py-12 text-center text-slate-400">Loading sources…</div>
+            ) : (
+              <div className="space-y-2">
+                {(sources ?? [])
+                  .filter(s => !search || s.citation.toLowerCase().includes(search.toLowerCase()))
+                  .map(s => (
+                    <Card key={s.source_id} className="bg-slate-900 border-slate-800">
+                      <CardContent className="p-4 flex items-start gap-4">
+                        <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-slate-200 leading-snug">{s.citation}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className={`text-xs px-2 py-0.5 rounded border capitalize ${
+                              s.source_type === "primary" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
+                              s.source_type === "secondary" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
+                              s.source_type === "vendor" ? "bg-amber-500/20 text-amber-300 border-amber-500/30" :
+                              "bg-slate-500/20 text-slate-300 border-slate-500/30"
+                            }`}>
+                              {s.source_type}
+                            </span>
+                            <span className="text-xs text-slate-500">{s.publication_date?.slice(0, 4)}</span>
+                            <span className="text-xs text-slate-600 font-mono">{s.source_id}</span>
+                          </div>
+                        </div>
+                        {s.url && (
+                          <a href={s.url} target="_blank" rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 shrink-0"
+                            onClick={e => e.stopPropagation()}>
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Modals */}
+      {selectedInitiative && (
+        <InitiativeModal id={selectedInitiative} onClose={() => setSelectedInitiative(null)} />
+      )}
+      {selectedRiskRule && (
+        <RiskRuleModal id={selectedRiskRule} onClose={() => setSelectedRiskRule(null)} />
+      )}
+    </div>
+  );
+}

@@ -22,6 +22,7 @@ import { peopleRouter } from "./routers/people";
 import { strategyRouter } from "./routers/strategy";
 import { companyAssessmentRouter } from "./routers/companyAssessment";
 import { coachRouter } from "./routers/coach";
+import { contentLibraryRouter } from "./routers/contentLibrary";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -46,6 +47,7 @@ export const appRouter = router({
   strategy: strategyRouter,
   companyAssessment: companyAssessmentRouter,
   coach: coachRouter,
+  contentLibrary: contentLibraryRouter,
 });
 
 export type AppRouter = typeof appRouter;
