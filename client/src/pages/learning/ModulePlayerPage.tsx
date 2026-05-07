@@ -25,7 +25,7 @@ import {
   Video, MessageSquare, Users, Clock, CheckCircle2, ChevronRight,
   ChevronLeft, Target, Brain, Lightbulb, BarChart3, Star,
   AlertCircle, ThumbsUp, RefreshCw, Sparkles, BookMarked,
-  ListChecks, FlaskConical, Quote, ExternalLink,
+  ListChecks, FlaskConical, Quote, ExternalLink, Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -1913,9 +1913,80 @@ function CompletionScreen({
         </div>
       )}
 
+      {/* AL-09: Share with team */}
+      <ShareWithTeamPanel moduleId={moduleId} moduleTitle={title} capability={capability} score={score} />
       <div className="flex flex-col gap-3 pt-2">
         <Button className="w-full gap-2" onClick={onContinue}>
           <ArrowLeft className="h-4 w-4" />Back to Learning Plan
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// --- AL-09: Share with team panel -------------------------------------------
+function ShareWithTeamPanel({ moduleId, moduleTitle, capability, score }: {
+  moduleId: string;
+  moduleTitle: string;
+  capability: string;
+  score: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reflection, setReflection] = useState("");
+  const [shared, setShared] = useState(false);
+  const shareMutation = trpc.adaptiveLearning.shareWithTeam.useMutation({
+    onSuccess: () => {
+      setShared(true);
+      toast.success("Shared with your team!");
+    },
+    onError: () => toast.error("Could not share. Please try again."),
+  });
+  if (shared) {
+    return (
+      <div className="rounded-xl border border-[#7A9E8E]/30 bg-[#7A9E8E]/10 p-4 flex items-center gap-3">
+        <CheckCircle2 className="h-4 w-4 text-[#7A9E8E] shrink-0" />
+        <p className="text-sm text-[#7A9E8E] font-medium">Shared with your team — your reflection has been sent as a learning nudge.</p>
+      </div>
+    );
+  }
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors text-sm text-muted-foreground hover:text-foreground"
+      >
+        <Share2 className="h-3.5 w-3.5" />
+        Share this learning with your team
+      </button>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Share2 className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium">Share with team</span>
+      </div>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Add a reflection or key takeaway to share with your team as a learning nudge.
+      </p>
+      <textarea
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+        rows={3}
+        maxLength={500}
+        placeholder="What was your key takeaway? What will you do differently?"
+        value={reflection}
+        onChange={e => setReflection(e.target.value)}
+      />
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button>
+        <Button
+          size="sm"
+          className="flex-1 gap-2"
+          disabled={shareMutation.isPending}
+          onClick={() => shareMutation.mutate({ moduleId, moduleTitle, capability, score, reflection: reflection || undefined })}
+        >
+          {shareMutation.isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+          Share
         </Button>
       </div>
     </div>

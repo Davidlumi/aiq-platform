@@ -648,6 +648,54 @@ export const dashboardRouter = router({
         gte(assessmentSessions.completedAt, thirtyDaysAgo)
       ));
 
+    // AL-03: Org-level Competence-Confidence Matrix quadrant distribution
+    // Uses overall score as competence proxy and avgConfidence from scoreBreakdownJson
+    const COMPETENCE_THRESHOLD = 55;
+    const CONFIDENCE_THRESHOLD = 55; // stored as 0-100 in avgConfidence field
+    const orgQuadrantCounts = {
+      unconscious_incompetence: 0,
+      conscious_incompetence: 0,
+      conscious_competence: 0,
+      unconscious_competence: 0,
+      unassessed: 0,
+    };
+    for (const u of allUsers) {
+      const latestSess = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(1);
+      if (!latestSess[0]) { orgQuadrantCounts.unassessed++; continue; }
+      const scoreRow = await db
+        .select({ overallScore: assessmentScores.overallScore, scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, latestSess[0].id))
+        .limit(1);
+      if (!scoreRow[0]) { orgQuadrantCounts.unassessed++; continue; }
+      const overallScore = parseFloat(String(scoreRow[0].overallScore ?? 0));
+      let avgConf = 50;
+      try {
+        const bd = typeof scoreRow[0].scoreBreakdownJson === "string"
+          ? JSON.parse(scoreRow[0].scoreBreakdownJson as string)
+          : (scoreRow[0].scoreBreakdownJson ?? {}) as Record<string, unknown>;
+        const rawConf = (bd as any)?.avgConfidence;
+        if (typeof rawConf === "number") avgConf = rawConf;
+        else if (typeof rawConf === "string") avgConf = parseFloat(rawConf);
+      } catch { /* use default */ }
+      const isCompetent = overallScore >= COMPETENCE_THRESHOLD;
+      const isConfident = avgConf >= CONFIDENCE_THRESHOLD;
+      if (!isCompetent && isConfident) orgQuadrantCounts.unconscious_incompetence++;
+      else if (!isCompetent && !isConfident) orgQuadrantCounts.conscious_incompetence++;
+      else if (isCompetent && !isConfident) orgQuadrantCounts.conscious_competence++;
+      else orgQuadrantCounts.unconscious_competence++;
+    }
+    const orgCompetenceConfidenceMatrix = {
+      quadrants: orgQuadrantCounts,
+      total: allUsers.length,
+      assessed: allUsers.length - orgQuadrantCounts.unassessed,
+    };
+
     return {
       totalUsers: allUsers.length,
       readinessDistribution: { ...readinessCounts, total: allUsers.length },
@@ -661,6 +709,7 @@ export const dashboardRouter = router({
       recentAudit,
       assessmentsLast30Days: Number(recentAssessments[0]?.count ?? 0),
       orgNarrative,
+      orgCompetenceConfidenceMatrix,
     };
   }),
 

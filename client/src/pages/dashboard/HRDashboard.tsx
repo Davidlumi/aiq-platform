@@ -871,6 +871,47 @@ export default function HRDashboard() {
         {showPeople && <PeopleTable users={userList} />}
       </div>
 
+      {/* -- AL-03: Org-level Competence-Confidence Matrix -- */}
+      {data?.orgCompetenceConfidenceMatrix && (data.orgCompetenceConfidenceMatrix as any).assessed > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Competence-Confidence Distribution</h2>
+            <span className="text-xs text-muted-foreground font-normal ml-1">({(data.orgCompetenceConfidenceMatrix as any).assessed} assessed)</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { key: "unconscious_incompetence", label: "Blind Spot",  sublabel: "High confidence, low competence",  color: "#DC2626", bg: "rgba(220,38,38,0.07)" },
+              { key: "conscious_incompetence",   label: "Aware Gap",   sublabel: "Low confidence, low competence",   color: "#D97706", bg: "rgba(217,119,6,0.07)" },
+              { key: "conscious_competence",     label: "Developing",  sublabel: "High competence, low confidence",  color: "#2563EB", bg: "rgba(37,99,235,0.07)" },
+              { key: "unconscious_competence",   label: "Mastery",     sublabel: "High confidence, high competence", color: "#16A34A", bg: "rgba(22,163,74,0.07)" },
+            ] as const).map(q => {
+              const qData = data.orgCompetenceConfidenceMatrix as any;
+              const count = qData.quadrants[q.key] as number;
+              const pct = qData.assessed > 0 ? Math.round((count / qData.assessed) * 100) : 0;
+              return (
+                <div key={q.key} className="rounded-xl border border-border p-4" style={{ background: q.bg }}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="text-xs font-semibold" style={{ color: q.color }}>{q.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{q.sublabel}</div>
+                    </div>
+                    <div className="text-2xl font-bold tabular-nums" style={{ color: q.color }}>{count}</div>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: q.color }} />
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">{pct}% of assessed</div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+            Blind Spot (high confidence, low competence) requires immediate attention — overconfidence masks real capability gaps.
+          </p>
+        </div>
+      )}
+
       {/* -- Regulatory Zone -- */}
       <div>
         <button onClick={() => setShowRegulatory(!showRegulatory)} className="flex items-center gap-2 mb-4 group">

@@ -58,9 +58,9 @@
 
 ## Future Enhancements
 - [ ] Email delivery for forgot-password (requires SMTP configuration)
-- [ ] PDF export rendering (requires server-side PDF library)
+- [x] PDF export rendering — fully implemented with PDFKit: assessment report, learning plan PDF, module PDF, AI strategy report; endpoints at /api/pdf/:type
 - [ ] Real-time notifications via WebSocket
-- [ ] Bulk user import via CSV
+- [x] Bulk user import via CSV — fully implemented: users.bulkInvite procedure (max 200 rows, email/firstName/lastName/role) + CSV paste dialog in UsersPage with preview and temp password
 
 ## Design System Overhaul (Priority)
 - [x] Full scan of Figma site and GitHub repo — extract all tokens, logos, SVGs, component specs
@@ -1413,7 +1413,7 @@
 ### Batch 1 — High Impact (Implement Now)
 - [x] AL-01: Competence-Confidence Matrix visualisation on AssessmentResultsPage — 2×2 quadrant chart showing per-domain placement (unconscious incompetence, conscious incompetence, conscious competence, unconscious competence)
 - [x] AL-02: Competence-Confidence Matrix summary on LearnerDashboard (CompetenceConfidenceWidget) — compact quadrant indicator showing the learner's overall position
-- [ ] AL-03: Competence-Confidence Matrix org-level distribution on HRDashboard (deferred to next sprint) — aggregate quadrant distribution across the org
+- [x] AL-03: Competence-Confidence Matrix org-level distribution on HRDashboard — 4-quadrant distribution panel added to HR Dashboard showing Blind Spot / Aware Gap / Developing / Mastery counts with progress bars
 - [x] AL-04: Metacognitive Feedback / Blind Spots section on AssessmentResultsPage — identifies domains where confidence was high but performance was low, explains the Dunning-Kruger connection, links to targeted learning modules
 - [x] AL-05: Adaptive Revalidation Cadence — already fully implemented (risk-based 30/60/90 day intervals) — make revalidation per-domain (critical: 3mo, overconfident: 4mo, proficient: 6mo), surface per-domain schedule on learner dashboard
 
@@ -1423,7 +1423,7 @@
 
 ### Deferred
 - [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework)
-- [ ] AL-09: Social/Collaborative Learning — "Share with team" action on completed modules that creates a nudge with reflection/takeaway
+- [x] AL-09: Social/Collaborative Learning — "Share with team" action on completed modules that creates a nudge with reflection/takeaway — ShareWithTeamPanel component added to CompletionScreen, shareWithTeam procedure in adaptiveLearning router, persists to learning_nudges table and notifies owner
 - [ ] AL-10: Content Freshness / Auto-Generation — flag modules older than 6 months, LLM-generate new scenario variations
 
 ## Bug Fixes (UX Deep Dive Follow-up)

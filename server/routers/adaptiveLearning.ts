@@ -28,6 +28,7 @@ import {
 import { eq, and, desc, lte, asc, gte, inArray, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { computeGapAnalysis, type CapabilityKey } from "../learning/gapAnalysisEngine";
+import { notifyOwner } from "../_core/notification";
 import { generateAdaptivePlan, computeNextReview, type ModuleCandidate } from "../learning/learningPathGenerator";
 import { getUserRoleKeys } from "../db";
 import {
@@ -1591,6 +1592,50 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         .orderBy(desc(sql<number>`count(*)`))
         .limit(10);
       return trending;
+    }),
+
+  // ─── AL-09: Share with team ─────────────────────────────────────────────────
+  shareWithTeam: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      moduleTitle: z.string(),
+      capability: z.string(),
+      score: z.number().min(0).max(100),
+      reflection: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Fetch the sharer's name
+      const userRow = await db.select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const name = userRow[0] ? `${userRow[0].firstName} ${userRow[0].lastName}` : ctx.user.email;
+
+      // Build nudge content
+      const capLabel = input.capability.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const reflectionText = input.reflection?.trim()
+        ? `\n\n💬 Their reflection: "${input.reflection.trim()}"`
+        : "";
+      const nudgeContent = `${name} just completed "${input.moduleTitle}" (${capLabel}) with a score of ${input.score}%.${reflectionText}\n\nConsider sharing this learning with your team or discussing it in your next 1:1.`;
+
+      // Persist as a learning nudge (manager = sharer, learner = sharer for social share)
+      await db.insert(learningNudges).values({
+        id: nanoid(),
+        managerId: ctx.user.id,
+        learnerId: ctx.user.id,
+        moduleId: input.moduleId,
+        message: nudgeContent,
+        status: "sent",
+      });
+
+      // Notify the platform owner
+      await notifyOwner({
+        title: `Team Learning Share: ${input.moduleTitle}`,
+        content: nudgeContent,
+      }).catch(() => { /* non-blocking */ });
+
+      return { shared: true, message: nudgeContent };
     }),
 
 });
