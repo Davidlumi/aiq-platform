@@ -2234,13 +2234,23 @@
 - [x] Appendix — Methodology (collapsed): scoring methodology, benchmark sources, confidence intervals
 
 ## AI Strategy Page — Round 4 Feedback (2026-05-07)
-- [ ] Fix broken "a Innovators / an Transformative" sentence — rewrite template to "Business is set on a [X] ambition; HR is expected to operate at the [Y] tier to deliver it"
-- [ ] Fix tautological outcome labels in Section 3 — replace category-name echoes with real business outcomes (Faster capability uplift, Reduced compliance risk, etc.)
-- [ ] Truncation fix for outcome label column — enforce 3-word ceiling or widen column
-- [ ] Vision statement — replace paragraph template with 3 specific commitments using "By end of strategy period, HR will: [do X] / [cut Y by Z%] / [achieve measurable signal]"
-- [ ] Risk severity — add Low risk visual treatment (muted gray pill) or drop the implicit 3-tier system
-- [ ] Sticky TOC — left-edge sticky nav: Hero · Diagnostic · Ambition · Plan · Investment · Methodology
-- [ ] PDF export — clarify/decide: Executive view → PDF, Operational view → CSV/XLSX; add label to Export PDF button
-- [ ] Persistence model — generate-once, edit-after: lock strategy after first save, show "Last saved [date]" badge, add "Edit strategy" unlock flow
-- [ ] Score drill-down — clicking any score in Diagnostic opens modal with underlying responses, weighting, and benchmarks
-- [ ] Page-end CTA — add "What's next?" panel at bottom: Share with stakeholders / Assign initiative owners / Schedule kickoff
+- [x] Fix broken "a Innovators / an Transformative" sentence — rewrite template to "Business is set on a [X] ambition; HR is expected to operate at the [Y] tier to deliver it"
+- [x] Fix tautological outcome labels in Section 3 — replace category-name echoes with real business outcomes (Faster capability uplift, Reduced compliance risk, etc.)
+- [x] Truncation fix for outcome label column — enforce 3-word ceiling or widen column
+- [x] Vision statement — replace paragraph template with 3 specific commitments using "By end of strategy period, HR will: [do X] / [cut Y by Z%] / [achieve measurable signal]"
+- [x] Risk severity — add Low risk visual treatment (muted gray pill) or drop the implicit 3-tier system
+- [x] Sticky TOC — left-edge sticky nav: Hero · Diagnostic · Ambition · Plan · Investment · Methodology
+- [x] PDF export — clarify/decide: Executive view → PDF, Operational view → CSV/XLSX; add label to Export PDF button
+- [x] Persistence model — generate-once, edit-after: lock strategy after first save, show "Last saved [date]" badge, add "Edit strategy" unlock flow
+- [x] Score drill-down — clicking any score in Diagnostic opens modal with underlying responses, weighting, and benchmarks
+- [x] Page-end CTA — add "What's next?" panel at bottom: Share with stakeholders / Assign initiative owners / Schedule kickoff
+
+## Score Consistency Audit (May 2026)
+- [x] AssessmentResultsPage: domain card /100 → /10 (×2 instances)
+- [x] AssessmentResultsPage: radar tooltip /100 → /10
+- [x] AssessmentResultsPage: signal tooltip /100 → /10
+- [x] AIStrategyPage: drill-down modal /100 → /10
+- [x] AIStrategyPage: company maturity donut / 5.0 → /10
+- [x] AIStrategyPage: dimension bars dim.score/5 → dim.score/10
+- [x] CompanyAssessmentResultsPage: /100 labels → /10 (hero donut, dimension bars, gap text)
+- [x] ReportsPage: /100 → /10

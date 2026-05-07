@@ -922,8 +922,8 @@ export default function AIStrategyPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <p className="text-2xl font-bold text-blue-400">{companyResults.overallScore.toFixed(1)}</p>
-                    <p className="text-[10px] text-muted-foreground">/ 5.0</p>
+                    <p className="text-2xl font-bold text-blue-400">{(companyResults.overallScore * 2).toFixed(1)}</p>
+                    <p className="text-[10px] text-muted-foreground">/ 10</p>
                   </div>
                 </div>
                 <p className="text-sm font-semibold text-foreground">{companyResults.maturityLabel}</p>
@@ -937,11 +937,11 @@ export default function AIStrategyPage() {
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Maturity Gap Analysis</p>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                   {companyGap !== null && companyGap > 1.5
-                    ? `The organisation carries a ${companyGap.toFixed(1)}-point maturity gap against the ${requiredMaturity.toFixed(1)} required for a ${bLevel?.label} ambition. The HR AI strategy must sequence foundation-building initiatives first — particularly in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")} — before scaling more advanced AI programmes.`
+                    ? `The organisation carries a ${(companyGap * 2).toFixed(1)}-point maturity gap against the ${(requiredMaturity * 2).toFixed(1)}/10 required for a ${bLevel?.label} ambition. The HR AI strategy must sequence foundation-building initiatives first — particularly in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")} — before scaling more advanced AI programmes.`
                     : companyGap !== null && companyGap > 0.5
-                    ? `The organisation is on a credible AI journey but needs to close a ${companyGap.toFixed(1)}-point gap to reach the maturity required for a ${bLevel?.label} ambition. The strategy should focus on scaling what is working and closing the gaps in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}.`
+                    ? `The organisation is on a credible AI journey but needs to close a ${(companyGap * 2).toFixed(1)}-point gap to reach the ${(requiredMaturity * 2).toFixed(1)}/10 maturity required for a ${bLevel?.label} ambition. The strategy should focus on scaling what is working and closing the gaps in ${weakDims.slice(0, 2).map(d => d.label).join(" and ")}.`
                     : companyGap !== null && companyGap > -0.3
-                    ? `The organisation's current AI maturity (${companyResults.overallScore.toFixed(1)}/5) is well-aligned with the ${bLevel?.label} ambition. The strategy should focus on maintaining momentum and deepening capability.`
+                    ? `The organisation's current AI maturity (${(companyResults.overallScore * 2).toFixed(1)}/10) is well-aligned with the ${bLevel?.label} ambition. The strategy should focus on maintaining momentum and deepening capability.`
                     : `The organisation is ahead of the maturity level required for a ${bLevel?.label} ambition. The strategy should focus on innovation and maintaining competitive advantage.`
                   }
                 </p>
@@ -960,7 +960,7 @@ export default function AIStrategyPage() {
                             <div className="absolute top-[-2px] w-0.5 h-[calc(100%+4px)] bg-white/30 rounded-full" style={{ left: `${(dim.sectorBenchmark / 5) * 100}%` }} />
                           )}
                         </div>
-                        <span className="text-xs font-mono w-8 text-right" style={{ color: isPriority ? "#F87171" : "#4ADE80" }}>{dim.score.toFixed(1)}</span>
+                        <span className="text-xs font-mono w-10 text-right" style={{ color: isPriority ? "#F87171" : "#4ADE80" }}>{(dim.score * 2).toFixed(1)}/10</span>
                         {isPriority && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 flex-shrink-0">Priority</span>
                         )}
@@ -1555,9 +1555,9 @@ export default function AIStrategyPage() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold" style={{ color: drillDownQ.data.domainColour }}>
-                    {drillDownQ.data.score ?? "—"}
+                    {drillDownQ.data.score != null ? (drillDownQ.data.score / 10).toFixed(1) : "—"}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">/ 100</p>
+                  <p className="text-[10px] text-muted-foreground">/ 10</p>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground leading-relaxed">{drillDownQ.data.narrativeExplanation}</p>
@@ -1579,7 +1579,7 @@ export default function AIStrategyPage() {
                           "bg-amber-500/20 text-amber-400"
                         }`}>{s.level}</span>
                         <span className="text-xs text-foreground flex-1 truncate">{s.name}</span>
-                        <span className="text-xs font-mono text-muted-foreground">{s.score}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{(s.score / 10).toFixed(1)}/10</span>
                       </div>
                     ))}
                   </div>

@@ -93,45 +93,46 @@ const MATURITY_LEVELS = [
   {
     key: "initiating",
     label: "Initiating",
-    range: "0–25",
+    range: "0–2.5",
     color: "text-rose-400",
     desc: "AI is largely absent from HR strategy. Foundational data, governance, and capability work is needed before meaningful deployment.",
   },
   {
     key: "developing",
     label: "Developing",
-    range: "26–50",
+    range: "2.6–5.0",
     color: "text-amber-400",
     desc: "Isolated AI pilots exist but lack strategic coherence. Governance frameworks and capability programmes are emerging.",
   },
   {
     key: "scaling",
     label: "Scaling",
-    range: "51–70",
+    range: "5.1–7.0",
     color: "text-blue-400",
     desc: "AI is embedded in several core HR processes with measurable outcomes. Governance is established and capability is growing.",
   },
   {
     key: "leading",
     label: "Leading",
-    range: "71–85",
+    range: "7.1–8.5",
     color: "text-emerald-400",
     desc: "AI is a strategic differentiator. HR leads AI adoption across the organisation with robust ethics, measurement, and innovation culture.",
   },
   {
     key: "pioneering",
     label: "Pioneering",
-    range: "86–100",
+    range: "8.6–10",
     color: "text-violet-400",
     desc: "AI is deeply embedded in all HR processes. The organisation contributes to industry standards and continuously innovates.",
   },
 ];
 
 function getMaturityLevel(score: number) {
-  if (score <= 25) return MATURITY_LEVELS[0];
-  if (score <= 50) return MATURITY_LEVELS[1];
-  if (score <= 70) return MATURITY_LEVELS[2];
-  if (score <= 85) return MATURITY_LEVELS[3];
+  // score is on 0-10 scale
+  if (score <= 2.5) return MATURITY_LEVELS[0];
+  if (score <= 5.0) return MATURITY_LEVELS[1];
+  if (score <= 7.0) return MATURITY_LEVELS[2];
+  if (score <= 8.5) return MATURITY_LEVELS[3];
   return MATURITY_LEVELS[4];
 }
 
@@ -163,8 +164,8 @@ export default function CompanyAssessmentResultsPage() {
     );
   }
 
-  // Server scores are on 1.0–5.0 scale; convert to 0–100 for display
-  const toDisplay = (s: number) => Math.round(((s - 1) / 4) * 100);
+  // Server scores are on 1.0–5.0 scale; convert to 0–10 for display
+  const toDisplay = (s: number) => +((((s - 1) / 4) * 10)).toFixed(1);
   const overallScoreRaw = results.overallScore ?? 1;
   const overallScore = toDisplay(overallScoreRaw);
   const maturity = getMaturityLevel(overallScore);
@@ -181,11 +182,11 @@ export default function CompanyAssessmentResultsPage() {
     .slice(0, 4);
   const executiveSummary = results.executiveSummary ?? "";
 
-  // Build radar data — convert 1-5 scores to 0-100 for display
+  // Build radar data — convert 1-5 scores to 0-10 for display
   const radarData = Object.entries(DIMENSION_META).map(([key, meta]) => ({
     dimension: meta.shortLabel,
     score: toDisplay(dimensionScores[key] ?? 1),
-    benchmark: results.sectorAverage ? toDisplay(results.sectorAverage as number) : 50,
+    benchmark: results.sectorAverage ? toDisplay(results.sectorAverage as number) : 5,
   }));
 
   return (
@@ -223,12 +224,12 @@ export default function CompanyAssessmentResultsPage() {
                   stroke="#7c3aed"
                   strokeWidth="10"
                   strokeLinecap="round"
-                  strokeDasharray={`${(overallScore / 100) * 264} 264`}
+                  strokeDasharray={`${(overallScore / 10) * 264} 264`}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-white">{Math.round(overallScore)}</span>
-                <span className="text-[10px] text-white/40">/100</span>
+                <span className="text-2xl font-bold text-white">{overallScore.toFixed(1)}</span>
+                <span className="text-[10px] text-white/40">/10</span>
               </div>
             </div>
 
@@ -322,6 +323,7 @@ export default function CompanyAssessmentResultsPage() {
                 <Tooltip
                   contentStyle={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
                   labelStyle={{ color: "rgba(255,255,255,0.7)" }}
+                  formatter={(value: number) => [`${value.toFixed(1)}/10`]}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -360,12 +362,12 @@ export default function CompanyAssessmentResultsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium text-white/70">{meta.label}</span>
-                          <span className={`text-xs font-bold ${meta.color}`}>{score}</span>
+                          <span className={`text-xs font-bold ${meta.color}`}>{score.toFixed(1)}/10</span>
                         </div>
                         <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ${meta.color.replace("text-", "bg-")}`}
-                            style={{ width: `${score}%` }}
+                            style={{ width: `${score * 10}%` }}
                           />
                         </div>
                       </div>
@@ -414,7 +416,7 @@ export default function CompanyAssessmentResultsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-white">{meta.label}</div>
                       <div className="text-xs text-white/40 mt-0.5">
-                        Current: {toDisplay(gap.score)}/100 · Gap to leading: {Math.round(gap.gap * 25)} points
+                        Current: {toDisplay(gap.score).toFixed(1)}/10 · Gap to leading: {(gap.gap * 2.5).toFixed(1)} pts
                       </div>
                     </div>
                     <Badge

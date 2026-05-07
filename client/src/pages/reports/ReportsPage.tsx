@@ -93,7 +93,7 @@ function DualAudienceNarrativeView({ data }: { data: any }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <StatusBadge state={data?.readinessState ?? "not_assessed"} />
-        <span className="text-sm text-muted-foreground">Score: <strong className="text-foreground">{Math.round(data?.overallScore ?? 0)}</strong>/100</span>
+        <span className="text-sm text-muted-foreground">Score: <strong className="text-foreground">{data?.overallScore != null ? (data.overallScore / 10).toFixed(1) : "—"}</strong>/10</span>
         <span className="text-sm text-muted-foreground">Credibility: <strong className="text-foreground capitalize">{data?.credibilityBand}</strong></span>
       </div>
       <div className="flex gap-2 flex-wrap">

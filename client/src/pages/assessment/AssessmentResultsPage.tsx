@@ -454,7 +454,7 @@ function SpiderChart({ domains }: {
             color: "var(--foreground)",
             fontSize: "13px",
           }}
-          formatter={(value: number) => [`${value}/100`, "Score"]}
+          formatter={(value: number) => [`${(value / 10).toFixed(1)}/10`, "Score"]}
         />
       </RadarChart>
     </ResponsiveContainer>
@@ -517,8 +517,8 @@ function DomainCard({
       <div className="flex items-center justify-between mb-1.5">
         <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
         <span className="text-lg font-bold text-foreground tabular-nums">
-          {Math.round(score)}
-          <span className="text-xs text-muted-foreground font-normal">/100</span>
+          {(score / 10).toFixed(1)}
+          <span className="text-xs text-muted-foreground font-normal">/10</span>
         </span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-4">
@@ -544,7 +544,7 @@ function DomainCard({
                 <div
                   key={sig.key}
                   className="flex flex-col items-center gap-1"
-                  title={`${sig.label}: ${s}/100`}
+                  title={`${sig.label}: ${(s / 10).toFixed(1)}/10`}
                 >
                   <div
                     className="w-full rounded-md flex items-center justify-center text-[11px] font-bold"
@@ -628,8 +628,8 @@ function DomainSheet({
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-bold text-foreground tabular-nums">{Math.round(score)}</span>
-              <span className="text-[10px] text-muted-foreground">/100</span>
+              <span className="text-xl font-bold text-foreground tabular-nums">{(score / 10).toFixed(1)}</span>
+              <span className="text-[10px] text-muted-foreground">/10</span>
             </div>
           </div>
           <div className="flex-1 min-w-0">
