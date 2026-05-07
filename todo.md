@@ -2033,9 +2033,9 @@
 
 ## AI Strategy PDF Export
 
-- [ ] FEAT-PDF-1: Add server-side PDF generation endpoint (strategy report: KPIs, domain bars, findings, board options, trajectory summary)
-- [ ] FEAT-PDF-2: Add Export PDF button to AI Strategy page with loading state and download trigger
-- [ ] FEAT-PDF-3: Write vitest for the PDF generation endpoint
+- [x] FEAT-PDF-1: Add server-side PDF generation endpoint (strategy report: KPIs, domain bars, findings, board options, trajectory summary)
+- [x] FEAT-PDF-2: Add Export PDF button to AI Strategy page with loading state and download trigger
+- [x] FEAT-PDF-3: Write vitest for the PDF generation endpoint (7 tests — auth, type validation, header assertions)
 
 ## AI Strategy Sidebar Restructure
 - [x] Add "AI Strategy" section to AppShell sidebar (both AppShell.tsx and DashboardLayout.tsx)
@@ -2062,12 +2062,12 @@
 - [x] Save strategy persists sector + ambition levels
 
 ## Initiative Library Modal & Selected-Only Display
-- [ ] Add selectedInitiativeIds (JSON array) to ailOrgContext schema and saveStrategy procedure
-- [ ] Generate and apply migration SQL for the new column
-- [ ] Move initiative library into a full-screen modal (opened via "Add Initiatives" button)
-- [ ] Modal: category filter chips, select/deselect checkboxes, click card to view detail
-- [ ] Main page: show only selected initiatives inline; "No initiatives selected" empty state
-- [ ] Save selected initiative IDs when saving strategy
+- [x] Add selectedInitiativeIds (JSON array) to ailOrgContext schema and saveStrategy procedure — already done (selectedInitiativesJson column)
+- [x] Generate and apply migration SQL for the new column — already in schema
+- [x] Move initiative library into a full-screen modal (opened via "Add Initiatives" button) — already done
+- [x] Modal: category filter chips, select/deselect checkboxes, click card to view detail — already done
+- [x] Main page: show only selected initiatives inline; "No initiatives selected" empty state — already done
+- [x] Save selected initiative IDs when saving strategy — already done
 
 ## Initiative Library Modal (Complete)
 - [x] Move initiative library to a full-screen selector modal (opened via "Manage Initiatives" button)
@@ -2077,12 +2077,12 @@
 - [x] Allow removing individual initiatives from the inline selected list
 
 ## HR AI Strategy Exec Paper Redesign
-- [ ] Move "People" nav item below "Overview" in My Team section (AppShell + DashboardLayout)
-- [ ] Rename "Strategy Dashboard" nav label to "HR AI Strategy" (AppShell + DashboardLayout)
-- [ ] Rebuild AIStrategyPage output as executive paper with three sections:
-  - [ ] Exec Summary: vision statement — how AI will change ways of work based on industry + ambition selections
-  - [ ] Visual Initiative Roadmap: timeline/phases showing selected initiatives and how they integrate to the vision
-  - [ ] Capability Gap: narrative gap analysis showing what the HR team needs to develop to deliver the vision
+- [x] Move "People" nav item below "Overview" in My Team section (AppShell + DashboardLayout) — already correct
+- [x] Rename "Strategy Dashboard" nav label to "HR AI Strategy" (AppShell + DashboardLayout) — already correct
+- [x] Rebuild AIStrategyPage output as executive paper with three sections:
+  - [x] Exec Summary: vision statement — how AI will change ways of work based on industry + ambition selections
+  - [x] Visual Initiative Roadmap: timeline/phases showing selected initiatives and how they integrate to the vision
+  - [x] Capability Gap: narrative gap analysis showing what the HR team needs to develop to deliver the vision
 
 ## HR AI Strategy Exec Paper (Complete)
 - [x] Rename Strategy Dashboard to HR AI Strategy in sidebar (AppShell and DashboardLayout)
@@ -2094,20 +2094,20 @@
 - [x] Single plan only — no A/B/C strategy tabs
 
 ## Company Assessment → HR AI Strategy Integration
-- [ ] Read company assessment results (7-dimension scores + maturity level) in AIStrategyPage
-- [ ] Add "Company Context" section at top of exec paper: company maturity level, 7-dimension scores, overall AI readiness
-- [ ] Add "Company Gap" section: what the company needs vs where it is now, per dimension
-- [ ] Update Executive Summary narrative to reference company assessment findings
-- [ ] Update Capability Gap section to show what HR must develop to support the company's AI ambition
-- [ ] Show a clear "HR must support this" bridge between company gap and HR capability requirements
+- [x] Read company assessment results (7-dimension scores + maturity level) in AIStrategyPage
+- [x] Add "Company Context" section at top of exec paper: company maturity level, 7-dimension scores, overall AI readiness
+- [x] Add "Company Gap" section: what the company needs vs where it is now, per dimension
+- [x] Update Executive Summary narrative to reference company assessment findings
+- [x] Update Capability Gap section to show what HR must develop to support the company's AI ambition
+- [x] Show a clear "HR must support this" bridge between company gap and HR capability requirements
 
 ## Company Assessment Deep Integration into HR AI Strategy
-- [ ] Show company maturity score prominently in the strategy header/context section
-- [ ] Show all 7 dimension scores as visual bars with sector benchmark comparison
-- [ ] Generate narrative: "What the company gap means for HR" — linking company maturity to HR strategy priorities
-- [ ] Feed company maturity into the Executive Summary vision statement
-- [ ] Show a "Company Gap vs Ambition" section that compares company current state to the selected business ambition level
-- [ ] If no assessment completed, show a clear CTA to complete it
+- [x] Show company maturity score prominently in the strategy header/context section
+- [x] Show all 7 dimension scores as visual bars with sector benchmark comparison
+- [x] Generate narrative: "What the company gap means for HR" — linking company maturity to HR strategy priorities
+- [x] Feed company maturity into the Executive Summary vision statement
+- [x] Show a "Company Gap vs Ambition" section that compares company current state to the selected business ambition level
+- [x] If no assessment completed, show a clear CTA to complete it
 
 ## HR AI Strategy Assessment Wizard
 - [x] Add aspirationAnswers, hrRoleAnswers, visionStatement, guidingPrinciplesJson fields to ailOrgContext schema
