@@ -1787,3 +1787,24 @@ export type UserCapabilityMemory = typeof userCapabilityMemory.$inferSelect;
 export type CoachAuditLog = typeof coachAuditLog.$inferSelect;
 export type ApplyCommitment = typeof applyCommitments.$inferSelect;
 export type ApplyEvidence = typeof applyEvidence.$inferSelect;
+
+// ── Norm Data Points (CR-7: population norm collection) ───────────────────────
+// Anonymised data points collected from completed assessments.
+// Used to replace synthetic sector norms with real population data over time.
+// No PII stored — only sector, job function, and score data.
+export const normDataPoints = mysqlTable("norm_data_points", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sector: varchar("sector", { length: 100 }),
+  jobFunction: varchar("job_function", { length: 100 }),
+  experienceLevel: varchar("experience_level", { length: 50 }),
+  overallScore: decimal("overall_score", { precision: 5, scale: 2 }).notNull(),
+  capabilityScoresJson: json("capability_scores_json").$type<Record<string, number>>().notNull(),
+  readinessState: varchar("readiness_state", { length: 50 }),
+  modelVersion: varchar("model_version", { length: 50 }).default("adaptive-v2"),
+  collectedAt: bigint("collected_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  sectorIdx: index("idx_norm_data_sector").on(t.sector),
+  jobFunctionIdx: index("idx_norm_data_job_function").on(t.jobFunction),
+  collectedAtIdx: index("idx_norm_data_collected_at").on(t.collectedAt),
+}));
+export type NormDataPoint = typeof normDataPoints.$inferSelect;

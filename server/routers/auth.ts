@@ -15,6 +15,7 @@ import { users, tenants } from "../../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { applyColdStart } from "../ail/coldStart";
+import { sendPasswordResetEmail } from "../email";
 
 export const authRouter = router({
   // Get current user with roles
@@ -258,8 +259,17 @@ export const authRouter = router({
         .set({ passwordResetToken: token, passwordResetExpiry: expiry })
         .where(eq(users.id, user.id));
 
-      // In production, send email. For demo, return token in response.
-      return { success: true, resetToken: token };
+      // Send password reset email (silently skips if RESEND_API_KEY not configured)
+      const origin = process.env.VITE_OAUTH_PORTAL_URL
+        ? process.env.VITE_OAUTH_PORTAL_URL.replace(/\/oauth.*$/, "")
+        : "https://hraiq.co.uk";
+      const resetUrl = `${origin}/reset-password?token=${token}`;
+      await sendPasswordResetEmail({
+        to: user.email,
+        firstName: user.firstName ?? "",
+        resetUrl,
+      }).catch(() => { /* non-blocking — token is still valid even if email fails */ });
+      return { success: true };
     }),
 
   // Reset password with token

@@ -244,3 +244,34 @@ export async function sendStatusChangeEmail(opts: {
     html:    emailLayout(body),
   });
 }
+
+// ─── Password Reset Email ────────────────────────────────────────────────────
+/**
+ * Sends a password reset link to the user.
+ * Silently skips if RESEND_API_KEY is not configured.
+ */
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  firstName: string;
+  resetUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return; // silently skip if key not configured
+
+  const subject = "Reset your AiQ password";
+  const body = `
+    ${h1("Reset your password")}
+    ${p(`Hi ${opts.firstName || "there"},`)}
+    ${p("We received a request to reset your AiQ password. Click the button below to choose a new password. This link expires in 1 hour.")}
+    ${ctaButton("Reset password", opts.resetUrl)}
+    ${divider()}
+    ${p("If you didn't request a password reset, you can safely ignore this email — your password won't change.")}
+  `;
+
+  await resend.emails.send({
+    from:    FROM_ADDRESS,
+    to:      opts.to,
+    subject,
+    html:    emailLayout(body),
+  });
+}

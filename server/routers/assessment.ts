@@ -1897,6 +1897,27 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         tenantId: ctx.user.tenantId,
         sessionId: input.sessionId,
       }).catch(err => console.warn("[assessment] Auto-regeneration failed (non-fatal):", err));
+      // CR-7: Collect anonymised norm data point (non-blocking, fire-and-forget)
+      void (async () => {
+        try {
+          const { normDataPoints } = await import("../../drizzle/schema");
+          const capScoresFlat: Record<string, number> = {};
+          for (const [k, v] of Object.entries(results.capabilityScores)) {
+            capScoresFlat[k] = Math.round((v as { score: number }).score);
+          }
+          await db.insert(normDataPoints).values({
+            id: nanoid(),
+            sector: ctx.user.sector ?? null,
+            jobFunction: ctx.user.jobFunction ?? null,
+            experienceLevel: ctx.user.experienceLevel ?? null,
+            overallScore: results.overallScore.toFixed(2) as any,
+            capabilityScoresJson: capScoresFlat,
+            readinessState: results.readiness.state,
+            modelVersion: "adaptive-v2",
+            collectedAt: Date.now(),
+          });
+        } catch { /* non-fatal — norm collection must never block session completion */ }
+      })();
       return {
         overallScore: results.overallScore,
         credibilityScore,

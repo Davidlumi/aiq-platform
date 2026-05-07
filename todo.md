@@ -57,9 +57,9 @@
 - [x] Final checkpoint and delivery
 
 ## Future Enhancements
-- [ ] Email delivery for forgot-password (requires SMTP configuration)
+- [x] Email delivery for forgot-password — sendPasswordResetEmail() added to server/email.ts using Resend, wired into requestPasswordReset procedure in auth.ts; silently skips if RESEND_API_KEY not configured
 - [x] PDF export rendering — fully implemented with PDFKit: assessment report, learning plan PDF, module PDF, AI strategy report; endpoints at /api/pdf/:type
-- [ ] Real-time notifications via WebSocket
+- [ ] Real-time notifications via WebSocket (deferred — requires SSE or WebSocket infrastructure change; current polling-based approach is functional)
 - [x] Bulk user import via CSV — fully implemented: users.bulkInvite procedure (max 200 rows, email/firstName/lastName/role) + CSV paste dialog in UsersPage with preview and temp password
 
 ## Design System Overhaul (Priority)
@@ -131,7 +131,7 @@
 - [x] Content versioning: version tracking, auditability, comparability (content_versions table + router)
 - [x] Seed all content into DB and wire to adaptive assessment engine (baseline phase now pulls from content_scenarios)
 - [x] Content Management System UI: scenario browser with filters, version history, admin CRUD (AssessmentContentPage)
-- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future)
+- [ ] Relevance & Update Engine: trigger-based updates, feedback loop, content validation (future roadmap — Phase 3)
 
 ## Bug Fixes
 - [x] Assessment session page: answer options bug — deferred (old dataset wiped, clean slate)
@@ -1156,7 +1156,7 @@
 - [x] CR-4: Include signalCount per capability in scoreBreakdown for confidence interval computation on frontend
 - [x] CR-5: Added methodology link to marketing page footer
 - [x] CR-6: Overall score confidence interval displayed in Score Summary card
-- [ ] Norm data collection mechanism — track real assessment completions to replace synthetic norms over time; add norm_data_collection table and collection logic (deferred to next sprint)
+- [x] Norm data collection mechanism — norm_data_points table created (migration 0033), collection logic added to completeSession (CR-7); anonymised sector/jobFunction/experienceLevel/scores collected non-blockingly after each assessment
 
 ## Assessment Redesign — Practical AI Skills (Apr 24 2026)
 - [x] AR-1: Audit current assessment items and identify what's testing theory vs practical skills
@@ -1278,7 +1278,7 @@
 
 ## Technical Debt
 - [x] TD-1: Rate limiting on auth endpoints (login, register, password reset)
-- [ ] TD-2: Email notifications for password reset (SMTP integration)
+- [x] TD-2: Email notifications for password reset — implemented via sendPasswordResetEmail() in server/email.ts, wired into auth.requestPasswordReset; uses RESEND_API_KEY env var
 - [x] TD-3: Feature flag back-office UI — configurable feature flags via admin panel
 - [x] TD-4: Multi-tenancy enforcement audit — verify all tRPC procedures enforce tenant isolation
 
@@ -1297,7 +1297,7 @@
 
 - [x] DS-1: Rewrite index.css with v2.2 token architecture — navy/warm-grey palette, Graphik font stack, dual-audience state tokens, spacing/radius/elevation/motion tokens
 - [x] DS-2: Update AppShell.tsx to v2.2 sidebar spec — 240px width, 56px collapsed, 3px left active border, section labels, sunken sidebar background
-- [ ] DS-3: Update DashboardLayout.tsx to match v2.2 sidebar spec (deferred — not used in active routing)
+- [ ] DS-3: Update DashboardLayout.tsx to match v2.2 sidebar spec (deferred — not used in active routing; custom AppShell used instead)
 - [x] DS-4: Update button.tsx — 44px min target, aria-disabled pattern, loading state, icon spacing, sentence case
 - [x] DS-5: Update badge.tsx — dual-audience state tokens, rectangular radius-xs, individual/org variants
 - [x] DS-6: Update card.tsx — elevated/default/sunken variants, CardDivider, v2.2 padding tokens
@@ -1422,9 +1422,9 @@
 - [x] AL-07: Mastery-Based Progression Gates — markModuleComplete enforces 70% mastery threshold before unlocking dependent items; CompletionScreen shows gate-blocked banner with retake button; locked items show 'Retake required' badge; plan item insertion bug fixed (items with unlockAfterModuleId now start as 'locked')
 
 ### Deferred
-- [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework)
+- [ ] AL-08: Adaptive difficulty within modules — track per-section engagement, inject simpler/harder content based on formative quiz performance (requires module player rework — Phase 3)
 - [x] AL-09: Social/Collaborative Learning — "Share with team" action on completed modules that creates a nudge with reflection/takeaway — ShareWithTeamPanel component added to CompletionScreen, shareWithTeam procedure in adaptiveLearning router, persists to learning_nudges table and notifies owner
-- [ ] AL-10: Content Freshness / Auto-Generation — flag modules older than 6 months, LLM-generate new scenario variations
+- [ ] AL-10: Content Freshness / Auto-Generation — flag modules older than 6 months, LLM-generate new scenario variations (future roadmap — Phase 3)
 
 ## Bug Fixes (UX Deep Dive Follow-up)
 - [x] BF-01: Fix sessionId undefined error on Learner Dashboard — CompetenceConfidenceWidget queries assessment.results with undefined sessionId when user has no completed assessment
