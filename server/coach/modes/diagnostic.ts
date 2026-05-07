@@ -774,3 +774,6 @@ Present the following follow-up probe naturally, as if you noticed something int
     return probeText;
   }
 }
+
+export const diagnosticModeHandler = new DiagnosticModeHandler();
+

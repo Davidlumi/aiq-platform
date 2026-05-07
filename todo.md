@@ -2178,3 +2178,26 @@
 - [x] Add /coach route to App.tsx (ProtectedRouteFullscreen — no AppShell wrapper)
 - [x] Add "AiQ Coach" nav item to AppShell and DashboardLayout sidebars (MessageSquare icon)
 - [x] 710/710 tests passing · 0 TypeScript errors
+
+## AiQ Coach — Phase 2: Debrief & Learning Modes
+- [x] Build DebriefModeHandler (server/coach/modes/debrief.ts)
+- [x] Debrief intro act: overall score summary, readiness state, tone-setting
+- [x] Debrief domain act: per-domain conversational walkthrough (6 domains)
+- [x] Debrief plan preview act: learning plan overview, transition to learning mode
+- [x] Memory proposals for strong domains and gap domains
+- [x] Assessment score loading from assessmentScores + scoreBreakdownJson
+- [x] Band/tier labelling (strong/developing/needs_work/critical)
+- [x] Build LearningModeHandler (server/coach/modes/learning.ts)
+- [x] TSDA-aligned acts: tell → show → do → apply
+- [x] Module selection from active learning plan
+- [x] Comprehension check integration
+- [x] Module completion memory writes
+- [x] Register DebriefModeHandler and LearningModeHandler in server/_core/index.ts
+- [x] Mode transition: diagnostic → debrief → learning (via transitionToMode)
+- [x] CoachPage UI Phase 2 enhancements:
+- [x] Dynamic mode state (updates on modeTransition)
+- [x] Debrief domain tracker sidebar panel (6 domains with done/active/pending states)
+- [x] Learning TSDA stage sidebar panel (Tell/Show/Do/Apply with progress)
+- [x] Suggested reply chips above input area (clickable, auto-fill)
+- [x] Mode-specific session-complete CTAs (diagnostic/debrief/learning)
+- [x] 710/710 tests passing · 0 TypeScript errors

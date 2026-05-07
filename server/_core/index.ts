@@ -10,6 +10,15 @@ import { registerPdfRoutes } from "../pdf";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { coachEngine } from "../coach/engine";
+import { diagnosticModeHandler } from "../coach/modes/diagnostic";
+import { debriefModeHandler } from "../coach/modes/debrief";
+import { learningModeHandler } from "../coach/modes/learning";
+
+// Register all AiQ Coach mode handlers at startup
+coachEngine.registerMode(diagnosticModeHandler);
+coachEngine.registerMode(debriefModeHandler);
+coachEngine.registerMode(learningModeHandler);
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {

@@ -49,6 +49,11 @@ import {
   Users,
   TrendingUp,
   Loader2,
+  BookOpen,
+  BarChart2,
+  ArrowRight,
+  CircleDot,
+  Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Streamdown } from "streamdown";
@@ -121,6 +126,22 @@ const DOMAIN_ICONS = {
 };
 
 const TOTAL_ITEMS = 30;
+
+const DEBRIEF_DOMAINS = [
+  { key: "ai_interaction", label: "AI Interaction" },
+  { key: "ai_output_evaluation", label: "Output Evaluation" },
+  { key: "ai_workflow_design", label: "Workflow Design" },
+  { key: "workforce_ai_readiness", label: "Workforce Readiness" },
+  { key: "ai_ethics_trust", label: "Ethics & Trust" },
+  { key: "ai_change_leadership", label: "Change Leadership" },
+];
+
+const TSDA_STAGES = [
+  { key: "tell", label: "Tell", description: "Concept introduction" },
+  { key: "show", label: "Show", description: "Worked example" },
+  { key: "do", label: "Do", description: "Practice scenario" },
+  { key: "apply", label: "Apply", description: "Real-work commitment" },
+];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -285,11 +306,15 @@ export default function CoachPage() {
 
   // Session state
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [mode] = useState<CoachMode>("diagnostic");
+  const [mode, setMode] = useState<CoachMode>("diagnostic");
   const [currentAct, setCurrentAct] = useState<CoachAct>("onboarding");
   const [answeredCount, setAnsweredCount] = useState(0);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [suggestedReplies, setSuggestedReplies] = useState<string[]>([]);
+  const [domainsDebriefed, setDomainsDebriefed] = useState(0);
+  const [learningModuleIndex, setLearningModuleIndex] = useState(0);
+  const [learningTsdaStage, setLearningTsdaStage] = useState<string>("tell");
 
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -446,7 +471,19 @@ export default function CoachPage() {
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (result.modeTransition) {
-        setCurrentAct(result.modeTransition as CoachAct);
+        // If the transition string contains a mode change (e.g. "debrief" or "learning")
+        const knownModes: CoachMode[] = ["diagnostic", "debrief", "learning", "practice", "apply", "manager"];
+        if (knownModes.includes(result.modeTransition as CoachMode)) {
+          setMode(result.modeTransition as CoachMode);
+          setCurrentAct("onboarding");
+        } else {
+          setCurrentAct(result.modeTransition as CoachAct);
+        }
+      }
+      if (result.suggestedReplies && result.suggestedReplies.length > 0) {
+        setSuggestedReplies(result.suggestedReplies);
+      } else {
+        setSuggestedReplies([]);
       }
 
       if (result.sessionComplete) {
@@ -460,6 +497,11 @@ export default function CoachPage() {
         ["baseline", "adaptive", "validation"].includes(result.modeTransition)
       ) {
         setAnsweredCount((prev) => prev + 1);
+      }
+
+      // Track debrief domain progress
+      if (result.modeTransition && (result.modeTransition as string) === "debrief_domain") {
+        setDomainsDebriefed((prev) => Math.min(prev + 1, DEBRIEF_DOMAINS.length));
       }
     } catch (err) {
       console.error("Failed to send message:", err);
@@ -545,6 +587,13 @@ export default function CoachPage() {
       setIsInitialising(false);
     }
   };
+
+  // Handle suggested reply click
+  const handleSuggestedReply = useCallback((reply: string) => {
+    setInputValue(reply);
+    setSuggestedReplies([]);
+    inputRef.current?.focus();
+  }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -676,19 +725,103 @@ export default function CoachPage() {
 
             <Separator className="bg-[var(--color-navy-border)]" />
 
-            {/* Progress */}
-            <div className="space-y-4">
-              <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
-                Session Progress
-              </p>
-              <ProgressBar
-                answeredCount={answeredCount}
-                totalTarget={TOTAL_ITEMS}
-                currentAct={currentAct}
-              />
-            </div>
+            {/* Progress — diagnostic mode */}
+            {mode === "diagnostic" && (
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
+                  Assessment Progress
+                </p>
+                <ProgressBar
+                  answeredCount={answeredCount}
+                  totalTarget={TOTAL_ITEMS}
+                  currentAct={currentAct}
+                />
+              </div>
+            )}
 
-            <Separator className="bg-[var(--color-navy-border)]" />
+            {/* Debrief domain tracker */}
+            {mode === "debrief" && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
+                  Results Debrief
+                </p>
+                <div className="space-y-2">
+                  {DEBRIEF_DOMAINS.map((d, i) => {
+                    const done = i < domainsDebriefed;
+                    const active = i === domainsDebriefed;
+                    return (
+                      <div
+                        key={d.key}
+                        className={cn(
+                          "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5 transition-colors",
+                          done && "text-[var(--color-brand)]",
+                          active && "text-[var(--color-neutral-100)] bg-[var(--color-navy-card)] border border-[var(--color-navy-border)]",
+                          !done && !active && "text-[var(--color-neutral-500)]"
+                        )}
+                      >
+                        {done ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                        ) : active ? (
+                          <CircleDot className="w-3.5 h-3.5 flex-shrink-0 text-[var(--color-brand)]" />
+                        ) : (
+                          <Circle className="w-3.5 h-3.5 flex-shrink-0" />
+                        )}
+                        <span>{d.label}</span>
+                        {active && (
+                          <span className="ml-auto text-[10px] text-[var(--color-brand)] font-medium">Now</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Learning TSDA stage */}
+            {mode === "learning" && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-[var(--color-neutral-400)] uppercase tracking-wider">
+                  Learning Stage
+                </p>
+                <div className="space-y-1.5">
+                  {TSDA_STAGES.map((stage, i) => {
+                    const stageIndex = TSDA_STAGES.findIndex((s) => s.key === learningTsdaStage);
+                    const done = i < stageIndex;
+                    const active = stage.key === learningTsdaStage;
+                    return (
+                      <div
+                        key={stage.key}
+                        className={cn(
+                          "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5 transition-colors",
+                          done && "text-[var(--color-brand)]",
+                          active && "text-[var(--color-neutral-100)] bg-[var(--color-navy-card)] border border-[var(--color-navy-border)]",
+                          !done && !active && "text-[var(--color-neutral-500)]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0",
+                            done && "bg-[var(--color-brand)] text-black",
+                            active && "bg-[var(--color-brand-bg)] border border-[var(--color-brand-border)] text-[var(--color-brand)]",
+                            !done && !active && "bg-[var(--color-navy-muted)] text-[var(--color-neutral-500)]"
+                          )}
+                        >
+                          {stage.label[0]}
+                        </span>
+                        <div>
+                          <p className="font-medium">{stage.label}</p>
+                          <p className="text-[10px] opacity-70">{stage.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {(mode === "diagnostic" || mode === "debrief" || mode === "learning") && (
+              <Separator className="bg-[var(--color-navy-border)]" />
+            )}
 
             {/* Mode description */}
             <div className="space-y-2">
@@ -805,27 +938,87 @@ export default function CoachPage() {
 
             {/* Input area */}
             <div className="border-t border-[var(--color-navy-border)] bg-[var(--color-navy-sidebar)] p-4">
+              {/* Suggested replies */}
+              {suggestedReplies.length > 0 && !sessionComplete && !isPaused && (
+                <div className="max-w-3xl mx-auto mb-3 flex flex-wrap gap-2">
+                  {suggestedReplies.map((reply, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestedReply(reply)}
+                      className={cn(
+                        "text-xs px-3 py-1.5 rounded-full border transition-colors",
+                        "border-[var(--color-navy-border)] bg-[var(--color-navy-card)]",
+                        "text-[var(--color-neutral-300)] hover:text-[var(--color-neutral-100)]",
+                        "hover:border-[var(--color-brand-border)] hover:bg-[var(--color-brand-bg)]"
+                      )}
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {sessionComplete ? (
                 <div className="max-w-3xl mx-auto flex flex-col items-center gap-3 py-2">
-                  <p className="text-sm text-[var(--color-neutral-400)] text-center">
-                    Your assessment is complete. View your personalised results and learning plan.
-                  </p>
-                  <div className="flex gap-3">
-                    <Link href="/assessment/results">
-                      <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        View results
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      className="border-[var(--color-navy-border)] text-[var(--color-neutral-300)]"
-                      onClick={() => setShowNewSessionConfirm(true)}
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Retake
-                    </Button>
-                  </div>
+                  {mode === "diagnostic" && (
+                    <>
+                      <p className="text-sm text-[var(--color-neutral-400)] text-center">
+                        Your assessment is complete. View your personalised results and learning plan.
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href="/assessment/results">
+                          <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            View results
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          className="border-[var(--color-navy-border)] text-[var(--color-neutral-300)]"
+                          onClick={() => setShowNewSessionConfirm(true)}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Retake
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                  {mode === "debrief" && (
+                    <>
+                      <p className="text-sm text-[var(--color-neutral-400)] text-center">
+                        Debrief complete. Your learning plan is ready.
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href="/learning">
+                          <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Start learning plan
+                          </Button>
+                        </Link>
+                        <Link href="/assessment/results">
+                          <Button variant="outline" className="border-[var(--color-navy-border)] text-[var(--color-neutral-300)]">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            Full results
+                          </Button>
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                  {mode === "learning" && (
+                    <>
+                      <p className="text-sm text-[var(--color-neutral-400)] text-center">
+                        Module complete. Ready for the next one?
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href="/learning">
+                          <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
+                            <ArrowRight className="w-4 h-4 mr-2" />
+                            Continue learning
+                          </Button>
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto flex items-end gap-3">
