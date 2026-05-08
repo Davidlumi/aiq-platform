@@ -545,6 +545,8 @@ export default function AIStrategyPage() {
   const [methodologyOpen, setMethodologyOpen]             = useState(false);
   const [strategyLocked, setStrategyLocked]               = useState(false);
   const [drillDownDomain, setDrillDownDomain]             = useState<string | null>(null);
+  const [provenanceOpen, setProvenanceOpen]               = useState(false);
+  const [provenanceTarget, setProvenanceTarget]           = useState<"vision" | "wontDo" | "costs" | "risks">("vision");
 
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
   const strategyAssessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
@@ -555,6 +557,7 @@ export default function AIStrategyPage() {
   );
   const ambitionGapQ       = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const companyAssessmentQ = trpc.companyAssessment.getMyAssessmentResults.useQuery();
+  const libMetaQ           = trpc.contentLibrary.meta.useQuery();
 
   const strategyData       = strategyQ.data;
   const strategyAssessment = strategyAssessmentQ.data;
@@ -562,6 +565,35 @@ export default function AIStrategyPage() {
   const ambitionGap        = ambitionGapQ.data;
   const allInitiatives     = initiativesQ.data ?? [];
   const companyResults     = companyAssessmentQ.data;
+  const libMeta            = libMetaQ.data;
+
+  // ── Derived ambition tier ─────────────────────────────────────────────────
+  const ambitionTier = useMemo((): "cautious" | "progressive" | "transformative" => {
+    if (businessLevel >= 4) return "transformative";
+    if (businessLevel >= 3) return "progressive";
+    return "cautious";
+  }, [businessLevel]);
+
+  // ── Live cost envelope (query, fires when initiatives are selected) ────────
+  const [costInitIds, setCostInitIds] = useState<string[]>([]);
+  const costEnvelopeQ = trpc.intelligence.calculateCostEnvelope.useQuery(
+    { selectedInitiativeIds: costInitIds, orgSize: "medium", ambitionTier },
+    { enabled: costInitIds.length > 0 }
+  );
+
+  // ── Live risk rules (mutation, fires on demand) ───────────────────────────
+  const evaluateRiskMut = trpc.intelligence.evaluateRiskRules.useMutation();
+  const [liveRisks, setLiveRisks] = useState<Array<{
+    ruleId: string; displayName: string; riskStatement: string;
+    severity: "very_high" | "high" | "medium" | "low";
+    recommendedAction: string; regulatoryBasis: string[]; sources: string[];
+  }> | null>(null);
+
+  // ── Sector benchmark ──────────────────────────────────────────────────────
+  const sectorBenchmarkQ = trpc.contentLibrary.getSectorBenchmark.useQuery(
+    { sector_id: sector },
+    { enabled: !!sector }
+  );
 
   useEffect(() => {
     if (strategyData?.configured) {
@@ -573,6 +605,23 @@ export default function AIStrategyPage() {
       if (strategyData.strategySavedAt) setStrategyLocked(true);
     }
   }, [strategyData]);
+
+  // Sync cost envelope query input when selected initiatives change
+  useEffect(() => {
+    const ids = Array.from(selectedInitiativeIds);
+    if (ids.length > 0) setCostInitIds(ids);
+  }, [selectedInitiativeIds]);
+
+  // Evaluate risk rules when initiatives or ambition tier changes
+  useEffect(() => {
+    const ids = Array.from(selectedInitiativeIds);
+    if (ids.length === 0) { setLiveRisks(null); return; }
+    evaluateRiskMut.mutate(
+      { selectedInitiativeIds: ids, ambitionTier, orgSize: "medium" },
+      { onSuccess: (data) => setLiveRisks(data) }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInitiativeIds, ambitionTier]);
 
   useEffect(() => {
     if (orgContext?.sector) setSectorRaw(orgContext.sector);
@@ -662,6 +711,12 @@ export default function AIStrategyPage() {
     }).sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0));
   }, [domainTargets, strategyData]);
 
+  // ── Regeneration banner ───────────────────────────────────────────────────
+  const showRegenerationBanner = useMemo(() => {
+    if (!strategyData?.libraryVersion || !libMeta?.version) return false;
+    return strategyData.libraryVersion !== libMeta.version;
+  }, [strategyData?.libraryVersion, libMeta?.version]);
+
   const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
   if (isLoading) {
     return (
@@ -681,6 +736,12 @@ export default function AIStrategyPage() {
   const weakDims         = companyResults ? [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 3) : [];
   const strongDims       = companyResults ? [...companyResults.dimensions].sort((a, b) => b.score - a.score).slice(0, 2) : [];
   const guidingPrinciples = strategyAssessment?.guidingPrinciples as Array<{ title: string; description: string }> | null | undefined;
+  // wontDo: prefer persisted DB value, fallback to static OUT_OF_SCOPE
+  const wontDoItems: string[] = useMemo(() => {
+    const persisted = strategyData?.wontDo;
+    if (Array.isArray(persisted) && persisted.length > 0) return persisted as string[];
+    return OUT_OF_SCOPE[businessLevel] ?? OUT_OF_SCOPE[3];
+  }, [strategyData?.wontDo, businessLevel]);
 
   // Hero numbers
   const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
@@ -693,32 +754,44 @@ export default function AIStrategyPage() {
   const domainsWithGap     = allDomainsWithGap.slice(0, priorityDomainCount);
   const domainsWithoutGap  = domainGapRows.filter(r => r.gap === null || r.gap <= 5);
 
-  // Cost envelope
-  const totalCostLow  = initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.low ?? 20), 0);
-  const totalCostHigh = initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.high ?? 60), 0);
+  // Cost envelope — use live data if available, fall back to static estimates
+  const liveCostEnvelope = costEnvelopeQ.data;
+  const totalCostLow  = liveCostEnvelope?.totalMin ?? initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.low ?? 20), 0);
+  const totalCostHigh = liveCostEnvelope?.totalMax ?? initiativesByPhase.reduce((s, g) => s + g.items.length * (PHASE_COST_PER_INIT[g.phase]?.high ?? 60), 0);
 
-  // Delivery risks
+  // Delivery risks — use live risk rule evaluation if available
+  const SEVERITY_TO_LIKELIHOOD: Record<string, "High" | "Medium" | "Low"> = {
+    very_high: "High", high: "High", medium: "Medium", low: "Low",
+  };
   const hasRegFlag = selectedInits.some((i: any) => i.regulatoryFlag);
-  const deliveryRisks = [
-    {
-      risk: "HR capability gap slows adoption",
-      likelihood: "High" as const,
-      mitigation: `Prioritise Phase 1 learning investment; target ${domainsWithGap.length > 0 ? domainsWithGap[0].label : "AI Interaction"} as the first capability sprint.`,
-      dependency: "L&D",
-    },
-    {
-      risk: "Data infrastructure not ready for AI tools",
-      likelihood: (companyResults && companyResults.overallScore < 2.5 ? "High" : "Medium") as "High" | "Medium" | "Low",
-      mitigation: "Conduct a data readiness audit in Month 1; gate Phase 2 initiatives on audit sign-off.",
-      dependency: "IT / Data",
-    },
-    {
-      risk: "Regulatory non-compliance (EU AI Act)",
-      likelihood: (hasRegFlag ? "Medium" : "Low") as "High" | "Medium" | "Low",
-      mitigation: "Engage Legal in Phase 1; map all flagged initiatives to EU AI Act risk categories before deployment.",
-      dependency: "Legal / Compliance",
-    },
-  ];
+  const deliveryRisks: Array<{ risk: string; likelihood: "High" | "Medium" | "Low"; mitigation: string; dependency: string; sources?: string[] }> = liveRisks && liveRisks.length > 0
+    ? liveRisks.slice(0, 4).map(r => ({
+        risk: r.displayName,
+        likelihood: SEVERITY_TO_LIKELIHOOD[r.severity] ?? "Medium",
+        mitigation: r.recommendedAction,
+        dependency: r.regulatoryBasis.length > 0 ? r.regulatoryBasis[0] : "Legal / Compliance",
+        sources: r.sources,
+      }))
+    : [
+        {
+          risk: "HR capability gap slows adoption",
+          likelihood: "High" as const,
+          mitigation: `Prioritise Phase 1 learning investment; target ${domainsWithGap.length > 0 ? domainsWithGap[0].label : "AI Interaction"} as the first capability sprint.`,
+          dependency: "L&D",
+        },
+        {
+          risk: "Data infrastructure not ready for AI tools",
+          likelihood: (companyResults && companyResults.overallScore < 2.5 ? "High" : "Medium") as "High" | "Medium" | "Low",
+          mitigation: "Conduct a data readiness audit in Month 1; gate Phase 2 initiatives on audit sign-off.",
+          dependency: "IT / Data",
+        },
+        {
+          risk: "Regulatory non-compliance (EU AI Act)",
+          likelihood: (hasRegFlag ? "Medium" : "Low") as "High" | "Medium" | "Low",
+          mitigation: "Engage Legal in Phase 1; map all flagged initiatives to EU AI Act risk categories before deployment.",
+          dependency: "Legal / Compliance",
+        },
+      ];
   type RiskLevel = "High" | "Medium" | "Low";
   const RISK_STYLE: Record<RiskLevel, { pill: string; border: string }> = {
     High:   { pill: "bg-red-500/20 text-red-400",    border: "border-red-500/30" },
@@ -836,6 +909,22 @@ export default function AIStrategyPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Regeneration banner — shown when library version has changed ── */}
+      {showRegenerationBanner && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-5 py-3 mb-4 flex items-center gap-3">
+          <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-amber-300">Content library updated to v{libMeta?.version}</p>
+            <p className="text-xs text-muted-foreground">Your strategy was generated with library v{strategyData?.libraryVersion}. Regenerate the vision and principles to incorporate the latest guidance.</p>
+          </div>
+          <a href="/ai-strategy/assessment">
+            <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 h-7 text-xs flex-shrink-0">
+              <Sparkles className="w-3 h-3 mr-1.5" />Regenerate
+            </Button>
+          </a>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           HERO — one sentence + 3 KPI numbers
@@ -1043,6 +1132,11 @@ export default function AIStrategyPage() {
               <div className="flex items-start gap-2 mb-3">
                 <Quote className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Vision Statement</p>
+                {strategyData?.provenanceJson && (
+                  <button onClick={() => { setProvenanceTarget("vision"); setProvenanceOpen(true); }} className="ml-auto text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <Info className="w-3 h-3" />Provenance
+                  </button>
+                )}
               </div>
               <blockquote className="text-base font-semibold text-foreground leading-relaxed italic mb-5">
                 &ldquo;{strategyAssessment.visionStatement}&rdquo;
@@ -1105,12 +1199,20 @@ export default function AIStrategyPage() {
               <div className="flex items-center gap-2 mb-3">
                 <Ban className="w-4 h-4 text-red-400" />
                 <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">What We Won't Do</p>
+                {Array.isArray(strategyData?.wontDo) && (strategyData?.wontDo as string[]).length > 0 && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">AI-generated</span>
+                )}
+                {strategyData?.provenanceJson && (
+                  <button onClick={() => { setProvenanceTarget("wontDo"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 ml-1">
+                    <Info className="w-3 h-3" />How?
+                  </button>
+                )}
               </div>
               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                 A strategy that makes no cuts is a wishlist. The following are explicitly out of scope for this strategy period.
               </p>
               <ul className="space-y-2">
-                {(OUT_OF_SCOPE[businessLevel] ?? OUT_OF_SCOPE[3]).map((item, i) => (
+                {wontDoItems.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <X className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-muted-foreground">{item}</span>
@@ -1178,12 +1280,19 @@ export default function AIStrategyPage() {
                 <div className="flex gap-2 mb-5">
                   {initiativesByPhase.map(({ phase, items }) => {
                     const meta = PHASE_LABELS[phase];
+                    // Map Q1/Q2/Q3/Q4 to library phase IDs
+                    const phaseIdMap: Record<string, string> = { Q1: "foundation", Q2: "build", Q3: "scale", Q4: "optimise" };
                     return (
                       <div key={phase} className="flex-1 rounded-lg border border-white/8 p-3 text-center" style={{ borderTopColor: meta.color, borderTopWidth: "2px" }}>
                         <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: meta.color }}>{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
                         <p className="text-[10px] text-muted-foreground mb-2">{meta.months}</p>
                         <p className="text-2xl font-bold text-foreground">{items.length}</p>
                         <p className="text-[10px] text-muted-foreground">initiatives</p>
+                        {/* Live cost from engine */}
+                        {liveCostEnvelope?.byPhase.find(p => p.phase === phaseIdMap[phase]) && (() => {
+                          const cp = liveCostEnvelope.byPhase.find(p => p.phase === phaseIdMap[phase])!;
+                          return <p className="text-[10px] font-semibold mt-1" style={{ color: meta.color }}>£{cp.minGbk}k–{cp.maxGbk}k</p>;
+                        })()}
                       </div>
                     );
                   })}
@@ -1303,30 +1412,40 @@ export default function AIStrategyPage() {
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="w-4 h-4 text-amber-400" />
               <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Cost Envelope by Phase</p>
+              {liveCostEnvelope && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">Library v{liveCostEnvelope.libraryVersion}</span>}
+              {strategyData?.provenanceJson && (
+                <button onClick={() => { setProvenanceTarget("costs"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+                  <Info className="w-3 h-3" />Sources
+                </button>
+              )}
             </div>
             {initiativesByPhase.length > 0 ? (
               <div className="space-y-3">
-                {initiativesByPhase.map(({ phase, items }) => {
-                  const meta = PHASE_LABELS[phase];
-                  const cost = PHASE_COST_PER_INIT[phase] ?? { low: 20, high: 60 };
-                  const low  = items.length * cost.low;
-                  const high = items.length * cost.high;
-                  return (
-                    <div key={phase} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-foreground">{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
-                        <p className="text-[10px] text-muted-foreground">{items.length} initiatives · {meta.months}</p>
+                {(() => {
+                  const phaseIdMap: Record<string, string> = { Q1: "foundation", Q2: "build", Q3: "scale", Q4: "optimise" };
+                  return initiativesByPhase.map(({ phase, items }) => {
+                    const meta = PHASE_LABELS[phase];
+                    const livePhase = liveCostEnvelope?.byPhase.find(p => p.phase === phaseIdMap[phase]);
+                    const cost = PHASE_COST_PER_INIT[phase] ?? { low: 20, high: 60 };
+                    const low  = livePhase?.minGbk ?? items.length * cost.low;
+                    const high = livePhase?.maxGbk ?? items.length * cost.high;
+                    return (
+                      <div key={phase} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-medium text-foreground">{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{items.length} initiatives · {meta.months}</p>
+                        </div>
+                        <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–{high}k</p>
                       </div>
-                      <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–{high}k</p>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
                 <div className="border-t border-white/8 pt-3 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total (18-month envelope)</p>
                   <p className="text-base font-bold text-amber-400">£{totalCostLow}k–{totalCostHigh}k</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Indicative order-of-magnitude estimates. Excludes internal headcount, change management, and vendor licensing. Requires Finance sign-off before Phase 2 commitment.
+                  {liveCostEnvelope?.caveat ?? "Indicative order-of-magnitude estimates. Excludes internal headcount, change management, and vendor licensing. Requires Finance sign-off before Phase 2 commitment."}
                 </p>
               </div>
             ) : (
@@ -1338,7 +1457,15 @@ export default function AIStrategyPage() {
           <div className="rounded-xl border border-red-500/15 bg-red-500/4 p-5">
             <div className="flex items-center gap-2 mb-4">
               <AlertCircle className="w-4 h-4 text-red-400" />
-              <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Top 3 Delivery Risks</p>
+              <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                {liveRisks && liveRisks.length > 0 ? `${liveRisks.length} Regulatory Risk${liveRisks.length > 1 ? "s" : ""} Identified` : "Top 3 Delivery Risks"}
+              </p>
+              {liveRisks && liveRisks.length > 0 && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">Rule-based</span>}
+              {strategyData?.provenanceJson && (
+                <button onClick={() => { setProvenanceTarget("risks"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+                  <Info className="w-3 h-3" />Sources
+                </button>
+              )}
             </div>
             <div className="space-y-4">
               {deliveryRisks.map((r, i) => {
@@ -1352,7 +1479,10 @@ export default function AIStrategyPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-1">{r.mitigation}</p>
-                    <p className="text-[10px] text-muted-foreground">Dependency: <strong className="text-foreground">{r.dependency}</strong></p>
+                    <p className="text-[10px] text-muted-foreground">Basis: <strong className="text-foreground">{r.dependency}</strong></p>
+                    {r.sources && r.sources.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">Sources: {r.sources.slice(0, 2).join(" · ")}</p>
+                    )}
                   </div>
                 );
               })}
@@ -1614,6 +1744,16 @@ export default function AIStrategyPage() {
         onClose={() => setDetailInitiative(null)}
       />
       <LibraryVersionFooter />
+
+      {/* ── Provenance modal ── */}
+      <ProvenanceModal
+        open={provenanceOpen}
+        onClose={() => setProvenanceOpen(false)}
+        target={provenanceTarget}
+        provenanceJson={strategyData?.provenanceJson ?? null}
+        selectedInits={selectedInits}
+        liveRisks={liveRisks}
+      />
     </div>
   );
 }
@@ -1633,5 +1773,166 @@ function LibraryVersionFooter() {
         Content Library v{meta.version}
       </a>
     </div>
+  );
+}
+
+// ── ProvenanceModal ───────────────────────────────────────────────────────────
+interface ProvenanceModalProps {
+  open: boolean;
+  onClose: () => void;
+  target: "vision" | "wontDo" | "costs" | "risks";
+  provenanceJson: string | null;
+  selectedInits: any[];
+  liveRisks: Array<{
+    ruleId: string; displayName: string; riskStatement: string;
+    severity: "very_high" | "high" | "medium" | "low";
+    recommendedAction: string; regulatoryBasis: string[]; sources: string[];
+  }> | null;
+}
+
+const PROVENANCE_TITLES: Record<string, string> = {
+  vision: "Vision Statement — How It Was Generated",
+  wontDo: "What We Won't Do — How It Was Generated",
+  costs: "Cost Envelope — Sources & Methodology",
+  risks: "Delivery Risks — Rule Basis & Sources",
+};
+
+function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits, liveRisks }: ProvenanceModalProps) {
+  const provenance = useMemo(() => {
+    if (!provenanceJson) return null;
+    try { return JSON.parse(provenanceJson) as {
+      vision?: { method: string; libraryVersion: string; generatedAt: number };
+      wontDo?: { method: string; libraryVersion: string; generatedAt: number };
+      costs?: Record<string, { sourceId: string; baseRange: [number, number]; multipliers: string[]; libraryVersion: string }>;
+      risks?: Record<string, { ruleId: string; triggeredBy: string; libraryVersion: string }>;
+    }; } catch { return null; }
+  }, [provenanceJson]);
+
+  const METHOD_LABELS: Record<string, string> = {
+    llm_with_quality_gate: "LLM with quality gate",
+    static: "Static content library",
+    rule_based: "Rule-based engine",
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold pr-6">{PROVENANCE_TITLES[target]}</DialogTitle>
+        </DialogHeader>
+
+        {!provenance ? (
+          <p className="text-sm text-muted-foreground py-4">Provenance data not available. Save your strategy to generate provenance records.</p>
+        ) : target === "vision" || target === "wontDo" ? (
+          <div className="space-y-4 pt-1">
+            <div className="rounded-lg border border-white/8 bg-white/2 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-0.5">Generation Method</p>
+                  <p className="text-xs text-muted-foreground">{METHOD_LABELS[provenance[target]?.method ?? ""] ?? provenance[target]?.method ?? "—"}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/6">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Library Version</p>
+                  <p className="text-xs font-mono text-foreground">{provenance[target]?.libraryVersion ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Generated</p>
+                  <p className="text-xs text-foreground">{provenance[target]?.generatedAt ? new Date(provenance[target]!.generatedAt).toLocaleString() : "—"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/8 bg-white/2 p-4">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Quality Gate</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The {target === "vision" ? "vision statement" : "\"What We Won't Do\" list"} was generated by the AiQ Strategy Engine using a multi-pass LLM process with a quality gate that checks for forbidden phrases, required numeric commitments, and sector-specific vocabulary. Outputs failing the gate are regenerated up to 3 times before falling back to a curated template.
+              </p>
+            </div>
+          </div>
+        ) : target === "costs" ? (
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Cost estimates are derived from the Content Library base ranges, adjusted by organisation size and ambition tier multipliers. All figures are indicative order-of-magnitude estimates in GBP thousands.
+            </p>
+            {provenance.costs && Object.entries(provenance.costs).length > 0 ? (
+              <div className="space-y-2">
+                {Object.entries(provenance.costs).map(([initId, costData]) => {
+                  const init = selectedInits.find((i: any) => i.id === initId || i.initiative_id === initId);
+                  return (
+                    <div key={initId} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                      <p className="text-xs font-semibold text-foreground mb-1">{init?.name ?? init?.display_name ?? initId}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Base range</p>
+                          <p className="text-xs font-mono text-foreground">£{costData.baseRange[0]}k–{costData.baseRange[1]}k</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Multipliers</p>
+                          <p className="text-xs text-foreground">{costData.multipliers.join(", ") || "none"}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Source</p>
+                          <p className="text-xs font-mono text-muted-foreground truncate">{costData.sourceId}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No per-initiative cost provenance available. Save your strategy after selecting initiatives.</p>
+            )}
+          </div>
+        ) : target === "risks" ? (
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Risks are identified by the AiQ Risk Rule Engine, which evaluates a rule set from the Content Library against your selected initiatives, ambition tier, and organisation size. Each rule has a regulatory basis and source citations.
+            </p>
+            {liveRisks && liveRisks.length > 0 ? (
+              <div className="space-y-3">
+                {liveRisks.map(r => (
+                  <div key={r.ruleId} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <p className="text-xs font-semibold text-foreground flex-1">{r.displayName}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        r.severity === "very_high" || r.severity === "high" ? "bg-red-500/15 text-red-400" :
+                        r.severity === "medium" ? "bg-amber-500/15 text-amber-400" :
+                        "bg-green-500/15 text-green-400"
+                      }`}>{r.severity.replace("_", " ")}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-2">{r.riskStatement}</p>
+                    {r.regulatoryBasis.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-1.5">
+                        {r.regulatoryBasis.map(b => (
+                          <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">{b}</span>
+                        ))}
+                      </div>
+                    )}
+                    {r.sources.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground/60">Sources: {r.sources.join(" · ")}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : provenance.risks && Object.keys(provenance.risks).length > 0 ? (
+              <div className="space-y-2">
+                {Object.entries(provenance.risks).map(([ruleId, riskData]) => (
+                  <div key={ruleId} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                    <p className="text-xs font-semibold text-foreground mb-0.5">{ruleId}</p>
+                    <p className="text-[10px] text-muted-foreground">Library v{riskData.libraryVersion}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No risk provenance available. Select initiatives to trigger risk rule evaluation.</p>
+            )}
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }

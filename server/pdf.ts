@@ -18,7 +18,8 @@ import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
 import { getUserById, getDb, getTenantById } from "./db";
-import { getLibraryMeta } from "./contentLibrary";
+import { getLibraryMeta, getAllInitiatives } from "./contentLibrary";
+import { calculateCostEnvelope, evaluateRiskRules } from "./strategyEngine";
 import {
   assessmentSessions,
   assessmentScores,
@@ -977,13 +978,207 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
     });
   }
 
+  // ── SECTION 2: Ambition ────────────────────────────────────────────────────
+  // Fetch vision statement, guiding principles, wontDo from ailOrgContext
+  const visionStatement: string | null = (orgCtx as any)?.visionStatement ?? null;
+  let guidingPrinciples: Array<{ title: string; description: string }> = [];
+  try {
+    const raw = (orgCtx as any)?.guidingPrinciplesJson;
+    if (raw) guidingPrinciples = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {}
+  let wontDoItems: string[] = [];
+  try {
+    const raw = (orgCtx as any)?.wontDoJson;
+    if (raw) wontDoItems = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {}
+  const libraryVersion: string | null = (orgCtx as any)?.libraryVersion ?? null;
+
+  if (visionStatement || guidingPrinciples.length > 0 || wontDoItems.length > 0) {
+    addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
+    doc.addPage();
+    pageCounter.n++;
+    doc.y = 40;
+    addSectionHeading(doc, "Section 2 — Ambition: Where We Are Going");
+
+    if (visionStatement) {
+      checkPageBreak(doc, 60, pageCounter);
+      doc.rect(40, doc.y, doc.page.width - 80, 4).fill(BRAND.teal);
+      doc.y += 8;
+      doc.fontSize(10).font("Helvetica-BoldOblique").fillColor(BRAND.navy)
+         .text(`"${visionStatement}"`, 48, doc.y, { width: doc.page.width - 96 });
+      doc.moveDown(0.8);
+    }
+
+    if (guidingPrinciples.length > 0) {
+      checkPageBreak(doc, 40, pageCounter);
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text("Guiding Principles", 40, doc.y);
+      doc.moveDown(0.4);
+      for (const p of guidingPrinciples) {
+        checkPageBreak(doc, 30, pageCounter);
+        doc.rect(40, doc.y, 3, 18).fill(BRAND.teal);
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text(p.title, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.2);
+        doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+           .text(p.description, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.7);
+      }
+    }
+
+    if (wontDoItems.length > 0) {
+      checkPageBreak(doc, 40, pageCounter);
+      doc.rect(40, doc.y, doc.page.width - 80, 22).fill(BRAND.unsafe);
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.white)
+         .text("WHAT WE WON'T DO", 48, doc.y - 16, { width: doc.page.width - 96 });
+      doc.moveDown(0.8);
+      for (const item of wontDoItems) {
+        checkPageBreak(doc, 18, pageCounter);
+        doc.fontSize(8).font("Helvetica").fillColor(BRAND.unsafe)
+           .text(`✕  ${item}`, 48, doc.y, { width: doc.page.width - 96 });
+        doc.moveDown(0.5);
+      }
+    }
+  }
+
+  // ── SECTION 3: Plan ────────────────────────────────────────────────────────
+  let selectedInitiativeIds: string[] = [];
+  try {
+    const raw = (orgCtx as any)?.selectedInitiativesJson;
+    if (raw) selectedInitiativeIds = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {}
+
+  const allInitiatives = getAllInitiatives();
+  const initiativeMap = new Map(allInitiatives.map(i => [i.initiative_id, i]));
+  const selectedInits = selectedInitiativeIds
+    .map(id => initiativeMap.get(id))
+    .filter(Boolean) as typeof allInitiatives;
+
+  if (selectedInits.length > 0) {
+    checkPageBreak(doc, 60, pageCounter);
+    addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
+    doc.addPage();
+    pageCounter.n++;
+    doc.y = 40;
+    addSectionHeading(doc, "Section 3 — Plan: How We Will Get There");
+
+    const phases: Record<string, typeof allInitiatives> = { phase_1: [], phase_2: [], phase_3: [] };
+    for (const init of selectedInits) {
+      const phase = (init as any).phase ?? "phase_1";
+      if (!phases[phase]) phases[phase] = [];
+      phases[phase].push(init);
+    }
+    const phaseLabels: Record<string, string> = {
+      phase_1: "Phase 1 — Foundation (0–6 months)",
+      phase_2: "Phase 2 — Build (6–12 months)",
+      phase_3: "Phase 3 — Scale (12–18 months)",
+    };
+    for (const [phaseKey, inits] of Object.entries(phases)) {
+      if (inits.length === 0) continue;
+      checkPageBreak(doc, 30, pageCounter);
+      doc.rect(40, doc.y, doc.page.width - 80, 18).fill(BRAND.navy);
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.gold)
+         .text(phaseLabels[phaseKey] ?? phaseKey, 48, doc.y - 13, { width: doc.page.width - 96 });
+      doc.moveDown(0.6);
+      for (const init of inits) {
+        checkPageBreak(doc, 28, pageCounter);
+        doc.rect(40, doc.y, 3, 20).fill(BRAND.teal);
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text((init as any).display_name ?? init.initiative_id, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.2);
+        const desc = (init as any).description ?? "";
+        if (desc) {
+          doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+             .text(desc.slice(0, 180) + (desc.length > 180 ? "…" : ""), 50, doc.y, { width: doc.page.width - 90 });
+        }
+        doc.moveDown(0.7);
+      }
+    }
+  }
+
+  // ── SECTION 4: Investment & Risk ───────────────────────────────────────────
+  if (selectedInits.length > 0) {
+    // Determine org size and ambition tier for cost envelope
+    const orgSizeRaw = (orgCtx as any)?.orgSize ?? "medium";
+    const orgSize: "small" | "medium" | "large" | "enterprise" =
+      ["small", "medium", "large", "enterprise"].includes(orgSizeRaw) ? orgSizeRaw : "medium";
+    const ambitionTierRaw = businessAmbitionLevel >= 4 ? "transformative" : businessAmbitionLevel >= 3 ? "progressive" : "cautious";
+    const ambitionTier: "cautious" | "progressive" | "transformative" = ambitionTierRaw;
+
+    const costEnvelope = calculateCostEnvelope(
+      selectedInitiativeIds,
+      orgSize,
+      ambitionTier,
+    );
+    const riskMatches = evaluateRiskRules({
+      selectedInitiativeIds,
+      orgSize,
+      ambitionTier,
+      hasExecSponsor: false,
+      hasDataGovernanceInitiative: false,
+    });
+
+    checkPageBreak(doc, 60, pageCounter);
+    addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
+    doc.addPage();
+    pageCounter.n++;
+    doc.y = 40;
+    addSectionHeading(doc, "Section 4 — Investment & Risk");
+
+    // Cost envelope
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.navy)
+       .text("Cost Envelope by Phase", 40, doc.y);
+    doc.moveDown(0.4);
+    doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+       .text(`Total estimated investment: £${Math.round(costEnvelope.totalMin)}k – £${Math.round(costEnvelope.totalMax)}k`, 40, doc.y);
+    doc.moveDown(0.4);
+    for (const phase of costEnvelope.byPhase) {
+      checkPageBreak(doc, 22, pageCounter);
+      const barW = doc.page.width - 200;
+      const barX = 160;
+      const barY = doc.y;
+      doc.fontSize(8).font("Helvetica").fillColor(BRAND.slate)
+         .text(phase.label, 40, barY, { width: 115 });
+      doc.rect(barX, barY + 2, barW, 8).fill(BRAND.border);
+      const filled = phase.maxGbk > 0 ? Math.round((phase.minGbk / phase.maxGbk) * barW) : 0;
+      if (filled > 0) doc.rect(barX, barY + 2, filled, 8).fill(BRAND.teal);
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text(`£${Math.round(phase.minGbk)}k–£${Math.round(phase.maxGbk)}k`, barX + barW + 6, barY, { width: 80 });
+      doc.y = barY + 18;
+    }
+    doc.moveDown(0.5);
+
+    // Risks
+    if (riskMatches.length > 0) {
+      checkPageBreak(doc, 40, pageCounter);
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text(`${riskMatches.length} Regulatory Risk${riskMatches.length > 1 ? "s" : ""} Identified`, 40, doc.y);
+      doc.moveDown(0.4);
+      for (const risk of riskMatches) {
+        checkPageBreak(doc, 40, pageCounter);
+        const sevColour = risk.severity === "very_high" || risk.severity === "high" ? BRAND.unsafe :
+                          risk.severity === "medium" ? BRAND.risk : BRAND.safe;
+        doc.rect(40, doc.y, 3, 24).fill(sevColour);
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text(risk.displayName, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.2);
+        doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+           .text(risk.riskStatement, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.2);
+        doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.teal)
+           .text(`Recommended: ${risk.recommendedAction}`, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.7);
+      }
+    }
+  }
+
   // Disclosure note
   checkPageBreak(doc, 40, pageCounter);
   doc.moveDown(0.5);
   doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
      .text("Capability scores are derived from AiQ adaptive assessments. Benchmarks are based on synthetic norms calibrated against the AiQ question bank. This report is confidential and intended for internal strategic planning purposes only.", 40, doc.y, { width: doc.page.width - 80 });
 
-  addFooter(doc, pageCounter.n);
+  addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
 }
 
 // ─── Route registration ───────────────────────────────────────────────────────

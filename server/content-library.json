@@ -1,11 +1,11 @@
 {
   "meta": {
     "version": "1.0.0",
-    "built_at": "2026-05-07T21:18:45.111811+00:00",
+    "built_at": "2026-05-08T05:41:45.932828+00:00",
     "git_sha": "unknown",
     "content_counts": {
       "sources": 15,
-      "initiatives": 24,
+      "initiatives": 30,
       "risk_rules": 10,
       "sector_benchmarks": 8,
       "templates": 5
@@ -4382,6 +4382,523 @@
         "src_cipd_2025_capability",
         "src_acas_ai_employment_2024",
         "src_ico_guidance_hr_ai_2025"
+      ],
+      "confidence": "medium",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "standard_quarterly"
+    },
+    "ai_talent_marketplace": {
+      "initiative_id": "ai_talent_marketplace",
+      "display_name": "Internal AI Talent Marketplace",
+      "category": "workforce_planning",
+      "short_description": "AI-powered internal mobility platform matching employees to open roles, projects, mentors, and stretch assignments based on skills, aspirations, and business need. Reduces external hiring costs and improves retention by surfacing internal career paths that employees would otherwise miss.\n",
+      "capability_domains_addressed": [
+        "ai_workflow_design",
+        "workforce_ai_readiness"
+      ],
+      "typical_phase": "scale",
+      "applicable_personas": [
+        "chro",
+        "hrbp",
+        "ta_specialist"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          60000,
+          200000
+        ],
+        "size_multipliers": {
+          "<100": 0.4,
+          "100-500": 1.0,
+          "500-2000": 2.0,
+          "2000+": 4.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.6,
+          "innovators": 1.0,
+          "transformative": 1.4
+        },
+        "caveat": "Platform build and HRIS integration. Excludes change management and adoption programme. Requires skills intelligence platform as a prerequisite."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "manager_hoarding",
+          "statement": "Managers block internal moves to protect team stability, undermining marketplace adoption",
+          "severity": "high",
+          "mitigation": "Embed internal mobility metrics in manager performance framework; executive sponsorship required",
+          "sources": [
+            "src_deloitte_workforce_ai_2025"
+          ]
+        },
+        {
+          "risk_id": "algorithmic_bias_matching",
+          "statement": "Matching algorithm perpetuates historical patterns of who gets development opportunities",
+          "severity": "high",
+          "mitigation": "Audit matching outcomes quarterly by protected characteristic; publish equity metrics",
+          "sources": [
+            "src_ico_guidance_hr_ai_2025",
+            "src_acas_ai_employment_2024"
+          ]
+        }
+      ],
+      "dependencies": [
+        "skills_intelligence_platform",
+        "hr_data_quality_audit",
+        "it_data"
+      ],
+      "typical_outcomes": [
+        "20-35% reduction in external hiring for roles that could be filled internally",
+        "Measurable improvement in internal mobility rates",
+        "Higher employee engagement scores linked to career development"
+      ],
+      "outcome_ids": [
+        "workforce_resilience",
+        "faster_capability_uplift",
+        "quality_of_hire"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "high",
+        "gdpr": "high",
+        "employment_law": "medium"
+      },
+      "sources": [
+        "src_deloitte_workforce_ai_2025",
+        "src_ico_guidance_hr_ai_2025",
+        "src_wef_future_jobs_2025"
+      ],
+      "confidence": "medium",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "standard_quarterly"
+    },
+    "ai_performance_calibration": {
+      "initiative_id": "ai_performance_calibration",
+      "display_name": "AI-Assisted Performance Calibration",
+      "category": "performance_management",
+      "short_description": "AI tool supporting performance calibration sessions: surfaces rating distribution anomalies, flags potential bias patterns (gender, ethnicity, tenure), and provides managers with evidence-based talking points. Does not replace human calibration \u2014 it prepares and informs it.\n",
+      "capability_domains_addressed": [
+        "ai_output_evaluation",
+        "ai_ethics_and_trust"
+      ],
+      "typical_phase": "scale",
+      "applicable_personas": [
+        "hrbp",
+        "hr_manager",
+        "chro"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          25000,
+          80000
+        ],
+        "size_multipliers": {
+          "<100": 0.5,
+          "100-500": 1.0,
+          "500-2000": 1.8,
+          "2000+": 3.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.7,
+          "innovators": 1.0,
+          "transformative": 1.2
+        },
+        "caveat": "Annual licence and configuration. Requires clean performance data with at least 2 years of history for bias detection to be statistically meaningful."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "automation_bias_in_calibration",
+          "statement": "Managers defer to AI flags rather than exercising independent judgement",
+          "severity": "high",
+          "mitigation": "Train managers that AI output is a prompt for discussion, not a verdict; document human decision rationale",
+          "sources": [
+            "src_acas_ai_employment_2024"
+          ]
+        },
+        {
+          "risk_id": "historical_bias_amplification",
+          "statement": "AI trained on historical ratings replicates past discriminatory patterns",
+          "severity": "high",
+          "mitigation": "Audit training data for historical bias before deployment; ongoing output monitoring",
+          "sources": [
+            "src_ico_guidance_hr_ai_2025",
+            "src_eu_ai_act_2024"
+          ]
+        }
+      ],
+      "dependencies": [
+        "hr_data_quality_audit",
+        "legal_compliance"
+      ],
+      "typical_outcomes": [
+        "Measurable reduction in rating distribution variance across managers",
+        "Documented evidence of bias-aware calibration process",
+        "Improved employee perception of performance fairness"
+      ],
+      "outcome_ids": [
+        "manager_effectiveness",
+        "reduced_compliance_risk",
+        "data_driven_hr_decisions"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "high",
+        "gdpr": "high",
+        "employment_law": "high"
+      },
+      "sources": [
+        "src_acas_ai_employment_2024",
+        "src_ico_guidance_hr_ai_2025",
+        "src_eu_ai_act_2024"
+      ],
+      "confidence": "high",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "priority_quarterly"
+    },
+    "ai_employee_listening": {
+      "initiative_id": "ai_employee_listening",
+      "display_name": "AI-Powered Employee Listening Programme",
+      "category": "analytics",
+      "short_description": "Continuous employee listening using AI to analyse pulse survey data, exit interview themes, and open-text feedback at scale. Surfaces emerging themes, sentiment trends, and leading indicators of engagement risk \u2014 without requiring manual thematic analysis.\n",
+      "capability_domains_addressed": [
+        "ai_output_evaluation",
+        "ai_interaction"
+      ],
+      "typical_phase": "optimise",
+      "applicable_personas": [
+        "chro",
+        "hrbp",
+        "hr_manager"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          20000,
+          70000
+        ],
+        "size_multipliers": {
+          "<100": 0.5,
+          "100-500": 1.0,
+          "500-2000": 1.8,
+          "2000+": 3.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.8,
+          "innovators": 1.0,
+          "transformative": 1.2
+        },
+        "caveat": "Annual platform licence. Excludes survey design and change management costs. Requires minimum 50 respondents per segment for statistically meaningful analysis."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "employee_surveillance_perception",
+          "statement": "Employees perceive continuous listening as surveillance, reducing candour",
+          "severity": "high",
+          "mitigation": "Transparent communication of data use; aggregate-only reporting; no individual attribution",
+          "sources": [
+            "src_acas_ai_employment_2024",
+            "src_ico_guidance_hr_ai_2025"
+          ]
+        },
+        {
+          "risk_id": "action_gap",
+          "statement": "Listening data collected but not acted on, eroding employee trust",
+          "severity": "medium",
+          "mitigation": "Publish listening-to-action cycle; close the loop publicly on themes raised",
+          "sources": [
+            "src_cipd_people_profession_2024"
+          ]
+        }
+      ],
+      "dependencies": [
+        "hr_data_quality_audit"
+      ],
+      "typical_outcomes": [
+        "Real-time visibility of engagement trends without manual analysis",
+        "Earlier identification of retention risk and culture issues",
+        "Evidence base for people strategy decisions"
+      ],
+      "outcome_ids": [
+        "data_driven_hr_decisions",
+        "workforce_resilience",
+        "manager_effectiveness"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "medium",
+        "gdpr": "high",
+        "employment_law": "medium"
+      },
+      "sources": [
+        "src_cipd_people_mgmt_2024",
+        "src_acas_ai_employment_2024",
+        "src_ico_guidance_hr_ai_2025"
+      ],
+      "confidence": "medium",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "standard_quarterly"
+    },
+    "ai_job_architecture_redesign": {
+      "initiative_id": "ai_job_architecture_redesign",
+      "display_name": "AI-Enabled Job Architecture Redesign",
+      "category": "workforce_planning",
+      "short_description": "Using AI to analyse job content, identify tasks susceptible to automation, redesign roles around human-AI collaboration, and produce updated job architectures. Addresses the structural workforce change that AI creates rather than just training people for jobs that are changing.\n",
+      "capability_domains_addressed": [
+        "ai_workflow_design",
+        "workforce_ai_readiness"
+      ],
+      "typical_phase": "optimise",
+      "applicable_personas": [
+        "chro",
+        "hrbp"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          80000,
+          300000
+        ],
+        "size_multipliers": {
+          "<100": 0.4,
+          "100-500": 1.0,
+          "500-2000": 2.5,
+          "2000+": 5.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.5,
+          "innovators": 1.0,
+          "transformative": 1.6
+        },
+        "caveat": "Includes AI task analysis, job design workshops, and updated job architecture documentation. Excludes regrading, pay modelling, and implementation change management."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "employee_anxiety",
+          "statement": "Job redesign programme triggers redundancy fears and talent flight",
+          "severity": "high",
+          "mitigation": "Lead with opportunity narrative; involve employees in redesign; provide clear transition commitments",
+          "sources": [
+            "src_wef_future_jobs_2025",
+            "src_deloitte_workforce_ai_2025"
+          ]
+        },
+        {
+          "risk_id": "consultation_obligations",
+          "statement": "Significant job changes trigger collective consultation obligations under TULRCA",
+          "severity": "high",
+          "mitigation": "Engage employment counsel before commencing; plan consultation timeline into project",
+          "sources": [
+            "src_acas_ai_employment_2024"
+          ]
+        }
+      ],
+      "dependencies": [
+        "skills_intelligence_platform",
+        "workforce_scenario_planning",
+        "legal_compliance"
+      ],
+      "typical_outcomes": [
+        "Updated job architecture reflecting human-AI collaboration model",
+        "Quantified automation exposure by role family",
+        "Transition pathways for roles most affected by AI"
+      ],
+      "outcome_ids": [
+        "workforce_resilience",
+        "manager_effectiveness",
+        "data_driven_hr_decisions"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "medium",
+        "gdpr": "low",
+        "employment_law": "high"
+      },
+      "sources": [
+        "src_wef_future_jobs_2025",
+        "src_deloitte_workforce_ai_2025",
+        "src_acas_ai_employment_2024"
+      ],
+      "confidence": "medium",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "standard_quarterly"
+    },
+    "ai_governance_continuous_monitoring": {
+      "initiative_id": "ai_governance_continuous_monitoring",
+      "display_name": "AI Governance Continuous Monitoring Programme",
+      "category": "governance",
+      "short_description": "Ongoing monitoring of all deployed HR AI systems: bias audits, model drift detection, regulatory compliance checks, and incident response procedures. Moves AI governance from a one-time deployment gate to a continuous operational discipline. Required for EU AI Act compliance for high-risk HR AI systems.\n",
+      "capability_domains_addressed": [
+        "ai_ethics_and_trust",
+        "ai_output_evaluation"
+      ],
+      "typical_phase": "optimise",
+      "applicable_personas": [
+        "chro",
+        "hrbp",
+        "er_specialist"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          30000,
+          100000
+        ],
+        "size_multipliers": {
+          "<100": 0.6,
+          "100-500": 1.0,
+          "500-2000": 1.8,
+          "2000+": 3.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.8,
+          "innovators": 1.0,
+          "transformative": 1.3
+        },
+        "caveat": "Annual operating cost for monitoring programme. Scales with number of AI systems deployed. Excludes remediation costs when issues are identified."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "monitoring_without_action",
+          "statement": "Monitoring programme identifies issues but no clear escalation or remediation process",
+          "severity": "high",
+          "mitigation": "Define escalation thresholds and remediation SLAs before go-live; assign named accountability",
+          "sources": [
+            "src_eu_ai_act_2024",
+            "src_ico_guidance_hr_ai_2025"
+          ]
+        },
+        {
+          "risk_id": "regulatory_change_lag",
+          "statement": "Monitoring programme does not keep pace with evolving EU AI Act guidance",
+          "severity": "medium",
+          "mitigation": "Assign regulatory watch responsibility; subscribe to ICO and EU AI Office updates",
+          "sources": [
+            "src_eu_ai_act_2024"
+          ]
+        }
+      ],
+      "dependencies": [
+        "ai_ethics_governance_framework",
+        "legal_compliance",
+        "it_data"
+      ],
+      "typical_outcomes": [
+        "Continuous compliance posture for all deployed HR AI systems",
+        "Documented audit trail for EU AI Act high-risk system obligations",
+        "Early detection of model drift and bias emergence"
+      ],
+      "outcome_ids": [
+        "reduced_compliance_risk",
+        "data_driven_hr_decisions"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "high",
+        "gdpr": "high",
+        "employment_law": "medium"
+      },
+      "sources": [
+        "src_eu_ai_act_2024",
+        "src_ico_guidance_hr_ai_2025",
+        "src_acas_ai_employment_2024"
+      ],
+      "confidence": "high",
+      "last_reviewed": "2026-Q1",
+      "reviewer": "DM",
+      "review_tier": "priority_quarterly"
+    },
+    "ai_hr_operating_model_redesign": {
+      "initiative_id": "ai_hr_operating_model_redesign",
+      "display_name": "HR Operating Model Redesign for AI",
+      "category": "change_and_capability",
+      "short_description": "Structural redesign of the HR operating model to embed AI capability: new roles (AI Ethics Lead, People Data Analyst, AI Change Partner), updated HR business partner remit, revised service delivery model, and governance structures for ongoing AI oversight. Addresses the organisational design question that most AI programmes ignore.\n",
+      "capability_domains_addressed": [
+        "ai_change_leadership",
+        "ai_ethics_and_trust",
+        "ai_workflow_design"
+      ],
+      "typical_phase": "optimise",
+      "applicable_personas": [
+        "chro",
+        "hrbp"
+      ],
+      "applicable_industries": [
+        "all"
+      ],
+      "cost": {
+        "base_range_gbp": [
+          50000,
+          200000
+        ],
+        "size_multipliers": {
+          "<100": 0.4,
+          "100-500": 1.0,
+          "500-2000": 2.0,
+          "2000+": 4.0
+        },
+        "ambition_multipliers": {
+          "embracers": 0.5,
+          "innovators": 1.0,
+          "transformative": 1.8
+        },
+        "caveat": "Design and implementation consulting costs. Excludes recruitment costs for new roles (typically \u00a315-40k per hire) and restructuring costs."
+      },
+      "typical_risks": [
+        {
+          "risk_id": "change_fatigue",
+          "statement": "Operating model redesign lands on top of existing transformation programmes, causing change fatigue",
+          "severity": "high",
+          "mitigation": "Sequence carefully against other HR transformation activity; invest in change management",
+          "sources": [
+            "src_cipd_people_profession_2024",
+            "src_deloitte_workforce_ai_2025"
+          ]
+        },
+        {
+          "risk_id": "capability_gap_in_new_roles",
+          "statement": "New AI-focused HR roles cannot be filled due to market scarcity of HR-AI hybrid talent",
+          "severity": "medium",
+          "mitigation": "Build-buy-borrow strategy: upskill existing HR talent, hire selectively, use interim expertise",
+          "sources": [
+            "src_wef_future_jobs_2025",
+            "src_pwc_workforce_upskilling_2025"
+          ]
+        }
+      ],
+      "dependencies": [
+        "ai_literacy_programme",
+        "ai_ethics_governance_framework"
+      ],
+      "typical_outcomes": [
+        "HR operating model fit for AI-enabled people management",
+        "Clear accountability for AI governance within HR",
+        "Upskilled HR function with defined AI capability expectations by role"
+      ],
+      "outcome_ids": [
+        "manager_effectiveness",
+        "reduced_compliance_risk",
+        "ai_adoption_rate"
+      ],
+      "regulatory_exposure": {
+        "eu_ai_act": "low",
+        "gdpr": "low",
+        "employment_law": "medium"
+      },
+      "sources": [
+        "src_cipd_people_mgmt_2024",
+        "src_deloitte_workforce_ai_2025",
+        "src_wef_future_jobs_2025"
       ],
       "confidence": "medium",
       "last_reviewed": "2026-Q1",

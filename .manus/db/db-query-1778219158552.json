@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE ail_org_context\n  ADD COLUMN wont_do_json TEXT NULL COMMENT 'JSON: string[] — LLM-generated out-of-scope items',\n  ADD COLUMN provenance_json TEXT NULL COMMENT 'JSON: provenance map for cost/risk/vision sources',\n  ADD COLUMN library_version VARCHAR(20) NULL COMMENT 'content library version used when strategy was generated';\n\nALTER TABLE strategy_risk_register\n  ADD COLUMN source_rule_id VARCHAR(100) NULL COMMENT 'content library risk rule ID that triggered this entry';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE ail_org_context\n  ADD COLUMN wont_do_json TEXT NULL COMMENT 'JSON: string[] — LLM-generated out-of-scope items',\n  ADD COLUMN provenance_json TEXT NULL COMMENT 'JSON: provenance map for cost/risk/vision sources',\n  ADD COLUMN library_version VARCHAR(20) NULL COMMENT 'content library version used when strategy was generated';\n\nALTER TABLE strategy_risk_register\n  ADD COLUMN source_rule_id VARCHAR(100) NULL COMMENT 'content library risk rule ID that triggered this entry';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1255
+}

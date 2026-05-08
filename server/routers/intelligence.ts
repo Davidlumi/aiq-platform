@@ -27,6 +27,16 @@ import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users }
 import { invokeLLM } from "../_core/llm";
 import { nanoid } from "nanoid";
 import { eq, desc, and } from "drizzle-orm";
+import {
+  generateVisionWithQualityGate,
+  evaluateRiskRules,
+  selectInitiatives,
+  calculateCostEnvelope,
+  buildProvenanceMap,
+  type RiskEvalInput,
+  type SelectInitiativesInput,
+} from "../strategyEngine";
+import { getLibraryMeta } from "../contentLibrary";
 
 import {
   generateCapabilityReport,
@@ -296,6 +306,9 @@ export const intelligenceRouter = router({
       ambitionTargetDate: ailOrgContext.ambitionTargetDate,
       ambitionTargetLabel: ailOrgContext.ambitionTargetLabel,
       selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+      wontDoJson: ailOrgContext.wontDoJson,
+      provenanceJson: ailOrgContext.provenanceJson,
+      libraryVersion: ailOrgContext.libraryVersion,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -305,6 +318,7 @@ export const intelligenceRouter = router({
       domainTargets: null, strategyNarrative: null, strategySavedAt: null,
       ambitionTargetScore: null, ambitionTargetDate: null, ambitionTargetLabel: null,
       selectedInitiativeIds: [] as string[],
+      wontDo: [] as string[], provenanceJson: null as string | null, libraryVersion: null as string | null,
     };
     let domainTargets: Record<string, number> | null = null;
     if (row.domainTargetsJson) {
@@ -348,6 +362,9 @@ export const intelligenceRouter = router({
       ambitionTargetLabel: row.ambitionTargetLabel,
       currentDomainScores,
       selectedInitiativeIds: (() => { try { return JSON.parse(row.selectedInitiativesJson ?? "[]") as string[]; } catch { return [] as string[]; } })(),
+      wontDo: (() => { try { return row.wontDoJson ? JSON.parse(row.wontDoJson) as string[] : [] as string[]; } catch { return [] as string[]; } })(),
+      provenanceJson: row.provenanceJson ?? null,
+      libraryVersion: row.libraryVersion ?? null,
     };
   }),
 
@@ -532,6 +549,7 @@ Return JSON with this exact structure:
 
   /**
    * Save the strategy assessment answers, vision statement, and guiding principles.
+   * Also persists wontDoJson, provenanceJson, and libraryVersion.
    */
   saveStrategyAssessment: protectedProcedure
     .input(z.object({
@@ -539,9 +557,11 @@ Return JSON with this exact structure:
       hrRoleAnswers: z.record(z.string(), z.string()),
       visionStatement: z.string(),
       guidingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })),
+      wontDo: z.array(z.string()).optional(),
       businessAmbitionLevel: z.number().int().min(1).max(5),
       peopleAmbitionLevel: z.number().int().min(1).max(5),
       selectedInitiativeIds: z.array(z.string()).optional(),
+      provenanceJson: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -550,6 +570,7 @@ Return JSON with this exact structure:
       }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const libMeta = getLibraryMeta();
       const existing = await db.select({ id: ailOrgContext.id })
         .from(ailOrgContext)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
@@ -559,6 +580,9 @@ Return JSON with this exact structure:
         hrRoleAnswersJson: JSON.stringify(input.hrRoleAnswers),
         visionStatement: input.visionStatement,
         guidingPrinciplesJson: JSON.stringify(input.guidingPrinciples),
+        wontDoJson: input.wontDo ? JSON.stringify(input.wontDo) : null,
+        provenanceJson: input.provenanceJson ?? null,
+        libraryVersion: libMeta?.version ?? null,
         businessAmbitionLevel: input.businessAmbitionLevel,
         peopleAmbitionLevel: input.peopleAmbitionLevel,
         selectedInitiativesJson: JSON.stringify(input.selectedInitiativeIds ?? []),
@@ -572,6 +596,133 @@ Return JSON with this exact structure:
         await db.insert(ailOrgContext).values({ id: nanoid(), tenantId: ctx.user.tenantId, ...payload });
       }
       return { success: true };
+    }),
+
+  /**
+   * P1.1 — Generate vision with quality gate (retry + forbidden phrase check + wontDo).
+   * Replaces the bare generateVisionAndPrinciples call.
+   */
+  generateVisionWithQualityGate: protectedProcedure
+    .input(z.object({
+      sector: z.string(),
+      businessAmbitionLabel: z.string(),
+      peopleAmbitionLabel: z.string(),
+      aspirationAnswers: z.record(z.string(), z.string()),
+      hrRoleAnswers: z.record(z.string(), z.string()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return generateVisionWithQualityGate(input);
+    }),
+
+  /**
+   * P1.3 — Evaluate risk rules against current strategy context.
+   * Returns auto-populated risk register entries with sourceRuleId.
+   */
+  evaluateRiskRules: protectedProcedure
+    .input(z.object({
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
+      orgSize: z.enum(["small", "medium", "large", "enterprise"]),
+      selectedInitiativeIds: z.array(z.string()),
+      hasExecSponsor: z.boolean().optional(),
+      hasDataGovernanceInitiative: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const riskInput: RiskEvalInput = {
+        ambitionTier: input.ambitionTier,
+        orgSize: input.orgSize,
+        selectedInitiativeIds: input.selectedInitiativeIds,
+        hasExecSponsor: input.hasExecSponsor ?? false,
+        hasDataGovernanceInitiative: input.hasDataGovernanceInitiative ?? false,
+      };
+      return evaluateRiskRules(riskInput);
+    }),
+
+  /**
+   * P2.1 — Auto-select initiatives based on capability gaps, sector, and ambition tier.
+   */
+  selectInitiatives: protectedProcedure
+    .input(z.object({
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
+      sector: z.string(),
+      orgSize: z.enum(["small", "medium", "large", "enterprise"]),
+      orgSizeHeadcount: z.number().int().positive().optional(),
+      priorityDomains: z.array(z.string()),
+      targetCount: z.number().int().min(1).max(30),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const selectInput: SelectInitiativesInput = {
+        ambitionTier: input.ambitionTier,
+        sector: input.sector,
+        orgSize: input.orgSize,
+        orgSizeHeadcount: input.orgSizeHeadcount ?? 300,
+        priorityDomains: input.priorityDomains,
+        targetCount: input.targetCount,
+      };
+      return selectInitiatives(selectInput);
+    }),
+
+  /**
+   * P2.2 — Calculate cost envelope for selected initiatives.
+   */
+  calculateCostEnvelope: protectedProcedure
+    .input(z.object({
+      selectedInitiativeIds: z.array(z.string()),
+      orgSize: z.enum(["small", "medium", "large", "enterprise"]),
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
+    }))
+    .query(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return calculateCostEnvelope(
+        input.selectedInitiativeIds,
+        input.orgSize,
+        input.ambitionTier,
+      );
+    }),
+
+  /**
+   * P1.4 / P2.3 — Build provenance map for a strategy artefact.
+   */
+  buildProvenanceMap: protectedProcedure
+    .input(z.object({
+      selectedInitiativeIds: z.array(z.string()),
+      visionStatement: z.string(),
+      sector: z.string(),
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      // Evaluate risk rules first to pass to provenance map
+      const riskMatches = evaluateRiskRules({
+        ambitionTier: input.ambitionTier,
+        orgSize: "medium", // default — provenance map doesn't gate on org size
+        selectedInitiativeIds: input.selectedInitiativeIds,
+        hasExecSponsor: false,
+        hasDataGovernanceInitiative: false,
+      });
+      return buildProvenanceMap({
+        selectedInitiativeIds: input.selectedInitiativeIds,
+        riskMatches,
+        orgSize: "medium",
+        ambitionTier: input.ambitionTier,
+      });
     }),
 
   /**

@@ -588,6 +588,7 @@ export default function HRAIStrategyAssessmentPage() {
   // Step 3 — Vision & Principles
   const [visionStatement, setVisionStatement] = useState("");
   const [principles, setPrinciples] = useState<Array<{ title: string; description: string }>>([]);
+  const [wontDo, setWontDo] = useState<string[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
 
   // Step 4 — Initiatives + Ambition levels
@@ -607,6 +608,9 @@ export default function HRAIStrategyAssessmentPage() {
     if (d.businessAmbitionLevel) setBusinessLevel(d.businessAmbitionLevel);
     if (d.peopleAmbitionLevel) setPeopleLevel(d.peopleAmbitionLevel);
     if (d.selectedInitiativeIds?.length) setSelectedIds(new Set(d.selectedInitiativeIds));
+    // Pre-fill wontDo from persisted strategy
+    const rawWontDo = (d as Record<string, unknown>).wontDo;
+    if (Array.isArray(rawWontDo) && rawWontDo.length > 0) setWontDo(rawWontDo as string[]);
   }, [existingQ.data]);
 
   // ── Unsaved-progress guard ─────────────────────────────────────────────────
@@ -627,10 +631,11 @@ export default function HRAIStrategyAssessmentPage() {
   }, []);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
-  const generateMut = trpc.intelligence.generateVisionAndPrinciples.useMutation({
+  const generateMut = trpc.intelligence.generateVisionWithQualityGate.useMutation({
     onSuccess: (data) => {
       setVisionStatement(data.visionStatement);
       setPrinciples(data.principles);
+      if (data.wontDo) setWontDo(data.wontDo);
       setHasGenerated(true);
       setIsDirty(true);
     },
@@ -638,6 +643,7 @@ export default function HRAIStrategyAssessmentPage() {
       toast.error("Failed to generate vision: " + err.message);
     },
   });
+  const buildProvenanceMut = trpc.intelligence.buildProvenanceMap.useMutation();
 
   const saveMut = trpc.intelligence.saveStrategyAssessment.useMutation({
     onSuccess: () => {
@@ -686,15 +692,32 @@ export default function HRAIStrategyAssessmentPage() {
   }, [generateMut, sectorLabel, businessLevel, peopleLevel, aspirationAnswers, hrRoleAnswers]);
 
   // ── Commit strategy ────────────────────────────────────────────────────────
-  const handleCommit = () => {
+  const handleCommit = async () => {
+    // Build provenance map before saving (non-blocking on failure)
+    let provenanceJson: string | undefined;
+    try {
+      const ambitionTier: "cautious" | "progressive" | "transformative" =
+        businessLevel >= 4 ? "transformative" : businessLevel >= 3 ? "progressive" : "cautious";
+      const provenance = await buildProvenanceMut.mutateAsync({
+        selectedInitiativeIds: Array.from(selectedIds),
+        visionStatement,
+        sector: sectorLabel,
+        ambitionTier,
+      });
+      provenanceJson = JSON.stringify(provenance);
+    } catch {
+      // Non-blocking — save without provenance if it fails
+    }
     saveMut.mutate({
       aspirationAnswers,
       hrRoleAnswers,
       visionStatement,
       guidingPrinciples: principles,
+      wontDo: wontDo.length > 0 ? wontDo : undefined,
       businessAmbitionLevel: businessLevel,
       peopleAmbitionLevel: peopleLevel,
       selectedInitiativeIds: Array.from(selectedIds),
+      provenanceJson,
     });
   };
 

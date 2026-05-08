@@ -872,6 +872,9 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   visionStatement: text("vision_statement"),                                // AI-drafted + user-edited vision statement
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
+  wontDoJson: text("wont_do_json"),                                              // JSON: string[] — LLM-generated out-of-scope items
+  provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources
+  libraryVersion: varchar("library_version", { length: 20 }),                   // content library version used when strategy was generated
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1537,6 +1540,7 @@ export const strategyRiskRegister = mysqlTable("strategy_risk_register", {
   launchQuarter: varchar("launch_quarter", { length: 20 }),
   status: mysqlEnum("status", ["open", "mitigated", "accepted", "closed"]).notNull().default("open"),
   isUserDefined: tinyint("is_user_defined").notNull().default(0),
+  sourceRuleId: varchar("source_rule_id", { length: 100 }),                      // content library risk rule ID that triggered this entry
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   strategyIdx: index("idx_risk_register_strategy").on(t.strategyId),

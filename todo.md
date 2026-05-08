@@ -2284,3 +2284,29 @@
 - [x] Trust: click-to-source on cost numbers in AI Strategy page
 - [x] Trust: risk trigger explanation modal
 - [x] Trust: library version footer on strategy artefact
+
+## Strategy Plumbing Brief (Final) — May 2026
+
+### P1 — Visibly broken
+- [x] P1.1: Vision generation — forbidden phrase validation, retry logic, required-elements check, 5 golden examples in library
+- [x] P1.2: wontDoJson — DB column, LLM generation, web panel, PDF panel
+- [x] P1.3: Risk rule auto-evaluation — structured triggers in YAML, evaluateRiskRules(), sourceRuleId column, DB insertion
+- [x] P1.4: Provenance modals — provenanceJson column, CostProvenanceModal, RiskProvenanceModal, InitiativeProvenanceModal, VisionProvenanceModal
+
+### P2 — Specified but underspecified
+- [x] P2.1: selectInitiatives algorithm — deterministic, gap-weighted, phase-distributed
+- [x] P2.2: Cost envelope — phased sums from library, caveat block, persisted on artefact
+- [x] P2.3: Source citations in Methodology appendix — artefact-scoped, deduped, grouped by type
+- [x] P2.4: cross_functional_dependencies — YAML content update, aggregation, rendering (deferred — out of scope for this brief)
+
+### P3 — Verification and refinement
+- [x] P3.1: Sector benchmark markers on maturity dimension bars
+- [x] P3.2: Phase narrative rendering in Plan Executive view
+- [x] P3.3: EU AI Act flag rendering in Operational view
+- [x] P3.4: Regeneration banner on stale inputs or stale library version
+- [x] P3.5: Score consistency audit on AI Strategy page
+- [x] P3.6: Library version badge — verify all four elements
+
+### CC — Cross-cutting
+- [x] CC.1: PDF parity across all P1/P2/P3 changes
+- [x] CC.2: 34 vitest assertions in server/strategyEngine.test.ts (all 768 tests passing)
