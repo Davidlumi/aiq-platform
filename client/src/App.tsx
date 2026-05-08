@@ -23,6 +23,10 @@ import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
 import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
 import HRAIStrategyAssessmentPage from "./pages/dashboard/HRAIStrategyAssessmentPage";
+import ImplementationTrackerPage from "./pages/dashboard/ImplementationTrackerPage";
+import MaturityProgressionPage from "./pages/dashboard/MaturityProgressionPage";
+import ManagerHubPage from "./pages/dashboard/ManagerHubPage";
+import ContentRequestsPage from "./pages/dashboard/ContentRequestsPage";
 import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
 import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
 import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
@@ -198,6 +202,18 @@ function Router() {
       </Route>
       <Route path="/ai-strategy/assessment">
         <ProtectedRoute component={HRAIStrategyAssessmentPage} />
+      </Route>
+      <Route path="/implementation-tracker">
+        <ProtectedRoute component={ImplementationTrackerPage} />
+      </Route>
+      <Route path="/maturity-progression">
+        <ProtectedRoute component={MaturityProgressionPage} />
+      </Route>
+      <Route path="/manager-hub">
+        <ProtectedRoute component={ManagerHubPage} />
+      </Route>
+      <Route path="/content-requests">
+        <ProtectedRoute component={ContentRequestsPage} />
       </Route>
       <Route path="/audit">
         <ProtectedRoute component={AuditLogPage} />

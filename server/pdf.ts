@@ -18,7 +18,7 @@ import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
 import { getUserById, getDb, getTenantById } from "./db";
-import { getLibraryMeta, getAllInitiatives } from "./contentLibrary";
+import { getLibraryMeta, getAllInitiatives, resolveInitiativeIds } from "./contentLibrary";
 import { calculateCostEnvelope, evaluateRiskRules, calculateValueEnvelope } from "./strategyEngine";
 import {
   assessmentSessions,
@@ -1050,7 +1050,9 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
 
   const allInitiatives = getAllInitiatives();
   const initiativeMap = new Map(allInitiatives.map(i => [i.initiative_id, i]));
-  const selectedInits = selectedInitiativeIds
+  // Resolve init-XX format IDs to snake_case initiative_ids used by the content library
+  const resolvedInitiativeIds = resolveInitiativeIds(selectedInitiativeIds);
+  const selectedInits = resolvedInitiativeIds
     .map(id => initiativeMap.get(id))
     .filter(Boolean) as typeof allInitiatives;
 
@@ -1288,6 +1290,73 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
     }
   }
 
+  // ── SECTION 6: Measurement Plan ─────────────────────────────────────────────
+  {
+    let structuredInputs: Record<string, any> = {};
+    try {
+      const raw = (orgCtx as any)?.structuredInputsJson;
+      if (raw) structuredInputs = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {}
+    const measurementCadence: string | undefined = structuredInputs.measurement_cadence;
+    const pilotDesign: string | undefined = structuredInputs.pilot_design;
+    if (measurementCadence || pilotDesign) {
+      checkPageBreak(doc, 60, pageCounter);
+      addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
+      doc.addPage();
+      pageCounter.n++;
+      doc.y = 40;
+      addSectionHeading(doc, "Section 6 — Measurement & Pilot Design");
+      if (measurementCadence) {
+        checkPageBreak(doc, 40, pageCounter);
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text("Measurement Cadence", 40, doc.y);
+        doc.moveDown(0.3);
+        const cadenceLabels: Record<string, string> = {
+          monthly: "Monthly — high-frequency tracking with monthly KPI reviews",
+          quarterly: "Quarterly — standard cadence with quarterly business reviews",
+          biannual: "Bi-annual — twice-yearly deep-dive assessments",
+          annual: "Annual — yearly strategic review cycle",
+        };
+        doc.fontSize(7.5).font("Helvetica").fillColor(BRAND.slate)
+           .text(cadenceLabels[measurementCadence] ?? measurementCadence, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.5);
+      }
+      if (pilotDesign) {
+        checkPageBreak(doc, 40, pageCounter);
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text("Pilot Design Approach", 40, doc.y);
+        doc.moveDown(0.3);
+        const pilotLabels: Record<string, string> = {
+          single_team: "Single Team Pilot — validate with one team before broader rollout",
+          department: "Department Pilot — test across a full department",
+          business_unit: "Business Unit Pilot — pilot within a defined business unit",
+          phased_rollout: "Phased Rollout — sequential deployment across the organisation",
+          big_bang: "Big Bang — organisation-wide simultaneous deployment",
+        };
+        doc.fontSize(7.5).font("Helvetica").fillColor(BRAND.slate)
+           .text(pilotLabels[pilotDesign] ?? pilotDesign, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.5);
+      }
+      // KPI framework note
+      checkPageBreak(doc, 40, pageCounter);
+      doc.fontSize(7.5).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text("Recommended KPI Framework", 40, doc.y);
+      doc.moveDown(0.3);
+      const kpiFramework = [
+        "Adoption rate: % of target users actively using the AI tool within 90 days",
+        "Quality delta: measurable improvement in output quality vs. baseline",
+        "Time-to-value: weeks from deployment to first measurable business outcome",
+        "Employee sentiment: quarterly pulse score on AI tool usefulness (1–5)",
+        "ROI realisation: % of projected value envelope achieved at 12 months",
+      ];
+      for (const kpi of kpiFramework) {
+        checkPageBreak(doc, 16, pageCounter);
+        doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+           .text(`• ${kpi}`, 50, doc.y, { width: doc.page.width - 90 });
+        doc.moveDown(0.3);
+      }
+    }
+  }
   // Disclosure note
   checkPageBreak(doc, 40, pageCounter);
   doc.moveDown(0.5);

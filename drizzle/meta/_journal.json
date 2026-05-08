@@ -15,6 +15,13 @@
       "when": 1776688300000,
       "tag": "0002_aiq_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1778280374000,
+      "tag": "0003_tiresome_madripoor",
+      "breakpoints": true
     }
   ]
 }

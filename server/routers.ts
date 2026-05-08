@@ -23,6 +23,7 @@ import { strategyRouter } from "./routers/strategy";
 import { companyAssessmentRouter } from "./routers/companyAssessment";
 import { coachRouter } from "./routers/coach";
 import { contentLibraryRouter } from "./routers/contentLibrary";
+import { operationalMaturityRouter } from "./routers/operationalMaturity";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -48,6 +49,7 @@ export const appRouter = router({
   companyAssessment: companyAssessmentRouter,
   coach: coachRouter,
   contentLibrary: contentLibraryRouter,
+  operationalMaturity: operationalMaturityRouter,
 });
 
 export type AppRouter = typeof appRouter;

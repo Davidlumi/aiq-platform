@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE strategy_initiatives\n  ADD COLUMN IF NOT EXISTS status ENUM('not_started','in_progress','paused','completed','cancelled') NOT NULL DEFAULT 'not_started',\n  ADD COLUMN IF NOT EXISTS status_started_at BIGINT,\n  ADD COLUMN IF NOT EXISTS status_completed_at BIGINT,\n  ADD COLUMN IF NOT EXISTS status_reason TEXT;\n\nALTER TABLE users\n  ADD COLUMN IF NOT EXISTS manager_function VARCHAR(100),\n  ADD COLUMN IF NOT EXISTS manager_direct_reports_json TEXT,\n  ADD COLUMN IF NOT EXISTS manager_onboarding_completed BOOLEAN DEFAULT FALSE,\n  ADD COLUMN IF NOT EXISTS manager_onboarding_completed_at TIMESTAMP NULL\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE strategy_initiatives\n  ADD COLUMN IF NOT EXISTS status ENUM('not_started','in_progress','paused','completed','cancelled') NOT NULL DEFAULT 'not_started',\n  ADD COLUMN IF NOT EXISTS status_started_at BIGINT,\n  ADD COLUMN IF NOT EXISTS status_completed_at BIGINT,\n  ADD COLUMN IF NOT EXISTS status_reason TEXT;\n\nALTER TABLE users\n  ADD COLUMN IF NOT EXISTS manager_function VARCHAR(100),\n  ADD COLUMN IF NOT EXISTS manager_direct_reports_json TEXT,\n  ADD COLUMN IF NOT EXISTS manager_onboarding_completed BOOLEAN DEFAULT FALSE,\n  ADD COLUMN IF NOT EXISTS manager_onboarding_completed_at TIMESTAMP NULL\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1769
+}

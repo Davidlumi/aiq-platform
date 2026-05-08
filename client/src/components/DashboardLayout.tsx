@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+// @refresh reset
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -35,6 +36,10 @@ import {
   Building2,
   Sparkles,
   MessageSquare,
+  BarChart3,
+  TrendingUp,
+  UserCog,
+  MessageSquarePlus,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -78,9 +83,13 @@ const MY_TEAM_CPO: NavSection = {
 const AI_STRATEGY: NavSection = {
   section: "AI Strategy",
   items: [
-    { icon: Target,    label: "HR AI Strategy",     path: "/ai-strategy" },
-    { icon: Sparkles,  label: "Build Strategy",      path: "/ai-strategy/assessment" },
-    { icon: Building2, label: "Company Assessment",  path: "/company-assessment" },
+    { icon: Target,            label: "HR AI Strategy",        path: "/ai-strategy" },
+    { icon: Sparkles,          label: "Build Strategy",         path: "/ai-strategy/assessment" },
+    { icon: Building2,         label: "Company Assessment",     path: "/company-assessment" },
+    { icon: BarChart3,         label: "Implementation Tracker", path: "/implementation-tracker" },
+    { icon: TrendingUp,        label: "Maturity Progression",   path: "/maturity-progression" },
+    { icon: UserCog,           label: "Manager Hub",            path: "/manager-hub" },
+    { icon: MessageSquarePlus, label: "Content Feedback",       path: "/content-requests" },
   ],
 };
 

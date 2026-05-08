@@ -76,6 +76,8 @@ export interface Initiative {
   review_tier: string;
   value_model?: ValueModel;
   cross_functional_dependencies?: CrossFunctionalDependencies;
+  // v1.3: manager function tags for E2 manager dashboard filtering
+  function_tags?: string[];
 }
 
 export interface RiskRule {
@@ -115,6 +117,9 @@ export interface Source {
   publication_date: string;
   accessed: string;
   notes?: string;
+  // v1.3: content freshness fields
+  last_reviewed_date?: string;  // ISO date — when this source was last verified by content team
+  confidence?: "high" | "medium" | "low";  // editorial confidence in the source
 }
 
 export interface ContentLibrary {
@@ -184,6 +189,21 @@ export function getSource(id: string): Source | undefined {
 export function resolveSources(ids: string[]): Source[] {
   const lib = getContentLibrary();
   return ids.map(id => lib.sources[id]).filter(Boolean);
+}
+
+/**
+ * Returns true if a source has not been reviewed in the last 18 months.
+ * Used to show stale badges in the methodology appendix.
+ */
+export function isSourceStale(source: Source, referenceDate?: Date): boolean {
+  const ref = referenceDate ?? new Date();
+  const reviewed = source.last_reviewed_date ?? source.accessed;
+  if (!reviewed) return false;
+  const reviewedDate = new Date(reviewed);
+  const monthsDiff =
+    (ref.getFullYear() - reviewedDate.getFullYear()) * 12 +
+    (ref.getMonth() - reviewedDate.getMonth());
+  return monthsDiff > 18;
 }
 
 export function getLibraryVersion(): string {

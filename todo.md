@@ -2369,3 +2369,36 @@
 - [x] Improve payback period display — added ">Nyr" format for payback > 120 months with "Beyond 3-yr horizon" sub-label and explanatory note in caveat block
 - [x] TypeScript: 0 errors
 - [x] Tests: 768/768 passing (32 test files)
+
+## v1.3 Operational Maturity Build — May 2026
+
+### Block A — Content Freshness
+- [x] A1: Add published_date + last_reviewed_date to all 15 sources in library.json; add isStale flag computation in strategyEngine; show stale badge in methodology appendix
+- [x] A2: Create CONTENT_REVIEW.md in hr-aiq-content/ with review cadences, source quality bar, versioning rules
+- [x] A3: Create MONITORING_SOURCES.md in hr-aiq-content/ with external monitoring feeds
+- [x] A4: Add library_usage_events table to schema; write telemetry events after strategy generation; admin analytics page at /admin/library-analytics
+
+### Block B — Customer Feedback Loop
+- [x] B1: Add content_requests table; "Suggest a content improvement" modal on strategy page footer; admin view at /admin/content-requests; daily digest notification
+- [x] B2: Admin QA review page at /admin/qa-review with automated checks (vision quality, initiative value models, risk tracing, cost envelope arithmetic, NPV/IRR)
+
+### Block C — Implementation Tracking
+- [x] C1: Add status/status_started_at/status_completed_at/status_reason columns to strategy_initiatives; add initiative_status_history table; tRPC procedures; status pill UI in Section 3 Plan
+- [x] C2: Add strategy_milestones table; generate milestones from change plan phases; milestone checklist UI in strategy page; due-soon surfacing
+- [x] C3: New implementation dashboard page at /strategy/dashboard with initiative status summary, phase progress, milestones, risks, capability progression blocks
+- [x] C4: New timeline page at /strategy/timeline with chronological audit trail; filter by event type; CSV export
+
+### Block D — Maturity Progression
+- [x] D1: Add assessment_history table; backfill from existing strategies; canReassess/startReassessment tRPC procedures with cadence enforcement; UI button from C3 dashboard
+- [x] D2: New Section 2.5 Maturity Progression in strategy page; capability delta + maturity delta + "where the gain came from" blocks; renders only when 2+ assessment_history rows exist
+- [x] D3: Add strategy_refresh_suggestions table; nightly Heartbeat job to detect capability progression ≥1.0 or library version update; refresh banner on strategy page with Regenerate/Dismiss/Remind options
+
+### Block E — Manager-Level Views
+- [x] E1: Add manager_function + manager_direct_reports_json to users table; manager onboarding flow at /onboarding/manager (3 steps); show on first login for manager role
+- [x] E2: Manager dashboard at /manager/dashboard with function-in-strategy, team capability (7-person threshold), change plan items, communications panels
+- [x] E3: Add manager_briefs table; LLM generation of function-specific brief cached per (strategy_id, manager_function); "Your Brief" tab on manager dashboard
+
+### Cross-cutting
+- [x] Bump library version to v1.3.0 in library.json meta
+- [x] PDF parity: include maturity progression section and manager brief in PDF export (Section 6 Measurement Plan added; resolveInitiativeIds fix applied to PDF generator)
+- [x] New tests: A1 staleness logic, A4 telemetry, B1 feedback flow, C1 status transitions, C2 milestone generation, D1 re-assessment auth, D2 progression calculation, D3 refresh trigger, E2 manager auth, E3 brief generation

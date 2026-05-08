@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": "1.0.0",
-    "built_at": "2026-05-07T21:31:39.857237+00:00",
+    "version": "1.3.0",
+    "built_at": "2026-05-08T00:00:00.000Z",
     "git_sha": "unknown",
     "content_counts": {
       "sources": 15,
@@ -18,7 +18,10 @@
       "source_type": "internal",
       "publication_date": "2026-01-01",
       "accessed": "2026-05-07",
-      "notes": "Proprietary framework defining six HR AI capability domains, scoring rubrics, and level descriptors. Developed through design partner research with 40+ UK HR leaders."
+      "notes": "Proprietary framework defining six HR AI capability domains, scoring rubrics, and level descriptors. Developed through design partner research with 40+ UK HR leaders.",
+      "published_date": "2026-01-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_cipd_2025_capability": {
       "source_id": "src_cipd_2025_capability",
@@ -27,7 +30,10 @@
       "url": "https://www.cipd.org/uk/knowledge/reports/people-profession-ai-skills/",
       "publication_date": "2025-06-01",
       "accessed": "2026-05-07",
-      "notes": "Survey of 1,247 HR professionals across UK and EU. Covers AI tool adoption, capability gaps, and upskilling priorities."
+      "notes": "Survey of 1,247 HR professionals across UK and EU. Covers AI tool adoption, capability gaps, and upskilling priorities.",
+      "published_date": "2025-06-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_mckinsey_lnd_2024": {
       "source_id": "src_mckinsey_lnd_2024",
@@ -36,7 +42,10 @@
       "url": "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/closing-the-ai-skills-gap",
       "publication_date": "2024-09-01",
       "accessed": "2026-05-07",
-      "notes": "Analysis of L&D investment patterns and skill decay rates for AI-related training."
+      "notes": "Analysis of L&D investment patterns and skill decay rates for AI-related training.",
+      "published_date": "2024-09-01",
+      "last_reviewed_date": "2025-09-01",
+      "confidence": "medium"
     },
     "src_lumi_design_partners_2025": {
       "source_id": "src_lumi_design_partners_2025",
@@ -44,7 +53,10 @@
       "source_type": "internal",
       "publication_date": "2025-12-01",
       "accessed": "2026-05-07",
-      "notes": "Qualitative research with 12 design partner organisations across retail, financial services, healthcare, and professional services. Covers initiative selection patterns, cost actuals, and delivery risks."
+      "notes": "Qualitative research with 12 design partner organisations across retail, financial services, healthcare, and professional services. Covers initiative selection patterns, cost actuals, and delivery risks.",
+      "published_date": "2025-12-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_eu_ai_act_2024": {
       "source_id": "src_eu_ai_act_2024",
@@ -53,7 +65,10 @@
       "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689",
       "publication_date": "2024-07-12",
       "accessed": "2026-05-07",
-      "notes": "Full text of the EU AI Act. Particularly relevant: Article 6 (high-risk AI systems), Annex III (employment and workers management use cases), Article 13 (transparency), Article 14 (human oversight)."
+      "notes": "Full text of the EU AI Act. Particularly relevant: Article 6 (high-risk AI systems), Annex III (employment and workers management use cases), Article 13 (transparency), Article 14 (human oversight).",
+      "published_date": "2024-07-12",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_ico_guidance_hr_ai_2025": {
       "source_id": "src_ico_guidance_hr_ai_2025",
@@ -62,7 +77,10 @@
       "url": "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/",
       "publication_date": "2025-03-01",
       "accessed": "2026-05-07",
-      "notes": "UK ICO guidance on GDPR compliance for AI systems in HR contexts, including automated decision-making under Article 22."
+      "notes": "UK ICO guidance on GDPR compliance for AI systems in HR contexts, including automated decision-making under Article 22.",
+      "published_date": "2025-03-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_gartner_hr_tech_2025": {
       "source_id": "src_gartner_hr_tech_2025",
@@ -71,7 +89,10 @@
       "url": "https://www.gartner.com/en/human-resources/topics/hr-technology",
       "publication_date": "2025-04-01",
       "accessed": "2026-05-07",
-      "notes": "Market analysis of HR technology adoption rates, vendor landscape, and implementation cost benchmarks."
+      "notes": "Market analysis of HR technology adoption rates, vendor landscape, and implementation cost benchmarks.",
+      "published_date": "2025-04-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "medium"
     },
     "src_gartner_data_readiness_2025": {
       "source_id": "src_gartner_data_readiness_2025",
@@ -80,7 +101,10 @@
       "url": "https://www.gartner.com/en/data-analytics/topics/data-readiness",
       "publication_date": "2025-02-01",
       "accessed": "2026-05-07",
-      "notes": "Survey of 800+ enterprise data leaders on data quality, infrastructure readiness, and AI project failure rates."
+      "notes": "Survey of 800+ enterprise data leaders on data quality, infrastructure readiness, and AI project failure rates.",
+      "published_date": "2025-02-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "medium"
     },
     "src_deloitte_workforce_ai_2025": {
       "source_id": "src_deloitte_workforce_ai_2025",
@@ -89,7 +113,10 @@
       "url": "https://www2.deloitte.com/global/en/pages/human-capital/articles/human-capital-trends.html",
       "publication_date": "2025-01-15",
       "accessed": "2026-05-07",
-      "notes": "Global survey of 14,000+ business and HR leaders. Covers workforce AI readiness, change management, and skills investment."
+      "notes": "Global survey of 14,000+ business and HR leaders. Covers workforce AI readiness, change management, and skills investment.",
+      "published_date": "2025-01-15",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "medium"
     },
     "src_acas_ai_employment_2024": {
       "source_id": "src_acas_ai_employment_2024",
@@ -98,7 +125,10 @@
       "url": "https://www.acas.org.uk/artificial-intelligence-in-the-workplace",
       "publication_date": "2024-11-01",
       "accessed": "2026-05-07",
-      "notes": "UK employment relations guidance on AI use in hiring, performance management, and monitoring. Relevant for employment law exposure assessments."
+      "notes": "UK employment relations guidance on AI use in hiring, performance management, and monitoring. Relevant for employment law exposure assessments.",
+      "published_date": "2024-11-01",
+      "last_reviewed_date": "2025-11-01",
+      "confidence": "high"
     },
     "src_wef_future_jobs_2025": {
       "source_id": "src_wef_future_jobs_2025",
@@ -107,7 +137,10 @@
       "url": "https://www.weforum.org/reports/the-future-of-jobs-report-2025/",
       "publication_date": "2025-01-07",
       "accessed": "2026-05-07",
-      "notes": "Survey of 1,000+ employers covering 14 million workers. Key data on AI-driven job displacement, reskilling investment, and skills half-life."
+      "notes": "Survey of 1,000+ employers covering 14 million workers. Key data on AI-driven job displacement, reskilling investment, and skills half-life.",
+      "published_date": "2025-01-07",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "high"
     },
     "src_cipd_people_mgmt_2024": {
       "source_id": "src_cipd_people_mgmt_2024",
@@ -116,7 +149,10 @@
       "url": "https://www.cipd.org/uk/knowledge/guides/ai-people-management/",
       "publication_date": "2024-10-01",
       "accessed": "2026-05-07",
-      "notes": "Practical guidance on AI use in performance management, recruitment, and workforce planning."
+      "notes": "Practical guidance on AI use in performance management, recruitment, and workforce planning.",
+      "published_date": "2024-10-01",
+      "last_reviewed_date": "2025-10-01",
+      "confidence": "high"
     },
     "src_ibm_ai_adoption_2025": {
       "source_id": "src_ibm_ai_adoption_2025",
@@ -125,7 +161,10 @@
       "url": "https://www.ibm.com/thought-leadership/institute-business-value/report/ai-adoption-index",
       "publication_date": "2025-05-01",
       "accessed": "2026-05-07",
-      "notes": "Survey of 3,000 C-suite executives on AI adoption rates, barriers, and ROI realisation timelines."
+      "notes": "Survey of 3,000 C-suite executives on AI adoption rates, barriers, and ROI realisation timelines.",
+      "published_date": "2025-05-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "medium"
     },
     "src_pwc_workforce_upskilling_2025": {
       "source_id": "src_pwc_workforce_upskilling_2025",
@@ -134,7 +173,10 @@
       "url": "https://www.pwc.com/gx/en/issues/workforce/upskilling.html",
       "publication_date": "2025-03-01",
       "accessed": "2026-05-07",
-      "notes": "Analysis of upskilling investment, programme effectiveness, and ROI benchmarks across 52 countries."
+      "notes": "Analysis of upskilling investment, programme effectiveness, and ROI benchmarks across 52 countries.",
+      "published_date": "2025-03-01",
+      "last_reviewed_date": "2026-04-01",
+      "confidence": "medium"
     },
     "src_nesta_ai_skills_2024": {
       "source_id": "src_nesta_ai_skills_2024",
@@ -143,7 +185,10 @@
       "url": "https://www.nesta.org.uk/report/ai-skills-uk-economy/",
       "publication_date": "2024-07-01",
       "accessed": "2026-05-07",
-      "notes": "UK-specific analysis of AI skills gaps across sectors, with HR and people management highlighted as a priority area."
+      "notes": "UK-specific analysis of AI skills gaps across sectors, with HR and people management highlighted as a priority area.",
+      "published_date": "2024-07-01",
+      "last_reviewed_date": "2025-07-01",
+      "confidence": "high"
     }
   },
   "frameworks": {
@@ -2561,7 +2606,12 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "HR Operations",
+        "HRBP"
+      ]
     },
     "ai_ethics_governance_framework": {
       "initiative_id": "ai_ethics_governance_framework",
@@ -2644,7 +2694,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "HRBP",
+        "HR Operations"
+      ]
     },
     "prompt_engineering_for_hr": {
       "initiative_id": "prompt_engineering_for_hr",
@@ -2716,7 +2770,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "People Analytics"
+      ]
     },
     "ai_acceptable_use_policy": {
       "initiative_id": "ai_acceptable_use_policy",
@@ -2788,7 +2846,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "HRBP"
+      ]
     },
     "hr_data_quality_audit": {
       "initiative_id": "hr_data_quality_audit",
@@ -2868,7 +2930,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "People Analytics",
+        "HR Operations"
+      ]
     },
     "ai_change_management_programme": {
       "initiative_id": "ai_change_management_programme",
@@ -2951,7 +3017,12 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "HRBP",
+        "HR Communications"
+      ]
     },
     "bias_monitoring_and_auditing": {
       "initiative_id": "bias_monitoring_and_auditing",
@@ -3034,7 +3105,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "People Analytics",
+        "HRBP"
+      ]
     },
     "hr_process_automation": {
       "initiative_id": "hr_process_automation",
@@ -3117,7 +3192,10 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations"
+      ]
     },
     "ai_assisted_job_descriptions": {
       "initiative_id": "ai_assisted_job_descriptions",
@@ -3191,7 +3269,10 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "TA"
+      ]
     },
     "hr_chatbot_employee_queries": {
       "initiative_id": "hr_chatbot_employee_queries",
@@ -3273,7 +3354,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "HRBP"
+      ]
     },
     "people_analytics_dashboard": {
       "initiative_id": "people_analytics_dashboard",
@@ -3357,7 +3442,10 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "People Analytics"
+      ]
     },
     "ai_assisted_performance_feedback": {
       "initiative_id": "ai_assisted_performance_feedback",
@@ -3442,7 +3530,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HRBP",
+        "L&D"
+      ]
     },
     "ai_tool_adoption_programme": {
       "initiative_id": "ai_tool_adoption_programme",
@@ -3516,7 +3608,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "HR Operations"
+      ]
     },
     "automated_onboarding_orchestration": {
       "initiative_id": "automated_onboarding_orchestration",
@@ -3594,7 +3690,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "TA"
+      ]
     },
     "ai_assisted_cv_screening": {
       "initiative_id": "ai_assisted_cv_screening",
@@ -3680,7 +3780,10 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "TA"
+      ]
     },
     "predictive_attrition_modelling": {
       "initiative_id": "predictive_attrition_modelling",
@@ -3766,7 +3869,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "People Analytics",
+        "HRBP"
+      ]
     },
     "skills_intelligence_platform": {
       "initiative_id": "skills_intelligence_platform",
@@ -3852,7 +3959,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "Workforce Planning"
+      ]
     },
     "workforce_scenario_planning": {
       "initiative_id": "workforce_scenario_planning",
@@ -3927,7 +4038,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "Workforce Planning",
+        "People Analytics"
+      ]
     },
     "ai_powered_learning_personalisation": {
       "initiative_id": "ai_powered_learning_personalisation",
@@ -4001,7 +4116,10 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D"
+      ]
     },
     "ai_pay_equity_analysis": {
       "initiative_id": "ai_pay_equity_analysis",
@@ -4084,7 +4202,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "People Analytics",
+        "HRBP"
+      ]
     },
     "ai_centre_of_excellence": {
       "initiative_id": "ai_centre_of_excellence",
@@ -4160,7 +4282,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "People Analytics"
+      ]
     },
     "hr_ai_operating_model_redesign": {
       "initiative_id": "hr_ai_operating_model_redesign",
@@ -4237,7 +4363,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "HRBP"
+      ]
     },
     "ai_governance_maturity_programme": {
       "initiative_id": "ai_governance_maturity_programme",
@@ -4310,7 +4440,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "HRBP"
+      ]
     },
     "manager_ai_coaching_toolkit": {
       "initiative_id": "manager_ai_coaching_toolkit",
@@ -4386,7 +4520,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "L&D",
+        "HRBP"
+      ]
     },
     "ai_talent_marketplace": {
       "initiative_id": "ai_talent_marketplace",
@@ -4473,7 +4611,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "TA",
+        "Workforce Planning"
+      ]
     },
     "ai_performance_calibration": {
       "initiative_id": "ai_performance_calibration",
@@ -4559,7 +4701,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "HRBP",
+        "People Analytics"
+      ]
     },
     "ai_employee_listening": {
       "initiative_id": "ai_employee_listening",
@@ -4644,7 +4790,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Communications",
+        "People Analytics"
+      ]
     },
     "ai_job_architecture_redesign": {
       "initiative_id": "ai_job_architecture_redesign",
@@ -4730,7 +4880,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "Workforce Planning",
+        "HR Operations"
+      ]
     },
     "ai_governance_continuous_monitoring": {
       "initiative_id": "ai_governance_continuous_monitoring",
@@ -4816,7 +4970,11 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "People Analytics"
+      ]
     },
     "ai_hr_operating_model_redesign": {
       "initiative_id": "ai_hr_operating_model_redesign",
@@ -4903,7 +5061,11 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "function_tags": [
+        "HR Operations",
+        "HRBP"
+      ]
     }
   },
   "risk_rules": {

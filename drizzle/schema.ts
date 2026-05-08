@@ -71,6 +71,11 @@ export const users = mysqlTable("users", {
   sector: varchar("sector", { length: 100 }),
   aiToolsUsed: text("ai_tools_used"),
   roleFamily: varchar("role_family", { length: 100 }),
+  // v1.3: E1 manager fields
+  managerFunction: varchar("manager_function", { length: 100 }),
+  managerDirectReportsJson: text("manager_direct_reports_json"),
+  managerOnboardingCompleted: boolean("manager_onboarding_completed").default(false),
+  managerOnboardingCompletedAt: timestamp("manager_onboarding_completed_at"),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),
@@ -1543,6 +1548,11 @@ export const strategyInitiatives = mysqlTable("strategy_initiatives", {
   targetQuarter: varchar("target_quarter", { length: 20 }).notNull().default("Q2 26"),
   targetQuarterOffset: int("target_quarter_offset").notNull().default(6),
   notes: text("notes"),
+  // v1.3: C1 implementation status tracking
+  status: mysqlEnum("status", ["not_started", "in_progress", "paused", "completed", "cancelled"]).notNull().default("not_started"),
+  statusStartedAt: bigint("status_started_at", { mode: "number" }),
+  statusCompletedAt: bigint("status_completed_at", { mode: "number" }),
+  statusReason: text("status_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   strategyIdx: index("idx_strategy_initiatives_strategy").on(t.strategyId),
@@ -1877,3 +1887,170 @@ export const contentFeedback = mysqlTable("content_feedback", {
   flaggedIdx: index("idx_content_feedback_flagged").on(t.flaggedForReview),
 }));
 export type ContentFeedback = typeof contentFeedback.$inferSelect;
+
+// ─── v1.3 Operational Maturity Tables ─────────────────────────────────────────
+
+// A4: Library usage telemetry — records each strategy generation event
+export const libraryUsageEvents = mysqlTable("library_usage_events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  eventType: mysqlEnum("event_type", [
+    "strategy_generated",
+    "strategy_regenerated",
+    "initiative_selected",
+    "initiative_deselected",
+    "cost_envelope_viewed",
+    "value_envelope_viewed",
+    "risk_evaluated",
+    "pdf_exported",
+  ]).notNull(),
+  libraryVersion: varchar("library_version", { length: 20 }).notNull(),
+  initiativeIdsJson: text("initiative_ids_json"),
+  sectorId: varchar("sector_id", { length: 36 }),
+  occurredAt: bigint("occurred_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  tenantIdx: index("idx_lue_tenant").on(t.tenantId),
+  userIdx: index("idx_lue_user").on(t.userId),
+  eventTypeIdx: index("idx_lue_event_type").on(t.eventType),
+  occurredAtIdx: index("idx_lue_occurred_at").on(t.occurredAt),
+}));
+export type LibraryUsageEvent = typeof libraryUsageEvents.$inferSelect;
+
+// B1: Content improvement requests from HR leaders
+export const contentRequests = mysqlTable("content_requests", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  requestType: mysqlEnum("request_type", [
+    "new_initiative",
+    "update_initiative",
+    "new_source",
+    "update_source",
+    "new_risk_rule",
+    "other",
+  ]).notNull().default("other"),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  relatedInitiativeId: varchar("related_initiative_id", { length: 100 }),
+  relatedSourceId: varchar("related_source_id", { length: 100 }),
+  priority: mysqlEnum("priority", ["low", "medium", "high"]).notNull().default("medium"),
+  status: mysqlEnum("status", ["open", "under_review", "accepted", "declined", "done"]).notNull().default("open"),
+  adminNotes: text("admin_notes"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedByUserId: varchar("resolved_by_user_id", { length: 36 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_cr_tenant").on(t.tenantId),
+  statusIdx: index("idx_cr_status").on(t.status),
+  createdAtIdx: index("idx_cr_created_at").on(t.createdAt),
+}));
+export type ContentRequest = typeof contentRequests.$inferSelect;
+
+// C1: Initiative status history audit trail
+export const initiativeStatusHistory = mysqlTable("initiative_status_history", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  strategyInitiativeId: varchar("strategy_initiative_id", { length: 36 }).notNull(),
+  strategyId: varchar("strategy_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }).notNull(),
+  fromStatus: mysqlEnum("from_status", ["not_started", "in_progress", "paused", "completed", "cancelled"]),
+  toStatus: mysqlEnum("to_status", ["not_started", "in_progress", "paused", "completed", "cancelled"]).notNull(),
+  reason: text("reason"),
+  changedByUserId: varchar("changed_by_user_id", { length: 36 }).notNull(),
+  changedAt: bigint("changed_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  strategyInitiativeIdx: index("idx_ish_strategy_initiative").on(t.strategyInitiativeId),
+  strategyIdx: index("idx_ish_strategy").on(t.strategyId),
+  changedAtIdx: index("idx_ish_changed_at").on(t.changedAt),
+}));
+export type InitiativeStatusHistory = typeof initiativeStatusHistory.$inferSelect;
+
+// C2: Strategy milestones — generated from change plan phases
+export const strategyMilestones = mysqlTable("strategy_milestones", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  strategyId: varchar("strategy_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  phase: mysqlEnum("phase", ["foundation", "build", "scale", "optimise"]).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  relatedInitiativeId: varchar("related_initiative_id", { length: 100 }),
+  dueDate: varchar("due_date", { length: 10 }),
+  completedAt: timestamp("completed_at"),
+  completedByUserId: varchar("completed_by_user_id", { length: 36 }),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "overdue"]).notNull().default("pending"),
+  sortOrder: int("sort_order").notNull().default(0),
+  isAutoGenerated: tinyint("is_auto_generated").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  strategyIdx: index("idx_sm_strategy").on(t.strategyId),
+  tenantIdx: index("idx_sm_tenant").on(t.tenantId),
+  phaseIdx: index("idx_sm_phase").on(t.phase),
+  statusIdx: index("idx_sm_status").on(t.status),
+}));
+export type StrategyMilestone = typeof strategyMilestones.$inferSelect;
+
+// D1: Assessment history — records each assessment snapshot for progression tracking
+export const assessmentHistory = mysqlTable("assessment_history", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  assessmentType: mysqlEnum("assessment_type", ["initial", "reassessment", "quarterly_review"]).notNull().default("initial"),
+  overallScore: double("overall_score").notNull().default(0),
+  domainScoresJson: text("domain_scores_json").notNull(),
+  selectedInitiativeIdsJson: text("selected_initiative_ids_json"),
+  libraryVersion: varchar("library_version", { length: 20 }),
+  assessedAt: bigint("assessed_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  notes: text("notes"),
+}, (t) => ({
+  tenantIdx: index("idx_ah_tenant").on(t.tenantId),
+  userIdx: index("idx_ah_user").on(t.userId),
+  assessedAtIdx: index("idx_ah_assessed_at").on(t.assessedAt),
+}));
+export type AssessmentHistory = typeof assessmentHistory.$inferSelect;
+
+// D3: Strategy refresh suggestions — generated by nightly Heartbeat job
+export const strategyRefreshSuggestions = mysqlTable("strategy_refresh_suggestions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  triggerType: mysqlEnum("trigger_type", [
+    "capability_progression",
+    "library_version_update",
+    "milestone_completion",
+    "manual",
+  ]).notNull(),
+  triggerDetail: text("trigger_detail"),
+  currentLibraryVersion: varchar("current_library_version", { length: 20 }),
+  latestLibraryVersion: varchar("latest_library_version", { length: 20 }),
+  previousScore: double("previous_score"),
+  currentScore: double("current_score"),
+  status: mysqlEnum("status", ["pending", "dismissed", "snoozed", "acted"]).notNull().default("pending"),
+  snoozedUntil: timestamp("snoozed_until"),
+  actedAt: timestamp("acted_at"),
+  actedByUserId: varchar("acted_by_user_id", { length: 36 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_srs_tenant").on(t.tenantId),
+  statusIdx: index("idx_srs_status").on(t.status),
+  createdAtIdx: index("idx_srs_created_at").on(t.createdAt),
+}));
+export type StrategyRefreshSuggestion = typeof strategyRefreshSuggestions.$inferSelect;
+
+// E3: Manager briefs — LLM-generated function-specific strategy briefs
+export const managerBriefs = mysqlTable("manager_briefs", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  strategyContextId: varchar("strategy_context_id", { length: 36 }).notNull(),
+  managerFunction: varchar("manager_function", { length: 100 }).notNull(),
+  briefMarkdown: text("brief_markdown").notNull(),
+  initiativeIdsJson: text("initiative_ids_json").notNull(),
+  libraryVersion: varchar("library_version", { length: 20 }),
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  generatedByUserId: varchar("generated_by_user_id", { length: 36 }),
+}, (t) => ({
+  tenantFunctionIdx: index("idx_mb_tenant_function").on(t.tenantId, t.managerFunction),
+  strategyCtxIdx: index("idx_mb_strategy_ctx").on(t.strategyContextId),
+}));
+export type ManagerBrief = typeof managerBriefs.$inferSelect;
