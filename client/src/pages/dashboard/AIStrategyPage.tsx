@@ -741,6 +741,14 @@ export default function AIStrategyPage() {
     return strategyData.libraryVersion !== libMeta.version;
   }, [strategyData?.libraryVersion, libMeta?.version]);
 
+  // wontDo: prefer persisted DB value, fallback to static OUT_OF_SCOPE
+  // MUST be before any early returns (React hooks rules)
+  const wontDoItems: string[] = useMemo(() => {
+    const persisted = strategyData?.wontDo;
+    if (Array.isArray(persisted) && persisted.length > 0) return persisted as string[];
+    return OUT_OF_SCOPE[businessLevel] ?? OUT_OF_SCOPE[3];
+  }, [strategyData?.wontDo, businessLevel]);
+
   const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
   if (isLoading) {
     return (
@@ -760,12 +768,6 @@ export default function AIStrategyPage() {
   const weakDims         = companyResults ? [...companyResults.dimensions].sort((a, b) => a.score - b.score).slice(0, 3) : [];
   const strongDims       = companyResults ? [...companyResults.dimensions].sort((a, b) => b.score - a.score).slice(0, 2) : [];
   const guidingPrinciples = strategyAssessment?.guidingPrinciples as Array<{ title: string; description: string }> | null | undefined;
-  // wontDo: prefer persisted DB value, fallback to static OUT_OF_SCOPE
-  const wontDoItems: string[] = useMemo(() => {
-    const persisted = strategyData?.wontDo;
-    if (Array.isArray(persisted) && persisted.length > 0) return persisted as string[];
-    return OUT_OF_SCOPE[businessLevel] ?? OUT_OF_SCOPE[3];
-  }, [strategyData?.wontDo, businessLevel]);
 
   // Hero numbers
   const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
