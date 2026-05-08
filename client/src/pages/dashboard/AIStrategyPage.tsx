@@ -609,6 +609,9 @@ export default function AIStrategyPage() {
   const [valueProvenanceOpen, setValueProvenanceOpen] = useState(false);
   const [valueProvenanceInitId, setValueProvenanceInitId] = useState<string | null>(null);
 
+  // ── Fade-in transition: content starts hidden, reveals once loading resolves ──
+  const [contentVisible, setContentVisible] = useState(false);
+
   useEffect(() => {
     if (strategyData?.configured) {
       setBusinessLevelRaw(strategyData.businessAmbitionLevel ?? 3);
@@ -750,6 +753,18 @@ export default function AIStrategyPage() {
   }, [strategyData?.wontDo, businessLevel]);
 
   const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
+
+  // Trigger fade-in once all queries resolve
+  useEffect(() => {
+    if (!isLoading) {
+      // Tiny rAF delay so the browser paints the opacity-0 frame first
+      const id = requestAnimationFrame(() => setContentVisible(true));
+      return () => cancelAnimationFrame(id);
+    } else {
+      setContentVisible(false);
+    }
+  }, [isLoading]);
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto pb-24 animate-pulse">
@@ -1081,7 +1096,13 @@ export default function AIStrategyPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto pb-24 relative">
+    <div
+      className="max-w-5xl mx-auto pb-24 relative transition-[opacity,transform] duration-500 ease-out"
+      style={{
+        opacity: contentVisible ? 1 : 0,
+        transform: contentVisible ? "translateY(0)" : "translateY(10px)",
+      }}
+    >
 
       {/* ── Sticky left TOC ─────────────────────────────────────────────── */}
       <nav className="hidden xl:flex flex-col gap-1 fixed left-4 top-1/2 -translate-y-1/2 z-20">
