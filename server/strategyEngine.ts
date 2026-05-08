@@ -716,3 +716,297 @@ export function buildProvenanceMap(params: {
     risks,
   };
 }
+
+// ─── C3 Value Envelope Calculation ───────────────────────────────────────────
+
+export interface ValueEnvelopeInitiative {
+  initiative_id: string;
+  display_name: string;
+  value_type: string;
+  quantified_value_gbp: { low: number; high: number } | null;
+  qualitative_value: string[];
+  monetisation_breakdown: string;
+  sources: string[];
+  uses_sector_default: boolean;
+  confidence: string;
+  payback_months: { low: number; high: number } | null;
+}
+
+export interface ValueEnvelope {
+  total_quantified_value_gbp: { low: number; high: number };
+  net_value_gbp: { low: number; high: number };
+  payback_period_months: { low: number; high: number } | null;
+  by_initiative: ValueEnvelopeInitiative[];
+  qualitative_summary: {
+    capability_uplift_count: number;
+    risk_avoidance_count: number;
+    strategic_count: number;
+    bullet_points: string[];
+  };
+  caveat: string;
+  libraryVersion: string;
+}
+
+function resolveValueFormula(
+  initiativeId: string,
+  improvementPct: number,
+  baseline: {
+    hires_per_year?: number;
+    cost_per_hire_gbp?: number;
+    time_to_fill_days?: number;
+    voluntary_attrition_rate_pct?: number;
+    l_and_d_spend_per_fte_gbp?: number;
+    hr_cost_per_fte_gbp?: number;
+    _sector_default_used?: Record<string, boolean>;
+  }
+): { value: number; breakdown: string; usesSectorDefault: boolean } {
+  let usesSectorDefault = false;
+  const sd = baseline._sector_default_used ?? {};
+
+  const get = (key: string, fallback: number): number => {
+    const v = (baseline as Record<string, unknown>)[key] as number | undefined;
+    if (v != null && v > 0) {
+      if (sd[key]) usesSectorDefault = true;
+      return v;
+    }
+    usesSectorDefault = true;
+    return fallback;
+  };
+
+  const hires = get("hires_per_year", 50);
+  const costPerHire = get("cost_per_hire_gbp", 4500);
+  const timeToFill = get("time_to_fill_days", 38);
+  const attritionPct = get("voluntary_attrition_rate_pct", 15);
+  const lndSpend = get("l_and_d_spend_per_fte_gbp", 400);
+  const hrCostPerFte = get("hr_cost_per_fte_gbp", 12000);
+
+  const totalHeadcount = Math.round(hires / 0.10);
+  const hrFunctionSize = Math.max(2, Math.round(totalHeadcount / 50));
+  const costPerDayOpenRole = Math.round(costPerHire / Math.max(1, timeToFill));
+  const imp = improvementPct / 100;
+  const hrHourlyRate = Math.round(hrCostPerFte / 2080);
+
+  let value = 0;
+  let breakdown = "";
+
+  const CASES: Record<string, () => void> = {
+    ai_assisted_cv_screening: () => {
+      const timeSaving = timeToFill * imp * hires * costPerDayOpenRole;
+      const screeningSaving = hires * 2 * hrHourlyRate;
+      value = timeSaving + screeningSaving;
+      breakdown = `${timeToFill}d × ${(imp*100).toFixed(0)}% × ${hires} hires × £${costPerDayOpenRole}/d = £${Math.round(timeSaving).toLocaleString()} TTF saving + £${Math.round(screeningSaving).toLocaleString()} screening`;
+    },
+    ai_assisted_job_descriptions: () => {
+      const saving = hires * 3 * hrHourlyRate;
+      value = saving;
+      breakdown = `${hires} hires × 3h drafting × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()} annual saving`;
+    },
+    predictive_attrition_modelling: () => {
+      value = (attritionPct / 100) * imp * totalHeadcount * costPerHire;
+      breakdown = `${attritionPct}% attrition × ${(imp*100).toFixed(0)}% improvement × ${totalHeadcount} headcount × £${costPerHire} CPH = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_employee_listening: () => {
+      value = (attritionPct / 100) * imp * 0.5 * totalHeadcount * costPerHire;
+      breakdown = `${attritionPct}% attrition × ${(imp*100).toFixed(0)}% × 50% attribution × ${totalHeadcount} headcount × £${costPerHire} CPH = £${Math.round(value).toLocaleString()}`;
+    },
+    hr_process_automation: () => {
+      value = hrCostPerFte * hrFunctionSize * imp;
+      breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% efficiency = £${Math.round(value).toLocaleString()}`;
+    },
+    hr_chatbot_employee_queries: () => {
+      const annualQueries = hrFunctionSize * 200;
+      value = 0.4 * annualQueries * 0.5 * hrHourlyRate;
+      breakdown = `40% deflection × ${annualQueries} queries × 0.5h × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+    },
+    automated_onboarding_orchestration: () => {
+      const admin = hires * 4 * hrHourlyRate;
+      const productivity = hires * 5 * Math.round(hrCostPerFte / 260);
+      value = admin + productivity;
+      breakdown = `${hires} hires × 4h admin + 5d productivity × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+    },
+    people_analytics_dashboard: () => {
+      value = hrFunctionSize * 40 * hrHourlyRate;
+      breakdown = `${hrFunctionSize} HR FTEs × 40h/yr × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_assisted_performance_feedback: () => {
+      value = totalHeadcount * 2 * hrHourlyRate;
+      breakdown = `${totalHeadcount} employees × 2h/cycle × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_performance_calibration: () => {
+      value = totalHeadcount * 1.5 * hrHourlyRate;
+      breakdown = `${totalHeadcount} employees × 1.5h calibration × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_powered_learning_personalisation: () => {
+      value = lndSpend * totalHeadcount * imp;
+      breakdown = `£${lndSpend} L&D/FTE × ${totalHeadcount} headcount × ${(imp*100).toFixed(0)}% efficiency = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_literacy_programme: () => {
+      value = lndSpend * hrFunctionSize * imp;
+      breakdown = `£${lndSpend} L&D/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+    },
+    prompt_engineering_for_hr: () => {
+      value = hrFunctionSize * hrCostPerFte * imp;
+      breakdown = `${hrFunctionSize} HR FTEs × £${hrCostPerFte} cost × ${(imp*100).toFixed(0)}% productivity = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_change_management_programme: () => {
+      value = totalHeadcount * (hrCostPerFte / 2080) * 8 * imp;
+      breakdown = `${totalHeadcount} employees × 8h × £${hrHourlyRate}/h × ${(imp*100).toFixed(0)}% adoption = £${Math.round(value).toLocaleString()}`;
+    },
+    skills_intelligence_platform: () => {
+      value = totalHeadcount * 0.05 * costPerHire * 0.6;
+      breakdown = `${Math.round(totalHeadcount * 0.05)} internal fills × £${Math.round(costPerHire * 0.6)} saving vs external = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_talent_marketplace: () => {
+      value = hires * imp * costPerHire * 0.7;
+      breakdown = `${hires} hires × ${(imp*100).toFixed(0)}% internal fill × £${Math.round(costPerHire * 0.7)} net saving = £${Math.round(value).toLocaleString()}`;
+    },
+    manager_ai_coaching_toolkit: () => {
+      const managers = Math.max(5, Math.round(totalHeadcount / 8));
+      const avgMgrSalary = 55000;
+      value = managers * (avgMgrSalary / 2080) * 20 * imp;
+      breakdown = `${managers} managers × 20h/yr × £${Math.round(avgMgrSalary / 2080)}/h × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_pay_equity_analysis: () => {
+      const claims = Math.max(1, Math.round(totalHeadcount / 100));
+      value = 0.05 * imp * 25000 * claims;
+      breakdown = `5% claim probability × ${(imp*100).toFixed(0)}% prevention × £25k avg award × ${claims} potential claims = £${Math.round(value).toLocaleString()}`;
+    },
+    bias_monitoring_and_auditing: () => {
+      value = 50000 * imp * 0.1;
+      breakdown = `£50k typical fine × ${(imp*100).toFixed(0)}% detection × 10% enforcement probability = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_job_architecture_redesign: () => {
+      value = totalHeadcount * hrHourlyRate * 4 * imp;
+      breakdown = `${totalHeadcount} employees × 4h role clarity × £${hrHourlyRate}/h × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+    },
+    ai_hr_operating_model_redesign: () => {
+      value = hrCostPerFte * hrFunctionSize * imp;
+      breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+    },
+  };
+
+  const fn = CASES[initiativeId];
+  if (fn) {
+    fn();
+  } else {
+    value = hrCostPerFte * hrFunctionSize * imp;
+    breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% (generic estimate) = £${Math.round(value).toLocaleString()}`;
+  }
+
+  return { value: Math.round(Math.max(0, value)), breakdown, usesSectorDefault };
+}
+
+export function calculateValueEnvelope(
+  selectedInitiatives: Initiative[],
+  operationalBaseline: {
+    hires_per_year?: number;
+    cost_per_hire_gbp?: number;
+    time_to_fill_days?: number;
+    voluntary_attrition_rate_pct?: number;
+    l_and_d_spend_per_fte_gbp?: number;
+    hr_cost_per_fte_gbp?: number;
+    _sector_default_used?: Record<string, boolean>;
+  },
+  planHorizonMonths: number
+): ValueEnvelope {
+  const libMeta = getLibraryMeta();
+  const byInitiative: ValueEnvelopeInitiative[] = [];
+  let totalLow = 0;
+  let totalHigh = 0;
+  let capabilityUpliftCount = 0;
+  let riskAvoidanceCount = 0;
+  let strategicCount = 0;
+  const allQualitative: string[] = [];
+
+  for (const init of selectedInitiatives) {
+    const vm = init.value_model;
+    if (!vm) continue;
+
+    for (const q of vm.qualitative_value ?? []) {
+      if (!allQualitative.includes(q)) allQualitative.push(q);
+    }
+
+    if (vm.primary_value_type === "capability_uplift") capabilityUpliftCount++;
+    else if (vm.primary_value_type === "risk_avoidance") riskAvoidanceCount++;
+    else if (vm.primary_value_type === "strategic") strategicCount++;
+
+    if (vm.qualitative_value_only || !vm.quantified_value) {
+      byInitiative.push({
+        initiative_id: init.initiative_id,
+        display_name: init.display_name,
+        value_type: vm.primary_value_type,
+        quantified_value_gbp: null,
+        qualitative_value: vm.qualitative_value,
+        monetisation_breakdown: "Qualitative value only — see bullet points",
+        sources: init.sources ?? [],
+        uses_sector_default: false,
+        confidence: init.confidence,
+        payback_months: null,
+      });
+      continue;
+    }
+
+    const qv = vm.quantified_value;
+    const lowResult = resolveValueFormula(init.initiative_id, qv.typical_improvement_pct.low, operationalBaseline);
+    const highResult = resolveValueFormula(init.initiative_id, qv.typical_improvement_pct.high, operationalBaseline);
+
+    totalLow += lowResult.value;
+    totalHigh += highResult.value;
+
+    byInitiative.push({
+      initiative_id: init.initiative_id,
+      display_name: init.display_name,
+      value_type: vm.primary_value_type,
+      quantified_value_gbp: { low: lowResult.value, high: highResult.value },
+      qualitative_value: vm.qualitative_value,
+      monetisation_breakdown: highResult.breakdown,
+      sources: qv.sources,
+      uses_sector_default: lowResult.usesSectorDefault || highResult.usesSectorDefault,
+      confidence: qv.confidence,
+      payback_months: qv.payback_months,
+    });
+  }
+
+  // Approximate total cost from initiative cost ranges for net value
+  let approxCostLow = 0;
+  let approxCostHigh = 0;
+  for (const init of selectedInitiatives) {
+    const cr = init.cost?.base_range_gbp;
+    if (cr) {
+      approxCostLow += cr[0];
+      approxCostHigh += cr[1];
+    }
+  }
+
+  const netLow = totalLow - approxCostHigh;
+  const netHigh = totalHigh - approxCostLow;
+
+  // Payback period
+  let paybackPeriod: { low: number; high: number } | null = null;
+  const annualValueHigh = (totalHigh * 12) / Math.max(1, planHorizonMonths);
+  const annualValueLow = (totalLow * 12) / Math.max(1, planHorizonMonths);
+  if (annualValueHigh > 0 && annualValueLow > 0) {
+    paybackPeriod = {
+      low: Math.max(0, Math.round(approxCostLow / (annualValueHigh / 12))),
+      high: Math.round(approxCostHigh / (annualValueLow / 12)),
+    };
+  }
+
+  const quantifiedCount = byInitiative.filter(i => i.quantified_value_gbp !== null).length;
+  const qualOnlyCount = byInitiative.filter(i => i.quantified_value_gbp === null).length;
+
+  return {
+    total_quantified_value_gbp: { low: totalLow, high: totalHigh },
+    net_value_gbp: { low: netLow, high: netHigh },
+    payback_period_months: paybackPeriod,
+    by_initiative: byInitiative,
+    qualitative_summary: {
+      capability_uplift_count: capabilityUpliftCount,
+      risk_avoidance_count: riskAvoidanceCount,
+      strategic_count: strategicCount,
+      bullet_points: allQualitative.slice(0, 20),
+    },
+    caveat: `Indicative value ranges based on cited sector benchmarks and your operational baseline. Excludes second-order effects. Quantified value applies to ${quantifiedCount} initiative${quantifiedCount !== 1 ? "s" : ""}; ${qualOnlyCount} initiative${qualOnlyCount !== 1 ? "s" : ""} produce qualitative value not reflected in these figures. Confirm with Finance before commitment.`,
+    libraryVersion: libMeta.version,
+  };
+}

@@ -275,3 +275,46 @@ export async function sendPasswordResetEmail(opts: {
     html:    emailLayout(body),
   });
 }
+
+// ─── Invitation Email ─────────────────────────────────────────────────────────
+/**
+ * Sends a magic-link invitation to a new team member.
+ * Silently skips if RESEND_API_KEY is not configured.
+ */
+export async function sendInvitationEmail(opts: {
+  to: string;
+  inviterName: string;
+  orgName: string;
+  acceptUrl: string;
+  expiresHours?: number;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return; // silently skip if key not configured
+
+  const expiresHours = opts.expiresHours ?? 72;
+  const subject = `${opts.inviterName} has invited you to AiQ`;
+  const body = `
+    ${greenBadge("You have been invited")}
+    <br/><br/>
+    ${h1(`Join ${opts.orgName} on AiQ`)}
+    ${p(`<strong style="color:${WHITE};">${opts.inviterName}</strong> has invited you to join their organisation on AiQ — the enterprise HR capability intelligence platform.`)}
+    ${p("Click the button below to accept your invitation and set up your account. This link expires in ${expiresHours} hours.")}
+    ${ctaButton("Accept invitation", opts.acceptUrl)}
+    ${divider()}
+    <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:${WHITE};">What is AiQ?</p>
+    <table cellpadding="0" cellspacing="0" width="100%">
+      ${stepRow("01", "Capability assessment", "A 20-minute adaptive assessment that maps your AI capability across six domains.")}
+      ${stepRow("02", "Personal roadmap", "A personalised learning plan to close your specific capability gaps.")}
+      ${stepRow("03", "Team intelligence", "Your results contribute to your organisation's HR AI readiness picture.")}
+    </table>
+    ${divider()}
+    ${p("If you were not expecting this invitation, you can safely ignore this email.")}
+  `.replace("${expiresHours}", String(expiresHours));
+
+  await resend.emails.send({
+    from:    FROM_ADDRESS,
+    to:      opts.to,
+    subject,
+    html:    emailLayout(body),
+  });
+}

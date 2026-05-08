@@ -43,6 +43,7 @@ import {
   type DomainKey,
   type RatingKey,
   type RoleFamilyKey,
+  ANONYMISATION_THRESHOLD,
 } from "../../shared/dashboard";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -768,6 +769,13 @@ const managerRouter = router({
     const managerUser = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
     const managerName = managerUser[0] ? `${managerUser[0].firstName} ${managerUser[0].lastName}` : "Manager";
 
+    const assessedInTeam = heatmapData.filter(m => m.overallScore !== null).length;
+    const teamBelowThreshold = assessedInTeam < ANONYMISATION_THRESHOLD;
+    // Suppress individual scores when below anonymisation threshold
+    const safeHeatmapData = teamBelowThreshold
+      ? heatmapData.map(m => ({ ...m, overallScore: null, domainScores: Object.fromEntries(DOMAIN_KEYS.map(k => [k, null])) as Record<DomainKey, number | null> }))
+      : heatmapData;
+
     return {
       manager: {
         name: managerName,
@@ -777,7 +785,9 @@ const managerRouter = router({
       lastTeamActivity,
       ratingCounts,
       teamMembersByRating,
-      heatmapData,
+      heatmapData: safeHeatmapData,
+      belowThreshold: teamBelowThreshold,
+      anonymisationThreshold: ANONYMISATION_THRESHOLD,
     };
   }),
 
@@ -1385,19 +1395,24 @@ const leaderRouter = router({
       totalAssessed: domainTotals[dk].count,
     }));
 
-    // Build role family heatmap
+    // Build role family heatmap (suppress cells below anonymisation threshold)
     const heatmap = ROLE_FAMILY_KEYS.map(rf => ({
       roleFamily: rf,
       roleFamilyName: ROLE_FAMILY_LABELS[rf],
-      domains: DOMAIN_KEYS.map(dk => ({
-        domain: dk,
-        avgScore: roleFamilyDomainData[rf][dk].count > 0
-          ? Math.round((roleFamilyDomainData[rf][dk].total / roleFamilyDomainData[rf][dk].count) * 10) / 10
-          : null,
-        headcount: roleFamilyDomainData[rf][dk].count,
-        target: null, // Will come from AI roadmap
-        gap: null,
-      })),
+      domains: DOMAIN_KEYS.map(dk => {
+        const cellCount = roleFamilyDomainData[rf][dk].count;
+        const meetsThreshold = cellCount >= ANONYMISATION_THRESHOLD;
+        return {
+          domain: dk,
+          avgScore: meetsThreshold && cellCount > 0
+            ? Math.round((roleFamilyDomainData[rf][dk].total / cellCount) * 10) / 10
+            : null,
+          headcount: cellCount,
+          belowThreshold: !meetsThreshold && cellCount > 0,
+          target: null, // Will come from AI roadmap
+          gap: null,
+        };
+      }),
     }));
 
     // Build 5-level distribution array
@@ -2281,21 +2296,32 @@ const leaderRouter = router({
     // Compute function-level averages
     const functions = Array.from(functionMap.values()).map(fn => {
       const assessed = fn.members.filter(m => m.overallScore !== null);
+      // Suppress scores if below anonymisation threshold (privacy protection)
+      const meetsThreshold = assessed.length >= ANONYMISATION_THRESHOLD;
       const domainAvgs: Record<string, number | null> = {};
       for (const dk of DOMAIN_KEYS) {
-        const vals = assessed.map(m => m.domainScores[dk]).filter((v): v is number => v != null && !isNaN(v));
-        domainAvgs[dk] = vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+        if (!meetsThreshold) {
+          domainAvgs[dk] = null;
+        } else {
+          const vals = assessed.map(m => m.domainScores[dk]).filter((v): v is number => v != null && !isNaN(v));
+          domainAvgs[dk] = vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+        }
       }
       const overallVals = assessed.map(m => m.overallScore).filter((v): v is number => v != null);
-      const overallAvg = overallVals.length > 0 ? Math.round((overallVals.reduce((a, b) => a + b, 0) / overallVals.length) * 10) / 10 : null;
+      const overallAvg = meetsThreshold && overallVals.length > 0
+        ? Math.round((overallVals.reduce((a, b) => a + b, 0) / overallVals.length) * 10) / 10
+        : null;
       return {
         key: fn.key,
         label: fn.label,
         memberCount: fn.members.length,
         assessedCount: assessed.length,
+        // Suppress individual member scores below threshold
+        members: meetsThreshold ? fn.members : fn.members.map(m => ({ ...m, overallScore: null, domainScores: {} as Record<string, number> })),
         domainAvgs,
         overallAvg,
-        members: fn.members,
+        belowThreshold: !meetsThreshold,
+        anonymisationThreshold: ANONYMISATION_THRESHOLD,
       };
     }).sort((a, b) => b.memberCount - a.memberCount);
 

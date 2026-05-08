@@ -642,6 +642,7 @@ export default function ManagerDashboard() {
 
   const dist = data?.distribution;
   const capGaps = data?.capabilityGaps ?? [];
+  const capGapsBelowThreshold = data?.capabilityGapsBelowThreshold ?? false;
   const team = data?.team ?? [];
 
   const filtered = team.filter(m =>
@@ -754,7 +755,12 @@ export default function ManagerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {capGaps.length > 0 ? (
+              {capGapsBelowThreshold ? (
+                <div className="flex items-center gap-2 py-6 px-3 rounded-lg bg-muted/40 text-muted-foreground text-sm">
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1z"/></svg>
+                  <span>Team averages are hidden until at least 7 members have completed their assessment. This protects individual privacy.</span>
+                </div>
+              ) : capGaps.length > 0 ? (
                 <ResponsiveContainer className="aiq-chart-mount" width="100%" height={180}>
                   <BarChart data={capGaps.map(g => ({ name: CAP_LABELS[g.capability] ?? g.capability, score: g.avgScore ?? 0 }))}
                     layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>

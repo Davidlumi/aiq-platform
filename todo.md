@@ -2310,3 +2310,32 @@
 ### CC — Cross-cutting
 - [x] CC.1: PDF parity across all P1/P2/P3 changes
 - [x] CC.2: 34 vitest assertions in server/strategyEngine.test.ts (all 768 tests passing)
+
+## Combined Build Brief — May 2026
+
+### Block A — Design Partner Blockers
+- [x] A1: Seven-person anonymisation threshold — API layer (dashboardV2.leader.main, functionHeatmap, ambitionGap, people.listMembers, people.getMemberReport)
+- [x] A1: Seven-person anonymisation threshold — UI (PeopleReportsPage placeholder panel, LeaderDashboardV2 greyed heatmap cells + tooltip)
+- [x] A1: Audit log entry for super-admin threshold bypass
+- [x] A2: Schema — invitation_token, invitation_expires_at, invitation_sent_at, invitation_status on users; new invitation_events table
+- [x] A2: trpc.users.bulkInviteWithEmail — magic-link flow, no temp password returned
+- [x] A2: trpc.users.resendInvitation, revokeInvitation; trpc.auth.acceptInvitation
+- [x] A2: Email template — invitation email via Resend (reuse email.ts pattern)
+- [x] A2: /accept-invitation page + UsersPage invitation status UI
+
+### Block B — Strategy Assessment Overhaul
+- [x] B1: Replace Steps 1+2 open-text questions with structured inputs (multi-select, scale, rank)
+- [x] B1: structuredInputsJson schema addition to ail_org_context; migrate existing rows
+- [x] B2: Operational baseline screen (Step 1.5) — 6 optional fields, sector-average fallback, skip-all
+- [x] B2: operationalBaselineJson schema addition; sector benchmark operational_benchmarks data in content library
+- [x] B3: Updated generateVisionWithQualityGate prompt using structured inputs
+- [x] B3: Updated principles and won't-do generation prompts
+
+### Block C — ROI / Value Build
+- [x] C1+C2: value_model schema in content library + populate all 30 initiatives + library version bump to v1.1.0
+- [x] C3: calculateValueEnvelope() in strategyEngine.ts + trpc.intelligence.calculateValueEnvelope + tests
+- [x] C4+C5: Value sub-block in AIStrategyPage Section 4 + ValueProvenanceModal, InitiativeValueProvenanceModal, PaybackProvenanceModal
+- [x] C6: PDF parity — Value sub-section in generateAIStrategyReport()
+
+### Block D — Cleanup
+- [x] D1: cross_functional_dependencies data for all 30 initiatives + aggregateCrossFunctionalDependencies() + Section 4 Dependencies sub-block + PDF mirror

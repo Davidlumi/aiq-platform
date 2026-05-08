@@ -156,6 +156,8 @@ function FunctionHeatmap({
     assessedCount: number;
     domainAvgs: Record<string, number | null>;
     overallAvg: number | null;
+    belowThreshold?: boolean;
+    anonymisationThreshold?: number;
     members: Array<{
       id: string;
       name: string;
@@ -232,30 +234,41 @@ function FunctionHeatmap({
                       </div>
                     </div>
                   </td>
-                  {domains.map(d => {
-                    const score = fn.domainAvgs[d.key] ?? null;
-                    const cell = heatmapCellStyle(score);
-                    return (
-                      <td key={d.key} className="py-1 px-1 text-center">
-                        <span
-                          className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums"
-                          style={{ background: cell.bg, color: cell.text }}
-                        >
-                          {score != null ? (score / 10).toFixed(1) : "—"}
-                        </span>
+                  {fn.belowThreshold ? (
+                    <td colSpan={domains.length + 1} className="py-1 px-3 text-center">
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground italic">
+                        <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1z"/></svg>
+                        Scores hidden — fewer than {fn.anonymisationThreshold ?? 7} assessed
+                      </span>
+                    </td>
+                  ) : (
+                    <>
+                      {domains.map(d => {
+                        const score = fn.domainAvgs[d.key] ?? null;
+                        const cell = heatmapCellStyle(score);
+                        return (
+                          <td key={d.key} className="py-1 px-1 text-center">
+                            <span
+                              className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums"
+                              style={{ background: cell.bg, color: cell.text }}
+                            >
+                              {score != null ? (score / 10).toFixed(1) : "—"}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td className="py-1 px-1 text-center">
+                        {(() => {
+                          const cell = heatmapCellStyle(fn.overallAvg);
+                          return (
+                            <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
+                              {fn.overallAvg != null ? (fn.overallAvg / 10).toFixed(1) : "—"}
+                            </span>
+                          );
+                        })()}
                       </td>
-                    );
-                  })}
-                  <td className="py-1 px-1 text-center">
-                    {(() => {
-                      const cell = heatmapCellStyle(fn.overallAvg);
-                      return (
-                        <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
-                          {fn.overallAvg != null ? (fn.overallAvg / 10).toFixed(1) : "—"}
-                        </span>
-                      );
-                    })()}
-                  </td>
+                    </>
+                  )}
                 </tr>
                 {/* Expanded member sub-rows */}
                 {isExpanded && fn.members.map((member) => {

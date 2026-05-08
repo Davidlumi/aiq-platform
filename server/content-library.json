@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": "1.0.0",
-    "built_at": "2026-05-08T05:41:45.932828+00:00",
+    "version": "1.1.0",
+    "built_at": "2026-05-08T09:00:00.000000+00:00",
     "git_sha": "unknown",
     "content_counts": {
       "sources": 15,
@@ -2561,7 +2561,46 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": {
+          "primary_metric": "l_and_d_spend_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 10,
+            "high": 25
+          },
+          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 hr_function_size \u00d7 content_efficiency_pct; plus productivity_hours_recovered \u00d7 hr_function_size \u00d7 hr_cost_per_fte/2080",
+          "sources": [
+            "src_cipd_lnd_2024",
+            "src_donald_clark_lnd_2025"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 9,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Builds workforce confidence in using AI tools safely",
+          "Surfaces and addresses capability gaps before they limit AI adoption",
+          "Signals leadership commitment to AI as a workforce-wide capability"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "l_and_d": [
+          "Curriculum design and delivery",
+          "Learning platform integration"
+        ],
+        "comms": [
+          "Internal launch communications",
+          "Manager enablement materials"
+        ],
+        "it_data": [
+          "LMS configuration and access provisioning"
+        ]
+      }
     },
     "ai_ethics_governance_framework": {
       "initiative_id": "ai_ethics_governance_framework",
@@ -2644,7 +2683,31 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Defensible position against ICO scrutiny under the 2025/26 action plan",
+          "Reduces audit findings risk during board and external regulator engagement",
+          "Provides a documented framework for vendor risk management on AI procurement",
+          "Reduces likelihood of HR being the bottleneck in firm-wide AI governance"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Policy drafting and review",
+          "DPIA integration"
+        ],
+        "it_data": [
+          "Tool inventory and risk classification"
+        ],
+        "comms": [
+          "All-hands governance announcement",
+          "Documentation publishing"
+        ]
+      }
     },
     "prompt_engineering_for_hr": {
       "initiative_id": "prompt_engineering_for_hr",
@@ -2716,7 +2779,41 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 8,
+            "high": 20
+          },
+          "monetisation_formula": "productivity_hours_recovered \u00d7 hr_function_size \u00d7 (hr_cost_per_fte / 2080)",
+          "sources": [
+            "src_mckinsey_gen_ai_2023",
+            "src_cipd_lnd_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 4,
+            "high": 10
+          }
+        },
+        "qualitative_value": [
+          "Reduces time spent drafting routine HR communications",
+          "Enables HR practitioners to prototype AI use cases without engineering support"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "AI tool access provisioning",
+          "Acceptable use controls"
+        ],
+        "l_and_d": [
+          "Training delivery and facilitation"
+        ]
+      }
     },
     "ai_acceptable_use_policy": {
       "initiative_id": "ai_acceptable_use_policy",
@@ -2788,7 +2885,30 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Establishes clear guardrails before AI tools proliferate informally",
+          "Reduces reputational and regulatory risk from unsanctioned AI use",
+          "Provides basis for disciplinary action if policy is breached"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Policy legal review",
+          "Employment law alignment"
+        ],
+        "comms": [
+          "Policy launch communications",
+          "Line manager briefing pack"
+        ],
+        "it_data": [
+          "Shadow AI monitoring tooling"
+        ]
+      }
     },
     "hr_data_quality_audit": {
       "initiative_id": "hr_data_quality_audit",
@@ -2868,7 +2988,30 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Enables downstream AI initiatives that depend on clean data",
+          "Reduces false positives in predictive models caused by dirty inputs",
+          "Surfaces data governance gaps before they become compliance issues"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "HRIS data extraction",
+          "Data lineage mapping",
+          "Remediation tooling"
+        ],
+        "legal_compliance": [
+          "Data retention and GDPR compliance review"
+        ],
+        "finance": [
+          "Budget for data remediation tooling"
+        ]
+      }
     },
     "ai_change_management_programme": {
       "initiative_id": "ai_change_management_programme",
@@ -2951,7 +3094,45 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 5,
+            "high": 15
+          },
+          "monetisation_formula": "adoption_rate_improvement \u00d7 productivity_hours_per_fte \u00d7 hr_function_size \u00d7 (hr_cost_per_fte / 2080)",
+          "sources": [
+            "src_prosci_change_2024",
+            "src_mckinsey_gen_ai_2023"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Reduces resistance to AI adoption across HR and the wider workforce",
+          "Accelerates time-to-value for all other AI initiatives in the portfolio"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "comms": [
+          "Change narrative and communications plan",
+          "Stakeholder engagement materials"
+        ],
+        "l_and_d": [
+          "Change champion training",
+          "Manager readiness workshops"
+        ],
+        "finance": [
+          "Programme budget approval"
+        ]
+      }
     },
     "bias_monitoring_and_auditing": {
       "initiative_id": "bias_monitoring_and_auditing",
@@ -3034,7 +3215,46 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": {
+          "primary_metric": "regulatory_fine_avoided_gbp",
+          "typical_improvement_pct": {
+            "low": 60,
+            "high": 90
+          },
+          "monetisation_formula": "probability_of_enforcement_action \u00d7 typical_fine_gbp \u00d7 bias_detection_coverage_pct",
+          "sources": [
+            "src_ico_enforcement_2024",
+            "src_eu_ai_act_2024"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Provides documented evidence of due diligence for regulator enquiries",
+          "Reduces employment tribunal risk from discriminatory AI-assisted decisions",
+          "Builds trust with employees and candidates in AI-assisted HR processes"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "EU AI Act high-risk classification review",
+          "Equality Act compliance mapping"
+        ],
+        "it_data": [
+          "Model monitoring infrastructure",
+          "Audit log access"
+        ],
+        "finance": [
+          "External audit vendor procurement"
+        ]
+      }
     },
     "hr_process_automation": {
       "initiative_id": "hr_process_automation",
@@ -3117,7 +3337,47 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 15,
+            "high": 30
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 total_headcount \u00d7 automation_coverage_pct \u00d7 improvement_pct",
+          "sources": [
+            "src_deloitte_hr_2024",
+            "src_mckinsey_gen_ai_2023"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 6,
+            "high": 14
+          }
+        },
+        "qualitative_value": [
+          "Frees HR practitioners to focus on higher-value advisory work",
+          "Reduces error rates in transactional HR processes",
+          "Improves employee experience through faster query resolution"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "HRIS API integration",
+          "Workflow automation platform",
+          "Data pipeline build"
+        ],
+        "legal_compliance": [
+          "Process compliance review",
+          "Data processing agreements"
+        ],
+        "finance": [
+          "Vendor procurement and contracting"
+        ]
+      }
     },
     "ai_assisted_job_descriptions": {
       "initiative_id": "ai_assisted_job_descriptions",
@@ -3191,7 +3451,43 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "time_to_fill_days",
+          "typical_improvement_pct": {
+            "low": 10,
+            "high": 20
+          },
+          "monetisation_formula": "time_saved_per_jd_hours \u00d7 hires_per_year \u00d7 (hr_cost_per_fte / 2080); plus time_to_fill_days \u00d7 improvement_pct \u00d7 hires_per_year \u00d7 cost_per_day_open_role",
+          "sources": [
+            "src_cipd_ta_2025",
+            "src_mckinsey_ta_ai_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 3,
+            "high": 8
+          }
+        },
+        "qualitative_value": [
+          "Reduces gender-coded language that deters diverse applicants",
+          "Standardises job architecture language across the organisation"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Equality Act language review"
+        ],
+        "it_data": [
+          "ATS integration for JD publishing"
+        ],
+        "comms": [
+          "Hiring manager guidance and training"
+        ]
+      }
     },
     "hr_chatbot_employee_queries": {
       "initiative_id": "hr_chatbot_employee_queries",
@@ -3273,7 +3569,47 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 12,
+            "high": 25
+          },
+          "monetisation_formula": "query_deflection_rate \u00d7 annual_query_volume \u00d7 avg_hr_handling_time_hours \u00d7 (hr_cost_per_fte / 2080)",
+          "sources": [
+            "src_gartner_hr_tech_2024",
+            "src_deloitte_hr_2024"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 6,
+            "high": 12
+          }
+        },
+        "qualitative_value": [
+          "Provides 24/7 HR support to shift workers and remote employees",
+          "Reduces HR advisor burnout from repetitive query handling"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "HRIS integration",
+          "Chatbot platform deployment",
+          "SSO configuration"
+        ],
+        "legal_compliance": [
+          "Data processing agreement with vendor",
+          "ICO registration if required"
+        ],
+        "comms": [
+          "Employee launch communications",
+          "Escalation pathway documentation"
+        ]
+      }
     },
     "people_analytics_dashboard": {
       "initiative_id": "people_analytics_dashboard",
@@ -3357,7 +3693,46 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 5,
+            "high": 12
+          },
+          "monetisation_formula": "reporting_time_saved_hours \u00d7 hr_function_size \u00d7 (hr_cost_per_fte / 2080); plus decision_quality_improvement \u00d7 attrition_rate_pct \u00d7 total_headcount \u00d7 cost_per_hire_gbp",
+          "sources": [
+            "src_cipd_people_analytics_2024",
+            "src_mckinsey_gen_ai_2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 8,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Enables evidence-based workforce decisions at board level",
+          "Surfaces early warning signals on engagement and attrition"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Data warehouse integration",
+          "BI tool configuration",
+          "Access control setup"
+        ],
+        "finance": [
+          "Budget for analytics tooling"
+        ],
+        "legal_compliance": [
+          "Data privacy impact assessment",
+          "Role-based access governance"
+        ]
+      }
     },
     "ai_assisted_performance_feedback": {
       "initiative_id": "ai_assisted_performance_feedback",
@@ -3442,7 +3817,45 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 8,
+            "high": 18
+          },
+          "monetisation_formula": "feedback_cycle_time_saved_hours \u00d7 total_headcount \u00d7 (hr_cost_per_fte / 2080)",
+          "sources": [
+            "src_mckinsey_gen_ai_2023",
+            "src_cipd_lnd_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 14
+          }
+        },
+        "qualitative_value": [
+          "Reduces recency bias in performance reviews",
+          "Improves consistency of feedback quality across managers",
+          "Increases frequency of meaningful performance conversations"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Employment law review of AI-generated feedback",
+          "ICO ADM disclosure"
+        ],
+        "it_data": [
+          "Performance management system integration"
+        ],
+        "comms": [
+          "Manager and employee communications on AI use"
+        ]
+      }
     },
     "ai_tool_adoption_programme": {
       "initiative_id": "ai_tool_adoption_programme",
@@ -3516,7 +3929,28 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Maximises return on AI tool investments already made",
+          "Reduces shadow IT risk from unmanaged AI tool adoption",
+          "Builds internal champions who accelerate peer adoption"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Tool access provisioning and licence management"
+        ],
+        "l_and_d": [
+          "Adoption training and coaching"
+        ],
+        "comms": [
+          "Internal adoption campaign"
+        ]
+      }
     },
     "automated_onboarding_orchestration": {
       "initiative_id": "automated_onboarding_orchestration",
@@ -3594,7 +4028,45 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 10,
+            "high": 22
+          },
+          "monetisation_formula": "onboarding_admin_time_saved_hours \u00d7 hires_per_year \u00d7 (hr_cost_per_fte / 2080); plus time_to_productivity_days_saved \u00d7 hires_per_year \u00d7 (avg_salary_gbp / 260)",
+          "sources": [
+            "src_deloitte_hr_2024",
+            "src_cipd_ta_2025"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 14
+          }
+        },
+        "qualitative_value": [
+          "Improves new hire experience and early engagement",
+          "Reduces manager burden during onboarding period"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "HRIS and onboarding platform integration",
+          "Identity provisioning automation"
+        ],
+        "legal_compliance": [
+          "Right-to-work check compliance",
+          "Data handling review"
+        ],
+        "comms": [
+          "New hire communications redesign"
+        ]
+      }
     },
     "ai_assisted_cv_screening": {
       "initiative_id": "ai_assisted_cv_screening",
@@ -3680,7 +4152,48 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "time_to_fill_days",
+          "typical_improvement_pct": {
+            "low": 15,
+            "high": 30
+          },
+          "monetisation_formula": "(time_to_fill_days \u00d7 improvement_pct) \u00d7 hires_per_year \u00d7 cost_per_day_open_role; plus screening_time_saved \u00d7 screener_hourly_cost",
+          "sources": [
+            "src_mckinsey_ta_ai_2024",
+            "src_cipd_ta_2025",
+            "src_lumi_design_partners_2025"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 14
+          }
+        },
+        "qualitative_value": [
+          "Improves candidate experience through faster response times",
+          "Reduces hiring manager screening burden",
+          "Standardises early-stage screening criteria"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "ATS integration",
+          "Candidate data pipeline"
+        ],
+        "legal_compliance": [
+          "EU AI Act high-risk classification review",
+          "ICO ADM disclosure to candidates",
+          "Equality Act bias audit"
+        ],
+        "finance": [
+          "Vendor procurement and contracting"
+        ]
+      }
     },
     "predictive_attrition_modelling": {
       "initiative_id": "predictive_attrition_modelling",
@@ -3766,7 +4279,46 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "attrition_rate_pct",
+          "typical_improvement_pct": {
+            "low": 10,
+            "high": 25
+          },
+          "monetisation_formula": "attrition_rate_pct \u00d7 improvement_pct \u00d7 total_headcount \u00d7 cost_per_hire_gbp",
+          "sources": [
+            "src_cipd_resourcing_2024",
+            "src_mckinsey_ta_ai_2024"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 8,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Enables targeted retention interventions before flight risk materialises",
+          "Improves workforce planning accuracy by reducing surprise departures"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "HRIS data pipeline",
+          "Model hosting and monitoring infrastructure"
+        ],
+        "legal_compliance": [
+          "ICO ADM disclosure",
+          "EU AI Act risk classification",
+          "Data minimisation review"
+        ],
+        "finance": [
+          "Model build or vendor procurement budget"
+        ]
+      }
     },
     "skills_intelligence_platform": {
       "initiative_id": "skills_intelligence_platform",
@@ -3852,7 +4404,50 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 8,
+            "high": 18
+          },
+          "monetisation_formula": "internal_mobility_rate_improvement \u00d7 total_headcount \u00d7 (cost_per_hire_gbp \u00d7 0.6); plus l_and_d_spend_per_fte \u00d7 hr_function_size \u00d7 targeting_efficiency_pct",
+          "sources": [
+            "src_mckinsey_future_of_work_2023",
+            "src_cipd_lnd_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Provides a single source of truth for workforce capability",
+          "Enables strategic workforce planning grounded in real skill data",
+          "Supports internal mobility and reduces external hiring dependency"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Skills taxonomy integration",
+          "HRIS and LMS data feeds",
+          "Platform deployment"
+        ],
+        "legal_compliance": [
+          "Employee data consent and transparency notices"
+        ],
+        "finance": [
+          "Platform licensing and implementation budget"
+        ],
+        "l_and_d": [
+          "Skills taxonomy design",
+          "Learning pathway integration"
+        ]
+      }
     },
     "workforce_scenario_planning": {
       "initiative_id": "workforce_scenario_planning",
@@ -3927,7 +4522,29 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Enables HR to contribute to board-level strategic planning",
+          "Reduces cost of reactive workforce restructuring",
+          "Surfaces workforce risk 12\u201324 months ahead of materialisation"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Workforce data modelling infrastructure"
+        ],
+        "finance": [
+          "Financial modelling integration",
+          "Budget planning alignment"
+        ],
+        "legal_compliance": [
+          "Data governance for scenario data"
+        ]
+      }
     },
     "ai_powered_learning_personalisation": {
       "initiative_id": "ai_powered_learning_personalisation",
@@ -4001,7 +4618,47 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": {
+          "primary_metric": "l_and_d_spend_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 15,
+            "high": 30
+          },
+          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 total_headcount \u00d7 waste_reduction_pct; plus completion_rate_improvement \u00d7 l_and_d_spend_per_fte \u00d7 total_headcount",
+          "sources": [
+            "src_cipd_lnd_2024",
+            "src_donald_clark_lnd_2025"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 9,
+            "high": 20
+          }
+        },
+        "qualitative_value": [
+          "Increases learning completion rates through relevance",
+          "Reduces time-to-competency for new skills",
+          "Improves employee engagement with development programmes"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "l_and_d": [
+          "Content library curation",
+          "Learning platform integration",
+          "Learner experience design"
+        ],
+        "it_data": [
+          "LMS API integration",
+          "Learner data pipeline"
+        ],
+        "legal_compliance": [
+          "Learner data privacy review"
+        ]
+      }
     },
     "ai_pay_equity_analysis": {
       "initiative_id": "ai_pay_equity_analysis",
@@ -4084,7 +4741,47 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": {
+          "primary_metric": "regulatory_fine_avoided_gbp",
+          "typical_improvement_pct": {
+            "low": 50,
+            "high": 85
+          },
+          "monetisation_formula": "probability_of_equal_pay_claim \u00d7 avg_tribunal_award_gbp \u00d7 claim_prevention_rate",
+          "sources": [
+            "src_ico_enforcement_2024",
+            "src_cipd_reward_2024"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Enables proactive remediation before mandatory gender pay gap reporting",
+          "Strengthens employer brand with equity-conscious candidates",
+          "Provides documented due diligence for board and investor scrutiny"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Equal pay legal review",
+          "Gender pay gap reporting alignment"
+        ],
+        "finance": [
+          "Payroll data access",
+          "Remediation budget planning"
+        ],
+        "it_data": [
+          "Payroll system integration",
+          "Anonymisation controls"
+        ]
+      }
     },
     "ai_centre_of_excellence": {
       "initiative_id": "ai_centre_of_excellence",
@@ -4160,7 +4857,32 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Creates a centre of gravity for AI capability and governance in HR",
+          "Reduces duplication of AI effort across HR sub-functions",
+          "Provides a mechanism for scaling successful pilots across the organisation"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "AI tooling governance and standards",
+          "Shared infrastructure provisioning"
+        ],
+        "legal_compliance": [
+          "CoE governance charter legal review"
+        ],
+        "finance": [
+          "CoE operating budget"
+        ],
+        "comms": [
+          "Internal CoE launch and positioning"
+        ]
+      }
     },
     "hr_ai_operating_model_redesign": {
       "initiative_id": "hr_ai_operating_model_redesign",
@@ -4237,7 +4959,46 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 15,
+            "high": 30
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 total_headcount \u00d7 operating_model_efficiency_pct",
+          "sources": [
+            "src_deloitte_hr_2024",
+            "src_mckinsey_gen_ai_2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Repositions HR as a strategic business partner rather than a transactional function",
+          "Enables HR to absorb headcount growth without proportional cost increase"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "finance": [
+          "Business case and headcount modelling"
+        ],
+        "legal_compliance": [
+          "Employment contract and role change review"
+        ],
+        "comms": [
+          "Workforce communications on role changes"
+        ],
+        "it_data": [
+          "Technology roadmap alignment"
+        ]
+      }
     },
     "ai_governance_maturity_programme": {
       "initiative_id": "ai_governance_maturity_programme",
@@ -4310,7 +5071,28 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Provides a structured pathway from ad-hoc AI governance to institutional capability",
+          "Reduces regulatory exposure as AI Act obligations mature",
+          "Enables the organisation to participate in industry governance benchmarking"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Regulatory mapping and gap analysis"
+        ],
+        "it_data": [
+          "AI inventory and risk register"
+        ],
+        "comms": [
+          "Governance communications to board and workforce"
+        ]
+      }
     },
     "manager_ai_coaching_toolkit": {
       "initiative_id": "manager_ai_coaching_toolkit",
@@ -4386,7 +5168,44 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 5,
+            "high": 12
+          },
+          "monetisation_formula": "manager_time_saved_hours \u00d7 manager_headcount \u00d7 (avg_manager_salary_gbp / 2080)",
+          "sources": [
+            "src_mckinsey_gen_ai_2023",
+            "src_cipd_lnd_2024"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 10,
+            "high": 20
+          }
+        },
+        "qualitative_value": [
+          "Improves quality and consistency of manager-led people conversations",
+          "Reduces HR advisory load from manager escalations",
+          "Builds manager confidence in handling complex people situations"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "l_and_d": [
+          "Toolkit content design and delivery"
+        ],
+        "it_data": [
+          "Coaching platform or app deployment"
+        ],
+        "comms": [
+          "Manager launch communications"
+        ]
+      }
     },
     "ai_talent_marketplace": {
       "initiative_id": "ai_talent_marketplace",
@@ -4473,7 +5292,48 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "cost_per_hire_gbp",
+          "typical_improvement_pct": {
+            "low": 10,
+            "high": 20
+          },
+          "monetisation_formula": "internal_fill_rate_improvement \u00d7 hires_per_year \u00d7 cost_per_hire_gbp \u00d7 0.7",
+          "sources": [
+            "src_mckinsey_future_of_work_2023",
+            "src_cipd_resourcing_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Reduces external hiring dependency and associated agency fees",
+          "Improves employee retention through visible internal mobility pathways",
+          "Surfaces hidden talent and reduces skills hoarding"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Platform integration with HRIS and skills data"
+        ],
+        "legal_compliance": [
+          "Internal mobility policy review",
+          "Data privacy for internal profiles"
+        ],
+        "comms": [
+          "Employee communications on marketplace launch"
+        ],
+        "finance": [
+          "Platform licensing budget"
+        ]
+      }
     },
     "ai_performance_calibration": {
       "initiative_id": "ai_performance_calibration",
@@ -4559,7 +5419,43 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "productivity_hours_per_fte",
+          "typical_improvement_pct": {
+            "low": 6,
+            "high": 14
+          },
+          "monetisation_formula": "calibration_time_saved_hours \u00d7 manager_headcount \u00d7 (avg_manager_salary_gbp / 2080)",
+          "sources": [
+            "src_mckinsey_gen_ai_2023"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 8,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Reduces grade inflation and compression in performance distributions",
+          "Improves fairness perception among employees",
+          "Enables more defensible reward and promotion decisions"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Employment law review of AI-assisted calibration"
+        ],
+        "it_data": [
+          "Performance system integration"
+        ],
+        "comms": [
+          "Manager communications on calibration process changes"
+        ]
+      }
     },
     "ai_employee_listening": {
       "initiative_id": "ai_employee_listening",
@@ -4644,7 +5540,46 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": {
+          "primary_metric": "attrition_rate_pct",
+          "typical_improvement_pct": {
+            "low": 8,
+            "high": 18
+          },
+          "monetisation_formula": "attrition_rate_pct \u00d7 improvement_pct \u00d7 total_headcount \u00d7 cost_per_hire_gbp",
+          "sources": [
+            "src_cipd_resourcing_2024",
+            "src_mckinsey_future_of_work_2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 10,
+            "high": 22
+          }
+        },
+        "qualitative_value": [
+          "Enables real-time pulse on workforce sentiment without survey fatigue",
+          "Surfaces emerging issues before they become grievances or departures",
+          "Provides thematic analysis at scale across large distributed workforces"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Works council or union consultation if applicable",
+          "Data privacy impact assessment"
+        ],
+        "it_data": [
+          "Listening platform integration",
+          "Data anonymisation controls"
+        ],
+        "comms": [
+          "Employee communications on listening programme purpose and data use"
+        ]
+      }
     },
     "ai_job_architecture_redesign": {
       "initiative_id": "ai_job_architecture_redesign",
@@ -4730,7 +5665,48 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 8,
+            "high": 18
+          },
+          "monetisation_formula": "role_clarity_efficiency_pct \u00d7 total_headcount \u00d7 (hr_cost_per_fte / 2080) \u00d7 avg_hours_saved_per_role",
+          "sources": [
+            "src_mckinsey_future_of_work_2023",
+            "src_cipd_reward_2024"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Creates a future-proof job architecture that accommodates AI-augmented roles",
+          "Enables skills-based talent management at scale",
+          "Reduces role duplication and spans-and-layers inefficiency"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "legal_compliance": [
+          "Employment contract implications review",
+          "Equality impact assessment"
+        ],
+        "finance": [
+          "Reward framework alignment"
+        ],
+        "comms": [
+          "Workforce communications on role changes"
+        ],
+        "it_data": [
+          "HRIS job architecture update"
+        ]
+      }
     },
     "ai_governance_continuous_monitoring": {
       "initiative_id": "ai_governance_continuous_monitoring",
@@ -4816,7 +5792,30 @@
       "confidence": "high",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "priority_quarterly"
+      "review_tier": "priority_quarterly",
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Provides ongoing assurance that deployed AI systems remain within policy",
+          "Enables rapid response to model drift or emerging regulatory requirements",
+          "Reduces cost of periodic point-in-time audits through continuous monitoring"
+        ],
+        "qualitative_value_only": true
+      },
+      "cross_functional_dependencies": {
+        "it_data": [
+          "Monitoring infrastructure build",
+          "Alert and escalation tooling"
+        ],
+        "legal_compliance": [
+          "Regulatory reporting obligations",
+          "Audit trail requirements"
+        ],
+        "finance": [
+          "Ongoing monitoring tooling budget"
+        ]
+      }
     },
     "ai_hr_operating_model_redesign": {
       "initiative_id": "ai_hr_operating_model_redesign",
@@ -4903,7 +5902,46 @@
       "confidence": "medium",
       "last_reviewed": "2026-Q1",
       "reviewer": "DM",
-      "review_tier": "standard_quarterly"
+      "review_tier": "standard_quarterly",
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "hr_cost_per_fte_gbp",
+          "typical_improvement_pct": {
+            "low": 12,
+            "high": 25
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 total_headcount \u00d7 redesign_efficiency_pct",
+          "sources": [
+            "src_deloitte_hr_2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Aligns HR operating model to AI-era workforce needs",
+          "Reduces manual coordination overhead in HR service delivery",
+          "Creates clear ownership of AI-augmented HR processes"
+        ],
+        "qualitative_value_only": false
+      },
+      "cross_functional_dependencies": {
+        "finance": [
+          "Headcount and cost modelling"
+        ],
+        "legal_compliance": [
+          "TUPE and employment law review if applicable"
+        ],
+        "comms": [
+          "Workforce and manager communications"
+        ],
+        "it_data": [
+          "Technology footprint rationalisation"
+        ]
+      }
     }
   },
   "risk_rules": {

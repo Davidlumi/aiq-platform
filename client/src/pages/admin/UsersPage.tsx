@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, MoreHorizontal, Eye, UserCog, ArrowUpDown, Upload, Download, FileText } from "lucide-react";
+import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, MoreHorizontal, Eye, UserCog, ArrowUpDown, Upload, Download, FileText, Mail, Send, RefreshCw, XCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ROLE_LABELS: Record<string, string> = {
   platform_super_admin: "Super Admin",
@@ -128,6 +129,33 @@ export default function UsersPage() {
     }
     setCsvPreview(parsed);
   }
+  // ── Invitation state ──────────────────────────────────────────────────────
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("hr_professional");
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  const { data: invitationsData, refetch: refetchInvitations } = trpc.users.listInvitations.useQuery();
+
+  const sendInviteMutation = trpc.users.sendInvitation.useMutation({
+    onSuccess: (res) => {
+      toast.success(`Invitation sent to ${res.email}`);
+      setInviteEmail("");
+      setInviteOpen(false);
+      refetchInvitations();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const revokeInviteMutation = trpc.users.revokeInvitation.useMutation({
+    onSuccess: () => { toast.success("Invitation revoked"); refetchInvitations(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const resendInviteMutation = trpc.users.resendInvitation.useMutation({
+    onSuccess: () => { toast.success("Invitation resent"); refetchInvitations(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const updateStatusMutation = trpc.users.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("User status updated");
@@ -150,6 +178,13 @@ export default function UsersPage() {
   });
   const total = users_list.length;
   const totalPages = 1; // single page for now
+
+  const INV_STATUS_STYLES: Record<string, string> = {
+    pending:  "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25",
+    accepted: "bg-[#047857]/8 text-[#047857] border-[#047857]/25",
+    expired:  "bg-muted text-muted-foreground border-border",
+    revoked:  "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25",
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -512,6 +547,122 @@ export default function UsersPage() {
                 </Button>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Invitations Section */}
+      <Card className="aiq-card">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="font-semibold text-foreground flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" /> Invitations
+            </CardTitle>
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Send className="h-3.5 w-3.5" /> Send Invitation
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="font-semibold">Send Magic-Link Invitation</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <Label className="aiq-label text-muted-foreground">Email address</Label>
+                    <Input
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={e => setInviteEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="aiq-label text-muted-foreground">Role</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {availableRoles
+                          ? availableRoles.map((r: { id: string; key: string; label: string }) => (
+                              <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>
+                            ))
+                          : ["learner", "hr_professional", "manager", "hr_leader"].map(r => (
+                              <SelectItem key={r} value={r}>{ROLE_LABELS[r] ?? r}</SelectItem>
+                            ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">The recipient will receive an email with a magic link to create their account. The link expires in 72 hours.</p>
+                  <Button
+                    className="w-full"
+                    disabled={!inviteEmail || sendInviteMutation.isPending}
+                    onClick={() => sendInviteMutation.mutate({ email: inviteEmail, roleKey: inviteRole, origin: window.location.origin })}
+                  >
+                    {sendInviteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                    Send invitation
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!invitationsData || invitationsData.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground text-sm">
+              No invitations sent yet. Use the button above to invite team members by email.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Email</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Role</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Expires</th>
+                  <th className="px-4 py-2.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {invitationsData.map((inv: any) => (
+                  <tr key={inv.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground">{inv.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{ROLE_LABELS[inv.roleKey] ?? inv.roleKey}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${INV_STATUS_STYLES[inv.status] ?? ""}`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {inv.status === "pending" ? new Date(inv.expiresAt).toLocaleDateString() : inv.status === "accepted" ? `Accepted ${new Date(inv.acceptedAt).toLocaleDateString()}` : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {inv.status === "pending" && (
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-7 px-2 text-xs gap-1"
+                            disabled={resendInviteMutation.isPending}
+                            onClick={() => resendInviteMutation.mutate({ id: inv.id, origin: window.location.origin })}
+                          >
+                            <RefreshCw className="h-3 w-3" /> Resend
+                          </Button>
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-7 px-2 text-xs gap-1 text-destructive hover:text-destructive"
+                            disabled={revokeInviteMutation.isPending}
+                            onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
+                          >
+                            <XCircle className="h-3 w-3" /> Revoke
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </CardContent>
       </Card>

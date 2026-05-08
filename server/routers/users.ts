@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb, getUserRoleKeys } from "../db";
-import { users, userRoles, roles } from "../../drizzle/schema";
+import { users, userRoles, roles, invitations } from "../../drizzle/schema";
+import { sendInvitationEmail } from "../email";
+import { tenants } from "../../drizzle/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { hashPassword } from "../auth";
@@ -288,4 +290,273 @@ export const usersRouter = router({
 
     return db.select().from(roles);
   }),
+
+  // ─── Magic-link invitations ────────────────────────────────────────────────────────────
+
+  /** Send a magic-link invitation to a single email address */
+  sendInvitation: protectedProcedure
+    .input(z.object({
+      email: z.string().email(),
+      roleKey: z.string().default("hr_professional"),
+      origin: z.string().url(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const email = input.email.toLowerCase().trim();
+
+      // Check if user already exists
+      const existing = await db.select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.tenantId, ctx.user.tenantId), eq(users.email, email)))
+        .limit(1);
+      if (existing[0]) throw new TRPCError({ code: "CONFLICT", message: "A user with this email already exists in your organisation." });
+
+      // Expire any existing pending invitations for this email
+      await db.update(invitations)
+        .set({ status: "expired" })
+        .where(and(
+          eq(invitations.tenantId, ctx.user.tenantId),
+          eq(invitations.email, email),
+          eq(invitations.status, "pending"),
+        ));
+
+      // Create new invitation token (64-char hex)
+      const { randomBytes } = await import("crypto");
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+
+      await db.insert(invitations).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        email,
+        token,
+        roleKey: input.roleKey,
+        invitedBy: ctx.user.id,
+        status: "pending",
+        expiresAt,
+      });
+
+      // Get inviter name and org name
+      const inviterRow = await db.select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const inviterName = inviterRow[0] ? `${inviterRow[0].firstName} ${inviterRow[0].lastName}` : "Your colleague";
+      const tenantRow = await db.select({ name: tenants.name })
+        .from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
+      const orgName = tenantRow[0]?.name ?? "your organisation";
+
+      const acceptUrl = `${input.origin}/accept-invitation?token=${token}`;
+
+      // Send email (fire-and-forget — don't fail the mutation if email fails)
+      sendInvitationEmail({ to: email, inviterName, orgName, acceptUrl, expiresHours: 72 })
+        .catch(() => {/* ignore email errors */});
+
+      return { success: true, email, acceptUrl };
+    }),
+
+  /** List all invitations for the tenant */
+  listInvitations: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Auto-expire old invitations
+    await db.update(invitations)
+      .set({ status: "expired" })
+      .where(and(
+        eq(invitations.tenantId, ctx.user.tenantId),
+        eq(invitations.status, "pending"),
+        sql`${invitations.expiresAt} < NOW()`,
+      ));
+
+    return db.select({
+      id: invitations.id,
+      email: invitations.email,
+      roleKey: invitations.roleKey,
+      status: invitations.status,
+      expiresAt: invitations.expiresAt,
+      acceptedAt: invitations.acceptedAt,
+      createdAt: invitations.createdAt,
+    })
+      .from(invitations)
+      .where(eq(invitations.tenantId, ctx.user.tenantId))
+      .orderBy(desc(invitations.createdAt))
+      .limit(200);
+  }),
+
+  /** Revoke a pending invitation */
+  revokeInvitation: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db.update(invitations)
+        .set({ status: "revoked" })
+        .where(and(
+          eq(invitations.id, input.id),
+          eq(invitations.tenantId, ctx.user.tenantId),
+          eq(invitations.status, "pending"),
+        ));
+      return { success: true };
+    }),
+
+  /** Resend an invitation (creates a new token, expires the old one) */
+  resendInvitation: protectedProcedure
+    .input(z.object({ id: z.string(), origin: z.string().url() }))
+    .mutation(async ({ input, ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      requireRole(myRoles, "platform_super_admin", "tenant_admin", "hr_leader");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const inv = await db.select()
+        .from(invitations)
+        .where(and(eq(invitations.id, input.id), eq(invitations.tenantId, ctx.user.tenantId)))
+        .limit(1);
+      if (!inv[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Expire the old invitation
+      await db.update(invitations)
+        .set({ status: "expired" })
+        .where(eq(invitations.id, input.id));
+
+      // Create a new one
+      const { randomBytes } = await import("crypto");
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+      const newId = nanoid();
+
+      await db.insert(invitations).values({
+        id: newId,
+        tenantId: ctx.user.tenantId,
+        email: inv[0].email,
+        token,
+        roleKey: inv[0].roleKey,
+        invitedBy: ctx.user.id,
+        status: "pending",
+        expiresAt,
+      });
+
+      const inviterRow = await db.select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const inviterName = inviterRow[0] ? `${inviterRow[0].firstName} ${inviterRow[0].lastName}` : "Your colleague";
+      const tenantRow = await db.select({ name: tenants.name })
+        .from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
+      const orgName = tenantRow[0]?.name ?? "your organisation";
+
+      const acceptUrl = `${input.origin}/accept-invitation?token=${token}`;
+      sendInvitationEmail({ to: inv[0].email, inviterName, orgName, acceptUrl, expiresHours: 72 })
+        .catch(() => {});
+
+      return { success: true, newId };
+    }),
+
+  /** Accept an invitation (public — no auth required) */
+  acceptInvitation: publicProcedure
+    .input(z.object({
+      token: z.string(),
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      password: z.string().min(8),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Look up the invitation
+      const inv = await db.select()
+        .from(invitations)
+        .where(and(eq(invitations.token, input.token), eq(invitations.status, "pending")))
+        .limit(1);
+      if (!inv[0]) throw new TRPCError({ code: "NOT_FOUND", message: "This invitation link is invalid or has expired." });
+      if (new Date(inv[0].expiresAt) < new Date()) {
+        await db.update(invitations).set({ status: "expired" }).where(eq(invitations.id, inv[0].id));
+        throw new TRPCError({ code: "NOT_FOUND", message: "This invitation link has expired. Please ask your administrator to send a new one." });
+      }
+
+      // Check if user already exists (race condition guard)
+      const existing = await db.select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.tenantId, inv[0].tenantId), eq(users.email, inv[0].email)))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(invitations).set({ status: "accepted", acceptedAt: new Date(), createdUserId: existing[0].id }).where(eq(invitations.id, inv[0].id));
+        throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists. Please sign in instead." });
+      }
+
+      // Create the user account
+      const passwordHash = await hashPassword(input.password);
+      const userId = nanoid();
+      await db.insert(users).values({
+        id: userId,
+        tenantId: inv[0].tenantId,
+        email: inv[0].email,
+        firstName: input.firstName.trim(),
+        lastName: input.lastName.trim(),
+        passwordHash,
+        status: "active",
+      });
+
+      // Assign role
+      const allRoles = await db.select().from(roles);
+      const roleMap = Object.fromEntries(allRoles.map(r => [r.key, r.id]));
+      const roleId = roleMap[inv[0].roleKey] ?? roleMap["hr_professional"];
+      if (roleId) {
+        await db.insert(userRoles).values({
+          id: nanoid(),
+          tenantId: inv[0].tenantId,
+          userId,
+          roleId,
+          assignedBy: inv[0].invitedBy,
+        });
+      }
+
+      // Mark invitation as accepted
+      await db.update(invitations)
+        .set({ status: "accepted", acceptedAt: new Date(), createdUserId: userId })
+        .where(eq(invitations.id, inv[0].id));
+
+      return { success: true, email: inv[0].email };
+    }),
+
+  /** Validate an invitation token (public — used by the accept-invitation page) */
+  validateInvitationToken: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const inv = await db.select({
+        id: invitations.id,
+        email: invitations.email,
+        roleKey: invitations.roleKey,
+        status: invitations.status,
+        expiresAt: invitations.expiresAt,
+        tenantId: invitations.tenantId,
+      })
+        .from(invitations)
+        .where(and(eq(invitations.token, input.token), eq(invitations.status, "pending")))
+        .limit(1);
+
+      if (!inv[0]) return { valid: false, reason: "invalid" as const };
+      if (new Date(inv[0].expiresAt) < new Date()) return { valid: false, reason: "expired" as const };
+
+      // Get org name
+      const tenantRow = await db.select({ name: tenants.name })
+        .from(tenants).where(eq(tenants.id, inv[0].tenantId)).limit(1);
+
+      return {
+        valid: true,
+        email: inv[0].email,
+        roleKey: inv[0].roleKey,
+        orgName: tenantRow[0]?.name ?? "your organisation",
+      };
+    }),
 });

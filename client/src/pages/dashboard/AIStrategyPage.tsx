@@ -8,6 +8,7 @@
  *   Section 2      — Ambition (vision + principles + what we won't do)
  *   Section 3      — Plan (pre-sequenced roadmap, Executive / Operational toggle)
  *   Section 4      — Investment & Risk (cost envelope, top risks, dependencies)
+ *   Section 5      — Value (ROI envelope, per-initiative breakdown, qualitative summary)
  *   Appendix       — Methodology (collapsed)
  */
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -594,6 +595,19 @@ export default function AIStrategyPage() {
     { sector_id: sector },
     { enabled: !!sector }
   );
+  // ── C4 Value envelope ─────────────────────────────────────────────────────
+  const [valueInitIds, setValueInitIds] = useState<string[]>([]);
+  const [valueBaseline, setValueBaseline] = useState<Record<string, number | undefined>>({});
+  const valueEnvelopeQ = trpc.intelligence.calculateValueEnvelope.useQuery(
+    {
+      selectedInitiativeIds: valueInitIds,
+      operationalBaseline: valueBaseline as any,
+      planHorizonMonths: 36,
+    },
+    { enabled: valueInitIds.length > 0 }
+  );
+  const [valueProvenanceOpen, setValueProvenanceOpen] = useState(false);
+  const [valueProvenanceInitId, setValueProvenanceInitId] = useState<string | null>(null);
 
   useEffect(() => {
     if (strategyData?.configured) {
@@ -611,6 +625,16 @@ export default function AIStrategyPage() {
     const ids = Array.from(selectedInitiativeIds);
     if (ids.length > 0) setCostInitIds(ids);
   }, [selectedInitiativeIds]);
+  // Sync value envelope query input when selected initiatives change
+  useEffect(() => {
+    const ids = Array.from(selectedInitiativeIds);
+    if (ids.length > 0) {
+      setValueInitIds(ids);
+      // Use operational baseline from strategy assessment if available
+      const ob = (strategyAssessmentQ.data as any)?.operationalBaseline;
+      if (ob && typeof ob === "object") setValueBaseline(ob);
+    }
+  }, [selectedInitiativeIds, strategyAssessmentQ.data]);
 
   // Evaluate risk rules when initiatives or ambition tier changes
   useEffect(() => {
@@ -806,6 +830,7 @@ export default function AIStrategyPage() {
     { id: "ambition",   label: "Ambition",     color: "#4ADE80" },
     { id: "plan",       label: "Plan",         color: "#A78BFA" },
     { id: "investment", label: "Investment",   color: "#FBBF24" },
+    { id: "value",      label: "Value",        color: "#34D399" },
     { id: "methodology",label: "Methodology",  color: "#9CA3AF" },
   ];
 
@@ -1603,6 +1628,212 @@ export default function AIStrategyPage() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECTION 5 — VALUE (ROI envelope + per-initiative breakdown)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section id="value" className="mt-10">
+        <SectionDivider
+          num="5"
+          color="#34D399"
+          eyebrow="Section 5 — Value"
+          title="What This Strategy Is Worth"
+          icon={<TrendingUp className="w-4 h-4" />}
+        />
+        {valueEnvelopeQ.isLoading && valueInitIds.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground px-1 py-4">
+            <Activity className="w-4 h-4 animate-pulse" />
+            Calculating value envelope…
+          </div>
+        )}
+        {!valueEnvelopeQ.data && !valueEnvelopeQ.isLoading && selectedInitiativeIds.size === 0 && (
+          <div className="rounded-xl border border-white/8 bg-white/2 px-6 py-8 text-center text-sm text-muted-foreground">
+            Select initiatives in Section 3 to see the value envelope.
+          </div>
+        )}
+        {valueEnvelopeQ.data && (() => {
+          const ve = valueEnvelopeQ.data;
+          const fmt = (n: number) => n < 0 ? `-£${Math.abs(n).toLocaleString()}` : `£${n.toLocaleString()}`;
+          const hasQuantified = ve.total_quantified_value_gbp.high > 0;
+          return (
+            <div className="space-y-5">
+              {/* KPI row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Gross Value (High)</div>
+                  <div className="text-xl font-bold text-emerald-400">{hasQuantified ? fmt(ve.total_quantified_value_gbp.high) : "—"}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.total_quantified_value_gbp.low) : "—"}</div>
+                </div>
+                <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Value (High)</div>
+                  <div className={`text-xl font-bold ${ve.net_value_gbp.high >= 0 ? "text-emerald-400" : "text-red-400"}`}>{hasQuantified ? fmt(ve.net_value_gbp.high) : "—"}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.net_value_gbp.low) : "—"}</div>
+                </div>
+                <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</div>
+                  <div className="text-xl font-bold text-amber-400">
+                    {ve.payback_period_months ? `${ve.payback_period_months.low}–${ve.payback_period_months.high}mo` : "—"}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Months to breakeven</div>
+                </div>
+                <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Qualitative Value</div>
+                  <div className="text-xl font-bold text-violet-400">{ve.qualitative_summary.capability_uplift_count + ve.qualitative_summary.risk_avoidance_count + ve.qualitative_summary.strategic_count}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Initiatives (non-monetised)</div>
+                </div>
+              </div>
+
+              {/* Per-initiative breakdown */}
+              <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/8 flex items-center justify-between">
+                  <span className="text-sm font-medium">Per-Initiative Value Breakdown</span>
+                  <button
+                    className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    onClick={() => setValueProvenanceOpen(true)}
+                  >
+                    <Info className="w-3 h-3" /> Methodology
+                  </button>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {ve.by_initiative.map(item => (
+                    <div key={item.initiative_id} className="px-5 py-3 flex items-start gap-3 hover:bg-white/2 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium truncate">{item.display_name}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            item.value_type === "cost_savings" ? "bg-emerald-500/15 text-emerald-400" :
+                            item.value_type === "productivity_gain" ? "bg-blue-500/15 text-blue-400" :
+                            item.value_type === "risk_avoidance" ? "bg-red-500/15 text-red-400" :
+                            item.value_type === "capability_uplift" ? "bg-violet-500/15 text-violet-400" :
+                            "bg-slate-500/15 text-slate-400"
+                          }`}>{item.value_type.replace(/_/g, " ")}</span>
+                          {item.uses_sector_default && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400">sector default</span>
+                          )}
+                        </div>
+                        {item.quantified_value_gbp ? (
+                          <div className="text-[11px] text-muted-foreground mt-1">{item.monetisation_breakdown}</div>
+                        ) : (
+                          <div className="text-[11px] text-muted-foreground mt-1">
+                            {item.qualitative_value.slice(0, 2).join(" · ")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        {item.quantified_value_gbp ? (
+                          <>
+                            <div className="text-sm font-semibold text-emerald-400">£{item.quantified_value_gbp.high.toLocaleString()}</div>
+                            <div className="text-[10px] text-muted-foreground">low £{item.quantified_value_gbp.low.toLocaleString()}</div>
+                          </>
+                        ) : (
+                          <div className="text-[11px] text-muted-foreground italic">Qualitative</div>
+                        )}
+                      </div>
+                      <button
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => { setValueProvenanceInitId(item.initiative_id); setValueProvenanceOpen(true); }}
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Qualitative bullets */}
+              {ve.qualitative_summary.bullet_points.length > 0 && (
+                <div className="rounded-xl border border-white/8 bg-white/2 px-5 py-4">
+                  <div className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-widest">Qualitative Value Highlights</div>
+                  <ul className="space-y-1.5">
+                    {ve.qualitative_summary.bullet_points.map((b, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Caveat */}
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[11px] text-amber-300/80">
+                <strong className="text-amber-300">Caveat:</strong> {ve.caveat}
+              </div>
+            </div>
+          );
+        })()}
+      </section>
+
+      {/* Value Provenance Modal */}
+      {valueProvenanceOpen && (
+        <Dialog open={valueProvenanceOpen} onOpenChange={setValueProvenanceOpen}>
+          <DialogContent className="max-w-lg bg-[#0F1117] border-white/10">
+            <DialogHeader>
+              <DialogTitle className="text-sm font-semibold">
+                {valueProvenanceInitId
+                  ? `Value Methodology — ${valueEnvelopeQ.data?.by_initiative.find(i => i.initiative_id === valueProvenanceInitId)?.display_name ?? valueProvenanceInitId}`
+                  : "Value Envelope — Methodology"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 text-sm text-muted-foreground">
+              {valueProvenanceInitId ? (() => {
+                const item = valueEnvelopeQ.data?.by_initiative.find(i => i.initiative_id === valueProvenanceInitId);
+                if (!item) return <p>No data available.</p>;
+                return (
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Value Type</div>
+                      <div className="text-foreground capitalize">{item.value_type.replace(/_/g, " ")}</div>
+                    </div>
+                    {item.quantified_value_gbp && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Monetisation Breakdown</div>
+                        <div className="text-foreground text-xs font-mono bg-white/5 rounded px-3 py-2">{item.monetisation_breakdown}</div>
+                      </div>
+                    )}
+                    {item.qualitative_value.length > 0 && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Qualitative Value</div>
+                        <ul className="space-y-1">
+                          {item.qualitative_value.map((q, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                              {q}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {item.uses_sector_default && (
+                      <div className="rounded bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300">
+                        One or more baseline inputs used a sector default value. Provide your actual operational baseline in the strategy assessment for a more accurate estimate.
+                      </div>
+                    )}
+                    {item.sources.length > 0 && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Sources</div>
+                        <ul className="space-y-0.5 text-xs">
+                          {item.sources.map((s, i) => <li key={i} className="text-blue-400">{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })() : (
+                <div className="space-y-3">
+                  <p>The value envelope is calculated by applying sector-benchmarked improvement percentages to your operational baseline inputs (hires per year, cost per hire, time to fill, attrition rate, L&D spend, HR cost per FTE).</p>
+                  <p>Where you have not provided a baseline value, a sector default is used and flagged with an amber "sector default" badge.</p>
+                  <p>Net value subtracts the indicative implementation cost range from the gross value range. Payback period is calculated as total cost ÷ annualised value.</p>
+                  <p className="text-amber-300/80 text-xs">All figures are indicative ranges for business case development. Confirm with Finance before commitment.</p>
+                </div>
+              )}
+              <div className="flex justify-end pt-2">
+                <Button size="sm" variant="outline" onClick={() => { setValueProvenanceOpen(false); setValueProvenanceInitId(null); }}>Close</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           APPENDIX — Methodology (collapsed)

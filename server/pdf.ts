@@ -19,7 +19,7 @@ import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
 import { getUserById, getDb, getTenantById } from "./db";
 import { getLibraryMeta, getAllInitiatives } from "./contentLibrary";
-import { calculateCostEnvelope, evaluateRiskRules } from "./strategyEngine";
+import { calculateCostEnvelope, evaluateRiskRules, calculateValueEnvelope } from "./strategyEngine";
 import {
   assessmentSessions,
   assessmentScores,
@@ -1172,12 +1172,127 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
     }
   }
 
+  // ── SECTION 5: Value Envelope ─────────────────────────────────────────────
+  {
+    let operationalBaseline: Record<string, number | undefined> = {};
+    try {
+      const raw = (orgCtx as any)?.operationalBaselineJson;
+      if (raw) operationalBaseline = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch { /* ignore */ }
+
+    if (selectedInits.length > 0) {
+      checkPageBreak(doc, 60, pageCounter);
+      addSectionHeading(doc, "Section 5 — Value");
+
+      const ve = calculateValueEnvelope(selectedInits, operationalBaseline, 36);
+      const fmt = (n: number) => n < 0 ? `-£${Math.abs(n).toLocaleString()}` : `£${n.toLocaleString()}`;
+      const hasQ = ve.total_quantified_value_gbp.high > 0;
+
+      // KPI row
+      const kpis = [
+        { label: "Gross Value (High)", value: hasQ ? `£${ve.total_quantified_value_gbp.high.toLocaleString()}` : "—" },
+        { label: "Net Value (High)",   value: hasQ ? (ve.net_value_gbp.high >= 0 ? `£${ve.net_value_gbp.high.toLocaleString()}` : `-£${Math.abs(ve.net_value_gbp.high).toLocaleString()}`) : "—" },
+        { label: "Payback",            value: ve.payback_period_months ? `${ve.payback_period_months.low}–${ve.payback_period_months.high} months` : "—" },
+        { label: "Qualitative Items",  value: String(ve.qualitative_summary.capability_uplift_count + ve.qualitative_summary.risk_avoidance_count + ve.qualitative_summary.strategic_count) },
+      ];
+      const kpiW = (doc.page.width - 80) / kpis.length;
+      const kpiY = doc.y;
+      for (let i = 0; i < kpis.length; i++) {
+        const x = 40 + i * kpiW;
+        doc.rect(x, kpiY, kpiW - 4, 36).fill(BRAND.light);
+        doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+           .text(kpis[i].label, x + 4, kpiY + 4, { width: kpiW - 8 });
+        doc.fontSize(9).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text(kpis[i].value, x + 4, kpiY + 16, { width: kpiW - 8 });
+      }
+      doc.y = kpiY + 44;
+      doc.moveDown(0.5);
+
+      // Per-initiative breakdown
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text("Per-Initiative Value Breakdown", 40, doc.y);
+      doc.moveDown(0.3);
+      for (const item of ve.by_initiative) {
+        checkPageBreak(doc, 30, pageCounter);
+        const valueStr = item.quantified_value_gbp
+          ? `£${item.quantified_value_gbp.high.toLocaleString()} (low £${item.quantified_value_gbp.low.toLocaleString()})`
+          : "Qualitative";
+        doc.fontSize(7.5).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text(item.display_name, 40, doc.y, { continued: true });
+        doc.fontSize(7.5).font("Helvetica").fillColor(BRAND.teal)
+           .text(`  ${valueStr}`, { width: doc.page.width - 80 });
+        if (item.monetisation_breakdown) {
+          doc.fontSize(6.5).font("Helvetica-Oblique").fillColor(BRAND.slate)
+             .text(item.monetisation_breakdown, 50, doc.y, { width: doc.page.width - 90 });
+        } else if (item.qualitative_value.length > 0) {
+          doc.fontSize(6.5).font("Helvetica-Oblique").fillColor(BRAND.slate)
+             .text(item.qualitative_value.slice(0, 2).join(" · "), 50, doc.y, { width: doc.page.width - 90 });
+        }
+        doc.moveDown(0.4);
+      }
+
+      // Qualitative bullets
+      if (ve.qualitative_summary.bullet_points.length > 0) {
+        checkPageBreak(doc, 30, pageCounter);
+        doc.moveDown(0.3);
+        doc.fontSize(7.5).font("Helvetica-Bold").fillColor(BRAND.navy)
+           .text("Qualitative Value Highlights", 40, doc.y);
+        doc.moveDown(0.2);
+        for (const b of ve.qualitative_summary.bullet_points) {
+          checkPageBreak(doc, 18, pageCounter);
+          doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+             .text(`• ${b}`, 50, doc.y, { width: doc.page.width - 90 });
+          doc.moveDown(0.3);
+        }
+      }
+
+      // Caveat
+      checkPageBreak(doc, 30, pageCounter);
+      doc.moveDown(0.3);
+      doc.fontSize(6.5).font("Helvetica-Oblique").fillColor(BRAND.risk)
+         .text(`Note: ${ve.caveat}`, 40, doc.y, { width: doc.page.width - 80 });
+      doc.moveDown(0.5);
+    }
+  }
+
+  // ── D1: Cross-functional Dependencies ──────────────────────────────────────
+  {
+    const depsMap: Record<string, string[]> = {};
+    for (const init of selectedInits) {
+      const cfd = (init as any).cross_functional_dependencies as Array<{ function: string; dependency_type: string; description: string }> | undefined;
+      if (!cfd || cfd.length === 0) continue;
+      for (const dep of cfd) {
+        if (!depsMap[dep.function]) depsMap[dep.function] = [];
+        depsMap[dep.function].push(`${init.display_name}: ${dep.description}`);
+      }
+    }
+    const functions = Object.keys(depsMap);
+    if (functions.length > 0) {
+      checkPageBreak(doc, 50, pageCounter);
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BRAND.navy)
+         .text("Cross-Functional Dependencies", 40, doc.y);
+      doc.moveDown(0.3);
+      for (const fn of functions) {
+        checkPageBreak(doc, 30, pageCounter);
+        doc.fontSize(7.5).font("Helvetica-Bold").fillColor(BRAND.teal)
+           .text(fn, 40, doc.y);
+        doc.moveDown(0.2);
+        for (const d of depsMap[fn]) {
+          checkPageBreak(doc, 16, pageCounter);
+          doc.fontSize(7).font("Helvetica").fillColor(BRAND.slate)
+             .text(`• ${d}`, 50, doc.y, { width: doc.page.width - 90 });
+          doc.moveDown(0.3);
+        }
+        doc.moveDown(0.2);
+      }
+    }
+  }
+
   // Disclosure note
   checkPageBreak(doc, 40, pageCounter);
   doc.moveDown(0.5);
   doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
      .text("Capability scores are derived from AiQ adaptive assessments. Benchmarks are based on synthetic norms calibrated against the AiQ question bank. This report is confidential and intended for internal strategic planning purposes only.", 40, doc.y, { width: doc.page.width - 80 });
-
   addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
 }
 

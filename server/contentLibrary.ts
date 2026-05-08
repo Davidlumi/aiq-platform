@@ -31,6 +31,24 @@ export interface InitiativeRisk {
   sources: string[];
 }
 
+export interface QuantifiedValue {
+  primary_metric: string;
+  typical_improvement_pct: { low: number; high: number };
+  monetisation_formula: string;
+  sources: string[];
+  confidence: "high" | "medium" | "low";
+  payback_months: { low: number; high: number };
+}
+
+export interface ValueModel {
+  primary_value_type: "cost_savings" | "productivity_gain" | "risk_avoidance" | "capability_uplift" | "strategic";
+  quantified_value: QuantifiedValue | null;
+  qualitative_value: string[];
+  qualitative_value_only: boolean;
+}
+
+export type CrossFunctionalDependencies = Partial<Record<"it_data" | "legal_compliance" | "finance" | "l_and_d" | "comms", string[]>>;
+
 export interface Initiative {
   initiative_id: string;
   display_name: string;
@@ -55,6 +73,8 @@ export interface Initiative {
   last_reviewed: string;
   reviewer: string;
   review_tier: string;
+  value_model?: ValueModel;
+  cross_functional_dependencies?: CrossFunctionalDependencies;
 }
 
 export interface RiskRule {

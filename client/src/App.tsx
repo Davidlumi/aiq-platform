@@ -59,6 +59,7 @@ import OnboardingWizard from "./pages/onboarding/OnboardingWizard";
 import OrgContextPage from "./pages/admin/OrgContextPage";
 import OrganisationsPage from "./pages/admin/OrganisationsPage";
 import PeopleManagementPage from "./pages/admin/PeopleManagementPage";
+import AcceptInvitationPage from "./pages/AcceptInvitationPage";
 import ContentLibraryAdminPage from "./pages/admin/ContentLibraryPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
 // Marketing pages (public)
@@ -134,6 +135,7 @@ function Router() {
       <Route path="/register" component={RegisterPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/accept-invitation" component={AcceptInvitationPage} />
 
       {/* Root redirect */}
       <Route path="/">

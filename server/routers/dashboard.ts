@@ -433,12 +433,15 @@ export const dashboardRouter = router({
       }
     }
 
+    const ANON_THRESHOLD = 7; // must match ANONYMISATION_THRESHOLD in shared/dashboard.ts
+    const assessedForGaps = CAPABILITY_KEYS.reduce((max, key) => Math.max(max, capabilityAverages[key].count), 0);
     const capabilityGaps = CAPABILITY_KEYS.map(key => ({
       capability: key,
-      avgScore: capabilityAverages[key].count > 0
+      avgScore: assessedForGaps >= ANON_THRESHOLD && capabilityAverages[key].count > 0
         ? Math.round(capabilityAverages[key].total / capabilityAverages[key].count)
         : null,
     })).sort((a, b) => (a.avgScore ?? 100) - (b.avgScore ?? 100));
+    const capabilityGapsBelowThreshold = assessedForGaps < ANON_THRESHOLD && assessedForGaps > 0;
 
     // P2-CC-3: Quarterly re-verification notification trigger
     // If quarterly review is enabled and there are overdue revalidations, notify the owner
@@ -459,7 +462,7 @@ export const dashboardRouter = router({
       }
     } catch { /* ignore settings fetch errors */ }
 
-    return { team: teamData, distribution, capabilityGaps };
+    return { team: teamData, distribution, capabilityGaps, capabilityGapsBelowThreshold };
   }),
 
   // ─── HR Leader Dashboard ────────────────────────────────────────────────────

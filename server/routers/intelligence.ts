@@ -33,10 +33,12 @@ import {
   selectInitiatives,
   calculateCostEnvelope,
   buildProvenanceMap,
+  calculateValueEnvelope,
+  type ValueEnvelope,
   type RiskEvalInput,
   type SelectInitiativesInput,
 } from "../strategyEngine";
-import { getLibraryMeta } from "../contentLibrary";
+import { getLibraryMeta, getContentLibrary, getAllInitiatives } from "../contentLibrary";
 
 import {
   generateCapabilityReport,
@@ -461,6 +463,9 @@ export const intelligenceRouter = router({
       businessAmbitionLevel: row.businessAmbitionLevel ?? null,
       peopleAmbitionLevel: row.peopleAmbitionLevel ?? null,
       selectedInitiativeIds: parse(row.selectedInitiativesJson) as string[] ?? [] as string[],
+      wontDo: parse((row as Record<string, unknown>).wontDoJson as string | null) as string[] | null,
+      structuredInputs: parse((row as Record<string, unknown>).structuredInputsJson as string | null),
+      operationalBaseline: parse((row as Record<string, unknown>).operationalBaselineJson as string | null),
     };
   }),
 
@@ -562,6 +567,8 @@ Return JSON with this exact structure:
       peopleAmbitionLevel: z.number().int().min(1).max(5),
       selectedInitiativeIds: z.array(z.string()).optional(),
       provenanceJson: z.string().optional(),
+      structuredInputsJson: z.string().optional(),
+      operationalBaselineJson: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -582,6 +589,8 @@ Return JSON with this exact structure:
         guidingPrinciplesJson: JSON.stringify(input.guidingPrinciples),
         wontDoJson: input.wontDo ? JSON.stringify(input.wontDo) : null,
         provenanceJson: input.provenanceJson ?? null,
+        structuredInputsJson: input.structuredInputsJson ?? null,
+        operationalBaselineJson: input.operationalBaselineJson ?? null,
         libraryVersion: libMeta?.version ?? null,
         businessAmbitionLevel: input.businessAmbitionLevel,
         peopleAmbitionLevel: input.peopleAmbitionLevel,
@@ -725,6 +734,36 @@ Return JSON with this exact structure:
       });
     }),
 
+
+  /**
+   * C3 — Calculate the value envelope for a set of selected initiatives.
+   * Uses the operational baseline from the strategy assessment to monetise
+   * quantifiable initiatives and summarise qualitative value.
+   */
+  calculateValueEnvelope: protectedProcedure
+    .input(z.object({
+      selectedInitiativeIds: z.array(z.string()),
+      operationalBaseline: z.object({
+        hires_per_year: z.number().optional(),
+        cost_per_hire_gbp: z.number().optional(),
+        time_to_fill_days: z.number().optional(),
+        voluntary_attrition_rate_pct: z.number().optional(),
+        l_and_d_spend_per_fte_gbp: z.number().optional(),
+        hr_cost_per_fte_gbp: z.number().optional(),
+        _sector_default_used: z.record(z.string(), z.boolean()).optional(),
+      }).optional(),
+      planHorizonMonths: z.number().min(6).max(60).default(36),
+    }))
+    .query(({ input }) => {
+      const lib = getContentLibrary();
+      const allInits = getAllInitiatives();
+      const selected = allInits.filter(i => input.selectedInitiativeIds.includes(i.initiative_id));
+      return calculateValueEnvelope(
+        selected,
+        input.operationalBaseline ?? {},
+        input.planHorizonMonths
+      ) as ValueEnvelope;
+    }),
   /**
    * Process assessment completion through the AIL.
    */

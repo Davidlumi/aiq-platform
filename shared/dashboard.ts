@@ -29,6 +29,15 @@ export { DOMAIN_KEYS as CAPABILITY_KEYS } from "./brand";
 // Legacy CapabilityKey alias
 export type { DomainKey as CapabilityKey } from "./brand";
 
+// ─── Anonymisation threshold ─────────────────────────────────────────────────
+/**
+ * Minimum number of assessed individuals required before aggregate scores
+ * (function averages, heatmap cells, domain averages) are shown to leaders
+ * and managers. Below this threshold, scores are suppressed and replaced
+ * with a privacy notice.
+ */
+export const ANONYMISATION_THRESHOLD = 7;
+
 // ─── Readiness Ratings (5-state per spec §1.2) ──────────────────────────────
 export const RATING_KEYS = [
   "ai_ready",

@@ -113,6 +113,25 @@ export const userPersonas = mysqlTable("user_personas", {
   uniqueUserPersona: unique("unique_user_persona").on(t.userId, t.personaId),
 }));
 
+// ─── Invitations ────────────────────────────────────────────────────────────
+
+export const invitations = mysqlTable("invitations", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  roleKey: varchar("role_key", { length: 50 }).notNull().default("learner"),
+  invitedBy: varchar("invited_by", { length: 36 }).notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).notNull().default("pending"),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  createdUserId: varchar("created_user_id", { length: 36 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  tokenIdx: index("idx_invitations_token").on(t.token),
+  tenantEmailIdx: index("idx_invitations_tenant_email").on(t.tenantId, t.email),
+}));
+
 // ─── Competencies ─────────────────────────────────────────────────────────────
 
 export const competencies = mysqlTable("competencies", {
@@ -873,6 +892,8 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   wontDoJson: text("wont_do_json"),                                              // JSON: string[] — LLM-generated out-of-scope items
+  structuredInputsJson: text("structured_inputs_json"),                          // JSON: B1 structured assessment inputs {business_outcomes, business_problems, timeline_months, risk_appetite, success_markers_ranked, hr_leadership_position, hr_processes_priority, governance_principles, voice_capture}
+  operationalBaselineJson: text("operational_baseline_json"),                    // JSON: B2 operational baseline {hires_per_year, cost_per_hire_gbp, time_to_fill_days, voluntary_attrition_rate_pct, l_and_d_spend_per_fte_gbp, hr_cost_per_fte_gbp, _sector_default_used: {field: bool}}
   provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources
   libraryVersion: varchar("library_version", { length: 20 }),                   // content library version used when strategy was generated
   createdAt: timestamp("created_at").defaultNow().notNull(),

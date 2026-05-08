@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `invitations` (\n  `id` varchar(36) NOT NULL,\n  `tenant_id` varchar(36) NOT NULL,\n  `email` varchar(320) NOT NULL,\n  `token` varchar(64) NOT NULL,\n  `role_key` varchar(50) NOT NULL DEFAULT 'learner',\n  `invited_by` varchar(36) NOT NULL,\n  `status` enum('pending','accepted','expired','revoked') NOT NULL DEFAULT 'pending',\n  `expires_at` timestamp NOT NULL,\n  `accepted_at` timestamp,\n  `created_user_id` varchar(36),\n  `created_at` timestamp NOT NULL DEFAULT (now()),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `invitations_token_unique` (`token`),\n  KEY `idx_invitations_token` (`token`),\n  KEY `idx_invitations_tenant_email` (`tenant_id`, `email`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute CREATE TABLE IF NOT EXISTS `invitations` (\n  `id` varchar(36) NOT NULL,\n  `tenant_id` varchar(36) NOT NULL,\n  `email` varchar(320) NOT NULL,\n  `token` varchar(64) NOT NULL,\n  `role_key` varchar(50) NOT NULL DEFAULT 'learner',\n  `invited_by` varchar(36) NOT NULL,\n  `status` enum('pending','accepted','expired','revoked') NOT NULL DEFAULT 'pending',\n  `expires_at` timestamp NOT NULL,\n  `accepted_at` timestamp,\n  `created_user_id` varchar(36),\n  `created_at` timestamp NOT NULL DEFAULT (now()),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `invitations_token_unique` (`token`),\n  KEY `idx_invitations_token` (`token`),\n  KEY `idx_invitations_tenant_email` (`tenant_id`, `email`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 374
+}
