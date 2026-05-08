@@ -753,6 +753,7 @@ Return JSON with this exact structure:
         _sector_default_used: z.record(z.string(), z.boolean()).optional(),
       }).optional(),
       planHorizonMonths: z.number().min(6).max(60).default(36),
+      solutionDeliveryConfidence: z.number().min(1).max(5).optional(),
     }))
     .query(({ input }) => {
       const lib = getContentLibrary();
@@ -761,7 +762,8 @@ Return JSON with this exact structure:
       return calculateValueEnvelope(
         selected,
         input.operationalBaseline ?? {},
-        input.planHorizonMonths
+        input.planHorizonMonths,
+        input.solutionDeliveryConfidence
       ) as ValueEnvelope;
     }),
   /**

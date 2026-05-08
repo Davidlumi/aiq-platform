@@ -47,6 +47,20 @@ import {
 import { toast } from "sonner";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
+import {
+  EXISTING_AI_TOOLS,
+  AI_PHILOSOPHY_OPTIONS,
+  EXECUTIVE_SPONSORS,
+  GATEKEEPERS,
+  AFFECTED_GROUPS,
+  POTENTIAL_RESISTORS,
+  MEASUREMENT_CADENCE_OPTIONS,
+  SOLUTION_DELIVERY_OPTIONS,
+  UK_REGULATORY_FRAMEWORKS,
+  PILOT_SCOPE_OPTIONS,
+  PILOT_DURATION_OPTIONS,
+  PILOT_SUCCESS_METRICS,
+} from "@/../../shared/strategyInputs";
 
 // ─── Sector options ───────────────────────────────────────────────────────────
 const SECTORS = [
@@ -563,6 +577,8 @@ export default function AIStrategyPage() {
   const strategyData       = strategyQ.data;
   const strategyAssessment = strategyAssessmentQ.data;
   const orgContext         = orgContextQ.data;
+  // A1/A3: structured inputs from assessment
+  const structuredInputs   = (strategyAssessment as any)?.structuredInputs as Record<string, unknown> | undefined;
   const ambitionGap        = ambitionGapQ.data;
   const allInitiatives     = initiativesQ.data ?? [];
   const companyResults     = companyAssessmentQ.data;
@@ -1486,6 +1502,43 @@ export default function AIStrategyPage() {
               </div>
             )}
 
+            {/* A3 — AI Philosophy */}
+            {(() => {
+              const philValue = structuredInputs?.ai_philosophy as string | undefined;
+              const phil = philValue ? AI_PHILOSOPHY_OPTIONS.find(o => o.value === philValue) : undefined;
+              if (!phil) return null;
+              return (
+                <div className="rounded-xl border border-blue-500/15 bg-blue-500/5 px-5 py-4 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">AI Philosophy</p>
+                    <p className="text-sm font-semibold text-foreground mb-1">{phil.label}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{phil.description}</p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* A1 — Current AI Landscape */}
+            {Array.isArray(structuredInputs?.existing_ai_tools) && (structuredInputs!.existing_ai_tools as string[]).length > 0 && !(structuredInputs!.existing_ai_tools as string[]).includes("none") && (
+              <div className="rounded-xl border border-white/8 bg-white/2 px-5 py-4">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Current AI Landscape</p>
+                <p className="text-xs text-muted-foreground mb-3">Tools already deployed in HR — initiatives will complement rather than duplicate these.</p>
+                <div className="flex flex-wrap gap-2">
+                  {(structuredInputs!.existing_ai_tools as string[]).map((toolId: string) => {
+                    const tool = EXISTING_AI_TOOLS.find(t => t.id === toolId);
+                    return tool ? (
+                      <span key={toolId} className="text-xs px-2.5 py-1 rounded-full border border-white/12 bg-white/4 text-muted-foreground">
+                        {tool.label}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* What we won't do — the cuts that make this a strategy */}
             <div className="rounded-xl border border-red-500/15 bg-red-500/4 p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -1528,9 +1581,68 @@ export default function AIStrategyPage() {
               </a>
             </div>
           </div>
-        )}
-      </section>
+         )}
 
+      {/* B1 — Stakeholder Map */}
+      {(() => {
+        const sm = structuredInputs?.stakeholder_map as {
+          executive_sponsors?: string[];
+          gatekeepers?: string[];
+          affected_groups?: string[];
+          potential_resistors?: string[];
+          notes?: string;
+        } | undefined;
+        if (!sm || (
+          !sm.executive_sponsors?.length &&
+          !sm.gatekeepers?.length &&
+          !sm.affected_groups?.length &&
+          !sm.potential_resistors?.length
+        )) return null;
+        const quadrants = [
+          { key: "executive_sponsors",  label: "Executive Sponsors",  ids: sm.executive_sponsors ?? [],  options: EXECUTIVE_SPONSORS,  color: "#60A5FA",  icon: <UserCheck className="w-3.5 h-3.5" /> },
+          { key: "gatekeepers",         label: "Gatekeepers",         ids: sm.gatekeepers ?? [],         options: GATEKEEPERS,         color: "#FBBF24",  icon: <Lock className="w-3.5 h-3.5" /> },
+          { key: "affected_groups",     label: "Affected Groups",     ids: sm.affected_groups ?? [],     options: AFFECTED_GROUPS,     color: "#4ADE80",  icon: <Users className="w-3.5 h-3.5" /> },
+          { key: "potential_resistors", label: "Potential Resistors", ids: sm.potential_resistors ?? [], options: POTENTIAL_RESISTORS, color: "#F87171",  icon: <AlertCircle className="w-3.5 h-3.5" /> },
+        ] as const;
+        return (
+          <div className="rounded-xl border border-white/8 bg-white/2 p-5 mt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="w-4 h-4 text-blue-400" />
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stakeholder Map</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {quadrants.map(q => (
+                <div key={q.key} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span style={{ color: q.color }}>{q.icon}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: q.color }}>{q.label}</p>
+                  </div>
+                  {q.ids.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/50 italic">None identified</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {q.ids.map(id => {
+                        const opt = (q.options as readonly { id: string; label: string }[]).find(o => o.id === id);
+                        return opt ? (
+                          <span key={id} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: `${q.color}40`, background: `${q.color}15`, color: q.color }}>
+                            {opt.label}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {sm.notes && (
+              <div className="mt-3 rounded-lg bg-white/3 border border-white/6 px-3 py-2">
+                <p className="text-xs text-muted-foreground leading-relaxed">{sm.notes}</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+      </section>
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 3 — PLAN (lighter weight)
           How we get there — pre-sequenced roadmap with view toggle
@@ -1782,6 +1894,42 @@ export default function AIStrategyPage() {
           </div>
         </div>
 
+        {/* C1 — TCO Expansion */}
+        {valueEnvelopeQ.data?.tco && (() => {
+          const tco = valueEnvelopeQ.data!.tco;
+          const fmt = (n: number) => `£${Math.round(n / 1000)}k`;
+          const rows = [
+            { label: "Implementation",    low: tco.implementation_gbp.low,    high: tco.implementation_gbp.high,    color: "#FBBF24" },
+            { label: "Change Management", low: tco.change_management_gbp.low,  high: tco.change_management_gbp.high, color: "#FB923C" },
+            { label: "Training",          low: tco.training_gbp.low,           high: tco.training_gbp.high,          color: "#60A5FA" },
+            { label: "Ongoing (annual)",  low: tco.ongoing_annual_gbp.low,     high: tco.ongoing_annual_gbp.high,    color: "#A78BFA" },
+          ];
+          return (
+            <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-5 mt-5">
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="w-4 h-4 text-amber-400" />
+                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Total Cost of Ownership (TCO)</p>
+                <span className="ml-auto text-[10px] text-muted-foreground">3-year horizon</span>
+              </div>
+              <div className="space-y-2">
+                {rows.map(row => (
+                  <div key={row.label} className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{row.label}</p>
+                    <p className="text-xs font-semibold" style={{ color: row.color }}>{fmt(row.low)}–{fmt(row.high)}</p>
+                  </div>
+                ))}
+                <div className="border-t border-white/8 pt-2 flex items-center justify-between">
+                  <p className="text-xs font-bold text-foreground">Total 3-Year TCO</p>
+                  <p className="text-sm font-bold text-amber-400">{fmt(tco.total_3yr_gbp.low)}–{fmt(tco.total_3yr_gbp.high)}</p>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                Includes implementation, change management (12–15%), training (£200–400 per HR FTE), and ongoing maintenance (18–20% per year). Excludes internal headcount costs.
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Dependencies */}
         <div className="rounded-xl border border-white/8 bg-white/2 p-5 mt-5">
           <div className="flex items-center gap-2 mb-3">
@@ -1820,7 +1968,162 @@ export default function AIStrategyPage() {
             ))}
           </div>
         </div>
+        {/* D3 — Delivery Confidence Panel */}
+        {(() => {
+          const conf = structuredInputs?.solution_delivery_confidence as number | undefined;
+          const opt = conf !== undefined ? SOLUTION_DELIVERY_OPTIONS.find(o => o.value === conf) : undefined;
+          if (!opt || conf === undefined) return null;
+          const confNum = conf;
+          const pct = ((confNum - 1) / 4) * 100;
+          const color = confNum >= 4 ? "#22C55E" : confNum === 3 ? "#F59E0B" : "#EF4444";
+          return (
+            <div className="mt-6 rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Solution Delivery Confidence</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{confNum}/5</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{opt.description}</p>
+                </div>
+              </div>
+              {confNum <= 2 && (
+                <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                  <p className="text-xs text-amber-300">
+                    <strong>Engine impact:</strong> Phase durations have been extended by 20% and change management costs increased by 5% to reflect your delivery confidence rating.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+        {/* E1/E2 — UK Regulatory Readiness */}
+        {(() => {
+          const fwIds = structuredInputs?.uk_regulatory_frameworks as string[] | undefined;
+          if (!fwIds || fwIds.length === 0 || fwIds.includes("none")) return null;
+          const fws = UK_REGULATORY_FRAMEWORKS.filter(fw => fwIds.includes(fw.id));
+          if (fws.length === 0) return null;
+          const highRisk = fws.filter(fw => fw.risk === "high");
+          return (
+            <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">UK Regulatory Readiness</p>
+                  <p className="text-[10px] text-muted-foreground">{fws.length} framework{fws.length !== 1 ? "s" : ""} identified · {highRisk.length} high-risk</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {fws.map(fw => (
+                  <div key={fw.id} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                    <div className="flex items-start gap-2">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
+                        fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
+                        fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
+                        "bg-white/10 text-muted-foreground"
+                      }`}>{fw.risk}</span>
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{fw.label}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{fw.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {highRisk.length > 0 && (
+                <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
+                  <p className="text-xs text-red-300">
+                    <strong>Action required:</strong> {highRisk.length} high-risk framework{highRisk.length !== 1 ? "s" : ""} identified. Engage Legal / Compliance and conduct a Data Protection Impact Assessment (DPIA) before deploying AI tools in affected HR processes.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </section>
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECTION 6 — Measurement Plan
+      ══════════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const cadenceId = structuredInputs?.measurement_cadence as string | undefined;
+        const cadenceOpt = cadenceId ? MEASUREMENT_CADENCE_OPTIONS.find(o => o.value === cadenceId) : undefined;
+        const pilotDesign = structuredInputs?.pilot_design as { scope?: string; duration?: string; success_metrics?: string[] } | undefined;
+        const hasMeasurement = cadenceOpt || pilotDesign;
+        if (!hasMeasurement) return null;
+        const pilotScopeOpt  = pilotDesign?.scope     ? PILOT_SCOPE_OPTIONS.find(o => o.value === pilotDesign.scope) : undefined;
+        const pilotDurOpt    = pilotDesign?.duration   ? PILOT_DURATION_OPTIONS.find(o => o.value === pilotDesign.duration) : undefined;
+        const pilotMetricOpts = (pilotDesign?.success_metrics ?? []).map(id => PILOT_SUCCESS_METRICS.find(m => m.id === id)).filter(Boolean) as typeof PILOT_SUCCESS_METRICS;
+        return (
+          <section id="measurement" className="mb-6">
+            <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Section 6 — Measurement Plan</p>
+                  <h2 className="text-lg font-bold text-foreground">How we will measure progress</h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {cadenceOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Review Cadence</p>
+                    <p className="text-sm font-semibold text-foreground">{cadenceOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      KPI tracking and strategy re-assessment will follow this rhythm. Schedule the first review before the end of the Foundation phase.
+                    </p>
+                  </div>
+                )}
+                {pilotScopeOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Scope</p>
+                    <p className="text-sm font-semibold text-foreground">{pilotScopeOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{pilotScopeOpt.description}</p>
+                  </div>
+                )}
+                {pilotDurOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Duration</p>
+                    <p className="text-sm font-semibold text-foreground">{pilotDurOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Run a structured pilot before full rollout. Define go/no-go criteria at the midpoint.
+                    </p>
+                  </div>
+                )}
+                {pilotMetricOpts.length > 0 && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Success Metrics</p>
+                    <div className="space-y-1.5">
+                      {pilotMetricOpts.map(m => (
+                        <div key={m.id} className="flex items-center gap-2">
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
+                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
+                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-purple-500/20 text-purple-400"
+                          }`}>{m.tier.slice(0, 3)}</span>
+                          <span className="text-xs text-foreground">{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ══════════════════════════════════════════════════════════════════════
           PAGE-END CTA — What's next?
@@ -2022,10 +2325,154 @@ export default function AIStrategyPage() {
                 </div>
               )}
 
+              {/* C2 — Three-Tier ROI */}
+              {ve.tiered_value && (() => {
+                const tv = ve.tiered_value;
+                const fmt = (n: number) => n === 0 ? "—" : `£${Math.round(n / 1000)}k`;
+                const tiers = [
+                  { label: "Efficiency",    desc: "Time savings, cost reduction, headcount avoidance", low: tv.efficiency.low,    high: tv.efficiency.high,    color: "#4ADE80" },
+                  { label: "Effectiveness", desc: "Quality of hire, attrition reduction, engagement",  low: tv.effectiveness.low, high: tv.effectiveness.high, color: "#60A5FA" },
+                  { label: "Strategic",     desc: "Risk avoidance, capability uplift, compliance",     low: tv.strategic.low,     high: tv.strategic.high,     color: "#A78BFA" },
+                ];
+                const totalHigh = tv.efficiency.high + tv.effectiveness.high + tv.strategic.high;
+                return (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <LayoutGrid className="w-4 h-4 text-emerald-400" />
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Tier Value Analysis</p>
+                    </div>
+                    <div className="space-y-3">
+                      {tiers.map(tier => {
+                        const pct = totalHigh > 0 ? Math.round((tier.high / totalHigh) * 100) : 0;
+                        return (
+                          <div key={tier.label}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div>
+                                <span className="text-xs font-semibold" style={{ color: tier.color }}>{tier.label}</span>
+                                <span className="text-[10px] text-muted-foreground ml-2">{tier.desc}</span>
+                              </div>
+                              <span className="text-xs font-semibold text-foreground">{fmt(tier.low)}–{fmt(tier.high)}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: tier.color }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* C3 — NPV / IRR Financial Model */}
+              {ve.financial_model && (() => {
+                const fm = ve.financial_model;
+                const fmt = (n: number) => n < 0 ? `-£${Math.abs(Math.round(n / 1000))}k` : `£${Math.round(n / 1000)}k`;
+                return (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="w-4 h-4 text-blue-400" />
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Financial Model ({fm.horizon_years}-Year DCF @ {fm.discount_rate_pct}%)</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-white/8 bg-white/2 px-4 py-3">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Present Value</p>
+                        <p className={`text-xl font-bold ${fm.npv_gbp.high >= 0 ? "text-blue-400" : "text-red-400"}`}>{fmt(fm.npv_gbp.high)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmt(fm.npv_gbp.low)}</p>
+                      </div>
+                      <div className="rounded-lg border border-white/8 bg-white/2 px-4 py-3">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Internal Rate of Return</p>
+                        {fm.irr_pct ? (
+                          <>
+                            <p className="text-xl font-bold text-violet-400">{fm.irr_pct.high}%</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fm.irr_pct.low}%</p>
+                          </>
+                        ) : (
+                          <p className="text-xl font-bold text-muted-foreground">—</p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                      DCF model discounts projected annual cashflows at {fm.discount_rate_pct}% over {fm.horizon_years} years. NPV &gt; 0 indicates the strategy creates value above the cost of capital. IRR is the break-even discount rate.
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* C4 — Three-Scenario Analysis */}
+              {ve.scenario_analysis && (() => {
+                const sa = ve.scenario_analysis;
+                const fmt = (n: number) => n < 0 ? `-£${Math.abs(Math.round(n / 1000))}k` : `£${Math.round(n / 1000)}k`;
+                const scenarios = [
+                  { key: "pessimistic", label: "Pessimistic", desc: "60% of low estimate, 110% of high cost", data: sa.pessimistic, color: "#F87171" },
+                  { key: "base",        label: "Base Case",   desc: "Midpoint of low/high estimates",        data: sa.base,        color: "#FBBF24" },
+                  { key: "optimistic",  label: "Optimistic",  desc: "120% of high estimate, 90% of low cost", data: sa.optimistic,  color: "#4ADE80" },
+                ] as const;
+                return (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Activity className="w-4 h-4 text-amber-400" />
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Scenario Analysis</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {scenarios.map(s => (
+                        <div key={s.key} className="rounded-lg border border-white/8 bg-white/2 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: s.color }}>{s.label}</p>
+                          <p className="text-[10px] text-muted-foreground mb-3 leading-relaxed">{s.desc}</p>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Value</span>
+                              <span className="font-semibold" style={{ color: s.color }}>{fmt(s.data.value_gbp)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Net</span>
+                              <span className={`font-semibold ${s.data.net_gbp >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(s.data.net_gbp)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">ROI</span>
+                              <span className={`font-semibold ${s.data.roi_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>{s.data.roi_pct}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Caveat */}
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[11px] text-amber-300/80">
                 <strong className="text-amber-300">Caveat:</strong> {ve.caveat}
               </div>
+
+              {/* A2 — Reinvestment Plan */}
+              {(() => {
+                const totalLow  = ve.by_initiative.reduce((s, i) => s + (i.quantified_value_gbp?.low  ?? 0), 0);
+                const totalHigh = ve.by_initiative.reduce((s, i) => s + (i.quantified_value_gbp?.high ?? 0), 0);
+                if (totalLow === 0 && totalHigh === 0) return null;
+                const hrProcesses = (structuredInputs?.hr_processes_priority as string[] | undefined) ?? [];
+                const reinvestTargets = hrProcesses.length > 0
+                  ? hrProcesses.slice(0, 2).map(p => p.replace(/_/g, " ")).join(" and ")
+                  : "people capability and HR infrastructure";
+                return (
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Reinvestment Plan</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      This strategy is projected to free up between{" "}
+                      <strong className="text-emerald-400">£{totalLow.toLocaleString()}</strong> and{" "}
+                      <strong className="text-emerald-400">£{totalHigh.toLocaleString()}</strong> in measurable value over the strategy period.
+                      The recommended reinvestment priority is <strong className="text-foreground">{reinvestTargets}</strong> —
+                      the areas most likely to compound returns from the initiatives already selected.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Reinvestment allocation should be reviewed at each phase gate and adjusted based on realised savings and emerging capability gaps.
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           );
         })()}

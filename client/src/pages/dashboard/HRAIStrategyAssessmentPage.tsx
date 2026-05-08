@@ -59,8 +59,24 @@ import {
   getGovernanceDefaults,
   getSectorBenchmarks,
   computeSectorDefaultBaseline,
+  EXISTING_AI_TOOLS,
+  AI_PHILOSOPHY_OPTIONS,
+  EXECUTIVE_SPONSORS,
+  GATEKEEPERS,
+  AFFECTED_GROUPS,
+  POTENTIAL_RESISTORS,
+  getStakeholderDefaults,
+  MEASUREMENT_CADENCE_OPTIONS,
+  SOLUTION_DELIVERY_OPTIONS,
   type StructuredInputs,
   type OperationalBaseline,
+  type AiPhilosophy,
+  type StakeholderMap,
+  type MeasurementCadence,
+  UK_REGULATORY_FRAMEWORKS,
+  PILOT_SCOPE_OPTIONS,
+  PILOT_DURATION_OPTIONS,
+  PILOT_SUCCESS_METRICS,
 } from "@/../../shared/strategyInputs";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -148,7 +164,8 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   const steps = [
     { label: "Business Aspiration", icon: <Target className="w-4 h-4" /> },
     { label: "Baseline",            icon: <BarChart2 className="w-4 h-4" /> },
-    { label: "HR's Role",           icon: <Users className="w-4 h-4" /> },
+    { label: "Stakeholders",        icon: <Users className="w-4 h-4" /> },
+    { label: "HR's Role",           icon: <Shield className="w-4 h-4" /> },
     { label: "AI Draft",            icon: <Sparkles className="w-4 h-4" /> },
     { label: "Initiatives",         icon: <ListPlus className="w-4 h-4" /> },
   ];
@@ -657,6 +674,9 @@ export default function HRAIStrategyAssessmentPage() {
   const [timelineMonths, setTimelineMonths] = useState<number | null>(null);
   const [successMarkers, setSuccessMarkers] = useState<string[]>([]);
 
+  // Step 1 — A1: existing AI tools
+  const [existingAiTools, setExistingAiTools] = useState<string[]>([]);
+
   // Step 1.5 — Operational baseline
   const [baselineValues, setBaselineValues] = useState<Omit<OperationalBaseline, "_sector_default_used">>({});
   const [sectorDefaultUsed, setSectorDefaultUsed] = useState<Record<string, boolean>>({});
@@ -666,6 +686,28 @@ export default function HRAIStrategyAssessmentPage() {
   const [hrProcessesPriority, setHrProcessesPriority] = useState<string[]>([]);
   const [governancePrinciples, setGovernancePrinciples] = useState<string[]>([]);
   const [voiceCapture, setVoiceCapture] = useState("");
+  // Step 2 — A3: AI philosophy
+  const [aiPhilosophy, setAiPhilosophy] = useState<AiPhilosophy | null>(null);
+
+  // Step 2.5 — B1: Stakeholder map
+  const [stakeholderMap, setStakeholderMap] = useState<StakeholderMap>({
+    executive_sponsors: [],
+    gatekeepers: [],
+    affected_groups: [],
+    potential_resistors: [],
+    notes: "",
+  });
+
+  // Step 3 (HR's Role) — D1: Measurement cadence
+  const [measurementCadence, setMeasurementCadence] = useState<MeasurementCadence | null>(null);
+  // E1 — UK regulatory frameworks
+  const [ukRegulatoryFrameworks, setUkRegulatoryFrameworks] = useState<string[]>([]);
+  // D2 — Pilot design
+  const [pilotScope, setPilotScope]         = useState<string>("");
+  const [pilotDuration, setPilotDuration]   = useState<string>("");
+  const [pilotMetrics, setPilotMetrics]     = useState<string[]>([]);
+  // Step 1 — D3: Solution delivery confidence
+  const [solutionDeliveryConfidence, setSolutionDeliveryConfidence] = useState<1|2|3|4|5 | null>(null);
 
   // Step 3 — Vision & Principles
   const [visionStatement, setVisionStatement] = useState("");
@@ -705,6 +747,15 @@ export default function HRAIStrategyAssessmentPage() {
       if (si.hr_processes_priority?.length) setHrProcessesPriority(si.hr_processes_priority);
       if (si.governance_principles?.length) setGovernancePrinciples(si.governance_principles);
       if (si.voice_capture) setVoiceCapture(si.voice_capture);
+      if (si.existing_ai_tools?.length) setExistingAiTools(si.existing_ai_tools);
+      if (si.ai_philosophy) setAiPhilosophy(si.ai_philosophy);
+      if (si.stakeholder_map) setStakeholderMap(si.stakeholder_map);
+      if (si.measurement_cadence) setMeasurementCadence(si.measurement_cadence);
+      if (si.uk_regulatory_frameworks) setUkRegulatoryFrameworks(si.uk_regulatory_frameworks);
+      if (si.pilot_design?.scope)            setPilotScope(si.pilot_design.scope);
+      if (si.pilot_design?.duration)         setPilotDuration(si.pilot_design.duration);
+      if (si.pilot_design?.success_metrics)  setPilotMetrics(si.pilot_design.success_metrics);
+      if (si.solution_delivery_confidence) setSolutionDeliveryConfidence(si.solution_delivery_confidence);
     }
 
     // Pre-fill operational baseline if available
@@ -732,6 +783,18 @@ export default function HRAIStrategyAssessmentPage() {
       setGovernancePrinciples(governanceDefaults);
     }
   }, [governanceDefaults]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Set stakeholder defaults when ambition levels are known ───────────────
+  useEffect(() => {
+    const hasData = existingQ.data?.completed;
+    if (!hasData && stakeholderMap.executive_sponsors.length === 0) {
+      const defaults = getStakeholderDefaults(
+        orgContextQ.data?.businessAmbitionLevel ?? 3,
+        orgContextQ.data?.peopleAmbitionLevel ?? 3,
+      );
+      setStakeholderMap(defaults);
+    }
+  }, [orgContextQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Unsaved-progress guard ─────────────────────────────────────────────────
   useEffect(() => {
@@ -828,7 +891,18 @@ export default function HRAIStrategyAssessmentPage() {
     hr_processes_priority: hrProcessesPriority,
     governance_principles: governancePrinciples,
     voice_capture: voiceCapture.trim() || undefined,
-  }), [businessOutcomes, businessProblems, timelineMonths, riskAppetite, successMarkers, hrLeadershipPosition, hrProcessesPriority, governancePrinciples, voiceCapture]);
+    existing_ai_tools: existingAiTools.length > 0 ? existingAiTools : undefined,
+    ai_philosophy: aiPhilosophy ?? undefined,
+    stakeholder_map: stakeholderMap,
+    measurement_cadence: measurementCadence ?? undefined,
+    uk_regulatory_frameworks: ukRegulatoryFrameworks.length > 0 ? ukRegulatoryFrameworks : undefined,
+    pilot_design: (pilotScope || pilotDuration || pilotMetrics.length > 0) ? {
+      scope:           pilotScope || undefined,
+      duration:        pilotDuration || undefined,
+      success_metrics: pilotMetrics.length > 0 ? pilotMetrics : undefined,
+    } : undefined,
+    solution_delivery_confidence: solutionDeliveryConfidence ?? undefined,
+  }), [businessOutcomes, businessProblems, timelineMonths, riskAppetite, successMarkers, hrLeadershipPosition, hrProcessesPriority, governancePrinciples, voiceCapture, existingAiTools, aiPhilosophy, stakeholderMap, measurementCadence, solutionDeliveryConfidence]);
 
   const buildOperationalBaseline = useCallback((): OperationalBaseline => ({
     ...baselineValues,
@@ -982,7 +1056,7 @@ export default function HRAIStrategyAssessmentPage() {
 
       {/* ── Wizard body ─────────────────────────────────────────────────────── */}
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <StepIndicator current={step} total={5} />
+        <StepIndicator current={step} total={6} />
 
         {/* ── Step 1: Business AI Aspiration ─────────────────────────────── */}
         {step === 1 && (
@@ -1089,6 +1163,27 @@ export default function HRAIStrategyAssessmentPage() {
                     Select exactly 3 success markers ({3 - successMarkers.length} more needed).
                   </p>
                 )}
+              </div>
+
+              {/* A1 — Existing AI tools */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  Which AI or digital HR tools do you already have in place? <span className="text-muted-foreground font-normal">(Optional)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">Select all that apply. This helps us avoid recommending tools you already have and identify integration opportunities.</p>
+                <ChipSelect
+                  options={EXISTING_AI_TOOLS}
+                  selected={existingAiTools}
+                  onToggle={id => {
+                    setExistingAiTools(prev => {
+                      if (id === "none") return prev.includes("none") ? [] : ["none"];
+                      const without = prev.filter(x => x !== "none");
+                      return without.includes(id) ? without.filter(x => x !== id) : [...without, id];
+                    });
+                    setIsDirty(true);
+                  }}
+                  color="green"
+                />
               </div>
             </div>
 
@@ -1215,6 +1310,173 @@ export default function HRAIStrategyAssessmentPage() {
                 onClick={() => goToStep(3)}
                 className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
+                Next: Stakeholder Map
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2.5: Stakeholder Map (B1) ─────────────────────────────── */}
+        {step === 3 && (
+          <div>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-7 h-7 rounded-full bg-teal-500/15 border border-teal-500/30 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-teal-400" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground">Stakeholder Map</h2>
+              </div>
+              <p className="text-sm text-muted-foreground ml-9">
+                Identify who needs to sponsor, approve, and be engaged in your AI strategy. Pre-filled with sensible defaults — adjust to reflect your organisation.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              {/* Executive sponsors */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Executive sponsors</p>
+                <p className="text-xs text-muted-foreground mb-4">Who at C-suite or board level is backing this initiative?</p>
+                <ChipSelect
+                  options={EXECUTIVE_SPONSORS}
+                  selected={stakeholderMap.executive_sponsors}
+                  onToggle={id => {
+                    setStakeholderMap(prev => ({
+                      ...prev,
+                      executive_sponsors: prev.executive_sponsors.includes(id)
+                        ? prev.executive_sponsors.filter(x => x !== id)
+                        : [...prev.executive_sponsors, id],
+                    }));
+                    setIsDirty(true);
+                  }}
+                  color="blue"
+                />
+              </div>
+
+              {/* Gatekeepers */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Gatekeepers</p>
+                <p className="text-xs text-muted-foreground mb-4">Which functions must approve or be consulted before deployment?</p>
+                <ChipSelect
+                  options={GATEKEEPERS}
+                  selected={stakeholderMap.gatekeepers}
+                  onToggle={id => {
+                    setStakeholderMap(prev => ({
+                      ...prev,
+                      gatekeepers: prev.gatekeepers.includes(id)
+                        ? prev.gatekeepers.filter(x => x !== id)
+                        : [...prev.gatekeepers, id],
+                    }));
+                    setIsDirty(true);
+                  }}
+                  color="green"
+                />
+              </div>
+
+              {/* Affected groups */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Affected groups</p>
+                <p className="text-xs text-muted-foreground mb-4">Who will be directly impacted by the AI tools and processes you're introducing?</p>
+                <ChipSelect
+                  options={AFFECTED_GROUPS}
+                  selected={stakeholderMap.affected_groups}
+                  onToggle={id => {
+                    setStakeholderMap(prev => ({
+                      ...prev,
+                      affected_groups: prev.affected_groups.includes(id)
+                        ? prev.affected_groups.filter(x => x !== id)
+                        : [...prev.affected_groups, id],
+                    }));
+                    setIsDirty(true);
+                  }}
+                  color="purple"
+                />
+              </div>
+
+              {/* Potential resistors */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Potential resistors <span className="text-muted-foreground font-normal">(Optional)</span></p>
+                <p className="text-xs text-muted-foreground mb-4">Who might push back, and why? Being honest here improves your change plan.</p>
+                <ChipSelect
+                  options={POTENTIAL_RESISTORS}
+                  selected={stakeholderMap.potential_resistors}
+                  onToggle={id => {
+                    setStakeholderMap(prev => ({
+                      ...prev,
+                      potential_resistors: prev.potential_resistors.includes(id)
+                        ? prev.potential_resistors.filter(x => x !== id)
+                        : [...prev.potential_resistors, id],
+                    }));
+                    setIsDirty(true);
+                  }}
+                  color="green"
+                />
+              </div>
+
+              {/* Notes */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Additional context <span className="text-muted-foreground font-normal">(Optional)</span></p>
+                <p className="text-xs text-muted-foreground mb-3">Any political dynamics, named individuals, or timing constraints worth noting?</p>
+                <Textarea
+                  value={stakeholderMap.notes ?? ""}
+                  onChange={e => { setStakeholderMap(prev => ({ ...prev, notes: e.target.value })); setIsDirty(true); }}
+                  rows={3}
+                  maxLength={400}
+                  className="resize-none bg-white/4 border-white/10 text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
+                  placeholder="e.g. Our CFO is sceptical — we need a quick win before the Q2 board. Trade union consultation required for any workforce-impacting tools."
+                />
+                <p className="text-xs text-muted-foreground mt-1.5 text-right">{(stakeholderMap.notes ?? "").length}/400</p>
+              </div>
+
+              {/* E1 — UK Regulatory Frameworks */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  Which UK regulatory frameworks apply to your AI initiatives? <span className="text-muted-foreground font-normal">(Optional)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Selecting these generates a Regulatory Readiness checklist in your strategy. Select all that apply.
+                </p>
+                <div className="space-y-2">
+                  {UK_REGULATORY_FRAMEWORKS.map(fw => (
+                    <button
+                      key={fw.id}
+                      onClick={() => {
+                        setUkRegulatoryFrameworks(prev =>
+                          prev.includes(fw.id) ? prev.filter(x => x !== fw.id) : [...prev, fw.id]
+                        );
+                        setIsDirty(true);
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                        ukRegulatoryFrameworks.includes(fw.id)
+                          ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
+                          fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
+                          fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-white/10 text-muted-foreground"
+                        }`}>{fw.risk}</span>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">{fw.label}</p>
+                          {fw.description && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{fw.description}</p>}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+              <Button variant="outline" onClick={() => goToStep(2)}>
+                <ChevronLeft className="w-4 h-4 mr-1.5" />
+                Back
+              </Button>
+              <Button
+                onClick={() => goToStep(4)}
+                className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
+              >
                 Next: HR's Role
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -1222,8 +1484,8 @@ export default function HRAIStrategyAssessmentPage() {
           </div>
         )}
 
-        {/* ── Step 2: HR's Role ──────────────────────────────────────────── */}
-        {step === 3 && (
+        {/* ── Step 3: HR's Role ──────────────────────────────────────────── */}
+        {step === 4 && (
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
@@ -1289,6 +1551,132 @@ export default function HRAIStrategyAssessmentPage() {
                 )}
               </div>
 
+              {/* A3 — AI philosophy */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  What is your organisation’s AI philosophy?
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">This shapes how initiatives are framed — whether AI augments your people or replaces manual steps.</p>
+                <div className="space-y-2">
+                  {AI_PHILOSOPHY_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setAiPhilosophy(opt.value); setIsDirty(true); }}
+                      className={`w-full text-left p-3.5 rounded-xl border transition-colors ${
+                        aiPhilosophy === opt.value
+                          ? "bg-blue-500/15 border-blue-500/40 text-foreground"
+                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      }`}
+                    >
+                      <p className={`text-sm font-semibold mb-0.5 ${aiPhilosophy === opt.value ? "text-blue-300" : ""}`}>{opt.label}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* D1 — Measurement cadence */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  How often will you review and measure progress? <span className="text-muted-foreground font-normal">(Optional)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">Sets the rhythm for KPI tracking and strategy re-assessment in your measurement plan.</p>
+                <div className="space-y-2">
+                  {MEASUREMENT_CADENCE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setMeasurementCadence(opt.value); setIsDirty(true); }}
+                      className={`w-full text-left p-3 rounded-xl border transition-colors text-sm ${
+                        measurementCadence === opt.value
+                          ? "bg-green-500/15 border-green-500/40 text-green-300"
+                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      }`}
+                    >
+                      {measurementCadence === opt.value && <Check className="w-3 h-3 inline mr-1.5" />}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* D2 — Pilot Design */}
+              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">
+                  How do you want to pilot your first initiative? <span className="text-muted-foreground font-normal">(Optional)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  This shapes the Pilot Design section of your strategy — scope, duration, and success metrics.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Pilot Scope</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PILOT_SCOPE_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setPilotScope(opt.value); setIsDirty(true); }}
+                          className={`text-left p-3 rounded-xl border transition-colors ${
+                            pilotScope === opt.value
+                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          }`}
+                        >
+                          <p className="text-xs font-semibold leading-tight">{opt.label}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{opt.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Pilot Duration</p>
+                    <div className="flex flex-wrap gap-2">
+                      {PILOT_DURATION_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setPilotDuration(opt.value); setIsDirty(true); }}
+                          className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
+                            pilotDuration === opt.value
+                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Success Metrics <span className="font-normal normal-case">(select up to 4)</span></p>
+                    <div className="space-y-1.5">
+                      {PILOT_SUCCESS_METRICS.map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => {
+                            setPilotMetrics(prev =>
+                              prev.includes(m.id)
+                                ? prev.filter(x => x !== m.id)
+                                : prev.length < 4 ? [...prev, m.id] : prev
+                            );
+                            setIsDirty(true);
+                          }}
+                          className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-colors ${
+                            pilotMetrics.includes(m.id)
+                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          }`}
+                        >
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
+                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
+                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-purple-500/20 text-purple-400"
+                          }`}>{m.tier.slice(0, 3)}</span>
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
               {/* Voice capture */}
               <div className="rounded-xl border border-white/8 bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
@@ -1309,13 +1697,13 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
-              <Button variant="outline" onClick={() => goToStep(2)}>
+              <Button variant="outline" onClick={() => goToStep(3)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>
               <Button
                 disabled={!step2Valid}
-                onClick={() => goToStep(4)}
+                onClick={() => goToStep(5)}
                 className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
                 Next: AI Draft
@@ -1330,8 +1718,8 @@ export default function HRAIStrategyAssessmentPage() {
           </div>
         )}
 
-        {/* ── Step 3: AI Draft ───────────────────────────────────────────── */}
-        {step === 4 && (
+        {/* ── Step 4: AI Draft ───────────────────────────────────────────── */}
+        {step === 5 && (
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
@@ -1430,13 +1818,13 @@ export default function HRAIStrategyAssessmentPage() {
             )}
 
             <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
-              <Button variant="outline" onClick={() => goToStep(3)}>
+              <Button variant="outline" onClick={() => goToStep(4)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>
               <Button
                 disabled={!step3Valid}
-                onClick={() => goToStep(5)}
+                onClick={() => goToStep(6)}
                 className="bg-green-500 hover:bg-green-400 text-black font-semibold px-6"
               >
                 Next: Select Initiatives
@@ -1446,8 +1834,8 @@ export default function HRAIStrategyAssessmentPage() {
           </div>
         )}
 
-        {/* ── Step 4: Initiatives ────────────────────────────────────────── */}
-        {step === 5 && (
+        {/* ── Step 5: Initiatives ────────────────────────────────────────── */}
+        {step === 6 && (
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
@@ -1572,7 +1960,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             <div className="flex justify-between pt-4 border-t border-white/6">
-              <Button variant="outline" onClick={() => goToStep(4)}>
+              <Button variant="outline" onClick={() => goToStep(5)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
               </Button>

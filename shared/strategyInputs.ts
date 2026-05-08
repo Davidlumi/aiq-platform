@@ -5,6 +5,8 @@
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type AiPhilosophy = "augment" | "automate" | "augment_first";
+
 export interface StructuredInputs {
   business_outcomes: string[];
   business_problems: string[];
@@ -15,6 +17,25 @@ export interface StructuredInputs {
   hr_processes_priority: string[];
   governance_principles: string[];
   voice_capture?: string;
+  /** A1 — existing AI tools already deployed in HR */
+  existing_ai_tools?: string[];
+  /** A3 — organisation's AI philosophy stance */
+  ai_philosophy?: AiPhilosophy;
+  /** B1 — stakeholder map */
+  stakeholder_map?: StakeholderMap;
+  /** D1 — measurement cadence */
+  measurement_cadence?: MeasurementCadence;
+  /** D3 — solution delivery confidence (1-5) */
+  solution_delivery_confidence?: 1 | 2 | 3 | 4 | 5;
+  /** E1 — UK regulatory frameworks that apply */
+  uk_regulatory_frameworks?: string[];
+  /** D2 — pilot design preferences */
+  pilot_design?: {
+    scope?: string;
+    duration?: string;
+    success_metrics?: string[];
+    first_initiative_id?: string;
+  };
 }
 
 export interface OperationalBaseline {
@@ -26,6 +47,147 @@ export interface OperationalBaseline {
   hr_cost_per_fte_gbp?: number;
   _sector_default_used?: Partial<Record<keyof Omit<OperationalBaseline, "_sector_default_used">, boolean>>;
 }
+
+// ── B1: Stakeholder map ──────────────────────────────────────────────────────
+
+export interface StakeholderMap {
+  executive_sponsors: string[];
+  gatekeepers: string[];
+  affected_groups: string[];
+  potential_resistors: string[];
+  notes?: string;
+}
+
+export const EXECUTIVE_SPONSORS: { id: string; label: string }[] = [
+  { id: "ceo",   label: "CEO" },
+  { id: "cfo",   label: "CFO" },
+  { id: "coo",   label: "COO" },
+  { id: "cio",   label: "CIO" },
+  { id: "cto",   label: "CTO" },
+  { id: "cro",   label: "Chief Risk Officer" },
+  { id: "audit", label: "Audit Committee" },
+  { id: "board", label: "Board" },
+  { id: "other", label: "Other" },
+];
+
+export const GATEKEEPERS: { id: string; label: string }[] = [
+  { id: "legal_compliance",  label: "Legal / Compliance" },
+  { id: "it_data",           label: "IT / Data" },
+  { id: "finance",           label: "Finance" },
+  { id: "procurement",       label: "Procurement" },
+  { id: "info_security",     label: "Information Security" },
+  { id: "risk_management",   label: "Risk Management" },
+  { id: "internal_audit",    label: "Internal Audit" },
+  { id: "hr_bps",            label: "HR Business Partners" },
+];
+
+export const AFFECTED_GROUPS: { id: string; label: string }[] = [
+  { id: "hr_team",             label: "HR team" },
+  { id: "hiring_managers",     label: "Hiring managers" },
+  { id: "all_employees",       label: "All employees" },
+  { id: "frontline_workers",   label: "Frontline workers" },
+  { id: "knowledge_workers",   label: "Knowledge workers" },
+  { id: "contractors",         label: "Contractors & contingent workforce" },
+  { id: "specific_functions",  label: "Specific functions (free text)" },
+];
+
+export const POTENTIAL_RESISTORS: { id: string; label: string }[] = [
+  { id: "trade_union",          label: "Trade union" },
+  { id: "works_council",        label: "Works council" },
+  { id: "employee_resource_groups", label: "Employee resource groups" },
+  { id: "senior_managers",      label: "Senior managers concerned about role change" },
+  { id: "hr_team_concerned",    label: "HR team members concerned about own role" },
+  { id: "legal_compliance_risk",label: "Legal / Compliance (risk-averse)" },
+  { id: "finance_cost",         label: "Finance (cost concerns)" },
+  { id: "dei_leads",            label: "DEI leads (bias concerns)" },
+  { id: "other",                label: "Other" },
+];
+
+/** Returns sector-aware default pre-checks for the stakeholder map */
+export function getStakeholderDefaults(
+  businessAmbitionLevel: number,
+  peopleAmbitionLevel: number,
+  hasTradeUnion?: boolean
+): StakeholderMap {
+  return {
+    executive_sponsors: [
+      "cfo",
+      ...(businessAmbitionLevel >= 5 ? ["ceo"] : []),
+    ],
+    gatekeepers: ["legal_compliance", "it_data"],
+    affected_groups: [
+      "hr_team",
+      ...(peopleAmbitionLevel >= 4 ? ["all_employees"] : []),
+    ],
+    potential_resistors: [
+      ...(hasTradeUnion ? ["trade_union"] : []),
+    ],
+  };
+}
+
+// ── D1: Measurement cadence ───────────────────────────────────────────────────
+
+export type MeasurementCadence =
+  | "monthly_quarterly_annual"
+  | "quarterly_annual"
+  | "biannual"
+  | "annual"
+  | "other_custom";
+
+export const MEASUREMENT_CADENCE_OPTIONS: { value: MeasurementCadence; label: string }[] = [
+  { value: "monthly_quarterly_annual", label: "Monthly KPI tracking, quarterly review, annual full re-assessment" },
+  { value: "quarterly_annual",         label: "Quarterly review with annual full re-assessment" },
+  { value: "biannual",                 label: "Twice-yearly review" },
+  { value: "annual",                   label: "Annual review only" },
+  { value: "other_custom",             label: "Custom (specify in voice capture)" },
+];
+
+// ── D3: Solution delivery confidence ─────────────────────────────────────────
+
+export const SOLUTION_DELIVERY_OPTIONS: { value: 1 | 2 | 3 | 4 | 5; label: string; description: string }[] = [
+  { value: 1, label: "Limited",     description: "We struggle to deliver change initiatives on time and to spec" },
+  { value: 2, label: "Developing",  description: "We can deliver smaller initiatives but struggle at scale" },
+  { value: 3, label: "Moderate",    description: "We've delivered transformation projects but with mixed outcomes" },
+  { value: 4, label: "Strong",      description: "We have a track record of delivering complex change initiatives" },
+  { value: 5, label: "Exceptional", description: "Change delivery is a recognised organisational strength" },
+];
+
+// ── A1: Existing AI tools ─────────────────────────────────────────────────────
+export const EXISTING_AI_TOOLS: { id: string; label: string }[] = [
+  { id: "ats",                 label: "Applicant Tracking System (ATS)" },
+  { id: "hris",                label: "HRIS / Core HR platform" },
+  { id: "lms",                 label: "Learning Management System (LMS)" },
+  { id: "performance_mgmt",    label: "Performance management tool" },
+  { id: "people_analytics",    label: "People analytics / BI dashboard" },
+  { id: "chatbot_helpdesk",    label: "HR chatbot / employee helpdesk" },
+  { id: "cv_screening",        label: "AI CV screening / sourcing tool" },
+  { id: "engagement_survey",   label: "Engagement / pulse survey platform" },
+  { id: "workforce_planning",  label: "Workforce planning tool" },
+  { id: "payroll_automation",  label: "Payroll / benefits automation" },
+  { id: "onboarding_platform", label: "Digital onboarding platform" },
+  { id: "skills_platform",     label: "Skills intelligence platform" },
+  { id: "copilot_llm",         label: "Copilot / LLM productivity tool (e.g. M365 Copilot)" },
+  { id: "none",                label: "None yet" },
+];
+
+// ── A3: AI philosophy ──────────────────────────────────────────────────────────────
+export const AI_PHILOSOPHY_OPTIONS: { value: AiPhilosophy; label: string; description: string }[] = [
+  {
+    value: "augment",
+    label: "Augment People",
+    description: "AI enhances human judgement — HR professionals remain in the decision loop. Speed and quality improve; headcount stays stable.",
+  },
+  {
+    value: "automate",
+    label: "Automate Processes",
+    description: "AI replaces manual, repetitive tasks end-to-end. Capacity is freed up or redeployed. Efficiency is the primary goal.",
+  },
+  {
+    value: "augment_first",
+    label: "Augment First, Automate Later",
+    description: "Start by augmenting people to build trust and data quality, then progressively automate as confidence grows.",
+  },
+];
 
 // ── Business outcomes ─────────────────────────────────────────────────────────
 
@@ -293,3 +455,46 @@ export function computeSectorDefaultBaseline(sector: string, headcount: number):
     },
   };
 }
+
+// ── E1: UK Regulatory Frameworks ─────────────────────────────────────────────
+export const UK_REGULATORY_FRAMEWORKS: { id: string; label: string; shortLabel: string; description: string; risk: "high" | "medium" | "low" }[] = [
+  { id: "uk_gdpr_dpa2018",          label: "UK GDPR / Data Protection Act 2018",     shortLabel: "UK GDPR",                  description: "Governs processing of personal data. AI tools that process employee data must have a lawful basis and DPIA where high risk.", risk: "high" },
+  { id: "equality_act_2010",        label: "Equality Act 2010",                       shortLabel: "Equality Act",             description: "Prohibits discrimination in recruitment, performance, and pay decisions. AI tools must be audited for bias and disparate impact.", risk: "high" },
+  { id: "employment_rights_1996",   label: "Employment Rights Act 1996",              shortLabel: "Employment Rights",        description: "Governs dismissal, redundancy, and employment terms. AI-assisted performance and workforce planning tools must not undermine statutory rights.", risk: "medium" },
+  { id: "ico_ai_guidance",          label: "ICO Guidance on AI and Data Protection",  shortLabel: "ICO AI Guidance",          description: "Requires explainability for automated decisions affecting individuals. Applies to AI-assisted hiring, performance, and pay.", risk: "high" },
+  { id: "eu_ai_act_alignment",      label: "EU AI Act (UK Alignment Considerations)", shortLabel: "EU AI Act",                description: "Organisations operating in the EU or with EU subsidiaries must comply. HR AI tools in recruitment and performance are classified as high-risk.", risk: "medium" },
+  { id: "trade_union_consult",      label: "Trade Union and Collective Consultation", shortLabel: "Trade Union",              description: "Where trade unions are recognised, employers may have obligations to consult on significant changes to working practices.", risk: "medium" },
+  { id: "algorithmic_transparency", label: "Algorithmic Transparency (Emerging)",     shortLabel: "Algorithmic Transparency", description: "Emerging UK government guidance on algorithmic transparency. Prepare for equivalent private sector requirements.", risk: "low" },
+  { id: "none",                     label: "None of these apply to our context",      shortLabel: "None",                     description: "", risk: "low" },
+];
+
+// ── D2: Pilot Design ─────────────────────────────────────────────────────────
+export const PILOT_SCOPE_OPTIONS: { value: string; label: string; description: string }[] = [
+  { value: "single_team",       label: "Single team",             description: "Pilot within one HR team or function (e.g. Talent Acquisition)" },
+  { value: "single_bu",         label: "Single business unit",    description: "Pilot across one business unit or geography" },
+  { value: "multi_bu",          label: "Multiple business units", description: "Pilot across 2-3 business units simultaneously" },
+  { value: "organisation_wide", label: "Organisation-wide",       description: "Full organisation rollout from the start" },
+];
+
+export const PILOT_DURATION_OPTIONS: { value: string; label: string }[] = [
+  { value: "4_weeks",  label: "4 weeks" },
+  { value: "6_weeks",  label: "6 weeks" },
+  { value: "8_weeks",  label: "8 weeks" },
+  { value: "12_weeks", label: "12 weeks (3 months)" },
+  { value: "6_months", label: "6 months" },
+  { value: "other",    label: "Other / TBD" },
+];
+
+export const PILOT_SUCCESS_METRICS: { id: string; label: string; tier: "efficiency" | "effectiveness" | "strategic" }[] = [
+  { id: "time_to_hire_reduction",        label: "Time-to-hire reduction (%)",              tier: "efficiency"    },
+  { id: "screening_time_saved",          label: "Screening time saved (hrs/week)",          tier: "efficiency"    },
+  { id: "hr_admin_time_saved",           label: "HR admin time saved (hrs/week)",           tier: "efficiency"    },
+  { id: "employee_satisfaction_score",   label: "Employee satisfaction score (eNPS delta)", tier: "effectiveness" },
+  { id: "manager_satisfaction_score",    label: "Manager satisfaction with HR tools",       tier: "effectiveness" },
+  { id: "adoption_rate",                 label: "Tool adoption rate (%)",                   tier: "effectiveness" },
+  { id: "data_quality_improvement",      label: "Data quality / completeness improvement",  tier: "effectiveness" },
+  { id: "compliance_incident_reduction", label: "Compliance incidents reduced",             tier: "strategic"     },
+  { id: "capability_score_uplift",       label: "AiQ capability score uplift",              tier: "strategic"     },
+  { id: "cost_per_hire_reduction",       label: "Cost-per-hire reduction (%)",              tier: "efficiency"    },
+  { id: "attrition_rate_change",         label: "Voluntary attrition rate change",          tier: "effectiveness" },
+];

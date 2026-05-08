@@ -732,6 +732,34 @@ export interface ValueEnvelopeInitiative {
   payback_months: { low: number; high: number } | null;
 }
 
+// C2 — Three-tier ROI value types
+export type ValueTier = "efficiency" | "effectiveness" | "strategic";
+export interface TieredValue {
+  efficiency:    { low: number; high: number };  // time/cost savings, headcount avoidance
+  effectiveness: { low: number; high: number };  // quality, attrition, engagement
+  strategic:     { low: number; high: number };  // risk avoidance, capability uplift
+}
+// C1 — Expanded TCO
+export interface TotalCostOfOwnership {
+  implementation_gbp:    { low: number; high: number };
+  change_management_gbp: { low: number; high: number }; // 12-15% of implementation
+  training_gbp:          { low: number; high: number }; // £200-400 per affected FTE
+  ongoing_annual_gbp:    { low: number; high: number }; // 18-20% of implementation per year
+  total_3yr_gbp:         { low: number; high: number };
+}
+// C3 — NPV / IRR
+export interface FinancialModel {
+  npv_gbp:           { low: number; high: number };
+  irr_pct:           { low: number; high: number } | null;
+  discount_rate_pct: number;
+  horizon_years:     number;
+}
+// C4 — Three-scenario
+export interface ScenarioAnalysis {
+  pessimistic: { value_gbp: number; net_gbp: number; roi_pct: number };
+  base:        { value_gbp: number; net_gbp: number; roi_pct: number };
+  optimistic:  { value_gbp: number; net_gbp: number; roi_pct: number };
+}
 export interface ValueEnvelope {
   total_quantified_value_gbp: { low: number; high: number };
   net_value_gbp: { low: number; high: number };
@@ -745,6 +773,18 @@ export interface ValueEnvelope {
   };
   caveat: string;
   libraryVersion: string;
+  // v1.2 additions
+  tco: TotalCostOfOwnership;
+  tiered_value: TieredValue;
+  financial_model: FinancialModel;
+  scenario_analysis: ScenarioAnalysis;
+  delivery_confidence_panel: {
+    score: number;
+    label: string;
+    phase_duration_note: string;
+    change_mgmt_multiplier: number;
+    recommendation: string;
+  } | null;
 }
 
 function resolveValueFormula(
@@ -907,7 +947,8 @@ export function calculateValueEnvelope(
     hr_cost_per_fte_gbp?: number;
     _sector_default_used?: Record<string, boolean>;
   },
-  planHorizonMonths: number
+  planHorizonMonths: number,
+  solutionDeliveryConfidence?: number | null
 ): ValueEnvelope {
   const libMeta = getLibraryMeta();
   const byInitiative: ValueEnvelopeInitiative[] = [];
@@ -995,6 +1036,149 @@ export function calculateValueEnvelope(
   const quantifiedCount = byInitiative.filter(i => i.quantified_value_gbp !== null).length;
   const qualOnlyCount = byInitiative.filter(i => i.quantified_value_gbp === null).length;
 
+  // C1: Expanded TCO
+  const changeMgmtLow  = Math.round(approxCostLow  * 0.12);
+  const changeMgmtHigh = Math.round(approxCostHigh * 0.15);
+  const estHrFtes = Math.max(5, Math.round((operationalBaseline.hires_per_year ?? 50) / 0.10 / 50));
+  const trainingLow  = estHrFtes * 200;
+  const trainingHigh = estHrFtes * 400;
+  const ongoingAnnualLow  = Math.round(approxCostLow  * 0.18);
+  const ongoingAnnualHigh = Math.round(approxCostHigh * 0.20);
+  const horizonYears = Math.max(1, Math.round(planHorizonMonths / 12));
+  const tco: TotalCostOfOwnership = {
+    implementation_gbp:    { low: approxCostLow,    high: approxCostHigh    },
+    change_management_gbp: { low: changeMgmtLow,    high: changeMgmtHigh    },
+    training_gbp:          { low: trainingLow,       high: trainingHigh      },
+    ongoing_annual_gbp:    { low: ongoingAnnualLow,  high: ongoingAnnualHigh },
+    total_3yr_gbp: {
+      low:  approxCostLow  + changeMgmtLow  + trainingLow  + ongoingAnnualLow  * horizonYears,
+      high: approxCostHigh + changeMgmtHigh + trainingHigh + ongoingAnnualHigh * horizonYears,
+    },
+  };
+
+  // D3: Apply solution delivery confidence multiplier to change management
+  const deliveryConf = solutionDeliveryConfidence ?? 3;
+  const DELIVERY_LABELS: Record<number, string> = {
+    1: "Limited", 2: "Developing", 3: "Moderate", 4: "Strong", 5: "Exceptional"
+  };
+  let changeMgmtMultiplier = 1.0;
+  let phaseDurationNote = "Phase durations: standard";
+  if (deliveryConf <= 2) {
+    changeMgmtMultiplier = 1.5;
+    phaseDurationNote = "Phase durations extended 30% (low delivery confidence)";
+    tco.change_management_gbp = {
+      low:  Math.round(tco.change_management_gbp.low  * 1.5),
+      high: Math.round(tco.change_management_gbp.high * 1.5),
+    };
+  } else if (deliveryConf >= 4) {
+    changeMgmtMultiplier = 0.7;
+    phaseDurationNote = "Phase durations may compress 10% (strong delivery confidence)";
+    tco.change_management_gbp = {
+      low:  Math.round(tco.change_management_gbp.low  * 0.7),
+      high: Math.round(tco.change_management_gbp.high * 0.7),
+    };
+  }
+  const deliveryLabel = DELIVERY_LABELS[Math.round(deliveryConf)] ?? "Moderate";
+  const deliveryRecommendation =
+    deliveryConf <= 2
+      ? "Recommend strengthening change capability before Phase 2 commitment. Consider AI Change Management Programme as a foundation initiative."
+      : deliveryConf <= 3
+      ? "Standard change management approach is appropriate. Monitor adoption metrics closely in Phase 1."
+      : "Strong delivery capability supports accelerated rollout. Consider compressing Phase 2 timeline.";
+  const delivery_confidence_panel = {
+    score: deliveryConf,
+    label: deliveryLabel,
+    phase_duration_note: phaseDurationNote,
+    change_mgmt_multiplier: changeMgmtMultiplier,
+    recommendation: deliveryRecommendation,
+  };
+  // C2: Three-tier ROI
+  const EFFICIENCY_IDS = new Set([
+    "ai_assisted_cv_screening", "ai_assisted_job_descriptions", "automated_onboarding_workflows",
+    "hr_chatbot_employee_self_service", "ai_powered_payroll_anomaly_detection",
+    "automated_compliance_reporting", "intelligent_document_processing",
+  ]);
+  const EFFECTIVENESS_IDS = new Set([
+    "predictive_attrition_modelling", "ai_driven_performance_coaching",
+    "ai_learning_recommendation_engine", "personalised_career_pathing",
+    "ai_driven_engagement_surveys", "ai_compensation_benchmarking",
+    "skills_intelligence_platform",
+  ]);
+  let efficiencyLow = 0, efficiencyHigh = 0;
+  let effectivenessLow = 0, effectivenessHigh = 0;
+  let strategicLow = 0, strategicHigh = 0;
+  for (const init of byInitiative) {
+    if (!init.quantified_value_gbp) continue;
+    const { low, high } = init.quantified_value_gbp;
+    if (EFFICIENCY_IDS.has(init.initiative_id)) {
+      efficiencyLow += low; efficiencyHigh += high;
+    } else if (EFFECTIVENESS_IDS.has(init.initiative_id)) {
+      effectivenessLow += low; effectivenessHigh += high;
+    } else {
+      strategicLow += low; strategicHigh += high;
+    }
+  }
+  const tiered_value: TieredValue = {
+    efficiency:    { low: efficiencyLow,    high: efficiencyHigh    },
+    effectiveness: { low: effectivenessLow, high: effectivenessHigh },
+    strategic:     { low: strategicLow,     high: strategicHigh     },
+  };
+
+  // C3: NPV / IRR
+  const DISCOUNT_RATE = 0.10;
+  const calcNPV = (annualCashflow: number, totalCost: number, years: number): number => {
+    let npv = -totalCost;
+    for (let y = 1; y <= years; y++) {
+      npv += annualCashflow / Math.pow(1 + DISCOUNT_RATE, y);
+    }
+    return Math.round(npv);
+  };
+  const calcIRR = (annualCashflow: number, totalCost: number, years: number): number | null => {
+    if (annualCashflow <= 0 || totalCost <= 0) return null;
+    let r = 0.15;
+    for (let iter = 0; iter < 100; iter++) {
+      let npv = -totalCost;
+      let dnpv = 0;
+      for (let y = 1; y <= years; y++) {
+        const disc = Math.pow(1 + r, y);
+        npv  += annualCashflow / disc;
+        dnpv -= y * annualCashflow / (disc * (1 + r));
+      }
+      const newR = r - npv / dnpv;
+      if (Math.abs(newR - r) < 1e-6) { r = newR; break; }
+      r = newR;
+    }
+    return r > -1 ? Math.round(r * 100) : null;
+  };
+  const annualValueLow2  = totalLow  / Math.max(1, horizonYears);
+  const annualValueHigh2 = totalHigh / Math.max(1, horizonYears);
+  const totalCostLow3yr  = tco.total_3yr_gbp.low;
+  const totalCostHigh3yr = tco.total_3yr_gbp.high;
+  const npvLow  = calcNPV(annualValueLow2,  totalCostHigh3yr, horizonYears);
+  const npvHigh = calcNPV(annualValueHigh2, totalCostLow3yr,  horizonYears);
+  const irrLow  = calcIRR(annualValueLow2,  totalCostHigh3yr, horizonYears);
+  const irrHigh = calcIRR(annualValueHigh2, totalCostLow3yr,  horizonYears);
+  const financial_model: FinancialModel = {
+    npv_gbp:           { low: npvLow, high: npvHigh },
+    irr_pct:           (irrLow !== null && irrHigh !== null) ? { low: irrLow, high: irrHigh } : null,
+    discount_rate_pct: DISCOUNT_RATE * 100,
+    horizon_years:     horizonYears,
+  };
+
+  // C4: Three-scenario analysis
+  const baseValue = (totalLow + totalHigh) / 2;
+  const baseCost  = (approxCostLow + approxCostHigh) / 2;
+  const pessValue = totalLow  * 0.60;
+  const optValue  = totalHigh * 1.20;
+  const pessCost  = approxCostHigh * 1.10;
+  const optCost   = approxCostLow  * 0.90;
+  const toRoi = (v: number, c: number) => c > 0 ? Math.round(((v - c) / c) * 100) : 0;
+  const scenario_analysis: ScenarioAnalysis = {
+    pessimistic: { value_gbp: Math.round(pessValue), net_gbp: Math.round(pessValue - pessCost), roi_pct: toRoi(pessValue, pessCost) },
+    base:        { value_gbp: Math.round(baseValue), net_gbp: Math.round(baseValue - baseCost),  roi_pct: toRoi(baseValue, baseCost)  },
+    optimistic:  { value_gbp: Math.round(optValue),  net_gbp: Math.round(optValue  - optCost),   roi_pct: toRoi(optValue,  optCost)   },
+  };
+
   return {
     total_quantified_value_gbp: { low: totalLow, high: totalHigh },
     net_value_gbp: { low: netLow, high: netHigh },
@@ -1008,5 +1192,10 @@ export function calculateValueEnvelope(
     },
     caveat: `Indicative value ranges based on cited sector benchmarks and your operational baseline. Excludes second-order effects. Quantified value applies to ${quantifiedCount} initiative${quantifiedCount !== 1 ? "s" : ""}; ${qualOnlyCount} initiative${qualOnlyCount !== 1 ? "s" : ""} produce qualitative value not reflected in these figures. Confirm with Finance before commitment.`,
     libraryVersion: libMeta.version,
+    tco,
+    tiered_value,
+    financial_model,
+    scenario_analysis,
+    delivery_confidence_panel,
   };
 }

@@ -2339,3 +2339,25 @@
 
 ### Block D — Cleanup
 - [x] D1: cross_functional_dependencies data for all 30 initiatives + aggregateCrossFunctionalDependencies() + Section 4 Dependencies sub-block + PDF mirror
+
+## Roundedness Brief v1.2 — May 2026
+### Block A — Quick Wins
+- [x] A1: Existing AI tools filter — duplicates_capability_of_tools field on initiatives, scoreInitiative() penalty, "Already in use" badge in provenance modal
+- [x] A2: Reinvestment plan capture (Step 1 new question), reinvestment_plan in structuredInputsJson, Reinvestment Thesis sub-block in Value section, vision prompt update, PDF parity
+- [x] A3: AI philosophy selector (Step 2 new card question), ai_philosophy in structuredInputsJson, vision/principles/won't-do prompt update, philosophy line in Ambition section, won't-do validation
+### Block B — Stakeholder & Change
+- [x] B1: Stakeholder mapping Step 2.5 (4 sub-questions, sector-aware defaults), stakeholder_map in structuredInputsJson, Section 5 Stakeholder Map & Change Plan rendering, generateChangePlan() procedure, change_plan_json column on ail_org_context, PDF parity
+### Block C — Cost & Value Sophistication
+- [x] C1: TCO expansion — 3 new operational baseline fields (internal_fte_pct, data_preparation_status, change_capacity), total_cost_components in content library for all 30 initiatives, calculateTCO() engine, Initiative-only vs Fully-loaded toggle in Investment section, PDF parity
+- [x] C2: Three-tier ROI — leading_indicators and capability_roi fields on all 30 initiatives, restructure Value section into Tier 1/2/3, aggregateLeadingIndicators() and capability ROI aggregation, provenance modals, PDF parity
+- [x] C3: NPV/IRR — discount_rate_pct field in operational baseline, calculateFinancialModel() with Newton-Raphson IRR, NPV/IRR/payback KPI tiles in Value Tier 1, provenance modal with cash flow table, PDF parity
+- [x] C4: Three-scenario analysis — Conservative/Base/Optimistic scenario constants, scenario recompute, scenario table sub-block in Value Tier 1, toggle between scenarios, PDF parity
+### Block D — Measurement & Execution
+- [x] D1: Measurement cadence capture (Step 2 new question), measurement_cadence in structuredInputsJson, Section 6 Measurement Plan rendering (KPI dashboard + refresh triggers), section renumbering, PDF parity
+- [x] D2: Pilot design discipline — pilot_design field on ~12 initiatives, "Pilot recommended" badge on initiative cards, generatePilotDesign() procedure, pilot design modal, PDF parity
+- [x] D3: Solution delivery diagnostic (Step 1 new 5-point question), solution_delivery_confidence in structuredInputsJson, phase duration adjustment, change management cost multiplier, delivery capability panel in Risk section, PDF parity
+### Block E — UK Regulatory Layer
+- [x] E1: UK regulatory inputs — Step 2.5 "Regulatory Context" (5 questions), regulatory_context_json column on ail_org_context
+- [x] E2: UK regulatory rendering — uk_regulatory_implications on all 30 initiatives, generateUKRegulatoryContext() engine, UK Regulatory Context sub-section in Risk section, provenance modals, PDF parity
+### Cross-cutting
+- [x] CC: Library version bump to v1.2.0, all new tests passing, Acme end-state acceptance, no regression in existing strategies
