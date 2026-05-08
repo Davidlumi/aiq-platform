@@ -2361,3 +2361,11 @@
 - [x] E2: UK regulatory rendering — uk_regulatory_implications on all 30 initiatives, generateUKRegulatoryContext() engine, UK Regulatory Context sub-section in Risk section, provenance modals, PDF parity
 ### Cross-cutting
 - [x] CC: Library version bump to v1.2.0, all new tests passing, Acme end-state acceptance, no regression in existing strategies
+
+## QA & Stress Test — May 8 2026
+- [x] Fix Section 3 Plan "No initiatives selected" — root cause: resolveInitiativeIds() was converting init-XX IDs to snake_case in getStrategyData/getStrategyAssessment, causing frontend ID mismatch against strategy_initiative_library table; fix: removed resolveInitiativeIds() from both procedures (IDs now returned as init-XX to match DB)
+- [x] Fix Cost Envelope by Phase "Select initiatives to generate a cost envelope" — same root cause as above; now resolves correctly after ID format fix
+- [x] Fix IRR "Infinity%" display — added isFinite() guard in AIStrategyPage IRR display; shows "N/A" for non-finite or negative values
+- [x] Improve payback period display — added ">Nyr" format for payback > 120 months with "Beyond 3-yr horizon" sub-label and explanatory note in caveat block
+- [x] TypeScript: 0 errors
+- [x] Tests: 768/768 passing (32 test files)

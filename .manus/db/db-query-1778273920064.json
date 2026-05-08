@@ -1,0 +1,13 @@
+{
+  "query": "SELECT selected_initiatives_json FROM ail_org_context LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT selected_initiatives_json FROM ail_org_context LIMIT 5;",
+  "rows": [
+    {
+      "selected_initiatives_json": "[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]"
+    }
+  ],
+  "messages": [],
+  "stdout": "selected_initiatives_json\n[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]\n",
+  "stderr": "",
+  "execution_time_ms": 315
+}

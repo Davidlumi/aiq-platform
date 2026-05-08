@@ -228,3 +228,25 @@ export function estimateInitiativeCost(
     caveat: initiative.cost.caveat ?? "",
   };
 }
+
+// ── Legacy ID backward-compat ─────────────────────────────────────────────────
+/**
+ * Resolves a mix of legacy numeric IDs (init-XX, 1-indexed) and current
+ * snake_case IDs to a deduplicated array of valid snake_case initiative IDs.
+ * Silently drops IDs that cannot be resolved.
+ */
+export function resolveInitiativeIds(ids: string[]): string[] {
+  const allInits = getAllInitiatives();
+  const validSet = new Set(allInits.map(i => i.initiative_id));
+  return ids
+    .map(id => {
+      if (validSet.has(id)) return id;                          // already snake_case
+      const m = id.match(/^init-(\d+)$/);
+      if (m) {
+        const idx = parseInt(m[1], 10) - 1;                    // 1-indexed → 0-indexed
+        return allInits[idx]?.initiative_id ?? null;
+      }
+      return null;
+    })
+    .filter((id): id is string => id !== null && validSet.has(id));
+}

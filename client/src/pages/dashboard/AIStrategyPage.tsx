@@ -2242,9 +2242,17 @@ export default function AIStrategyPage() {
                 <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</div>
                   <div className="text-xl font-bold text-amber-400">
-                    {ve.payback_period_months ? `${ve.payback_period_months.low}–${ve.payback_period_months.high}mo` : "—"}
+                    {ve.payback_period_months ? (
+                      ve.payback_period_months.low > 120
+                        ? `>${Math.round(ve.payback_period_months.low / 12)}yr`
+                        : `${ve.payback_period_months.low}–${ve.payback_period_months.high}mo`
+                    ) : "—"}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Months to breakeven</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {ve.payback_period_months && ve.payback_period_months.low > 120
+                      ? "Beyond 3-yr horizon — see note below"
+                      : "Months to breakeven"}
+                  </div>
                 </div>
                 <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Qualitative Value</div>
@@ -2383,10 +2391,15 @@ export default function AIStrategyPage() {
                       <div className="rounded-lg border border-white/8 bg-white/2 px-4 py-3">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Internal Rate of Return</p>
                         {fm.irr_pct ? (
-                          <>
-                            <p className="text-xl font-bold text-violet-400">{fm.irr_pct.high}%</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fm.irr_pct.low}%</p>
-                          </>
+                          (() => {
+                            const fmtIrr = (v: number) => !isFinite(v) || v < 0 ? 'N/A' : `${v.toFixed(1)}%`;
+                            return (
+                              <>
+                                <p className="text-xl font-bold text-violet-400">{fmtIrr(fm.irr_pct.high)}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmtIrr(fm.irr_pct.low)}</p>
+                              </>
+                            );
+                          })()
                         ) : (
                           <p className="text-xl font-bold text-muted-foreground">—</p>
                         )}
@@ -2443,6 +2456,9 @@ export default function AIStrategyPage() {
               {/* Caveat */}
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[11px] text-amber-300/80">
                 <strong className="text-amber-300">Caveat:</strong> {ve.caveat}
+                {ve.payback_period_months && ve.payback_period_months.low > 120 && (
+                  <p className="mt-2"><strong className="text-amber-300">Payback note:</strong> The payback period extends beyond the 3-year modelling horizon. This is expected for transformative programmes where capability and infrastructure investment precedes value realisation. The NPV and scenario analysis above reflect the 3-year window only; full value typically materialises in years 4–7 as AI-enabled processes compound.</p>
+                )}
               </div>
 
               {/* A2 — Reinvestment Plan */}

@@ -38,7 +38,7 @@ import {
   type RiskEvalInput,
   type SelectInitiativesInput,
 } from "../strategyEngine";
-import { getLibraryMeta, getContentLibrary, getAllInitiatives } from "../contentLibrary";
+import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
 
 import {
   generateCapabilityReport,
@@ -462,7 +462,7 @@ export const intelligenceRouter = router({
       completedAt: row.strategyAssessmentCompletedAt ?? null,
       businessAmbitionLevel: row.businessAmbitionLevel ?? null,
       peopleAmbitionLevel: row.peopleAmbitionLevel ?? null,
-      selectedInitiativeIds: parse(row.selectedInitiativesJson) as string[] ?? [] as string[],
+      selectedInitiativeIds: (parse(row.selectedInitiativesJson) as string[] ?? []),
       wontDo: parse((row as Record<string, unknown>).wontDoJson as string | null) as string[] | null,
       structuredInputs: parse((row as Record<string, unknown>).structuredInputsJson as string | null),
       operationalBaseline: parse((row as Record<string, unknown>).operationalBaselineJson as string | null),
@@ -647,7 +647,7 @@ Return JSON with this exact structure:
       const riskInput: RiskEvalInput = {
         ambitionTier: input.ambitionTier,
         orgSize: input.orgSize,
-        selectedInitiativeIds: input.selectedInitiativeIds,
+        selectedInitiativeIds: resolveInitiativeIds(input.selectedInitiativeIds),
         hasExecSponsor: input.hasExecSponsor ?? false,
         hasDataGovernanceInitiative: input.hasDataGovernanceInitiative ?? false,
       };
@@ -696,8 +696,9 @@ Return JSON with this exact structure:
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const resolvedCostIds = resolveInitiativeIds(input.selectedInitiativeIds);
       return calculateCostEnvelope(
-        input.selectedInitiativeIds,
+        resolvedCostIds,
         input.orgSize,
         input.ambitionTier,
       );
@@ -719,15 +720,16 @@ Return JSON with this exact structure:
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       // Evaluate risk rules first to pass to provenance map
+      const resolvedProvenanceIds = resolveInitiativeIds(input.selectedInitiativeIds);
       const riskMatches = evaluateRiskRules({
         ambitionTier: input.ambitionTier,
         orgSize: "medium", // default — provenance map doesn't gate on org size
-        selectedInitiativeIds: input.selectedInitiativeIds,
+        selectedInitiativeIds: resolvedProvenanceIds,
         hasExecSponsor: false,
         hasDataGovernanceInitiative: false,
       });
       return buildProvenanceMap({
-        selectedInitiativeIds: input.selectedInitiativeIds,
+        selectedInitiativeIds: resolvedProvenanceIds,
         riskMatches,
         orgSize: "medium",
         ambitionTier: input.ambitionTier,
@@ -758,7 +760,8 @@ Return JSON with this exact structure:
     .query(({ input }) => {
       const lib = getContentLibrary();
       const allInits = getAllInitiatives();
-      const selected = allInits.filter(i => input.selectedInitiativeIds.includes(i.initiative_id));
+      const resolvedValueIds = resolveInitiativeIds(input.selectedInitiativeIds);
+      const selected = allInits.filter(i => resolvedValueIds.includes(i.initiative_id));
       return calculateValueEnvelope(
         selected,
         input.operationalBaseline ?? {},

@@ -1187,6 +1187,32 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
             </div>
 
+            {/* D3 — Solution Delivery Confidence */}
+            <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+              <p className="text-sm font-semibold text-foreground mb-1">
+                How confident is your organisation in delivering AI change programmes? <span className="text-muted-foreground font-normal">(Optional)</span>
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                This adjusts phase durations and change management cost estimates in your strategy.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                {SOLUTION_DELIVERY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => { setSolutionDeliveryConfidence(opt.value as 1|2|3|4|5); setIsDirty(true); }}
+                    className={`rounded-lg border p-3 text-left transition-all ${
+                      solutionDeliveryConfidence === opt.value
+                        ? "border-cyan-500 bg-cyan-500/10 text-foreground"
+                        : "border-white/10 bg-white/3 text-muted-foreground hover:border-white/20"
+                    }`}
+                  >
+                    <div className="text-xs font-bold mb-1">{opt.value}. {opt.label}</div>
+                    <div className="text-xs opacity-70 leading-snug">{opt.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex justify-end mt-8 pt-4 border-t border-white/6">
               <Button
                 disabled={!step1Valid}

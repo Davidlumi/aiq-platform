@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name FROM strategy_initiative_library LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT id, name FROM strategy_initiative_library LIMIT 10;",
+  "rows": [
+    {
+      "id": "init-01",
+      "name": "AI-Assisted CV Screening"
+    },
+    {
+      "id": "init-02",
+      "name": "Predictive Candidate Sourcing"
+    },
+    {
+      "id": "init-03",
+      "name": "AI Interview Scheduling & Logistics"
+    },
+    {
+      "id": "init-04",
+      "name": "Personalised Learning Path Generation"
+    },
+    {
+      "id": "init-05",
+      "name": "AI-Powered Content Creation"
+    },
+    {
+      "id": "init-06",
+      "name": "Skills Gap Analysis & Workforce Planning"
+    },
+    {
+      "id": "init-07",
+      "name": "Predictive Attrition Modelling"
+    },
+    {
+      "id": "init-08",
+      "name": "AI-Augmented Performance Conversations"
+    },
+    {
+      "id": "init-09",
+      "name": "Workforce Scenario Planning"
+    },
+    {
+      "id": "init-10",
+      "name": "AI-Driven Pay Equity Analysis"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\ninit-01\tAI-Assisted CV Screening\ninit-02\tPredictive Candidate Sourcing\ninit-03\tAI Interview Scheduling & Logistics\ninit-04\tPersonalised Learning Path Generation\ninit-05\tAI-Powered Content Creation\ninit-06\tSkills Gap Analysis & Workforce Planning\ninit-07\tPredictive Attrition Modelling\ninit-08\tAI-Augmented Performance Conversations\ninit-09\tWorkforce Scenario Planning\ninit-10\tAI-Driven Pay Equity Analysis\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}

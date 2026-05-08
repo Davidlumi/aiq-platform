@@ -1,0 +1,14 @@
+{
+  "query": "SELECT selected_initiatives_json, structured_inputs_json FROM ail_org_context LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT selected_initiatives_json, structured_inputs_json FROM ail_org_context LIMIT 1;",
+  "rows": [
+    {
+      "selected_initiatives_json": "[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]",
+      "structured_inputs_json": "{\"business_outcomes\":[\"improve_hiring_velocity\",\"strengthen_workforce_capability\",\"free_up_hr_capacity\"],\"business_problems\":[\"capability_gaps_growing\",\"hr_team_overstretched\",\"decisions_too_anecdotal\"],\"timeline_months\":18,\"risk_appetite\":3,\"success_markers_ranked\":[\"productivity_gains\",\"team_capability_uplift\",\"improved_speed_of_decision\"],\"hr_leadership_position\":4,\"hr_processes_priority\":[\"talent_acquisition\",\"learning_development\"],\"governance_principles\":[\"human_in_the_loop_employment_decisions\",\"fairness_bias_testing\",\"transparency_in_ai_decisions\"]}"
+    }
+  ],
+  "messages": [],
+  "stdout": "selected_initiatives_json\tstructured_inputs_json\n[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]\t{\"business_outcomes\":[\"improve_hiring_velocity\",\"strengthen_workforce_capability\",\"free_up_hr_capacity\"],\"business_problems\":[\"capability_gaps_growing\",\"hr_team_overstretched\",\"decisions_too_anecdotal\"],\"timeline_months\":18,\"risk_appetite\":3,\"success_markers_ranked\":[\"productivity_gains\",\"team_capability_uplift\",\"improved_speed_of_decision\"],\"hr_leadership_position\":4,\"hr_processes_priority\":[\"talent_acquisition\",\"learning_development\"],\"governance_principles\":[\"human_in_the_loop_employment_decisions\",\"fairness_bias_testing\",\"transparency_in_ai_decisions\"]}\n",
+  "stderr": "",
+  "execution_time_ms": 268
+}
