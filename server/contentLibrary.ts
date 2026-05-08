@@ -5,7 +5,8 @@
  */
 
 import { readFileSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -132,7 +133,9 @@ let _library: ContentLibrary | null = null;
 
 export function getContentLibrary(): ContentLibrary {
   if (!_library) {
-    const libPath = join(__dirname, "content-library.json");
+    const __filename = fileURLToPath(import.meta.url);
+    const __dir = dirname(__filename);
+    const libPath = join(__dir, "content-library.json");
     const raw = readFileSync(libPath, "utf-8");
     _library = JSON.parse(raw) as ContentLibrary;
     console.log(
