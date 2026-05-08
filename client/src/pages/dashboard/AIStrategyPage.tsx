@@ -752,10 +752,254 @@ export default function AIStrategyPage() {
   const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-5xl mx-auto pt-4">
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-36 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="max-w-5xl mx-auto pb-24 animate-pulse">
+
+        {/* ── Sticky header skeleton ─────────────────────────────────────── */}
+        <div className="sticky top-0 z-30 bg-[#0E1726]/95 backdrop-blur-sm border-b border-white/8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-6">
+          <div className="flex items-center justify-between gap-3 max-w-5xl mx-auto">
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-3 w-1 rounded" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-3 w-1 rounded" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-3 w-1 rounded" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-7 w-20 rounded-md" />
+              <Skeleton className="h-7 w-32 rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Hero skeleton ──────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-24 rounded mb-3" />
+          <Skeleton className="h-7 w-4/5 rounded mb-1" />
+          <Skeleton className="h-7 w-3/5 rounded mb-6" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {["w-16", "w-14", "w-12", "w-8"].map((w, i) => (
+              <div key={i} className="rounded-xl border border-white/8 bg-white/3 p-4 flex flex-col items-center gap-2">
+                <Skeleton className={`h-8 ${w} rounded`} />
+                <Skeleton className="h-3 w-20 rounded" />
+                <Skeleton className="h-3 w-16 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section 1 — Diagnostic skeleton ───────────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-32 rounded mb-2" />
+          <Skeleton className="h-6 w-40 rounded mb-5" />
+          {/* Takeaway banner */}
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 mb-5 flex items-start gap-3">
+            <Skeleton className="h-4 w-4 rounded-full flex-shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3 w-full rounded" />
+              <Skeleton className="h-3 w-4/5 rounded" />
+            </div>
+          </div>
+          {/* Maturity grid */}
+          <div className="grid sm:grid-cols-3 gap-0 rounded-xl border border-white/8 overflow-hidden mb-5">
+            <div className="p-6 flex flex-col items-center gap-3">
+              <Skeleton className="h-28 w-28 rounded-full" />
+              <Skeleton className="h-4 w-20 rounded" />
+              <Skeleton className="h-3 w-16 rounded" />
+            </div>
+            <div className="sm:col-span-2 p-6 space-y-3">
+              <Skeleton className="h-3 w-28 rounded mb-3" />
+              <Skeleton className="h-3 w-full rounded" />
+              <Skeleton className="h-3 w-5/6 rounded" />
+              <Skeleton className="h-3 w-4/5 rounded mb-4" />
+              {["w-32", "w-28", "w-24", "w-36", "w-20", "w-28"].map((lw, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className={`h-3 ${lw} rounded flex-shrink-0`} />
+                  <Skeleton className="flex-1 h-1.5 rounded-full" />
+                  <Skeleton className="h-3 w-10 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* HR capability bars */}
+          <div className="rounded-2xl border border-white/10 bg-white/3 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-28 rounded" />
+                <Skeleton className="h-4 w-40 rounded" />
+                <Skeleton className="h-3 w-52 rounded" />
+              </div>
+              <div className="flex gap-4">
+                <div className="text-center space-y-1">
+                  <Skeleton className="h-6 w-10 rounded mx-auto" />
+                  <Skeleton className="h-3 w-8 rounded" />
+                </div>
+                <div className="text-center space-y-1">
+                  <Skeleton className="h-6 w-10 rounded mx-auto" />
+                  <Skeleton className="h-3 w-8 rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {["w-40", "w-36", "w-32", "w-44", "w-36", "w-28"].map((lw, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className={`h-3 ${lw} rounded flex-shrink-0`} />
+                  <Skeleton className="flex-1 h-2 rounded-full" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                  <Skeleton className="h-3 w-10 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 2 — Ambition skeleton ─────────────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-32 rounded mb-2" />
+          <Skeleton className="h-6 w-44 rounded mb-5" />
+          {/* Vision */}
+          <div className="rounded-xl border border-white/8 bg-white/3 p-5 mb-4">
+            <Skeleton className="h-3 w-28 rounded mb-3" />
+            <Skeleton className="h-3 w-full rounded mb-1.5" />
+            <Skeleton className="h-3 w-5/6 rounded mb-1.5" />
+            <Skeleton className="h-3 w-4/5 rounded" />
+          </div>
+          {/* Commitments */}
+          <div className="space-y-2 mb-4">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-white/8">
+                <Skeleton className="h-5 w-5 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-full rounded" />
+                  <Skeleton className="h-3 w-3/4 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Principles */}
+          <Skeleton className="h-3 w-28 rounded mb-3" />
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className="p-4 rounded-xl border border-white/8 space-y-1.5">
+                <Skeleton className="h-4 w-36 rounded" />
+                <Skeleton className="h-3 w-full rounded" />
+                <Skeleton className="h-3 w-4/5 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section 3 — Plan skeleton ──────────────────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-32 rounded mb-2" />
+          <Skeleton className="h-6 w-40 rounded mb-5" />
+          {/* Toggle */}
+          <div className="flex items-center gap-2 mb-5">
+            <Skeleton className="h-7 w-24 rounded-md" />
+            <Skeleton className="h-7 w-24 rounded-md" />
+          </div>
+          {/* Phase columns */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            {["Foundation", "Build", "Scale"].map((phase) => (
+              <div key={phase} className="rounded-xl border border-white/8 bg-white/3 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                </div>
+                <Skeleton className="h-3 w-24 rounded" />
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="p-3 rounded-lg border border-white/8 space-y-1.5">
+                    <Skeleton className="h-3 w-full rounded" />
+                    <Skeleton className="h-3 w-2/3 rounded" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section 4 — Investment & Risk skeleton ─────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-40 rounded mb-2" />
+          <Skeleton className="h-6 w-64 rounded mb-5" />
+          {/* Cost envelope */}
+          <div className="rounded-xl border border-white/8 bg-white/3 p-5 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-4 w-36 rounded" />
+              <Skeleton className="h-3 w-24 rounded" />
+            </div>
+            <div className="grid sm:grid-cols-3 gap-3 mb-3">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="p-4 rounded-xl border border-white/8 space-y-2">
+                  <Skeleton className="h-3 w-20 rounded" />
+                  <Skeleton className="h-5 w-28 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                </div>
+              ))}
+            </div>
+            <div className="p-4 rounded-xl border border-white/8 flex items-center justify-between">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-6 w-28 rounded" />
+            </div>
+          </div>
+          {/* Risks */}
+          <div className="space-y-3 mb-4">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="p-4 rounded-xl border border-white/8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                  <Skeleton className="h-4 w-56 rounded" />
+                </div>
+                <Skeleton className="h-3 w-full rounded" />
+                <Skeleton className="h-3 w-4/5 rounded" />
+              </div>
+            ))}
+          </div>
+          {/* Dependencies */}
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="p-4 rounded-xl border border-white/8 space-y-2">
+                <Skeleton className="h-4 w-24 rounded" />
+                {[0, 1, 2].map(j => (
+                  <div key={j} className="flex items-start gap-2">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full flex-shrink-0 mt-1.5" />
+                    <Skeleton className="h-3 w-full rounded" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section 5 — Value skeleton ─────────────────────────────────── */}
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 mb-6">
+          <Skeleton className="h-3 w-32 rounded mb-2" />
+          <Skeleton className="h-6 w-52 rounded mb-5" />
+          {/* KPI row */}
+          <div className="grid grid-cols-3 gap-4 mb-5">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="rounded-xl border border-white/8 bg-white/3 p-4 text-center space-y-2">
+                <Skeleton className="h-7 w-20 rounded mx-auto" />
+                <Skeleton className="h-3 w-24 rounded mx-auto" />
+              </div>
+            ))}
+          </div>
+          {/* Per-initiative rows */}
+          <div className="space-y-2">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-white/8">
+                <Skeleton className="h-4 w-48 rounded flex-shrink-0" />
+                <Skeleton className="flex-1 h-1.5 rounded-full" />
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-6 w-16 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     );
   }
