@@ -2054,3 +2054,60 @@ export const managerBriefs = mysqlTable("manager_briefs", {
   strategyCtxIdx: index("idx_mb_strategy_ctx").on(t.strategyContextId),
 }));
 export type ManagerBrief = typeof managerBriefs.$inferSelect;
+
+// ─── F: Content Review Policy ─────────────────────────────────────────────────
+
+// F1: Content review log — append-only audit trail of library version bumps
+export const contentReviewLog = mysqlTable("content_review_log", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  version: varchar("version", { length: 20 }).notNull(),                       // e.g. "1.3.0"
+  bumpType: mysqlEnum("bump_type", ["patch", "minor", "major"]).notNull(),
+  triggerType: mysqlEnum("trigger_type", [
+    "quarterly_review",
+    "annual_review",
+    "regulatory_trigger",
+    "customer_trigger",
+    "operational_trigger",
+    "manual",
+  ]).notNull().default("manual"),
+  triggerDetail: text("trigger_detail"),                                        // free-text description of what triggered this review
+  author: varchar("author", { length: 100 }).notNull().default("David"),
+  reviewer: varchar("reviewer", { length: 100 }),
+  changesJson: text("changes_json"),                                            // JSON: string[] of change descriptions
+  newSourcesJson: text("new_sources_json"),                                     // JSON: { source_id, citation, confidence }[]
+  testFixturesJson: text("test_fixtures_json"),                                 // JSON: { passed, total, notes }[]
+  knownIssues: text("known_issues"),                                            // free-text known issues
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  versionIdx: index("idx_crl_version").on(t.version),
+  createdAtIdx: index("idx_crl_created_at").on(t.createdAt),
+}));
+export type ContentReviewLogEntry = typeof contentReviewLog.$inferSelect;
+
+// F2: Triggered reviews — tracks events that trigger an immediate content review
+export const triggeredReviews = mysqlTable("triggered_reviews", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  triggerCategory: mysqlEnum("trigger_category", [
+    "regulatory",
+    "customer",
+    "operational",
+  ]).notNull(),
+  triggerType: varchar("trigger_type", { length: 100 }).notNull(),             // e.g. "ICO guidance", "design_partner_request", "risk_rule_never_fires"
+  triggerDetail: text("trigger_detail").notNull(),                              // full description of the triggering event
+  affectedContent: text("affected_content"),                                   // what content is affected (initiative IDs, rule IDs, etc.)
+  plannedReviewDate: varchar("planned_review_date", { length: 10 }),           // ISO date YYYY-MM-DD
+  status: mysqlEnum("status", ["open", "in_review", "resolved", "deferred"]).notNull().default("open"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).notNull().default("medium"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedByUserId: varchar("resolved_by_user_id", { length: 36 }),
+  resolutionNotes: text("resolution_notes"),
+  linkedReviewLogId: varchar("linked_review_log_id", { length: 36 }),          // FK to content_review_log if resolved via a version bump
+  createdByUserId: varchar("created_by_user_id", { length: 36 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  statusIdx: index("idx_tr_status").on(t.status),
+  categoryIdx: index("idx_tr_category").on(t.triggerCategory),
+  createdAtIdx: index("idx_tr_created_at").on(t.createdAt),
+}));
+export type TriggeredReview = typeof triggeredReviews.$inferSelect;

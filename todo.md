@@ -2407,21 +2407,21 @@
 - [x] Fix: content-library.json ENOENT in production — added cp to build script + multi-path fallback in contentLibrary.ts (tries dist/, server/, library.json variants)
 
 ## Deep QA & Stress Test — May 9 2026
-- [ ] QA: Public pages (homepage, how it works, pricing, methodology, about)
-- [ ] QA: Authentication flow (login, demo buttons, logout, forgot password)
-- [ ] QA: Assessment flow (start, all question types, completion, results)
-- [ ] QA: Learning plan (modules, progress, streaks)
-- [ ] QA: Dashboard (scores, charts, team view)
-- [ ] QA: AI Strategy wizard (all 6 steps, save, regenerate)
-- [ ] QA: AI Strategy view (all 6 sections, PDF export)
-- [ ] QA: Implementation Tracker (status updates, milestones, timeline)
-- [ ] QA: Maturity Progression (re-assess, history, refresh suggestions)
-- [ ] QA: Manager Hub (onboarding, dashboard, brief generation)
-- [ ] QA: Content Requests (submit, view, QA check)
-- [ ] QA: Admin pages (users, tenants, beta applications, people management)
-- [ ] Fix: Invisible button text (outline buttons with transparent bg showing no text on dark bg)
-- [ ] Fix: All contrast/visibility issues found during audit
-- [ ] Fix: Any broken workflows or error states found during audit
+- [x] QA: Public pages (homepage, how it works, pricing, methodology, about)
+- [x] QA: Authentication flow (login, demo buttons, logout, forgot password)
+- [x] QA: Assessment flow (start, all question types, completion, results)
+- [x] QA: Learning plan (modules, progress, streaks)
+- [x] QA: Dashboard (scores, charts, team view)
+- [x] QA: AI Strategy wizard (all 6 steps, save, regenerate)
+- [x] QA: AI Strategy view (all 6 sections, PDF export)
+- [x] QA: Implementation Tracker (status updates, milestones, timeline)
+- [x] QA: Maturity Progression (re-assess, history, refresh suggestions)
+- [x] QA: Manager Hub (onboarding, dashboard, brief generation)
+- [x] QA: Content Requests (submit, view, QA check)
+- [x] QA: Admin pages (users, tenants, beta applications, people management)
+- [x] Fix: Invisible button text (outline buttons with transparent bg showing no text on dark bg)
+- [x] Fix: All contrast/visibility issues found during audit
+- [x] Fix: Any broken workflows or error states found during audit
 
 ## Deep QA & Dark-Theme Contrast Fixes (May 2026)
 - [x] ImplementationTrackerPage: replace all bg-slate-50/bg-blue-50/bg-emerald-50/bg-amber-50 stat cards with dark-themed bg-card/bg-blue-900/bg-emerald-900/bg-amber-900 variants
@@ -2437,3 +2437,15 @@
 - [x] PeakonHeatmap: fix hover:bg-blue-50/30 row hover to bg-blue-900/15; fix expand button hover:bg-neutral-200 to hover:bg-white/10; fix filter chip hover states
 - [x] TypeScript: 0 errors after all fixes
 - [x] Tests: 803/803 passing after all fixes
+
+## Content Review Policy Implementation (CONTENT_REVIEW.md) — May 2026
+- [x] DB: Add content_review_log table (version, type, trigger, author, changes_json, test_fixtures_json, known_issues, created_at)
+- [x] DB: Add triggered_reviews table (trigger_type, trigger_category, affected_content, planned_review_date, status, resolved_at, notes)
+- [x] tRPC: contentReview router with listReviewLog, addReviewEntry, listTriggeredReviews, addTriggeredReview, resolveTriggeredReview, getCadenceStatus
+- [x] UI: New /admin/content-review page — Content Review Dashboard with 4 tabs: Cadence, Review Log, Triggered Reviews, Source Health
+- [x] UI: Cadence tab — table of all content types with cadence, last reviewed date, next due date, status badge (due/overdue/ok)
+- [x] UI: Review Log tab — append-only audit trail of library version bumps with full change details
+- [x] UI: Triggered Reviews tab — list of open/resolved triggered reviews with add/resolve actions
+- [x] UI: Source Health tab — stale source report with last_reviewed_date, confidence, staleness badge
+- [x] Nav: Add "Content Review" item to Admin sidebar section
+- [ ] Tests: cover review log CRUD, cadence status logic, triggered review lifecycle (deferred — existing 803 tests passing)

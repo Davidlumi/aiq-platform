@@ -24,6 +24,7 @@ import { companyAssessmentRouter } from "./routers/companyAssessment";
 import { coachRouter } from "./routers/coach";
 import { contentLibraryRouter } from "./routers/contentLibrary";
 import { operationalMaturityRouter } from "./routers/operationalMaturity";
+import { contentReviewRouter } from "./routers/contentReview";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -50,6 +51,7 @@ export const appRouter = router({
   coach: coachRouter,
   contentLibrary: contentLibraryRouter,
   operationalMaturity: operationalMaturityRouter,
+  contentReview: contentReviewRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -40,6 +40,7 @@ import {
   TrendingUp,
   UserCog,
   MessageSquarePlus,
+  CalendarCheck2,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -106,6 +107,7 @@ const ADMIN: NavSection = {
   items: [
     { icon: Users, label: "Users", path: "/admin/users" },
     { icon: BookOpen, label: "Content Library", path: "/admin/content-library" },
+    { icon: CalendarCheck2, label: "Content Review", path: "/admin/content-review" },
   ],
 };
 
