@@ -1621,7 +1621,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange, moduleId, modu
 
 // --- Coaching Renderer --------------------------------------------------------
 
-function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
+function CoachingRenderer({ body, onComplete, onProgressChange, moduleId, moduleTitle, moduleDomain, strategyLinkage, journeyPosition }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void; moduleId?: string; moduleTitle?: string; moduleDomain?: string; strategyLinkage?: { initiativeName: string; phase: string; status?: string } | null; journeyPosition?: string | null }) {
   const [phase, setPhase] = useState<"intro" | "framework" | "questions">("intro");
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [questionIdx, setQuestionIdx] = useState(0);
@@ -1720,6 +1720,19 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
                     value={responses[`p${phaseIdx}_q${i}`] ?? ""}
                     onChange={e => setResponses(r => ({ ...r, [`p${phaseIdx}_q${i}`]: e.target.value }))}
                   />
+                  {moduleId && (
+                    <ModuleFeedbackPanel
+                      moduleId={moduleId}
+                      moduleTitle={moduleTitle ?? ""}
+                      moduleDomain={moduleDomain ?? ""}
+                      formatType="reflection"
+                      promptIndex={phaseIdx * 10 + i}
+                      promptText={q}
+                      userResponse={responses[`p${phaseIdx}_q${i}`] ?? ""}
+                      strategyLinkage={strategyLinkage}
+                      journeyPosition={journeyPosition}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -1771,6 +1784,19 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
                 value={responses[`q_${questionIdx}`] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [`q_${questionIdx}`]: e.target.value }))}
               />
+              {moduleId && (
+                <ModuleFeedbackPanel
+                  moduleId={moduleId}
+                  moduleTitle={moduleTitle ?? ""}
+                  moduleDomain={moduleDomain ?? ""}
+                  formatType="reflection"
+                  promptIndex={100 + questionIdx}
+                  promptText={currentPrompt?.prompt ?? ""}
+                  userResponse={responses[`q_${questionIdx}`] ?? ""}
+                  strategyLinkage={strategyLinkage}
+                  journeyPosition={journeyPosition}
+                />
+              )}
             </div>
           )}
 
@@ -2449,7 +2475,7 @@ export default function ModulePlayerPage() {
             {mod.modality === "case_study" && <CaseStudyRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
             {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} moduleId={params.moduleId ?? ""} moduleTitle={mod.title} moduleDomain={mod.capability ?? ""} strategyLinkage={journeyCtx?.strategyLinkage} journeyPosition={journeyCtx?.journeyPosition} />}
             {mod.modality === "scenario"   && <ScenarioRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
-            {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} moduleId={params.moduleId ?? ""} moduleTitle={mod.title} moduleDomain={mod.capability ?? ""} strategyLinkage={journeyCtx?.strategyLinkage} journeyPosition={journeyCtx?.journeyPosition} />}
             {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
           </div>
           {/* LM-7: Research citations for advanced modules (Level 7–10) */}

@@ -2511,5 +2511,8 @@
 - [x] Cost note: Operating cost projection documented (£0.05-0.10/module, £1,500-3,000/month at 1k completions/day)
 
 ## Module Feedback Streaming Animation
-- [ ] Add streaming SSE endpoint for generateModuleFeedback so text arrives token-by-token
-- [ ] Update ModuleFeedbackPanel to consume the stream and render text word-by-word with a blinking cursor
+- [x] Add streaming SSE endpoint for generateModuleFeedback so text arrives token-by-token
+- [x] Update ModuleFeedbackPanel to consume the stream and render text word-by-word with a blinking cursor
+
+## Module Feedback — Coaching Renderer Fix
+- [x] Add ModuleFeedbackPanel to CoachingRenderer (GROW model) after each step response textarea
