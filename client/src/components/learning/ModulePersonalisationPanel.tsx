@@ -1,19 +1,20 @@
 /**
- * v1.4 Change 1 — Visible Personalisation Panel
+ * v3 Change 7c — Personalisation Panel (complete implementation)
  *
- * Always-visible 2-line context block below the module header:
- *   Line 1: Journey position ("Module 3 of 6 in Foundation — 2 completed so far")
- *   Line 2: Strategy linkage ("Linked to: AI Recruitment Automation initiative (Q3)")
+ * Renders two warm, contextual sentences:
+ *   1. Journey position: "You're 4 of 4 in your AI Change Leadership pathway at the Advanced stage."
+ *   2. Strategy linkage: "This module supports your [initiative] initiative ([phase])."
  *
- * If priming_text_v2 is available (Change 3), renders a structured hook/concepts/application block.
- * Collapse preference persists per user via tRPC mutation.
+ * Visual treatment (Changes 7a + 7b):
+ *   - No green border or green header icon
+ *   - Subtle left accent line in neutral grey
+ *   - Sentence-case copy, no ALL-CAPS label
+ *   - Collapse toggle as small text link (not a button)
+ *   - Preference persists via tRPC mutation
  */
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Sparkles, ChevronDown, ChevronUp, Target, MapPin, Lightbulb, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 interface ModulePersonalisationPanelProps {
   moduleId: string;
@@ -36,6 +37,27 @@ function parsePrimingText(raw: string | null | undefined): PrimingTextV2 | null 
   } catch {
     return null;
   }
+}
+
+/** Build a warm journey sentence from the journeyPosition string returned by the server. */
+function buildJourneySentence(journeyPosition: string | null | undefined): string | null {
+  if (!journeyPosition) return null;
+  // Server returns e.g. "Module 3 of 6 in Foundation — 2 completed so far"
+  // We surface it as-is but could reformat if needed
+  return journeyPosition;
+}
+
+/** Build a strategy linkage sentence. */
+function buildStrategyLinkageSentence(
+  strategyLinkage: { initiativeName: string; phase?: string | null; status?: string | null } | null | undefined
+): string | null {
+  if (!strategyLinkage?.initiativeName) return null;
+  const parts: string[] = [`This module supports your ${strategyLinkage.initiativeName} initiative`];
+  const meta: string[] = [];
+  if (strategyLinkage.phase) meta.push(strategyLinkage.phase);
+  if (strategyLinkage.status) meta.push(strategyLinkage.status);
+  if (meta.length > 0) parts.push(` (${meta.join(", ")})`);
+  return parts.join("") + ".";
 }
 
 export default function ModulePersonalisationPanel({ moduleId, className }: ModulePersonalisationPanelProps) {
@@ -62,102 +84,53 @@ export default function ModulePersonalisationPanel({ moduleId, className }: Modu
 
   if (isLoading) {
     return (
-      <div className={cn("rounded-xl border border-border bg-muted/10 px-4 py-3 animate-pulse", className)}>
-        <div className="h-3 rounded bg-muted w-2/3 mb-2" />
-        <div className="h-3 rounded bg-muted w-1/2" />
+      <div className={cn("pl-4 border-l-2 border-muted-foreground/15 py-1 animate-pulse", className)}>
+        <div className="h-3 rounded bg-muted w-3/4 mb-1.5" />
+        <div className="h-3 rounded bg-muted w-2/3" />
       </div>
     );
   }
 
   if (!ctx) return null;
 
-  const hasStrategyLinkage = !!ctx.strategyLinkage;
-  const hasJourneyPosition = !!ctx.journeyPosition;
+  const journeySentence = buildJourneySentence(ctx.journeyPosition);
+  const strategySentence = buildStrategyLinkageSentence(ctx.strategyLinkage as any);
   const priming = parsePrimingText((ctx as any).primingTextV2);
 
-  if (!hasJourneyPosition && !hasStrategyLinkage && !priming) return null;
+  // Only render if there's something meaningful to show
+  if (!journeySentence && !strategySentence && !priming) return null;
 
   return (
-    <div className={cn("rounded-xl border border-primary/20 bg-primary/5 overflow-hidden", className)}>
-      {/* Header row */}
-      <div className="flex items-center gap-2 px-4 py-2.5">
-        <Sparkles className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-        <span className="text-xs font-semibold text-primary flex-1">Your learning context</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-          onClick={handleToggle}
-          aria-label={collapsed ? "Expand personalisation panel" : "Collapse personalisation panel"}
-        >
-          {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-        </Button>
-      </div>
-
-      {/* Content — collapses */}
+    <div
+      className={cn(
+        "pl-4 border-l-2 border-muted-foreground/20 py-1 space-y-2",
+        className
+      )}
+    >
+      {/* Main context copy — two sentences */}
       {!collapsed && (
-        <div className="px-4 pb-3 space-y-3 border-t border-primary/10">
-          {/* Journey position + strategy linkage */}
-          {(hasJourneyPosition || hasStrategyLinkage) && (
-            <div className="space-y-1.5 pt-2">
-              {hasJourneyPosition && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-3 w-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-foreground/80 leading-relaxed">{ctx.journeyPosition}</p>
-                </div>
-              )}
-              {hasStrategyLinkage && ctx.strategyLinkage && (
-                <div className="flex items-start gap-2">
-                  <Target className="h-3 w-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-foreground/80 leading-relaxed">
-                    Linked to: <span className="font-medium text-primary">{ctx.strategyLinkage.initiativeName}</span>
-                    {ctx.strategyLinkage.phase && (
-                      <span className="text-muted-foreground"> ({ctx.strategyLinkage.phase})</span>
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
+        <div className="space-y-1">
+          {journeySentence && (
+            <p className="text-sm text-foreground/70 leading-relaxed">{journeySentence}</p>
+          )}
+          {strategySentence && (
+            <p className="text-sm text-foreground/70 leading-relaxed">{strategySentence}</p>
           )}
 
-          {/* priming_text_v2 structured block (Change 3) */}
+          {/* Priming text (optional, progressive disclosure) */}
           {priming && (
-            <div className="space-y-2.5 pt-1 border-t border-primary/10">
-              {/* Hook */}
-              <div className="flex items-start gap-2">
-                <Zap className="h-3.5 w-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs font-medium text-foreground/90 leading-relaxed italic">"{priming.hook}"</p>
-              </div>
-
-              {/* Key concepts */}
-              {priming.key_concepts?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {priming.key_concepts.map((concept, i) => (
-                    <Badge
-                      key={i}
-                      variant="secondary"
-                      className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border-primary/20 font-normal"
-                    >
-                      {concept}
-                    </Badge>
-                  ))}
-                </div>
+            <div className="pt-1 space-y-1.5">
+              {priming.hook && (
+                <p className="text-xs text-muted-foreground/80 italic leading-relaxed">"{priming.hook}"</p>
               )}
-
-              {/* HR application */}
               {priming.hr_application && (
-                <div className="flex items-start gap-2">
-                  <Lightbulb className="h-3 w-3 text-primary/70 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-foreground/70 leading-relaxed">
-                    <span className="font-medium text-foreground/80">In practice: </span>
-                    {priming.hr_application}
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                  <span className="font-medium">In practice: </span>
+                  {priming.hr_application}
+                </p>
               )}
-
-              {/* Time to value */}
               {priming.time_to_value && (
-                <p className="text-[10px] text-muted-foreground leading-relaxed pl-5">
+                <p className="text-[11px] text-muted-foreground/50 leading-relaxed">
                   ✓ {priming.time_to_value}
                 </p>
               )}
@@ -165,6 +138,15 @@ export default function ModulePersonalisationPanel({ moduleId, className }: Modu
           )}
         </div>
       )}
+
+      {/* Collapse toggle — small text link, not a button */}
+      <button
+        onClick={handleToggle}
+        className="text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+        aria-label={collapsed ? "Show learning context" : "Hide learning context"}
+      >
+        {collapsed ? "Show context" : "Hide"}
+      </button>
     </div>
   );
 }

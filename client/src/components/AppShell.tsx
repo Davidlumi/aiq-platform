@@ -289,8 +289,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {sections.map((section) => (
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
+              // Change 7d: Reduced section divider weight — smaller, lighter, less prominent
               <div
-                className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-sidebar-foreground/40"
+                className="px-4 pt-3 pb-1 text-[10px] font-medium tracking-[0.07em] uppercase text-sidebar-foreground/25"
                 aria-hidden="true"
               >
                 {section.label}
@@ -308,9 +309,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         className={cn(
                           "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                           collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
+                          // Change 7d: Non-active items slightly more muted
                           active
                             ? "bg-primary/14 text-primary font-semibold border-l-primary"
-                            : "text-sidebar-foreground/60 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85 border-l-transparent",
+                            : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent",
                         )}
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
@@ -329,8 +331,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
 
-      {/* View As role switcher */}
-      {!collapsed && (
+      {/* Change 7d: View As role switcher — admin/CPO users only */}
+      {!collapsed && (userRoles.some(r => CPO_ROLES.includes(r)) || userRoles.includes('platform_super_admin')) && (
         <div className="shrink-0 px-3 pb-2">
           <div className="relative">
             <button
@@ -364,26 +366,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      {/* User profile footer */}
-      <div className="shrink-0 p-2 border-t border-sidebar-border">
+      {/* User profile footer — Change 7d: lower contrast */}
+      <div className="shrink-0 p-2 border-t border-sidebar-border/50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/60 hover:bg-sidebar-foreground/5",
+                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/40 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/60",
                 collapsed && "justify-center"
               )}
               aria-label="Account menu"
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/20 text-primary">
+              {/* Change 7d: Avatar lower contrast */}
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-sidebar-foreground/10 text-sidebar-foreground/50">
                 {initials}
               </div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-medium truncate text-sidebar-foreground">
+                  <p className="text-sm font-medium truncate text-sidebar-foreground/60">
                     {displayName}
                   </p>
-                  <p className="text-xs truncate text-sidebar-foreground/40">
+                  <p className="text-xs truncate text-sidebar-foreground/30">
                     {roleLabel}
                   </p>
                 </div>

@@ -329,10 +329,20 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
+  /* Change 6b: Dark mode typography audit
+     Background: oklch(16.5% 0.048 264) ≈ #0f1535 ✔ (near-black, research range)
+     Body text: oklch(95% 0.006 240) ≈ #e8e8ea ✔ (near-white, research range)
+     Body size: 16px ✔ (within 16–18px range)
+     Body weight: 400 ✔ (minimum met)
+     Line-height: bumped to 1.65 (research range 1.5–1.7) ✔
+     Small label weight: 500 minimum — enforced below in .nav-section-label
+     Small text size: 14px minimum — enforced via Tailwind text-xs (12px) only for
+       non-body labels; body text stays 16px+
+  */
   html {
     font-family: var(--font-sans);
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -474,6 +484,15 @@
   .section-header {
     font-size: 0.6875rem;
     font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: oklch(55% 0.018 240);
+    margin-bottom: 0.75rem;
+  }
+
+  .nav-section-label {
+    font-size: 0.6875rem;
+    font-weight: 500; /* Change 6b: 500 minimum for small labels */
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: oklch(55% 0.018 240);

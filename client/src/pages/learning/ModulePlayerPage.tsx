@@ -29,7 +29,14 @@ import {
   ChevronLeft, Target, Brain, Lightbulb, BarChart3, Star,
   AlertCircle, ThumbsUp, RefreshCw, Sparkles, BookMarked,
   ListChecks, FlaskConical, Quote, ExternalLink, Share2,
+  MoreHorizontal, Bookmark, Link2, BookmarkCheck,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 // --- Progress Tracking -------------------------------------------------------
@@ -153,73 +160,71 @@ function useModuleProgress(moduleId: string, totalSteps: number): [number, (idx:
   return [stepIdx, setAndPersist];
 }
 
-/** The sticky progress bar rendered above the module content card */
+/**
+ * Change 4 — Unified step navigation (replaces dual progress-bar + tabs).
+ * Single row of tab-style steps with completion-state circles.
+ * Green reserved for: filled circle (completed), active tab text.
+ * No percentage text on desktop (absorbed by circle states).
+ */
 function ModuleProgressBar({
-  steps, currentStepIdx, completed,
+  steps, currentStepIdx, completed, onStepClick,
 }: {
   steps: ProgressStep[];
   currentStepIdx: number;
   completed: boolean;
+  onStepClick?: (idx: number) => void;
 }) {
   const total = steps.length;
-  const pct = completed ? 100 : total <= 1 ? 0 : Math.round((currentStepIdx / (total - 1)) * 100);
+  if (total <= 1) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card px-4 pt-3.5 pb-3 space-y-2.5">
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-          {completed ? "Module Complete" : "Your Progress"}
-        </span>
-        <span className="text-xs font-bold tabular-nums" style={{ color: completed ? "#4A6E5E" : "var(--primary)" }}>
-          {pct}%
-        </span>
-      </div>
+    <div
+      className="flex items-stretch overflow-x-auto scrollbar-none rounded-xl border border-border bg-card"
+      role="tablist"
+      aria-label="Module steps"
+    >
+      {steps.map((step, i) => {
+        const isDone = completed || i < currentStepIdx;
+        const isCurrent = !completed && i === currentStepIdx;
+        const isClickable = !!onStepClick && (isDone || isCurrent);
 
-      {/* Smooth fill bar */}
-      <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
-          style={{
-            width: `${pct}%`,
-            background: completed
-              ? "#4A6E5E"
-              : "linear-gradient(90deg, var(--primary) 0%, color-mix(in oklch, var(--primary) 80%, transparent) 100%)",
-          }}
-        />
-      </div>
-
-      {/* Step indicators */}
-      {total > 1 && (
-        <div className="flex items-start gap-0.5 overflow-x-auto pt-1 pb-1 scrollbar-none">
-          {steps.map((step, i) => {
-            const isDone = completed || i < currentStepIdx;
-            const isCurrent = !completed && i === currentStepIdx;
-            return (
-              <div key={step.id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
-                <div className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
-                  isDone ? "bg-primary" : isCurrent ? "bg-primary/20 ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-muted"
-                )}>
-                  {isDone ? (
-                    <CheckCircle2 className="h-3 w-3 text-white" />
-                  ) : (
-                    <span className={cn("text-xs font-bold", isCurrent ? "text-primary" : "text-muted-foreground")}>
-                      {i + 1}
-                    </span>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-xs text-center leading-tight max-w-[52px] truncate",
-                  isCurrent ? "text-foreground font-semibold" : isDone ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        return (
+          <button
+            key={step.id}
+            role="tab"
+            aria-selected={isCurrent}
+            aria-label={`Step ${i + 1}: ${step.label}${isDone ? " (completed)" : isCurrent ? " (current)" : ""}`}
+            disabled={!isClickable}
+            onClick={() => isClickable && onStepClick?.(i)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2.5 text-sm transition-all duration-200 flex-1 min-w-0 border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+              isCurrent
+                ? "border-b-primary bg-primary/5 text-foreground font-medium cursor-default"
+                : isDone
+                ? "border-b-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30 cursor-pointer"
+                : "border-b-transparent text-muted-foreground/50 cursor-default",
+              i > 0 && "border-l border-border/50"
+            )}
+          >
+            {/* Completion circle */}
+            <span
+              className={cn(
+                "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                isDone
+                  ? "bg-primary"
+                  : isCurrent
+                  ? "ring-2 ring-primary ring-offset-1 ring-offset-card bg-transparent"
+                  : "bg-muted/60"
+              )}
+              aria-hidden="true"
+            >
+              {isDone && <CheckCircle2 className="h-2.5 w-2.5 text-white" />}
+            </span>
+            {/* Label — not truncated per spec */}
+            <span className="whitespace-nowrap text-xs leading-tight">{step.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -259,26 +264,27 @@ function IntroductionPanel({ intro }: { intro: any }) {
   return (
     <div className="space-y-4">
       {intro.hook && (
-        <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-          <p className="text-sm leading-relaxed font-medium text-foreground">{intro.hook}</p>
+        // Change 5 + 7a: Hook as editorial lead paragraph — larger, left accent, no green border
+        <div className="pl-4 border-l-2 border-muted-foreground/20 py-1">
+          <p className="text-base leading-relaxed text-foreground/80 font-normal">{intro.hook}</p>
         </div>
       )}
       {intro.whyItMatters && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border">
-          <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Why This Matters</p>
-            <p className="text-sm text-foreground/80 leading-relaxed">{intro.whyItMatters}</p>
-          </div>
+        // Change 5 + 7a: Why this matters — no bordered box, just label + paragraph
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Why this matters</p>
+          <p className="text-sm text-foreground/70 leading-relaxed">{intro.whyItMatters}</p>
         </div>
       )}
       {intro.learningObjectives && intro.learningObjectives.length > 0 && (
-        <div className="p-4 rounded-xl bg-muted/20 border border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">Learning Objectives</p>
-          <ul className="space-y-2">
+        // Change 7a: No border — label + bullets carry grouping
+        // Change 7b: CheckCircle muted grey (not green)
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground">Learning objectives</p>
+          <ul className="space-y-1.5">
             {intro.learningObjectives.map((obj: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
-                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
                 <span className="text-foreground/80">{obj}</span>
               </li>
             ))}
@@ -293,7 +299,7 @@ function ConceptSection({ section, index, total }: { section: any; index: number
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+        <span className="text-xs font-medium text-muted-foreground/60">
           Section {index + 1} of {total}
         </span>
       </div>
@@ -306,12 +312,14 @@ function ConceptSection({ section, index, total }: { section: any; index: number
         </div>
       )}
       {section.keyPoints && section.keyPoints.length > 0 && (
-        <div className="p-4 rounded-xl bg-muted border border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">Key Points</p>
+        // Change 7a: No border — subtle bg tint only
+        // Change 7b: Bullet dot muted grey (not green)
+        <div className="p-4 rounded-xl bg-muted/40 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">Key points</p>
           <ul className="space-y-2">
             {section.keyPoints.map((kp: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mt-2 flex-shrink-0" />
                 <span className="text-foreground/80">{kp}</span>
               </li>
             ))}
@@ -319,15 +327,17 @@ function ConceptSection({ section, index, total }: { section: any; index: number
         </div>
       )}
       {section.example && (
-        <div className="p-4 rounded-xl bg-muted border-l-4 border-primary/60">
-          <p className="text-xs font-semibold text-primary mb-1.5">Real-World Example</p>
+        // Change 7b: Left accent neutral grey (not green)
+        <div className="pl-4 border-l-2 border-muted-foreground/25 py-1 space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground">Real-world example</p>
           <p className="text-sm text-foreground/80 leading-relaxed">{section.example}</p>
         </div>
       )}
       {section.researchNote && (
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/20 border border-border">
-          <Quote className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground italic leading-relaxed">{section.researchNote}</p>
+        // Change 7a: No border — just muted italic text
+        <div className="flex items-start gap-2">
+          <Quote className="h-3 w-3 text-muted-foreground/40 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground/70 italic leading-relaxed">{section.researchNote}</p>
         </div>
       )}
     </div>
@@ -346,7 +356,7 @@ function WorkedExamplePanel({ example }: { example: any }) {
         <div className="flex items-center gap-2.5">
           <BookMarked className="h-4 w-4 text-[#8E7848]" />
           <div>
-            <p className="text-xs font-semibold text-[#8E7848] uppercase tracking-widest">Worked Example</p>
+            <p className="text-xs font-semibold text-[#8E7848]">Worked example</p>
             <p className="text-sm font-semibold text-foreground mt-0.5">{example.title}</p>
           </div>
         </div>
@@ -355,14 +365,14 @@ function WorkedExamplePanel({ example }: { example: any }) {
       {expanded && (
         <div className="px-4 pb-4 space-y-4 border-t border-[#C8B07A]/20">
           <div className="pt-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">The Scenario</p>
+            <p className="text-xs font-semibold text-muted-foreground">The scenario</p>
             {String(example.scenario ?? "").split("\n\n").map((p: string, i: number) => (
               <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
             ))}
           </div>
           {example.analysis && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Expert Analysis</p>
+              <p className="text-xs font-semibold text-muted-foreground">Expert analysis</p>
               {String(example.analysis).split("\n\n").map((p: string, i: number) => (
                 <p key={i} className="text-sm leading-relaxed text-foreground/80">{p}</p>
               ))}
@@ -375,8 +385,9 @@ function WorkedExamplePanel({ example }: { example: any }) {
             </div>
           )}
           {example.lessonLearned && (
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-xs font-semibold text-primary mb-1">Lesson Learned</p>
+        // Change 7b: Lesson learned — neutral, not green
+        <div className="p-3 rounded-lg bg-muted/40">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">Lesson learned</p>
               <p className="text-sm text-foreground/80 font-medium">{example.lessonLearned}</p>
             </div>
           )}
@@ -389,12 +400,13 @@ function WorkedExamplePanel({ example }: { example: any }) {
 function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
   if (!takeaways || takeaways.length === 0) return null;
   return (
-    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-      <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Key Takeaways</p>
+    // Change 7a + 7b: No green border, subtle bg tint only; star icon muted
+    <div className="p-4 rounded-xl bg-muted/30 space-y-0">
+      <p className="text-xs font-semibold text-muted-foreground mb-3">Key takeaways</p>
       <ul className="space-y-2.5">
         {takeaways.map((t: string, i: number) => (
           <li key={i} className="flex items-start gap-2.5 text-sm">
-            <Star className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+            <Star className="h-3.5 w-3.5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
             <span className="text-foreground/80 font-medium">{t}</span>
           </li>
         ))}
@@ -406,10 +418,11 @@ function KeyTakeawaysPanel({ takeaways }: { takeaways: string[] }) {
 function FurtherReadingPanel({ items }: { items: any[] }) {
   if (!items || items.length === 0) return null;
   return (
-    <div className="p-4 rounded-xl bg-muted/40 border border-border">
+    // Change 7a: No border on further reading
+    <div className="p-4 rounded-xl bg-muted/20">
       <div className="flex items-center gap-2 mb-3">
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Further Reading</p>
+        <p className="text-xs font-semibold text-muted-foreground">Further reading</p>
       </div>
       <ul className="space-y-3">
         {items.map((item: any, i: number) => (
@@ -720,7 +733,7 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Pre-reading</p>
+              <p className="text-xs font-semibold text-muted-foreground">Pre-reading</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -845,7 +858,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && !exercise && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Background</p>
+              <p className="text-xs font-semibold text-muted-foreground">Background</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -856,7 +869,7 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
           )}
           {exercise && (
             <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Exercise</p>
+              <p className="text-xs font-semibold text-muted-foreground">Exercise</p>
               <p className="text-sm font-semibold">{exercise.title}</p>
               {exercise.context && <p className="text-sm text-foreground/80">{exercise.context}</p>}
               <div className="flex items-center gap-2 mt-2">
@@ -1011,7 +1024,7 @@ function CaseStudyRenderer({ body, onComplete, onProgressChange }: { body: any; 
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Context</p>
+              <p className="text-xs font-semibold text-muted-foreground">Context</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1323,7 +1336,7 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Priming Your Thinking</p>
+              <p className="text-xs font-semibold text-muted-foreground">Priming your thinking</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1356,7 +1369,8 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
           {currentPrompt && (
             <div className="space-y-3">
               <div className="flex items-start gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
+                {/* Change 7b: Prompt number badge neutral */}
+                <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
                   {promptIdx + 1}
                 </span>
                 <p className="text-sm font-semibold leading-relaxed">{currentPrompt.prompt}</p>
@@ -1446,7 +1460,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
           <IntroductionPanel intro={intro} />
           {sections.length > 0 && (
             <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Coaching Context</p>
+              <p className="text-xs font-semibold text-muted-foreground">Coaching context</p>
               {sections.map((s: any, i: number) => (
                 <div key={i} className="space-y-2">
                   <h3 className="font-semibold text-sm">{s.heading ?? s.title}</h3>
@@ -1456,11 +1470,12 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
             </div>
           )}
           {framework && (
-            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-              <p className="text-xs font-semibold text-primary mb-2">Coaching Framework: {framework.model}</p>
+            // Change 7a + 7b: No green border; framework pills use neutral bg
+            <div className="p-4 rounded-xl bg-muted/30">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Coaching framework: {framework.model}</p>
               <div className="flex gap-2 flex-wrap">
                 {frameworkPhases.map((fp: any, i: number) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
                     {fp.phase}
                   </span>
                 ))}
@@ -1481,9 +1496,10 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
                 i < phaseIdx ? "bg-primary" : i === phaseIdx ? "bg-primary/60" : "bg-muted")} />
             ))}
           </div>
-          <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">
-              {framework.model} - {currentFrameworkPhase?.phase}
+          {/* Change 7a + 7b: No green border on coaching context */}
+          <div className="p-4 rounded-xl bg-muted/30">
+            <p className="text-xs font-semibold text-muted-foreground mb-1">
+              {framework.model} — {currentFrameworkPhase?.phase}
             </p>
             <p className="text-sm text-foreground/80">{currentFrameworkPhase?.purpose}</p>
           </div>
@@ -1492,7 +1508,7 @@ function CoachingRenderer({ body, onComplete, onProgressChange }: { body: any; o
               {currentFrameworkPhase.questions.map((q: string, i: number) => (
                 <div key={i} className="space-y-2">
                   <div className="flex items-start gap-2.5">
-                    <Users className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <Users className="h-4 w-4 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
                     <p className="text-sm font-medium">{q}</p>
                   </div>
                   <textarea
@@ -1636,7 +1652,7 @@ function VideoRenderer({ body, onComplete, onProgressChange }: { body: any; onCo
           {/* Learning objectives */}
           {intro?.learningObjectives && intro.learningObjectives.length > 0 && (
             <div className="p-4 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Learning Objectives</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Learning objectives</p>
               <ul className="space-y-1.5">
                 {intro.learningObjectives.map((obj: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
@@ -1852,7 +1868,7 @@ function CompletionScreen({
       {/* Next module suggestion */}
       {nextModule && (
         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Up next in your plan</p>
+          <p className="text-xs font-semibold text-muted-foreground">Up next in your plan</p>
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0 mt-0.5">
               <ChevronRight className="h-4 w-4 text-primary" />
@@ -1996,6 +2012,66 @@ function ShareWithTeamPanel({ moduleId, moduleTitle, capability, score }: {
   );
 }
 
+// --- Action Bar Overflow (Change 3) ------------------------------------------
+
+function ModuleActionOverflow({ moduleId, moduleTitle }: { moduleId: string; moduleTitle: string }) {
+  const [bookmarked, setBookmarked] = useState(false);
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/learning/module/${moduleId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success("Link copied to clipboard");
+    }).catch(() => {
+      toast.error("Could not copy link");
+    });
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/learning/module/${moduleId}`;
+    if (navigator.share) {
+      navigator.share({ title: moduleTitle, url }).catch(() => {});
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleBookmark = () => {
+    setBookmarked(b => !b);
+    toast.success(bookmarked ? "Bookmark removed" : "Module bookmarked");
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+          aria-label="More actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={handleBookmark} className="gap-2 cursor-pointer">
+          {bookmarked
+            ? <BookmarkCheck className="h-3.5 w-3.5 text-muted-foreground" />
+            : <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />}
+          {bookmarked ? "Bookmarked" : "Save / Bookmark"}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleShare} className="gap-2 cursor-pointer">
+          <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+          Share
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCopyLink} className="gap-2 cursor-pointer">
+          <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+          Copy link
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // --- Main Page ----------------------------------------------------------------
 
 export default function ModulePlayerPage() {
@@ -2133,23 +2209,28 @@ export default function ModulePlayerPage() {
             </div>
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-2xl font-bold flex-1">{mod.title}</h1>
-              <DownloadPdfButton
-                type="module"
-                moduleId={params.moduleId}
-                label="PDF"
-                variant="ghost"
-                size="sm"
-                className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-              />
+              {/* Change 3: Action bar — PDF primary + overflow menu */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <DownloadPdfButton
+                  type="module"
+                  moduleId={params.moduleId}
+                  label="PDF"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                />
+                <ModuleActionOverflow moduleId={params.moduleId ?? ""} moduleTitle={mod.title} />
+              </div>
             </div>
             {mod.subtitle && <p className="text-sm text-muted-foreground">{mod.subtitle}</p>}
           </div>
 
-              {/* Progress bar */}
+              {/* Change 4: Unified step nav (progress bar + tabs consolidated) */}
           <ModuleProgressBar
             steps={progressSteps}
             currentStepIdx={currentProgressStep}
             completed={false}
+            onStepClick={setCurrentProgressStep}
           />
 
           {/* v1.4 Change 1: Visible personalisation panel */}
@@ -2203,7 +2284,7 @@ export default function ModulePlayerPage() {
         </>
       ) : (
         <>
-          {/* Progress bar - 100% on completion */}
+          {/* Completion state step nav */}
           <ModuleProgressBar
             steps={progressSteps}
             currentStepIdx={progressSteps.length - 1}

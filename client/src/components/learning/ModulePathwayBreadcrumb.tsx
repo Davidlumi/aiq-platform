@@ -1,21 +1,27 @@
 /**
- * v1.4 Change 2 — Pathway Breadcrumb
+ * v1.4 Change 2 — Pathway Breadcrumb (v3 refinement)
  *
  * Renders: Domain ▸ Level ▸ Module N of M
  * Domain and Level segments are clickable links.
  * Sits above the module title.
+ *
+ * v3 colour discipline:
+ *   - Domain segment: muted grey (was per-domain colour, e.g. pink)
+ *   - Level segment: muted grey
+ *   - Module position (current): primary green — the only coloured segment
+ *   - Hover: brighter grey + underline on clickable segments
  */
 import { useLocation } from "wouter";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const DOMAIN_META: Record<string, { label: string; color: string }> = {
-  ai_interaction:        { label: "AI Interaction",        color: "#3B82F6" },
-  ai_output_evaluation:  { label: "AI Output Evaluation",  color: "#8B5CF6" },
-  ai_workflow_design:    { label: "AI Workflow Design",     color: "#10B981" },
-  ai_ethics_trust:       { label: "AI Ethics & Trust",     color: "#F59E0B" },
-  workforce_ai_readiness:{ label: "Workforce AI Readiness",color: "#EF4444" },
-  ai_change_leadership:  { label: "AI Change Leadership",  color: "#EC4899" },
+const DOMAIN_META: Record<string, { label: string }> = {
+  ai_interaction:        { label: "AI Interaction" },
+  ai_output_evaluation:  { label: "AI Output Evaluation" },
+  ai_workflow_design:    { label: "AI Workflow Design" },
+  ai_ethics_trust:       { label: "AI Ethics & Trust" },
+  workforce_ai_readiness:{ label: "Workforce AI Readiness" },
+  ai_change_leadership:  { label: "AI Change Leadership" },
 };
 
 const LEVEL_LABELS: Record<number, string> = {
@@ -43,7 +49,7 @@ export default function ModulePathwayBreadcrumb({
   className,
 }: ModulePathwayBreadcrumbProps) {
   const [, setLocation] = useLocation();
-  const domainMeta = DOMAIN_META[capability] ?? { label: capability, color: "#888" };
+  const domainMeta = DOMAIN_META[capability] ?? { label: capability };
   const levelLabel = LEVEL_LABELS[difficulty] ?? `Level ${difficulty}`;
 
   const handleDomainClick = () => {
@@ -56,34 +62,33 @@ export default function ModulePathwayBreadcrumb({
 
   return (
     <nav
-      className={cn("flex items-center gap-1 text-xs text-muted-foreground flex-wrap", className)}
+      className={cn("flex items-center gap-1 text-xs flex-wrap", className)}
       aria-label="Module pathway breadcrumb"
     >
-      {/* Domain */}
+      {/* Domain — muted grey, clickable */}
       <button
         onClick={handleDomainClick}
-        className="hover:text-foreground transition-colors font-medium"
-        style={{ color: domainMeta.color }}
+        className="text-muted-foreground/60 hover:text-muted-foreground hover:underline transition-colors font-medium"
         aria-label={`Go to ${domainMeta.label} domain pathway`}
       >
         {domainMeta.label}
       </button>
 
-      <ChevronRight className="h-3 w-3 flex-shrink-0 opacity-50" />
+      <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground/30" />
 
-      {/* Level */}
+      {/* Level — muted grey, clickable */}
       <button
         onClick={handleLevelClick}
-        className="hover:text-foreground transition-colors"
+        className="text-muted-foreground/60 hover:text-muted-foreground hover:underline transition-colors"
         aria-label={`Go to ${levelLabel} level in ${domainMeta.label}`}
       >
         {levelLabel}
       </button>
 
-      <ChevronRight className="h-3 w-3 flex-shrink-0 opacity-50" />
+      <ChevronRight className="h-3 w-3 flex-shrink-0 text-muted-foreground/30" />
 
-      {/* Module position */}
-      <span className="text-muted-foreground/70">
+      {/* Module position — green (current location) */}
+      <span className="text-primary font-medium">
         Module {moduleIndex} of {totalModules}
       </span>
     </nav>

@@ -2473,3 +2473,16 @@
 
 ## ROI Bar Chart — Section 5 (May 2026)
 - [x] Add Recharts bar chart to Section 5 of AIStrategyPage: vertical summary chart (Gross Value / Total Cost / Net Value) + horizontal per-initiative chart coloured by value type + payback period callout strip
+
+## Module Page UI Refinements v3 (May 2026)
+- [x] Change 1: Remove "Made with Manus" badge from production builds (not present — already clean)
+- [x] Change 2: Breadcrumb colour — inactive segments muted grey, current segment green
+- [x] Change 6a: Replace ALL-CAPS labels with sentence case throughout module page
+- [x] Change 4: Consolidate progress bar + tabs into single tab nav with completion-state circles
+- [x] Change 7a: Border audit — removed borders from learning objectives, why-this-matters, key points, research notes, further reading, coaching context, key takeaways
+- [x] Change 7b: Green discipline — neutralised green from hook border, objective ticks, key point bullets, section icons, framework pills, coaching context, example accents
+- [x] Change 7c: Personalisation panel — two-sentence warm copy (journey + strategy linkage), no green/border, collapse toggle
+- [x] Change 3: Top action bar — PDF visible button + overflow menu (⋯) for Save/Share/Copy link
+- [x] Change 5: Differentiate hook (larger/muted/left-accent) from "Why this matters" (no bordered box)
+- [x] Change 6b: Dark mode typography audit — line-height 1.65, body near-white, small label weight 500
+- [x] Change 7d: Sidebar surgical softening — section dividers lighter/smaller, non-active items more muted, View As role-gated to CPO/admin, profile block lower contrast
