@@ -447,6 +447,9 @@ export const intelligenceRouter = router({
       businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
       peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
       selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+      wontDoJson: ailOrgContext.wontDoJson,
+      structuredInputsJson: ailOrgContext.structuredInputsJson,
+      operationalBaselineJson: ailOrgContext.operationalBaselineJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -463,9 +466,9 @@ export const intelligenceRouter = router({
       businessAmbitionLevel: row.businessAmbitionLevel ?? null,
       peopleAmbitionLevel: row.peopleAmbitionLevel ?? null,
       selectedInitiativeIds: (parse(row.selectedInitiativesJson) as string[] ?? []),
-      wontDo: parse((row as Record<string, unknown>).wontDoJson as string | null) as string[] | null,
-      structuredInputs: parse((row as Record<string, unknown>).structuredInputsJson as string | null),
-      operationalBaseline: parse((row as Record<string, unknown>).operationalBaselineJson as string | null),
+      wontDo: parse(row.wontDoJson ?? null) as string[] | null,
+      structuredInputs: parse(row.structuredInputsJson ?? null),
+      operationalBaseline: parse(row.operationalBaselineJson ?? null),
     };
   }),
 

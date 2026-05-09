@@ -2611,7 +2611,33 @@
         "L&D",
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": {
+          "primary_metric": "L&D efficiency gain per HR FTE",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "sources": [
+            "CIPD L&D Survey 2024",
+            "McKinsey AI Upskilling ROI 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Faster AI adoption",
+          "Reduced change resistance",
+          "Improved HR credibility"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_ethics_governance_framework": {
       "initiative_id": "ai_ethics_governance_framework",
@@ -2698,7 +2724,17 @@
       "function_tags": [
         "HRBP",
         "HR Operations"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Regulatory compliance assurance",
+          "Reduced reputational risk",
+          "Board confidence in AI programme"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "prompt_engineering_for_hr": {
       "initiative_id": "prompt_engineering_for_hr",
@@ -2774,7 +2810,33 @@
       "function_tags": [
         "L&D",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "HR FTE productivity improvement",
+          "typical_improvement_pct": {
+            "low": 0.08,
+            "high": 0.2
+          },
+          "monetisation_formula": "hr_function_size \u00d7 hr_cost_per_fte \u00d7 improvement_pct",
+          "sources": [
+            "Stanford HAI Productivity Study 2024",
+            "Accenture GenAI Workforce Report 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Higher quality HR outputs",
+          "Faster response times",
+          "Improved employee experience"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_acceptable_use_policy": {
       "initiative_id": "ai_acceptable_use_policy",
@@ -2850,7 +2912,17 @@
       "function_tags": [
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Legal liability reduction",
+          "Clear employee expectations",
+          "Audit readiness"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "hr_data_quality_audit": {
       "initiative_id": "hr_data_quality_audit",
@@ -2934,7 +3006,17 @@
       "function_tags": [
         "People Analytics",
         "HR Operations"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Improved analytics accuracy",
+          "AI model reliability",
+          "Compliance data integrity"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "ai_change_management_programme": {
       "initiative_id": "ai_change_management_programme",
@@ -3022,7 +3104,33 @@
         "L&D",
         "HRBP",
         "HR Communications"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "Adoption rate improvement across workforce",
+          "typical_improvement_pct": {
+            "low": 0.15,
+            "high": 0.35
+          },
+          "monetisation_formula": "total_headcount \u00d7 8h \u00d7 hr_hourly_rate \u00d7 adoption_improvement_pct",
+          "sources": [
+            "Prosci Change Management ROI 2024",
+            "Gartner Digital Adoption 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 30
+          }
+        },
+        "qualitative_value": [
+          "Reduced resistance to AI tools",
+          "Faster time-to-value on AI investments",
+          "Cultural readiness"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "bias_monitoring_and_auditing": {
       "initiative_id": "bias_monitoring_and_auditing",
@@ -3109,7 +3217,33 @@
       "function_tags": [
         "People Analytics",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": {
+          "primary_metric": "Regulatory fine avoidance probability",
+          "typical_improvement_pct": {
+            "low": 0.5,
+            "high": 0.9
+          },
+          "monetisation_formula": "\u00a350k_typical_fine \u00d7 improvement_pct \u00d7 10%_enforcement_probability",
+          "sources": [
+            "ICO Enforcement Data 2024",
+            "EU AI Act Impact Assessment 2024"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Regulatory compliance",
+          "Reduced discrimination claims",
+          "Audit trail for AI decisions"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "hr_process_automation": {
       "initiative_id": "hr_process_automation",
@@ -3195,7 +3329,33 @@
       "review_tier": "standard_quarterly",
       "function_tags": [
         "HR Operations"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "HR operational cost reduction",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "sources": [
+            "Deloitte HR Automation ROI 2024",
+            "KPMG Future of HR 2023"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Freed HR capacity for strategic work",
+          "Reduced error rates",
+          "Improved compliance"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_assisted_job_descriptions": {
       "initiative_id": "ai_assisted_job_descriptions",
@@ -3272,7 +3432,33 @@
       "review_tier": "standard_quarterly",
       "function_tags": [
         "TA"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "Recruiter time saved per hire",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "hires_per_year \u00d7 3h_per_JD \u00d7 hr_hourly_rate \u00d7 improvement_pct",
+          "sources": [
+            "LinkedIn Talent Trends 2024",
+            "CIPD Recruitment Survey 2024"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 3,
+            "high": 12
+          }
+        },
+        "qualitative_value": [
+          "More inclusive language",
+          "Faster time-to-post",
+          "Better candidate quality"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "hr_chatbot_employee_queries": {
       "initiative_id": "hr_chatbot_employee_queries",
@@ -3358,7 +3544,33 @@
       "function_tags": [
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "HR query deflection rate",
+          "typical_improvement_pct": {
+            "low": 0.3,
+            "high": 0.5
+          },
+          "monetisation_formula": "40%_deflection \u00d7 hr_function_size \u00d7 200_queries \u00d7 0.5h \u00d7 hr_hourly_rate",
+          "sources": [
+            "ServiceNow HR Service Delivery Report 2024",
+            "Gartner HR Technology 2023"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "24/7 employee support",
+          "Consistent policy answers",
+          "HR team focus on complex queries"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "people_analytics_dashboard": {
       "initiative_id": "people_analytics_dashboard",
@@ -3445,7 +3657,33 @@
       "review_tier": "standard_quarterly",
       "function_tags": [
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "HR reporting time saved per FTE",
+          "typical_improvement_pct": {
+            "low": 0.2,
+            "high": 0.4
+          },
+          "monetisation_formula": "hr_function_size \u00d7 40h_per_year \u00d7 hr_hourly_rate",
+          "sources": [
+            "Visier People Analytics ROI 2024",
+            "CIPD Analytics Report 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Data-driven decisions",
+          "Faster board reporting",
+          "Proactive workforce planning"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_assisted_performance_feedback": {
       "initiative_id": "ai_assisted_performance_feedback",
@@ -3534,7 +3772,33 @@
       "function_tags": [
         "HRBP",
         "L&D"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "Manager time saved per performance cycle",
+          "typical_improvement_pct": {
+            "low": 0.2,
+            "high": 0.4
+          },
+          "monetisation_formula": "total_headcount \u00d7 2h_per_cycle \u00d7 hr_hourly_rate",
+          "sources": [
+            "Gartner Performance Management 2024",
+            "Deloitte Human Capital Trends 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "More consistent feedback quality",
+          "Reduced recency bias",
+          "Higher employee engagement"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_tool_adoption_programme": {
       "initiative_id": "ai_tool_adoption_programme",
@@ -3612,7 +3876,17 @@
       "function_tags": [
         "L&D",
         "HR Operations"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "capability_uplift",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Accelerated AI ROI realisation",
+          "Reduced shadow IT risk",
+          "Measurable adoption metrics"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "automated_onboarding_orchestration": {
       "initiative_id": "automated_onboarding_orchestration",
@@ -3694,7 +3968,33 @@
       "function_tags": [
         "HR Operations",
         "TA"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "Admin time saved per new hire + productivity ramp improvement",
+          "typical_improvement_pct": {
+            "low": 0.15,
+            "high": 0.3
+          },
+          "monetisation_formula": "hires \u00d7 4h_admin \u00d7 hr_hourly_rate + hires \u00d7 5d_productivity \u00d7 daily_rate",
+          "sources": [
+            "BambooHR Onboarding ROI 2024",
+            "SHRM Onboarding Cost Study 2023"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Consistent onboarding experience",
+          "Faster time-to-productivity",
+          "Reduced early attrition"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_assisted_cv_screening": {
       "initiative_id": "ai_assisted_cv_screening",
@@ -3783,7 +4083,33 @@
       "review_tier": "priority_quarterly",
       "function_tags": [
         "TA"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "Recruiter screening time saved per hire",
+          "typical_improvement_pct": {
+            "low": 0.3,
+            "high": 0.6
+          },
+          "monetisation_formula": "hires \u00d7 time_to_fill_reduction \u00d7 cost_per_hire_pct",
+          "sources": [
+            "LinkedIn Talent Solutions ROI 2024",
+            "CIPD Resourcing Report 2024"
+          ],
+          "confidence": "high",
+          "payback_months": {
+            "low": 3,
+            "high": 12
+          }
+        },
+        "qualitative_value": [
+          "Faster time-to-hire",
+          "Reduced unconscious bias",
+          "Better candidate shortlist quality"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "predictive_attrition_modelling": {
       "initiative_id": "predictive_attrition_modelling",
@@ -3873,7 +4199,33 @@
       "function_tags": [
         "People Analytics",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "Attrition cost reduction",
+          "typical_improvement_pct": {
+            "low": 0.05,
+            "high": 0.15
+          },
+          "monetisation_formula": "voluntary_attrition_rate \u00d7 total_headcount \u00d7 cost_per_hire \u00d7 improvement_pct",
+          "sources": [
+            "Gallup Employee Engagement 2024",
+            "SHRM Turnover Cost Calculator 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 30
+          }
+        },
+        "qualitative_value": [
+          "Proactive retention interventions",
+          "Improved manager conversations",
+          "Workforce stability"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "skills_intelligence_platform": {
       "initiative_id": "skills_intelligence_platform",
@@ -3963,7 +4315,33 @@
       "function_tags": [
         "L&D",
         "Workforce Planning"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "Internal mobility rate improvement (external hire cost avoidance)",
+          "typical_improvement_pct": {
+            "low": 0.03,
+            "high": 0.08
+          },
+          "monetisation_formula": "total_headcount \u00d7 5%_internal_fill \u00d7 cost_per_hire \u00d7 60%_saving",
+          "sources": [
+            "LinkedIn Workplace Learning Report 2024",
+            "Deloitte Skills-Based Org 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Improved talent visibility",
+          "Better succession planning",
+          "Employee development clarity"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "workforce_scenario_planning": {
       "initiative_id": "workforce_scenario_planning",
@@ -4042,7 +4420,17 @@
       "function_tags": [
         "Workforce Planning",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Proactive workforce risk management",
+          "Board-level strategic confidence",
+          "Reduced reactive hiring costs"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "ai_powered_learning_personalisation": {
       "initiative_id": "ai_powered_learning_personalisation",
@@ -4119,7 +4507,33 @@
       "review_tier": "standard_quarterly",
       "function_tags": [
         "L&D"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "L&D spend efficiency improvement",
+          "typical_improvement_pct": {
+            "low": 0.15,
+            "high": 0.3
+          },
+          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 total_headcount \u00d7 improvement_pct",
+          "sources": [
+            "Josh Bersin Learning in the Flow of Work 2024",
+            "LinkedIn Learning ROI 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 30
+          }
+        },
+        "qualitative_value": [
+          "Higher completion rates",
+          "Faster skill development",
+          "Reduced irrelevant training time"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_pay_equity_analysis": {
       "initiative_id": "ai_pay_equity_analysis",
@@ -4206,7 +4620,33 @@
       "function_tags": [
         "People Analytics",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": {
+          "primary_metric": "Equal pay claim prevention probability",
+          "typical_improvement_pct": {
+            "low": 0.4,
+            "high": 0.8
+          },
+          "monetisation_formula": "5%_claim_probability \u00d7 improvement_pct \u00d7 \u00a325k_avg_award \u00d7 headcount/100",
+          "sources": [
+            "EHRC Equal Pay Guidance 2024",
+            "Korn Ferry Pay Equity Study 2023"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "Gender pay gap compliance",
+          "Employee trust",
+          "Employer brand improvement"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_centre_of_excellence": {
       "initiative_id": "ai_centre_of_excellence",
@@ -4286,7 +4726,17 @@
       "function_tags": [
         "HR Operations",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Coordinated AI governance",
+          "Faster initiative delivery",
+          "Reduced duplication of AI efforts"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "hr_ai_operating_model_redesign": {
       "initiative_id": "hr_ai_operating_model_redesign",
@@ -4367,7 +4817,33 @@
       "function_tags": [
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "HR operational cost reduction through restructuring",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "sources": [
+            "Deloitte HR Transformation 2024",
+            "KPMG Future of HR 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Clearer HR accountability",
+          "Faster decision-making",
+          "Better AI-human collaboration"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_governance_maturity_programme": {
       "initiative_id": "ai_governance_maturity_programme",
@@ -4444,7 +4920,17 @@
       "function_tags": [
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "EU AI Act compliance readiness",
+          "Reduced audit risk",
+          "Stakeholder confidence"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "manager_ai_coaching_toolkit": {
       "initiative_id": "manager_ai_coaching_toolkit",
@@ -4524,7 +5010,33 @@
       "function_tags": [
         "L&D",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "Manager time saved on coaching and development conversations",
+          "typical_improvement_pct": {
+            "low": 0.15,
+            "high": 0.3
+          },
+          "monetisation_formula": "managers \u00d7 20h_per_year \u00d7 manager_hourly_rate \u00d7 improvement_pct",
+          "sources": [
+            "Gartner Manager Effectiveness 2024",
+            "Harvard Business Review Coaching ROI 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 12,
+            "high": 24
+          }
+        },
+        "qualitative_value": [
+          "Improved team performance",
+          "Higher employee engagement scores",
+          "Reduced manager burnout"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_talent_marketplace": {
       "initiative_id": "ai_talent_marketplace",
@@ -4615,7 +5127,33 @@
       "function_tags": [
         "TA",
         "Workforce Planning"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "External hire cost avoidance through internal mobility",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "hires \u00d7 improvement_pct \u00d7 cost_per_hire \u00d7 70%_saving",
+          "sources": [
+            "Gartner Talent Marketplace 2024",
+            "Deloitte Internal Mobility 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Improved retention",
+          "Faster role filling",
+          "Career development visibility"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_performance_calibration": {
       "initiative_id": "ai_performance_calibration",
@@ -4705,7 +5243,33 @@
       "function_tags": [
         "HRBP",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "Calibration meeting time saved per employee",
+          "typical_improvement_pct": {
+            "low": 0.2,
+            "high": 0.4
+          },
+          "monetisation_formula": "total_headcount \u00d7 1.5h_calibration \u00d7 hr_hourly_rate",
+          "sources": [
+            "CEB/Gartner Performance Management 2024",
+            "Deloitte Performance Trends 2023"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 6,
+            "high": 18
+          }
+        },
+        "qualitative_value": [
+          "More consistent ratings",
+          "Reduced bias in calibration",
+          "Faster cycle completion"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_employee_listening": {
       "initiative_id": "ai_employee_listening",
@@ -4794,7 +5358,17 @@
       "function_tags": [
         "HR Communications",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "strategic",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Real-time sentiment intelligence",
+          "Proactive retention signals",
+          "Evidence-based HR decisions"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "ai_job_architecture_redesign": {
       "initiative_id": "ai_job_architecture_redesign",
@@ -4884,7 +5458,33 @@
       "function_tags": [
         "Workforce Planning",
         "HR Operations"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "productivity_gain",
+        "quantified_value": {
+          "primary_metric": "Role clarity productivity improvement",
+          "typical_improvement_pct": {
+            "low": 0.05,
+            "high": 0.15
+          },
+          "monetisation_formula": "total_headcount \u00d7 4h_role_clarity \u00d7 hr_hourly_rate \u00d7 improvement_pct",
+          "sources": [
+            "Mercer Job Architecture ROI 2024",
+            "Willis Towers Watson Role Clarity 2023"
+          ],
+          "confidence": "low",
+          "payback_months": {
+            "low": 18,
+            "high": 42
+          }
+        },
+        "qualitative_value": [
+          "Clearer career pathways",
+          "Better skills taxonomy",
+          "Improved pay equity foundation"
+        ],
+        "qualitative_value_only": false
+      }
     },
     "ai_governance_continuous_monitoring": {
       "initiative_id": "ai_governance_continuous_monitoring",
@@ -4974,7 +5574,17 @@
       "function_tags": [
         "HR Operations",
         "People Analytics"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "risk_avoidance",
+        "quantified_value": null,
+        "qualitative_value": [
+          "Ongoing regulatory compliance",
+          "Early issue detection",
+          "Audit-ready documentation"
+        ],
+        "qualitative_value_only": true
+      }
     },
     "ai_hr_operating_model_redesign": {
       "initiative_id": "ai_hr_operating_model_redesign",
@@ -5065,7 +5675,33 @@
       "function_tags": [
         "HR Operations",
         "HRBP"
-      ]
+      ],
+      "value_model": {
+        "primary_value_type": "cost_savings",
+        "quantified_value": {
+          "primary_metric": "HR operational cost reduction",
+          "typical_improvement_pct": {
+            "low": 0.1,
+            "high": 0.25
+          },
+          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "sources": [
+            "Deloitte HR Transformation 2024",
+            "KPMG Future of HR 2024"
+          ],
+          "confidence": "medium",
+          "payback_months": {
+            "low": 18,
+            "high": 36
+          }
+        },
+        "qualitative_value": [
+          "Clearer HR accountability",
+          "Faster decision-making",
+          "Better AI-human collaboration"
+        ],
+        "qualitative_value_only": false
+      }
     }
   },
   "risk_rules": {

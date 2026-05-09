@@ -2452,16 +2452,21 @@
 
 ## v1.4 Module Experience Refresh
 
-- [ ] DB: ADD COLUMN module_personalisation_collapsed BOOLEAN DEFAULT false to users
-- [ ] DB: ADD COLUMN linked_initiative_ids JSON to learning_modules
-- [ ] DB: ADD COLUMN priming_text_v2 TEXT to learning_modules
-- [ ] Backend: tRPC adaptiveLearning.getJourneyContext — journey position + strategy linkage
-- [ ] Backend: tRPC user.setPersonalisationCollapsed — persist collapse preference
-- [ ] Backend: tRPC adaptiveLearning.getDomainPathway — full domain pathway with level gating
-- [ ] Backend: Extend coach.createOrResumeSession to accept moduleId + moduleContext
-- [ ] Change 1: ModulePersonalisationPanel component — always-visible 2-line context block with collapse
-- [ ] Change 2: ModulePathwayBreadcrumb component — Domain breadcrumb ▸ Level ▸ Module N of M
-- [ ] Change 3: priming_text_v2 for 15 priority modules + fallback rendering in ModulePlayerPage
-- [ ] Change 4: ModuleCoachPanel component — context-aware coach affordance
-- [ ] Change 5: DomainPathwayPage at /development/[domain] with level gating
-- [ ] Change 5: Navigation — add Development section to sidebar linking to domain pathway
+- [x] DB: ADD COLUMN module_personalisation_collapsed BOOLEAN DEFAULT false to users
+- [x] DB: ADD COLUMN linked_initiative_ids JSON to learning_modules
+- [x] DB: ADD COLUMN priming_text_v2 TEXT to learning_modules
+- [x] Backend: tRPC adaptiveLearning.getJourneyContext — journey position + strategy linkage
+- [x] Backend: tRPC user.setPersonalisationCollapsed — persist collapse preference
+- [x] Backend: tRPC adaptiveLearning.getDomainPathway — full domain pathway with level gating
+- [x] Backend: Extend coach.createOrResumeSession to accept moduleId + moduleContext (inline moduleCoachChat procedure)
+- [x] Change 1: ModulePersonalisationPanel component — always-visible 2-line context block with collapse
+- [x] Change 2: ModulePathwayBreadcrumb component — Domain breadcrumb ▸ Level ▸ Module N of M
+- [x] Change 3: priming_text_v2 for 15 priority modules + fallback rendering in ModulePlayerPage
+- [x] Change 4: ModuleCoachPanel component — context-aware coach affordance
+- [x] Change 5: DomainPathwayPage at /development/[domain] with level gating
+- [x] Change 5: Navigation — add Development section to sidebar linking to domain pathway
+
+## Bug Fixes — Strategy Page (May 2026)
+- [x] Bug 1: ROI/value section (Section 5) showing empty — gross value, net value, payback period all blank despite 9 initiatives existing
+- [x] Bug 2: Edit Strategy wizard not pre-populating with previously saved answers — all fields blank on re-open
+- [x] Bug 3: Edit Strategy wizard errors on generate

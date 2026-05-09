@@ -1,0 +1,15 @@
+{
+  "query": "SELECT tenant_id, selected_initiatives_json, strategy_saved_at FROM ail_org_context LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT tenant_id, selected_initiatives_json, strategy_saved_at FROM ail_org_context LIMIT 5;",
+  "rows": [
+    {
+      "tenant_id": "tenant-acme-ltd",
+      "selected_initiatives_json": "[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]",
+      "strategy_saved_at": "2026-05-08 10:28:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "tenant_id\tselected_initiatives_json\tstrategy_saved_at\ntenant-acme-ltd\t[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]\t2026-05-08 10:28:09\n",
+  "stderr": "",
+  "execution_time_ms": 578
+}
