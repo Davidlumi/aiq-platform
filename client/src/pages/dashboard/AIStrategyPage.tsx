@@ -45,6 +45,9 @@ import {
   TrendingDown, Activity,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine,
+} from "recharts";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS } from "@/lib/domains";
 import type { CapabilityKey } from "@/lib/domains";
 import {
@@ -2261,6 +2264,163 @@ export default function AIStrategyPage() {
                 </div>
               </div>
 
+              {/* ── ROI Bar Chart ──────────────────────────────────────── */}
+              {hasQuantified && (() => {
+                // Build bar chart data: gross value (high), net value (high), and cost
+                const grossHigh = ve.total_quantified_value_gbp.high;
+                const grossLow  = ve.total_quantified_value_gbp.low;
+                const netHigh   = ve.net_value_gbp.high;
+                const netLow    = ve.net_value_gbp.low;
+                const costHigh  = ve.tco?.total_3yr_gbp?.high ?? (grossHigh - netHigh);
+                const costLow   = ve.tco?.total_3yr_gbp?.low  ?? (grossLow  - netLow);
+                const fmtK = (n: number) => {
+                  const abs = Math.abs(n);
+                  if (abs >= 1_000_000) return `${n < 0 ? "-" : ""}£${(abs / 1_000_000).toFixed(1)}M`;
+                  if (abs >= 1_000)    return `${n < 0 ? "-" : ""}£${Math.round(abs / 1_000)}k`;
+                  return `${n < 0 ? "-" : ""}£${abs}`;
+                };
+                // Per-initiative bar data (quantified only, sorted desc by high)
+                const initiativeData = ve.by_initiative
+                  .filter(i => i.quantified_value_gbp && i.quantified_value_gbp.high > 0)
+                  .sort((a, b) => (b.quantified_value_gbp?.high ?? 0) - (a.quantified_value_gbp?.high ?? 0))
+                  .slice(0, 12)
+                  .map(i => ({
+                    name: i.display_name.length > 22 ? i.display_name.slice(0, 20) + "…" : i.display_name,
+                    fullName: i.display_name,
+                    high: i.quantified_value_gbp!.high,
+                    low:  i.quantified_value_gbp!.low,
+                    type: i.value_type,
+                  }));
+                const typeColor: Record<string, string> = {
+                  cost_savings:       "#4ADE80",
+                  productivity_gain:  "#60A5FA",
+                  risk_avoidance:     "#F87171",
+                  capability_uplift:  "#A78BFA",
+                  strategic:          "#FBBF24",
+                };
+                // Summary bar chart data
+                const summaryData = [
+                  { name: "Gross Value",  high: grossHigh, low: grossLow,  fill: "#4ADE80" },
+                  { name: "Total Cost",   high: costHigh,  low: costLow,   fill: "#F87171" },
+                  { name: "Net Value",    high: netHigh,   low: netLow,    fill: netHigh >= 0 ? "#60A5FA" : "#F87171" },
+                ];
+                return (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BarChart3 className="w-4 h-4 text-emerald-400" />
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Value Summary — 3-Year Horizon</p>
+                    </div>
+                    {/* Summary: Gross / Cost / Net */}
+                    <div className="mb-6">
+                      <p className="text-[10px] text-muted-foreground mb-3">High estimate shown. Hover for low estimate.</p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={summaryData} barCategoryGap="35%" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fill: "#94A3B8", fontSize: 11 }}
+                            axisLine={false} tickLine={false}
+                          />
+                          <YAxis
+                            tickFormatter={fmtK}
+                            tick={{ fill: "#94A3B8", fontSize: 10 }}
+                            axisLine={false} tickLine={false} width={52}
+                          />
+                          <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" />
+                          <Tooltip
+                            cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                            contentStyle={{ background: "#0F172A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                            formatter={(value: number, _name: string, props: { payload?: { name: string; low: number } }) => [
+                              <span key="v">
+                                <span style={{ color: props.payload?.name === "Total Cost" ? "#F87171" : "#4ADE80" }}>{fmtK(value)}</span>
+                                <span style={{ color: "#94A3B8", marginLeft: 8, fontSize: 10 }}>low: {fmtK(props.payload?.low ?? 0)}</span>
+                              </span>,
+                              props.payload?.name ?? "",
+                            ]}
+                          />
+                          <Bar dataKey="high" radius={[4, 4, 0, 0]}>
+                            {summaryData.map((entry, i) => (
+                              <Cell key={i} fill={entry.fill} fillOpacity={0.85} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {/* Per-initiative horizontal bars */}
+                    {initiativeData.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Value by Initiative (High Estimate)</p>
+                        <ResponsiveContainer width="100%" height={Math.max(180, initiativeData.length * 32)}>
+                          <BarChart
+                            data={initiativeData}
+                            layout="vertical"
+                            barCategoryGap="20%"
+                            margin={{ top: 0, right: 60, left: 8, bottom: 0 }}
+                          >
+                            <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.06)" />
+                            <XAxis
+                              type="number"
+                              tickFormatter={fmtK}
+                              tick={{ fill: "#94A3B8", fontSize: 10 }}
+                              axisLine={false} tickLine={false}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="name"
+                              width={140}
+                              tick={{ fill: "#CBD5E1", fontSize: 11 }}
+                              axisLine={false} tickLine={false}
+                            />
+                            <Tooltip
+                              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                              contentStyle={{ background: "#0F172A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                              formatter={(value: number, _name: string, props: { payload?: { fullName: string; low: number; type: string } }) => [
+                                <span key="v">
+                                  <span style={{ color: typeColor[props.payload?.type ?? ""] ?? "#4ADE80" }}>{fmtK(value)}</span>
+                                  <span style={{ color: "#94A3B8", marginLeft: 8, fontSize: 10 }}>low: {fmtK(props.payload?.low ?? 0)}</span>
+                                </span>,
+                                props.payload?.fullName ?? "",
+                              ]}
+                            />
+                            <Bar dataKey="high" radius={[0, 4, 4, 0]}>
+                              {initiativeData.map((entry, i) => (
+                                <Cell key={i} fill={typeColor[entry.type] ?? "#4ADE80"} fillOpacity={0.8} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                        {/* Legend */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                          {Object.entries(typeColor).map(([type, color]) => {
+                            const hasType = initiativeData.some(d => d.type === type);
+                            if (!hasType) return null;
+                            return (
+                              <div key={type} className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
+                                <span className="text-[10px] text-muted-foreground capitalize">{type.replace(/_/g, " ")}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {/* Payback callout */}
+                    {ve.payback_period_months && (
+                      <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 flex items-center gap-3">
+                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <span className="text-xs font-semibold text-amber-300">Payback Period: </span>
+                          <span className="text-xs text-amber-200/80">
+                            {ve.payback_period_months.low > 120
+                              ? `Beyond 3-year horizon (>${Math.round(ve.payback_period_months.low / 12)} yrs) — value realises in years 4–7`
+                              : `${ve.payback_period_months.low}–${ve.payback_period_months.high} months to breakeven`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {/* Per-initiative breakdown */}
               <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
                 <div className="px-5 py-3 border-b border-white/8 flex items-center justify-between">

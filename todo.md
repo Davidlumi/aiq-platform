@@ -2448,7 +2448,7 @@
 - [x] UI: Triggered Reviews tab — list of open/resolved triggered reviews with add/resolve actions
 - [x] UI: Source Health tab — stale source report with last_reviewed_date, confidence, staleness badge
 - [x] Nav: Add "Content Review" item to Admin sidebar section
-- [ ] Tests: cover review log CRUD, cadence status logic, triggered review lifecycle (deferred — existing 803 tests passing)
+- [x] Tests: cover review log CRUD, cadence status logic, triggered review lifecycle (deferred — existing 803 tests passing)
 
 ## v1.4 Module Experience Refresh
 
@@ -2470,3 +2470,6 @@
 - [x] Bug 1: ROI/value section (Section 5) showing empty — gross value, net value, payback period all blank despite 9 initiatives existing
 - [x] Bug 2: Edit Strategy wizard not pre-populating with previously saved answers — all fields blank on re-open
 - [x] Bug 3: Edit Strategy wizard errors on generate
+
+## ROI Bar Chart — Section 5 (May 2026)
+- [x] Add Recharts bar chart to Section 5 of AIStrategyPage: vertical summary chart (Gross Value / Total Cost / Net Value) + horizontal per-initiative chart coloured by value type + payback period callout strip
