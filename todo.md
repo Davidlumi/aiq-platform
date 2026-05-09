@@ -2508,4 +2508,8 @@
 - [x] A3: Add "Get coach feedback" button + inline feedback panel to all Reflection module renderers; persistence on revisit; "Get a different perspective" affordance
 - [x] B1: Add Practical Exercise variant system prompt (acknowledge-strong / contextualize / strengthen / invite-iteration)
 - [x] B2: Apply same UI affordance to Practical Exercise module renderer
-- [ ] Cost note: Operating cost projection documented (£0.05-0.10/module, £1,500-3,000/month at 1k completions/day)
+- [x] Cost note: Operating cost projection documented (£0.05-0.10/module, £1,500-3,000/month at 1k completions/day)
+
+## Module Feedback Streaming Animation
+- [ ] Add streaming SSE endpoint for generateModuleFeedback so text arrives token-by-token
+- [ ] Update ModuleFeedbackPanel to consume the stream and render text word-by-word with a blinking cursor

@@ -12,7 +12,7 @@
  *   coaching   - structured coaching framework (GROW model)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import ModulePersonalisationPanel from "@/components/learning/ModulePersonalisationPanel";
@@ -835,50 +835,98 @@ function ModuleFeedbackPanel({
 }: ModuleFeedbackPanelProps) {
   const utils = trpc.useUtils();
   const [open, setOpen] = useState(false);
+  const [streamedText, setStreamedText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const { data: saved } = trpc.adaptiveLearning.getModuleFeedback.useQuery(
+  const { data: saved, refetch: refetchSaved } = trpc.adaptiveLearning.getModuleFeedback.useQuery(
     { moduleId, promptIndex },
     { enabled: !!moduleId, staleTime: 1000 * 60 * 5 }
   );
 
-  const generate = trpc.adaptiveLearning.generateModuleFeedback.useMutation({
-    onSuccess: () => {
-      utils.adaptiveLearning.getModuleFeedback.invalidate({ moduleId, promptIndex });
-      setOpen(true);
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
   const canRequest = userResponse.trim().length >= 30;
-  const isLoading = generate.isPending;
 
-  const handleRequest = () => {
-    generate.mutate({
-      moduleId, moduleTitle, moduleDomain, formatType,
-      promptIndex, promptText, userResponse,
-      strategyLinkage: strategyLinkage ?? undefined,
-      journeyPosition: journeyPosition ?? undefined,
-    });
+  const handleRequest = async () => {
+    // Cancel any in-flight stream
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setStreamedText("");
+    setIsStreaming(true);
+    setOpen(true);
+
+    try {
+      const res = await fetch("/api/feedback/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId, moduleTitle, moduleDomain, formatType,
+          promptIndex, promptText, userResponse,
+          strategyLinkage: strategyLinkage ?? null,
+          journeyPosition: journeyPosition ?? null,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        toast.error("Failed to get feedback. Please try again.");
+        setIsStreaming(false);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(trimmed.slice(6));
+            if (event.type === "token" && typeof event.content === "string") {
+              setStreamedText(prev => prev + event.content);
+            } else if (event.type === "done") {
+              // Refresh the saved query so the panel shows the persisted version
+              await refetchSaved();
+            } else if (event.type === "error") {
+              toast.error(event.message ?? "Feedback generation failed.");
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        toast.error("Connection interrupted. Please try again.");
+      }
+    } finally {
+      setIsStreaming(false);
+    }
   };
+
+  // The text to display: live stream while streaming, persisted text once done
+  const displayText = isStreaming ? streamedText : (saved?.feedbackText ?? streamedText);
 
   return (
     <div className="mt-3 space-y-2">
-      {!open && !saved && (
+      {!open && !saved && !isStreaming && (
         <Button
           variant="outline"
           size="sm"
           className="gap-1.5 text-xs"
-          disabled={!canRequest || isLoading}
+          disabled={!canRequest}
           onClick={handleRequest}
         >
-          {isLoading ? (
-            <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Generating feedback…</>
-          ) : (
-            <><Sparkles className="h-3.5 w-3.5" />Get coach feedback</>
-          )}
+          <Sparkles className="h-3.5 w-3.5" />Get coach feedback
         </Button>
       )}
-      {saved && !open && (
+      {saved && !open && !isStreaming && (
         <Button
           variant="ghost"
           size="sm"
@@ -888,33 +936,51 @@ function ModuleFeedbackPanel({
           <Brain className="h-3.5 w-3.5" />View saved feedback
         </Button>
       )}
-      {open && saved && (
+      {(open || isStreaming) && (
         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Brain className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">Coach feedback</span>
+              {isStreaming && (
+                <span className="text-xs text-muted-foreground/60 italic">typing…</span>
+              )}
             </div>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setOpen(false)}>
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-            <Streamdown>{saved.feedbackText}</Streamdown>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs text-muted-foreground mt-1"
-            disabled={isLoading}
-            onClick={handleRequest}
-          >
-            {isLoading ? (
-              <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Regenerating…</>
-            ) : (
-              <><RefreshCw className="h-3.5 w-3.5" />Regenerate feedback</>
+            {!isStreaming && (
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setOpen(false)}>
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
             )}
-          </Button>
+          </div>
+          {displayText ? (
+            <div className="text-sm leading-relaxed">
+              {isStreaming ? (
+                <span>
+                  {displayText}
+                  <span className="inline-block w-0.5 h-4 bg-foreground/70 ml-0.5 align-middle animate-[blink_1s_step-end_infinite]" />
+                </span>
+              ) : (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <Streamdown>{displayText}</Streamdown>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <span>Generating feedback…</span>
+            </div>
+          )}
+          {!isStreaming && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground mt-1"
+              onClick={handleRequest}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />Regenerate feedback
+            </Button>
+          )}
         </div>
       )}
     </div>

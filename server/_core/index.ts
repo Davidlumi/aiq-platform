@@ -8,6 +8,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerPdfRoutes } from "../pdf";
 import { registerSseRoutes } from "../sse";
+import { registerFeedbackStreamRoute } from "../feedbackStream";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -80,6 +81,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerPdfRoutes(app);
   registerSseRoutes(app);
+  registerFeedbackStreamRoute(app);
   // tRPC API
   app.use(
     "/api/trpc",

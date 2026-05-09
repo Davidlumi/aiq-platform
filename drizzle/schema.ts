@@ -16,7 +16,7 @@ import {
   bigint,
 } from "drizzle-orm/mysql-core";
 
-// ─── Tenants ─────────────────────────────────────────────────────────────────
+// --- Tenants -----------------------------------------------------------------
 
 export const tenants = mysqlTable("tenants", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -47,7 +47,7 @@ export const tenantSettings = mysqlTable("tenant_settings", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
-// ─── Users & Auth ─────────────────────────────────────────────────────────────
+// --- Users & Auth -------------------------------------------------------------
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -120,7 +120,7 @@ export const userPersonas = mysqlTable("user_personas", {
   uniqueUserPersona: unique("unique_user_persona").on(t.userId, t.personaId),
 }));
 
-// ─── Invitations ────────────────────────────────────────────────────────────
+// --- Invitations ------------------------------------------------------------
 
 export const invitations = mysqlTable("invitations", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -139,7 +139,7 @@ export const invitations = mysqlTable("invitations", {
   tenantEmailIdx: index("idx_invitations_tenant_email").on(t.tenantId, t.email),
 }));
 
-// ─── Competencies ─────────────────────────────────────────────────────────────
+// --- Competencies -------------------------------------------------------------
 
 export const competencies = mysqlTable("competencies", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -148,7 +148,7 @@ export const competencies = mysqlTable("competencies", {
   description: text("description"),
 });
 
-// ─── Assessment ───────────────────────────────────────────────────────────────
+// --- Assessment ---------------------------------------------------------------
 
 export const assessmentBlueprints = mysqlTable("assessment_blueprints", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -267,7 +267,7 @@ export const assessmentScores = mysqlTable("assessment_scores", {
   confidenceFloor: decimal("confidence_floor", { precision: 4, scale: 3 }).default("0.600"),
 });
 
-// ─── Credibility, Risk, State ─────────────────────────────────────────────────
+// --- Credibility, Risk, State -------------------------------------------------
 
 export const credibilityScores = mysqlTable("credibility_scores", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -326,7 +326,7 @@ export const revalidationSchedules = mysqlTable("revalidation_schedules", {
   completedAt: timestamp("completed_at"),
 });
 
-// ─── Content & Learning ───────────────────────────────────────────────────────
+// --- Content & Learning -------------------------------------------------------
 
 export const learningObjectives = mysqlTable("learning_objectives", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -415,7 +415,7 @@ export const contentProgress = mysqlTable("content_progress", {
   uniqueUserContent: unique("unique_user_content").on(t.userId, t.contentItemId),
 }));
 
-// ─── Simulations ──────────────────────────────────────────────────────────────
+// --- Simulations --------------------------------------------------------------
 
 export const simulations = mysqlTable("simulations", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -505,7 +505,7 @@ export const simulationResults = mysqlTable("simulation_results", {
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
-// ─── Policy & Governance ──────────────────────────────────────────────────────
+// --- Policy & Governance ------------------------------------------------------
 
 export const policyEvaluations = mysqlTable("policy_evaluations", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -532,7 +532,7 @@ export const adminOverrides = mysqlTable("admin_overrides", {
   active: boolean("active").notNull().default(true),
 });
 
-// ─── Events & Audit ───────────────────────────────────────────────────────────
+// --- Events & Audit -----------------------------------------------------------
 
 export const events = mysqlTable("events", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -576,7 +576,7 @@ export const reportJobs = mysqlTable("report_jobs", {
   completedAt: timestamp("completed_at"),
 });
 
-// ─── Type exports ─────────────────────────────────────────────────────────────
+// --- Type exports -------------------------------------------------------------
 
 export type Tenant = typeof tenants.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -602,7 +602,7 @@ export type SimulationSession = typeof simulationSessions.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type ReportJob = typeof reportJobs.$inferSelect;
 
-// ─── Content System ───────────────────────────────────────────────────────────
+// --- Content System -----------------------------------------------------------
 
 export const contentRoles = mysqlTable("content_roles", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -728,7 +728,7 @@ export type ContentFailureMode = typeof contentFailureModes.$inferSelect;
 export type ContentTag = typeof contentTags.$inferSelect;
 export type ContentVersion = typeof contentVersions.$inferSelect;
 
-// ─── Adaptive Intelligence Layer (AIL) Tables ────────────────────────────────
+// --- Adaptive Intelligence Layer (AIL) Tables --------------------------------
 
 export const ailUserIntelligenceProfiles = mysqlTable("ail_user_intelligence_profiles", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1024,7 +1024,7 @@ export const ailDifficultyProfiles = mysqlTable("ail_difficulty_profiles", {
   tenantIdx: index("idx_ail_dp_tenant").on(t.tenantId),
 }));
 
-// ─── S1: Scoring Config ──────────────────────────────────────────────────────
+// --- S1: Scoring Config ------------------------------------------------------
 
 export const scoringConfig = mysqlTable("scoring_config", {
   id: int("id").primaryKey().autoincrement(),
@@ -1057,7 +1057,7 @@ export const scoringConfig = mysqlTable("scoring_config", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-// ─── S10: Organisation-Configurable Thresholds ────────────────────────────────
+// --- S10: Organisation-Configurable Thresholds --------------------------------
 
 export const organisationCapabilityThresholds = mysqlTable("organisation_capability_thresholds", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1072,7 +1072,7 @@ export const organisationCapabilityThresholds = mysqlTable("organisation_capabil
   orgArchetypeCapIdx: index("idx_org_thresholds_org_archetype_cap").on(t.orgId, t.archetypeId, t.capability),
 }));
 
-// ─── S8: Sector Vocabulary ────────────────────────────────────────────────────
+// --- S8: Sector Vocabulary ----------------------------------------------------
 
 export const sectorVocabulary = mysqlTable("sector_vocabulary", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1099,10 +1099,10 @@ export type AilNarrativeEvent = typeof ailNarrativeEvents.$inferSelect;
 export type AilNarrativeThread = typeof ailNarrativeThreads.$inferSelect;
 export type AilDifficultyProfile = typeof ailDifficultyProfiles.$inferSelect;
 
-// ─── WS1.3: Contribution Breakdown on assessment_answers ─────────────────────
+// --- WS1.3: Contribution Breakdown on assessment_answers ---------------------
 // (column added via migration; schema update below)
 
-// ─── WS4.3: Assessment Review Flags ──────────────────────────────────────────
+// --- WS4.3: Assessment Review Flags ------------------------------------------
 export const assessmentReviewFlags = mysqlTable("assessment_review_flags", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }).notNull(),
@@ -1117,7 +1117,7 @@ export const assessmentReviewFlags = mysqlTable("assessment_review_flags", {
   statusIdx: index("idx_arf_status").on(t.status),
 }));
 
-// ─── WS5: Assessment Answer Telemetry ────────────────────────────────────────
+// --- WS5: Assessment Answer Telemetry ----------------------------------------
 export const assessmentAnswerTelemetry = mysqlTable("assessment_answer_telemetry", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }).notNull(),
@@ -1140,7 +1140,7 @@ export const assessmentAnswerTelemetry = mysqlTable("assessment_answer_telemetry
   sessionIdx: index("idx_aat_session").on(t.sessionId),
 }));
 
-// ─── WS3: LLM Item Review Queue ──────────────────────────────────────────────
+// --- WS3: LLM Item Review Queue ----------------------------------------------
 export const llmItemReviewQueue = mysqlTable("llm_item_review_queue", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }),
@@ -1159,7 +1159,7 @@ export type AssessmentReviewFlag = typeof assessmentReviewFlags.$inferSelect;
 export type AssessmentAnswerTelemetry = typeof assessmentAnswerTelemetry.$inferSelect;
 export type LlmItemReviewQueue = typeof llmItemReviewQueue.$inferSelect;
 
-// ─── WS2.2: Anti-Gaming Thresholds ───────────────────────────────────────────
+// --- WS2.2: Anti-Gaming Thresholds -------------------------------------------
 export const antiGamingThresholds = mysqlTable("anti_gaming_thresholds", {
   id: varchar("id", { length: 36 }).primaryKey(),
   roleKey: varchar("role_key", { length: 100 }).notNull(),
@@ -1182,7 +1182,7 @@ export type AntiGamingThreshold = typeof antiGamingThresholds.$inferSelect;
 
 
 
-// ─── Adaptive Learning Engine ─────────────────────────────────────────────────
+// --- Adaptive Learning Engine -------------------------------------------------
 
 export const learningModules = mysqlTable("learning_modules", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1328,7 +1328,7 @@ export type AdaptiveLearningPlan = typeof adaptiveLearningPlans.$inferSelect;
 export type AdaptivePlanItem = typeof adaptivePlanItems.$inferSelect;
 export type SpacedRepetitionQueue = typeof spacedRepetitionQueue.$inferSelect;
 
-// ─── Module Personalisation Cache ─────────────────────────────────────────────
+// --- Module Personalisation Cache ---------------------------------------------
 export const modulePersonalisationCache = mysqlTable("module_personalisation_cache", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull(),
@@ -1344,7 +1344,7 @@ export const modulePersonalisationCache = mysqlTable("module_personalisation_cac
   userIdx: index("idx_mpc_user").on(t.userId),
 }));
 
-// ─── Formative Quiz Results ────────────────────────────────────────────────────
+// --- Formative Quiz Results ----------------------------------------------------
 export const formativeQuizResults = mysqlTable("formative_quiz_results", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull(),
@@ -1360,7 +1360,7 @@ export const formativeQuizResults = mysqlTable("formative_quiz_results", {
   userIdx: index("idx_fqr_user").on(t.userId),
 }));
 
-// ─── Learning Streaks ──────────────────────────────────────────────────────────
+// --- Learning Streaks ----------------------------------------------------------
 export const learningStreaks = mysqlTable("learning_streaks", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique(),
@@ -1375,7 +1375,7 @@ export const learningStreaks = mysqlTable("learning_streaks", {
   userIdx: index("idx_ls_user").on(t.userId),
 }));
 
-// ─── Manager Team Members ──────────────────────────────────────────────────────
+// --- Manager Team Members ------------------------------------------------------
 export const managerTeamMembers = mysqlTable("manager_team_members", {
   id: varchar("id", { length: 36 }).primaryKey(),
   managerId: varchar("manager_id", { length: 36 }).notNull(),
@@ -1386,7 +1386,7 @@ export const managerTeamMembers = mysqlTable("manager_team_members", {
   managerIdx: index("idx_mtm_manager").on(t.managerId),
 }));
 
-// ─── Learning Nudges (manager → learner module recommendations) ──────────────
+// --- Learning Nudges (manager → learner module recommendations) --------------
 export const learningNudges = mysqlTable("learning_nudges", {
   id: varchar("id", { length: 36 }).primaryKey(),
   managerId: varchar("manager_id", { length: 36 }).notNull(),
@@ -1400,7 +1400,7 @@ export const learningNudges = mysqlTable("learning_nudges", {
   managerIdx: index("idx_nudges_manager").on(t.managerId),
 }));
 
-// ─── Learning Milestones (capability improvement badges) ─────────────────────
+// --- Learning Milestones (capability improvement badges) ---------------------
 export const learningMilestones = mysqlTable("learning_milestones", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull(),
@@ -1413,7 +1413,7 @@ export const learningMilestones = mysqlTable("learning_milestones", {
   userIdx: index("idx_milestones_user").on(t.userId),
 }));
 
-// ─── Organisations ──────────────────────────────────────────────────────────
+// --- Organisations ----------------------------------------------------------
 export const organisations = mysqlTable("organisations", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1438,7 +1438,7 @@ export const organisationProfiles = mysqlTable("organisation_profiles", {
 });
 
 
-// ─── Canonical Signals ────────────────────────────────────────────────────────
+// --- Canonical Signals --------------------------------------------------------
 export const canonicalSignals = mysqlTable("canonical_signals", {
   signalKey: varchar("signal_key", { length: 100 }).primaryKey(),
   domain: varchar("domain", { length: 100 }).notNull(),
@@ -1456,7 +1456,7 @@ export type Organisation = typeof organisations.$inferSelect;
 export type OrganisationProfile = typeof organisationProfiles.$inferSelect;
 export type CanonicalSignal = typeof canonicalSignals.$inferSelect;
 
-// ─── A3: Org Workflow Anchor Usage (cross-participant overlap guard) ───────────
+// --- A3: Org Workflow Anchor Usage (cross-participant overlap guard) -----------
 // Tracks which workflow contexts have been recently used by participants in a
 // tenant cohort, enabling the adaptive engine to rotate anchors across users.
 export const orgWorkflowAnchorUsage = mysqlTable("org_workflow_anchor_usage", {
@@ -1471,7 +1471,7 @@ export const orgWorkflowAnchorUsage = mysqlTable("org_workflow_anchor_usage", {
 }));
 export type OrgWorkflowAnchorUsage = typeof orgWorkflowAnchorUsage.$inferSelect;
 
-// ─── Strategy Builder ─────────────────────────────────────────────────────────
+// --- Strategy Builder ---------------------------------------------------------
 
 export const strategyIndustries = mysqlTable("strategy_industries", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1590,7 +1590,7 @@ export type Strategy = typeof strategies.$inferSelect;
 export type StrategyInitiative = typeof strategyInitiatives.$inferSelect;
 export type StrategyRiskRegister = typeof strategyRiskRegister.$inferSelect;
 
-// ─── Company HR AI Assessment ─────────────────────────────────────────────────
+// --- Company HR AI Assessment -------------------------------------------------
 
 export const companies = mysqlTable("companies", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -1698,11 +1698,11 @@ export type CompanyAssessment = typeof companyAssessments.$inferSelect;
 export type CompanyAssessmentResponse = typeof companyAssessmentResponses.$inferSelect;
 export type CompanyAssessmentResult = typeof companyAssessmentResults.$inferSelect;
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // AiQ COACH — Phase 0 Schema
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
-// ── coach_sessions ────────────────────────────────────────────────────────────
+// -- coach_sessions ------------------------------------------------------------
 export const coachSessions = mysqlTable("coach_sessions", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1724,7 +1724,7 @@ export const coachSessions = mysqlTable("coach_sessions", {
   userIdx: index("idx_coach_sessions_user").on(t.userId),
 }));
 
-// ── coach_messages ────────────────────────────────────────────────────────────
+// -- coach_messages ------------------------------------------------------------
 export const coachMessages = mysqlTable("coach_messages", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sessionId: varchar("session_id", { length: 36 }).notNull(),
@@ -1747,7 +1747,7 @@ export const coachMessages = mysqlTable("coach_messages", {
   tenantIdx: index("idx_coach_messages_tenant").on(t.tenantId),
 }));
 
-// ── user_capability_memory ────────────────────────────────────────────────────
+// -- user_capability_memory ----------------------------------------------------
 export const userCapabilityMemory = mysqlTable("user_capability_memory", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1771,7 +1771,7 @@ export const userCapabilityMemory = mysqlTable("user_capability_memory", {
   tenantIdx: index("idx_ucm_tenant").on(t.tenantId),
 }));
 
-// ── coach_audit_log ───────────────────────────────────────────────────────────
+// -- coach_audit_log -----------------------------------------------------------
 export const coachAuditLog = mysqlTable("coach_audit_log", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1788,7 +1788,7 @@ export const coachAuditLog = mysqlTable("coach_audit_log", {
   tenantEventIdx: index("idx_coach_audit_tenant_event").on(t.tenantId, t.eventType, t.createdAt),
 }));
 
-// ── apply_commitments ─────────────────────────────────────────────────────────
+// -- apply_commitments ---------------------------------------------------------
 export const applyCommitments = mysqlTable("apply_commitments", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1806,7 +1806,7 @@ export const applyCommitments = mysqlTable("apply_commitments", {
   tenantIdx: index("idx_apply_commitments_tenant").on(t.tenantId),
 }));
 
-// ── apply_evidence ────────────────────────────────────────────────────────────
+// -- apply_evidence ------------------------------------------------------------
 export const applyEvidence = mysqlTable("apply_evidence", {
   id: varchar("id", { length: 36 }).primaryKey(),
   commitmentId: varchar("commitment_id", { length: 36 }).notNull(),
@@ -1821,7 +1821,7 @@ export const applyEvidence = mysqlTable("apply_evidence", {
   userIdx: index("idx_apply_evidence_user").on(t.userId),
 }));
 
-// ── Exported types ─────────────────────────────────────────────────────────────
+// -- Exported types -------------------------------------------------------------
 export type CoachSession = typeof coachSessions.$inferSelect;
 export type CoachMessage = typeof coachMessages.$inferSelect;
 export type UserCapabilityMemory = typeof userCapabilityMemory.$inferSelect;
@@ -1829,7 +1829,7 @@ export type CoachAuditLog = typeof coachAuditLog.$inferSelect;
 export type ApplyCommitment = typeof applyCommitments.$inferSelect;
 export type ApplyEvidence = typeof applyEvidence.$inferSelect;
 
-// ── Norm Data Points (CR-7: population norm collection) ───────────────────────
+// -- Norm Data Points (CR-7: population norm collection) -----------------------
 // Anonymised data points collected from completed assessments.
 // Used to replace synthetic sector norms with real population data over time.
 // No PII stored — only sector, job function, and score data.
@@ -1850,7 +1850,7 @@ export const normDataPoints = mysqlTable("norm_data_points", {
 }));
 export type NormDataPoint = typeof normDataPoints.$inferSelect;
 
-// ── Module Engagement Events (AL-08: per-section engagement tracking) ─────────
+// -- Module Engagement Events (AL-08: per-section engagement tracking) ---------
 // Tracks time-on-section and scroll depth for adaptive difficulty (Phase 3).
 // Data collection layer — adaptive content injection is Phase 3.
 export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
@@ -1870,7 +1870,7 @@ export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
 }));
 export type ModuleEngagementEvent = typeof moduleEngagementEvents.$inferSelect;
 
-// ── Content Feedback (Relevance & Update Engine — data collection layer) ──────
+// -- Content Feedback (Relevance & Update Engine — data collection layer) ------
 // Collects user ratings on assessment scenarios after completion.
 // Feeds the trigger-based content update pipeline (Phase 3 full implementation).
 export const contentFeedback = mysqlTable("content_feedback", {
@@ -1894,7 +1894,7 @@ export const contentFeedback = mysqlTable("content_feedback", {
 }));
 export type ContentFeedback = typeof contentFeedback.$inferSelect;
 
-// ─── v1.3 Operational Maturity Tables ─────────────────────────────────────────
+// --- v1.3 Operational Maturity Tables -----------------------------------------
 
 // A4: Library usage telemetry — records each strategy generation event
 export const libraryUsageEvents = mysqlTable("library_usage_events", {
@@ -2061,7 +2061,7 @@ export const managerBriefs = mysqlTable("manager_briefs", {
 }));
 export type ManagerBrief = typeof managerBriefs.$inferSelect;
 
-// ─── F: Content Review Policy ─────────────────────────────────────────────────
+// --- F: Content Review Policy -------------------------------------------------
 
 // F1: Content review log — append-only audit trail of library version bumps
 export const contentReviewLog = mysqlTable("content_review_log", {
@@ -2118,7 +2118,7 @@ export const triggeredReviews = mysqlTable("triggered_reviews", {
 }));
 export type TriggeredReview = typeof triggeredReviews.$inferSelect;
 
-// ── coaching_conversations (v1.4: module-linked conversation persistence) ─────
+// -- coaching_conversations (v1.4: module-linked conversation persistence) -----
 export const coachingConversations = mysqlTable("coaching_conversations", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull(),
@@ -2132,7 +2132,7 @@ export const coachingConversations = mysqlTable("coaching_conversations", {
 export type CoachingConversation = typeof coachingConversations.$inferSelect;
 
 
-// ── module_feedback (Feedback Build Brief A1) ─────────────────────────────────
+// -- module_feedback (Feedback Build Brief A1) ---------------------------------
 // Stores AI coaching feedback generated for Reflection and Practical Exercise
 // module responses. Multiple rows per (user, module, prompt_index) are allowed —
 // each "Get a different perspective" call creates a new row.

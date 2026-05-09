@@ -641,6 +641,11 @@ tr {
    AiQ LOADING ANIMATIONS
    ───────────────────────────────────────────────────────────────────────────── */
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 @keyframes aiq-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
