@@ -106,7 +106,7 @@ function RefreshSuggestionCard({ suggestion, onUpdate }: { suggestion: any; onUp
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+              <Badge variant="outline" className="text-xs bg-amber-900/30 text-amber-300 border-amber-700/40">
                 {triggerLabels[suggestion.triggerType] ?? suggestion.triggerType}
               </Badge>
             </div>
@@ -158,12 +158,12 @@ export default function MaturityProgressionPage() {
   const { snapshots = [], trend = "stable", delta = 0 } = progressionQ.data ?? {};
 
   const trendIcon = trend === "improving"
-    ? <TrendingUp className="w-4 h-4 text-emerald-600" />
+    ? <TrendingUp className="w-4 h-4 text-emerald-400" />
     : trend === "declining"
-    ? <TrendingDown className="w-4 h-4 text-red-600" />
-    : <Minus className="w-4 h-4 text-slate-500" />;
+    ? <TrendingDown className="w-4 h-4 text-red-400" />
+    : <Minus className="w-4 h-4 text-slate-400" />;
 
-  const trendColor = trend === "improving" ? "text-emerald-600" : trend === "declining" ? "text-red-600" : "text-slate-500";
+  const trendColor = trend === "improving" ? "text-emerald-400" : trend === "declining" ? "text-red-400" : "text-slate-400";
 
   const latestSnapshot = snapshots[snapshots.length - 1];
   const previousSnapshot = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : null;
@@ -189,7 +189,7 @@ export default function MaturityProgressionPage() {
       {/* D2: Trend summary */}
       {snapshots.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
-          <Card className="border-0 bg-slate-50">
+          <Card className="border border-white/10 bg-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
                 {trendIcon}
@@ -198,17 +198,17 @@ export default function MaturityProgressionPage() {
               <div className="text-xs text-muted-foreground">Overall trend</div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-slate-50">
+          <Card className="border border-white/10 bg-card">
             <CardContent className="p-4">
-              <div className={`text-2xl font-bold ${delta >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              <div className={`text-2xl font-bold ${delta >= 0 ? "text-emerald-300" : "text-red-300"}`}>
                 {delta >= 0 ? "+" : ""}{delta.toFixed(2)}
               </div>
               <div className="text-xs text-muted-foreground">Score delta (first → latest)</div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-slate-50">
+          <Card className="border border-white/10 bg-card">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{snapshots.length}</div>
+              <div className="text-2xl font-bold text-foreground">{snapshots.length}</div>
               <div className="text-xs text-muted-foreground">Assessment snapshots</div>
             </CardContent>
           </Card>
@@ -270,7 +270,7 @@ export default function MaturityProgressionPage() {
                             <span className="text-xs font-medium">{DOMAIN_LABELS[domain] ?? domain}</span>
                             <div className="flex items-center gap-2">
                               {diff != null && (
-                                <span className={`text-xs ${diff > 0 ? "text-emerald-600" : diff < 0 ? "text-red-600" : "text-slate-500"}`}>
+                                <span className={`text-xs ${diff > 0 ? "text-emerald-400" : diff < 0 ? "text-red-400" : "text-slate-400"}`}>
                                   {diff > 0 ? "+" : ""}{diff.toFixed(1)}
                                 </span>
                               )}

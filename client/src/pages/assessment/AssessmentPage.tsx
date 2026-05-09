@@ -64,7 +64,7 @@ function SessionBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
     completed:   "bg-primary/12 text-primary border-primary/25",
     in_progress: "bg-[#D97706]/12 text-[#99882A] border-[#D97706]/25",
-    abandoned:   "bg-gray-100 text-gray-500 border-gray-200",
+    abandoned:   "bg-slate-800/60 text-slate-400 border-slate-600/50",
   };
   const labels: Record<string, string> = { completed: "Completed", in_progress: "In Progress", abandoned: "Abandoned" };
   return (

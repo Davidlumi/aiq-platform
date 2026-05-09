@@ -1,11 +1,11 @@
 /**
- * Button - AiQ Design System v2.2 §5.5
+ * Button - AiQ Design System v2.3 §5.5
  *
  * Hierarchy:
- *   default     = primary action (navy-800 fill) - one per view
- *   secondary   = secondary action (outlined, transparent bg)
+ *   default     = primary action (green fill) - one per view
+ *   secondary   = secondary action (outlined, transparent bg, light text on dark bg)
  *   outline     = alias for secondary (backward compat)
- *   ghost       = tertiary / toolbar (no border, hover fill)
+ *   ghost       = tertiary / toolbar (no border, hover fill, light text)
  *   destructive = irreversible actions (red-700)
  *   link        = inline text actions
  *
@@ -13,6 +13,7 @@
  *   - Minimum 44×44px touch target (WCAG 2.5.8)
  *   - Use aria-disabled + loading prop for in-progress states
  *   - Sentence case enforced by convention - no text-transform
+ *   - All variants use high-contrast text on the dark theme background
  */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
@@ -27,7 +28,7 @@ const buttonVariants = cva(
     "rounded-md border border-transparent",
     "transition-colors",
     "select-none",
-    "outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy-800)] focus-visible:ring-offset-2",
+    "outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)]",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&[aria-disabled=true]]:pointer-events-none [&[aria-disabled=true]]:opacity-50",
     "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
@@ -35,29 +36,29 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /** Primary - navy-800 fill. One per view. */
+        /** Primary - green fill. One per view. */
         default:
-          "bg-[var(--navy-800)] text-white border-[var(--navy-800)] hover:bg-[var(--navy-900)] active:bg-[var(--navy-1000)]",
+          "bg-[var(--color-primary)] text-[var(--color-primary-foreground)] border-[var(--color-primary)] hover:bg-[oklch(65%_0.220_142)] active:bg-[oklch(60%_0.220_142)]",
 
-        /** Secondary - outlined, transparent bg */
+        /** Secondary - outlined, transparent bg, light text for dark theme */
         secondary:
-          "bg-transparent text-[var(--color-neutral-900)] border-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-50)] hover:border-[var(--color-neutral-400)] active:bg-[var(--color-neutral-100)]",
+          "bg-transparent text-[var(--color-foreground)] border-[var(--color-border)] hover:bg-[var(--color-secondary)] hover:border-[oklch(40%_0.060_264)] active:bg-[var(--color-muted)]",
 
         /** Outline - alias for secondary (backward compat) */
         outline:
-          "bg-transparent text-[var(--color-neutral-900)] border-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-50)] hover:border-[var(--color-neutral-400)] active:bg-[var(--color-neutral-100)]",
+          "bg-transparent text-[var(--color-foreground)] border-[var(--color-border)] hover:bg-[var(--color-secondary)] hover:border-[oklch(40%_0.060_264)] active:bg-[var(--color-muted)]",
 
-        /** Ghost - no border, hover fill only */
+        /** Ghost - no border, hover fill only, light text for dark theme */
         ghost:
-          "bg-transparent text-[var(--color-neutral-700)] border-transparent hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-neutral-900)] active:bg-[var(--color-neutral-200)]",
+          "bg-transparent text-[var(--color-muted-foreground)] border-transparent hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] active:bg-[var(--color-muted)]",
 
         /** Destructive - irreversible actions */
         destructive:
-          "bg-[var(--color-red-700)] text-white border-[var(--color-red-700)] hover:bg-[var(--color-red-900)] active:bg-[var(--color-red-900)]",
+          "bg-[var(--color-destructive)] text-[var(--color-destructive-foreground)] border-[var(--color-destructive)] hover:bg-[oklch(48%_0.200_27)] active:bg-[oklch(44%_0.200_27)]",
 
         /** Link - inline text action */
         link:
-          "bg-transparent text-[var(--navy-800)] border-transparent underline underline-offset-2 hover:text-[var(--navy-900)] p-0 h-auto min-h-0",
+          "bg-transparent text-[var(--color-primary)] border-transparent underline underline-offset-2 hover:text-[oklch(65%_0.220_142)] p-0 h-auto min-h-0",
       },
       size: {
         /** Default - 44px height (WCAG 2.5.8 minimum target) */

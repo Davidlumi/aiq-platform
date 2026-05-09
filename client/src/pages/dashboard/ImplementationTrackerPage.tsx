@@ -21,25 +21,25 @@ import { CheckCircle2, Circle, Clock, PauseCircle, XCircle, ChevronRight, Milest
 import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  not_started: { label: "Not Started", color: "bg-slate-100 text-slate-700 border-slate-200", icon: <Circle className="w-3.5 h-3.5" /> },
-  in_progress: { label: "In Progress", color: "bg-blue-100 text-blue-700 border-blue-200", icon: <Clock className="w-3.5 h-3.5" /> },
-  paused: { label: "Paused", color: "bg-amber-100 text-amber-700 border-amber-200", icon: <PauseCircle className="w-3.5 h-3.5" /> },
-  completed: { label: "Completed", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700 border-red-200", icon: <XCircle className="w-3.5 h-3.5" /> },
+  not_started: { label: "Not Started", color: "bg-slate-800/60 text-slate-300 border-slate-600/50", icon: <Circle className="w-3.5 h-3.5" /> },
+  in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300 border-blue-700/50", icon: <Clock className="w-3.5 h-3.5" /> },
+  paused: { label: "Paused", color: "bg-amber-900/40 text-amber-300 border-amber-700/50", icon: <PauseCircle className="w-3.5 h-3.5" /> },
+  completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300 border-emerald-700/50", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+  cancelled: { label: "Cancelled", color: "bg-red-900/40 text-red-300 border-red-700/50", icon: <XCircle className="w-3.5 h-3.5" /> },
 };
 
 const MILESTONE_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-slate-100 text-slate-700" },
-  in_progress: { label: "In Progress", color: "bg-blue-100 text-blue-700" },
-  completed: { label: "Completed", color: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Overdue", color: "bg-red-100 text-red-700" },
+  pending: { label: "Pending", color: "bg-slate-800/60 text-slate-300" },
+  in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300" },
+  completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300" },
+  overdue: { label: "Overdue", color: "bg-red-900/40 text-red-300" },
 };
 
 const PHASE_COLORS: Record<string, string> = {
-  foundation: "bg-violet-50 border-violet-200 text-violet-800",
-  build: "bg-blue-50 border-blue-200 text-blue-800",
-  scale: "bg-emerald-50 border-emerald-200 text-emerald-800",
-  optimise: "bg-amber-50 border-amber-200 text-amber-800",
+  foundation: "bg-violet-900/30 border-violet-700/40 text-violet-300",
+  build: "bg-blue-900/30 border-blue-700/40 text-blue-300",
+  scale: "bg-emerald-900/30 border-emerald-700/40 text-emerald-300",
+  optimise: "bg-amber-900/30 border-amber-700/40 text-amber-300",
 };
 
 function StatusUpdateDialog({
@@ -210,28 +210,28 @@ export default function ImplementationTrackerPage() {
       {/* Dashboard summary cards */}
       {dashboard && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-0 bg-slate-50">
+          <Card className="border border-white/10 bg-card">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{dashboard.completionPct}%</div>
+              <div className="text-2xl font-bold text-foreground">{dashboard.completionPct}%</div>
               <div className="text-xs text-muted-foreground mt-0.5">Initiatives complete</div>
               <Progress value={dashboard.completionPct} className="h-1.5 mt-2" />
             </CardContent>
           </Card>
-          <Card className="border-0 bg-blue-50">
+          <Card className="border border-blue-700/30 bg-blue-900/20">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-blue-700">{dashboard.statusCounts.in_progress}</div>
+              <div className="text-2xl font-bold text-blue-300">{dashboard.statusCounts.in_progress}</div>
               <div className="text-xs text-muted-foreground mt-0.5">In progress</div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-emerald-50">
+          <Card className="border border-emerald-700/30 bg-emerald-900/20">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-emerald-700">{dashboard.statusCounts.completed}</div>
+              <div className="text-2xl font-bold text-emerald-300">{dashboard.statusCounts.completed}</div>
               <div className="text-xs text-muted-foreground mt-0.5">Completed</div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-amber-50">
+          <Card className="border border-amber-700/30 bg-amber-900/20">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-amber-700">{dashboard.milestoneCounts.overdue}</div>
+              <div className="text-2xl font-bold text-amber-300">{dashboard.milestoneCounts.overdue}</div>
               <div className="text-xs text-muted-foreground mt-0.5">Overdue milestones</div>
             </CardContent>
           </Card>
@@ -268,7 +268,7 @@ export default function ImplementationTrackerPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium truncate">{init.name}</span>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0 bg-violet-50 border-violet-200 text-violet-800">
+                          <Badge variant="outline" className="text-xs px-1.5 py-0 bg-violet-900/30 border-violet-700/40 text-violet-300">
                             {init.category}
                           </Badge>
                         </div>

@@ -27,23 +27,23 @@ const REQUEST_TYPES = [
 ];
 
 const PRIORITY_CONFIG = {
-  low: { label: "Low", color: "bg-slate-100 text-slate-700" },
-  medium: { label: "Medium", color: "bg-blue-100 text-blue-700" },
-  high: { label: "High", color: "bg-red-100 text-red-700" },
+  low: { label: "Low", color: "bg-slate-800/60 text-slate-300" },
+  medium: { label: "Medium", color: "bg-blue-900/40 text-blue-300" },
+  high: { label: "High", color: "bg-red-900/40 text-red-300" },
 };
 
 const STATUS_CONFIG = {
-  open: { label: "Open", color: "bg-amber-100 text-amber-700" },
-  under_review: { label: "Under Review", color: "bg-blue-100 text-blue-700" },
-  accepted: { label: "Accepted", color: "bg-emerald-100 text-emerald-700" },
-  declined: { label: "Declined", color: "bg-red-100 text-red-700" },
-  done: { label: "Done", color: "bg-slate-100 text-slate-700" },
+  open: { label: "Open", color: "bg-amber-900/40 text-amber-300" },
+  under_review: { label: "Under Review", color: "bg-blue-900/40 text-blue-300" },
+  accepted: { label: "Accepted", color: "bg-emerald-900/40 text-emerald-300" },
+  declined: { label: "Declined", color: "bg-red-900/40 text-red-300" },
+  done: { label: "Done", color: "bg-slate-800/60 text-slate-300" },
 };
 
 const QA_STATUS_CONFIG = {
-  pass: { label: "Pass", icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />, color: "text-emerald-700" },
-  warn: { label: "Warning", icon: <AlertTriangle className="w-4 h-4 text-amber-600" />, color: "text-amber-700" },
-  fail: { label: "Fail", icon: <XCircle className="w-4 h-4 text-red-600" />, color: "text-red-700" },
+  pass: { label: "Pass", icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />, color: "text-emerald-400" },
+  warn: { label: "Warning", icon: <AlertTriangle className="w-4 h-4 text-amber-400" />, color: "text-amber-400" },
+  fail: { label: "Fail", icon: <XCircle className="w-4 h-4 text-red-400" />, color: "text-red-400" },
 };
 
 function SubmitRequestForm({ onSuccess }: { onSuccess: () => void }) {
@@ -191,7 +191,7 @@ function QACheckPanel() {
       {qaQ.data && (
         <div className="space-y-3">
           {/* Summary */}
-          <div className={`flex items-center gap-3 p-3 rounded-lg border ${qaQ.data.overallStatus === "pass" ? "bg-emerald-50 border-emerald-200" : qaQ.data.overallStatus === "warn" ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200"}`}>
+          <div className={`flex items-center gap-3 p-3 rounded-lg border ${qaQ.data.overallStatus === "pass" ? "bg-emerald-900/20 border-emerald-700/40" : qaQ.data.overallStatus === "warn" ? "bg-amber-900/20 border-amber-700/40" : "bg-red-900/20 border-red-700/40"}`}>
             {overallCfg?.icon}
             <div>
               <div className={`text-sm font-semibold ${overallCfg?.color}`}>

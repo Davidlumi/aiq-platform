@@ -220,9 +220,9 @@ function ChipSelect({
   color?: "green" | "blue" | "purple";
 }) {
   const colorMap = {
-    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground" },
-    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground" },
-    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground" },
+    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
   };
   const c = colorMap[color];
   return (

@@ -161,10 +161,10 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
     critique: {
       label: "AI-Generated Output",
       sublabel: "Evaluate this output",
-      borderColor: "border-violet-200",
-      bgColor: "bg-violet-50",
-      labelColor: "text-violet-700",
-      iconColor: "text-violet-600",
+      borderColor: "border-violet-700/40",
+      bgColor: "bg-violet-900/20",
+      labelColor: "text-violet-300",
+      iconColor: "text-violet-400",
     },
     improvement: {
       label: "AI-Generated Output",
@@ -209,11 +209,11 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
 
 function DataContextBlock({ content }: { content: string }) {
   return (
-    <div className="rounded-xl border-2 border-cyan-200 bg-cyan-50 p-4">
+    <div className="rounded-xl border-2 border-cyan-700/40 bg-cyan-900/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 className="w-4 h-4 text-cyan-600" />
+        <BarChart3 className="w-4 h-4 text-cyan-400" />
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-700">
+          <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">
             Data / AI Insight
           </p>
           <p className="text-xs text-muted-foreground">Interpret this output</p>
@@ -261,42 +261,42 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     meeting_notes: {
       label: "Meeting Notes",
       sublabel: "Review the discussion record",
-      borderColor: "border-purple-200",
-      bgColor: "bg-purple-50",
-      labelColor: "text-purple-600",
-      headerBg: "bg-purple-100",
+      borderColor: "border-purple-700/40",
+      bgColor: "bg-purple-900/20",
+      labelColor: "text-purple-300",
+      headerBg: "bg-purple-900/30",
     },
     chat_log: {
       label: "Chat Log",
       sublabel: "Review the conversation",
-      borderColor: "border-cyan-200",
-      bgColor: "bg-cyan-50",
-      labelColor: "text-cyan-600",
-      headerBg: "bg-cyan-100",
+      borderColor: "border-cyan-700/40",
+      bgColor: "bg-cyan-900/20",
+      labelColor: "text-cyan-300",
+      headerBg: "bg-cyan-900/30",
     },
     data_table: {
       label: "Data Extract",
       sublabel: "Review the data",
-      borderColor: "border-rose-200",
-      bgColor: "bg-rose-50",
-      labelColor: "text-rose-600",
-      headerBg: "bg-rose-100",
+      borderColor: "border-rose-700/40",
+      bgColor: "bg-rose-900/20",
+      labelColor: "text-rose-300",
+      headerBg: "bg-rose-900/30",
     },
     dashboard_card: {
       label: "Analytics Dashboard",
       sublabel: "Review the AI-generated insight",
-      borderColor: "border-indigo-200",
-      bgColor: "bg-indigo-50",
-      labelColor: "text-indigo-600",
-      headerBg: "bg-indigo-100",
+      borderColor: "border-indigo-700/40",
+      bgColor: "bg-indigo-900/20",
+      labelColor: "text-indigo-300",
+      headerBg: "bg-indigo-900/30",
     },
     screening_output: {
       label: "AI Screening Output",
       sublabel: "Review the automated screening result",
-      borderColor: "border-orange-200",
-      bgColor: "bg-orange-50",
-      labelColor: "text-orange-600",
-      headerBg: "bg-orange-100",
+      borderColor: "border-orange-700/40",
+      bgColor: "bg-orange-900/20",
+      labelColor: "text-orange-300",
+      headerBg: "bg-orange-900/30",
     },
     alert: {
       label: "System Alert",
@@ -309,10 +309,10 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     document_excerpt: {
       label: "Document Excerpt",
       sublabel: "Review the extract",
-      borderColor: "border-slate-200",
-      bgColor: "bg-slate-50",
-      labelColor: "text-slate-600",
-      headerBg: "bg-slate-100",
+      borderColor: "border-slate-600/40",
+      bgColor: "bg-slate-800/30",
+      labelColor: "text-slate-300",
+      headerBg: "bg-slate-800/50",
     },
     none: {
       label: "Context",
@@ -560,7 +560,7 @@ function CompletionScreen({
                 <span className="text-xs text-muted-foreground w-40 truncate">
                   {DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                 </span>
-                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-slate-800/60 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${score}%`, backgroundColor: colors.bg }}

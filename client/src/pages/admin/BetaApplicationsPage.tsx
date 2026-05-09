@@ -42,10 +42,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  pending:    { label: "Pending",    className: "bg-amber-50 text-amber-700 border-amber-200",   icon: Clock },
-  approved:   { label: "Approved",   className: "bg-green-50 text-green-700 border-green-200",   icon: CheckCircle2 },
-  rejected:   { label: "Rejected",   className: "bg-red-50 text-red-700 border-red-200",         icon: XCircle },
-  waitlisted: { label: "Waitlisted", className: "bg-blue-50 text-blue-700 border-blue-200",      icon: Layers },
+  pending:    { label: "Pending",    className: "bg-amber-900/30 text-amber-300 border-amber-700/40",   icon: Clock },
+  approved:   { label: "Approved",   className: "bg-emerald-900/30 text-emerald-300 border-emerald-700/40", icon: CheckCircle2 },
+  rejected:   { label: "Rejected",   className: "bg-red-900/30 text-red-300 border-red-700/40",         icon: XCircle },
+  waitlisted: { label: "Waitlisted", className: "bg-blue-900/30 text-blue-300 border-blue-700/40",      icon: Layers },
 };
 
 type Application = {

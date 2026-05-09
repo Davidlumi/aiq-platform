@@ -276,9 +276,9 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
         {activeCount > 0 && (
           <>
             {departmentOptions.filter(o => selectedDepts.has(o.value)).map(opt => (
-              <Badge key={opt.value} variant="secondary" size="sm" className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-neutral-200 transition-colors">
+              <Badge key={opt.value} variant="secondary" size="sm" className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-white/10 transition-colors">
                 {opt.label}
-                <button type="button" className="rounded-full hover:bg-neutral-300 p-0.5 transition-colors" onClick={() => toggleDept(opt.value)}>
+                <button type="button" className="rounded-full hover:bg-white/15 p-0.5 transition-colors" onClick={() => toggleDept(opt.value)}>
                   <X className="w-2.5 h-2.5" />
                 </button>
               </Badge>
@@ -356,17 +356,17 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                     className={cn(
                       "group transition-colors",
                       idx % 2 === 0 ? "bg-card" : "bg-secondary/50",
-                      "hover:bg-blue-50/30",
+                      "hover:bg-blue-900/15",
                     )}
                   >
                     <td className={cn(
                       "sticky left-0 z-10 py-0 px-4 border-b border-r border-border",
-                      idx % 2 === 0 ? "bg-card group-hover:bg-blue-50/30" : "bg-secondary/50 group-hover:bg-blue-50/30",
+                      idx % 2 === 0 ? "bg-card group-hover:bg-blue-900/15" : "bg-secondary/50 group-hover:bg-blue-900/15",
                     )}>
                       <div className="flex items-center gap-2 py-2.5">
                         <button
                           type="button"
-                          className="w-5 h-5 rounded flex items-center justify-center hover:bg-neutral-200 transition-colors shrink-0"
+                          className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                           onClick={() => toggleExpand(row.roleFamily)}
                         >
                           {isExpanded

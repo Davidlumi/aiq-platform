@@ -2405,3 +2405,35 @@
 
 ## Bug Fixes — May 2026
 - [x] Fix: content-library.json ENOENT in production — added cp to build script + multi-path fallback in contentLibrary.ts (tries dist/, server/, library.json variants)
+
+## Deep QA & Stress Test — May 9 2026
+- [ ] QA: Public pages (homepage, how it works, pricing, methodology, about)
+- [ ] QA: Authentication flow (login, demo buttons, logout, forgot password)
+- [ ] QA: Assessment flow (start, all question types, completion, results)
+- [ ] QA: Learning plan (modules, progress, streaks)
+- [ ] QA: Dashboard (scores, charts, team view)
+- [ ] QA: AI Strategy wizard (all 6 steps, save, regenerate)
+- [ ] QA: AI Strategy view (all 6 sections, PDF export)
+- [ ] QA: Implementation Tracker (status updates, milestones, timeline)
+- [ ] QA: Maturity Progression (re-assess, history, refresh suggestions)
+- [ ] QA: Manager Hub (onboarding, dashboard, brief generation)
+- [ ] QA: Content Requests (submit, view, QA check)
+- [ ] QA: Admin pages (users, tenants, beta applications, people management)
+- [ ] Fix: Invisible button text (outline buttons with transparent bg showing no text on dark bg)
+- [ ] Fix: All contrast/visibility issues found during audit
+- [ ] Fix: Any broken workflows or error states found during audit
+
+## Deep QA & Dark-Theme Contrast Fixes (May 2026)
+- [x] ImplementationTrackerPage: replace all bg-slate-50/bg-blue-50/bg-emerald-50/bg-amber-50 stat cards with dark-themed bg-card/bg-blue-900/bg-emerald-900/bg-amber-900 variants
+- [x] ImplementationTrackerPage: fix STATUS_CONFIG, MILESTONE_STATUS_CONFIG, PHASE_COLORS badge colours to use dark-theme /30 opacity variants
+- [x] MaturityProgressionPage: fix bg-slate-50 trend summary cards to bg-card; fix trendColor/trendIcon to use -400 variants; fix diff colour classes
+- [x] ManagerHubPage: fix PHASE_COLORS to dark-theme variants; fix CheckCircle2 to emerald-400
+- [x] ContentRequestsPage: fix PRIORITY_CONFIG, STATUS_CONFIG, QA_STATUS_CONFIG badge colours; fix QA summary banner backgrounds
+- [x] AssessmentSessionPage: fix AiOutputBlock critique mode (bg-violet-50 → bg-violet-900/20); fix DataContextBlock (bg-cyan-50 → bg-cyan-900/20); fix ArtefactBlock configs (meeting_notes, chat_log, data_table, dashboard_card, screening_output, document_excerpt); fix progress bar track (bg-slate-100 → bg-slate-800/60)
+- [x] BackOfficePage: fix waitlisted button hover (hover:bg-blue-50 → hover:bg-blue-900/20); fix pending StatusBadge (bg-yellow-50 → bg-amber-900/30); fix inline status badge fallback
+- [x] BetaApplicationsPage: fix all STATUS_CONFIG badge colours to dark-theme variants
+- [x] AssessmentPage: fix abandoned SessionBadge (bg-gray-100 → bg-slate-800/60)
+- [x] UsersPage: fix fallback status badge (bg-gray-100 → bg-slate-800/60)
+- [x] PeakonHeatmap: fix hover:bg-blue-50/30 row hover to bg-blue-900/15; fix expand button hover:bg-neutral-200 to hover:bg-white/10; fix filter chip hover states
+- [x] TypeScript: 0 errors after all fixes
+- [x] Tests: 803/803 passing after all fixes
