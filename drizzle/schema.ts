@@ -24,7 +24,7 @@ export const tenants = mysqlTable("tenants", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   primaryDomain: varchar("primary_domain", { length: 255 }),
   status: mysqlEnum("status", ["active", "trial", "suspended", "archived"]).notNull().default("trial"),
-  // B4: Subscription tier — controls which features are available
+  // B4: Subscription tier - controls which features are available
   // foundation: core assessment + individual results
   // readiness: + team dashboards, manager nudges, gap analysis, learning plans
   // enterprise: + org-level analytics, regulatory mapping, API access, custom branding
@@ -233,7 +233,7 @@ export const assessmentAnswers = mysqlTable("assessment_answers", {
   itemId: varchar("item_id", { length: 100 }).notNull(),
   selectedValueJson: json("selected_value_json"),
   freeText: text("free_text"),
-  // C2.1: Participant reasoning capture — optional free-text explanation of thinking
+  // C2.1: Participant reasoning capture - optional free-text explanation of thinking
   // Stored separately from freeText (which is used for open-ended item types)
   // reasoningText is always optional and shown for judgement/governance/critique items
   reasoningText: text("reasoning_text"),
@@ -652,7 +652,7 @@ export const contentScenarios = mysqlTable("content_scenarios", {
   tagsJson: json("tags_json").$type<string[]>().$default(() => ([])),
   primarySignal: varchar("primary_signal", { length: 100 }),
   ambiguityLevel: mysqlEnum("ambiguity_level", ["low", "medium", "high"]).notNull().default("medium"),
-  /** S8: Sector applicability — empty array means universal (all sectors) */
+  /** S8: Sector applicability - empty array means universal (all sectors) */
   sectorApplicability: json("sector_applicability").$type<string[]>().$default(() => ([])),
   /** S8: True if item does not reference any specific AI tool */
   toolAgnostic: boolean("tool_agnostic").notNull().default(false),
@@ -898,7 +898,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   visionStatement: text("vision_statement"),                                // AI-drafted + user-edited vision statement
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
-  wontDoJson: text("wont_do_json"),                                              // JSON: string[] — LLM-generated out-of-scope items
+  wontDoJson: text("wont_do_json"),                                              // JSON: string[] - LLM-generated out-of-scope items
   structuredInputsJson: text("structured_inputs_json"),                          // JSON: B1 structured assessment inputs {business_outcomes, business_problems, timeline_months, risk_appetite, success_markers_ranked, hr_leadership_position, hr_processes_priority, governance_principles, voice_capture}
   operationalBaselineJson: text("operational_baseline_json"),                    // JSON: B2 operational baseline {hires_per_year, cost_per_hire_gbp, time_to_fill_days, voluntary_attrition_rate_pct, l_and_d_spend_per_fte_gbp, hr_cost_per_fte_gbp, _sector_default_used: {field: bool}}
   provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources
@@ -1285,7 +1285,7 @@ export const adaptivePlanItems = mysqlTable("adaptive_plan_items", {
   required: boolean("required").notNull().default(true),
   unlockAfterModuleId: varchar("unlock_after_module_id", { length: 36 }),
   status: mysqlEnum("status", ["locked", "available", "in_progress", "completed", "skipped"]).notNull().default("available"),
-  // Spec §5.1 completion states — only completed_with_engagement advances the pathway
+  // Spec §5.1 completion states - only completed_with_engagement advances the pathway
   completionState: mysqlEnum("completion_state", ["not_started", "opened", "partial", "completed", "completed_with_engagement"]).notNull().default("not_started"),
   // No-transfer tracking per §5.4
   noTransferCount: int("no_transfer_count").notNull().default(0),
@@ -1699,7 +1699,7 @@ export type CompanyAssessmentResponse = typeof companyAssessmentResponses.$infer
 export type CompanyAssessmentResult = typeof companyAssessmentResults.$inferSelect;
 
 // -----------------------------------------------------------------------------
-// AiQ COACH — Phase 0 Schema
+// AiQ COACH - Phase 0 Schema
 // -----------------------------------------------------------------------------
 
 // -- coach_sessions ------------------------------------------------------------
@@ -1832,7 +1832,7 @@ export type ApplyEvidence = typeof applyEvidence.$inferSelect;
 // -- Norm Data Points (CR-7: population norm collection) -----------------------
 // Anonymised data points collected from completed assessments.
 // Used to replace synthetic sector norms with real population data over time.
-// No PII stored — only sector, job function, and score data.
+// No PII stored - only sector, job function, and score data.
 export const normDataPoints = mysqlTable("norm_data_points", {
   id: varchar("id", { length: 36 }).primaryKey(),
   sector: varchar("sector", { length: 100 }),
@@ -1852,7 +1852,7 @@ export type NormDataPoint = typeof normDataPoints.$inferSelect;
 
 // -- Module Engagement Events (AL-08: per-section engagement tracking) ---------
 // Tracks time-on-section and scroll depth for adaptive difficulty (Phase 3).
-// Data collection layer — adaptive content injection is Phase 3.
+// Data collection layer - adaptive content injection is Phase 3.
 export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull(),
@@ -1870,7 +1870,7 @@ export const moduleEngagementEvents = mysqlTable("module_engagement_events", {
 }));
 export type ModuleEngagementEvent = typeof moduleEngagementEvents.$inferSelect;
 
-// -- Content Feedback (Relevance & Update Engine — data collection layer) ------
+// -- Content Feedback (Relevance & Update Engine - data collection layer) ------
 // Collects user ratings on assessment scenarios after completion.
 // Feeds the trigger-based content update pipeline (Phase 3 full implementation).
 export const contentFeedback = mysqlTable("content_feedback", {
@@ -1896,7 +1896,7 @@ export type ContentFeedback = typeof contentFeedback.$inferSelect;
 
 // --- v1.3 Operational Maturity Tables -----------------------------------------
 
-// A4: Library usage telemetry — records each strategy generation event
+// A4: Library usage telemetry - records each strategy generation event
 export const libraryUsageEvents = mysqlTable("library_usage_events", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -1972,7 +1972,7 @@ export const initiativeStatusHistory = mysqlTable("initiative_status_history", {
 }));
 export type InitiativeStatusHistory = typeof initiativeStatusHistory.$inferSelect;
 
-// C2: Strategy milestones — generated from change plan phases
+// C2: Strategy milestones - generated from change plan phases
 export const strategyMilestones = mysqlTable("strategy_milestones", {
   id: varchar("id", { length: 36 }).primaryKey(),
   strategyId: varchar("strategy_id", { length: 36 }).notNull(),
@@ -1997,7 +1997,7 @@ export const strategyMilestones = mysqlTable("strategy_milestones", {
 }));
 export type StrategyMilestone = typeof strategyMilestones.$inferSelect;
 
-// D1: Assessment history — records each assessment snapshot for progression tracking
+// D1: Assessment history - records each assessment snapshot for progression tracking
 export const assessmentHistory = mysqlTable("assessment_history", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -2016,7 +2016,7 @@ export const assessmentHistory = mysqlTable("assessment_history", {
 }));
 export type AssessmentHistory = typeof assessmentHistory.$inferSelect;
 
-// D3: Strategy refresh suggestions — generated by nightly Heartbeat job
+// D3: Strategy refresh suggestions - generated by nightly Heartbeat job
 export const strategyRefreshSuggestions = mysqlTable("strategy_refresh_suggestions", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -2044,7 +2044,7 @@ export const strategyRefreshSuggestions = mysqlTable("strategy_refresh_suggestio
 }));
 export type StrategyRefreshSuggestion = typeof strategyRefreshSuggestions.$inferSelect;
 
-// E3: Manager briefs — LLM-generated function-specific strategy briefs
+// E3: Manager briefs - LLM-generated function-specific strategy briefs
 export const managerBriefs = mysqlTable("manager_briefs", {
   id: varchar("id", { length: 36 }).primaryKey(),
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
@@ -2063,7 +2063,7 @@ export type ManagerBrief = typeof managerBriefs.$inferSelect;
 
 // --- F: Content Review Policy -------------------------------------------------
 
-// F1: Content review log — append-only audit trail of library version bumps
+// F1: Content review log - append-only audit trail of library version bumps
 export const contentReviewLog = mysqlTable("content_review_log", {
   id: varchar("id", { length: 36 }).primaryKey(),
   version: varchar("version", { length: 20 }).notNull(),                       // e.g. "1.3.0"
@@ -2090,7 +2090,7 @@ export const contentReviewLog = mysqlTable("content_review_log", {
 }));
 export type ContentReviewLogEntry = typeof contentReviewLog.$inferSelect;
 
-// F2: Triggered reviews — tracks events that trigger an immediate content review
+// F2: Triggered reviews - tracks events that trigger an immediate content review
 export const triggeredReviews = mysqlTable("triggered_reviews", {
   id: varchar("id", { length: 36 }).primaryKey(),
   triggerCategory: mysqlEnum("trigger_category", [
@@ -2134,7 +2134,7 @@ export type CoachingConversation = typeof coachingConversations.$inferSelect;
 
 // -- module_feedback (Feedback Build Brief A1) ---------------------------------
 // Stores AI coaching feedback generated for Reflection and Practical Exercise
-// module responses. Multiple rows per (user, module, prompt_index) are allowed —
+// module responses. Multiple rows per (user, module, prompt_index) are allowed -
 // each "Get a different perspective" call creates a new row.
 export const moduleFeedback = mysqlTable("module_feedback", {
   id: varchar("id", { length: 36 }).primaryKey(),

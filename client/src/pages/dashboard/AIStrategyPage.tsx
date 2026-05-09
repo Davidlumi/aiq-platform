@@ -353,19 +353,23 @@ function DomainBarChart({
         const targetPct  = row.target;
         const gapPts     = row.gap !== null ? row.gap : null;
         const isGap      = gapPts !== null && gapPts > 5;
+        // B1: display all capability scores as /10 with one decimal place
+        const currentDisp = hasCurrent ? (row.current! / 10).toFixed(1) : null;
+        const targetDisp  = (row.target / 10).toFixed(1);
+        const gapDisp     = gapPts !== null ? (gapPts / 10).toFixed(1) : null;
         return (
           <div key={row.key} className={`group ${onDomainClick ? "cursor-pointer" : ""}`} onClick={() => onDomainClick?.(row.key)}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-foreground">{row.label}</span>
               <div className="flex items-center gap-2">
                 {hasCurrent && (
-                  <span className="text-xs font-mono" style={{ color: row.color }}>{row.current}</span>
+                  <span className="text-xs font-mono" style={{ color: row.color }}>{currentDisp}</span>
                 )}
                 <span className="text-xs text-muted-foreground">→</span>
-                <span className="text-xs font-mono text-muted-foreground">{row.target}</span>
-                {gapPts !== null && (
+                <span className="text-xs font-mono text-muted-foreground">{targetDisp}</span>
+                {gapDisp !== null && (
                   <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isGap ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400"}`}>
-                    {gapPts > 0 ? `−${gapPts}` : gapPts === 0 ? "✓" : `+${Math.abs(gapPts)}`}
+                    {gapPts! > 0 ? `-${gapDisp}` : gapPts === 0 ? "✓" : `+${Math.abs(Number(gapDisp))}`}
                   </span>
                 )}
               </div>
@@ -634,6 +638,41 @@ export default function AIStrategyPage() {
 
   // ── Fade-in transition: content starts hidden, reveals once loading resolves ──
   const [contentVisible, setContentVisible] = useState(false);
+  // C1: Collapsible subsection states (collapsed by default)
+  const [onTrackCollapsed, setOnTrackCollapsed]           = useState(true);
+  const [guidingPrinciplesCollapsed, setGuidingPrinciplesCollapsed] = useState(true);
+  const [crossFuncCollapsed, setCrossFuncCollapsed]       = useState(true);
+  const [riskDescCollapsed, setRiskDescCollapsed]         = useState<Record<number, boolean>>({});
+  const [regDescCollapsed, setRegDescCollapsed]           = useState<Record<string, boolean>>({});
+  const [perInitCollapsed, setPerInitCollapsed]           = useState(true);
+  const [qualBulletsCollapsed, setQualBulletsCollapsed]   = useState(true);
+  // C2: Active ToC section scroll-spy
+  const [activeSection, setActiveSection] = useState("hero");
+  const [mobileTocOpen, setMobileTocOpen] = useState(false);
+
+  // C2: Scroll-spy for ToC active section
+  useEffect(() => {
+    const sectionIds = ["hero", "diagnostic", "ambition", "plan", "investment", "value", "measurement", "methodology"];
+    const observers: IntersectionObserver[] = [];
+    const visibleSections = new Set<string>();
+    sectionIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) visibleSections.add(id);
+          else visibleSections.delete(id);
+          // Pick the first visible section in document order
+          const first = sectionIds.find(s => visibleSections.has(s));
+          if (first) setActiveSection(first);
+        },
+        { rootMargin: "-10% 0px -60% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [contentVisible]);
 
   useEffect(() => {
     if (strategyData?.configured) {
@@ -1107,15 +1146,15 @@ export default function AIStrategyPage() {
     Low:    { pill: "bg-slate-500/20 text-slate-400", border: "border-slate-500/30" },
   };
 
-  // TOC sections for sticky left nav
+  // TOC sections for sticky left nav (C2)
   const TOC_ITEMS = [
-    { id: "hero",        label: "Hero",        color: "#94A3B8" },
-    { id: "diagnostic", label: "Diagnostic",   color: "#60A5FA" },
-    { id: "ambition",   label: "Ambition",     color: "#4ADE80" },
-    { id: "plan",       label: "Plan",         color: "#A78BFA" },
-    { id: "investment", label: "Investment",   color: "#FBBF24" },
-    { id: "value",      label: "Value",        color: "#34D399" },
-    { id: "methodology",label: "Methodology",  color: "#9CA3AF" },
+    { id: "diagnostic",  label: "Where we are",                      color: "#60A5FA" },
+    { id: "ambition",    label: "Where we're going",                  color: "#4ADE80" },
+    { id: "plan",        label: "How we get there",                   color: "#A78BFA" },
+    { id: "investment",  label: "What it costs & what could go wrong", color: "#FBBF24" },
+    { id: "value",       label: "What this strategy is worth",        color: "#34D399" },
+    { id: "measurement", label: "How we will measure progress",       color: "#94A3B8" },
+    { id: "methodology", label: "Methodology",                        color: "#6B7280" },
   ];
 
   return (
@@ -1127,19 +1166,58 @@ export default function AIStrategyPage() {
       }}
     >
 
-      {/* ── Sticky left TOC ─────────────────────────────────────────────── */}
-      <nav className="hidden xl:flex flex-col gap-1 fixed left-4 top-1/2 -translate-y-1/2 z-20">
-        {TOC_ITEMS.map(item => (
-          <button
-            key={item.id}
-            onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="flex items-center gap-2 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" style={{ background: item.color }} />
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{item.label}</span>
-          </button>
-        ))}
+      {/* ── C2: Sticky left TOC with scroll-spy ────────────────────────── */}
+      <nav
+        aria-label="Page sections"
+        className="hidden xl:flex flex-col gap-0.5 fixed left-4 top-1/2 -translate-y-1/2 z-20 bg-[#0E1726]/80 backdrop-blur-sm rounded-xl border border-white/8 px-2 py-3 min-w-[180px]"
+      >
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-2 mb-1">On this page</p>
+        {TOC_ITEMS.map(item => {
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              aria-label={`Jump to ${item.label}`}
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-left ${
+                isActive
+                  ? "text-foreground border-l-2 pl-[6px]"
+                  : "text-muted-foreground hover:text-foreground border-l-2 border-transparent pl-[6px]"
+              }`}
+              style={isActive ? { borderColor: item.color } : {}}
+            >
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-opacity" style={{ background: item.color, opacity: isActive ? 1 : 0.4 }} />
+              <span className="leading-tight">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
+      {/* ── C2: Mobile ToC dropdown (<768px) ──────────────────────────────── */}
+      <div className="xl:hidden sticky top-[52px] z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-[#0E1726]/95 backdrop-blur-sm border-b border-white/8 mb-4">
+        <button
+          onClick={() => setMobileTocOpen(o => !o)}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          aria-expanded={mobileTocOpen}
+          aria-label="Jump to section"
+        >
+          <List className="w-3.5 h-3.5" />
+          <span>Jump to section</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileTocOpen ? "rotate-180" : ""}`} />
+        </button>
+        {mobileTocOpen && (
+          <div className="mt-2 flex flex-col gap-0.5 pb-2">
+            {TOC_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => { document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" }); setMobileTocOpen(false); }}
+                className="text-left text-xs text-muted-foreground hover:text-foreground py-1 px-2 rounded transition-colors"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
           STICKY HEADER — breadcrumb pills + actions
@@ -1349,10 +1427,12 @@ export default function AIStrategyPage() {
                     : `The organisation is ahead of the maturity level required for a ${bLevel?.label} ambition. The strategy should focus on innovation and maintaining competitive advantage.`
                   }
                 </p>
-                {/* Dimension breakdown — top 3 gaps only flagged as priority, unified 2-colour system */}
-                <div className="space-y-2">
-                  {[...companyResults.dimensions].sort((a, b) => a.score - b.score).map((dim, idx) => {
-                    const isPriority = idx < 3;
+                {/* Dimension breakdown — top 3 gaps VISIBLE, on-track COLLAPSED (C1) */}
+                {(() => {
+                  const sorted = [...companyResults.dimensions].sort((a, b) => a.score - b.score);
+                  const priority = sorted.slice(0, 3);
+                  const onTrack  = sorted.slice(3);
+                  const renderDim = (dim: typeof sorted[0], isPriority: boolean) => {
                     const pct = (dim.score / 5) * 100;
                     const barColor = isPriority ? "#F87171" : "#4ADE80";
                     return (
@@ -1370,8 +1450,30 @@ export default function AIStrategyPage() {
                         )}
                       </div>
                     );
-                  })}
-                </div>
+                  };
+                  return (
+                    <div className="space-y-2">
+                      {priority.map(d => renderDim(d, true))}
+                      {onTrack.length > 0 && (
+                        <div>
+                          <button
+                            onClick={() => setOnTrackCollapsed(c => !c)}
+                            className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-1 mb-1"
+                            aria-expanded={!onTrackCollapsed}
+                          >
+                            <ChevronDown className={`w-3 h-3 transition-transform ${onTrackCollapsed ? "" : "rotate-180"}`} />
+                            {onTrackCollapsed ? `See ${onTrack.length} on-track dimension${onTrack.length !== 1 ? "s" : ""}` : "Hide on-track dimensions"}
+                          </button>
+                          {!onTrackCollapsed && (
+                            <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                              {onTrack.map(d => renderDim(d, false))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-red-400/70 inline-block" />Priority gap (bottom 3)</span>
                   <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-green-400/70 inline-block" />On track</span>
@@ -1489,23 +1591,35 @@ export default function AIStrategyPage() {
               </div>
             )}
 
-            {/* Guiding principles */}
+            {/* Guiding principles — C1: collapsed by default */}
             {guidingPrinciples && guidingPrinciples.length > 0 && (
               <div className="rounded-xl border border-white/8 bg-white/2 p-5">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Guiding Principles</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {guidingPrinciples.map((p, i) => (
-                    <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg border border-white/6 bg-white/2">
-                      <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
+                <button
+                  onClick={() => setGuidingPrinciplesCollapsed(c => !c)}
+                  className="w-full flex items-center justify-between"
+                  aria-expanded={!guidingPrinciplesCollapsed}
+                >
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Guiding Principles</p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>{guidingPrinciplesCollapsed ? `See ${guidingPrinciples.length} principles` : "Hide"}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${guidingPrinciplesCollapsed ? "" : "rotate-180"}`} />
+                  </div>
+                </button>
+                {!guidingPrinciplesCollapsed && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2 duration-200">
+                    {guidingPrinciples.map((p, i) => (
+                      <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg border border-white/6 bg-white/2">
+                        <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-0.5">{p.title}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold text-foreground mb-0.5">{p.title}</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1957,13 +2071,22 @@ export default function AIStrategyPage() {
           );
         })()}
 
-        {/* Dependencies */}
+        {/* Dependencies — C1: collapsed by default */}
         <div className="rounded-xl border border-white/8 bg-white/2 p-5 mt-5">
-          <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={() => setCrossFuncCollapsed(c => !c)}
+            className="w-full flex items-center gap-2"
+            aria-expanded={!crossFuncCollapsed}
+          >
             <Link2 className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cross-Functional Dependencies</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1 text-left">Cross-Functional Dependencies</p>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span>{crossFuncCollapsed ? "See dependencies" : "Hide"}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${crossFuncCollapsed ? "" : "rotate-180"}`} />
+            </div>
+          </button>
+          {!crossFuncCollapsed && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 animate-in slide-in-from-top-2 duration-200">
             {[
               {
                 function: "IT / Data",
@@ -1994,6 +2117,7 @@ export default function AIStrategyPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
         {/* D3 — Delivery Confidence Panel */}
         {(() => {
@@ -2054,17 +2178,24 @@ export default function AIStrategyPage() {
               <div className="space-y-2">
                 {fws.map(fw => (
                   <div key={fw.id} className="rounded-lg border border-white/8 bg-white/2 p-3">
-                    <div className="flex items-start gap-2">
+                    <button
+                      onClick={() => setRegDescCollapsed(s => ({ ...s, [fw.id]: !s[fw.id] }))}
+                      className="w-full flex items-start gap-2"
+                      aria-expanded={!regDescCollapsed[fw.id]}
+                    >
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
                         fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
                         fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
                         "bg-white/10 text-muted-foreground"
                       }`}>{fw.risk}</span>
-                      <div>
+                      <div className="flex-1 text-left">
                         <p className="text-xs font-semibold text-foreground">{fw.label}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{fw.description}</p>
                       </div>
-                    </div>
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5 transition-transform ${regDescCollapsed[fw.id] !== false ? "" : "rotate-180"}`} />
+                    </button>
+                    {regDescCollapsed[fw.id] === false && (
+                      <p className="text-[10px] text-muted-foreground mt-1.5 ml-8 leading-relaxed animate-in slide-in-from-top-1 duration-200">{fw.description}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2298,18 +2429,53 @@ export default function AIStrategyPage() {
                   </div>
                 );
               })()}
-              {/* Per-initiative breakdown */}
+              {/* A4: Value concentration risk banner */}
+              {(() => {
+                const totalHigh = ve.total_quantified_value_gbp.high;
+                if (totalHigh <= 0) return null;
+                const sorted = [...ve.by_initiative]
+                  .filter(i => i.quantified_value_gbp && i.quantified_value_gbp.high > 0)
+                  .sort((a, b) => (b.quantified_value_gbp?.high ?? 0) - (a.quantified_value_gbp?.high ?? 0));
+                if (sorted.length === 0) return null;
+                const top = sorted[0];
+                const topPct = Math.round((top.quantified_value_gbp!.high / totalHigh) * 100);
+                if (topPct < 60) return null;
+                return (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/6 p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-300 mb-1">Value concentration risk</p>
+                      <p className="text-[11px] text-amber-300/80 leading-relaxed mb-2">
+                        <strong>{topPct}%</strong> of this strategy's quantified value depends on a single initiative:{" "}
+                        <strong>{top.display_name}</strong>. If this initiative is delayed or under-delivers, the strategy's measurable case weakens significantly.
+                      </p>
+                      <p className="text-[10px] text-amber-300/60 leading-relaxed">
+                        Mitigation: review value assumptions against your operational baseline · consider additional value-generating initiatives to diversify · use phased value recognition rather than full Year-1 attribution.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* Per-initiative breakdown — C1: collapsed by default */}
               <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
-                <div className="px-5 py-3 border-b border-white/8 flex items-center justify-between">
+                <button
+                  onClick={() => setPerInitCollapsed(c => !c)}
+                  className="w-full px-5 py-3 border-b border-white/8 flex items-center justify-between"
+                  aria-expanded={!perInitCollapsed}
+                >
                   <span className="text-sm font-medium">Per-Initiative Value Breakdown</span>
-                  <button
-                    className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    onClick={() => setValueProvenanceOpen(true)}
-                  >
-                    <Info className="w-3 h-3" /> Methodology
-                  </button>
-                </div>
-                <div className="divide-y divide-white/5">
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      onClick={(e) => { e.stopPropagation(); setValueProvenanceOpen(true); }}
+                    >
+                      <Info className="w-3 h-3" /> Methodology
+                    </button>
+                    <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${perInitCollapsed ? "" : "rotate-180"}`} />
+                  </div>
+                </button>
+                {!perInitCollapsed && (
+                <div className="divide-y divide-white/5 animate-in slide-in-from-top-2 duration-200">
                   {ve.by_initiative.map(item => (
                     <div key={item.initiative_id} className="px-5 py-3 flex items-start gap-3 hover:bg-white/2 transition-colors">
                       <div className="flex-1 min-w-0">
@@ -2353,20 +2519,33 @@ export default function AIStrategyPage() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
 
-              {/* Qualitative bullets */}
+              {/* Qualitative bullets — C1: collapsed by default */}
               {ve.qualitative_summary.bullet_points.length > 0 && (
                 <div className="rounded-xl border border-white/8 bg-white/2 px-5 py-4">
-                  <div className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-widest">Qualitative Value Highlights</div>
-                  <ul className="space-y-1.5">
-                    {ve.qualitative_summary.bullet_points.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    onClick={() => setQualBulletsCollapsed(c => !c)}
+                    className="w-full flex items-center justify-between"
+                    aria-expanded={!qualBulletsCollapsed}
+                  >
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Qualitative Value Highlights</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span>{qualBulletsCollapsed ? `See ${ve.qualitative_summary.bullet_points.length} outcomes` : "Hide"}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${qualBulletsCollapsed ? "" : "rotate-180"}`} />
+                    </div>
+                  </button>
+                  {!qualBulletsCollapsed && (
+                    <ul className="space-y-1.5 mt-3 animate-in slide-in-from-top-2 duration-200">
+                      {ve.qualitative_summary.bullet_points.map((b, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
@@ -2445,6 +2624,18 @@ export default function AIStrategyPage() {
                     <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
                       DCF model discounts projected annual cashflows at {fm.discount_rate_pct}% over {fm.horizon_years} years. NPV &gt; 0 indicates the strategy creates value above the cost of capital. IRR is the break-even discount rate.
                     </p>
+                    {/* A3.2: IRR credibility banner when IRR > 40% */}
+                    {fm.irr_pct && fm.irr_pct.high > 40 && isFinite(fm.irr_pct.high) && (
+                      <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                          <strong className="text-amber-300">Indicative figure — sanity check before relying.</strong>{" "}
+                          IRR of {fm.irr_pct.high.toFixed(1)}% is materially higher than typical transformation programme returns (15–40%).
+                          Possible reasons: value concentration in a single initiative, optimistic improvement assumptions, or implementation costs understated.
+                          Recommended: review with Finance before relying on this figure for capital decisions.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })()}

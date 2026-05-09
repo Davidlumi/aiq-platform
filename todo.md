@@ -2520,40 +2520,60 @@
 ## Learning Plan Dashboard Rebuild v2
 
 ### Backend — new tRPC procedures
-- [ ] A1: getLearningDashboard procedure — greeting data (name, plan count, completed count, current focus domain + strategy linkage)
-- [ ] B1: getInFlightInitiatives — user's in-flight strategy initiatives with module counts per initiative
-- [ ] B2: getModulesByInitiative — modules filtered by initiative-id
-- [ ] D1: getRecentCompletions — last 30 days completions with coaching feedback indicators
-- [ ] D2: getActiveCoachingConversations — active coaching conversations list
+- [x] A1: getLearningDashboard procedure — greeting data (name, plan count, completed count, current focus domain + strategy linkage)
+- [x] B1: getInFlightInitiatives — user's in-flight strategy initiatives with module counts per initiative
+- [x] B2: getModulesByInitiative — modules filtered by initiative-id
+- [x] D1: getRecentCompletions — last 30 days completions with coaching feedback indicators
+- [x] D2: getActiveCoachingConversations — active coaching conversations list
 
 ### Frontend — Block A (Header zone)
-- [ ] A1: Greeting block — 3-sentence greeting with strategy context and learning plan explanation
-- [ ] A1: Current focus logic (most recent domain in 14 days → most initiative-linked → highest pathway → fallback)
-- [ ] A1: Fallback for users without strategy; empty state for first-time users
-- [ ] A2: Continue Learning panel — module name + metadata + reasoning paragraph + green CTA
-- [ ] A3: Calm progress framing — collapsed single sentence + expandable detail panel
+- [x] A1: Greeting block — 3-sentence greeting with strategy context and learning plan explanation
+- [x] A1: Current focus logic (most recent domain in 14 days → most initiative-linked → highest pathway → fallback)
+- [x] A1: Fallback for users without strategy; empty state for first-time users
+- [x] A2: Continue Learning panel — module name + metadata + reasoning paragraph + green CTA
+- [x] A3: Calm progress framing — collapsed single sentence + expandable detail panel
 
 ### Frontend — Block B (Strategy linkage)
-- [ ] B1: In-flight initiatives panel with module counts + [See modules →]
-- [ ] B1: Empty state for users without strategy
-- [ ] B2: /learning/initiative/[id] route — modules filtered by initiative
+- [x] B1: In-flight initiatives panel with module counts + [See modules →]
+- [x] B1: Empty state for users without strategy
+- [x] B2: /learning/initiative/[id] route — modules filtered by initiative
 
 ### Frontend — Block C (Domain cards refinement)
-- [ ] C1: Demote score to metadata line as 3rd element: "[level] level · Module [N] of [M] · Capability [score]"
-- [ ] C1: Remove large standalone coloured score number from card header
-- [ ] C1: "Connects to: [initiative]" line when strategy linked
-- [ ] C1: "See your progression in this domain ↗" drill-down link
-- [ ] C2: Subtle domain tint on card background (5-10% opacity), neutral border, green progress bar + button
-- [ ] C3: Remove "AI Ready" / "Developing" overlay badge entirely; keep level label in metadata line only
+- [x] C1: Demote score to metadata line as 3rd element: "[level] level · Module [N] of [M] · Capability [score]"
+- [x] C1: Remove large standalone coloured score number from card header
+- [x] C1: "Connects to: [initiative]" line when strategy linked
+- [x] C1: "See your progression in this domain ↗" drill-down link
+- [x] C2: Subtle domain tint on card background (5-10% opacity), neutral border, green progress bar + button
+- [x] C3: Remove "AI Ready" / "Developing" overlay badge entirely; keep level label in metadata line only
 
 ### Frontend — Block D (Recent activity)
-- [ ] D1: Recent progress panel — compact default + expandable to 5 completions with coaching feedback indicators
-- [ ] D2: Active coaching conversations panel — hidden if no conversations
-- [ ] D1+D2: Mobile combined "Recent activity" panel
+- [x] D1: Recent progress panel — compact default + expandable to 5 completions with coaching feedback indicators
+- [x] D2: Active coaching conversations panel — hidden if no conversations
+- [x] D1+D2: Mobile combined "Recent activity" panel
 
 ### Cross-cutting
-- [ ] Loading states: skeleton loaders for all panels
-- [ ] Error states: graceful degradation per panel
-- [ ] Empty states: first-time user renders warmly
-- [ ] Mobile: above-fold = greeting + Continue Learning only at 375px; domain cards single column
-- [ ] Accessibility: keyboard nav, ARIA labels on progress bars, h2/h3 headings
+- [x] Loading states: skeleton loaders for all panels
+- [x] Error states: graceful degradation per panel
+- [x] Empty states: first-time user renders warmly
+- [x] Mobile: above-fold = greeting + Continue Learning only at 375px; domain cards single column
+- [x] Accessibility: keyboard nav, ARIA labels on progress bars, h2/h3 headings
+
+## Strategy Credibility & Disclosure Brief v2
+
+### Block A — Calculation Fixes
+- [x] A1: Formula/value unification — single source of truth; formula text from actual inputs; 0% inputs handled gracefully
+- [x] A2: Cap maturity scores at 10 (display + console.warn); investigate root cause of >10 scores
+- [x] A3: IRR caveat banner when IRR > 40%; concentration scenario when single initiative > 60% of value
+- [x] A4: Value concentration risk banner in Section 5 when single initiative > 60% of total quantified value
+- [x] A5: Test coverage for calculation engine (formula accuracy, zero inputs, concentration, maturity cap, /10 scale, NPV/IRR, TCO)
+
+### Block B — Content Credibility
+- [x] B1: Convert ALL displayed capability scores to /10 (1 decimal) — Six-Domain Gap Profile bars, drill-downs
+- [x] B2: Vision prompt v1.2 — 5 quality criteria enforced; tested for 3+ profiles
+- [x] B3: ERA 2025 as primary statute (amending ERA 1996) in all framework lists
+- [x] B4: Cost figure consistency — Value Summary uses 3-year TCO basis; Net Value = Gross Value (3yr) - 3yr TCO
+- [x] B5: Qualitative Highlights capped at 8-10 items; criteria-driven filtering (specific/defensible/distinctive/material)
+
+### Block C — Progressive Disclosure
+- [x] C1: CollapsibleSubsection component; per-section collapsible map per spec; keyboard nav + ARIA
+- [x] C2: Sticky ToC left rail (>1280px); scroll-spy active section; mobile dropdown; section anchors

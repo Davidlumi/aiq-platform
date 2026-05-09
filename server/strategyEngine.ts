@@ -90,7 +90,32 @@ const FORBIDDEN_PHRASES = [
 
 const REQUIRED_ELEMENTS = [
   /\d+\s*%|\d+\s*points?|\d+\s*months?|\d+\s*weeks?|\d+\s*days?/i, // at least one number/metric
+  /by \d{4}|by Q[1-4]|within \d+|over the next \d+|end of \d{4}/i,  // time-bound horizon
 ];
+// B5: Qualitative items considered too generic to surface in the strategy artefact
+export const GENERIC_QUAL_PHRASES = new Set([
+  "Employee trust",
+  "Data-driven decisions",
+  "Improved compliance",
+  "Regulatory compliance",
+  "Improved employee experience",
+  "Higher employee engagement",
+  "Higher employee engagement scores",
+  "Improved retention",
+  "Faster decision-making",
+  "Faster response times",
+  "Better AI-human collaboration",
+  "Cultural readiness",
+  "Stakeholder confidence",
+  "Improved HR credibility",
+  "Higher quality HR outputs",
+  "Improved analytics accuracy",
+  "Improved team performance",
+  "Workforce stability",
+  "AI model reliability",
+  "Measurable adoption metrics",
+  "Regulatory compliance assurance",
+]);
 
 const GOLDEN_EXAMPLES: Record<string, string> = {
   retail_transformative: `By 2027, ${"{company}"}'s HR function will operate as a predictive intelligence layer for a 45,000-person retail workforce: deploying AI-driven attrition signals to store managers 90 days before turnover risk peaks, running continuous skills gap analysis against seasonal trading plans, and ensuring every people decision from hiring to promotion is auditable under the EU AI Act. HR will move from reactive administration to a function that shapes labour strategy before the board asks for it.`,
@@ -860,10 +885,11 @@ function resolveValueFormula(
       breakdown = `40% deflection × ${annualQueries} queries × 0.5h × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
     },
     automated_onboarding_orchestration: () => {
+      const dailyRate = Math.round(hrCostPerFte / 260);
       const admin = hires * 4 * hrHourlyRate;
-      const productivity = hires * 5 * Math.round(hrCostPerFte / 260);
+      const productivity = hires * 5 * dailyRate;
       value = admin + productivity;
-      breakdown = `${hires} hires × 4h admin + 5d productivity × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+      breakdown = `${hires} hires × (4h admin @ £${hrHourlyRate}/h + 5d productivity @ £${dailyRate}/d) = £${Math.round(value).toLocaleString()}`;
     },
     people_analytics_dashboard: () => {
       value = hrFunctionSize * 40 * hrHourlyRate;
@@ -1020,8 +1046,20 @@ export function calculateValueEnvelope(
     }
   }
 
-  const netLow = totalLow - approxCostHigh;
-  const netHigh = totalHigh - approxCostLow;
+  // B4: Compute 3-year TCO first so net value uses the same cost basis as the bar chart
+  const horizonYears_pre = Math.max(1, Math.round(planHorizonMonths / 12));
+  const changeMgmtLow_pre  = Math.round(approxCostLow  * 0.12);
+  const changeMgmtHigh_pre = Math.round(approxCostHigh * 0.15);
+  const estHrFtes_pre = Math.max(5, Math.round((operationalBaseline.hires_per_year ?? 50) / 0.10 / 50));
+  const trainingLow_pre  = estHrFtes_pre * 200;
+  const trainingHigh_pre = estHrFtes_pre * 400;
+  const ongoingAnnualLow_pre  = Math.round(approxCostLow  * 0.18);
+  const ongoingAnnualHigh_pre = Math.round(approxCostHigh * 0.20);
+  const tco3yrLow  = approxCostLow  + changeMgmtLow_pre  + trainingLow_pre  + ongoingAnnualLow_pre  * horizonYears_pre;
+  const tco3yrHigh = approxCostHigh + changeMgmtHigh_pre + trainingHigh_pre + ongoingAnnualHigh_pre * horizonYears_pre;
+  // Net value = Gross Value (3-yr) – 3-yr TCO (consistent cost basis with bar chart)
+  const netLow = totalLow - tco3yrHigh;
+  const netHigh = totalHigh - tco3yrLow;
 
   // Payback period
   let paybackPeriod: { low: number; high: number } | null = null;
@@ -1037,23 +1075,23 @@ export function calculateValueEnvelope(
   const quantifiedCount = byInitiative.filter(i => i.quantified_value_gbp !== null).length;
   const qualOnlyCount = byInitiative.filter(i => i.quantified_value_gbp === null).length;
 
-  // C1: Expanded TCO
-  const changeMgmtLow  = Math.round(approxCostLow  * 0.12);
-  const changeMgmtHigh = Math.round(approxCostHigh * 0.15);
-  const estHrFtes = Math.max(5, Math.round((operationalBaseline.hires_per_year ?? 50) / 0.10 / 50));
-  const trainingLow  = estHrFtes * 200;
-  const trainingHigh = estHrFtes * 400;
-  const ongoingAnnualLow  = Math.round(approxCostLow  * 0.18);
-  const ongoingAnnualHigh = Math.round(approxCostHigh * 0.20);
-  const horizonYears = Math.max(1, Math.round(planHorizonMonths / 12));
+  // C1: Expanded TCO (reuse pre-computed values for B4 consistency)
+  const changeMgmtLow  = changeMgmtLow_pre;
+  const changeMgmtHigh = changeMgmtHigh_pre;
+  const estHrFtes = estHrFtes_pre;
+  const trainingLow  = trainingLow_pre;
+  const trainingHigh = trainingHigh_pre;
+  const ongoingAnnualLow  = ongoingAnnualLow_pre;
+  const ongoingAnnualHigh = ongoingAnnualHigh_pre;
+  const horizonYears = horizonYears_pre;
   const tco: TotalCostOfOwnership = {
     implementation_gbp:    { low: approxCostLow,    high: approxCostHigh    },
     change_management_gbp: { low: changeMgmtLow,    high: changeMgmtHigh    },
     training_gbp:          { low: trainingLow,       high: trainingHigh      },
     ongoing_annual_gbp:    { low: ongoingAnnualLow,  high: ongoingAnnualHigh },
     total_3yr_gbp: {
-      low:  approxCostLow  + changeMgmtLow  + trainingLow  + ongoingAnnualLow  * horizonYears,
-      high: approxCostHigh + changeMgmtHigh + trainingHigh + ongoingAnnualHigh * horizonYears,
+      low:  tco3yrLow,
+      high: tco3yrHigh,
     },
   };
 
@@ -1200,7 +1238,11 @@ export function calculateValueEnvelope(
       capability_uplift_count: capabilityUpliftCount,
       risk_avoidance_count: riskAvoidanceCount,
       strategic_count: strategicCount,
-      bullet_points: allQualitative.slice(0, 20),
+      bullet_points: (() => {
+        // B5: filter generic phrases, cap at 8-10, prioritise Foundation phase items
+        const filtered = allQualitative.filter(q => !GENERIC_QUAL_PHRASES.has(q));
+        return filtered.slice(0, 10);
+      })(),
     },
     caveat: `Indicative value ranges based on cited sector benchmarks and your operational baseline. Excludes second-order effects. Quantified value applies to ${quantifiedCount} initiative${quantifiedCount !== 1 ? "s" : ""}; ${qualOnlyCount} initiative${qualOnlyCount !== 1 ? "s" : ""} produce qualitative value not reflected in these figures. Confirm with Finance before commitment.`,
     libraryVersion: libMeta.version,
