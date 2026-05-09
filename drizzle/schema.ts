@@ -76,6 +76,8 @@ export const users = mysqlTable("users", {
   managerDirectReportsJson: text("manager_direct_reports_json"),
   managerOnboardingCompleted: boolean("manager_onboarding_completed").default(false),
   managerOnboardingCompletedAt: timestamp("manager_onboarding_completed_at"),
+  // v1.4: module personalisation collapse preference
+  modulePersonalisationCollapsed: tinyint("module_personalisation_collapsed").notNull().default(0),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),
@@ -1213,6 +1215,10 @@ export const learningModules = mysqlTable("learning_modules", {
   requiredCapabilityScore: int("required_capability_score"),
   /** Minimum difficulty level (1-5) of completed modules required to unlock */
   requiredLevel: int("required_level"),
+  // v1.4: strategy initiative linkage (array of initiative key strings)
+  linkedInitiativeIds: json("linked_initiative_ids").$type<string[]>(),
+  // v1.4: compressed priming text for priority modules (falls back to bodyJson.overview if null)
+  primingTextV2: text("priming_text_v2"),
   createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
   updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
 }, (t) => ({
@@ -2111,3 +2117,16 @@ export const triggeredReviews = mysqlTable("triggered_reviews", {
   createdAtIdx: index("idx_tr_created_at").on(t.createdAt),
 }));
 export type TriggeredReview = typeof triggeredReviews.$inferSelect;
+
+// ── coaching_conversations (v1.4: module-linked conversation persistence) ─────
+export const coachingConversations = mysqlTable("coaching_conversations", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 36 }),
+  conversationJson: json("conversation_json").$type<Array<{ role: string; content: string; createdAt: number }>>().notNull().$default(() => []),
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  userModuleIdx: index("idx_cc_user_module").on(t.userId, t.moduleId),
+}));
+export type CoachingConversation = typeof coachingConversations.$inferSelect;

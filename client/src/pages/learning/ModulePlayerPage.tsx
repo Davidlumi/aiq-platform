@@ -15,6 +15,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
+import ModulePersonalisationPanel from "@/components/learning/ModulePersonalisationPanel";
+import ModulePathwayBreadcrumb from "@/components/learning/ModulePathwayBreadcrumb";
+import ModuleCoachPanel from "@/components/learning/ModuleCoachPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DownloadPdfButton } from "@/components/DownloadPdfButton";
@@ -2015,7 +2018,11 @@ export default function ModulePlayerPage() {
     { moduleId: params.moduleId ?? "" },
     { enabled: !!params.moduleId && !!mod, retry: 1, staleTime: 1000 * 60 * 60 }
   );
-
+  // v1.4: Journey context for personalisation panel and coach panel
+  const { data: journeyCtx } = trpc.adaptiveLearning.getJourneyContext.useQuery(
+    { moduleId: params.moduleId ?? "" },
+    { enabled: !!params.moduleId && !!mod, staleTime: 1000 * 60 * 5 }
+  );
   const [noTransferResult, setNoTransferResult] = useState<{ alternativeTitle: string | null; alternativeModality: string | null; message: string } | null>(null);
   const [masteryGateResult, setMasteryGateResult] = useState<{ blocked: boolean; message: string | null; threshold: number; score: number } | null>(null);
 
@@ -2099,7 +2106,15 @@ export default function ModulePlayerPage() {
       <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-foreground hover:text-foreground/80" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />Learning Plan
       </Button>
-
+      {/* v1.4 Change 2: Pathway breadcrumb */}
+      {journeyCtx && (
+        <ModulePathwayBreadcrumb
+          capability={mod.capability}
+          difficulty={mod.difficulty ?? 1}
+          moduleIndex={journeyCtx.moduleIndexInDomain}
+          totalModules={journeyCtx.totalModulesInDomain}
+        />
+      )}
       {!completed ? (
         <>
           {/* Module header */}
@@ -2137,47 +2152,10 @@ export default function ModulePlayerPage() {
             completed={false}
           />
 
-          {/* LLM Personalised Context Panel - collapsible, shown below progress bar */}
-          {(personalisedLoading || personalised) && (
-            <details className="group rounded-xl border border-border bg-muted/20 overflow-hidden">
-              <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none list-none">
-                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm font-semibold text-primary flex-1">Personalised for you</span>
-                {personalisedLoading && <span className="text-xs text-muted-foreground animate-pulse">Generating…</span>}
-                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="px-4 pb-4 space-y-2 border-t border-border">
-              {personalised ? (
-                <>
-                  {personalised.personalisedIntro && (
-                    <p className="text-sm text-foreground/80 leading-relaxed pt-3">{personalised.personalisedIntro}</p>
-                  )}
-                  {Array.isArray(personalised.contextualExamples) && (personalised.contextualExamples as string[]).length > 0 && (
-                    <div className="space-y-1">
-                      {(personalised.contextualExamples as string[]).slice(0, 2).map((ex, i) => (
-                        <p key={i} className="text-xs text-muted-foreground border-l-2 border-border pl-3 italic">{ex}</p>
-                      ))}
-                    </div>
-                  )}
-                  {Array.isArray(personalised.failureModeCallouts) && (personalised.failureModeCallouts as string[]).length > 0 && (
-                    <div className="p-2.5 rounded-lg bg-[#C8B07A]/10 border border-[#C8B07A]/30 mt-1">
-                      {(personalised.failureModeCallouts as string[]).slice(0, 1).map((fm, i) => (
-                        <p key={i} className="text-xs text-[#8E7848]">
-                          <span className="font-semibold">Watch out: </span>{fm}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-1.5 pt-3">
-                  <div className="h-3 rounded bg-muted animate-pulse w-3/4" />
-                  <div className="h-3 rounded bg-muted animate-pulse w-1/2" />
-                </div>
-              )}
-              </div>
-            </details>
-          )}
+          {/* v1.4 Change 1: Visible personalisation panel */}
+          <ModulePersonalisationPanel
+            moduleId={params.moduleId ?? ""}
+          />
 
           {/* Module content */}
           <div className="p-5 rounded-2xl border border-border bg-card">
@@ -2211,6 +2189,17 @@ export default function ModulePlayerPage() {
               </div>
             </details>
           )}
+
+          {/* v1.4 Change 4: Coach affordance panel */}
+          <ModuleCoachPanel
+            moduleId={params.moduleId ?? ""}
+            moduleTitle={mod.title}
+            moduleFormat={mod.modality}
+            moduleDifficulty={mod.difficulty ?? 1}
+            moduleCapability={mod.capability}
+            journeyPosition={journeyCtx?.journeyPosition}
+            strategyLinkage={journeyCtx?.strategyLinkage}
+          />
         </>
       ) : (
         <>

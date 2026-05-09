@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE users ADD COLUMN module_personalisation_collapsed TINYINT(1) NOT NULL DEFAULT 0;\nALTER TABLE learning_modules ADD COLUMN linked_initiative_ids JSON;\nALTER TABLE learning_modules ADD COLUMN priming_text_v2 TEXT;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE users ADD COLUMN module_personalisation_collapsed TINYINT(1) NOT NULL DEFAULT 0;\nALTER TABLE learning_modules ADD COLUMN linked_initiative_ids JSON;\nALTER TABLE learning_modules ADD COLUMN priming_text_v2 TEXT;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1304
+}

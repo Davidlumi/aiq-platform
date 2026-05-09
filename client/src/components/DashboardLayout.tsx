@@ -41,6 +41,7 @@ import {
   UserCog,
   MessageSquarePlus,
   CalendarCheck2,
+  Map,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -68,6 +69,7 @@ const MY_DEVELOPMENT: NavSection = {
     // AiQ Coach hidden — in development: { icon: MessageSquare, label: "AiQ Coach", path: "/coach" }
     { icon: ClipboardList,  label: "Assessment",     path: "/assessment" },
     { icon: BookOpen,       label: "Learning Plan",  path: "/learning" },
+    { icon: Map,            label: "Domain Pathways", path: "/development/ai_interaction" },
     { icon: Library,        label: "Content Library",path: "/library" },
     { icon: BookMarked,     label: "Knowledge Base", path: "/knowledge-base" },
   ],

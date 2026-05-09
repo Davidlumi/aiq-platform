@@ -44,6 +44,10 @@ import {
   ailOrgContext,
   auditLogs,
   moduleEngagementEvents,
+  coachingConversations,
+  strategies,
+  strategyInitiatives,
+  strategyInitiativeLibrary,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
@@ -1718,6 +1722,319 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
         total: stale.length,
         cutoffDate: new Date(cutoff).toISOString(),
       };
+    }),
+
+  // ─── v1.4 Change 1: get journey context for personalisation panel ─────────
+  getJourneyContext: protectedProcedure
+    .input(z.object({ moduleId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Get the module
+      const [mod] = await db.select().from(learningModules).where(eq(learningModules.id, input.moduleId)).limit(1);
+      if (!mod) return null;
+      // Get user's active plan items for this capability to determine position
+      const plan = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, ctx.user.id), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+      let journeyPosition = "";
+      let moduleIndexInDomain = 0;
+      let totalModulesInDomain = 0;
+      if (plan[0]) {
+        const items = await db.select().from(adaptivePlanItems)
+          .where(eq(adaptivePlanItems.planId, plan[0].id));
+        const moduleIds = items.map(i => i.moduleId);
+        const mods = moduleIds.length > 0
+          ? await db.select({ id: learningModules.id, capability: learningModules.capability, difficulty: learningModules.difficulty })
+              .from(learningModules).where(inArray(learningModules.id, moduleIds))
+          : [];
+        const domainMods = mods.filter(m => m.capability === mod.capability);
+        totalModulesInDomain = domainMods.length;
+        const sortedDomainMods = domainMods.sort((a, b) => (a.difficulty ?? 1) - (b.difficulty ?? 1));
+        const idx = sortedDomainMods.findIndex(m => m.id === input.moduleId);
+        moduleIndexInDomain = idx >= 0 ? idx + 1 : 1;
+        const completedCount = items.filter(i => {
+          const m = mods.find(m => m.id === i.moduleId && m.capability === mod.capability);
+          return m && i.status === "completed";
+        }).length;
+        const LEVEL_LABELS: Record<number, string> = { 1: "Foundation", 2: "Developing", 3: "Practitioner", 4: "Advanced", 5: "Expert" };
+        const levelLabel = LEVEL_LABELS[mod.difficulty ?? 1] ?? `Level ${mod.difficulty}`;
+        journeyPosition = `Module ${moduleIndexInDomain} of ${totalModulesInDomain} in ${levelLabel} — ${completedCount} completed so far`;
+      }
+      // Get user's latest strategy for initiative linkage
+      let strategyLinkage: { initiativeName: string; phase: string; status: string } | null = null;
+      const linkedIds = (mod.linkedInitiativeIds as string[] | null) ?? [];
+      if (linkedIds.length > 0) {
+        const latestStrategy = await db.select().from(strategies)
+          .where(eq(strategies.createdByUserId, ctx.user.id))
+          .orderBy(desc(strategies.updatedAt)).limit(1);
+        if (latestStrategy[0]) {
+          const initiatives = await db.select({
+            id: strategyInitiatives.id,
+            initiativeId: strategyInitiatives.initiativeId,
+            targetQuarter: strategyInitiatives.targetQuarter,
+            name: strategyInitiativeLibrary.name,
+            category: strategyInitiativeLibrary.category,
+          })
+          .from(strategyInitiatives)
+          .innerJoin(strategyInitiativeLibrary, eq(strategyInitiatives.initiativeId, strategyInitiativeLibrary.id))
+          .where(eq(strategyInitiatives.strategyId, latestStrategy[0].id));
+          const matched = initiatives.find(i => linkedIds.includes(i.initiativeId));
+          if (matched) {
+            strategyLinkage = {
+              initiativeName: matched.name,
+              phase: matched.targetQuarter ?? "In planning",
+              status: "Active",
+            };
+          }
+        }
+      }
+      // Get user's collapse preference
+      const [userRow] = await db.select({ modulePersonalisationCollapsed: users.modulePersonalisationCollapsed })
+        .from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      return {
+        moduleId: input.moduleId,
+        capability: mod.capability,
+        difficulty: mod.difficulty,
+        journeyPosition,
+        moduleIndexInDomain,
+        totalModulesInDomain,
+        strategyLinkage,
+        collapsed: userRow?.modulePersonalisationCollapsed === 1,
+        primingTextV2: mod.primingTextV2 ?? null,
+      };
+    }),
+
+  // ─── v1.4 Change 1: persist collapse preference ───────────────────────────
+  setPersonalisationCollapsed: protectedProcedure
+    .input(z.object({ collapsed: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(users)
+        .set({ modulePersonalisationCollapsed: input.collapsed ? 1 : 0 })
+        .where(eq(users.id, ctx.user.id));
+      return { ok: true };
+    }),
+
+  // ─── v1.4 Change 5: domain pathway view ──────────────────────────────────
+  getDomainPathway: protectedProcedure
+    .input(z.object({ domainId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const DOMAIN_META: Record<string, { name: string; description: string }> = {
+        ai_interaction: { name: "AI Interaction", description: "Prompting, dialogue, and effective use of AI tools in HR workflows" },
+        ai_output_evaluation: { name: "AI Output Evaluation", description: "Critically assessing AI outputs for accuracy, bias, and fitness for purpose" },
+        ai_workflow_design: { name: "AI Workflow Design", description: "Designing and integrating AI into HR processes and decision flows" },
+        ai_ethics_trust: { name: "AI Ethics & Trust", description: "Governance, fairness, transparency, and responsible AI deployment" },
+        workforce_ai_readiness: { name: "Workforce AI Readiness", description: "Building organisational capability and managing AI-driven change" },
+        ai_change_leadership: { name: "AI Change Leadership", description: "Leading AI transformation, stakeholder engagement, and strategic alignment" },
+      };
+      const LEVEL_META: Record<number, { name: string; unlockThreshold: number }> = {
+        1: { name: "Foundation",   unlockThreshold: 0 },
+        2: { name: "Developing",   unlockThreshold: 3.0 },
+        3: { name: "Practitioner", unlockThreshold: 4.5 },
+        4: { name: "Advanced",     unlockThreshold: 6.0 },
+        5: { name: "Expert",       unlockThreshold: 7.5 },
+        6: { name: "Master",       unlockThreshold: 8.5 },
+      };
+      const domainMeta = DOMAIN_META[input.domainId] ?? { name: input.domainId, description: "" };
+      // Get all published modules for this domain
+      const allMods = await db.select().from(learningModules)
+        .where(and(eq(learningModules.capability, input.domainId), eq(learningModules.status, "published")));
+      // Get user's plan items for completion status
+      const plan = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, ctx.user.id), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+      let completedModuleIds = new Set<string>();
+      let completedAtMap = new Map<string, number>();
+      if (plan[0]) {
+        const items = await db.select().from(adaptivePlanItems)
+          .where(and(eq(adaptivePlanItems.planId, plan[0].id), eq(adaptivePlanItems.status, "completed")));
+        items.forEach(i => { completedModuleIds.add(i.moduleId); completedAtMap.set(i.moduleId, i.completedAt ?? 0); });
+      }
+      // Get user's capability score for this domain
+      const latestScore = await db.select().from(assessmentScores)
+        .innerJoin(assessmentSessions, eq(assessmentScores.sessionId, assessmentSessions.id))
+        .where(and(eq(assessmentSessions.userId, ctx.user.id), eq(assessmentSessions.state, "completed")))
+        .orderBy(desc(assessmentSessions.completedAt)).limit(1);
+      let capabilityScore = 0;
+      if (latestScore[0]) {
+        const breakdown = latestScore[0].assessment_scores.scoreBreakdownJson as Record<string, number> | null;
+        if (breakdown) capabilityScore = breakdown[input.domainId] ?? 0;
+      }
+      // Build levels
+      const levels = Object.entries(LEVEL_META).map(([levelStr, meta]) => {
+        const level = parseInt(levelStr);
+        const levelMods = allMods.filter(m => (m.difficulty ?? 1) === level);
+        const completedCount = levelMods.filter(m => completedModuleIds.has(m.id)).length;
+        const totalCount = levelMods.length;
+        // Determine if locked: Foundation always unlocked; others require 75%+ of prior level OR score threshold
+        let locked = false;
+        let lockReason: string | null = null;
+        if (level > 1) {
+          const priorLevelMods = allMods.filter(m => (m.difficulty ?? 1) === level - 1);
+          const priorCompleted = priorLevelMods.filter(m => completedModuleIds.has(m.id)).length;
+          const priorPct = priorLevelMods.length > 0 ? priorCompleted / priorLevelMods.length : 0;
+          const scoreUnlocks = capabilityScore >= meta.unlockThreshold;
+          const completionUnlocks = priorPct >= 0.75;
+          if (!scoreUnlocks && !completionUnlocks) {
+            locked = true;
+            lockReason = `Complete 75% of ${LEVEL_META[level - 1]?.name ?? `Level ${level - 1}`} modules to unlock`;
+          }
+        }
+        // Is this the current active level?
+        const isCurrentLevel = !locked && completedCount < totalCount && (level === 1 || (() => {
+          const priorMods = allMods.filter(m => (m.difficulty ?? 1) === level - 1);
+          const priorCompleted = priorMods.filter(m => completedModuleIds.has(m.id)).length;
+          return priorCompleted / Math.max(priorMods.length, 1) >= 0.75;
+        })());
+        return {
+          id: `level-${level}`,
+          level,
+          name: meta.name,
+          modules: levelMods.sort((a, b) => a.title.localeCompare(b.title)).map(m => ({
+            id: m.id,
+            title: m.title,
+            format: m.modality,
+            durationMins: m.durationMins,
+            completed: completedModuleIds.has(m.id),
+            completedAt: completedAtMap.get(m.id) ?? null,
+          })),
+          completionCount: completedCount,
+          totalModules: totalCount,
+          complete: totalCount > 0 && completedCount === totalCount,
+          locked,
+          lockReason,
+          isCurrentLevel,
+        };
+      }).filter(l => l.totalModules > 0);
+      // Find next recommended module (first incomplete in current level)
+      const currentLevel = levels.find(l => l.isCurrentLevel);
+      const nextRecommendedModule = currentLevel?.modules.find(m => !m.completed) ?? null;
+      // Strategy context
+      let strategyContext: { linkedInitiative: string; capabilityRelevance: string } | null = null;
+      const latestStrategy = await db.select().from(strategies)
+        .where(eq(strategies.createdByUserId, ctx.user.id))
+        .orderBy(desc(strategies.updatedAt)).limit(1);
+      if (latestStrategy[0]) {
+        const initiatives = await db.select({
+          id: strategyInitiatives.id,
+          name: strategyInitiativeLibrary.name,
+          category: strategyInitiativeLibrary.category,
+        })
+        .from(strategyInitiatives)
+        .innerJoin(strategyInitiativeLibrary, eq(strategyInitiatives.initiativeId, strategyInitiativeLibrary.id))
+        .where(eq(strategyInitiatives.strategyId, latestStrategy[0].id))
+        .limit(3);
+        if (initiatives.length > 0) {
+          strategyContext = {
+            linkedInitiative: initiatives[0].name,
+            capabilityRelevance: `Relevant to your ${initiatives.map(i => i.category).join(", ")} initiatives`,
+          };
+        }
+      }
+      return {
+        domain: { id: input.domainId, ...domainMeta },
+        levels,
+        nextRecommendedModule,
+        strategyContext,
+        capabilityScore,
+      };
+    }),
+
+  // ─── v1.4 Change 4: coaching conversation persistence ────────────────────
+  getCoachingConversation: protectedProcedure
+    .input(z.object({ moduleId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [conv] = await db.select().from(coachingConversations)
+        .where(and(eq(coachingConversations.userId, ctx.user.id), eq(coachingConversations.moduleId, input.moduleId)))
+        .limit(1);
+      return conv ?? null;
+    }),
+
+  saveCoachingConversation: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      messages: z.array(z.object({ role: z.string(), content: z.string(), createdAt: z.number() })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [existing] = await db.select({ id: coachingConversations.id })
+        .from(coachingConversations)
+        .where(and(eq(coachingConversations.userId, ctx.user.id), eq(coachingConversations.moduleId, input.moduleId)))
+        .limit(1);
+      const now = Date.now();
+      if (existing) {
+        await db.update(coachingConversations)
+          .set({ conversationJson: input.messages as any, updatedAt: now })
+          .where(eq(coachingConversations.id, existing.id));
+      } else {
+        await db.insert(coachingConversations).values({
+          id: nanoid(),
+          userId: ctx.user.id,
+          moduleId: input.moduleId,
+          conversationJson: input.messages as any,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      return { ok: true };
+    }),
+
+  // ─── v1.4 Change 4: inline module coach chat ─────────────────────────────
+  moduleCoachChat: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      message: z.string().min(1).max(2000),
+      history: z.array(z.object({ role: z.string(), content: z.string() })).max(20),
+      // Context passed from the module page
+      moduleTitle: z.string(),
+      moduleFormat: z.string(),
+      moduleDifficulty: z.number().optional(),
+      moduleCapability: z.string(),
+      journeyPosition: z.string().optional(),
+      strategyLinkage: z.object({ initiativeName: z.string(), phase: z.string() }).optional().nullable(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Get user org context for sector/headcount
+      const tenantIdForOrg = ctx.user.tenantId ?? ctx.user.id;
+      const [orgCtx] = await db.select().from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, tenantIdForOrg)).limit(1);
+      const sector = orgCtx?.sector ?? "HR";
+      const headcount = orgCtx?.headcount ? `${orgCtx.headcount}+ employees` : "";
+      const LEVEL_LABELS: Record<number, string> = { 1: "Foundation", 2: "Developing", 3: "Practitioner", 4: "Advanced", 5: "Expert" };
+      const levelLabel = LEVEL_LABELS[input.moduleDifficulty ?? 1] ?? `Level ${input.moduleDifficulty}`;
+      const domainLabel = ({
+        ai_interaction: "AI Interaction",
+        ai_output_evaluation: "AI Output Evaluation",
+        ai_workflow_design: "AI Workflow Design",
+        ai_ethics_trust: "AI Ethics & Trust",
+        workforce_ai_readiness: "Workforce AI Readiness",
+        ai_change_leadership: "AI Change Leadership",
+      } as Record<string, string>)[input.moduleCapability] ?? input.moduleCapability;
+      const strategyLine = input.strategyLinkage
+        ? `Their strategy context: ${input.strategyLinkage.initiativeName} initiative (${input.strategyLinkage.phase}).`
+        : "No active strategy linked.";
+      const journeyLine = input.journeyPosition
+        ? `Their journey context: ${input.journeyPosition}.`
+        : "";
+      const systemPrompt = `You are the AiQ Coach. The user is engaging with the module '${input.moduleTitle}' (${input.moduleFormat}, ${levelLabel}, ${domainLabel}). ${journeyLine} ${strategyLine} Their organisational context: ${sector} sector${headcount ? `, ${headcount} headcount` : ""}. Help them apply this module to their specific work context. Use mastery framing — focus on the capability they're building. Reference specifics from their strategy where relevant. Keep responses concise (2-4 paragraphs typical) unless they ask for depth. Never mention capability scores or gap numbers.`;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...input.history.slice(-10).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+          { role: "user", content: input.message },
+        ],
+      });
+      const reply = (response.choices?.[0]?.message?.content as string) ?? "I'm here to help you apply this module. What would you like to explore?";
+      return { reply };
     }),
 
 });
