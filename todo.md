@@ -2402,3 +2402,6 @@
 - [x] Bump library version to v1.3.0 in library.json meta
 - [x] PDF parity: include maturity progression section and manager brief in PDF export (Section 6 Measurement Plan added; resolveInitiativeIds fix applied to PDF generator)
 - [x] New tests: A1 staleness logic, A4 telemetry, B1 feedback flow, C1 status transitions, C2 milestone generation, D1 re-assessment auth, D2 progression calculation, D3 refresh trigger, E2 manager auth, E3 brief generation
+
+## Bug Fixes — May 2026
+- [x] Fix: content-library.json ENOENT in production — added cp to build script + multi-path fallback in contentLibrary.ts (tries dist/, server/, library.json variants)

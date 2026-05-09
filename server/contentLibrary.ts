@@ -4,7 +4,7 @@
  * for procedures to query initiatives, risk rules, benchmarks, and templates.
  */
 
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -140,7 +140,20 @@ export function getContentLibrary(): ContentLibrary {
   if (!_library) {
     const __filename = fileURLToPath(import.meta.url);
     const __dir = dirname(__filename);
-    const libPath = join(__dir, "content-library.json");
+    // Try multiple candidate paths to support dev (server/), production (dist/),
+    // and any edge case where the file may be in the project root or server/ sibling.
+    const candidates = [
+      join(__dir, "content-library.json"),          // dist/content-library.json (production)
+      join(__dir, "library.json"),                   // dist/library.json (fallback)
+      join(__dir, "..", "server", "content-library.json"), // project root → server/
+      join(__dir, "..", "server", "library.json"),         // project root → server/
+    ];
+    const libPath = candidates.find(p => existsSync(p));
+    if (!libPath) {
+      throw new Error(
+        `Content library not found. Tried:\n${candidates.join("\n")}`
+      );
+    }
     const raw = readFileSync(libPath, "utf-8");
     _library = JSON.parse(raw) as ContentLibrary;
     console.log(
