@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Streamdown } from "streamdown";
 
 // --- Progress Tracking -------------------------------------------------------
 
@@ -812,9 +813,117 @@ function QuizRenderer({ body, onComplete, onProgressChange }: { body: any; onCom
   );
 }
 
+// --- Module Feedback Panel --------------------------------------------------
+// A3 + B2: Inline "Get coach feedback" affordance for Reflection and Practical modules
+
+interface ModuleFeedbackPanelProps {
+  moduleId: string;
+  moduleTitle: string;
+  moduleDomain: string;
+  formatType: "reflection" | "practical_exercise";
+  promptIndex: number;
+  promptText: string;
+  userResponse: string;
+  strategyLinkage?: { initiativeName: string; phase: string; status?: string } | null;
+  journeyPosition?: string | null;
+}
+
+function ModuleFeedbackPanel({
+  moduleId, moduleTitle, moduleDomain, formatType,
+  promptIndex, promptText, userResponse,
+  strategyLinkage, journeyPosition,
+}: ModuleFeedbackPanelProps) {
+  const utils = trpc.useUtils();
+  const [open, setOpen] = useState(false);
+
+  const { data: saved } = trpc.adaptiveLearning.getModuleFeedback.useQuery(
+    { moduleId, promptIndex },
+    { enabled: !!moduleId, staleTime: 1000 * 60 * 5 }
+  );
+
+  const generate = trpc.adaptiveLearning.generateModuleFeedback.useMutation({
+    onSuccess: () => {
+      utils.adaptiveLearning.getModuleFeedback.invalidate({ moduleId, promptIndex });
+      setOpen(true);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const canRequest = userResponse.trim().length >= 30;
+  const isLoading = generate.isPending;
+
+  const handleRequest = () => {
+    generate.mutate({
+      moduleId, moduleTitle, moduleDomain, formatType,
+      promptIndex, promptText, userResponse,
+      strategyLinkage: strategyLinkage ?? undefined,
+      journeyPosition: journeyPosition ?? undefined,
+    });
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      {!open && !saved && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          disabled={!canRequest || isLoading}
+          onClick={handleRequest}
+        >
+          {isLoading ? (
+            <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Generating feedback…</>
+          ) : (
+            <><Sparkles className="h-3.5 w-3.5" />Get coach feedback</>
+          )}
+        </Button>
+      )}
+      {saved && !open && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-xs text-muted-foreground"
+          onClick={() => setOpen(true)}
+        >
+          <Brain className="h-3.5 w-3.5" />View saved feedback
+        </Button>
+      )}
+      {open && saved && (
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Brain className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Coach feedback</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setOpen(false)}>
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+            <Streamdown>{saved.feedbackText}</Streamdown>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-muted-foreground mt-1"
+            disabled={isLoading}
+            onClick={handleRequest}
+          >
+            {isLoading ? (
+              <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Regenerating…</>
+            ) : (
+              <><RefreshCw className="h-3.5 w-3.5" />Regenerate feedback</>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Practical Renderer -------------------------------------------------------
 
-function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
+function PracticalRenderer({ body, onComplete, onProgressChange, moduleId, moduleTitle, moduleDomain, strategyLinkage, journeyPosition }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void; moduleId?: string; moduleTitle?: string; moduleDomain?: string; strategyLinkage?: { initiativeName: string; phase: string; status?: string } | null; journeyPosition?: string | null }) {
   const [phase, setPhase] = useState<"intro" | "exercise">("intro");
   const [stepIdx, setStepIdx] = useState(0);
   const [responses, setResponses] = useState<Record<number, string>>({});
@@ -925,6 +1034,20 @@ function PracticalRenderer({ body, onComplete, onProgressChange }: { body: any; 
                   value={responses[stepIdx] ?? ""}
                   onChange={e => setResponses(r => ({ ...r, [stepIdx]: e.target.value }))}
                 />
+                {/* B2: Coach feedback affordance */}
+                {moduleId && moduleTitle && (
+                  <ModuleFeedbackPanel
+                    moduleId={moduleId}
+                    moduleTitle={moduleTitle}
+                    moduleDomain={moduleDomain ?? ""}
+                    formatType="practical_exercise"
+                    promptIndex={stepIdx}
+                    promptText={step?.instruction ?? ""}
+                    userResponse={responses[stepIdx] ?? ""}
+                    strategyLinkage={strategyLinkage}
+                    journeyPosition={journeyPosition}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -1304,7 +1427,7 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
 
 // --- Reflection Renderer ------------------------------------------------------
 
-function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void }) {
+function ReflectionRenderer({ body, onComplete, onProgressChange, moduleId, moduleTitle, moduleDomain, strategyLinkage, journeyPosition }: { body: any; onComplete: (score: number) => void; onProgressChange?: (stepIdx: number) => void; moduleId?: string; moduleTitle?: string; moduleDomain?: string; strategyLinkage?: { initiativeName: string; phase: string; status?: string } | null; journeyPosition?: string | null }) {
   const [phase, setPhase] = useState<"intro" | "reflect">("intro");
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [promptIdx, setPromptIdx] = useState(0);
@@ -1386,6 +1509,20 @@ function ReflectionRenderer({ body, onComplete, onProgressChange }: { body: any;
                 value={responses[promptIdx] ?? ""}
                 onChange={e => setResponses(r => ({ ...r, [promptIdx]: e.target.value }))}
               />
+              {/* A3: Coach feedback affordance */}
+              {moduleId && moduleTitle && (
+                <ModuleFeedbackPanel
+                  moduleId={moduleId}
+                  moduleTitle={moduleTitle}
+                  moduleDomain={moduleDomain ?? ""}
+                  formatType="reflection"
+                  promptIndex={promptIdx}
+                  promptText={currentPrompt?.prompt ?? ""}
+                  userResponse={responses[promptIdx] ?? ""}
+                  strategyLinkage={strategyLinkage}
+                  journeyPosition={journeyPosition}
+                />
+              )}
             </div>
           )}
 
@@ -2242,9 +2379,9 @@ export default function ModulePlayerPage() {
           <div className="p-5 rounded-2xl border border-border bg-card">
             {mod.modality === "tutorial"   && <TutorialRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
             {mod.modality === "quiz"       && <QuizRenderer        body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
-            {mod.modality === "practical"  && <PracticalRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "practical"  && <PracticalRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} moduleId={params.moduleId ?? ""} moduleTitle={mod.title} moduleDomain={mod.capability ?? ""} strategyLinkage={journeyCtx?.strategyLinkage} journeyPosition={journeyCtx?.journeyPosition} />}
             {mod.modality === "case_study" && <CaseStudyRenderer   body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
-            {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
+            {mod.modality === "reflection" && <ReflectionRenderer  body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} moduleId={params.moduleId ?? ""} moduleTitle={mod.title} moduleDomain={mod.capability ?? ""} strategyLinkage={journeyCtx?.strategyLinkage} journeyPosition={journeyCtx?.journeyPosition} />}
             {mod.modality === "scenario"   && <ScenarioRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
             {mod.modality === "coaching"   && <CoachingRenderer    body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}
             {mod.modality === "video"      && <VideoRenderer       body={body} onComplete={handleComplete} onProgressChange={setCurrentProgressStep} />}

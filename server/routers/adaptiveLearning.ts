@@ -48,6 +48,7 @@ import {
   strategies,
   strategyInitiatives,
   strategyInitiativeLibrary,
+  moduleFeedback,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
@@ -2037,6 +2038,111 @@ Be specific, practical, and directly relevant to ${roleArchetype} at ${seniority
       return { reply };
     }),
 
+  // ─── A2 + B1: generateModuleFeedback ─────────────────────────────────────────
+  // Generates AI coaching feedback for a reflection or practical exercise response.
+  // Persists the feedback to module_feedback table and returns it.
+  generateModuleFeedback: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      moduleTitle: z.string(),
+      moduleDomain: z.string(),
+      formatType: z.enum(["reflection", "practical_exercise"]),
+      promptIndex: z.number().int().min(0).default(0),
+      promptText: z.string(),
+      userResponse: z.string().min(10),
+      strategyLinkage: z.object({
+        initiativeName: z.string(),
+        phase: z.string(),
+      }).nullable().optional(),
+      journeyPosition: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const strategyContext = input.strategyLinkage
+        ? `\n\nStrategy context: This module supports the learner's active AI strategy initiative "${input.strategyLinkage.initiativeName}" (${input.strategyLinkage.phase} phase). Where relevant, connect your feedback to how this skill will be applied in that initiative.`
+        : "";
+      const journeyContext = input.journeyPosition
+        ? `\n\nLearner journey: ${input.journeyPosition}`
+        : "";
+
+      let systemPrompt: string;
+      if (input.formatType === "reflection") {
+        systemPrompt = `You are an expert HR leadership coach and AI capability advisor. Your role is to provide personalised, constructive feedback on a learner's reflection response within the AiQ HR capability development platform.
+
+Module: "${input.moduleTitle}" (Domain: ${input.moduleDomain})${strategyContext}${journeyContext}
+
+Feedback principles:
+- Acknowledge what the learner has identified well — be specific, not generic
+- Offer one or two genuinely novel angles or considerations they may not have thought of
+- Connect their reflection to real-world HR practice or their organisation's AI journey where possible
+- Ask one forward-looking question to deepen their thinking (do not demand an answer)
+- Keep the tone warm, direct, and collegial — like a trusted senior colleague, not a marking rubric
+- Length: 150–220 words. No bullet points. Use flowing prose.
+- Do not repeat the question back to the learner
+- Do not use phrases like "Great reflection!" or "Well done" — start with substance`;
+      } else {
+        systemPrompt = `You are an expert HR leadership coach and AI capability advisor. Your role is to provide personalised, constructive feedback on a learner's practical exercise response within the AiQ HR capability development platform.
+
+Module: "${input.moduleTitle}" (Domain: ${input.moduleDomain})${strategyContext}${journeyContext}
+
+Feedback principles:
+- Assess whether the learner's approach is likely to work in practice — be honest but constructive
+- Identify the strongest element of their response and explain why it matters
+- Highlight one specific gap, risk, or missed consideration that would improve the outcome
+- Where relevant, suggest a concrete next action they could take in their own organisation
+- Keep the tone direct and practical — like a senior practitioner reviewing a colleague's work plan
+- Length: 180–250 words. No bullet points. Use flowing prose.
+- Do not restate the exercise instructions
+- Do not use generic praise — start with a substantive observation about their specific response`;
+      }
+
+      const userMessage = `Reflection prompt: "${input.promptText}"\n\nLearner's response:\n${input.userResponse}`;
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+      });
+      const feedbackText = (response.choices?.[0]?.message?.content as string) ?? "Thank you for your thoughtful response. Keep reflecting on how these ideas apply in your context.";
+
+      const id = nanoid();
+      await db.insert(moduleFeedback).values({
+        id,
+        userId: ctx.user.id,
+        moduleId: input.moduleId,
+        promptIndex: input.promptIndex,
+        feedbackText,
+        formatType: input.formatType,
+        userResponseSnapshot: input.userResponse.slice(0, 2000),
+        modelUsed: "default",
+        libraryVersion: "v1.4",
+        generatedAt: Date.now(),
+      });
+      return { feedbackId: id, feedbackText };
+    }),
+
+  // ─── A3 helper: getModuleFeedback ─────────────────────────────────────────
+  getModuleFeedback: protectedProcedure
+    .input(z.object({
+      moduleId: z.string(),
+      promptIndex: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select()
+        .from(moduleFeedback)
+        .where(and(
+          eq(moduleFeedback.userId, ctx.user.id),
+          eq(moduleFeedback.moduleId, input.moduleId),
+          eq(moduleFeedback.promptIndex, input.promptIndex),
+        ))
+        .orderBy(desc(moduleFeedback.generatedAt))
+        .limit(1);
+      return rows[0] ?? null;
+    }),
 });
 // ─── Helper: enrich plan with items and modules ────────────────────────────────
 async function enrichPlan(

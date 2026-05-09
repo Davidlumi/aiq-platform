@@ -2130,3 +2130,26 @@ export const coachingConversations = mysqlTable("coaching_conversations", {
   userModuleIdx: index("idx_cc_user_module").on(t.userId, t.moduleId),
 }));
 export type CoachingConversation = typeof coachingConversations.$inferSelect;
+
+
+// ── module_feedback (Feedback Build Brief A1) ─────────────────────────────────
+// Stores AI coaching feedback generated for Reflection and Practical Exercise
+// module responses. Multiple rows per (user, module, prompt_index) are allowed —
+// each "Get a different perspective" call creates a new row.
+export const moduleFeedback = mysqlTable("module_feedback", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  moduleId: varchar("module_id", { length: 100 }).notNull(),
+  promptIndex: int("prompt_index").notNull().default(0),
+  feedbackText: text("feedback_text").notNull(),
+  formatType: mysqlEnum("format_type", ["reflection", "practical_exercise"]).notNull(),
+  userResponseSnapshot: text("user_response_snapshot").notNull(),
+  modelUsed: varchar("model_used", { length: 100 }).notNull().default("default"),
+  libraryVersion: varchar("library_version", { length: 20 }).notNull().default("v1.4"),
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  userModuleIdx: index("idx_mf_user_module").on(t.userId, t.moduleId),
+  userModulePromptIdx: index("idx_mf_user_module_prompt").on(t.userId, t.moduleId, t.promptIndex),
+}));
+export type ModuleFeedback = typeof moduleFeedback.$inferSelect;

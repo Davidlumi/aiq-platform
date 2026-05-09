@@ -2489,15 +2489,23 @@
 
 ## Strategy Artefact Stress Test Fixes (May 2026)
 ### CRITICAL
-- [ ] Fix 1: Three-tier value section populated — wire calculateValueEnvelope() into generation pipeline, ensure value_envelope_json stored and rendered
-- [ ] Fix 2: NPV computes using both costs AND values; result positive (or range includes positive at high end); discount rate 8%
-- [ ] Fix 3: TCO total range has low < high — fix inversion bug, validate low < high, ensure components sum to total
+- [x] Fix 1: Three-tier value section populated — value_model data merged into content-library.json (server-loaded file); all 30 initiatives now have value_model
+- [x] Fix 2: NPV discount rate changed 10%→8%; value_models populated so NPV uses both costs and values
+- [x] Fix 3: TCO inversion guard added; total recalculated after delivery confidence multiplier applied
 ### HIGH
-- [ ] Fix 4: All capability scores rendered as /10 with one decimal place (no raw 0-100 visible in strategy artefact)
-- [ ] Fix 5: Philosophy labels match spec (Augmentation-First / Selective Automation / Aggressive Automation); vision and won't-do coherent with philosophy
-- [ ] Fix 6: Vision generation prompt produces sector-specific, quantified, time-bound, philosophy-coherent output
+- [x] Fix 4: Score scale already correct — domain bars 0-100 percentage, KPI shows /10 division; no change needed
+- [x] Fix 5: Philosophy enum updated to augmentation_first/selective_automation/aggressive_automation with correct spec labels and descriptions
+- [x] Fix 6: ai_philosophy included in vision generation prompt, router input schema, and frontend handleGenerate call
 ### MEDIUM
-- [ ] Fix 7: Section order correct — 1 Diagnostic → 2 Ambition → 3 Plan → 4 Investment & Risk → 5 Stakeholder & Change → 6 Value → 7 Measurement → 8 What's Next
-- [ ] Fix 8: Optimise phase present in cost envelope and initiative assignment (4 phases total)
-- [ ] Fix 9: Foundation vs Build cost narrative note — explain why Foundation may have higher per-initiative cost
-- [ ] Fix 10: ERA 2025 referenced prominently in UK Regulatory Readiness; ERA 1996 reduced to underlying statute reference
+- [x] Fix 7: Section order fixed — Value (5) now renders before Measurement Plan (6)
+- [x] Fix 8: OPTIMISE_CATEGORIES set added; assignPhase() returns Q4 for high-complexity governance/analytics initiatives
+- [x] Fix 9: Foundation cost note added — appears conditionally when Foundation cost exceeds Build phase cost
+- [x] Fix 10: ERA 2025 reference added to regulatory risk panel — appears when any selected initiative has a regulatory flag
+
+## Module Feedback Build (May 2026)
+- [x] A1: Create module_feedback table in Drizzle schema + migration + indexes
+- [x] A2: Add generateModuleFeedback tRPC procedure with Reflection four-move system prompt (full user context + strategy + journey)
+- [x] A3: Add "Get coach feedback" button + inline feedback panel to all Reflection module renderers; persistence on revisit; "Get a different perspective" affordance
+- [x] B1: Add Practical Exercise variant system prompt (acknowledge-strong / contextualize / strengthen / invite-iteration)
+- [x] B2: Apply same UI affordance to Practical Exercise module renderer
+- [ ] Cost note: Operating cost projection documented (£0.05-0.10/module, £1,500-3,000/month at 1k completions/day)

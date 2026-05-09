@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS `module_feedback` (\n  `id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `module_id` varchar(100) NOT NULL,\n  `prompt_index` int NOT NULL DEFAULT 0,\n  `feedback_text` text NOT NULL,\n  `format_type` enum('reflection','practical_exercise') NOT NULL,\n  `user_response_snapshot` text NOT NULL,\n  `model_used` varchar(100) NOT NULL DEFAULT 'default',\n  `library_version` varchar(20) NOT NULL DEFAULT 'v1.4',\n  `generated_at` bigint NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `module_feedback_id` PRIMARY KEY(`id`)\n);\n\nCREATE INDEX IF NOT EXISTS `idx_mf_user_module` ON `module_feedback` (`user_id`,`module_id`);\nCREATE INDEX IF NOT EXISTS `idx_mf_user_module_prompt` ON `module_feedback` (`user_id`,`module_id`,`prompt_index`);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nCREATE TABLE IF NOT EXISTS `module_feedback` (\n  `id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `module_id` varchar(100) NOT NULL,\n  `prompt_index` int NOT NULL DEFAULT 0,\n  `feedback_text` text NOT NULL,\n  `format_type` enum('reflection','practical_exercise') NOT NULL,\n  `user_response_snapshot` text NOT NULL,\n  `model_used` varchar(100) NOT NULL DEFAULT 'default',\n  `library_version` varchar(20) NOT NULL DEFAULT 'v1.4',\n  `generated_at` bigint NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT (now()),\n  CONSTRAINT `module_feedback_id` PRIMARY KEY(`id`)\n);\n\nCREATE INDEX IF NOT EXISTS `idx_mf_user_module` ON `module_feedback` (`user_id`,`module_id`);\nCREATE INDEX IF NOT EXISTS `idx_mf_user_module_prompt` ON `module_feedback` (`user_id`,`module_id`,`prompt_index`);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1270
+}
