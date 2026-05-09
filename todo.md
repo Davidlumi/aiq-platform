@@ -2486,3 +2486,18 @@
 - [x] Change 5: Differentiate hook (larger/muted/left-accent) from "Why this matters" (no bordered box)
 - [x] Change 6b: Dark mode typography audit — line-height 1.65, body near-white, small label weight 500
 - [x] Change 7d: Sidebar surgical softening — section dividers lighter/smaller, non-active items more muted, View As role-gated to CPO/admin, profile block lower contrast
+
+## Strategy Artefact Stress Test Fixes (May 2026)
+### CRITICAL
+- [ ] Fix 1: Three-tier value section populated — wire calculateValueEnvelope() into generation pipeline, ensure value_envelope_json stored and rendered
+- [ ] Fix 2: NPV computes using both costs AND values; result positive (or range includes positive at high end); discount rate 8%
+- [ ] Fix 3: TCO total range has low < high — fix inversion bug, validate low < high, ensure components sum to total
+### HIGH
+- [ ] Fix 4: All capability scores rendered as /10 with one decimal place (no raw 0-100 visible in strategy artefact)
+- [ ] Fix 5: Philosophy labels match spec (Augmentation-First / Selective Automation / Aggressive Automation); vision and won't-do coherent with philosophy
+- [ ] Fix 6: Vision generation prompt produces sector-specific, quantified, time-bound, philosophy-coherent output
+### MEDIUM
+- [ ] Fix 7: Section order correct — 1 Diagnostic → 2 Ambition → 3 Plan → 4 Investment & Risk → 5 Stakeholder & Change → 6 Value → 7 Measurement → 8 What's Next
+- [ ] Fix 8: Optimise phase present in cost envelope and initiative assignment (4 phases total)
+- [ ] Fix 9: Foundation vs Build cost narrative note — explain why Foundation may have higher per-initiative cost
+- [ ] Fix 10: ERA 2025 referenced prominently in UK Regulatory Readiness; ERA 1996 reduced to underlying statute reference

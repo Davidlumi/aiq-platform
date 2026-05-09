@@ -132,6 +132,8 @@ const OUT_OF_SCOPE: Record<number, string[]> = {
 // ─── Phase sequencing — deterministic, dependency-aware ─────────────────────
 const FOUNDATION_CATEGORIES = new Set(["Change & Capability", "Governance & Ethics", "HR Operations"]);
 const SCALE_CATEGORIES      = new Set(["People Analytics", "HR Business Partnering"]);
+// Optimise-phase categories: CoE, operating model redesign, continuous governance maturation
+const OPTIMISE_CATEGORIES   = new Set(["Ethics & Governance", "Governance & Ethics", "People Analytics", "HR Business Partnering"]);
 
 function assignPhase(initiative: { category: string; complexity: number | string; name: string }): string {
   const complexity = Number(initiative.complexity);
@@ -143,6 +145,8 @@ function assignPhase(initiative: { category: string; complexity: number | string
   if (complexity === 3 && FOUNDATION_CATEGORIES.has(cat)) return "Q2";
   if (complexity === 3 && SCALE_CATEGORIES.has(cat)) return "Q3";
   if (complexity === 3) return "Q2";
+  // Q4 — Optimise: high-complexity governance, analytics maturation, and operating model redesign
+  if (complexity >= 4 && OPTIMISE_CATEGORIES.has(cat)) return "Q4";
   if (complexity >= 4 && SCALE_CATEGORIES.has(cat)) return "Q3";
   if (complexity >= 4) return "Q3";
   return "Q2";
@@ -1836,13 +1840,28 @@ export default function AIStrategyPage() {
                     const cost = PHASE_COST_PER_INIT[phase] ?? { low: 20, high: 60 };
                     const low  = livePhase?.minGbk ?? items.length * cost.low;
                     const high = livePhase?.maxGbk ?? items.length * cost.high;
+                    const isFoundationHigher = phase === "Q1" && (() => {
+                      const buildPhase = initiativesByPhase.find(p => p.phase === "Q2");
+                      if (!buildPhase) return false;
+                      const buildLive = liveCostEnvelope?.byPhase.find(p => p.phase === "build");
+                      const buildCost = PHASE_COST_PER_INIT["Q2"] ?? { low: 20, high: 60 };
+                      const buildHigh = buildLive?.maxGbk ?? buildPhase.items.length * buildCost.high;
+                      return high > buildHigh;
+                    })();
                     return (
-                      <div key={phase} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-foreground">{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{items.length} initiatives · {meta.months}</p>
+                      <div key={phase}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-foreground">{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{items.length} initiatives · {meta.months}</p>
+                          </div>
+                          <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–{high}k</p>
                         </div>
-                        <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–{high}k</p>
+                        {isFoundationHigher && (
+                          <p className="text-[10px] text-blue-400/70 mt-0.5 leading-relaxed">
+                            Foundation includes one-off setup costs (data governance, infrastructure readiness, tool procurement) that do not recur in later phases.
+                          </p>
+                        )}
                       </div>
                     );
                   });
@@ -1894,6 +1913,11 @@ export default function AIStrategyPage() {
                 );
               })}
             </div>
+            {hasRegFlag && (
+              <p className="text-[10px] text-amber-400/70 mt-4 leading-relaxed border-t border-red-500/10 pt-3">
+                <strong className="text-amber-400">Employment Rights Act 2025 (ERA 2025):</strong> One or more selected initiatives involve automated decision-making in employment processes. Under ERA 2025, workers have the right to request a human review of any AI-assisted employment decision. Ensure all flagged initiatives include a human-review override mechanism and are documented in your AI Register before deployment.
+              </p>
+            )}
           </div>
         </div>
 
@@ -2055,153 +2079,6 @@ export default function AIStrategyPage() {
           );
         })()}
       </section>
-      {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 6 — Measurement Plan
-      ══════════════════════════════════════════════════════════════════════ */}
-      {(() => {
-        const cadenceId = structuredInputs?.measurement_cadence as string | undefined;
-        const cadenceOpt = cadenceId ? MEASUREMENT_CADENCE_OPTIONS.find(o => o.value === cadenceId) : undefined;
-        const pilotDesign = structuredInputs?.pilot_design as { scope?: string; duration?: string; success_metrics?: string[] } | undefined;
-        const hasMeasurement = cadenceOpt || pilotDesign;
-        if (!hasMeasurement) return null;
-        const pilotScopeOpt  = pilotDesign?.scope     ? PILOT_SCOPE_OPTIONS.find(o => o.value === pilotDesign.scope) : undefined;
-        const pilotDurOpt    = pilotDesign?.duration   ? PILOT_DURATION_OPTIONS.find(o => o.value === pilotDesign.duration) : undefined;
-        const pilotMetricOpts = (pilotDesign?.success_metrics ?? []).map(id => PILOT_SUCCESS_METRICS.find(m => m.id === id)).filter(Boolean) as typeof PILOT_SUCCESS_METRICS;
-        return (
-          <section id="measurement" className="mb-6">
-            <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Section 6 — Measurement Plan</p>
-                  <h2 className="text-lg font-bold text-foreground">How we will measure progress</h2>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {cadenceOpt && (
-                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Review Cadence</p>
-                    <p className="text-sm font-semibold text-foreground">{cadenceOpt.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      KPI tracking and strategy re-assessment will follow this rhythm. Schedule the first review before the end of the Foundation phase.
-                    </p>
-                  </div>
-                )}
-                {pilotScopeOpt && (
-                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Scope</p>
-                    <p className="text-sm font-semibold text-foreground">{pilotScopeOpt.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{pilotScopeOpt.description}</p>
-                  </div>
-                )}
-                {pilotDurOpt && (
-                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Duration</p>
-                    <p className="text-sm font-semibold text-foreground">{pilotDurOpt.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Run a structured pilot before full rollout. Define go/no-go criteria at the midpoint.
-                    </p>
-                  </div>
-                )}
-                {pilotMetricOpts.length > 0 && (
-                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Success Metrics</p>
-                    <div className="space-y-1.5">
-                      {pilotMetricOpts.map(m => (
-                        <div key={m.id} className="flex items-center gap-2">
-                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
-                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
-                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
-                            "bg-purple-500/20 text-purple-400"
-                          }`}>{m.tier.slice(0, 3)}</span>
-                          <span className="text-xs text-foreground">{m.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          PAGE-END CTA — What's next?
-      ══════════════════════════════════════════════════════════════════════ */}
-      <section className="mb-10">
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
-              <ArrowRight className="w-4 h-4 text-green-400" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">What's Next</p>
-              <h2 className="text-lg font-bold text-foreground">Turn this strategy into action</h2>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              {
-                icon: <Share2 className="w-4 h-4" />,
-                color: "#60A5FA",
-                title: "Share with stakeholders",
-                description: "Export the Executive PDF and share with your CHRO, CPO, or board sponsor before the next leadership cycle.",
-                action: "Export PDF",
-                href: "/api/pdf/ai_strategy",
-                external: true,
-              },
-              {
-                icon: <UserCheck className="w-4 h-4" />,
-                color: "#A78BFA",
-                title: "Assign initiative owners",
-                description: "Each initiative needs a named owner and a target date. Use the Operational view to assign and track.",
-                action: "View initiatives",
-                href: "#plan",
-                external: false,
-              },
-              {
-                icon: <Calendar className="w-4 h-4" />,
-                color: "#4ADE80",
-                title: "Schedule a kickoff",
-                description: "Block time with your HR leadership team to review Phase 1 initiatives and confirm the first 90-day sprint.",
-                action: "View Phase 1",
-                href: "#plan",
-                external: false,
-              },
-            ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-white/8 bg-white/3 p-5 flex flex-col gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}18`, color: item.color }}>
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
-                </div>
-                {item.external ? (
-                  <a href={item.href} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="w-full h-7 text-xs border-white/15 hover:bg-white/8" style={{ color: item.color }}>
-                      {item.action} <ExternalLink className="w-3 h-3 ml-1" />
-                    </Button>
-                  </a>
-                ) : (
-                  <Button
-                    size="sm" variant="outline"
-                    className="w-full h-7 text-xs border-white/15 hover:bg-white/8"
-                    style={{ color: item.color }}
-                    onClick={() => document.querySelector(item.href)?.scrollIntoView({ behavior: "smooth" })}
-                  >
-                    {item.action}
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 5 — VALUE (ROI envelope + per-initiative breakdown)
       ══════════════════════════════════════════════════════════════════════ */}
@@ -2725,6 +2602,154 @@ export default function AIStrategyPage() {
         </Dialog>
       )}
 
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECTION 6 — Measurement Plan
+      ══════════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const cadenceId = structuredInputs?.measurement_cadence as string | undefined;
+        const cadenceOpt = cadenceId ? MEASUREMENT_CADENCE_OPTIONS.find(o => o.value === cadenceId) : undefined;
+        const pilotDesign = structuredInputs?.pilot_design as { scope?: string; duration?: string; success_metrics?: string[] } | undefined;
+        const hasMeasurement = cadenceOpt || pilotDesign;
+        if (!hasMeasurement) return null;
+        const pilotScopeOpt  = pilotDesign?.scope     ? PILOT_SCOPE_OPTIONS.find(o => o.value === pilotDesign.scope) : undefined;
+        const pilotDurOpt    = pilotDesign?.duration   ? PILOT_DURATION_OPTIONS.find(o => o.value === pilotDesign.duration) : undefined;
+        const pilotMetricOpts = (pilotDesign?.success_metrics ?? []).map(id => PILOT_SUCCESS_METRICS.find(m => m.id === id)).filter(Boolean) as typeof PILOT_SUCCESS_METRICS;
+        return (
+          <section id="measurement" className="mb-6">
+            <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Section 6 — Measurement Plan</p>
+                  <h2 className="text-lg font-bold text-foreground">How we will measure progress</h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {cadenceOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Review Cadence</p>
+                    <p className="text-sm font-semibold text-foreground">{cadenceOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      KPI tracking and strategy re-assessment will follow this rhythm. Schedule the first review before the end of the Foundation phase.
+                    </p>
+                  </div>
+                )}
+                {pilotScopeOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Scope</p>
+                    <p className="text-sm font-semibold text-foreground">{pilotScopeOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{pilotScopeOpt.description}</p>
+                  </div>
+                )}
+                {pilotDurOpt && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Duration</p>
+                    <p className="text-sm font-semibold text-foreground">{pilotDurOpt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Run a structured pilot before full rollout. Define go/no-go criteria at the midpoint.
+                    </p>
+                  </div>
+                )}
+                {pilotMetricOpts.length > 0 && (
+                  <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Success Metrics</p>
+                    <div className="space-y-1.5">
+                      {pilotMetricOpts.map(m => (
+                        <div key={m.id} className="flex items-center gap-2">
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
+                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
+                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-purple-500/20 text-purple-400"
+                          }`}>{m.tier.slice(0, 3)}</span>
+                          <span className="text-xs text-foreground">{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          PAGE-END CTA — What's next?
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="mb-10">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 text-green-400" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">What's Next</p>
+              <h2 className="text-lg font-bold text-foreground">Turn this strategy into action</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                icon: <Share2 className="w-4 h-4" />,
+                color: "#60A5FA",
+                title: "Share with stakeholders",
+                description: "Export the Executive PDF and share with your CHRO, CPO, or board sponsor before the next leadership cycle.",
+                action: "Export PDF",
+                href: "/api/pdf/ai_strategy",
+                external: true,
+              },
+              {
+                icon: <UserCheck className="w-4 h-4" />,
+                color: "#A78BFA",
+                title: "Assign initiative owners",
+                description: "Each initiative needs a named owner and a target date. Use the Operational view to assign and track.",
+                action: "View initiatives",
+                href: "#plan",
+                external: false,
+              },
+              {
+                icon: <Calendar className="w-4 h-4" />,
+                color: "#4ADE80",
+                title: "Schedule a kickoff",
+                description: "Block time with your HR leadership team to review Phase 1 initiatives and confirm the first 90-day sprint.",
+                action: "View Phase 1",
+                href: "#plan",
+                external: false,
+              },
+            ].map((item, i) => (
+              <div key={i} className="rounded-xl border border-white/8 bg-white/3 p-5 flex flex-col gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}18`, color: item.color }}>
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
+                </div>
+                {item.external ? (
+                  <a href={item.href} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="w-full h-7 text-xs border-white/15 hover:bg-white/8" style={{ color: item.color }}>
+                      {item.action} <ExternalLink className="w-3 h-3 ml-1" />
+                    </Button>
+                  </a>
+                ) : (
+                  <Button
+                    size="sm" variant="outline"
+                    className="w-full h-7 text-xs border-white/15 hover:bg-white/8"
+                    style={{ color: item.color }}
+                    onClick={() => document.querySelector(item.href)?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    {item.action}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
       {/* ══════════════════════════════════════════════════════════════════════
           APPENDIX — Methodology (collapsed)
       ══════════════════════════════════════════════════════════════════════ */}

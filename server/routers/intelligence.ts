@@ -619,6 +619,7 @@ Return JSON with this exact structure:
       sector: z.string(),
       businessAmbitionLabel: z.string(),
       peopleAmbitionLabel: z.string(),
+      aiPhilosophy: z.string().optional(),
       aspirationAnswers: z.record(z.string(), z.string()),
       hrRoleAnswers: z.record(z.string(), z.string()),
     }))

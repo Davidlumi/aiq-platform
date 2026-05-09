@@ -939,10 +939,13 @@ export default function HRAIStrategyAssessmentPage() {
       hrRoleAnswers.additional_context = si.voice_capture;
     }
 
+    // Include ai_philosophy so the vision generation reflects the chosen philosophy
+    const philOpt = AI_PHILOSOPHY_OPTIONS.find(o => o.value === si.ai_philosophy);
     generateMut.mutate({
       sector: sectorLabel,
       businessAmbitionLabel: BUSINESS_LEVELS[businessLevel]?.label ?? "Progressive",
       peopleAmbitionLabel: PEOPLE_LEVELS[peopleLevel]?.label ?? "Practitioners",
+      aiPhilosophy: philOpt ? `${philOpt.label}: ${philOpt.description}` : undefined,
       aspirationAnswers,
       hrRoleAnswers,
     });

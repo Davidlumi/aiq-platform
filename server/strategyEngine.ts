@@ -106,11 +106,12 @@ export async function generateVisionWithQualityGate(params: {
   sector: string;
   businessAmbitionLabel: string;
   peopleAmbitionLabel: string;
+  aiPhilosophy?: string;
   aspirationAnswers: Record<string, string>;
   hrRoleAnswers: Record<string, string>;
   maxAttempts?: number;
 }): Promise<VisionResult> {
-  const { sector, businessAmbitionLabel, peopleAmbitionLabel, aspirationAnswers, hrRoleAnswers, maxAttempts = 3 } = params;
+  const { sector, businessAmbitionLabel, peopleAmbitionLabel, aiPhilosophy, aspirationAnswers, hrRoleAnswers, maxAttempts = 3 } = params;
   const libMeta = getLibraryMeta();
 
   // Select closest golden example for the system prompt
@@ -1078,6 +1079,17 @@ export function calculateValueEnvelope(
       high: Math.round(tco.change_management_gbp.high * 0.7),
     };
   }
+  // Recalculate total_3yr_gbp after delivery confidence adjustments to change management
+  tco.total_3yr_gbp = {
+    low:  Math.min(
+      tco.implementation_gbp.low  + tco.change_management_gbp.low  + tco.training_gbp.low  + tco.ongoing_annual_gbp.low  * horizonYears,
+      tco.implementation_gbp.high + tco.change_management_gbp.high + tco.training_gbp.high + tco.ongoing_annual_gbp.high * horizonYears,
+    ),
+    high: Math.max(
+      tco.implementation_gbp.low  + tco.change_management_gbp.low  + tco.training_gbp.low  + tco.ongoing_annual_gbp.low  * horizonYears,
+      tco.implementation_gbp.high + tco.change_management_gbp.high + tco.training_gbp.high + tco.ongoing_annual_gbp.high * horizonYears,
+    ),
+  };
   const deliveryLabel = DELIVERY_LABELS[Math.round(deliveryConf)] ?? "Moderate";
   const deliveryRecommendation =
     deliveryConf <= 2
@@ -1125,7 +1137,7 @@ export function calculateValueEnvelope(
   };
 
   // C3: NPV / IRR
-  const DISCOUNT_RATE = 0.10;
+  const DISCOUNT_RATE = 0.08; // UK default per v1.2 brief Block C3
   const calcNPV = (annualCashflow: number, totalCost: number, years: number): number => {
     let npv = -totalCost;
     for (let y = 1; y <= years; y++) {

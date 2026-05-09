@@ -5,7 +5,7 @@
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type AiPhilosophy = "augment" | "automate" | "augment_first";
+export type AiPhilosophy = "augmentation_first" | "selective_automation" | "aggressive_automation";
 
 export interface StructuredInputs {
   business_outcomes: string[];
@@ -173,19 +173,19 @@ export const EXISTING_AI_TOOLS: { id: string; label: string }[] = [
 // ── A3: AI philosophy ──────────────────────────────────────────────────────────────
 export const AI_PHILOSOPHY_OPTIONS: { value: AiPhilosophy; label: string; description: string }[] = [
   {
-    value: "augment",
-    label: "Augment People",
-    description: "AI enhances human judgement — HR professionals remain in the decision loop. Speed and quality improve; headcount stays stable.",
+    value: "augmentation_first",
+    label: "Augmentation-first",
+    description: "AI enhances human capability. Decisions and accountability remain with people. Productivity gains flow into higher-value human work.",
   },
   {
-    value: "automate",
-    label: "Automate Processes",
-    description: "AI replaces manual, repetitive tasks end-to-end. Capacity is freed up or redeployed. Efficiency is the primary goal.",
+    value: "selective_automation",
+    label: "Selective automation",
+    description: "Automate clearly bounded, low-risk tasks end-to-end. Preserve human judgement for decisions with significant people impact. Build trust before expanding scope.",
   },
   {
-    value: "augment_first",
-    label: "Augment First, Automate Later",
-    description: "Start by augmenting people to build trust and data quality, then progressively automate as confidence grows.",
+    value: "aggressive_automation",
+    label: "Aggressive automation",
+    description: "AI replaces manual, repetitive tasks end-to-end wherever technically feasible. Efficiency and capacity redeployment are the primary goals. Governance frameworks run in parallel.",
   },
 ];
 
