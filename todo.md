@@ -2516,3 +2516,44 @@
 
 ## Module Feedback — Coaching Renderer Fix
 - [x] Add ModuleFeedbackPanel to CoachingRenderer (GROW model) after each step response textarea
+
+## Learning Plan Dashboard Rebuild v2
+
+### Backend — new tRPC procedures
+- [ ] A1: getLearningDashboard procedure — greeting data (name, plan count, completed count, current focus domain + strategy linkage)
+- [ ] B1: getInFlightInitiatives — user's in-flight strategy initiatives with module counts per initiative
+- [ ] B2: getModulesByInitiative — modules filtered by initiative-id
+- [ ] D1: getRecentCompletions — last 30 days completions with coaching feedback indicators
+- [ ] D2: getActiveCoachingConversations — active coaching conversations list
+
+### Frontend — Block A (Header zone)
+- [ ] A1: Greeting block — 3-sentence greeting with strategy context and learning plan explanation
+- [ ] A1: Current focus logic (most recent domain in 14 days → most initiative-linked → highest pathway → fallback)
+- [ ] A1: Fallback for users without strategy; empty state for first-time users
+- [ ] A2: Continue Learning panel — module name + metadata + reasoning paragraph + green CTA
+- [ ] A3: Calm progress framing — collapsed single sentence + expandable detail panel
+
+### Frontend — Block B (Strategy linkage)
+- [ ] B1: In-flight initiatives panel with module counts + [See modules →]
+- [ ] B1: Empty state for users without strategy
+- [ ] B2: /learning/initiative/[id] route — modules filtered by initiative
+
+### Frontend — Block C (Domain cards refinement)
+- [ ] C1: Demote score to metadata line as 3rd element: "[level] level · Module [N] of [M] · Capability [score]"
+- [ ] C1: Remove large standalone coloured score number from card header
+- [ ] C1: "Connects to: [initiative]" line when strategy linked
+- [ ] C1: "See your progression in this domain ↗" drill-down link
+- [ ] C2: Subtle domain tint on card background (5-10% opacity), neutral border, green progress bar + button
+- [ ] C3: Remove "AI Ready" / "Developing" overlay badge entirely; keep level label in metadata line only
+
+### Frontend — Block D (Recent activity)
+- [ ] D1: Recent progress panel — compact default + expandable to 5 completions with coaching feedback indicators
+- [ ] D2: Active coaching conversations panel — hidden if no conversations
+- [ ] D1+D2: Mobile combined "Recent activity" panel
+
+### Cross-cutting
+- [ ] Loading states: skeleton loaders for all panels
+- [ ] Error states: graceful degradation per panel
+- [ ] Empty states: first-time user renders warmly
+- [ ] Mobile: above-fold = greeting + Continue Learning only at 375px; domain cards single column
+- [ ] Accessibility: keyboard nav, ARIA labels on progress bars, h2/h3 headings

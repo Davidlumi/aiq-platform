@@ -2143,6 +2143,344 @@ Feedback principles:
         .limit(1);
       return rows[0] ?? null;
     }),
+
+  // ─── v2 Learning Dashboard: greeting + focus context ─────────────────────
+  getLearningDashboard: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const userId = ctx.user.id;
+
+      // Get user name
+      const [userRow] = await db.select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      const firstName = userRow?.firstName ?? "there";
+
+      // Get active plan
+      const [plan] = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, userId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+
+      let totalModules = 0;
+      let completedModules = 0;
+      let firstModuleTitle: string | null = null;
+      let firstModuleCapability: string | null = null;
+      let firstModuleId: string | null = null;
+      let firstModuleLevelLabel: string | null = null;
+      let firstModuleReasonJson: Record<string, unknown> | null = null;
+      let lastActivityDomain: string | null = null;
+      let lastActivityAt: number | null = null;
+
+      if (plan) {
+        const items = await db.select().from(adaptivePlanItems)
+          .where(eq(adaptivePlanItems.planId, plan.id))
+          .orderBy(asc(adaptivePlanItems.orderIndex));
+        totalModules = items.length;
+        completedModules = items.filter(i => i.status === "completed").length;
+
+        // Find last activity domain (most recent completion in last 14 days)
+        const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+        const recentCompleted = items
+          .filter(i => i.status === "completed" && (i.completedAt ?? 0) >= fourteenDaysAgo)
+          .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+        if (recentCompleted.length > 0) {
+          const modIds = recentCompleted.map(i => i.moduleId);
+          const mods = await db.select({ id: learningModules.id, capability: learningModules.capability })
+            .from(learningModules).where(inArray(learningModules.id, modIds));
+          const modMap = Object.fromEntries(mods.map(m => [m.id, m.capability]));
+          lastActivityDomain = modMap[recentCompleted[0].moduleId] ?? null;
+          lastActivityAt = recentCompleted[0].completedAt ?? null;
+        }
+
+        // Find first available/in-progress module
+        const nextItem = items.find(i => i.status === "in_progress" || i.status === "available");
+        if (nextItem) {
+          const [mod] = await db.select({ title: learningModules.title, capability: learningModules.capability, levelLabel: learningModules.levelLabel })
+            .from(learningModules).where(eq(learningModules.id, nextItem.moduleId)).limit(1);
+          if (mod) {
+            firstModuleTitle = mod.title;
+            firstModuleCapability = mod.capability;
+            firstModuleLevelLabel = mod.levelLabel;
+            firstModuleId = nextItem.moduleId;
+            firstModuleReasonJson = nextItem.reasonJson as Record<string, unknown> | null;
+          }
+        }
+      }
+
+      // Get user's latest strategy and in-flight initiatives
+      const [latestStrategy] = await db.select().from(strategies)
+        .where(eq(strategies.createdByUserId, userId))
+        .orderBy(desc(strategies.updatedAt)).limit(1);
+
+      let focusDomain: string | null = lastActivityDomain;
+      let focusInitiative: { name: string; phase: string; status: string } | null = null;
+      let strategyExists = false;
+
+      if (latestStrategy) {
+        strategyExists = true;
+        const initiatives = await db.select({
+          id: strategyInitiatives.id,
+          initiativeId: strategyInitiatives.initiativeId,
+          targetQuarter: strategyInitiatives.targetQuarter,
+          status: strategyInitiatives.status,
+          name: strategyInitiativeLibrary.name,
+          category: strategyInitiativeLibrary.category,
+        })
+        .from(strategyInitiatives)
+        .innerJoin(strategyInitiativeLibrary, eq(strategyInitiatives.initiativeId, strategyInitiativeLibrary.id))
+        .where(eq(strategyInitiatives.strategyId, latestStrategy.id));
+
+        const inFlight = initiatives.filter(i => i.status === "in_progress");
+
+        // If no recent activity domain, pick domain most linked to in-flight initiatives
+        if (!focusDomain && inFlight.length > 0 && plan) {
+          const planItems = await db.select({ moduleId: adaptivePlanItems.moduleId })
+            .from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, plan.id));
+          const moduleIds = planItems.map(i => i.moduleId);
+          if (moduleIds.length > 0) {
+            const mods = await db.select({ id: learningModules.id, capability: learningModules.capability, linkedInitiativeIds: learningModules.linkedInitiativeIds })
+              .from(learningModules).where(inArray(learningModules.id, moduleIds));
+            const initiativeIds = inFlight.map(i => i.initiativeId);
+            const domainCounts: Record<string, number> = {};
+            for (const mod of mods) {
+              const linked = (mod.linkedInitiativeIds as string[] | null) ?? [];
+              if (linked.some(id => initiativeIds.includes(id))) {
+                domainCounts[mod.capability] = (domainCounts[mod.capability] ?? 0) + 1;
+              }
+            }
+            const topDomain = Object.entries(domainCounts).sort((a, b) => b[1] - a[1])[0];
+            if (topDomain) focusDomain = topDomain[0];
+          }
+        }
+
+        // Fallback: firstModuleCapability
+        if (!focusDomain) focusDomain = firstModuleCapability;
+
+        // Find initiative linked to focus domain
+        if (inFlight.length > 0) {
+          const linked = inFlight[0];
+          focusInitiative = {
+            name: linked.name,
+            phase: linked.targetQuarter ?? "In planning",
+            status: linked.status.replace(/_/g, " "),
+          };
+        }
+      } else {
+        if (!focusDomain) focusDomain = firstModuleCapability ?? "ai_workflow_design";
+      }
+
+      if (!focusDomain) focusDomain = "ai_workflow_design";
+
+      return {
+        firstName,
+        totalModules,
+        completedModules,
+        focusDomain,
+        focusInitiative,
+        strategyExists,
+        firstModuleTitle,
+        firstModuleCapability,
+        firstModuleLevelLabel,
+        firstModuleId,
+        firstModuleReasonJson,
+        lastActivityAt,
+      };
+    }),
+
+  // ─── v2 Learning Dashboard: in-flight strategy initiatives ───────────────
+  getInFlightInitiatives: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const userId = ctx.user.id;
+
+      const [latestStrategy] = await db.select().from(strategies)
+        .where(eq(strategies.createdByUserId, userId))
+        .orderBy(desc(strategies.updatedAt)).limit(1);
+      if (!latestStrategy) return { hasStrategy: false, initiatives: [] };
+
+      const initiatives = await db.select({
+        id: strategyInitiatives.id,
+        initiativeId: strategyInitiatives.initiativeId,
+        targetQuarter: strategyInitiatives.targetQuarter,
+        status: strategyInitiatives.status,
+        criticality: strategyInitiatives.criticality,
+        name: strategyInitiativeLibrary.name,
+        category: strategyInitiativeLibrary.category,
+        description: strategyInitiativeLibrary.description,
+      })
+      .from(strategyInitiatives)
+      .innerJoin(strategyInitiativeLibrary, eq(strategyInitiatives.initiativeId, strategyInitiativeLibrary.id))
+      .where(eq(strategyInitiatives.strategyId, latestStrategy.id));
+
+      const [plan] = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, userId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+
+      const modulesByInitiative: Record<string, { total: number; completed: number }> = {};
+      if (plan) {
+        const items = await db.select({ moduleId: adaptivePlanItems.moduleId, status: adaptivePlanItems.status })
+          .from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, plan.id));
+        const moduleIds = items.map(i => i.moduleId);
+        if (moduleIds.length > 0) {
+          const mods = await db.select({ id: learningModules.id, linkedInitiativeIds: learningModules.linkedInitiativeIds })
+            .from(learningModules).where(inArray(learningModules.id, moduleIds));
+          const statusMap = Object.fromEntries(items.map(i => [i.moduleId, i.status]));
+          for (const mod of mods) {
+            const linked = (mod.linkedInitiativeIds as string[] | null) ?? [];
+            for (const initId of linked) {
+              if (!modulesByInitiative[initId]) modulesByInitiative[initId] = { total: 0, completed: 0 };
+              modulesByInitiative[initId].total++;
+              if (statusMap[mod.id] === "completed") modulesByInitiative[initId].completed++;
+            }
+          }
+        }
+      }
+
+      return {
+        hasStrategy: true,
+        initiatives: initiatives.map(i => ({
+          id: i.id,
+          initiativeId: i.initiativeId,
+          name: i.name,
+          category: i.category,
+          description: i.description,
+          phase: i.targetQuarter ?? "In planning",
+          status: i.status,
+          criticality: i.criticality,
+          moduleCount: modulesByInitiative[i.initiativeId]?.total ?? 0,
+          completedCount: modulesByInitiative[i.initiativeId]?.completed ?? 0,
+        })),
+      };
+    }),
+
+  // ─── v2 Learning Dashboard: modules filtered by initiative ───────────────
+  getModulesByInitiative: protectedProcedure
+    .input(z.object({ initiativeId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const userId = ctx.user.id;
+
+      const [plan] = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, userId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+      if (!plan) return { initiativeName: null, items: [] };
+
+      const items = await db.select().from(adaptivePlanItems)
+        .where(eq(adaptivePlanItems.planId, plan.id))
+        .orderBy(asc(adaptivePlanItems.orderIndex));
+      const moduleIds = items.map(i => i.moduleId);
+      if (moduleIds.length === 0) return { initiativeName: null, items: [] };
+
+      const mods = await db.select().from(learningModules)
+        .where(inArray(learningModules.id, moduleIds));
+      const modMap = Object.fromEntries(mods.map(m => [m.id, m]));
+
+      const filtered = items.filter(item => {
+        const mod = modMap[item.moduleId];
+        if (!mod) return false;
+        const linked = (mod.linkedInitiativeIds as string[] | null) ?? [];
+        return linked.includes(input.initiativeId);
+      });
+
+      const [initRow] = await db.select({ name: strategyInitiativeLibrary.name })
+        .from(strategyInitiativeLibrary).where(eq(strategyInitiativeLibrary.id, input.initiativeId)).limit(1);
+
+      return {
+        initiativeName: initRow?.name ?? null,
+        items: filtered.map(item => ({ ...item, module: modMap[item.moduleId] ?? null })),
+      };
+    }),
+
+  // ─── v2 Learning Dashboard: recent completions (last 30 days) ────────────
+  getRecentCompletions: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const userId = ctx.user.id;
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+      const [plan] = await db.select().from(adaptiveLearningPlans)
+        .where(and(eq(adaptiveLearningPlans.userId, userId), eq(adaptiveLearningPlans.state, "active")))
+        .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
+      if (!plan) return { completions: [], totalLast30Days: 0, withCoachingFeedback: 0 };
+
+      const items = await db.select().from(adaptivePlanItems)
+        .where(and(
+          eq(adaptivePlanItems.planId, plan.id),
+          eq(adaptivePlanItems.status, "completed"),
+          gte(adaptivePlanItems.completedAt, thirtyDaysAgo),
+        ))
+        .orderBy(desc(adaptivePlanItems.completedAt))
+        .limit(10);
+
+      if (items.length === 0) return { completions: [], totalLast30Days: 0, withCoachingFeedback: 0 };
+
+      const moduleIds = items.map(i => i.moduleId);
+      const mods = await db.select({ id: learningModules.id, title: learningModules.title, capability: learningModules.capability, durationMins: learningModules.durationMins, levelLabel: learningModules.levelLabel })
+        .from(learningModules).where(inArray(learningModules.id, moduleIds));
+      const modMap = Object.fromEntries(mods.map(m => [m.id, m]));
+
+      const feedbackRows = await db.select({ moduleId: moduleFeedback.moduleId })
+        .from(moduleFeedback).where(and(
+          eq(moduleFeedback.userId, userId),
+          inArray(moduleFeedback.moduleId, moduleIds),
+        ));
+      const feedbackModuleIds = new Set(feedbackRows.map(f => f.moduleId));
+
+      const completions = items.map(item => ({
+        id: item.id,
+        moduleId: item.moduleId,
+        completedAt: item.completedAt,
+        title: modMap[item.moduleId]?.title ?? "Module",
+        capability: modMap[item.moduleId]?.capability ?? null,
+        durationMins: modMap[item.moduleId]?.durationMins ?? null,
+        levelLabel: modMap[item.moduleId]?.levelLabel ?? null,
+        hasCoachingFeedback: feedbackModuleIds.has(item.moduleId),
+      }));
+
+      return {
+        completions,
+        totalLast30Days: completions.length,
+        withCoachingFeedback: completions.filter(c => c.hasCoachingFeedback).length,
+      };
+    }),
+
+  // ─── v2 Learning Dashboard: active coaching conversations ────────────────
+  getActiveCoachingConversations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const userId = ctx.user.id;
+
+      const convs = await db.select().from(coachingConversations)
+        .where(eq(coachingConversations.userId, userId))
+        .orderBy(desc(coachingConversations.updatedAt))
+        .limit(10);
+
+      if (convs.length === 0) return [];
+
+      const moduleIds = convs.map(c => c.moduleId).filter(Boolean) as string[];
+      const mods = moduleIds.length > 0
+        ? await db.select({ id: learningModules.id, title: learningModules.title, capability: learningModules.capability })
+            .from(learningModules).where(inArray(learningModules.id, moduleIds))
+        : [];
+      const modMap = Object.fromEntries(mods.map(m => [m.id, m]));
+
+      return convs.map(conv => {
+        const messages = (conv.conversationJson as Array<{ role: string; content: string; createdAt: number }> | null) ?? [];
+        return {
+          id: conv.id,
+          moduleId: conv.moduleId,
+          moduleTitle: conv.moduleId ? (modMap[conv.moduleId]?.title ?? "Module") : "General coaching",
+          moduleCapability: conv.moduleId ? (modMap[conv.moduleId]?.capability ?? null) : null,
+          messageCount: messages.length,
+          lastActiveAt: conv.updatedAt,
+          lastMessage: messages.length > 0 ? messages[messages.length - 1].content.slice(0, 100) : null,
+        };
+      });
+    }),
 });
 // ─── Helper: enrich plan with items and modules ────────────────────────────────
 async function enrichPlan(
