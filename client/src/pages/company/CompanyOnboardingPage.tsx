@@ -44,7 +44,10 @@ const SECTOR_OPTIONS: { label: string; value: string }[] = [
   { label: "Public Sector & Education",   value: "public_sector" },
   { label: "Energy & Utilities",          value: "energy_utilities" },
   { label: "Media & Entertainment",       value: "media_entertainment" },
-  { label: "Other",                       value: "other" },
+  { label: "Logistics & Transport",        value: "logistics_transport" },
+  { label: "Education",                    value: "education" },
+  { label: "Hospitality & Leisure",        value: "hospitality_leisure" },
+  { label: "Other",                        value: "other" },
 ];
 
 const HEADCOUNT_BANDS = [

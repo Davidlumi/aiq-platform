@@ -2652,3 +2652,6 @@
 - [x] CompanyOnboardingPage: ORG_TYPES chip grid (7 options with descriptions), orgType in form state + handleStart + review badge
 - [x] OrgContextPage (admin): orgType chip grid with confirmation text, prefill from existing, save via upsertOrgContext
 - [x] 860 tests passing (35 test files, 0 TypeScript errors)
+
+## Onboarding Sector Grid Consistency
+- [x] CompanyOnboardingPage: add logistics_transport, education, hospitality_leisure sectors to chip grid
