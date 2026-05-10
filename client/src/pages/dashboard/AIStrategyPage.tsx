@@ -2500,12 +2500,15 @@ export default function AIStrategyPage() {
                 >
                   <span className="text-sm font-medium">Per-Initiative Value Breakdown</span>
                   <div className="flex items-center gap-2">
-                    <button
-                      className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
                       onClick={(e) => { e.stopPropagation(); setValueProvenanceOpen(true); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setValueProvenanceOpen(true); } }}
                     >
                       <Info className="w-3 h-3" /> Methodology
-                    </button>
+                    </span>
                     <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${perInitCollapsed ? "" : "rotate-180"}`} />
                   </div>
                 </button>
