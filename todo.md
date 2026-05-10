@@ -2669,3 +2669,27 @@
 - [x] Add sector-specific regulatory context to generateVisionWithQualityGate LLM prompt
 - [x] Add input confirmation summary card on AI Draft step before Generate button
 - [x] Add sector/sub-sector/org-type context pill to wizard step indicator header
+
+## Assessment Question Page Refinement Brief v2
+
+### Block A — Labelling & Information Architecture
+- [x] A1: Convert all section labels to sentence case (Scenario, Constraint, Policy context, etc.)
+- [ ] A2: Tag row cleanup — humanised capability identifier, remove raw workflow slug, risk badge tooltip, difficulty tooltip, remove elapsed timer from tag row
+- [x] A3: Elapsed timer — hide from UI (keep server-side telemetry intact)
+- [x] A4: Scenario context (NarrativeWrapper) — collapsed by default (confirmed, label also sentence-cased)
+
+### Block B — Question Body & Interaction Types
+- [x] B1.1: Move P6 interaction-purpose banner into a tooltip on the interaction-type badge (remove inline banner)
+- [x] B1.3: Remove sub-prompt instruction italic line for scenario_critique type
+- [x] B2: Mobile rendering — sticky "Next question" button on mobile (sm:static sticky bottom-4)
+
+### Block C — Confidence & Save/Exit
+- [x] C1: Hide score multipliers (0.25×/0.65×/1.0×) from confidence cards; add "How scoring works" link → methodology dialog
+- [ ] C2: Save & Exit dialog — add resume-window expiry note (48 h); confirm auto-save messaging is accurate
+
+### Block D — Flag This Question
+- [x] D1: Add "Flag this question" affordance (flag icon button below confidence cards)
+- [x] D1: Flag modal with reason selector (Confusing wording / Multiple correct answers / Doesn't apply to my context / Other) + optional free-text
+- [ ] D1: question_flags DB table (sessionId, itemId, userId, reason, comment, createdAt)
+- [ ] D1: tRPC flagQuestion mutation
+- [ ] D1: Admin review queue — surface flags in AssessmentContentPage alongside existing feedback

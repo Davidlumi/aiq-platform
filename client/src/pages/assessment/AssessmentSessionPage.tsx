@@ -60,6 +60,8 @@ import {
   Sparkles,
   Loader2,
   FileText,
+  Flag,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
@@ -392,7 +394,7 @@ function NarrativeWrapper({ context }: { context: string }) {
       >
         <Layers className="w-4 h-4 text-blue-600 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Your Scenario Context</p>
+          <p className="text-xs font-semibold text-blue-700">Your scenario context</p>
           {!expanded && (
             <p className="text-xs text-muted-foreground truncate mt-0.5">{context.slice(0, 80)}{context.length > 80 ? "…" : ""}</p>
           )}
@@ -731,9 +733,15 @@ export default function AssessmentSessionPage() {
   // B1: Track revision count (option changes after first selection) and focus loss count
   const [revisionCount, setRevisionCount] = useState<number>(0);
   const [focusLossCount, setFocusLossCount] = useState<number>(0);
-  // UX-6: Elapsed timer
+  // UX-6: Elapsed timer (retained for telemetry, hidden from UI per A3)
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // D1: Flag this question dialog
+  const [showFlagDialog, setShowFlagDialog] = useState(false);
+  const [flagReason, setFlagReason] = useState<string>("");
+  const [flagSubmitted, setFlagSubmitted] = useState(false);
+  // C1: Methodology dialog
+  const [showMethodologyDialog, setShowMethodologyDialog] = useState(false);
 
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: (data) => {
@@ -1199,6 +1207,117 @@ export default function AssessmentSessionPage() {
           </button>
         </div>
 
+        {/* D1: Flag this question dialog */}
+        <AlertDialog open={showFlagDialog} onOpenChange={setShowFlagDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Flag className="w-4 h-4 text-muted-foreground" />
+                Flag this question
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Help us improve the assessment by flagging any issues with this question.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="px-0 pb-2 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {["Confusing wording", "Multiple correct answers", "Doesn't apply to my context", "Other"].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setFlagReason(reason)}
+                    className={cn(
+                      "text-xs rounded-lg border px-3 py-2 text-left transition-all",
+                      flagReason === reason
+                        ? "border-primary bg-[#047857]/8 text-foreground font-medium"
+                        : "border-border text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
+                    )}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+              <Textarea
+                value={flagReason && !["Confusing wording", "Multiple correct answers", "Doesn't apply to my context", "Other"].includes(flagReason) ? flagReason : ""}
+                onChange={e => setFlagReason(e.target.value)}
+                rows={3}
+                placeholder="Optional: add more detail about the issue…"
+                className="text-sm resize-none"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setFlagReason(""); }}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setFlagSubmitted(true);
+                  setShowFlagDialog(false);
+                  setFlagReason("");
+                  toast.success("Thank you — this question has been flagged for review.");
+                }}
+                disabled={!flagReason}
+              >
+                Submit flag
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* C1: Methodology / How scoring works dialog */}
+        <AlertDialog open={showMethodologyDialog} onOpenChange={setShowMethodologyDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-muted-foreground" />
+                How scoring works
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="text-sm text-muted-foreground space-y-3">
+                  <p>
+                    Your score for each question is calculated by combining the correctness of your answer with how confident you said you were. This rewards accurate self-assessment as well as knowledge.
+                  </p>
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          <th className="text-left px-3 py-2 font-semibold text-foreground">Confidence level</th>
+                          <th className="text-left px-3 py-2 font-semibold text-foreground">Description</th>
+                          <th className="text-right px-3 py-2 font-semibold text-foreground">Weight</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="px-3 py-2 font-medium text-[#DC2626]">Guessing</td>
+                          <td className="px-3 py-2 text-muted-foreground">Not sure at all</td>
+                          <td className="px-3 py-2 text-right font-mono">0.25×</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium text-[#99882A]">Fairly sure</td>
+                          <td className="px-3 py-2 text-muted-foreground">I think this is right</td>
+                          <td className="px-3 py-2 text-right font-mono">0.65×</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium text-[#047857]">Certain</td>
+                          <td className="px-3 py-2 text-muted-foreground">Confident in my answer</td>
+                          <td className="px-3 py-2 text-right font-mono">1.0×</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p>
+                    If you select a correct answer with <strong className="text-foreground">Certain</strong> confidence, you receive the full score. If you select the same correct answer with <strong className="text-foreground">Guessing</strong>, you receive 25% of the score — reflecting that the correct answer may have been luck rather than knowledge.
+                  </p>
+                  <p>
+                    This approach is based on confidence-weighted scoring used in professional capability assessments and is designed to measure genuine knowledge rather than test-taking strategy.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setShowMethodologyDialog(false)}>Got it</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -1260,22 +1379,41 @@ export default function AssessmentSessionPage() {
                 <TooltipContent side="bottom" className="max-w-xs text-xs">
                   <p className="font-semibold mb-0.5">{iConfig.label}</p>
                   <p className="text-muted-foreground">{iConfig.instruction}</p>
+                  {INTERACTION_PURPOSE[interactionType] && (
+                    <p className="text-muted-foreground mt-1 pt-1 border-t border-border/40">{INTERACTION_PURPOSE[interactionType]}</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
-            {/* Capability badge */}
+            {/* A2: humanised capability badge with tooltip */}
             {(nextItem as any).capability && (
-              <span
-                className="text-xs font-medium px-2 py-0.5 rounded-full border"
-                style={{
-                  color: capabilityColor,
-                  backgroundColor: `${capabilityColor}10`,
-                  borderColor: `${capabilityColor}25`,
-                }}
-              >
-                {(nextItem as any).capability}
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="text-xs font-medium px-2 py-0.5 rounded-full border cursor-help"
+                      style={{
+                        color: capabilityColor,
+                        backgroundColor: `${capabilityColor}10`,
+                        borderColor: `${capabilityColor}25`,
+                      }}
+                    >
+                      {(nextItem as any).capability
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    <p className="font-semibold mb-0.5">Capability area</p>
+                    <p className="text-muted-foreground">
+                      {(nextItem as any).capability
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
             {/* Workflow */}
@@ -1294,9 +1432,9 @@ export default function AssessmentSessionPage() {
               </span>
             )}
 
-            {/* UX-6: Elapsed timer */}
+            {/* A3: Difficulty level badge only — elapsed timer hidden from UI (retained in telemetry) */}
             <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-              <span className="opacity-60">⏱</span> {formatElapsed(elapsedSeconds)} · Level {(nextItem as any).difficulty}
+              Level {(nextItem as any).difficulty}
             </span>
           </div>
 
@@ -1310,7 +1448,8 @@ export default function AssessmentSessionPage() {
           {/* Scenario */}
           {(nextItem as any).scenario && (
             <div className="bg-muted/40 rounded-xl p-4 border border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+              {/* A1: sentence case label */}
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
                 Scenario
               </p>
               <p className="text-sm text-foreground leading-relaxed">{(nextItem as any).scenario}</p>
@@ -1325,7 +1464,7 @@ export default function AssessmentSessionPage() {
           {/* Constraint - only for non-AI-output types and no artefact */}
           {(nextItem as any).constraint && !iConfig.hasAiOutput && !iConfig.hasDataContext && (!artefactType || artefactType === "none") && (
             <div className="bg-[#D97706]/8 rounded-xl p-3 border border-[#D97706]/25">
-              <p className="text-xs font-semibold text-[#99882A] uppercase tracking-widest mb-1">
+              <p className="text-xs font-semibold text-[#99882A] mb-1">
                 Constraint
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
@@ -1335,8 +1474,8 @@ export default function AssessmentSessionPage() {
           {/* Risk framing for pressure_test */}
           {interactionType === "pressure_test" && (nextItem as any).constraint && (
             <div className="bg-[#DC2626]/8 rounded-xl p-3 border border-[#DC2626]/25">
-              <p className="text-xs font-semibold text-[#CC3344] uppercase tracking-widest mb-1">
-                Risk Factor
+              <p className="text-xs font-semibold text-[#CC3344] mb-1">
+                Risk factor
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
             </div>
@@ -1345,8 +1484,8 @@ export default function AssessmentSessionPage() {
           {/* Governance framing */}
           {interactionType === "ethical_dilemma" && (nextItem as any).constraint && (
             <div className="bg-[#047857]/8 rounded-xl p-3 border border-[#047857]/25">
-              <p className="text-xs font-semibold text-[#047857] uppercase tracking-widest mb-1">
-                Policy Context
+              <p className="text-xs font-semibold text-[#047857] mb-1">
+                Policy context
               </p>
               <p className="text-sm text-foreground">{(nextItem as any).constraint}</p>
             </div>
@@ -1372,15 +1511,7 @@ export default function AssessmentSessionPage() {
             <DataContextBlock content={(nextItem as any).constraint} />
           )}
 
-          {/* P6: Interaction purpose banner */}
-          {INTERACTION_PURPOSE[interactionType] && (
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border">
-              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {INTERACTION_PURPOSE[interactionType]}
-              </p>
-            </div>
-          )}
+          {/* B1.1: Interaction purpose moved to tooltip on the badge above — banner removed */}
 
           {/* Question prompt - A5-04: promoted from text-xs uppercase to text-sm for readability */}
           <div>
@@ -1389,9 +1520,12 @@ export default function AssessmentSessionPage() {
             >
               {(nextItem as any).question || iConfig.questionLabel}
             </p>
-            <p className="text-xs text-muted-foreground italic border-l-2 pl-3 py-0.5" style={{ borderColor: `${iConfig.accent}50` }}>
-              {iConfig.instruction}
-            </p>
+            {/* B1.3: hide generic sub-prompt for scenario_critique — it duplicates the question intent */}
+            {interactionType !== "scenario_critique" && (
+              <p className="text-xs text-muted-foreground italic border-l-2 pl-3 py-0.5" style={{ borderColor: `${iConfig.accent}50` }}>
+                {iConfig.instruction}
+              </p>
+            )}
           </div>
 
           {/* Options - UX-4: keyboard hint shown below */}
@@ -1429,7 +1563,7 @@ export default function AssessmentSessionPage() {
           {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                <Label className="text-xs font-semibold text-muted-foreground">
                   Explain your thinking
                   <span className="font-normal normal-case text-muted-foreground"> — optional</span>
                 </Label>
@@ -1456,7 +1590,7 @@ export default function AssessmentSessionPage() {
 
           {/* v10: Three-level confidence staking - A5-05: dimmed until an answer is selected */}
           <div className={cn("space-y-2 pt-1 transition-opacity duration-200", !selectedValue ? "opacity-40 pointer-events-none" : "")}>
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+            <Label className="text-xs font-semibold text-muted-foreground">
               How confident are you in this answer?
             </Label>
             <div className="grid grid-cols-3 gap-2">
@@ -1482,17 +1616,42 @@ export default function AssessmentSessionPage() {
                   >
                     <span className="text-sm font-bold">{label}</span>
                     <span className="text-xs opacity-70 leading-tight">{desc}</span>
-                    <span className="text-xs font-mono mt-0.5 opacity-50">score {weight}</span>
+                    {/* C1: score multiplier hidden — methodology link shown below */}
                   </button>
                 );
               })}
             </div>
           </div>
 
+          {/* D1: Flag this question affordance */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowFlagDialog(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              <Flag className="w-3 h-3" />
+              Flag this question
+            </button>
+          </div>
+
+          {/* C1: Methodology note replacing hidden score multipliers */}
+          <p className="text-xs text-muted-foreground/50 text-center">
+            Confidence weighting is applied to your score.{" "}
+            <button
+              type="button"
+              onClick={() => setShowMethodologyDialog(true)}
+              className="underline underline-offset-2 hover:text-muted-foreground transition-colors"
+            >
+              How scoring works
+            </button>
+          </p>
+
+          {/* B2: sticky on mobile so Next is always reachable without scrolling */}
           <Button
             onClick={handleSubmit}
             disabled={submitMutation.isPending || !selectedValue}
-            className="w-full gap-2"
+            className="w-full gap-2 sm:static sticky bottom-4"
           >
             {submitMutation.isPending ? (
               <>
