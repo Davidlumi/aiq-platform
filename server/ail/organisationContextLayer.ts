@@ -51,6 +51,8 @@ export interface OrgContextInput {
   revalidationCycleMonths?: number;
   smallHRFunctionMode?: boolean;
   companyAiContextNarrative?: string;
+  // Sub-sector selection (Phase 2 sub-sector feature)
+  subSector?: string | null;
   // Phase 3: Business Ambition Linkage
   ambitionTargetScore?: number | null;   // 0-100 raw (shown as 0-10 Peakon)
   ambitionTargetDate?: string | null;    // ISO date YYYY-MM-DD
@@ -128,6 +130,18 @@ const SECTOR_REGULATORY_CONTEXT: Record<string, {
     reportingRequirements: ["Gender pay gap report", "Modern slavery statement"],
     aiRisks: ["Predictive maintenance vs workforce planning", "Skills gap in AI-adjacent roles", "Union consultation requirements"],
   },
+  energy_utilities: {
+    regulator: "Ofgem / HSE / ICO",
+    keyLegislation: ["UK GDPR", "Equality Act 2010", "Employment Rights Act 1996", "Health and Safety at Work Act 1974", "Energy Act 2023"],
+    reportingRequirements: ["Gender pay gap report", "Modern slavery statement", "SECR energy reporting"],
+    aiRisks: ["Critical infrastructure risk from AI-driven operational decisions", "Algorithmic bias in safety-critical roles", "Union consultation requirements"],
+  },
+  media_entertainment: {
+    regulator: "Ofcom / ICO",
+    keyLegislation: ["UK GDPR", "Equality Act 2010", "Employment Rights Act 1996", "Online Safety Act 2023"],
+    reportingRequirements: ["Gender pay gap report", "Diversity in broadcasting (Ofcom)"],
+    aiRisks: ["AI-generated content and copyright liability", "Algorithmic bias in creative hiring", "Freelancer and gig worker classification"],
+  },
   other: {
     regulator: "ICO",
     keyLegislation: ["UK GDPR", "Equality Act 2010", "Employment Rights Act 1996"],
@@ -153,6 +167,7 @@ export async function upsertOrgContext(input: OrgContextInput): Promise<void> {
 
   const data = {
     sector: (input.sector as any) ?? "other",
+    subSector: input.subSector ?? null,
     primaryRegulator: input.primaryRegulator,
     additionalRegulatorsJson: JSON.stringify(input.additionalRegulators ?? []),
     reportingRequirementsJson: JSON.stringify(input.reportingRequirements ?? []),

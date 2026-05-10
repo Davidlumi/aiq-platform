@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE `ail_org_context`\n  MODIFY COLUMN `sector` enum(\n    'financial_services','healthcare','technology','retail',\n    'public_sector','professional_services','manufacturing','other',\n    'energy_utilities','media_entertainment'\n  ) NOT NULL DEFAULT 'other',\n  ADD COLUMN `sub_sector` varchar(100) NULL AFTER `sector`;\n\nALTER TABLE `companies`\n  ADD COLUMN `sub_sector` varchar(100) NULL AFTER `sector`;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE `ail_org_context`\n  MODIFY COLUMN `sector` enum(\n    'financial_services','healthcare','technology','retail',\n    'public_sector','professional_services','manufacturing','other',\n    'energy_utilities','media_entertainment'\n  ) NOT NULL DEFAULT 'other',\n  ADD COLUMN `sub_sector` varchar(100) NULL AFTER `sector`;\n\nALTER TABLE `companies`\n  ADD COLUMN `sub_sector` varchar(100) NULL AFTER `sector`;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1312
+}

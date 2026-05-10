@@ -843,7 +843,9 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   sector: mysqlEnum("sector", [
     "financial_services", "healthcare", "technology", "retail",
     "public_sector", "professional_services", "manufacturing", "other",
+    "energy_utilities", "media_entertainment",
   ]).notNull().default("other"),
+  subSector: varchar("sub_sector", { length: 100 }),                                    // sub-sector slug from sectorTaxonomy.ts
   primaryRegulator: varchar("primary_regulator", { length: 100 }),
   additionalRegulatorsJson: text("additional_regulators_json"),
   reportingRequirementsJson: text("reporting_requirements_json"),
@@ -1598,6 +1600,7 @@ export const companies = mysqlTable("companies", {
   createdByUserId: varchar("created_by_user_id", { length: 36 }).notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   sector: varchar("sector", { length: 100 }).notNull().default(""),
+  subSector: varchar("sub_sector", { length: 100 }),
   headcountBand: varchar("headcount_band", { length: 50 }).notNull().default(""),
   hrTeamSize: varchar("hr_team_size", { length: 50 }).notNull().default(""),
   hrisPlatform: varchar("hris_platform", { length: 100 }).notNull().default(""),

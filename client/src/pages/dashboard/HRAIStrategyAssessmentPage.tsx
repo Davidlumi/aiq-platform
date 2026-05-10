@@ -78,6 +78,7 @@ import {
   PILOT_DURATION_OPTIONS,
   PILOT_SUCCESS_METRICS,
 } from "@/../../shared/strategyInputs";
+import { getSubSectors, getSubSectorLabel } from "@/../../shared/sectorTaxonomy";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -723,11 +724,15 @@ export default function HRAIStrategyAssessmentPage() {
 
   // ── Derived values ─────────────────────────────────────────────────────────
   const sector = orgContextQ.data?.sector ?? "other";
+  const subSector = orgContextQ.data?.subSector ?? null;
   const headcount = orgContextQ.data?.headcount ?? 500;
   const sectorLabel = sector.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const subSectorLabel = subSector ? getSubSectorLabel(sector, subSector) : null;
+  const contextLabel = subSectorLabel ? `${subSectorLabel} (${sectorLabel})` : sectorLabel;
   const sectorBenchmarks = getSectorBenchmarks(sector);
   const availableOutcomes = useMemo(() => getBusinessOutcomes(sector), [sector]);
   const governanceDefaults = useMemo(() => getGovernanceDefaults(sector), [sector]);
+  const subSectorOptions = useMemo(() => getSubSectors(sector), [sector]);
 
   // ── Pre-fill from existing assessment ─────────────────────────────────────
   useEffect(() => {
@@ -811,6 +816,13 @@ export default function HRAIStrategyAssessmentPage() {
   }, []);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
+  const upsertOrgContextMut = trpc.intelligence.upsertOrgContext.useMutation({
+    onSuccess: () => {
+      trpc.useUtils().intelligence.orgContext.invalidate();
+    },
+    onError: (err) => { toast.error("Failed to update sub-sector: " + err.message); },
+  });
+
   const generateMut = trpc.intelligence.generateVisionWithQualityGate.useMutation({
     onSuccess: (data) => {
       setVisionStatement(data.visionStatement);
@@ -942,7 +954,7 @@ export default function HRAIStrategyAssessmentPage() {
     // Include ai_philosophy so the vision generation reflects the chosen philosophy
     const philOpt = AI_PHILOSOPHY_OPTIONS.find(o => o.value === si.ai_philosophy);
     generateMut.mutate({
-      sector: sectorLabel,
+      sector: contextLabel,
       businessAmbitionLabel: BUSINESS_LEVELS[businessLevel]?.label ?? "Progressive",
       peopleAmbitionLabel: PEOPLE_LEVELS[peopleLevel]?.label ?? "Practitioners",
       aiPhilosophy: philOpt ? `${philOpt.label}: ${philOpt.description}` : undefined,
@@ -960,7 +972,7 @@ export default function HRAIStrategyAssessmentPage() {
       const provenance = await buildProvenanceMut.mutateAsync({
         selectedInitiativeIds: Array.from(selectedIds),
         visionStatement,
-        sector: sectorLabel,
+        sector: contextLabel,
         ambitionTier,
       });
       provenanceJson = JSON.stringify(provenance);
@@ -1057,11 +1069,46 @@ export default function HRAIStrategyAssessmentPage() {
         </div>
       </div>
 
-      {/* ── Wizard body ─────────────────────────────────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <StepIndicator current={step} total={6} />
+      {/* ── Sub-sector context banner ────────────────────────────────────────────── */}
+      {(sector !== "other" && subSectorOptions.length > 0) && (
+        <div className="border-b border-white/6 bg-white/1">
+          <div className="max-w-3xl mx-auto px-6 py-3 flex items-center gap-3 flex-wrap">
+            <span className="text-xs text-muted-foreground flex-shrink-0">
+              Benchmarks for:
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-foreground bg-white/6 border border-white/10 rounded-full px-2.5 py-1">
+                {sectorLabel}
+              </span>
+              {subSectorOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    const newSubSector = subSector === opt.value ? null : opt.value;
+                    upsertOrgContextMut.mutate({ subSector: newSubSector });
+                  }}
+                  className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
+                    subSector === opt.value
+                      ? "bg-green-500/20 border-green-500/40 text-green-300 font-semibold"
+                      : "bg-white/4 border-white/10 text-muted-foreground hover:text-foreground hover:bg-white/8"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {subSector && (
+              <span className="text-xs text-green-400 ml-auto flex-shrink-0">
+                Using {subSectorLabel} benchmarks
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
-        {/* ── Step 1: Business AI Aspiration ─────────────────────────────── */}
+      {/* ── Wizard body ───────────────────────────────────────────────────────── */}
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <StepIndicator current={step} total={6} />        {/* ── Step 1: Business AI Aspiration ─────────────────────────────── */}
         {step === 1 && (
           <div>
             <div className="mb-6">
@@ -1082,7 +1129,7 @@ export default function HRAIStrategyAssessmentPage() {
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What AI outcomes matter most to your organisation?
                 </p>
-                <p className="text-xs text-muted-foreground mb-4">Select all that apply. Sector-specific options are included for {sectorLabel}.</p>
+                <p className="text-xs text-muted-foreground mb-4">Select all that apply. Sector-specific options are included for {contextLabel}.</p>
                 <ChipSelect
                   options={availableOutcomes}
                   selected={businessOutcomes}
@@ -1250,7 +1297,7 @@ export default function HRAIStrategyAssessmentPage() {
               <div className="flex-1">
                 <p className="text-sm text-foreground font-medium">All fields are optional</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  We'll use {sectorLabel} sector averages for any fields you skip. Sector defaults are sourced from CIPD and SHRM benchmarks.
+                  We'll use {contextLabel} sector averages for any fields you skip. Sector defaults are sourced from CIPD and SHRM benchmarks.
                 </p>
               </div>
               <Button
@@ -1259,7 +1306,7 @@ export default function HRAIStrategyAssessmentPage() {
                 onClick={skipAllBaseline}
                 className="flex-shrink-0 text-xs"
               >
-                Skip all — use sector averages
+                Skip all — use {contextLabel} averages
               </Button>
             </div>
 
@@ -1567,7 +1614,7 @@ export default function HRAIStrategyAssessmentPage() {
                   What governance principles matter most?
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Sector defaults for {sectorLabel} are pre-checked. Adjust as needed.
+                  Sector defaults for {contextLabel} are pre-checked. Adjust as needed.
                 </p>
                 <ChipSelect
                   options={GOVERNANCE_PRINCIPLES}
@@ -1769,7 +1816,7 @@ export default function HRAIStrategyAssessmentPage() {
                 <Sparkles className="w-10 h-10 text-purple-400 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-foreground mb-1">Ready to generate your strategy</p>
                 <p className="text-xs text-muted-foreground mb-5">
-                  Based on your {sectorLabel} context, {businessOutcomes.length} outcomes, and {businessProblems.length} problems.
+                  Based on your {contextLabel} context, {businessOutcomes.length} outcomes, and {businessProblems.length} problems.
                 </p>
                 <Button
                   onClick={handleGenerate}
@@ -1975,7 +2022,7 @@ export default function HRAIStrategyAssessmentPage() {
               </p>
               <div className="grid grid-cols-2 gap-3 text-xs mb-4">
                 {[
-                  { label: "Sector", value: sectorLabel },
+                  { label: "Sector", value: contextLabel },
                   { label: "Risk Appetite", value: RISK_APPETITE_OPTIONS.find(r => r.value === riskAppetite)?.label ?? "—" },
                   { label: "Timeline", value: timelineMonths ? `${timelineMonths} months` : "—" },
                   { label: "Initiatives", value: `${selectedIds.size} selected` },

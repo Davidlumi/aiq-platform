@@ -2617,3 +2617,17 @@
 - [x] B7.3: Variant 3 — All users: module recommendations based on lowest-scoring domains
 
 - [x] Formula concentration bug: skills_intelligence_platform anchored to hires (not totalHeadcount) — prevents 10x inflation for large companies
+
+## Sector + Sub-Sector Selection
+- [x] Define SUB_SECTOR_TAXONOMY in shared/sectorTaxonomy.ts (with 9 sectors × 4-5 sub-sectors each)
+- [x] Add SUB_SECTOR_BENCHMARKS (per-sub-sector AI maturity norms) in shared/sectorTaxonomy.ts
+- [x] getEffectiveBenchmark helper: resolves sub-sector → sector → global fallback
+- [x] Schema: sub_sector column on ailOrgContext and companies tables
+- [x] CompanyOnboardingPage: cascading sub-sector selector (appears after sector is chosen, clears on sector change)
+- [x] HRAIStrategyAssessmentPage: sub-sector context banner with toggle chips; contextLabel used in all narrative text
+- [x] AIStrategyPage: sub-sector PillEdit in sticky header; energy_utilities + media_entertainment added to SECTORS
+- [x] OrgContextPage (admin): sub-sector chip grid with confirmation text; all 10 sectors in SECTORS list
+- [x] Server: createCompany procedure accepts subSector and stores it
+- [x] Server: upsertOrgContext procedure accepts subSector and stores it
+- [x] Server: all three SECTOR_BENCHMARKS lookups in companyAssessment.ts use getEffectiveBenchmark
+- [x] 18 unit tests for benchmark resolution, taxonomy completeness, and label helpers

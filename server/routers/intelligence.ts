@@ -122,7 +122,9 @@ export const intelligenceRouter = router({
       sector: z.enum([
         "financial_services", "healthcare", "technology", "retail",
         "public_sector", "professional_services", "manufacturing", "other",
+        "energy_utilities", "media_entertainment",
       ]).optional(),
+      subSector: z.string().max(100).nullable().optional(),
       primaryRegulator: z.string().optional(),
       additionalRegulators: z.array(z.string()).optional(),
       headcount: z.number().int().positive().optional(),

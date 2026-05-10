@@ -1107,7 +1107,7 @@ export default function AssessmentResultsPage() {
                 { label: "Novice", color: "text-red-400", minVal: 0 },
               ].map(tier => (
                 <span key={tier.label} className={cn("text-[11px] font-medium", tier.color)}>
-                  {tier.label}{tier.minVal > 0 ? " >=" + tier.minVal : " below 35"}
+                  {tier.label}{tier.minVal > 0 ? ` ≥${tier.minVal}` : " below 35"}
                 </span>
               ))}
             </div>

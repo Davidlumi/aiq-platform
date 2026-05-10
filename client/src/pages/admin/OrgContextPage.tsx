@@ -31,18 +31,21 @@ import {
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getSubSectors, getSubSectorLabel } from "@/../../shared/sectorTaxonomy";
 
 // --- Option Sets --------------------------------------------------------------
 
 const SECTORS = [
-  { value: "financial_services", label: "Financial Services" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "technology", label: "Technology" },
-  { value: "retail", label: "Retail" },
-  { value: "public_sector", label: "Public Sector" },
+  { value: "financial_services",    label: "Financial Services" },
+  { value: "healthcare",            label: "Healthcare" },
+  { value: "technology",            label: "Technology" },
+  { value: "retail",                label: "Retail" },
+  { value: "public_sector",         label: "Public Sector" },
   { value: "professional_services", label: "Professional Services" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "other", label: "Other" },
+  { value: "manufacturing",         label: "Manufacturing" },
+  { value: "energy_utilities",      label: "Energy & Utilities" },
+  { value: "media_entertainment",   label: "Media & Entertainment" },
+  { value: "other",                 label: "Other" },
 ];
 
 const RISK_APPETITES = [
@@ -142,6 +145,7 @@ export default function OrgContextPage() {
 
   // Block 1: Organisation Profile
   const [sector, setSector] = useState<string>("");
+  const [subSector, setSubSector] = useState<string | null>(null);
   const [headcount, setHeadcount] = useState<string>("");
   const [structure, setStructure] = useState<string>("");
   const [hrInfluence, setHrInfluence] = useState<string>("");
@@ -187,6 +191,7 @@ export default function OrgContextPage() {
   // Pre-populate from existing config
   if (existing && !initialised) {
     if (existing.sector) setSector(existing.sector);
+    if ((existing as any).subSector) setSubSector((existing as any).subSector ?? null);
     if (existing.headcount) setHeadcount(String(existing.headcount));
     if (existing.structure) setStructure(existing.structure);
     if (existing.hrInfluence) setHrInfluence(existing.hrInfluence);
@@ -248,6 +253,7 @@ export default function OrgContextPage() {
   function handleSave() {
     upsert.mutate({
       sector: sector as any || undefined,
+      subSector: subSector ?? null,
       headcount: headcount ? parseInt(headcount) : undefined,
       structure: structure as any || undefined,
       riskAppetiteOverall: riskAppetite as any || undefined,
@@ -325,10 +331,33 @@ export default function OrgContextPage() {
             <label className="text-xs font-medium text-foreground mb-2 block">Sector</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {SECTORS.map(s => (
-                <ToggleChip key={s.value} value={s.value} label={s.label} selected={sector === s.value} onClick={() => setSector(s.value)} />
+                <ToggleChip key={s.value} value={s.value} label={s.label} selected={sector === s.value} onClick={() => { setSector(s.value); setSubSector(null); }} />
               ))}
             </div>
           </div>
+          {getSubSectors(sector).length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-foreground mb-2 block">
+                Sub-sector <span className="text-muted-foreground font-normal">(optional — refines benchmark norms)</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {getSubSectors(sector).map(ss => (
+                  <ToggleChip
+                    key={ss.value}
+                    value={ss.value}
+                    label={ss.label}
+                    selected={subSector === ss.value}
+                    onClick={() => setSubSector(subSector === ss.value ? null : ss.value)}
+                  />
+                ))}
+              </div>
+              {subSector && (
+                <p className="text-[11px] text-green-400 mt-1.5">
+                  Using {getSubSectorLabel(sector, subSector)} benchmarks for all assessments and strategy simulations.
+                </p>
+              )}
+            </div>
+          )}
 
           <Separator />
 

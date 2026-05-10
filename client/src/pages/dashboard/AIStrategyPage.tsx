@@ -64,8 +64,9 @@ import {
   PILOT_DURATION_OPTIONS,
   PILOT_SUCCESS_METRICS,
 } from "@/../../shared/strategyInputs";
+import { getSubSectors, getSubSectorLabel } from "@/../../shared/sectorTaxonomy";
 
-// ─── Sector options ───────────────────────────────────────────────────────────
+// ─── Sector options ─────────────────────────────────────────────────────
 const SECTORS = [
   { value: "financial_services",    label: "Financial Services" },
   { value: "healthcare",            label: "Healthcare" },
@@ -74,6 +75,8 @@ const SECTORS = [
   { value: "public_sector",         label: "Public Sector" },
   { value: "professional_services", label: "Professional Services" },
   { value: "manufacturing",         label: "Manufacturing" },
+  { value: "energy_utilities",      label: "Energy & Utilities" },
+  { value: "media_entertainment",   label: "Media & Entertainment" },
   { value: "other",                 label: "Other" },
 ];
 
@@ -563,6 +566,7 @@ export default function AIStrategyPage() {
   const [businessLevel, setBusinessLevelRaw] = useState(3);
   const [peopleLevel, setPeopleLevelRaw]     = useState(3);
   const [sector, setSectorRaw]               = useState("");
+  const [subSector, setSubSectorRaw]         = useState<string | null>(null);
   const [isDirty, setIsDirty]                = useState(false);
   const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<Set<string>>(new Set());
   const [showSelectorModal, setShowSelectorModal]         = useState(false);
@@ -714,12 +718,14 @@ export default function AIStrategyPage() {
 
   useEffect(() => {
     if (orgContext?.sector) setSectorRaw(orgContext.sector);
+    if (orgContext?.subSector !== undefined) setSubSectorRaw(orgContext.subSector ?? null);
   }, [orgContext]);
 
   // Locked strategy: pills are read-only until user explicitly unlocks
   const setBusinessLevel = useCallback((v: number) => { if (!strategyLocked) { setBusinessLevelRaw(v); setIsDirty(true); } }, [strategyLocked]);
   const setPeopleLevel   = useCallback((v: number) => { if (!strategyLocked) { setPeopleLevelRaw(v); setIsDirty(true); } }, [strategyLocked]);
-  const setSector        = useCallback((v: string) => { if (!strategyLocked) { setSectorRaw(v); setIsDirty(true); } }, [strategyLocked]);
+  const setSector        = useCallback((v: string) => { if (!strategyLocked) { setSectorRaw(v); setSubSectorRaw(null); setIsDirty(true); } }, [strategyLocked]);
+  const setSubSector     = useCallback((v: string | null) => { if (!strategyLocked) { setSubSectorRaw(v); setIsDirty(true); } }, [strategyLocked]);
   const toggleInitiative = useCallback((id: string) => {
     setSelectedInitiativeIds(prev => {
       const next = new Set(prev);
@@ -744,8 +750,10 @@ export default function AIStrategyPage() {
   });
 
   function handleSave() {
-    if (sector && sector !== orgContext?.sector) {
-      upsertOrgContextMut.mutate({ sector: sector as any });
+    const sectorChanged    = sector && sector !== orgContext?.sector;
+    const subSectorChanged = subSector !== (orgContext?.subSector ?? null);
+    if (sectorChanged || subSectorChanged) {
+      upsertOrgContextMut.mutate({ sector: sector as any, subSector });
     }
     saveStrategyMut.mutate({
       businessAmbitionLevel: businessLevel,
@@ -1082,6 +1090,9 @@ export default function AIStrategyPage() {
   }
 
   const sectorLabel      = SECTORS.find(s => s.value === sector)?.label;
+  const subSectorOptions = useMemo(() => getSubSectors(sector), [sector]);
+  const subSectorLabel   = subSector ? getSubSectorLabel(sector, subSector) : null;
+  const contextLabel     = subSectorLabel ? `${subSectorLabel} (${sectorLabel})` : (sectorLabel ?? sector);
   const bLevel           = BUSINESS_LEVELS[businessLevel];
   const pLevel           = PEOPLE_LEVELS[peopleLevel];
   const requiredMaturity = bLevel?.requiredMaturity ?? 2.75;
@@ -1233,6 +1244,18 @@ export default function AIStrategyPage() {
               options={SECTORS}
               onChange={setSector}
             />
+            {subSectorOptions.length > 0 && (
+              <>
+                <span className="text-muted-foreground text-xs">/</span>
+                <PillEdit
+                  label="Sub-sector"
+                  icon={<Building2 className="w-3 h-3" />}
+                  value={subSectorLabel ?? "All sub-sectors"}
+                  options={[{ value: "", label: "All sub-sectors" }, ...subSectorOptions]}
+                  onChange={v => setSubSector(v || null)}
+                />
+              </>
+            )}
             <span className="text-muted-foreground text-xs">·</span>
             <PillEdit
               label="Business Ambition"
@@ -1583,7 +1606,7 @@ export default function AIStrategyPage() {
               <div className="rounded-xl border border-white/8 bg-white/2 p-5">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">How AI Will Change Ways of Work</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  In {sectorLabel}, {companyResults?.companyName ?? "the organisation"}'s business is set on a{" "}
+                  In {contextLabel}, {companyResults?.companyName ?? "the organisation"}'s business is set on a{" "}
                   <strong className="text-foreground">{bLevel?.label}</strong> AI ambition, and HR is expected to operate at the{" "}
                   <strong className="text-foreground">{pLevel?.label}</strong> tier to deliver it.{" "}
                   {bLevel?.waysOfWork} {pLevel?.expectation}

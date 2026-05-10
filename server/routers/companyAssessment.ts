@@ -33,7 +33,7 @@ import { eq, and, inArray, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
-
+import { getEffectiveBenchmark } from "../../shared/sectorTaxonomy";
 // ─── Dimension config ─────────────────────────────────────────────────────────
 const DIMENSIONS = [
   {
@@ -680,6 +680,7 @@ export const companyAssessmentRouter = router({
     .input(z.object({
       name: z.string().min(1),
       sector: z.string().default(""),
+      subSector: z.string().optional(),
       headcountBand: z.string().default(""),
       hrTeamSize: z.string().default(""),
       hrisPlatform: z.string().default(""),
@@ -697,6 +698,7 @@ export const companyAssessmentRouter = router({
         createdByUserId: ctx.user.id,
         name: input.name,
         sector: input.sector,
+        subSector: input.subSector ?? null,
         headcountBand: input.headcountBand,
         hrTeamSize: input.hrTeamSize,
         hrisPlatform: input.hrisPlatform,
@@ -962,7 +964,7 @@ export const companyAssessmentRouter = router({
       // Get company for sector benchmark
       const [company] = await db.select().from(companies)
         .where(eq(companies.id, assessment.companyId));
-      const sectorAvg = SECTOR_BENCHMARKS[company?.sector || "Other"] || 2.5;
+      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
       const sectorPercentile = computePercentile(overallScore, sectorAvg);
       const overallPercentile = computePercentile(overallScore, 2.5);
 
@@ -1061,7 +1063,7 @@ Write the executive summary.`,
         .where(eq(companies.id, result.companyId));
 
       const maturity = getMaturityLabel(result.overallScore);
-      const sectorAvg = SECTOR_BENCHMARKS[company?.sector || "Other"] || 2.5;
+      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
 
       return {
         ...result,
@@ -1123,7 +1125,7 @@ Write the executive summary.`,
     const [company] = await db.select().from(companies)
       .where(eq(companies.id, result.companyId));
     const maturity = getMaturityLabel(result.overallScore);
-    const sectorAvg = SECTOR_BENCHMARKS[company?.sector || "Other"] || 2.5;
+    const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
     // Per-dimension sector benchmarks (scaled from overall sector avg)
     const dimBenchmarkScale: Record<string, number> = {
       strategy:    1.05, // strategy tends to be higher in advanced sectors

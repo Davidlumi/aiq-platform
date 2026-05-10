@@ -22,7 +22,9 @@ import {
   Brain,
   ArrowRight,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
+import { getSubSectors, type SubSectorDef } from "../../../../shared/sectorTaxonomy";
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 const STEPS = [
@@ -31,17 +33,18 @@ const STEPS = [
   { id: "briefing", label: "Assessment Briefing" },
 ];
 
-const SECTORS = [
-  "Financial Services",
-  "Healthcare & Life Sciences",
-  "Technology & Software",
-  "Professional Services",
-  "Retail & Consumer",
-  "Manufacturing & Engineering",
-  "Public Sector & Education",
-  "Energy & Utilities",
-  "Media & Entertainment",
-  "Other",
+// Display labels → DB enum slug mapping
+const SECTOR_OPTIONS: { label: string; value: string }[] = [
+  { label: "Financial Services",          value: "financial_services" },
+  { label: "Healthcare & Life Sciences",  value: "healthcare" },
+  { label: "Technology & Software",       value: "technology" },
+  { label: "Professional Services",       value: "professional_services" },
+  { label: "Retail & Consumer",           value: "retail" },
+  { label: "Manufacturing & Engineering", value: "manufacturing" },
+  { label: "Public Sector & Education",   value: "public_sector" },
+  { label: "Energy & Utilities",          value: "energy_utilities" },
+  { label: "Media & Entertainment",       value: "media_entertainment" },
+  { label: "Other",                       value: "other" },
 ];
 
 const HEADCOUNT_BANDS = [
@@ -162,7 +165,8 @@ export default function CompanyOnboardingPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     name: "",
-    sector: "",
+    sector: "",        // DB slug e.g. "financial_services"
+    subSector: "",     // DB slug e.g. "banking_capital_markets"
     headcountBand: "",
     hrTeamSize: "",
     hrisPlatform: "",
@@ -176,9 +180,18 @@ export default function CompanyOnboardingPage() {
   const startAssessment = trpc.companyAssessment.startAssessment.useMutation();
   const seedQuestions = trpc.companyAssessment.seedQuestions.useMutation();
 
+  // Derived: sub-sector options for the currently selected sector
+  const subSectorOptions: SubSectorDef[] = form.sector ? getSubSectors(form.sector) : [];
+
   const updateField = (field: string, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleSectorSelect = (value: string) => {
+    // Reset sub-sector whenever sector changes
+    setForm((prev) => ({ ...prev, sector: value, subSector: "" }));
+    setErrors((prev) => ({ ...prev, sector: "" }));
   };
 
   const toggleTool = (tool: string) => {
@@ -216,7 +229,17 @@ export default function CompanyOnboardingPage() {
       // Seed questions if needed
       await seedQuestions.mutateAsync();
       // Create company, then start assessment
-      const company = await createCompany.mutateAsync(form);
+      const company = await createCompany.mutateAsync({
+        name: form.name,
+        sector: form.sector,
+        subSector: form.subSector || undefined,
+        headcountBand: form.headcountBand,
+        hrTeamSize: form.hrTeamSize,
+        hrisPlatform: form.hrisPlatform,
+        existingAiTools: form.existingAiTools,
+        assessmentMotivation: form.assessmentMotivation,
+        resultsAudience: form.resultsAudience,
+      });
       const assessment = await startAssessment.mutateAsync({ companyId: company.companyId });
       // Navigate to assessment
       navigate(`/company-assessment/${assessment.assessmentId}`);
@@ -224,6 +247,9 @@ export default function CompanyOnboardingPage() {
       console.error("Failed to start company assessment:", err);
     }
   };
+
+  // Helper: display label for selected sector
+  const selectedSectorLabel = SECTOR_OPTIONS.find((s) => s.value === form.sector)?.label ?? "";
 
   return (
     <div className="bg-[#0d1117] text-white">
@@ -318,11 +344,11 @@ export default function CompanyOnboardingPage() {
                   key={item.title}
                   className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-xl p-4"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
                     <item.icon className="w-4.5 h-4.5 text-violet-400" />
                   </div>
                   <div>
-                    <div className="font-medium text-sm text-white">{item.title}</div>
+                    <div className="font-semibold text-sm text-white">{item.title}</div>
                     <div className="text-xs text-white/50 mt-0.5">{item.desc}</div>
                   </div>
                 </div>
@@ -330,8 +356,12 @@ export default function CompanyOnboardingPage() {
             </div>
 
             {/* Time estimate */}
-            <div className="text-center text-sm text-white/40">
-              Approximately 20–30 minutes · Adaptive format · Results available immediately
+            <div className="flex items-center justify-center gap-6 text-sm text-white/40">
+              <span>⏱ 15–20 minutes</span>
+              <span>·</span>
+              <span>40–52 adaptive questions</span>
+              <span>·</span>
+              <span>Instant results</span>
             </div>
           </div>
         )}
@@ -369,22 +399,55 @@ export default function CompanyOnboardingPage() {
                 Sector <span className="text-rose-400">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {SECTORS.map((s) => (
+                {SECTOR_OPTIONS.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => updateField("sector", s)}
+                    key={s.value}
+                    onClick={() => handleSectorSelect(s.value)}
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
-                      form.sector === s
+                      form.sector === s.value
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
                         : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                     }`}
                   >
-                    {s}
+                    {s.label}
                   </button>
                 ))}
               </div>
               {errors.sector && <p className="text-rose-400 text-xs mt-1">{errors.sector}</p>}
             </div>
+
+            {/* Sub-sector — cascading, only shown when a sector with sub-sectors is selected */}
+            {form.sector && subSectorOptions.length > 0 && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+                  Sub-sector
+                  <span className="text-white/30 font-normal normal-case ml-1">(optional — improves benchmark accuracy)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {subSectorOptions.map((ss) => (
+                    <button
+                      key={ss.value}
+                      onClick={() =>
+                        updateField("subSector", form.subSector === ss.value ? "" : ss.value)
+                      }
+                      className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
+                        form.subSector === ss.value
+                          ? "bg-violet-500/15 border-violet-400 text-violet-300"
+                          : "bg-white/3 border-white/8 text-white/50 hover:border-white/15"
+                      }`}
+                    >
+                      {ss.label}
+                    </button>
+                  ))}
+                </div>
+                {form.subSector && (
+                  <p className="text-xs text-violet-400/70 mt-1.5 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Benchmarks will use {subSectorOptions.find((s) => s.value === form.subSector)?.label} norms
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Headcount */}
             <div>
@@ -615,9 +678,15 @@ export default function CompanyOnboardingPage() {
                     <Building2 className="w-3 h-3 mr-1" />
                     {form.name}
                   </Badge>
-                  {form.sector && (
+                  {selectedSectorLabel && (
                     <Badge variant="outline" className="border-white/20 text-white/70">
-                      {form.sector}
+                      {selectedSectorLabel}
+                    </Badge>
+                  )}
+                  {form.subSector && (
+                    <Badge variant="outline" className="border-violet-500/30 text-violet-400/80">
+                      <ChevronDown className="w-3 h-3 mr-1" />
+                      {subSectorOptions.find((s) => s.value === form.subSector)?.label ?? form.subSector}
                     </Badge>
                   )}
                   {form.headcountBand && (
