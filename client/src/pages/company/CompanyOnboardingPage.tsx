@@ -113,6 +113,16 @@ const AUDIENCES = [
   "HR Business Partners",
 ];
 
+const ORG_TYPES: { label: string; value: string; desc: string }[] = [
+  { label: "Listed / Public Company",    value: "listed_plc",      desc: "Publicly traded on a stock exchange" },
+  { label: "Private Equity Backed",      value: "pe_backed",       desc: "PE-owned or portfolio company" },
+  { label: "Private / Family Owned",     value: "private_family",  desc: "Privately held, owner-managed" },
+  { label: "Public Sector / Government", value: "public_sector",   desc: "Government department or agency" },
+  { label: "Charity / Not-for-Profit",   value: "charity_nfp",     desc: "Registered charity or NFP" },
+  { label: "Start-up / Scale-up",        value: "startup_scaleup", desc: "Early-stage or high-growth company" },
+  { label: "Mutual / Co-operative",      value: "mutual_coop",     desc: "Member-owned structure" },
+];
+
 const DIMENSIONS = [
   {
     key: "strategy_governance",
@@ -167,6 +177,7 @@ export default function CompanyOnboardingPage() {
     name: "",
     sector: "",        // DB slug e.g. "financial_services"
     subSector: "",     // DB slug e.g. "banking_capital_markets"
+    orgType: "",       // DB slug e.g. "listed_plc"
     headcountBand: "",
     hrTeamSize: "",
     hrisPlatform: "",
@@ -233,6 +244,7 @@ export default function CompanyOnboardingPage() {
         name: form.name,
         sector: form.sector,
         subSector: form.subSector || undefined,
+        orgType: form.orgType || undefined,
         headcountBand: form.headcountBand,
         hrTeamSize: form.hrTeamSize,
         hrisPlatform: form.hrisPlatform,
@@ -448,6 +460,30 @@ export default function CompanyOnboardingPage() {
                 )}
               </div>
             )}
+
+            {/* Organisation Type */}
+            <div>
+              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+                Organisation Type
+                <span className="ml-2 text-white/30 font-normal normal-case tracking-normal text-[11px]">Calibrates governance &amp; compliance benchmarks</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {ORG_TYPES.map((ot) => (
+                  <button
+                    key={ot.value}
+                    onClick={() => updateField("orgType", form.orgType === ot.value ? "" : ot.value)}
+                    className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
+                      form.orgType === ot.value
+                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                    }`}
+                  >
+                    <span className="block font-medium">{ot.label}</span>
+                    <span className="block text-[11px] text-white/40 mt-0.5">{ot.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Headcount */}
             <div>
@@ -687,6 +723,11 @@ export default function CompanyOnboardingPage() {
                     <Badge variant="outline" className="border-violet-500/30 text-violet-400/80">
                       <ChevronDown className="w-3 h-3 mr-1" />
                       {subSectorOptions.find((s) => s.value === form.subSector)?.label ?? form.subSector}
+                    </Badge>
+                  )}
+                  {form.orgType && (
+                    <Badge variant="outline" className="border-blue-500/30 text-blue-400/80">
+                      {ORG_TYPES.find((o) => o.value === form.orgType)?.label ?? form.orgType}
                     </Badge>
                   )}
                   {form.headcountBand && (

@@ -53,6 +53,8 @@ export interface OrgContextInput {
   companyAiContextNarrative?: string;
   // Sub-sector selection (Phase 2 sub-sector feature)
   subSector?: string | null;
+  // Organisation type for benchmark modifiers
+  orgType?: string | null;
   // Phase 3: Business Ambition Linkage
   ambitionTargetScore?: number | null;   // 0-100 raw (shown as 0-10 Peakon)
   ambitionTargetDate?: string | null;    // ISO date YYYY-MM-DD
@@ -168,6 +170,7 @@ export async function upsertOrgContext(input: OrgContextInput): Promise<void> {
   const data = {
     sector: (input.sector as any) ?? "other",
     subSector: input.subSector ?? null,
+    orgType: input.orgType ?? null,
     primaryRegulator: input.primaryRegulator,
     additionalRegulatorsJson: JSON.stringify(input.additionalRegulators ?? []),
     reportingRequirementsJson: JSON.stringify(input.reportingRequirements ?? []),

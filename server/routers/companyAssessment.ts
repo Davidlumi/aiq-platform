@@ -33,7 +33,12 @@ import { eq, and, inArray, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
-import { getEffectiveBenchmark } from "../../shared/sectorTaxonomy";
+import {
+  getEffectiveBenchmark,
+  getStrategyGuidance,
+  headcountBandToSize,
+  getBenchmarkContext,
+} from "../../shared/sectorTaxonomy";
 // ─── Dimension config ─────────────────────────────────────────────────────────
 const DIMENSIONS = [
   {
@@ -579,19 +584,24 @@ function getMaturityLabel(score: number) {
   return MATURITY_LABELS.find(m => score >= m.min && score <= m.max) || MATURITY_LABELS[0];
 }
 
-// Sector benchmark data (based on published research averages)
+// Sector benchmark data — legacy display-key map used as fallback in getEffectiveBenchmark.
+// Primary benchmarks are now sourced from SECTOR_TAXONOMY in sectorTaxonomy.ts.
 const SECTOR_BENCHMARKS: Record<string, number> = {
-  "Financial Services": 3.1,
-  "Technology": 3.6,
-  "Healthcare": 2.4,
-  "Education": 2.2,
+  "Financial Services":    3.1,
+  "Technology":            3.6,
+  "Healthcare":            2.4,
+  "Education":             2.0,
   "Professional Services": 2.9,
-  "Retail": 2.3,
-  "Manufacturing": 2.1,
-  "Public Sector": 1.9,
-  "Energy & Utilities": 2.5,
+  "Retail":                2.3,
+  "Retail & Consumer":     2.3,
+  "Manufacturing":         2.1,
+  "Manufacturing & Engineering": 2.1,
+  "Public Sector":         1.9,
+  "Energy & Utilities":    2.5,
   "Media & Entertainment": 2.8,
-  "Other": 2.5,
+  "Logistics & Transport": 2.2,
+  "Hospitality & Leisure": 1.8,
+  "Other":                 2.5,
 };
 
 function computePercentile(score: number, sectorAvg: number): number {
@@ -681,6 +691,7 @@ export const companyAssessmentRouter = router({
       name: z.string().min(1),
       sector: z.string().default(""),
       subSector: z.string().optional(),
+      orgType: z.string().optional(),
       headcountBand: z.string().default(""),
       hrTeamSize: z.string().default(""),
       hrisPlatform: z.string().default(""),
@@ -699,6 +710,7 @@ export const companyAssessmentRouter = router({
         name: input.name,
         sector: input.sector,
         subSector: input.subSector ?? null,
+        orgType: input.orgType ?? null,
         headcountBand: input.headcountBand,
         hrTeamSize: input.hrTeamSize,
         hrisPlatform: input.hrisPlatform,
@@ -964,8 +976,11 @@ export const companyAssessmentRouter = router({
       // Get company for sector benchmark
       const [company] = await db.select().from(companies)
         .where(eq(companies.id, assessment.companyId));
-      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
+      const orgSizeValue = company?.headcountBand ? headcountBandToSize(company.headcountBand) : null;
+      const orgTypeValue = company?.orgType ?? null;
+      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null, orgSizeValue, orgTypeValue);
       const sectorPercentile = computePercentile(overallScore, sectorAvg);
+      const benchmarkCtx = getBenchmarkContext(company?.sector ?? "other", company?.subSector, orgSizeValue, orgTypeValue, sectorAvg);
       const overallPercentile = computePercentile(overallScore, 2.5);
 
       // Gap analysis
@@ -1001,12 +1016,14 @@ export const companyAssessmentRouter = router({
             },
             {
               role: "user",
-              content: `Organisation: ${company?.name || "Unknown"}, Sector: ${company?.sector || "Unknown"}.
+              content: `Organisation: ${company?.name || "Unknown"}.
+Benchmark context: ${benchmarkCtx}.
+Org size: ${orgSizeValue ?? "unknown"}.
 Overall score: ${overallScore}/5.0 (${maturity.label}).
 Dimension scores: Strategy ${scoreStrategy}, Governance ${scoreGovernance}, Data ${scoreData}, Technology ${scoreTechnology}, Workforce ${scoreWorkforce}, HR Function ${scoreHrFunction}, Culture ${scoreCulture}.
 Critical gaps: ${critical.join(", ") || "None"}.
 Strengths: ${strengths.join(", ") || "None"}.
-Sector: ${company?.sector || "Unknown"}, sector average: ${sectorAvg}/5.0, sector percentile: ${sectorPercentile}th.
+Sector strategy context: ${getStrategyGuidance(company?.sector ?? "other", orgSizeValue, orgTypeValue)}
 Write the executive summary.`,
             },
           ],
@@ -1063,12 +1080,14 @@ Write the executive summary.`,
         .where(eq(companies.id, result.companyId));
 
       const maturity = getMaturityLabel(result.overallScore);
-      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
-
+      const orgSizeValue = company?.headcountBand ? headcountBandToSize(company.headcountBand) : null;
+      const orgTypeValue = company?.orgType ?? null;
+      const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null, orgSizeValue, orgTypeValue);
       return {
         ...result,
         maturityDescription: maturity.description,
         sectorAverage: sectorAvg,
+        benchmarkContext: getBenchmarkContext(company?.sector ?? "other", company?.subSector, orgSizeValue, orgTypeValue, sectorAvg),
         company,
         dimensions: DIMENSIONS.map(d => {
           const score = {
@@ -1125,7 +1144,10 @@ Write the executive summary.`,
     const [company] = await db.select().from(companies)
       .where(eq(companies.id, result.companyId));
     const maturity = getMaturityLabel(result.overallScore);
-    const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null);
+    const orgSizeValue = company?.headcountBand ? headcountBandToSize(company.headcountBand) : null;
+    const orgTypeValue = company?.orgType ?? null;
+    const sectorAvg = getEffectiveBenchmark(SECTOR_BENCHMARKS, company?.sector ?? "Other", company?.subSector ?? null, orgSizeValue, orgTypeValue);
+    const benchmarkCtx = getBenchmarkContext(company?.sector ?? "other", company?.subSector, orgSizeValue, orgTypeValue, sectorAvg);
     // Per-dimension sector benchmarks (scaled from overall sector avg)
     const dimBenchmarkScale: Record<string, number> = {
       strategy:    1.05, // strategy tends to be higher in advanced sectors
@@ -1155,8 +1177,11 @@ Write the executive summary.`,
       maturityDescription: maturity.description,
       executiveSummary: result.executiveSummary,
       sectorAverage: sectorAvg,
+      benchmarkContext: benchmarkCtx,
       companyName: company?.name ?? null,
       companySector: company?.sector ?? null,
+      companySubSector: company?.subSector ?? null,
+      companyOrgSize: orgSizeValue,
       ambitionToRequiredMaturity,
       dimensions: DIMENSIONS.map(d => {
         const score = dimScores[d.key] ?? 0;

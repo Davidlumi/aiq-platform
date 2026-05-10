@@ -2631,3 +2631,24 @@
 - [x] Server: upsertOrgContext procedure accepts subSector and stores it
 - [x] Server: all three SECTOR_BENCHMARKS lookups in companyAssessment.ts use getEffectiveBenchmark
 - [x] 18 unit tests for benchmark resolution, taxonomy completeness, and label helpers
+
+## Comprehensive Sector/Sub-Sector/Org-Type/Size Norms
+- [x] Expand sectorTaxonomy.ts to 12 sectors (added logistics_transport, education, hospitality_leisure)
+- [x] 50+ sub-sectors across all 12 sectors with individual AI maturity benchmark norms
+- [x] SUB_SECTOR_BENCHMARKS: per-sub-sector norms grounded in McKinsey/Deloitte/CIPD research
+- [x] ORG_SIZE_BANDS: 5 bands (micro/sme/mid_market/enterprise/large_enterprise) with benchmarkDelta + strategyNote
+- [x] HEADCOUNT_BAND_TO_SIZE: maps onboarding headcount strings to size band values
+- [x] ORG_TYPES: 7 org types (listed_plc, pe_backed, private_family, public_sector, charity_nfp, startup_scaleup, mutual_coop) with benchmarkDelta + strategyNote
+- [x] getEffectiveBenchmark: resolves sub-sector → sector → legacy fallback, applies size + org-type additive modifiers, clamped to [1.0, 5.0]
+- [x] getBenchmarkContext: human-readable context string for UI and LLM prompts
+- [x] getStrategyGuidance: merged sector + size + org-type guidance paragraph for LLM injection
+- [x] Schema: org_type column added to both companies and ail_org_context tables (migration applied)
+- [x] Server: createCompany procedure accepts orgType and stores it
+- [x] Server: upsertOrgContext procedure (intelligence router) accepts orgType
+- [x] Server: OrgContextInput interface includes orgType; upsertOrgContext stores it to DB
+- [x] Server: all 3 getEffectiveBenchmark calls pass orgTypeValue
+- [x] Server: all 3 getBenchmarkContext calls pass orgTypeValue
+- [x] Server: getStrategyGuidance in LLM prompt passes orgTypeValue
+- [x] CompanyOnboardingPage: ORG_TYPES chip grid (7 options with descriptions), orgType in form state + handleStart + review badge
+- [x] OrgContextPage (admin): orgType chip grid with confirmation text, prefill from existing, save via upsertOrgContext
+- [x] 860 tests passing (35 test files, 0 TypeScript errors)

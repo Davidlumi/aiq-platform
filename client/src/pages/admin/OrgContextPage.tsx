@@ -31,7 +31,7 @@ import {
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSubSectors, getSubSectorLabel } from "@/../../shared/sectorTaxonomy";
+import { getSubSectors, getSubSectorLabel, ORG_TYPES } from "@/../../shared/sectorTaxonomy";
 
 // --- Option Sets --------------------------------------------------------------
 
@@ -146,6 +146,7 @@ export default function OrgContextPage() {
   // Block 1: Organisation Profile
   const [sector, setSector] = useState<string>("");
   const [subSector, setSubSector] = useState<string | null>(null);
+  const [orgType, setOrgType] = useState<string | null>(null);
   const [headcount, setHeadcount] = useState<string>("");
   const [structure, setStructure] = useState<string>("");
   const [hrInfluence, setHrInfluence] = useState<string>("");
@@ -192,6 +193,7 @@ export default function OrgContextPage() {
   if (existing && !initialised) {
     if (existing.sector) setSector(existing.sector);
     if ((existing as any).subSector) setSubSector((existing as any).subSector ?? null);
+    if ((existing as any).orgType) setOrgType((existing as any).orgType ?? null);
     if (existing.headcount) setHeadcount(String(existing.headcount));
     if (existing.structure) setStructure(existing.structure);
     if (existing.hrInfluence) setHrInfluence(existing.hrInfluence);
@@ -254,6 +256,7 @@ export default function OrgContextPage() {
     upsert.mutate({
       sector: sector as any || undefined,
       subSector: subSector ?? null,
+      orgType: orgType ?? null,
       headcount: headcount ? parseInt(headcount) : undefined,
       structure: structure as any || undefined,
       riskAppetiteOverall: riskAppetite as any || undefined,
@@ -358,6 +361,29 @@ export default function OrgContextPage() {
               )}
             </div>
           )}
+
+          {/* Organisation Type */}
+          <div>
+            <label className="text-xs font-medium text-foreground mb-2 block">
+              Organisation Type <span className="text-muted-foreground font-normal">(optional — calibrates governance &amp; compliance norms)</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ORG_TYPES.map(ot => (
+                <ToggleChip
+                  key={ot.value}
+                  value={ot.value}
+                  label={ot.label}
+                  selected={orgType === ot.value}
+                  onClick={() => setOrgType(orgType === ot.value ? null : ot.value)}
+                />
+              ))}
+            </div>
+            {orgType && (
+              <p className="text-[11px] text-blue-400 mt-1.5">
+                {ORG_TYPES.find(o => o.value === orgType)?.label} governance &amp; compliance norms applied.
+              </p>
+            )}
+          </div>
 
           <Separator />
 
