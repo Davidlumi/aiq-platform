@@ -209,6 +209,9 @@ function Router() {
       <Route path="/ai-strategy">
         <ProtectedRoute component={AIStrategyPage} />
       </Route>
+      <Route path="/strategy/builder">
+        <ProtectedRoute component={StrategyBuilderPage} />
+      </Route>
       <Route path="/ai-strategy/assessment">
         <ProtectedRoute component={HRAIStrategyAssessmentPage} />
       </Route>
