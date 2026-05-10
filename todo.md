@@ -2615,3 +2615,5 @@
 - [x] B7.1: Variant 1 — User has no AI Strategy: affordance to generate strategy + CTA
 - [x] B7.2: Variant 2 — User has existing AI Strategy: show capability shift, update/keep affordances
 - [x] B7.3: Variant 3 — All users: module recommendations based on lowest-scoring domains
+
+- [x] Formula concentration bug: skills_intelligence_platform anchored to hires (not totalHeadcount) — prevents 10x inflation for large companies

@@ -920,8 +920,11 @@ function resolveValueFormula(
       breakdown = `${totalHeadcount} employees × 8h × £${hrHourlyRate}/h × ${(imp*100).toFixed(0)}% adoption = £${Math.round(value).toLocaleString()}`;
     },
     skills_intelligence_platform: () => {
-      value = totalHeadcount * 0.05 * costPerHire * 0.6;
-      breakdown = `${Math.round(totalHeadcount * 0.05)} internal fills × £${Math.round(costPerHire * 0.6)} saving vs external = £${Math.round(value).toLocaleString()}`;
+      // Internal mobility: 15% of external hires redirected internally (industry benchmark).
+      // Anchored to hires (not totalHeadcount) to avoid 10× inflation for large companies.
+      const internalFills = Math.round(hires * 0.15);
+      value = internalFills * costPerHire * 0.6 * imp;
+      breakdown = `${internalFills} internal fills (15% of ${hires} hires) × £${Math.round(costPerHire * 0.6)} saving × ${(imp*100).toFixed(0)}% adoption = £${Math.round(value).toLocaleString()}`;
     },
     ai_talent_marketplace: () => {
       value = hires * imp * costPerHire * 0.7;

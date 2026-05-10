@@ -600,3 +600,70 @@ describe("calculateValueEnvelope (A1, B4, B5)", () => {
     expect(result.scenario_analysis.optimistic.value_gbp).toBeGreaterThan(result.scenario_analysis.pessimistic.value_gbp);
   });
 });
+
+// ─── Formula concentration regression tests ───────────────────────────────────
+describe("skills_intelligence_platform formula — concentration guard", () => {
+  const LARGE_BASELINE = {
+    hires_per_year: 4800,
+    cost_per_hire_gbp: 4500,
+    time_to_fill_days: 38,
+    voluntary_attrition_rate_pct: 15,
+    l_and_d_spend_per_fte_gbp: 400,
+    hr_cost_per_fte_gbp: 12000,
+  };
+  const SMALL_BASELINE = {
+    ...LARGE_BASELINE,
+    hires_per_year: 50,
+  };
+
+  // Use getInitiatives to get properly-shaped initiative objects
+  const NINE_IDS = [
+    "skills_intelligence_platform",
+    "predictive_attrition_modelling",
+    "ai_learning_personalisation",
+    "ai_assisted_cv_screening",
+    "ai_assisted_job_descriptions",
+    "ai_performance_review_automation",
+    "ai_change_management_programme",
+    "ai_pay_equity_analysis",
+    "bias_monitoring_and_auditing",
+  ];
+  const NINE_LARGE = getInitiatives(NINE_IDS);
+  const NINE_SMALL = getInitiatives(NINE_IDS);
+
+  it("skills_intelligence_platform concentration is below 60% of a 9-initiative portfolio for large company", () => {
+    const result = calculateValueEnvelope(NINE_LARGE, LARGE_BASELINE, 36);
+    const sipEntry = result.by_initiative.find(i => i.id === "skills_intelligence_platform");
+    const totalHigh = result.total_quantified_value_gbp.high;
+    if (sipEntry && totalHigh > 0) {
+      const concentration = sipEntry.value_high / totalHigh;
+      expect(concentration).toBeLessThan(0.60);
+    }
+  });
+
+  it("skills_intelligence_platform value scales proportionally with company size (not 10x inflated)", () => {
+    const resultLarge = calculateValueEnvelope(NINE_LARGE, LARGE_BASELINE, 36);
+    const resultSmall = calculateValueEnvelope(NINE_SMALL, SMALL_BASELINE, 36);
+    const sipLarge = resultLarge.by_initiative.find(i => i.id === "skills_intelligence_platform");
+    const sipSmall = resultSmall.by_initiative.find(i => i.id === "skills_intelligence_platform");
+    if (sipLarge && sipSmall && sipSmall.value_high > 0) {
+      const hiresRatio = 4800 / 50; // 96x
+      const valueRatio = sipLarge.value_high / sipSmall.value_high;
+      // Value should scale proportionally with hires (not 10x inflated via headcount)
+      // Allow 2x tolerance above the hires ratio
+      expect(valueRatio).toBeLessThanOrEqual(hiresRatio * 2);
+      // And it should scale at least somewhat with company size
+      expect(valueRatio).toBeGreaterThan(1);
+    }
+  });
+
+  it("skills_intelligence_platform value is less than predictive_attrition_modelling for large companies", () => {
+    const result = calculateValueEnvelope(NINE_LARGE, LARGE_BASELINE, 36);
+    const sipEntry = result.by_initiative.find(i => i.id === "skills_intelligence_platform");
+    const attrEntry = result.by_initiative.find(i => i.id === "predictive_attrition_modelling");
+    if (sipEntry && attrEntry) {
+      // SIP should be materially smaller than attrition for a 48k headcount company
+      expect(sipEntry.value_high).toBeLessThan(attrEntry.value_high);
+    }
+  });
+});
