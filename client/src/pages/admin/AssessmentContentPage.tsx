@@ -48,7 +48,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, MessageSquare, Star } from "lucide-react";
+import { AlertTriangle, Flag, MessageSquare, Star } from "lucide-react";
 
 const DOMAIN_COLOURS: Record<string, string> = {
   "Candidate Screening & Evaluation":    "#4477AA",
@@ -395,6 +395,8 @@ export default function AssessmentContentPage() {
 
       <ReviewQueue />
 
+      <QuestionFlagsQueue />
+
       <Card className="border-border">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 flex-wrap">
@@ -558,6 +560,82 @@ export default function AssessmentContentPage() {
 
 // ─── Review Queue Component ────────────────────────────────────────────────────
 // Surfaced in the Assessment Content CMS page for admin review of flagged scenarios.
+// D1: Question Flags Review Queue — surfaces user-submitted question flags for admin review
+export function QuestionFlagsQueue() {
+  const [unreviewedOnly, setUnreviewedOnly] = useState(true);
+  const { data, isLoading, refetch } = trpc.assessment.getQuestionFlags.useQuery({
+    unreviewedOnly,
+    limit: 100,
+  });
+  const result = data as any;
+  const REASON_LABELS: Record<string, string> = {
+    confusing_wording: "Confusing wording",
+    multiple_correct_answers: "Multiple correct answers",
+    not_applicable: "Doesn't apply to my context",
+    other: "Other",
+  };
+  return (
+    <Card className="border-border">
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Flag className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-foreground">Question Flags</span>
+          {result?.total > 0 && (
+            <Badge variant="destructive" className="text-xs">{result.total} {unreviewedOnly ? "unreviewed" : "total"}</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={unreviewedOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUnreviewedOnly(!unreviewedOnly)}
+          >
+            <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+            {unreviewedOnly ? "All Flags" : "Unreviewed Only"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="p-6"><TableSkeleton columns={4} rows={3} /></div>
+      ) : !result || result.total === 0 ? (
+        <div className="p-8 text-center text-muted-foreground text-sm">
+          <Flag className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          No question flags {unreviewedOnly ? "awaiting review" : "submitted yet"}.
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {result.items.map((item: any) => (
+            <div key={item.id} className="px-6 py-3 flex items-start gap-3">
+              <div className="shrink-0 mt-0.5">
+                <Flag className="h-4 w-4 text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono text-muted-foreground">Item: {item.itemId.slice(0, 8)}</span>
+                  <span className="text-xs font-mono text-muted-foreground">Session: {item.sessionId.slice(0, 8)}</span>
+                  <Badge variant="outline" className="text-xs">{REASON_LABELS[item.reason] ?? item.reason}</Badge>
+                  {item.reviewed ? (
+                    <Badge variant="secondary" className="text-xs">Reviewed</Badge>
+                  ) : (
+                    <Badge variant="destructive" className="text-xs">Unreviewed</Badge>
+                  )}
+                </div>
+                {item.comment && <p className="text-xs text-foreground/80 mt-1 line-clamp-2">{item.comment}</p>}
+              </div>
+              <div className="text-xs text-muted-foreground shrink-0">
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function ReviewQueue() {
   const [showFlagged, setShowFlagged] = useState(false);
   const { data, isLoading, refetch } = trpc.assessment.getFeedbackSummary.useQuery({

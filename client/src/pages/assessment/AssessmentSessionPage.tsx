@@ -743,6 +743,9 @@ export default function AssessmentSessionPage() {
   // C1: Methodology dialog
   const [showMethodologyDialog, setShowMethodologyDialog] = useState(false);
 
+  // D1: Flag question mutation
+  const flagQuestionMutation = trpc.assessment.flagQuestion.useMutation();
+
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: (data) => {
       // T2-5: Show rationale if available before advancing to next question
@@ -1249,6 +1252,20 @@ export default function AssessmentSessionPage() {
               <AlertDialogCancel onClick={() => { setFlagReason(""); }}>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
+                  // Map display label to DB enum value
+                  const reasonMap: Record<string, "confusing_wording" | "multiple_correct_answers" | "not_applicable" | "other"> = {
+                    "Confusing wording": "confusing_wording",
+                    "Multiple correct answers": "multiple_correct_answers",
+                    "Doesn't apply to my context": "not_applicable",
+                    "Other": "other",
+                  };
+                  const dbReason = reasonMap[flagReason] ?? "other";
+                  flagQuestionMutation.mutate({
+                    sessionId: sessionId!,
+                    itemId: (nextItem as any).id ?? "unknown",
+                    reason: dbReason,
+                    comment: !reasonMap[flagReason] ? flagReason : undefined,
+                  });
                   setFlagSubmitted(true);
                   setShowFlagDialog(false);
                   setFlagReason("");
@@ -1322,8 +1339,12 @@ export default function AssessmentSessionPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Save &amp; Exit</AlertDialogTitle>
-              <AlertDialogDescription>
-                Your progress is automatically saved. You are on question {answeredCount + 1} of {totalItems} ({progress}% complete). You can resume from exactly where you left off from the Assessment page.
+              <AlertDialogDescription className="space-y-2">
+                <span className="block">Your progress is automatically saved. You are on question {answeredCount + 1} of {totalItems} ({progress}% complete).</span>
+                <span className="block">You can resume from exactly where you left off from the Assessment page.</span>
+                <span className="block text-amber-600 dark:text-amber-400 text-xs font-medium">
+                  ⚠️ Resume window: your session will expire after 48 hours of inactivity. After that, you will need to start a new assessment.
+                </span>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

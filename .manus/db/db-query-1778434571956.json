@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `question_flags` (\n  `id` varchar(36) NOT NULL,\n  `session_id` varchar(36) NOT NULL,\n  `item_id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `reason` enum('confusing_wording','multiple_correct_answers','not_applicable','other') NOT NULL,\n  `comment` text,\n  `reviewed` tinyint NOT NULL DEFAULT 0,\n  `reviewed_by` varchar(36),\n  `reviewed_at` bigint,\n  `created_at` bigint NOT NULL,\n  PRIMARY KEY (`id`),\n  INDEX `idx_qf_session` (`session_id`),\n  INDEX `idx_qf_item` (`item_id`),\n  INDEX `idx_qf_user` (`user_id`),\n  INDEX `idx_qf_reviewed` (`reviewed`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute CREATE TABLE IF NOT EXISTS `question_flags` (\n  `id` varchar(36) NOT NULL,\n  `session_id` varchar(36) NOT NULL,\n  `item_id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `reason` enum('confusing_wording','multiple_correct_answers','not_applicable','other') NOT NULL,\n  `comment` text,\n  `reviewed` tinyint NOT NULL DEFAULT 0,\n  `reviewed_by` varchar(36),\n  `reviewed_at` bigint,\n  `created_at` bigint NOT NULL,\n  PRIMARY KEY (`id`),\n  INDEX `idx_qf_session` (`session_id`),\n  INDEX `idx_qf_item` (`item_id`),\n  INDEX `idx_qf_user` (`user_id`),\n  INDEX `idx_qf_reviewed` (`reviewed`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 710
+}

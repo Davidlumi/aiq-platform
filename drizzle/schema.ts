@@ -2158,3 +2158,31 @@ export const moduleFeedback = mysqlTable("module_feedback", {
   userModulePromptIdx: index("idx_mf_user_module_prompt").on(t.userId, t.moduleId, t.promptIndex),
 }));
 export type ModuleFeedback = typeof moduleFeedback.$inferSelect;
+
+// -- question_flags (Assessment Question Page Refinement Brief v2 — D1) --------
+// Stores user-submitted flags on assessment questions for content team review.
+// Flags are captured during live assessment sessions and surfaced in the admin
+// review queue. High flag rates on a question trigger automated tagging.
+export const questionFlags = mysqlTable("question_flags", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  sessionId: varchar("session_id", { length: 36 }).notNull(),
+  itemId: varchar("item_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  reason: mysqlEnum("reason", [
+    "confusing_wording",
+    "multiple_correct_answers",
+    "not_applicable",
+    "other",
+  ]).notNull(),
+  comment: text("comment"),
+  reviewed: tinyint("reviewed").notNull().default(0),
+  reviewedBy: varchar("reviewed_by", { length: 36 }),
+  reviewedAt: bigint("reviewed_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  sessionIdx: index("idx_qf_session").on(t.sessionId),
+  itemIdx: index("idx_qf_item").on(t.itemId),
+  userIdx: index("idx_qf_user").on(t.userId),
+  reviewedIdx: index("idx_qf_reviewed").on(t.reviewed),
+}));
+export type QuestionFlag = typeof questionFlags.$inferSelect;

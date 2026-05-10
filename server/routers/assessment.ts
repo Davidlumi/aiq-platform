@@ -44,6 +44,7 @@ import {
   organisationCapabilityThresholds,
   orgWorkflowAnchorUsage,
   contentFeedback,
+  questionFlags,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -3127,6 +3128,67 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         }
       }
       return { submitted: true, feedbackId };
+    }),
+
+  // ─── D1: Flag Question (Assessment Question Page Refinement Brief v2) ──────────
+  // Stores user-submitted flags on assessment questions for content team review.
+  flagQuestion: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      itemId: z.string(),
+      reason: z.enum(["confusing_wording", "multiple_correct_answers", "not_applicable", "other"]),
+      comment: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const flagId = randomUUID();
+      await db.insert(questionFlags).values({
+        id: flagId,
+        sessionId: input.sessionId,
+        itemId: input.itemId,
+        userId: ctx.user.id,
+        reason: input.reason,
+        comment: input.comment ?? null,
+        reviewed: 0,
+        reviewedBy: null,
+        reviewedAt: null,
+        createdAt: Date.now(),
+      });
+      return { flagId, submitted: true };
+    }),
+
+  // ─── D1: Get Question Flags (admin review queue) ──────────────────────────────
+  getQuestionFlags: protectedProcedure
+    .input(z.object({
+      itemId: z.string().optional(),
+      reviewedOnly: z.boolean().optional().default(false),
+      unreviewedOnly: z.boolean().optional().default(false),
+      limit: z.number().int().min(1).max(200).optional().default(100),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Admin-only gate — accept platform admin role or tenant_admin/platform_super_admin role keys
+      const userAsRecord = ctx.user as unknown as Record<string, unknown>;
+      const isDirectAdmin = userAsRecord.role === "admin";
+      if (!isDirectAdmin) {
+        const tenantId = (userAsRecord.tenantId as string) ?? "";
+        const { getUserRoleKeys } = await import("../db");
+        const roleKeys = await getUserRoleKeys(ctx.user.id, tenantId);
+        if (!roleKeys.includes("platform_super_admin") && !roleKeys.includes("tenant_admin") && !roleKeys.includes("content_admin")) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+      }
+      const conditions = [];
+      if (input.itemId) conditions.push(eq(questionFlags.itemId, input.itemId));
+      if (input.reviewedOnly) conditions.push(eq(questionFlags.reviewed, 1));
+      if (input.unreviewedOnly) conditions.push(eq(questionFlags.reviewed, 0));
+      const rows = await db.select().from(questionFlags)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(questionFlags.createdAt))
+        .limit(input.limit);
+      return { total: rows.length, items: rows };
     }),
 
   // ─── Relevance & Update Engine: Get Feedback Summary (admin) ─────────────────
