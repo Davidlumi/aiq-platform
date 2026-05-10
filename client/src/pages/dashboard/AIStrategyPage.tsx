@@ -77,6 +77,9 @@ const SECTORS = [
   { value: "manufacturing",         label: "Manufacturing" },
   { value: "energy_utilities",      label: "Energy & Utilities" },
   { value: "media_entertainment",   label: "Media & Entertainment" },
+  { value: "logistics_transport",   label: "Logistics & Transport" },
+  { value: "education",             label: "Education" },
+  { value: "hospitality_leisure",   label: "Hospitality & Leisure" },
   { value: "other",                 label: "Other" },
 ];
 
@@ -2997,12 +3000,14 @@ export default function AIStrategyPage() {
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Benchmark Sources</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {[
-                    { source: "McKinsey Global Survey on AI", year: "2024", use: "Sector maturity benchmarks" },
-                    { source: "Deloitte AI Maturity Index", year: "2023", use: "Maturity level definitions" },
-                    { source: "CIPD People Profession Survey", year: "2024", use: "HR capability benchmarks" },
-                    { source: "BCG AI at Work", year: "2023", use: "Workforce readiness benchmarks" },
-                    { source: "MIT Sloan Management Review", year: "2023", use: "AI culture indicators" },
+                    { source: "McKinsey Global Survey on AI", year: "2024", use: "Sector maturity benchmarks & sub-sector norms" },
+                    { source: "Deloitte AI Maturity Index", year: "2023", use: "Maturity level definitions & org-type modifiers" },
+                    { source: "CIPD People Profession Survey", year: "2024", use: "HR capability benchmarks & public sector norms" },
+                    { source: "BCG AI at Work", year: "2023", use: "Workforce readiness & PE-backed org benchmarks" },
+                    { source: "MIT Sloan Management Review", year: "2023", use: "AI culture indicators & SME benchmarks" },
                     { source: "EU AI Act (Regulation 2024/1689)", year: "2024", use: "Regulatory risk classification" },
+                    { source: "Gartner HR Technology Survey", year: "2024", use: "Technology adoption benchmarks by org size" },
+                    { source: "PwC AI Readiness Survey", year: "2024", use: "Data infrastructure benchmarks by sector" },
                   ].map(ref => (
                     <div key={ref.source} className="flex items-start gap-2 p-2.5 rounded-lg border border-white/6 bg-white/2">
                       <FileText className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />

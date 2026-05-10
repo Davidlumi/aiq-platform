@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useParams, useLocation } from "wouter";
 import {
+  getSubSectorLabel,
+  getOrgSizeBand,
+  getOrgType,
+  getSectorDef,
+} from "../../../../shared/sectorTaxonomy";
+import {
   Building2,
   Target,
   Users,
@@ -24,6 +30,8 @@ import {
   Loader2,
   Brain,
   Sparkles,
+  Info,
+  BookOpen,
 } from "lucide-react";
 import {
   RadarChart,
@@ -269,6 +277,84 @@ export default function CompanyAssessmentResultsPage() {
             <p className="text-sm text-white/50 leading-relaxed">{maturity.desc}</p>
           </div>
         </div>
+
+        {/* Benchmark Transparency Panel */}
+        {results.benchmarkContext && (
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Info className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Benchmark Applied</span>
+                  <Badge className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 px-1.5 py-0">Context-aware</Badge>
+                </div>
+                <p className="text-sm font-medium text-white/80 mb-2">
+                  {results.benchmarkContext as string}
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs text-white/40">
+                  {/* Sector */}
+                  {results.companySector && (() => {
+                    const sectorDef = getSectorDef(results.companySector as string);
+                    return sectorDef ? (
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
+                        Sector: <span className="text-white/60">{sectorDef.label}</span>
+                      </span>
+                    ) : null;
+                  })()}
+                  {/* Sub-sector */}
+                  {results.companySubSector && results.companySector && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+                      Sub-sector: <span className="text-white/60">{getSubSectorLabel(results.companySector as string, results.companySubSector as string)}</span>
+                    </span>
+                  )}
+                  {/* Org size */}
+                  {results.companyOrgSize && (() => {
+                    const sizeBand = getOrgSizeBand(results.companyOrgSize as string);
+                    return sizeBand ? (
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                        Size: <span className="text-white/60">{sizeBand.label}</span>
+                        <span className="text-white/30">({sizeBand.benchmarkDelta >= 0 ? "+" : ""}{sizeBand.benchmarkDelta.toFixed(1)} pts)</span>
+                      </span>
+                    ) : null;
+                  })()}
+                  {/* Org type */}
+                  {results.companyOrgType && (() => {
+                    const orgType = getOrgType(results.companyOrgType as string);
+                    return orgType ? (
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                        Type: <span className="text-white/60">{orgType.label}</span>
+                        <span className="text-white/30">({orgType.benchmarkDelta >= 0 ? "+" : ""}{orgType.benchmarkDelta.toFixed(1)} pts)</span>
+                      </span>
+                    ) : null;
+                  })()}
+                  {/* Effective norm */}
+                  {results.sectorAverage && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
+                      Norm: <span className="text-white/60">{(results.sectorAverage as number).toFixed(1)}/5.0</span>
+                      <span className="text-white/30">(= {(((results.sectorAverage as number) - 1) / 4 * 10).toFixed(1)}/10 display)</span>
+                    </span>
+                  )}
+                </div>
+                {/* Source footnote */}
+                <div className="mt-3 pt-3 border-t border-amber-500/10 flex items-start gap-1.5">
+                  <BookOpen className="w-3 h-3 text-white/20 mt-0.5 shrink-0" />
+                  <p className="text-[10px] text-white/30 leading-relaxed">
+                    Benchmarks are calibrated from McKinsey State of AI (2024), Deloitte AI Maturity Index (2023), CIPD People Profession AI Framework (2024), and BCG AI Maturity Model (2023).
+                    Sector norms reflect published AI adoption rates and maturity scores for organisations of comparable size and type.
+                    These are reference benchmarks; individual variation within sectors is significant.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Maturity scale */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6">

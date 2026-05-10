@@ -2655,3 +2655,10 @@
 
 ## Onboarding Sector Grid Consistency
 - [x] CompanyOnboardingPage: add logistics_transport, education, hospitality_leisure sectors to chip grid
+
+## UX Polish — Benchmark Transparency & Sector Consistency
+- [x] AIStrategyPage: add logistics_transport, education, hospitality_leisure to SECTORS list in sticky header
+- [x] AssessmentResultsPage: benchmark transparency panel (sector · sub-sector · org-size delta · org-type delta · effective norm · source footnote)
+- [x] AssessmentResultsPage: getResults procedure returns companySubSector, companyOrgSize, companyOrgType
+- [x] HRAIStrategyAssessmentPage: benchmark source footnote in commit card (McKinsey, Deloitte, CIPD, BCG, PwC, Gartner)
+- [x] AIStrategyPage Methodology appendix: expanded Benchmark Sources grid (8 sources with sub-sector/size/org-type attribution)

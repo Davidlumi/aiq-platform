@@ -1088,6 +1088,10 @@ Write the executive summary.`,
         maturityDescription: maturity.description,
         sectorAverage: sectorAvg,
         benchmarkContext: getBenchmarkContext(company?.sector ?? "other", company?.subSector, orgSizeValue, orgTypeValue, sectorAvg),
+        companySector: company?.sector ?? null,
+        companySubSector: company?.subSector ?? null,
+        companyOrgSize: orgSizeValue,
+        companyOrgType: orgTypeValue,
         company,
         dimensions: DIMENSIONS.map(d => {
           const score = {
@@ -1182,6 +1186,7 @@ Write the executive summary.`,
       companySector: company?.sector ?? null,
       companySubSector: company?.subSector ?? null,
       companyOrgSize: orgSizeValue,
+      companyOrgType: orgTypeValue,
       ambitionToRequiredMaturity,
       dimensions: DIMENSIONS.map(d => {
         const score = dimScores[d.key] ?? 0;

@@ -45,6 +45,7 @@ import {
   AlertCircle,
   BarChart2,
   Info,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -2032,6 +2033,14 @@ export default function HRAIStrategyAssessmentPage() {
                     <p className="text-foreground font-semibold mt-0.5">{value}</p>
                   </div>
                 ))}
+              </div>
+              {/* Benchmark source footnote */}
+              <div className="flex items-start gap-1.5 pt-3 border-t border-green-500/10">
+                <BookOpen className="w-3 h-3 text-muted-foreground/40 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-muted-foreground/40 leading-relaxed">
+                  Sector norms are calibrated from McKinsey State of AI (2024), Deloitte AI Maturity Index (2023), CIPD People Profession AI Framework (2024), BCG AI at Work (2023), PwC AI Readiness Survey (2024), and Gartner HR Technology Survey (2024).
+                  Benchmarks reflect AI adoption rates for organisations of comparable sector, size, and type. Individual variation within peer groups is significant.
+                </p>
               </div>
             </div>
 
