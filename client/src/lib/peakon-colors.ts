@@ -45,7 +45,7 @@ export function formatPeakonScore(score: number): string {
 
 /** Get a readiness label for a 0-100 score */
 export function scoreToReadinessLabel(score: number): string {
-  if (score >= 75) return "AI Ready";
+  if (score >= 75) return "Expert";
   if (score >= 60) return "Strong Developing";
   if (score >= 50) return "Developing";
   if (score >= 40) return "Weak Developing";

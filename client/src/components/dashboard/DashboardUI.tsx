@@ -22,7 +22,7 @@ const RATING_STYLES: Record<string, { bg: string; text: string; border: string; 
 };
 
 const RATING_DISPLAY: Record<string, string> = {
-  ai_ready: "AI Ready",
+  ai_ready: "Expert",
   developing: "Developing",
   not_yet_ready: "Not Yet Ready",
   foundation_gap: "Foundation Gap",

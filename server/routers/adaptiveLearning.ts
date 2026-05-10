@@ -731,7 +731,7 @@ export const adaptiveLearningRouter = router({
 
       const capabilityGap = capabilityGaps[mod[0].capability];
       const gapContext = capabilityGap
-        ? `Current score: ${capabilityGap.score}/100 (${capabilityGap.severity} gap)`
+        ? `Current score: ${(capabilityGap.score / 10).toFixed(1)}/10 (${capabilityGap.severity} gap)`
         : "No specific gap data available";
 
       // Generate personalised content via LLM
@@ -750,7 +750,8 @@ Generate a JSON response with:
 2. contextualExamples: Array of 2 role-specific examples showing how this capability applies in their day-to-day work
 3. failureModeCallouts: Array of 1-2 specific failure modes this module will help them avoid, framed as "Without this skill, you might..." statements
 
-Be specific, practical, and directly relevant to ${roleArchetype} at ${seniorityLevel} level.`;
+Be specific, practical, and directly relevant to ${roleArchetype} at ${seniorityLevel} level.
+CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic recommendations. DO name specific initiatives, frameworks, and sector contexts where relevant.`;
 
       let personalisedIntro = "";
       let contextualExamples: string[] = [];
@@ -2081,7 +2082,10 @@ Feedback principles:
 - Keep the tone warm, direct, and collegial — like a trusted senior colleague, not a marking rubric
 - Length: 150–220 words. No bullet points. Use flowing prose.
 - Do not repeat the question back to the learner
-- Do not use phrases like "Great reflection!" or "Well done" — start with substance`;
+- Do not use phrases like "Great reflection!" or "Well done" — start with substance
+- Do NOT use encouragement-machine language: avoid "fantastic", "impressive", "excellent", "well done", "great job"
+- Do NOT use templated openings: avoid "It's wonderful to see...", "I'm delighted to note..."
+- DO reference the learner's specific context: their role, sector, and any strategy initiatives mentioned`;
       } else {
         systemPrompt = `You are an expert HR leadership coach and AI capability advisor. Your role is to provide personalised, constructive feedback on a learner's practical exercise response within the AiQ HR capability development platform.
 
@@ -2095,7 +2099,10 @@ Feedback principles:
 - Keep the tone direct and practical — like a senior practitioner reviewing a colleague's work plan
 - Length: 180–250 words. No bullet points. Use flowing prose.
 - Do not restate the exercise instructions
-- Do not use generic praise — start with a substantive observation about their specific response`;
+- Do not use generic praise — start with a substantive observation about their specific response
+- Do NOT use encouragement-machine language: avoid "fantastic", "impressive", "excellent", "well done", "great job"
+- Do NOT make generic recommendations: avoid "consider exploring", "perhaps starting with", "you might want to look into"
+- DO reference the learner's specific context: their role, sector, and any strategy initiatives mentioned`;
       }
 
       const userMessage = `Reflection prompt: "${input.promptText}"\n\nLearner's response:\n${input.userResponse}`;

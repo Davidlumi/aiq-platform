@@ -70,7 +70,7 @@ function readinessColor(r: string | null) {
   return "#6B7280";
 }
 function readinessLabel(r: string | null) {
-  if (r === "safe")    return "AI Ready";
+  if (r === "safe")    return "Expert";
   if (r === "at_risk") return "Developing";
   if (r === "unsafe")  return "Not Yet Ready";
   return "Not assessed";

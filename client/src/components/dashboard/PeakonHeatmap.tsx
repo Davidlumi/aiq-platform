@@ -77,7 +77,7 @@ function HeatmapScoreCell({ score, headcount }: { score: number | null; headcoun
 
   const { bg, text } = scoreToColor(score);
   const displayScore = formatScore(score);
-  const readiness = score >= 75 ? "AI Ready" : score >= 60 ? "Strong Developing" : score >= 50 ? "Developing" : score >= 40 ? "Weak Developing" : score >= 30 ? "Not Yet Ready" : "Foundation Gap";
+  const readiness = score >= 75 ? "Expert" : score >= 60 ? "Strong Developing" : score >= 50 ? "Developing" : score >= 40 ? "Weak Developing" : score >= 30 ? "Not Yet Ready" : "Foundation Gap";
 
   return (
     <td className="border border-white/20 text-center p-0">

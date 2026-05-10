@@ -1549,7 +1549,7 @@ export const assessmentRouter = router({
       let llmNarrative: { strengths: string; gaps: string; priorities: string } | null = null;
       try {
         const capSummary = Object.entries(results.capabilityScores)
-          .map(([k, v]) => `${k}: ${Math.round(v.score)}/100`)
+          .map(([k, v]) => `${k}: ${(v.score / 10).toFixed(1)}/10`)
           .join(", ");
         const topStrengths = Object.entries(results.capabilityScores)
           .sort((a, b) => b[1].score - a[1].score)
@@ -1568,16 +1568,25 @@ export const assessmentRouter = router({
           messages: [
             {
               role: "system",
-              content: `You are an expert AI capability coach writing personalised assessment feedback for HR professionals. 
-Write in a professional, direct, and encouraging tone. Be specific — reference the actual capability scores provided. 
-Do NOT use bullet points or headers. Write in flowing prose. Each paragraph should be 2-4 sentences.`,
+              content: `You are an expert AI capability coach writing personalised assessment feedback for HR professionals.
+Write in a professional, direct tone. Be specific — reference the actual capability scores provided.
+Do NOT use bullet points or headers. Write in flowing prose. Each paragraph should be 2-4 sentences.
+
+CRITICAL CONSTRAINTS — apply to every sentence:
+- Do NOT use encouragement-machine language: avoid "fantastic", "impressive", "excellent", "well done", "great job", "you're doing amazing".
+- Do NOT use templated openings: avoid "It's wonderful to see...", "I'm delighted to note...", "Building on your strong foundation...".
+- Do NOT make generic recommendations: avoid "consider exploring", "perhaps starting with", "you might want to look into".
+- DO reference the user's specific context: sector, role, organisational size, in-flight strategy initiatives, recent activity.
+- DO use specific names: name initiatives, sectors, frameworks where relevant.
+- DO use mastery framing: "build", "develop", "strengthen" — avoid "score", "rank", "compared to others".
+- Scores referenced in narrative MUST match the actual data provided — do not hallucinate or approximate.`,
             },
             {
               role: "user",
               content: `Write a 3-paragraph development narrative for a ${roleArchetypeName} who just completed an AI capability assessment.
 
 Assessment results:
-- Overall score: ${Math.round(results.overallScore)}/100
+- Overall score: ${(results.overallScore / 10).toFixed(1)}/10
 - Readiness state: ${readinessLabel}
 - Capability scores: ${capSummary}
 - Key strengths: ${topStrengths}
@@ -1586,8 +1595,8 @@ Assessment results:
 - Over-reliance risk: ${results.failureModes.modes.includes("over_reliance") ? "Yes" : "No"}
 - C2: All failure modes detected: ${results.failureModes.modes.length > 0 ? results.failureModes.modes.join(", ") : "None"}
 - C2: Gaming scrutiny level: ${results.gamingAnalysis.scrutinyLevel}
-${results.readiness.governingConstraint ? `- S3.4: Governing constraint: ${String((results.readiness.governingConstraint as any).capability).replace(/_/g, " ")} (score ${Math.round(Number((results.readiness.governingConstraint as any).score))}, threshold ${Math.round(Number((results.readiness.governingConstraint as any).thresholdRequired))}, gap ${Math.round(Number((results.readiness.governingConstraint as any).gap))} points) — this drove the classification` : "- S3.4: No single governing constraint (safe classification)"}
-${priorCapabilityScoresForNarrative ? `- C1: Prior session capability scores: ${Object.entries(priorCapabilityScoresForNarrative).map(([k, v]) => `${k}: ${Math.round(v as number)}/100`).join(", ")}` : "- C1: First assessment (no prior scores available)"}
+${results.readiness.governingConstraint ? `- S3.4: Governing constraint: ${String((results.readiness.governingConstraint as any).capability).replace(/_/g, " ")} (score ${((results.readiness.governingConstraint as any).score / 10).toFixed(1)}/10, threshold ${((results.readiness.governingConstraint as any).thresholdRequired / 10).toFixed(1)}/10, gap ${((results.readiness.governingConstraint as any).gap / 10).toFixed(1)} points) — this drove the classification` : "- S3.4: No single governing constraint (safe classification)"}
+${priorCapabilityScoresForNarrative ? `- C1: Prior session capability scores: ${Object.entries(priorCapabilityScoresForNarrative).map(([k, v]) => `${k}: ${((v as number) / 10).toFixed(1)}/10`).join(", ")}` : "- C1: First assessment (no prior scores available)"}
 
 Paragraph 1 (Strengths): What this person does well in their AI capability profile. Reference specific capabilities and any improvements since their last assessment if prior scores are available.
 Paragraph 2 (Gaps): Where the most significant development opportunities lie. Reference any detected failure modes (e.g., over_reliance, blind_ai_acceptance, governance_bypass) if present. Be honest but constructive.
@@ -2425,7 +2434,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       factors.push({
         factor: "Overall capability score",
         direction: overallScore >= 65 ? "positive" : overallScore >= 45 ? "neutral" : "negative",
-        detail: `Your overall score of ${Math.round(overallScore)}/100 ${overallScore >= 65 ? "meets" : "is below"} the threshold for this classification band.`,
+        detail: `Your overall score of ${(overallScore / 10).toFixed(1)}/10 ${overallScore >= 65 ? "meets" : "is below"} the threshold for this classification band.`,
       });
 
       // Confidence factor
@@ -2738,7 +2747,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           const isObj = v !== null && typeof v === "object" && "score" in v;
           const scoreNum = isObj ? (v.score ?? 0) : (typeof v === "number" ? v : 0);
           const name = isObj ? (v.displayName ?? key.replace(/_/g, " ")) : key.replace(/_/g, " ");
-          return `${name}: ${Math.round(scoreNum)}/100`;
+          return `${name}: ${(scoreNum / 10).toFixed(1)}/10`;
         })
         .join(", ");
 
@@ -2808,12 +2817,12 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       if (input.domainScores && input.domainScores.length > 0) {
         domainLines = input.domainScores
           .sort((a, b) => b.score - a.score)
-          .map(d => `${d.name}: ${Math.round(d.score)}/100`)
+          .map(d => `${d.name}: ${(d.score / 10).toFixed(1)}/10`)
           .join("\n");
       } else {
         domainLines = Object.entries(capabilityScores)
           .sort(([, a]: any, [, b]: any) => (b.score ?? 0) - (a.score ?? 0))
-          .map(([, v]: [string, any]) => `${v.displayName ?? v}: ${Math.round(v.score ?? 0)}/100`)
+          .map(([, v]: [string, any]) => `${v.displayName ?? v}: ${((v.score ?? 0) / 10).toFixed(1)}/10`)
           .join("\n");
       }
 
@@ -3013,10 +3022,10 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
             const weaknesses = domainSignals.filter(s => s.normScore < 60).slice(-3).reverse();
             const lines: string[] = [];
             if (strengths.length > 0) {
-              lines.push(`Their strongest sub-capabilities in this domain are: ${strengths.map(s => `${s.label} (${s.normScore}/100)`).join(", ")}.`);
+              lines.push(`Their strongest sub-capabilities in this domain are: ${strengths.map(s => `${s.label} (${(s.normScore / 10).toFixed(1)}/10)`).join(", ")}.`);
             }
             if (weaknesses.length > 0) {
-              lines.push(`Their areas for development are: ${weaknesses.map(s => `${s.label} (${s.normScore}/100)`).join(", ")}.`);
+              lines.push(`Their areas for development are: ${weaknesses.map(s => `${s.label} (${(s.normScore / 10).toFixed(1)}/10)`).join(", ")}.`);
             }
             if (lines.length > 0) {
               signalBreakdownText = "\n\nActual sub-capability breakdown from their assessment:\n" + lines.join(" ");
@@ -3064,11 +3073,11 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           messages: [
             {
               role: "system",
-              content: "You are an expert HR AI capability coach providing personalised, actionable assessment feedback. Be specific, encouraging, and practical. Use plain prose — no markdown headers, no bullet points, no asterisks. Write in flowing paragraphs.",
+              content: "You are an expert HR AI capability coach providing personalised, actionable assessment feedback. Be specific and practical. Use plain prose — no markdown headers, no bullet points, no asterisks. Write in flowing paragraphs. Do NOT use encouragement-machine language (avoid: fantastic, impressive, excellent, well done, great job). Do NOT use templated openings (avoid: It's wonderful to see, I'm delighted to note). DO reference the user's specific domain scores and sub-capability signals by name.",
             },
             {
               role: "user",
-              content: `Write a personalised deep dive for ${userName}'s performance in the "${input.domainName}" domain of their AI capability assessment.\n\nDomain focus: ${domainDesc}\nOverall domain score: ${Math.round(input.score)}/100 (${levelLabel})${input.quadrantLabel ? `\nProfile: ${input.quadrantLabel}` : ""}${isBlindSpot ? " — this is a blind spot area" : ""}${signalBreakdownText}\n\nWrite 4 short paragraphs (2-3 sentences each):\n1. What this domain means and why it matters for HR professionals\n2. What their overall score of ${Math.round(input.score)}/100 tells us about their current capability — be specific and honest\n3. Their specific strengths and gaps in this domain — you MUST reference the actual sub-capabilities listed above by name (e.g. their strongest and weakest signals). Do not be vague — name the specific signals.\n4. One concrete, actionable next step they can take this week to develop in their weakest area\n\nKeep total response under 220 words. No bullet points. No headers. Plain paragraphs only.`,
+              content: `Write a personalised deep dive for ${userName}'s performance in the "${input.domainName}" domain of their AI capability assessment.\n\nDomain focus: ${domainDesc}\nOverall domain score: ${(input.score / 10).toFixed(1)}/10 (${levelLabel})${input.quadrantLabel ? `\nProfile: ${input.quadrantLabel}` : ""}${isBlindSpot ? " — this is a blind spot area" : ""}${signalBreakdownText}\n\nWrite 4 short paragraphs (2-3 sentences each):\n1. What this domain means and why it matters for HR professionals\n2. What their overall score of ${(input.score / 10).toFixed(1)}/10 tells us about their current capability — be specific and honest\n3. Their specific strengths and gaps in this domain — you MUST reference the actual sub-capabilities listed above by name (e.g. their strongest and weakest signals). Do not be vague — name the specific signals.\n4. One concrete, actionable next step they can take this week to develop in their weakest area\n\nKeep total response under 220 words. No bullet points. No headers. Plain paragraphs only.`,
             },
           ],
         });

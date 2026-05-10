@@ -97,7 +97,7 @@ export const DOMAIN_DESCRIPTIONS: Record<DomainKey, string> = {
 };
 
 // ─── Capability Levels ───────────────────────────────────────────────────────
-// 5-level scale: 1 Emerging → 2 Developing → 3 Capable → 4 Strong → 5 AI Ready
+// 5-level scale: 1 Emerging → 2 Developing → 3 Capable → 4 Strong → 5 Expert
 // Scores are 0–10 (precise level) or 0–100 (raw assessment score).
 
 export type LevelKey = 1 | 2 | 3 | 4 | 5;
@@ -108,7 +108,7 @@ export const LEVEL_LABELS: Record<LevelKey, string> = {
   2: "Developing",
   3: "Capable",
   4: "Strong",
-  5: "AI Ready",
+  5: "Expert",
 };
 
 /**
@@ -165,7 +165,7 @@ export const READINESS_COLOURS: Record<string, string> = {
 };
 
 export const READINESS_LABELS: Record<string, string> = {
-  safe:    "AI Ready",
+  safe:    "Expert",
   at_risk: "Developing",
   unsafe:  "Not Yet Ready",
 };

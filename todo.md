@@ -2577,3 +2577,41 @@
 ### Block C — Progressive Disclosure
 - [x] C1: CollapsibleSubsection component; per-section collapsible map per spec; keyboard nav + ARIA
 - [x] C2: Sticky ToC left rail (>1280px); scroll-spy active section; mobile dropdown; section anchors
+
+## Systemic Fixes + Assessment Outcome Refinement Brief v2
+### Block A — Platform-wide systemic fixes
+#### A1 — Centralised score display
+- [x] A1.1: Create canonical score formatting utility (formatCapScore, formatCapDelta) in shared/scoreFormat.ts
+- [x] A1.2: Fix strategy artefact six-domain bars — convert from /100 to /10 display
+- [x] A1.3: Fix assessment outcome domain breakdown — convert from /100 to /10 display
+- [x] A1.4: Fix assessment outcome sub-components — convert from /100 to /10 display
+- [x] A1.5: Fix assessment narrative — remove /100 score references, use /10
+- [x] A1.6: Fix learning plan dashboard domain cards and drill-downs — audit and fix any /100 leaks
+- [x] A1.7: Fix PDF exports — mirror web display /10 format
+- [x] A1.8: Add cap-at-10 guard with console.warn for capping events
+- [x] A1.9: Document backfill decision (Option A — forward-going only) in todo.md
+#### A2 — AI Ready framing (Decision: Option 1 — remove badges only, keep level labels)
+- [x] A2.1: Audit codebase for all "AI Ready" / "aiReady" patterns
+- [x] A2.2: Remove "AI Ready" badges from all surfaces
+- [x] A2.3: Verify level labels (Foundation/Developing/Practitioner/Advanced/Expert) are preserved everywhere
+#### A3 — Narrative prompt engineering audit
+- [x] A3.1: Locate all AI-generated narrative prompts in codebase
+- [x] A3.2: Update assessment narrative prompt with standard constraints
+- [x] A3.3: Update learning plan reasoning prompt with standard constraints
+- [x] A3.4: Update module coach feedback prompt with standard constraints
+- [x] A3.5: Verify numerical accuracy — scores in narrative match actual data
+### Block B — Assessment outcome page fixes
+- [x] B1.1: Remove "Strength" badges from all domain cards on assessment outcome page
+- [x] B2.1: Investigate assessment state model — can user have multiple assessments?
+- [x] B2.2: Fix resume banner — user can clearly distinguish current vs in-progress drafts
+- [x] B3.1: Investigate Knowledge/Application/Leadership sub-scores (CIPD-aligned?)
+- [x] B3.2: Apply decision — label with CIPD tooltip OR add categorisation tooltip OR remove
+- [x] B4.1: Domain cards show score + level by default (sub-components hidden)
+- [x] B4.2: "See sub-component breakdown ▼" expands to reveal three sub-bars with labels
+- [x] B4.3: Each sub-component label has tooltip explaining what it measures
+- [x] B5.1: Remove hexagonal radar chart from assessment outcome page
+- [x] B6.1: Add CPD alignment tooltip with full explanation text
+- [x] B6.2: Add Confidence profile tooltip with full explanation text
+- [x] B7.1: Variant 1 — User has no AI Strategy: affordance to generate strategy + CTA
+- [x] B7.2: Variant 2 — User has existing AI Strategy: show capability shift, update/keep affordances
+- [x] B7.3: Variant 3 — All users: module recommendations based on lowest-scoring domains

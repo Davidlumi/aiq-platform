@@ -9,14 +9,10 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import {
-  RadarChart, PolarGrid, PolarAngleAxis, Radar,
-  ResponsiveContainer, Tooltip,
-} from "recharts";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
@@ -30,6 +26,7 @@ import {
 } from "lucide-react";
 import { Sparkles, BarChart2, AlertCircle } from "lucide-react";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 // ── Assessment History Dropdown ────────────────────────────────────────────────
 
@@ -161,6 +158,7 @@ function InProgressBanner({ session }: { session: any }) {
         <div>
           <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
           <p className="text-xs text-muted-foreground">{answered} of {total} questions answered · {pct}% complete</p>
+          <p className="text-xs text-muted-foreground/70 mt-0.5">You are viewing a completed assessment. Resume to continue your in-progress assessment.</p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -418,49 +416,6 @@ function domainInsight(key: string, score: number): string {
   return insights[key]?.[level] ?? "This domain measures your practical AI capability in a specific area.";
 }
 
-// ── Spider Chart ───────────────────────────────────────────────────────────────
-
-function SpiderChart({ domains }: {
-  domains: Array<{ key: string; displayName: string; score: number; colour: string }>;
-}) {
-  const data = domains.map(d => ({
-    subject: d.displayName.replace("AI ", "").replace("Workforce ", ""),
-    score: Math.round(d.score),
-    fullMark: 100,
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={340}>
-      <RadarChart data={data} margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
-        <PolarGrid stroke="rgba(255,255,255,0.20)" />
-        <PolarAngleAxis
-          dataKey="subject"
-          tick={{ fill: "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: 500 }}
-        />
-        <Radar
-          name="Score"
-          dataKey="score"
-          stroke="var(--primary)"
-          fill="var(--primary)"
-          fillOpacity={0.15}
-          strokeWidth={2}
-          dot={{ fill: "var(--primary)", r: 4, strokeWidth: 0 }}
-        />
-        <Tooltip
-          contentStyle={{
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            borderRadius: "8px",
-            color: "var(--foreground)",
-            fontSize: "13px",
-          }}
-          formatter={(value: number) => [`${(value / 10).toFixed(1)}/10`, "Score"]}
-        />
-      </RadarChart>
-    </ResponsiveContainer>
-  );
-}
-
 // ── Domain Card ────────────────────────────────────────────────────────────────
 
 function DomainCard({
@@ -475,6 +430,7 @@ function DomainCard({
   const level = scoreToLevel(score);
   const isBlindSpot = quadrant === "unconscious_incompetence";
   const isStrength = score >= 70;
+  const [showSignals, setShowSignals] = useState(false);
 
   // Show top 3 signals (best + worst to give a balanced view)
   const topSignals = signals && signals.length > 0
@@ -504,11 +460,6 @@ function DomainCard({
               Blind spot
             </span>
           )}
-          {isStrength && !isBlindSpot && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/12 text-primary border border-primary/25">
-              Strength
-            </span>
-          )}
           <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
         </div>
       </div>
@@ -528,10 +479,17 @@ function DomainCard({
         />
       </div>
 
-      {/* Sub-domain mini heatmap */}
+      {/* Sub-domain mini heatmap — collapsible */}
       {topSignals.length > 0 && (
         <div className="pt-3 border-t border-border/60">
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${topSignals.length}, 1fr)` }}>
+          <button
+            onClick={e => { e.stopPropagation(); setShowSignals(v => !v); }}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mb-2"
+          >
+            <ChevronRight className={cn("w-3 h-3 transition-transform", showSignals && "rotate-90")} />
+            {showSignals ? "Hide" : "See"} sub-component breakdown
+          </button>
+          {showSignals && <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${topSignals.length}, 1fr)` }}>
             {topSignals.map(sig => {
               const s = sig.normScore;
               // Colour: green (high) → amber (mid) → red (low), risk signals inverted
@@ -555,7 +513,7 @@ function DomainCard({
                       color: cellColor,
                     }}
                   >
-                    {s}
+                    {(s / 10).toFixed(1)}
                   </div>
                   <span
                     className="text-[9px] text-muted-foreground text-center leading-tight w-full truncate px-0.5"
@@ -566,7 +524,7 @@ function DomainCard({
                 </div>
               );
             })}
-          </div>
+          </div>}
         </div>
       )}
     </button>
@@ -943,9 +901,9 @@ export default function AssessmentResultsPage() {
             const appScore = getScore("ai_interaction") ?? getScore("ai_workflow_design");
             const leadScore = getScore("ai_change_leadership") ?? getScore("workforce_ai_readiness");
             const indices = [
-              { label: "Knowledge & Ethics", score: ethicsScore, icon: "⚖️" },
-              { label: "Application", score: appScore, icon: "⚡" },
-              { label: "Leadership", score: leadScore, icon: "🎯" },
+              { label: "Knowledge & Ethics", score: ethicsScore, icon: "⚖️", tooltip: "Composite of AI Ethics & Trust and Governance domains. Measures your understanding of responsible AI use, bias awareness, data privacy, and regulatory compliance." },
+              { label: "Application", score: appScore, icon: "⚡", tooltip: "Composite of AI Interaction and AI Workflow Design domains. Measures your ability to use AI tools effectively in day-to-day HR practice." },
+              { label: "Leadership", score: leadScore, icon: "🎯", tooltip: "Composite of AI Change Leadership and Workforce AI Readiness domains. Measures your ability to lead AI adoption and build AI capability across your organisation." },
             ].filter(i => i.score !== null);
             // CIPD Profession Map alignment
             const cipdLevel = overallScore >= 75 ? "Chartered Fellow" : overallScore >= 55 ? "Chartered Member" : "Associate";
@@ -968,10 +926,13 @@ export default function AssessmentResultsPage() {
                 {/* Secondary indices */}
                 <div className="flex flex-wrap gap-2">
                   {indices.map(idx => (
-                    <div key={idx.label} className="flex items-center gap-1.5 bg-muted/20 rounded-lg px-3 py-1.5">
+                    <div key={idx.label} className="flex items-center gap-1.5 bg-muted/20 rounded-lg px-3 py-1.5" title={(idx as any).tooltip}>
                       <span className="text-sm">{idx.icon}</span>
                       <div>
-                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5">{idx.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5 flex items-center gap-1">
+                          {idx.label}
+                          <HelpCircle className="w-2.5 h-2.5 text-muted-foreground/50 shrink-0" />
+                        </p>
                         <p className="text-xs font-bold text-foreground tabular-nums">
                           {(idx.score! / 10).toFixed(1)}<span className="text-muted-foreground font-normal">/10</span>
                         </p>
@@ -981,13 +942,21 @@ export default function AssessmentResultsPage() {
                 </div>
                 {/* CIPD alignment + confidence calibration */}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
-                  <div className="flex items-center gap-1.5">
+                  <div
+                    className="flex items-center gap-1.5 cursor-help"
+                    title={`Your performance aligns with the ${cipdLevel} level of the CIPD Profession Map. Levels: Foundation → Associate → Chartered Member → Chartered Fellow. Alignment is based on your overall score: ≥75 = Chartered Fellow, ≥55 = Chartered Member, below 55 = Associate. See methodology for details.`}
+                  >
                     <span className="text-muted-foreground">CIPD alignment:</span>
                     <span className={`font-semibold ${cipdColor}`}>{cipdLevel}</span>
+                    <HelpCircle className="w-3 h-3 text-muted-foreground/50 shrink-0" />
                   </div>
-                  <div className="flex items-center gap-1.5" title={calibDesc}>
+                  <div
+                    className="flex items-center gap-1.5 cursor-help"
+                    title={`Comparison of your self-assessed confidence against your demonstrated capability. Profiles: Well Calibrated (confidence matches capability), Under-Confident (capability exceeds confidence), Over-Confident (confidence exceeds capability). Well Calibrated indicates accurate self-awareness. ${calibDesc}.`}
+                  >
                     <span className="text-muted-foreground">Confidence profile:</span>
                     <span className={`font-semibold ${calibColor}`}>{calibLabel}</span>
+                    <HelpCircle className="w-3 h-3 text-muted-foreground/50 shrink-0" />
                   </div>
                 </div>
               </div>
@@ -1072,7 +1041,7 @@ export default function AssessmentResultsPage() {
         </div>
       )}
 
-      {/* Capability Profile — two-column: spider left, domain bars right */}
+      {/* Capability Profile - domain bars */}
       {domains.length > 0 && (
         <div
           className="rounded-2xl border border-border bg-card p-8 aiq-chart-mount"
@@ -1084,71 +1053,69 @@ export default function AssessmentResultsPage() {
           <p className="text-sm text-muted-foreground mb-6">
             Your scores across all {domains.length} capability domains
           </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Left: spider chart */}
-            <div className="pt-2">
-              <SpiderChart domains={domains} />
-            </div>
-            {/* Right: domain score bars */}
-            <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Domain Breakdown</p>
-              {[...domains].sort((a, b) => b.score - a.score).map(domain => {
-                const level = scoreToLevel(domain.score);
-                // LM-8: Domain floor rule — fewer than 3 signals means score is provisional
-                const isFloorTriggered = (domain.signalCount ?? 0) < 3;
-                return (
-                  <div key={domain.key}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-foreground">{domain.displayName}</span>
-                      <div className="flex items-center gap-2">
-                        {isFloorTriggered && (
-                          <span
-                            className="text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5"
-                            title={`Only ${domain.signalCount ?? 0} signal${(domain.signalCount ?? 0) === 1 ? '' : 's'} collected — score is provisional. Complete more questions to confirm this domain.`}
-                          >
-                            Provisional
-                          </span>
-                        )}
-                        <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
-                        <span className="text-sm font-bold text-foreground tabular-nums w-8 text-right">
-                          {Math.round(domain.score)}
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Domain Breakdown</p>
+            {[...domains].sort((a, b) => b.score - a.score).map(domain => {
+              const level = scoreToLevel(domain.score);
+              const isFloorTriggered = (domain.signalCount ?? 0) < 3;
+              const scoreDisplay = (domain.score / 10).toFixed(1);
+              const barWidth = Math.round(domain.score);
+              const barColor = isFloorTriggered ? domain.colour + "80" : domain.colour;
+              const signalCount = domain.signalCount ?? 0;
+              const signalWord = signalCount === 1 ? "signal" : "signals";
+              const provisionalTitle = "Only " + signalCount + " " + signalWord + " collected - score is provisional. Complete more questions to confirm this domain.";
+              return (
+                <div key={domain.key}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-medium text-foreground">{domain.displayName}</span>
+                    <div className="flex items-center gap-2">
+                      {isFloorTriggered && (
+                        <span
+                          className="text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5"
+                          title={provisionalTitle}
+                        >
+                          Provisional
                         </span>
-                      </div>
+                      )}
+                      <span className={cn("text-xs font-medium", level.color)}>{level.label}</span>
+                      <span className="text-sm font-bold text-foreground tabular-nums w-8 text-right">
+                        {scoreDisplay}
+                      </span>
                     </div>
-                    <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${Math.round(domain.score)}%`, backgroundColor: isFloorTriggered ? `${domain.colour}80` : domain.colour }}
-                      />
-                    </div>
-                    {isFloorTriggered && (
-                      <p className="text-[11px] text-muted-foreground mt-1">
-                        Based on {domain.signalCount ?? 0} signal{(domain.signalCount ?? 0) === 1 ? '' : 's'} — 3 required for a confirmed score. Retake to strengthen this domain.
-                      </p>
-                    )}
                   </div>
-                );
-              })}
-              {/* Legend */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-3 border-t border-border">
-                {[
-                  { label: "Expert", color: "text-primary", min: 80 },
-                  { label: "Proficient", color: "text-emerald-400", min: 65 },
-                  { label: "Developing", color: "text-amber-400", min: 50 },
-                  { label: "Beginner", color: "text-orange-400", min: 35 },
-                  { label: "Novice", color: "text-red-400", min: 0 },
-                ].map(tier => (
-                  <span key={tier.label} className={cn("text-[11px] font-medium", tier.color)}>
-                    {tier.label} {tier.min > 0 ? `≥${tier.min}` : `<35`}
-                  </span>
-                ))}
-              </div>
+                  <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: barWidth + "%", backgroundColor: barColor }}
+                    />
+                  </div>
+                  {isFloorTriggered && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Based on {signalCount} {signalWord}; answer more questions to confirm this domain.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            {/* Legend */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-3 border-t border-border">
+              {[
+                { label: "Expert", color: "text-primary", minVal: 80 },
+                { label: "Proficient", color: "text-emerald-400", minVal: 65 },
+                { label: "Developing", color: "text-amber-400", minVal: 50 },
+                { label: "Beginner", color: "text-orange-400", minVal: 35 },
+                { label: "Novice", color: "text-red-400", minVal: 0 },
+              ].map(tier => (
+                <span key={tier.label} className={cn("text-[11px] font-medium", tier.color)}>
+                  {tier.label}{tier.minVal > 0 ? " >=" + tier.minVal : " below 35"}
+                </span>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Domain cards */}
+            {/* Domain cards */}
       {domains.length > 0 && (
         <div>
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
@@ -1243,6 +1210,148 @@ export default function AssessmentResultsPage() {
           quadrantLabel={selectedMatrix?.quadrantLabel}
           quadrantDescription={selectedMatrix?.quadrantDescription}
         />
+      )}
+      {/* B7: Strategy & Learning Plan Linkage */}
+      <StrategyLinkageSection sessionId={sessionId!} domains={domains} />
+    </div>
+  );
+}
+
+// ── B7: Strategy Linkage Section ──────────────────────────────────────────────
+function StrategyLinkageSection({
+  sessionId,
+  domains,
+}: {
+  sessionId: string;
+  domains: Array<{ key: string; displayName: string; score: number; colour: string }>;
+}) {
+  const { user } = useAuth();
+  const tenantId = user?.tenantId ?? "";
+  const { data: strategies, isLoading: strategiesLoading } = trpc.strategy.listStrategies.useQuery(
+    { tenantId },
+    { enabled: !!tenantId }
+  );
+  // Get top 3 lowest-scoring domains for module recommendations
+  const lowestDomains = useMemo(() =>
+    [...domains].sort((a, b) => a.score - b.score).slice(0, 3),
+    [domains]
+  );
+  const hasStrategy = strategies && strategies.length > 0;
+  const committedStrategy = strategies?.find(s => s.status === "committed") ?? strategies?.[0];
+  // Module recommendations — link to filtered learning plan view
+  if (strategiesLoading) return null;
+  return (
+    <div className="space-y-5">
+      {/* Strategy Linkage */}
+      <div className="rounded-2xl border border-border bg-card p-8" style={{ boxShadow: "var(--card-shadow)" }}>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Target className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">AI Strategy & Development</h2>
+            <p className="text-xs text-muted-foreground">Connect your assessment results to your organisation's AI strategy</p>
+          </div>
+        </div>
+        {!hasStrategy ? (
+          /* Variant 1: No strategy yet */
+          <div className="rounded-xl border border-dashed border-border/60 p-6 text-center">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <p className="text-sm font-semibold text-foreground mb-1">No AI Strategy yet</p>
+            <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
+              Generate a personalised AI strategy for your HR function based on your capability assessment results.
+              Your domain scores will inform the recommended initiatives and prioritisation.
+            </p>
+            <Link href="/strategy/builder">
+              <Button size="sm" className="gap-2">
+                <Target className="w-3.5 h-3.5" />
+                Build AI Strategy
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          /* Variant 2: Has existing strategy */
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-background/40">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{committedStrategy?.name ?? "AI Strategy"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {committedStrategy?.status === "committed" ? "Active strategy" : "Draft strategy"} ·{" "}
+                  {committedStrategy?.updatedAt
+                    ? `Updated ${new Date(committedStrategy.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                    : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link href={`/strategy/${committedStrategy?.id}`}>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    View Strategy
+                  </Button>
+                </Link>
+                <Link href="/strategy/builder">
+                  <Button size="sm" className="gap-1.5 text-xs">
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Update with Results
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your assessment results can inform your strategy priorities. The domains with the most development opportunity are:{" "}
+              <span className="font-medium text-foreground">
+                {lowestDomains.map(d => d.displayName).join(", ")}
+              </span>.
+            </p>
+          </div>
+        )}
+      </div>
+      {/* Variant 3: Module recommendations (always visible) */}
+      {lowestDomains.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-8" style={{ boxShadow: "var(--card-shadow)" }}>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Recommended Next Steps</h2>
+                <p className="text-xs text-muted-foreground">Modules targeting your highest-priority development areas</p>
+              </div>
+            </div>
+            <Link href="/learning">
+              <Button variant="outline" size="sm" className="text-xs gap-1.5 shrink-0">
+                View Learning Plan
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {lowestDomains.map(domain => (
+              <Link key={domain.key} href={`/learning?capability=${domain.key}`}>
+                <div className="flex items-center justify-between p-3.5 rounded-xl border border-border hover:bg-accent/30 transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${domain.colour}20` }}
+                    >
+                      <Brain className="w-4 h-4" style={{ color: domain.colour }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{domain.displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Score: {(domain.score / 10).toFixed(1)}/10 · Explore modules to build this capability
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

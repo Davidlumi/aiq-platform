@@ -113,7 +113,7 @@ function DomainSliderRow({ domainKey, value, onChange, currentScore }: { domainK
           className="flex-1"
           style={{ "--slider-track-color": colour } as React.CSSProperties}
         />
-        <span className="text-xs text-muted-foreground w-10 text-right">{value}/100</span>
+        <span className="text-xs text-muted-foreground w-10 text-right">{(value / 10).toFixed(1)}/10</span>
       </div>
     </div>
   );

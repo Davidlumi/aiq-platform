@@ -35,7 +35,7 @@ function getLevelFromScore(score: number): number {
 }
 
 function getLevelLabel(level: number): string {
-  return ["", "Emerging", "Developing", "Capable", "Strong", "AI Ready"][level] ?? "Developing";
+  return ["", "Emerging", "Developing", "Capable", "Strong", "Expert"][level] ?? "Developing";
 }
 
 function getLevelChipStyle(level: number): { bg: string; text: string } {
