@@ -2879,7 +2879,7 @@ export default function AIStrategyPage() {
                             m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
                             m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
                             "bg-purple-500/20 text-purple-400"
-                          }`}>{m.tier.slice(0, 3)}</span>
+                          }`}>{m.tier === "efficiency" ? "Eff" : m.tier === "effectiveness" ? "Qual" : "Strat"}</span>
                           <span className="text-xs text-foreground">{m.label}</span>
                         </div>
                       ))}

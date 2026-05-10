@@ -84,7 +84,7 @@ export interface SimulationContextInjection {
 
 // ─── Sector-specific regulatory context ──────────────────────────────────────
 
-const SECTOR_REGULATORY_CONTEXT: Record<string, {
+export const SECTOR_REGULATORY_CONTEXT: Record<string, {
   regulator: string;
   keyLegislation: string[];
   reportingRequirements: string[];
@@ -143,6 +143,24 @@ const SECTOR_REGULATORY_CONTEXT: Record<string, {
     keyLegislation: ["UK GDPR", "Equality Act 2010", "Employment Rights Act 1996", "Online Safety Act 2023"],
     reportingRequirements: ["Gender pay gap report", "Diversity in broadcasting (Ofcom)"],
     aiRisks: ["AI-generated content and copyright liability", "Algorithmic bias in creative hiring", "Freelancer and gig worker classification"],
+  },
+  logistics_transport: {
+    regulator: "DVSA / HSE / ICO",
+    keyLegislation: ["UK GDPR", "Equality Act 2010", "Employment Rights Act 1996", "Health and Safety at Work Act 1974", "Working Time Regulations 1998"],
+    reportingRequirements: ["Gender pay gap report", "Modern slavery statement", "Driver hours compliance"],
+    aiRisks: ["Algorithmic management of drivers and warehouse workers", "Surveillance and monitoring of mobile workers", "Union consultation on AI-driven scheduling"],
+  },
+  education: {
+    regulator: "Ofsted / OfS / ICO",
+    keyLegislation: ["UK GDPR", "Equality Act 2010", "Education Act 2011", "Children Act 2004", "Employment Rights Act 1996"],
+    reportingRequirements: ["Gender pay gap report", "Workforce census (DfE)", "Safeguarding compliance"],
+    aiRisks: ["Safeguarding implications of AI in staff recruitment", "Bias in AI-assisted student outcome predictions affecting HR planning", "Data protection for staff and student data"],
+  },
+  hospitality_leisure: {
+    regulator: "ICO / HSE",
+    keyLegislation: ["UK GDPR", "Equality Act 2010", "National Minimum Wage Act 1998", "Employment Rights Act 1996", "Working Time Regulations 1998"],
+    reportingRequirements: ["Gender pay gap report", "Modern slavery statement"],
+    aiRisks: ["Algorithmic tipping and pay distribution", "Zero-hours contract compliance with AI scheduling", "High turnover and bias in AI-driven recruitment"],
   },
   other: {
     regulator: "ICO",

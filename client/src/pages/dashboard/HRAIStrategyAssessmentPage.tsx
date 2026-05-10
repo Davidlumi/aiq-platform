@@ -46,6 +46,7 @@ import {
   BarChart2,
   Info,
   BookOpen,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -79,7 +80,7 @@ import {
   PILOT_DURATION_OPTIONS,
   PILOT_SUCCESS_METRICS,
 } from "@/../../shared/strategyInputs";
-import { getSubSectors, getSubSectorLabel } from "@/../../shared/sectorTaxonomy";
+import { getSubSectors, getSubSectorLabel, getSectorDef } from "@/../../shared/sectorTaxonomy";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -727,13 +728,15 @@ export default function HRAIStrategyAssessmentPage() {
   const sector = orgContextQ.data?.sector ?? "other";
   const subSector = orgContextQ.data?.subSector ?? null;
   const headcount = orgContextQ.data?.headcount ?? 500;
-  const sectorLabel = sector.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const sectorLabel = getSectorDef(sector)?.label ?? sector.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   const subSectorLabel = subSector ? getSubSectorLabel(sector, subSector) : null;
   const contextLabel = subSectorLabel ? `${subSectorLabel} (${sectorLabel})` : sectorLabel;
   const sectorBenchmarks = getSectorBenchmarks(sector);
   const availableOutcomes = useMemo(() => getBusinessOutcomes(sector), [sector]);
   const governanceDefaults = useMemo(() => getGovernanceDefaults(sector), [sector]);
   const subSectorOptions = useMemo(() => getSubSectors(sector), [sector]);
+  const orgType = orgContextQ.data?.orgType ?? null;
+  const orgTypeLabel = orgType ? orgType.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") : null;
 
   // ── Pre-fill from existing assessment ─────────────────────────────────────
   useEffect(() => {
@@ -1109,6 +1112,21 @@ export default function HRAIStrategyAssessmentPage() {
 
       {/* ── Wizard body ───────────────────────────────────────────────────────── */}
       <div className="max-w-3xl mx-auto px-6 py-8">
+        {/* Context pill: shows sector/sub-sector/org-type context at top of wizard */}
+        {sector !== "other" && (
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/25 text-[11px] font-medium text-green-400">
+              <Building2 className="w-3 h-3" />
+              {contextLabel}
+            </span>
+            {orgTypeLabel && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-[11px] font-medium text-blue-400">
+                {orgTypeLabel}
+              </span>
+            )}
+            <span className="text-[10px] text-muted-foreground/50 ml-1">Benchmarks calibrated to your context</span>
+          </div>
+        )}
         <StepIndicator current={step} total={6} />        {/* ── Step 1: Business AI Aspiration ─────────────────────────────── */}
         {step === 1 && (
           <div>
@@ -1813,23 +1831,65 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             {!hasGenerated && (
-              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-8 text-center mb-6">
-                <Sparkles className="w-10 h-10 text-purple-400 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-foreground mb-1">Ready to generate your strategy</p>
-                <p className="text-xs text-muted-foreground mb-5">
-                  Based on your {contextLabel} context, {businessOutcomes.length} outcomes, and {businessProblems.length} problems.
-                </p>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={generateMut.isPending}
-                  className="bg-purple-500 hover:bg-purple-400 text-white font-semibold px-8"
-                >
-                  {generateMut.isPending ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
-                  ) : (
-                    <><Sparkles className="w-4 h-4 mr-2" />Generate Vision & Principles</>
-                  )}
-                </Button>
+              <div className="space-y-4 mb-6">
+                {/* Input confirmation card */}
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Strategy will be generated using these inputs</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs mb-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Sector context</span>
+                      <span className="font-semibold text-foreground">{contextLabel}</span>
+                    </div>
+                    {orgTypeLabel && (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-muted-foreground">Organisation type</span>
+                        <span className="font-semibold text-foreground">{orgTypeLabel}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Business AI ambition</span>
+                      <span className="font-semibold text-foreground">{BUSINESS_LEVELS[businessLevel]?.label ?? "Progressive"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">People AI ambition</span>
+                      <span className="font-semibold text-foreground">{PEOPLE_LEVELS[peopleLevel]?.label ?? "Practitioners"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Risk appetite</span>
+                      <span className="font-semibold text-foreground">{RISK_APPETITE_OPTIONS.find(r => r.value === riskAppetite)?.label ?? "—"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Timeline</span>
+                      <span className="font-semibold text-foreground">{TIMELINE_OPTIONS.find(t => t.value === timelineMonths)?.label ?? "—"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Key outcomes</span>
+                      <span className="font-semibold text-foreground">{businessOutcomes.length} selected</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground">Business problems</span>
+                      <span className="font-semibold text-foreground">{businessProblems.length} selected</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/70 italic">Not right? Go back to any step to adjust your inputs before generating.</p>
+                </div>
+                {/* Generate button */}
+                <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-6 text-center">
+                  <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-foreground mb-1">Ready to generate your strategy</p>
+                  <p className="text-xs text-muted-foreground mb-4">The AI will produce a board-ready vision statement and 5 guiding principles calibrated to your {contextLabel} context.</p>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={generateMut.isPending}
+                    className="bg-purple-500 hover:bg-purple-400 text-white font-semibold px-8"
+                  >
+                    {generateMut.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
+                    ) : (
+                      <><Sparkles className="w-4 h-4 mr-2" />Generate Vision & Principles</>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
 

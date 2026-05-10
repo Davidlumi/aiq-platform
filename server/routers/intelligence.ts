@@ -123,6 +123,7 @@ export const intelligenceRouter = router({
         "financial_services", "healthcare", "technology", "retail",
         "public_sector", "professional_services", "manufacturing", "other",
         "energy_utilities", "media_entertainment",
+        "logistics_transport", "education", "hospitality_leisure",
       ]).optional(),
       subSector: z.string().max(100).nullable().optional(),
       orgType: z.string().max(100).nullable().optional(),
@@ -620,6 +621,9 @@ Return JSON with this exact structure:
   generateVisionWithQualityGate: protectedProcedure
     .input(z.object({
       sector: z.string(),
+      subSector: z.string().nullable().optional(),
+      orgType: z.string().nullable().optional(),
+      orgSize: z.string().nullable().optional(),
       businessAmbitionLabel: z.string(),
       peopleAmbitionLabel: z.string(),
       aiPhilosophy: z.string().optional(),
@@ -631,7 +635,14 @@ Return JSON with this exact structure:
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      return generateVisionWithQualityGate(input);
+      // Enrich with org context if not provided
+      const orgCtx = await getOrgContext(ctx.user.tenantId);
+      return generateVisionWithQualityGate({
+        ...input,
+        subSector: input.subSector ?? orgCtx?.subSector ?? null,
+        orgType: input.orgType ?? orgCtx?.orgType ?? null,
+        orgSize: input.orgSize ?? null,
+      });
     }),
 
   /**

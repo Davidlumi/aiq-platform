@@ -18,6 +18,8 @@ import {
   estimateInitiativeCost,
   type Initiative,
 } from "./contentLibrary";
+import { getSectorDef, getSubSectorLabel } from "../shared/sectorTaxonomy";
+import { SECTOR_REGULATORY_CONTEXT } from "./ail/organisationContextLayer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,6 +131,9 @@ const GOLDEN_EXAMPLES: Record<string, string> = {
 
 export async function generateVisionWithQualityGate(params: {
   sector: string;
+  subSector?: string | null;
+  orgType?: string | null;
+  orgSize?: string | null;
   businessAmbitionLabel: string;
   peopleAmbitionLabel: string;
   aiPhilosophy?: string;
@@ -136,7 +141,7 @@ export async function generateVisionWithQualityGate(params: {
   hrRoleAnswers: Record<string, string>;
   maxAttempts?: number;
 }): Promise<VisionResult> {
-  const { sector, businessAmbitionLabel, peopleAmbitionLabel, aiPhilosophy, aspirationAnswers, hrRoleAnswers, maxAttempts = 3 } = params;
+  const { sector, subSector, orgType, orgSize, businessAmbitionLabel, peopleAmbitionLabel, aiPhilosophy, aspirationAnswers, hrRoleAnswers, maxAttempts = 3 } = params;
   const libMeta = getLibraryMeta();
 
   // Select closest golden example for the system prompt
@@ -160,11 +165,22 @@ GOLDEN EXAMPLE (vision statement quality bar):
 
 Always respond with valid JSON only, no markdown fences.`;
 
+  const sectorDef = getSectorDef(sector);
+  const sectorLabel = sectorDef?.label ?? sector;
+  const subSectorLabel = subSector ? getSubSectorLabel(sector, subSector) : null;
+  const contextLabel = subSectorLabel ? `${subSectorLabel} (${sectorLabel})` : sectorLabel;
+  const sectorRegContext = SECTOR_REGULATORY_CONTEXT[sector] ?? SECTOR_REGULATORY_CONTEXT.other;
+  const regulatoryBlock = `Regulator: ${sectorRegContext.regulator}
+Key legislation: ${sectorRegContext.keyLegislation.slice(0, 3).join(", ")}
+Key AI risks for this sector: ${sectorRegContext.aiRisks.join("; ")}`;
+
   const userPrompt = `Generate a board-ready HR AI strategy vision for:
-Sector: ${sector}
+Sector: ${contextLabel}${orgType ? `\nOrganisation type: ${orgType}` : ""}${orgSize ? `\nOrganisation size: ${orgSize}` : ""}
 Business AI Ambition: ${businessAmbitionLabel}
 People AI Ambition: ${peopleAmbitionLabel}
 Content Library Version: ${libMeta.version}
+Sector Regulatory Context:
+${regulatoryBlock}
 
 Business AI Aspiration Answers:
 ${Object.entries(aspirationAnswers).map(([q, a]) => `Q: ${q}\nA: ${a}`).join("\n\n")}

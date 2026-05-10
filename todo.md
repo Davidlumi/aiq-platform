@@ -2662,3 +2662,10 @@
 - [x] AssessmentResultsPage: getResults procedure returns companySubSector, companyOrgSize, companyOrgType
 - [x] HRAIStrategyAssessmentPage: benchmark source footnote in commit card (McKinsey, Deloitte, CIPD, BCG, PwC, Gartner)
 - [x] AIStrategyPage Methodology appendix: expanded Benchmark Sources grid (8 sources with sub-sector/size/org-type attribution)
+
+## CPO Persona Test Fixes
+- [x] Fix "Other context" sector label in wizard — use getSectorDef(sector)?.label instead of split("_")
+- [x] Fix EFF/STR/EFF abbreviations on pilot success metrics — use proper short labels (Eff / Qual / Strat)
+- [x] Add sector-specific regulatory context to generateVisionWithQualityGate LLM prompt
+- [x] Add input confirmation summary card on AI Draft step before Generate button
+- [x] Add sector/sub-sector/org-type context pill to wizard step indicator header
