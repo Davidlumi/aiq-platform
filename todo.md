@@ -2763,3 +2763,8 @@
 
 ## Bug Fix: Nested button on /ai-strategy
 - [x] Find and fix nested `<button>` inside another `<button>` — was in AssessmentResultsPage.tsx DomainCard (outer button → div[role=button])
+
+## Feature: AI Facts Loading Animation (Assessment Question Generation)
+- [x] Create AIFactsLoader component with rotating AI bite-sized facts, animated progress bar, and pulsing brain/AI icon
+- [x] Wire component into AssessmentSessionPage question-generation loading state
+- [x] Write 30 curated AI facts relevant to HR/workplace AI

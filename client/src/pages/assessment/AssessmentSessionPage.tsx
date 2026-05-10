@@ -420,10 +420,47 @@ const GENERATING_STEPS = [
   { label: "Validating item quality",               delay: 4000 },
 ];
 
+// 30 curated AI / HR-AI bite-sized facts
+const AI_FACTS = [
+  { emoji: "🧠", text: "GPT-4 was trained on roughly 1 trillion tokens of text — equivalent to reading every Wikipedia article about 10,000 times." },
+  { emoji: "💼", text: "A 2024 McKinsey survey found that 65% of organisations are now using generative AI in at least one business function, up from 33% the year before." },
+  { emoji: "⏱️", text: "HR professionals who use AI tools for CV screening report saving an average of 4 hours per week on administrative tasks." },
+  { emoji: "🌍", text: "The global AI market is projected to reach $1.8 trillion by 2030 — growing at roughly 37% per year." },
+  { emoji: "🤖", text: "The term \"Artificial Intelligence\" was coined by John McCarthy in 1956 at the Dartmouth Conference — the same year Elvis Presley released his first album." },
+  { emoji: "📊", text: "Research shows AI-assisted performance reviews reduce recency bias by up to 40% compared to purely human-conducted reviews." },
+  { emoji: "⚖️", text: "The EU AI Act (2024) is the world’s first comprehensive legal framework for AI — it classifies HR tools like CV screening as \"high risk\"." },
+  { emoji: "🔍", text: "Large language models don’t \"know\" facts — they predict the most statistically likely next word. That’s why they can confidently state things that are wrong." },
+  { emoji: "👥", text: "Companies using AI for talent matching report a 35% improvement in quality-of-hire scores within 12 months of deployment." },
+  { emoji: "💡", text: "The \"hallucination\" problem in AI refers to models generating plausible-sounding but factually incorrect information — a critical risk in HR decision-making." },
+  { emoji: "🎯", text: "Adaptive assessment engines like this one adjust question difficulty in real time based on your response patterns — similar to how GMAT and GRE exams work." },
+  { emoji: "📝", text: "CIPD research (2024) found that only 19% of HR professionals feel \"very confident\" using AI tools — yet 72% believe AI will significantly change their role within 3 years." },
+  { emoji: "🔐", text: "AI bias in hiring is a real risk: Amazon scrapped an AI recruiting tool in 2018 after discovering it systematically downgraded CVs from women." },
+  { emoji: "⚡", text: "Training a large AI model like GPT-4 consumes roughly the same energy as 500 transatlantic flights. Running inference (using it) is far cheaper." },
+  { emoji: "🎓", text: "AI literacy is now listed as a core competency in 41% of new HR job descriptions posted in 2025 — up from just 8% in 2022." },
+  { emoji: "🧩", text: "Retrieval-Augmented Generation (RAG) is the technique that lets AI tools like HR chatbots answer questions about your specific policies — not just general knowledge." },
+  { emoji: "📈", text: "Organisations with a formal AI governance framework are 2.3x more likely to report positive ROI from their AI investments, according to Gartner." },
+  { emoji: "🤝", text: "The most effective AI deployments in HR combine automation for repetitive tasks with human judgement for nuanced decisions — a model called \"human-in-the-loop\"." },
+  { emoji: "📱", text: "By 2026, Gartner predicts that 80% of HR technology vendors will have embedded generative AI into their core products — whether customers want it or not." },
+  { emoji: "🌟", text: "The average time-to-hire drops by 23% when AI is used to schedule interviews and automate initial screening — but candidate experience scores can fall if not managed carefully." },
+  { emoji: "💬", text: "AI coaching tools can process 100% of manager-employee conversations (with consent) to identify coaching moments — something human HR teams could never scale to." },
+  { emoji: "🔬", text: "Transformer architecture — the \"T\" in GPT — was invented by Google researchers in 2017. The paper was called \"Attention Is All You Need\"." },
+  { emoji: "🏛️", text: "AI tools used in redundancy decisions in the UK must comply with the Equality Act 2010 — employers remain legally liable even when an algorithm makes the recommendation." },
+  { emoji: "🔄", text: "Continuous learning AI models update their knowledge from new data over time. Most commercial LLMs have a fixed \"knowledge cutoff\" and don’t learn from your conversations." },
+  { emoji: "💰", text: "The ROI of AI in HR is highest in talent acquisition (avg. 3.5x) and lowest in performance management (avg. 1.2x), according to Deloitte’s 2024 HR Technology Report." },
+  { emoji: "🧑\u200d💻", text: "Prompt engineering — the skill of writing effective instructions for AI — is now a distinct job role. Some prompt engineers earn over £150k at leading AI labs." },
+  { emoji: "🔎", text: "AI explainability (\"why did the model decide this?\") is a legal requirement under the UK GDPR for any automated decision that significantly affects a person." },
+  { emoji: "🌱", text: "AI can reduce HR administrative burden by up to 60% — but the freed-up time is only valuable if HR teams are equipped to redirect it to strategic work." },
+  { emoji: "🏆", text: "The Turing Test, proposed in 1950, asked whether a machine could converse indistinguishably from a human. Most experts now agree modern LLMs can pass it — but that’s not the same as intelligence." },
+  { emoji: "🔭", text: "Skills intelligence platforms powered by AI can map an employee’s inferred skills from job history and learning data — often surfacing capabilities the employee themselves hadn’t recognised." },
+];
+
 function GeneratingState({ answeredCount, totalItems }: { answeredCount: number; totalItems: number }) {
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
   const [activeStep, setActiveStep] = useState(0);
+  const [factIndex, setFactIndex] = useState(() => Math.floor(Math.random() * AI_FACTS.length));
+  const [factVisible, setFactVisible] = useState(true);
 
+  // Advance generating steps
   useEffect(() => {
     const timers = GENERATING_STEPS.slice(1).map((step, i) =>
       setTimeout(() => setActiveStep(i + 1), step.delay)
@@ -431,8 +468,23 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Rotate facts every 4 seconds with a fade transition
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFactVisible(false);
+      setTimeout(() => {
+        setFactIndex(prev => (prev + 1) % AI_FACTS.length);
+        setFactVisible(true);
+      }, 400);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fact = AI_FACTS[factIndex];
+
   return (
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
+      {/* Progress header */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">
@@ -442,33 +494,86 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
         </div>
         <Progress value={progress} className="h-1.5" />
       </div>
-      <Card className="border-border shadow-sm">
-        <CardContent className="p-6 space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: "#F0FDF4", border: "1px solid #ECFDF5" }}>
-              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--color-green-700)" }} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Preparing your next question</p>
-              <p className="text-xs text-muted-foreground">Tailored to your profile and responses so far</p>
+
+      {/* AI Fact card */}
+      <div
+        className="rounded-2xl border border-white/10 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(59,78,255,0.08) 100%)" }}
+      >
+        {/* Top bar */}
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-white/8">
+          <div className="relative flex items-center justify-center">
+            {/* Pulsing rings */}
+            <span className="absolute w-8 h-8 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.15)", animationDuration: "1.8s" }} />
+            <span className="absolute w-6 h-6 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.2)", animationDuration: "1.8s", animationDelay: "0.3s" }} />
+            <div className="relative w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)" }}>
+              <Sparkles className="w-3.5 h-3.5" style={{ color: "#10B981" }} />
             </div>
           </div>
-          <div className="space-y-2.5">
+          <p className="text-xs font-semibold" style={{ color: "#10B981" }}>Generating your next question…</p>
+          <div className="ml-auto flex items-center gap-1">
+            {[0,1,2].map(i => (
+              <span key={i} className="w-1.5 h-1.5 rounded-full" style={{
+                background: "#10B981",
+                opacity: 0.9,
+                animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Fact area */}
+        <div className="px-5 py-5 min-h-[110px] flex flex-col justify-center">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Did you know?</p>
+          <div
+            style={{
+              opacity: factVisible ? 1 : 0,
+              transform: factVisible ? "translateY(0)" : "translateY(6px)",
+              transition: "opacity 0.4s ease, transform 0.4s ease",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5 shrink-0">{fact.emoji}</span>
+              <p className="text-sm text-foreground leading-relaxed">{fact.text}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Fact dots indicator */}
+        <div className="flex items-center justify-center gap-1.5 pb-4">
+          {AI_FACTS.slice(0, 8).map((_, i) => (
+            <span
+              key={i}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === (factIndex % 8) ? "16px" : "6px",
+                height: "6px",
+                background: i === (factIndex % 8) ? "#10B981" : "rgba(255,255,255,0.15)",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Engine steps card */}
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-5 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Engine status</p>
+          <div className="space-y-2">
             {GENERATING_STEPS.map((step, i) => (
               <div
                 key={i}
                 className={cn(
                   "flex items-center gap-2.5 text-xs transition-all duration-500",
-                  i < activeStep ? "" :
+                  i < activeStep ? "text-muted-foreground" :
                   i === activeStep ? "text-foreground" :
-                  "text-muted-foreground/40"
+                  "text-muted-foreground/30"
                 )}
               >
                 {i < activeStep ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--color-green-700)" }} />
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#10B981" }} />
                 ) : i === activeStep ? (
-                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "var(--color-green-700)" }} />
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" style={{ color: "#10B981" }} />
                 ) : (
                   <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
                 )}
@@ -476,7 +581,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border pt-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border pt-3 mt-1">
             <Bot className="w-3 h-3" />
             <span>Adaptive AI assessment engine · Each question is unique to you</span>
           </div>
