@@ -2729,3 +2729,34 @@
 - [x] Tests: 879/879 passing (36 test files)
 - [x] No regression on mobile rendering
 - [x] No regression on loading/error/empty states
+
+## Critical Strategy Fixes Brief v2
+
+### Block A — Calculation correctness
+- [x] A1: Investigate negative NPV root cause — trace headcount inputs, per-unit values, cost multipliers, initiative selection
+- [x] A1: Document findings before applying any fix (STRATEGY_CALCULATION_AUDIT.md)
+- [x] A2: Calibrate per-unit labour cost values (HR generalist, line manager, employee, executive) with researched 2026 UK figures
+- [x] A2: Remove placeholder values (£1/h, 0%) from all calculations
+- [x] A3: Audit headcount input flow — use user band midpoint, not sector benchmark
+- [x] A3: Document headcount assumption in methodology appendix
+- [x] A4: Fix TCO cost multiplier scaling — training cost must use HR FTE count not total headcount
+- [x] A4: Verify each cost line scales correctly for 500-2000 employee org
+- [x] A5: Implement strategy calculation sanity-check test suite (5+ profiles, plausibility checks, formula consistency)
+
+### Block B — Vision generation
+- [x] B1: Inspect deployed vision generation prompt directly — document path, current text, comparison to v1.2 spec
+- [x] B1: Apply correct branch fix based on diagnostic (Branch 1/2/3)
+- [x] B1: Verify deployment post-fix
+- [x] B2: Validate Sarah's vision against 5 criteria (sector-specific, quantified, time-bound, boundary, philosophy-coherent)
+- [x] B2: Validate 3 test profiles produce materially different sector-grounded visions
+- [x] B2: No banned language in any regenerated vision
+
+### Block C — Conditional content
+- [x] C1: Reinvestment plan conditional on NPV — three-case logic (both positive / straddles zero / both negative)
+- [x] C2: CEO sponsorship recommendation — trigger on Transformative ambition OR high-TCO Innovative OR multi-initiative complexity
+- [ ] C3: Strategy regeneration audit — check audit log, document cause of initiative change (deferred)
+
+### Cross-cutting
+- [ ] PDF export: verify corrected vision + numbers + conditional reinvestment + CEO sponsorship appear in PDF (deferred)
+- [ ] Backwards compatibility: implement Option C (legacy flag on existing strategies with regenerate prompt) (deferred)
+- [x] Existing tests: audit and update tests asserting specific calculation outputs (899/899 passing)

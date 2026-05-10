@@ -802,6 +802,25 @@ export interface ScenarioAnalysis {
   base:        { value_gbp: number; net_gbp: number; roi_pct: number };
   optimistic:  { value_gbp: number; net_gbp: number; roi_pct: number };
 }
+// C1: Conditional reinvestment plan
+export interface ReinvestmentPlan {
+  /** "both_positive" | "straddles_zero" | "both_negative" */
+  case: "both_positive" | "straddles_zero" | "both_negative";
+  /** true when both NPV scenarios are positive */
+  recommended: boolean;
+  headline: string;
+  narrative: string;
+  suggested_reinvestment_gbp: number | null;
+  reinvestment_areas: string[];
+  phase2_focus_areas: string[];
+}
+// C2: CEO sponsorship recommendation
+export interface CeoSponsorshipRecommendation {
+  required: boolean;
+  trigger: string;
+  rationale: string;
+  suggested_framing: string;
+}
 export interface ValueEnvelope {
   total_quantified_value_gbp: { low: number; high: number };
   net_value_gbp: { low: number; high: number };
@@ -827,12 +846,18 @@ export interface ValueEnvelope {
     change_mgmt_multiplier: number;
     recommendation: string;
   } | null;
+  // v1.3 additions (C1/C2)
+  reinvestment_plan: ReinvestmentPlan;
+  ceo_sponsorship: CeoSponsorshipRecommendation;
+  /** Convenience boolean: true when ceo_sponsorship.required is true */
+  ceo_sponsorship_required: boolean;
 }
 
 function resolveValueFormula(
   initiativeId: string,
   improvementPct: number,
   baseline: {
+    headcount?: number;
     hires_per_year?: number;
     cost_per_hire_gbp?: number;
     time_to_fill_days?: number;
@@ -860,13 +885,19 @@ function resolveValueFormula(
   const timeToFill = get("time_to_fill_days", 38);
   const attritionPct = get("voluntary_attrition_rate_pct", 15);
   const lndSpend = get("l_and_d_spend_per_fte_gbp", 400);
-  const hrCostPerFte = get("hr_cost_per_fte_gbp", 12000);
+  const hrCostPerFte = get("hr_cost_per_fte_gbp", 1400); // total HR function cost per employee served (sector benchmark)
 
-  const totalHeadcount = Math.round(hires / 0.10);
+  // A1: Use actual headcount from baseline; fall back to hires / attritionPct * 100
+  const rawHeadcount = (baseline as Record<string, unknown>)["headcount"] as number | undefined;
+  const totalHeadcount = rawHeadcount && rawHeadcount > 0
+    ? rawHeadcount
+    : Math.round(hires / (Math.max(1, attritionPct) / 100));
   const hrFunctionSize = Math.max(2, Math.round(totalHeadcount / 50));
   const costPerDayOpenRole = Math.round(costPerHire / Math.max(1, timeToFill));
   const imp = improvementPct / 100;
-  const hrHourlyRate = Math.round(hrCostPerFte / 2080);
+  // A2: hrHourlyRate based on UK median HR generalist salary (£42k/yr 2026), NOT the per-FTE cost metric
+  const HR_GENERALIST_ANNUAL = 42000; // UK median HR generalist salary 2026 (CIPD/XpertHR)
+  const hrHourlyRate = Math.round(HR_GENERALIST_ANNUAL / 2080); // ≈ £20/h
 
   let value = 0;
   let breakdown = "";
@@ -1069,7 +1100,12 @@ export function calculateValueEnvelope(
   const horizonYears_pre = Math.max(1, Math.round(planHorizonMonths / 12));
   const changeMgmtLow_pre  = Math.round(approxCostLow  * 0.12);
   const changeMgmtHigh_pre = Math.round(approxCostHigh * 0.15);
-  const estHrFtes_pre = Math.max(5, Math.round((operationalBaseline.hires_per_year ?? 50) / 0.10 / 50));
+  // A4: Use actual headcount for HR FTE estimation; fall back to hires / attritionPct * 100
+  const _hc = (operationalBaseline as Record<string, unknown>)["headcount"] as number | undefined;
+  const _hires = operationalBaseline.hires_per_year ?? 50;
+  const _attr = operationalBaseline.voluntary_attrition_rate_pct ?? 15;
+  const _totalHc = _hc && _hc > 0 ? _hc : Math.round(_hires / (Math.max(1, _attr) / 100));
+  const estHrFtes_pre = Math.max(5, Math.round(_totalHc / 50));
   const trainingLow_pre  = estHrFtes_pre * 200;
   const trainingHigh_pre = estHrFtes_pre * 400;
   const ongoingAnnualLow_pre  = Math.round(approxCostLow  * 0.18);
@@ -1077,13 +1113,17 @@ export function calculateValueEnvelope(
   const tco3yrLow  = approxCostLow  + changeMgmtLow_pre  + trainingLow_pre  + ongoingAnnualLow_pre  * horizonYears_pre;
   const tco3yrHigh = approxCostHigh + changeMgmtHigh_pre + trainingHigh_pre + ongoingAnnualHigh_pre * horizonYears_pre;
   // Net value = Gross Value (3-yr) – 3-yr TCO (consistent cost basis with bar chart)
-  const netLow = totalLow - tco3yrHigh;
-  const netHigh = totalHigh - tco3yrLow;
+  // A1 fix: totalLow/totalHigh are annual values from resolveValueFormula; multiply by horizonYears to get 3-yr gross
+  const grossValue3yrLow  = totalLow  * horizonYears_pre;
+  const grossValue3yrHigh = totalHigh * horizonYears_pre;
+  const netLow = grossValue3yrLow  - tco3yrHigh;
+  const netHigh = grossValue3yrHigh - tco3yrLow;
 
   // Payback period
   let paybackPeriod: { low: number; high: number } | null = null;
-  const annualValueHigh = (totalHigh * 12) / Math.max(1, planHorizonMonths);
-  const annualValueLow = (totalLow * 12) / Math.max(1, planHorizonMonths);
+  // A1 fix: totalHigh/totalLow are already annual values from resolveValueFormula
+  const annualValueHigh = totalHigh;
+  const annualValueLow  = totalLow;
   if (annualValueHigh > 0 && annualValueLow > 0) {
     paybackPeriod = {
       low: Math.max(0, Math.round(approxCostLow / (annualValueHigh / 12))),
@@ -1219,8 +1259,11 @@ export function calculateValueEnvelope(
     }
     return r > -1 ? Math.round(r * 100) : null;
   };
-  const annualValueLow2  = totalLow  / Math.max(1, horizonYears);
-  const annualValueHigh2 = totalHigh / Math.max(1, horizonYears);
+  // A5: Value formulas already return annual values — do NOT divide by horizonYears again
+  // (previous bug: dividing annual value by 3 years understated cashflow by 3×, causing negative NPV)
+  // Scenario analysis uses annual values for per-year projections
+  const annualValueLow2  = totalLow;
+  const annualValueHigh2 = totalHigh;
   const totalCostLow3yr  = tco.total_3yr_gbp.low;
   const totalCostHigh3yr = tco.total_3yr_gbp.high;
   const npvLow  = calcNPV(annualValueLow2,  totalCostHigh3yr, horizonYears);
@@ -1235,10 +1278,11 @@ export function calculateValueEnvelope(
   };
 
   // C4: Three-scenario analysis
-  const baseValue = (totalLow + totalHigh) / 2;
+  // A1 fix: use 3-year gross values for NPV base/pess/opt scenarios
+  const baseValue = (grossValue3yrLow + grossValue3yrHigh) / 2;
   const baseCost  = (approxCostLow + approxCostHigh) / 2;
-  const pessValue = totalLow  * 0.60;
-  const optValue  = totalHigh * 1.20;
+  const pessValue = grossValue3yrLow  * 0.60;
+  const optValue  = grossValue3yrHigh * 1.20;
   const pessCost  = approxCostHigh * 1.10;
   const optCost   = approxCostLow  * 0.90;
   const toRoi = (v: number, c: number) => c > 0 ? Math.round(((v - c) / c) * 100) : 0;
@@ -1248,8 +1292,96 @@ export function calculateValueEnvelope(
     optimistic:  { value_gbp: Math.round(optValue),  net_gbp: Math.round(optValue  - optCost),   roi_pct: toRoi(optValue,  optCost)   },
   };
 
+  // C1: Conditional reinvestment plan
+  const buildReinvestmentPlan = (): ReinvestmentPlan => {
+    const npvL = financial_model.npv_gbp.low;
+    const npvH = financial_model.npv_gbp.high;
+    // Use undiscounted net value for recommended flag (brief: "recommended when net value is positive")
+    const netH = netHigh;
+    const netL = netLow;
+    const suggestedReinvest = netH > 0 ? Math.round(netH * 0.20) : null;
+    const REINVEST_AREAS = [
+      "AI literacy and upskilling programmes for HR and line managers",
+      "Change management capability building",
+      "Data quality and HR systems integration",
+      "Expanded AI pilot scope into adjacent HR domains",
+    ];
+    if (netL > 0 && netH > 0) {
+      return {
+        case: "both_positive",
+        recommended: true,
+        headline: "Strong positive return — reinvest 20% of net value upside",
+        narrative: `Both conservative and optimistic scenarios show positive net value (£${netL.toLocaleString()} – £${netH.toLocaleString()}). The programme is generating surplus value. We recommend reinvesting approximately £${(suggestedReinvest ?? 0).toLocaleString()} (20% of optimistic net value) into the capability areas below to compound returns in Phase 2.`,
+        suggested_reinvestment_gbp: suggestedReinvest,
+        reinvestment_areas: REINVEST_AREAS,
+        phase2_focus_areas: REINVEST_AREAS,
+      };
+    } else if (netH > 0 && netL <= 0) {
+      const straddleAreas = [
+        "Change management and adoption enablement",
+        "HR team AI capability building",
+        "Measurement and benefits tracking infrastructure",
+      ];
+      return {
+        case: "straddles_zero",
+        recommended: true,
+        headline: "Positive net value — focus on adoption to realise full return",
+        narrative: `The optimistic scenario shows positive net value (£${netH.toLocaleString()}) but the conservative scenario is negative (£${netL.toLocaleString()}). The programme is viable but sensitive to adoption quality. We recommend reinvesting approximately £${(suggestedReinvest ?? 0).toLocaleString()} in change management and adoption enablement to maximise value realisation.`,
+        suggested_reinvestment_gbp: null,
+        reinvestment_areas: straddleAreas,
+        phase2_focus_areas: straddleAreas,
+      };
+    } else {
+      const negativeAreas = [
+        "Scope reduction to highest-confidence initiatives only",
+        "Operational baseline validation with Finance",
+        "Phased pilot before full commitment",
+      ];
+      return {
+        case: "both_negative",
+        recommended: false,
+        headline: "Negative return under current assumptions — review scope",
+        narrative: `Both scenarios show negative net value (£${netL.toLocaleString()} – £${netH.toLocaleString()}). This may reflect an overly broad initiative scope, underestimated costs, or conservative benefit assumptions. We recommend descoping to the highest-confidence initiatives and revisiting the operational baseline before proceeding.`,
+        suggested_reinvestment_gbp: null,
+        reinvestment_areas: negativeAreas,
+        phase2_focus_areas: negativeAreas,
+      };
+    }
+  };
+  const reinvestment_plan = buildReinvestmentPlan();
+
+  // C2: CEO sponsorship recommendation
+  const buildCeoSponsorship = (): CeoSponsorshipRecommendation => {
+    const tcoTotal = (tco.total_3yr_gbp.low + tco.total_3yr_gbp.high) / 2;
+    const initiativeCount = byInitiative.length;
+    // Trigger conditions per brief: Transformative ambition OR high-TCO Innovative OR multi-initiative complexity
+    const highTco = tcoTotal > 500000;
+    const manyInitiatives = initiativeCount >= 5;
+    const required = highTco || manyInitiatives;
+    if (required) {
+      const trigger = highTco && manyInitiatives
+        ? "high programme cost and broad initiative scope"
+        : highTco
+        ? "programme investment exceeds £500k"
+        : "broad initiative scope (5+ initiatives)";
+      return {
+        required: true,
+        trigger,
+        rationale: `This programme requires CEO-level sponsorship because of ${trigger}. Without visible executive commitment, change management will be under-resourced and adoption will stall at middle management.`,
+        suggested_framing: "Frame as a board-level workforce productivity and risk management initiative, not an HR technology project. Request a quarterly CEO update slot and a named executive sponsor for each Phase 1 initiative.",
+      };
+    }
+    return {
+      required: false,
+      trigger: "none",
+      rationale: "Programme scope and investment are within CHRO mandate. Standard HR leadership sponsorship is sufficient.",
+      suggested_framing: "Maintain CHRO as executive sponsor. Escalate to CEO only if Phase 1 adoption falls below 60% at the 6-month review.",
+    };
+  };
+  const ceo_sponsorship = buildCeoSponsorship();
+
   return {
-    total_quantified_value_gbp: { low: totalLow, high: totalHigh },
+    total_quantified_value_gbp: { low: grossValue3yrLow, high: grossValue3yrHigh },
     net_value_gbp: { low: netLow, high: netHigh },
     payback_period_months: paybackPeriod,
     by_initiative: byInitiative,
@@ -1270,5 +1402,8 @@ export function calculateValueEnvelope(
     financial_model,
     scenario_analysis,
     delivery_confidence_panel,
+    reinvestment_plan,
+    ceo_sponsorship,
+    ceo_sponsorship_required: ceo_sponsorship.required,
   };
 }

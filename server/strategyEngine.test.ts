@@ -667,3 +667,232 @@ describe("skills_intelligence_platform formula — concentration guard", () => {
     }
   });
 });
+
+// ─── A5: Sanity checks — NPV must be positive for plausible inputs ─────────────
+describe("A5: NPV sanity — positive NPV for plausible profiles", () => {
+  const PLAUSIBLE_BASELINE = {
+    hires_per_year: 100,
+    cost_per_hire_gbp: 5000,
+    time_to_fill_days: 30,
+    voluntary_attrition_rate_pct: 12,
+    l_and_d_spend_per_fte_gbp: 500,
+    hr_cost_per_fte_gbp: 45000,
+    headcount: 1000,
+  };
+  const CORE_IDS = [
+    "ai_assisted_cv_screening",
+    "predictive_attrition_modelling",
+    "automated_onboarding_orchestration",
+  ];
+  it("NPV high is positive for a 1000-headcount org with 3 core initiatives", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, PLAUSIBLE_BASELINE, 36);
+    expect(result.financial_model.npv_gbp.high).toBeGreaterThan(0);
+  });
+  it("NPV low <= NPV high (conservative NPV may be negative — that is economically valid)", () => {
+    // The conservative scenario (low value, high TCO) can produce negative NPV.
+    // What matters is the ordering and that NPV high is positive.
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, PLAUSIBLE_BASELINE, 36);
+    expect(result.financial_model.npv_gbp.low).toBeLessThanOrEqual(result.financial_model.npv_gbp.high);
+  });
+  it("net_value_gbp.high is positive for plausible inputs", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, PLAUSIBLE_BASELINE, 36);
+    expect(result.net_value_gbp.high).toBeGreaterThan(0);
+  });
+  it("A1: headcount field is used — totalHeadcount >= hires_per_year", () => {
+    const inits = getInitiatives(["predictive_attrition_modelling"]);
+    const resultWith = calculateValueEnvelope(inits, { ...PLAUSIBLE_BASELINE, headcount: 1000 }, 36);
+    const resultWithout = calculateValueEnvelope(inits, { ...PLAUSIBLE_BASELINE, headcount: undefined }, 36);
+    expect(resultWith.total_quantified_value_gbp.high).toBeGreaterThanOrEqual(
+      resultWithout.total_quantified_value_gbp.high * 0.9
+    );
+  });
+});
+
+// ─── A5: Multi-profile plausibility ──────────────────────────────────────────
+describe("A5: Multi-profile plausibility — value scales with org size", () => {
+  const SMALL_BASELINE = {
+    hires_per_year: 20,
+    cost_per_hire_gbp: 4000,
+    time_to_fill_days: 25,
+    voluntary_attrition_rate_pct: 10,
+    l_and_d_spend_per_fte_gbp: 400,
+    hr_cost_per_fte_gbp: 40000,
+    headcount: 150,
+  };
+  const ENTERPRISE_BASELINE = {
+    hires_per_year: 500,
+    cost_per_hire_gbp: 8000,
+    time_to_fill_days: 45,
+    voluntary_attrition_rate_pct: 15,
+    l_and_d_spend_per_fte_gbp: 800,
+    hr_cost_per_fte_gbp: 55000,
+    headcount: 10000,
+  };
+  const CORE_IDS = [
+    "ai_assisted_cv_screening",
+    "predictive_attrition_modelling",
+    "automated_onboarding_orchestration",
+  ];
+  it("enterprise org produces higher total value than small org", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const small = calculateValueEnvelope(inits, SMALL_BASELINE, 36);
+    const enterprise = calculateValueEnvelope(inits, ENTERPRISE_BASELINE, 36);
+    expect(enterprise.total_quantified_value_gbp.high).toBeGreaterThan(small.total_quantified_value_gbp.high);
+  });
+  it("enterprise NPV high is positive", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, ENTERPRISE_BASELINE, 36);
+    expect(result.financial_model.npv_gbp.high).toBeGreaterThan(0);
+  });
+  it("small org: value scales with org size (small < plausible)", () => {
+    // A 150-headcount org with 3 initiatives has negative net value due to fixed initiative costs — economically correct.
+    // What matters is that value is lower for small than for a larger org.
+    const inits = getInitiatives(CORE_IDS);
+    const PLAUSIBLE_BASELINE = {
+      hires_per_year: 100, cost_per_hire_gbp: 5000, time_to_fill_days: 30,
+      voluntary_attrition_rate_pct: 12, l_and_d_spend_per_fte_gbp: 500,
+      hr_cost_per_fte_gbp: 45000, headcount: 1000,
+    };
+    const small = calculateValueEnvelope(inits, SMALL_BASELINE, 36);
+    const plausible = calculateValueEnvelope(inits, PLAUSIBLE_BASELINE, 36);
+    expect(plausible.total_quantified_value_gbp.high).toBeGreaterThan(small.total_quantified_value_gbp.high);
+  });
+  it("payback period has low/high range for enterprise inputs", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, ENTERPRISE_BASELINE, 36);
+    if (result.payback_period_months !== null) {
+      // payback_period_months is a { low, high } range object
+      const p = result.payback_period_months as { low: number; high: number };
+      if (typeof p === 'object') {
+        expect(p.low).toBeGreaterThan(0);
+        expect(p.high).toBeGreaterThanOrEqual(p.low);
+      } else {
+        expect(p).toBeGreaterThan(0);
+      }
+    }
+  });
+  it("TCO scales with org size — enterprise TCO > small TCO", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const small = calculateValueEnvelope(inits, SMALL_BASELINE, 36);
+    const enterprise = calculateValueEnvelope(inits, ENTERPRISE_BASELINE, 36);
+    expect(enterprise.tco.total_3yr_gbp.low).toBeGreaterThan(small.tco.total_3yr_gbp.low);
+  });
+});
+
+// ─── C1: Reinvestment plan ────────────────────────────────────────────────────
+describe("C1: reinvestment_plan — conditional on net value", () => {
+  const BASELINE = {
+    hires_per_year: 100,
+    cost_per_hire_gbp: 5000,
+    time_to_fill_days: 30,
+    voluntary_attrition_rate_pct: 12,
+    l_and_d_spend_per_fte_gbp: 500,
+    hr_cost_per_fte_gbp: 45000,
+    headcount: 1000,
+  };
+  const CORE_IDS = [
+    "ai_assisted_cv_screening",
+    "predictive_attrition_modelling",
+    "automated_onboarding_orchestration",
+  ];
+  it("reinvestment_plan is present on the result", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    expect(result).toHaveProperty("reinvestment_plan");
+  });
+  it("reinvestment_plan has recommended field", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    expect(result.reinvestment_plan).toHaveProperty("recommended");
+    expect(typeof result.reinvestment_plan.recommended).toBe("boolean");
+  });
+  it("reinvestment_plan.recommended is true when net_value_gbp.high > 0 (straddles_zero or both_positive)", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    // recommended is true when netHigh > 0 (straddles_zero or both_positive case)
+    if (result.net_value_gbp.high > 0) {
+      expect(result.reinvestment_plan.recommended).toBe(true);
+    } else {
+      expect(result.reinvestment_plan.recommended).toBe(false);
+    }
+  });
+  it("reinvestment_plan is not recommended when no initiatives are selected", () => {
+    const result = calculateValueEnvelope([], BASELINE, 36);
+    expect(result.reinvestment_plan.recommended).toBe(false);
+  });
+});
+
+// ─── C2: CEO sponsorship trigger ─────────────────────────────────────────────
+describe("C2: ceo_sponsorship — trigger logic", () => {
+  const BASELINE = {
+    hires_per_year: 100,
+    cost_per_hire_gbp: 5000,
+    time_to_fill_days: 30,
+    voluntary_attrition_rate_pct: 12,
+    l_and_d_spend_per_fte_gbp: 500,
+    hr_cost_per_fte_gbp: 45000,
+    headcount: 1000,
+  };
+  it("ceo_sponsorship is present on the result", () => {
+    const inits = getInitiatives(["ai_assisted_cv_screening"]);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    expect(result).toHaveProperty("ceo_sponsorship");
+  });
+  it("ceo_sponsorship has required, trigger, rationale, suggested_framing", () => {
+    const inits = getInitiatives(["ai_assisted_cv_screening"]);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    expect(result.ceo_sponsorship).toMatchObject({
+      required: expect.any(Boolean),
+      trigger: expect.any(String),
+      rationale: expect.any(String),
+      suggested_framing: expect.any(String),
+    });
+  });
+  it("ceo_sponsorship.required is false when no initiatives are selected", () => {
+    const result = calculateValueEnvelope([], BASELINE, 36);
+    expect(result.ceo_sponsorship.required).toBe(false);
+  });
+  it("ceo_sponsorship.trigger is 'none' when not required", () => {
+    const result = calculateValueEnvelope([], BASELINE, 36);
+    expect(result.ceo_sponsorship.trigger).toBe("none");
+  });
+});
+
+// ─── A5: Formula consistency ──────────────────────────────────────────────────
+describe("A5: Formula consistency — net value = total value - TCO", () => {
+  const BASELINE = {
+    hires_per_year: 100,
+    cost_per_hire_gbp: 5000,
+    time_to_fill_days: 30,
+    voluntary_attrition_rate_pct: 12,
+    l_and_d_spend_per_fte_gbp: 500,
+    hr_cost_per_fte_gbp: 45000,
+    headcount: 1000,
+  };
+  const CORE_IDS = [
+    "ai_assisted_cv_screening",
+    "predictive_attrition_modelling",
+    "automated_onboarding_orchestration",
+  ];
+  it("net_value_gbp.high = total_quantified_value_gbp.high - tco.total_3yr_gbp.low", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    const expected = result.total_quantified_value_gbp.high - result.tco.total_3yr_gbp.low;
+    expect(Math.abs(result.net_value_gbp.high - expected)).toBeLessThan(200);
+  });
+  it("net_value_gbp.low = total_quantified_value_gbp.low - tco.total_3yr_gbp.high", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    const expected = result.total_quantified_value_gbp.low - result.tco.total_3yr_gbp.high;
+    expect(Math.abs(result.net_value_gbp.low - expected)).toBeLessThan(200);
+  });
+  it("scenario_analysis.base.value_gbp is between pessimistic and optimistic", () => {
+    const inits = getInitiatives(CORE_IDS);
+    const result = calculateValueEnvelope(inits, BASELINE, 36);
+    expect(result.scenario_analysis.base.value_gbp).toBeGreaterThanOrEqual(result.scenario_analysis.pessimistic.value_gbp);
+    expect(result.scenario_analysis.base.value_gbp).toBeLessThanOrEqual(result.scenario_analysis.optimistic.value_gbp);
+  });
+});

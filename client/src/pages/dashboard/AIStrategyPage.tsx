@@ -2727,34 +2727,68 @@ export default function AIStrategyPage() {
                 )}
               </div>
 
-              {/* A2 — Reinvestment Plan */}
-              {(() => {
-                const totalLow  = ve.by_initiative.reduce((s, i) => s + (i.quantified_value_gbp?.low  ?? 0), 0);
-                const totalHigh = ve.by_initiative.reduce((s, i) => s + (i.quantified_value_gbp?.high ?? 0), 0);
-                if (totalLow === 0 && totalHigh === 0) return null;
-                const hrProcesses = (structuredInputs?.hr_processes_priority as string[] | undefined) ?? [];
-                const reinvestTargets = hrProcesses.length > 0
-                  ? hrProcesses.slice(0, 2).map(p => p.replace(/_/g, " ")).join(" and ")
-                  : "people capability and HR infrastructure";
+              {/* C1 — Reinvestment Plan (data-driven from calculateValueEnvelope) */}
+              {ve.reinvestment_plan && (() => {
+                const rp = ve.reinvestment_plan as {
+                  case: string; recommended: boolean; headline: string; narrative: string;
+                  suggested_reinvestment_gbp: number | null; phase2_focus_areas: string[];
+                };
+                const isPositive = rp.recommended;
+                const borderColor = isPositive ? "border-emerald-500/20" : "border-amber-500/20";
+                const bgColor = isPositive ? "bg-emerald-500/5" : "bg-amber-500/5";
+                const iconColor = isPositive ? "text-emerald-400" : "text-amber-400";
+                const caseLabel = rp.case === "both_positive" ? "Strong return" : rp.case === "straddles_zero" ? "Positive outlook" : "Review scope";
                 return (
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
+                  <div className={`rounded-xl border ${borderColor} ${bgColor} px-5 py-4`}>
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Reinvestment Plan</p>
+                      <TrendingUp className={`w-4 h-4 ${iconColor}`} />
+                      <p className={`text-[10px] font-bold ${iconColor} uppercase tracking-widest`}>Reinvestment Plan</p>
+                      <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-amber-500/30 text-amber-400 bg-amber-500/10"}`}>
+                        {caseLabel}
+                      </span>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      This strategy is projected to free up between{" "}
-                      <strong className="text-emerald-400">£{totalLow.toLocaleString()}</strong> and{" "}
-                      <strong className="text-emerald-400">£{totalHigh.toLocaleString()}</strong> in measurable value over the strategy period.
-                      The recommended reinvestment priority is <strong className="text-foreground">{reinvestTargets}</strong> —
-                      the areas most likely to compound returns from the initiatives already selected.
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Reinvestment allocation should be reviewed at each phase gate and adjusted based on realised savings and emerging capability gaps.
-                    </p>
+                    <p className={`text-sm font-medium mb-2 ${iconColor}`}>{rp.headline}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{rp.narrative}</p>
+                    {rp.suggested_reinvestment_gbp && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Suggested reinvestment:</span>
+                        <span className={`text-sm font-bold ${iconColor}`}>£{rp.suggested_reinvestment_gbp.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {rp.phase2_focus_areas && rp.phase2_focus_areas.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">Phase 2 focus areas</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {rp.phase2_focus_areas.map((area: string) => (
+                            <span key={area} className={`text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-amber-500/30 text-amber-300 bg-amber-500/10"}`}>
+                              {area.replace(/_/g, " ")}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
+              {/* C2 — CEO Sponsorship Banner */}
+              {ve.ceo_sponsorship_required && (
+                <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                      <UserCheck className="w-4 h-4 text-purple-300" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-1">CEO Sponsorship Recommended</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        The scale of this strategy — spanning multiple capability domains and requiring significant cross-functional change — indicates that <strong className="text-foreground">CEO-level sponsorship is a critical success factor</strong>. Programmes of this scope have a materially higher success rate when the CEO is an active sponsor rather than a passive approver.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Recommended action: brief the CEO with a one-page summary of the business case and request formal sponsorship before Phase 1 kick-off.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}

@@ -921,9 +921,10 @@ export default function HRAIStrategyAssessmentPage() {
   }), [businessOutcomes, businessProblems, timelineMonths, riskAppetite, successMarkers, hrLeadershipPosition, hrProcessesPriority, governancePrinciples, voiceCapture, existingAiTools, aiPhilosophy, stakeholderMap, measurementCadence, solutionDeliveryConfidence]);
 
   const buildOperationalBaseline = useCallback((): OperationalBaseline => ({
+    headcount,  // A3: pass actual headcount so value formulas don't back-calculate from hires
     ...baselineValues,
     _sector_default_used: sectorDefaultUsed as Record<string, boolean>,
-  }), [baselineValues, sectorDefaultUsed]);
+  }), [headcount, baselineValues, sectorDefaultUsed]);
 
   // ── Generate vision ────────────────────────────────────────────────────────
   const handleGenerate = useCallback(() => {

@@ -39,6 +39,7 @@ export interface StructuredInputs {
 }
 
 export interface OperationalBaseline {
+  headcount?: number;              // total org headcount — used directly in value formulas
   hires_per_year?: number;
   cost_per_hire_gbp?: number;
   time_to_fill_days?: number;
@@ -439,6 +440,7 @@ export function computeSectorDefaultBaseline(sector: string, headcount: number):
   const b = getSectorBenchmarks(sector);
   const hiresPerYear = Math.round((b.hires_per_year_per_1000_employees.median / 1000) * headcount);
   return {
+    headcount:                    headcount,
     hires_per_year:               hiresPerYear,
     cost_per_hire_gbp:            b.cost_per_hire_gbp.median,
     time_to_fill_days:            b.time_to_fill_days.median,

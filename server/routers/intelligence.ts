@@ -764,6 +764,7 @@ Return JSON with this exact structure:
     .input(z.object({
       selectedInitiativeIds: z.array(z.string()),
       operationalBaseline: z.object({
+        headcount: z.number().optional(),
         hires_per_year: z.number().optional(),
         cost_per_hire_gbp: z.number().optional(),
         time_to_fill_days: z.number().optional(),

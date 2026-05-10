@@ -17,6 +17,7 @@
  */
 
 import { invokeLLM } from "../../_core/llm";
+import { generateVisionWithQualityGate } from "../../strategyEngine";
 import { getDb } from "../../db";
 import {
   ailOrgContext,
@@ -150,75 +151,38 @@ You are facilitating a strategy conversation, not conducting an assessment. Your
 
 // ─── Generate vision and principles ──────────────────────────────────────────
 
-async function generateVisionAndPrinciples(ctx: StrategyModeContext): Promise<{
+async function generateVisionAndPrinciples(
+  ctx: StrategyModeContext,
+  orgInfo?: { sector?: string | null; subSector?: string | null; orgType?: string | null; orgSize?: string | null }
+): Promise<{
   visionStatement: string;
   principles: Array<{ title: string; description: string }>;
   businessAmbitionLevel: number;
   peopleAmbitionLevel: number;
 }> {
-  const aspirationText = Object.entries(ctx.aspirationAnswers)
-    .map(([q, a]) => `Q: ${q}\nA: ${a}`)
-    .join("\n\n");
-  const hrRoleText = Object.entries(ctx.hrRoleAnswers)
-    .map(([q, a]) => `Q: ${q}\nA: ${a}`)
-    .join("\n\n");
-
-  const response = await invokeLLM({
-    messages: [
-      {
-        role: "system",
-        content: `You are a strategic HR advisor. Based on the conversation below, draft:
-1. A vision statement (2–3 sentences, first person plural "We", ambitious but grounded)
-2. Five guiding principles (each with a title of 3–5 words and a description of 1–2 sentences)
-3. A business ambition level (1–5 scale: 1=cautious, 3=balanced, 5=bold innovator)
-4. A people ambition level (1–5 scale: 1=foundational, 3=developing, 5=leading edge)
-
-Return JSON only.`,
-      },
-      {
-        role: "user",
-        content: `BUSINESS AI ASPIRATION:\n${aspirationText}\n\nHR'S ENABLING ROLE:\n${hrRoleText}`,
-      },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "strategy_draft",
-        strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            visionStatement: { type: "string" },
-            principles: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  description: { type: "string" },
-                },
-                required: ["title", "description"],
-                additionalProperties: false,
-              },
-            },
-            businessAmbitionLevel: { type: "integer" },
-            peopleAmbitionLevel: { type: "integer" },
-          },
-          required: ["visionStatement", "principles", "businessAmbitionLevel", "peopleAmbitionLevel"],
-          additionalProperties: false,
-        },
-      },
-    },
-  } as Parameters<typeof invokeLLM>[0]);
-
-  const content = (response as { choices?: Array<{ message?: { content?: string } }> })
-    ?.choices?.[0]?.message?.content || "{}";
-  const parsed = JSON.parse(content);
+  // B1: Use the same quality-gate prompt as the wizard path for consistent, board-ready output
+  const AMBITION_LABELS: Record<number, string> = {
+    1: "Cautious", 2: "Selective", 3: "Balanced", 4: "Progressive", 5: "Transformative",
+  };
+  const bizLevel = Math.min(5, Math.max(1, ctx.businessAmbitionLevel ?? 3));
+  const pplLevel = Math.min(5, Math.max(1, ctx.peopleAmbitionLevel ?? 3));
+  const result = await generateVisionWithQualityGate({
+    sector: orgInfo?.sector ?? "other",
+    subSector: orgInfo?.subSector ?? null,
+    orgType: orgInfo?.orgType ?? null,
+    orgSize: orgInfo?.orgSize ?? null,
+    businessAmbitionLabel: AMBITION_LABELS[bizLevel],
+    peopleAmbitionLabel: AMBITION_LABELS[pplLevel],
+    aiPhilosophy: undefined,
+    aspirationAnswers: ctx.aspirationAnswers,
+    hrRoleAnswers: ctx.hrRoleAnswers,
+    maxAttempts: 3,
+  });
   return {
-    visionStatement: parsed.visionStatement || "",
-    principles: parsed.principles || [],
-    businessAmbitionLevel: Math.min(5, Math.max(1, Number(parsed.businessAmbitionLevel) || 3)),
-    peopleAmbitionLevel: Math.min(5, Math.max(1, Number(parsed.peopleAmbitionLevel) || 3)),
+    visionStatement: result.visionStatement,
+    principles: result.principles,
+    businessAmbitionLevel: bizLevel,
+    peopleAmbitionLevel: pplLevel,
   };
 }
 
@@ -327,6 +291,29 @@ export class StrategyCoachModeHandler implements ModeHandler {
     const { session, userMessage, messageHistory } = input;
     const db = await getDb();
     let ctx = getContext(session);
+    // Fetch org context for sector/subSector/orgType/orgSize (used in vision generation)
+    let orgInfo: { sector?: string | null; subSector?: string | null; orgType?: string | null; orgSize?: string | null } = {};
+    if (db) {
+      const orgRow = await db.select({
+        sector: ailOrgContext.sector,
+        subSector: ailOrgContext.subSector,
+        orgType: ailOrgContext.orgType,
+        headcount: ailOrgContext.headcount,
+      }).from(ailOrgContext).where(eq(ailOrgContext.tenantId, session.tenantId)).limit(1);
+      if (orgRow[0]) {
+        orgInfo = {
+          sector: orgRow[0].sector,
+          subSector: orgRow[0].subSector,
+          orgType: orgRow[0].orgType,
+          orgSize: orgRow[0].headcount
+            ? orgRow[0].headcount < 250 ? "small"
+              : orgRow[0].headcount < 1000 ? "medium"
+              : orgRow[0].headcount < 5000 ? "large"
+              : "enterprise"
+            : null,
+        };
+      }
+    }
     const systemPrompt = buildSystemPrompt();
 
     let responseText = "";
@@ -422,7 +409,7 @@ export class StrategyCoachModeHandler implements ModeHandler {
 
             // Pre-generate the vision in the background (will be used next turn)
             try {
-              const generated = await generateVisionAndPrinciples(ctx);
+              const generated = await generateVisionAndPrinciples(ctx, orgInfo);
               ctx.draftVision = generated.visionStatement;
               ctx.draftPrinciples = generated.principles;
               ctx.businessAmbitionLevel = generated.businessAmbitionLevel;
@@ -439,7 +426,7 @@ export class StrategyCoachModeHandler implements ModeHandler {
           if (!ctx.draftVision) {
             // Generate if not already done
             try {
-              const generated = await generateVisionAndPrinciples(ctx);
+              const generated = await generateVisionAndPrinciples(ctx, orgInfo);
               ctx.draftVision = generated.visionStatement;
               ctx.draftPrinciples = generated.principles;
               ctx.businessAmbitionLevel = generated.businessAmbitionLevel;
