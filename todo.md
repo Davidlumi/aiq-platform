@@ -2760,3 +2760,6 @@
 - [ ] PDF export: verify corrected vision + numbers + conditional reinvestment + CEO sponsorship appear in PDF (deferred)
 - [ ] Backwards compatibility: implement Option C (legacy flag on existing strategies with regenerate prompt) (deferred)
 - [x] Existing tests: audit and update tests asserting specific calculation outputs (899/899 passing)
+
+## Bug Fix: Nested button on /ai-strategy
+- [x] Find and fix nested `<button>` inside another `<button>` — was in AssessmentResultsPage.tsx DomainCard (outer button → div[role=button])

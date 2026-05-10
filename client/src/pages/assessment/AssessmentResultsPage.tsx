@@ -438,9 +438,12 @@ function DomainCard({
     : [];
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left rounded-xl border bg-card p-5 hover:bg-accent/30 transition-all duration-200 hover:border-primary/30 group"
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      className="w-full text-left rounded-xl border bg-card p-5 hover:bg-accent/30 transition-all duration-200 hover:border-primary/30 group cursor-pointer"
       style={{ boxShadow: "var(--card-shadow)" }}
     >
       {/* Header row */}
@@ -527,11 +530,11 @@ function DomainCard({
           </div>}
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
-// ── Domain Detail Sheet ────────────────────────────────────────────────────────
+// ─── Main pageail Sheet ────────────────────────────────────────────────────────
 
 function DomainSheet({
   open, onClose, sessionId, domainKey, displayName, score, colour,
