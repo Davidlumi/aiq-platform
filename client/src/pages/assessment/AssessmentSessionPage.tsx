@@ -422,42 +422,102 @@ const GENERATING_STEPS = [
 
 // 30 curated AI / HR-AI bite-sized facts
 const AI_FACTS = [
+  // ── How AI works ──────────────────────────────────────────────────────────
   { emoji: "🧠", text: "GPT-4 was trained on roughly 1 trillion tokens of text — equivalent to reading every Wikipedia article about 10,000 times." },
+  { emoji: "🔍", text: "Large language models don't \"know\" facts — they predict the most statistically likely next word. That's why they can confidently state things that are wrong." },
+  { emoji: "🔬", text: "Transformer architecture — the \"T\" in GPT — was invented by Google researchers in 2017. The paper was called \"Attention Is All You Need\"." },
+  { emoji: "💡", text: "The \"hallucination\" problem in AI refers to models generating plausible-sounding but factually incorrect information — a critical risk in HR decision-making." },
+  { emoji: "🧩", text: "Retrieval-Augmented Generation (RAG) lets AI tools answer questions about your specific policies by fetching relevant documents first — rather than relying on general training data." },
+  { emoji: "🔄", text: "Most commercial LLMs have a fixed \"knowledge cutoff\" and don't learn from your conversations. What you tell ChatGPT today won't change its answers tomorrow." },
+  { emoji: "⚡", text: "Training a large AI model like GPT-4 consumes roughly the same energy as 500 transatlantic flights. Running inference (using it) is far cheaper." },
+  { emoji: "🌡️", text: "AI models don't \"understand\" language — they manipulate statistical patterns in high-dimensional vector space. The appearance of understanding is an emergent property of scale." },
+  { emoji: "🎲", text: "The \"temperature\" setting in an LLM controls randomness. Temperature 0 = deterministic and repetitive. Temperature 1+ = creative but potentially incoherent." },
+  { emoji: "🗜️", text: "A \"token\" in AI is roughly ¾ of a word. GPT-4 can process about 128,000 tokens in one go — approximately the length of a full novel." },
+  { emoji: "🕸️", text: "Neural networks are loosely inspired by the brain, but the analogy breaks down quickly. A human brain has ~86 billion neurons; GPT-4 has ~1.8 trillion parameters." },
+  { emoji: "📐", text: "\"Fine-tuning\" an AI model means training it further on a smaller, domain-specific dataset. It's how generic LLMs become specialised HR, legal, or medical assistants." },
+  // ── AI in HR ───────────────────────────────────────────────────────────────
   { emoji: "💼", text: "A 2024 McKinsey survey found that 65% of organisations are now using generative AI in at least one business function, up from 33% the year before." },
   { emoji: "⏱️", text: "HR professionals who use AI tools for CV screening report saving an average of 4 hours per week on administrative tasks." },
-  { emoji: "🌍", text: "The global AI market is projected to reach $1.8 trillion by 2030 — growing at roughly 37% per year." },
-  { emoji: "🤖", text: "The term \"Artificial Intelligence\" was coined by John McCarthy in 1956 at the Dartmouth Conference — the same year Elvis Presley released his first album." },
   { emoji: "📊", text: "Research shows AI-assisted performance reviews reduce recency bias by up to 40% compared to purely human-conducted reviews." },
-  { emoji: "⚖️", text: "The EU AI Act (2024) is the world’s first comprehensive legal framework for AI — it classifies HR tools like CV screening as \"high risk\"." },
-  { emoji: "🔍", text: "Large language models don’t \"know\" facts — they predict the most statistically likely next word. That’s why they can confidently state things that are wrong." },
   { emoji: "👥", text: "Companies using AI for talent matching report a 35% improvement in quality-of-hire scores within 12 months of deployment." },
-  { emoji: "💡", text: "The \"hallucination\" problem in AI refers to models generating plausible-sounding but factually incorrect information — a critical risk in HR decision-making." },
-  { emoji: "🎯", text: "Adaptive assessment engines like this one adjust question difficulty in real time based on your response patterns — similar to how GMAT and GRE exams work." },
   { emoji: "📝", text: "CIPD research (2024) found that only 19% of HR professionals feel \"very confident\" using AI tools — yet 72% believe AI will significantly change their role within 3 years." },
-  { emoji: "🔐", text: "AI bias in hiring is a real risk: Amazon scrapped an AI recruiting tool in 2018 after discovering it systematically downgraded CVs from women." },
-  { emoji: "⚡", text: "Training a large AI model like GPT-4 consumes roughly the same energy as 500 transatlantic flights. Running inference (using it) is far cheaper." },
-  { emoji: "🎓", text: "AI literacy is now listed as a core competency in 41% of new HR job descriptions posted in 2025 — up from just 8% in 2022." },
-  { emoji: "🧩", text: "Retrieval-Augmented Generation (RAG) is the technique that lets AI tools like HR chatbots answer questions about your specific policies — not just general knowledge." },
-  { emoji: "📈", text: "Organisations with a formal AI governance framework are 2.3x more likely to report positive ROI from their AI investments, according to Gartner." },
-  { emoji: "🤝", text: "The most effective AI deployments in HR combine automation for repetitive tasks with human judgement for nuanced decisions — a model called \"human-in-the-loop\"." },
-  { emoji: "📱", text: "By 2026, Gartner predicts that 80% of HR technology vendors will have embedded generative AI into their core products — whether customers want it or not." },
   { emoji: "🌟", text: "The average time-to-hire drops by 23% when AI is used to schedule interviews and automate initial screening — but candidate experience scores can fall if not managed carefully." },
   { emoji: "💬", text: "AI coaching tools can process 100% of manager-employee conversations (with consent) to identify coaching moments — something human HR teams could never scale to." },
-  { emoji: "🔬", text: "Transformer architecture — the \"T\" in GPT — was invented by Google researchers in 2017. The paper was called \"Attention Is All You Need\"." },
-  { emoji: "🏛️", text: "AI tools used in redundancy decisions in the UK must comply with the Equality Act 2010 — employers remain legally liable even when an algorithm makes the recommendation." },
-  { emoji: "🔄", text: "Continuous learning AI models update their knowledge from new data over time. Most commercial LLMs have a fixed \"knowledge cutoff\" and don’t learn from your conversations." },
-  { emoji: "💰", text: "The ROI of AI in HR is highest in talent acquisition (avg. 3.5x) and lowest in performance management (avg. 1.2x), according to Deloitte’s 2024 HR Technology Report." },
-  { emoji: "🧑\u200d💻", text: "Prompt engineering — the skill of writing effective instructions for AI — is now a distinct job role. Some prompt engineers earn over £150k at leading AI labs." },
-  { emoji: "🔎", text: "AI explainability (\"why did the model decide this?\") is a legal requirement under the UK GDPR for any automated decision that significantly affects a person." },
   { emoji: "🌱", text: "AI can reduce HR administrative burden by up to 60% — but the freed-up time is only valuable if HR teams are equipped to redirect it to strategic work." },
-  { emoji: "🏆", text: "The Turing Test, proposed in 1950, asked whether a machine could converse indistinguishably from a human. Most experts now agree modern LLMs can pass it — but that’s not the same as intelligence." },
-  { emoji: "🔭", text: "Skills intelligence platforms powered by AI can map an employee’s inferred skills from job history and learning data — often surfacing capabilities the employee themselves hadn’t recognised." },
+  { emoji: "🔭", text: "Skills intelligence platforms powered by AI can map an employee's inferred skills from job history and learning data — often surfacing capabilities the employee themselves hadn't recognised." },
+  { emoji: "📉", text: "AI-powered attrition models can predict employee flight risk with up to 85% accuracy 90 days before resignation — giving HR time to intervene." },
+  { emoji: "🗣️", text: "Natural language processing can analyse employee survey verbatims at scale, surfacing themes and sentiment that manual analysis would miss in a 10,000-person organisation." },
+  { emoji: "🏅", text: "AI-driven internal mobility tools match employees to open roles based on inferred skills — reducing reliance on self-nomination, which historically favours extroverts." },
+  { emoji: "📋", text: "AI job description tools reduce gendered language by an average of 60%, which research links to a 42% increase in applications from underrepresented groups." },
+  { emoji: "🔮", text: "Workforce planning AI can model the skills your organisation will need in 3–5 years based on business strategy, industry trends, and current capability gaps." },
+  // ── Governance & ethics ────────────────────────────────────────────────────
+  { emoji: "⚖️", text: "The EU AI Act (2024) is the world's first comprehensive legal framework for AI — it classifies HR tools like CV screening as \"high risk\", requiring human oversight and audit trails." },
+  { emoji: "🔐", text: "AI bias in hiring is a real risk: Amazon scrapped an AI recruiting tool in 2018 after discovering it systematically downgraded CVs from women." },
+  { emoji: "🏛️", text: "AI tools used in redundancy decisions in the UK must comply with the Equality Act 2010 — employers remain legally liable even when an algorithm makes the recommendation." },
+  { emoji: "🔎", text: "AI explainability (\"why did the model decide this?\") is a legal requirement under the UK GDPR for any automated decision that significantly affects a person." },
+  { emoji: "🛡️", text: "The ICO's guidance on AI and data protection requires organisations to conduct a Data Protection Impact Assessment before deploying AI in HR processes." },
+  { emoji: "🧾", text: "The UK's Algorithmic Transparency Recording Standard requires public sector bodies to publish details of algorithmic tools used in significant decisions — a model increasingly adopted in large enterprises." },
+  { emoji: "🚦", text: "The EU AI Act uses a traffic-light risk model: unacceptable risk (banned), high risk (regulated), limited risk (transparency obligations), minimal risk (no rules)." },
+  { emoji: "🔏", text: "Using employee data to train an AI model without explicit consent may breach GDPR Article 6. Many HR AI vendors process data outside the EEA — check your DPA." },
+  // ── AI literacy & skills ───────────────────────────────────────────────────
+  { emoji: "🎓", text: "AI literacy is now listed as a core competency in 41% of new HR job descriptions posted in 2025 — up from just 8% in 2022." },
+  { emoji: "🧑\u200d💻", text: "Prompt engineering — the skill of writing effective instructions for AI — is now a distinct job role. Some prompt engineers earn over £150k at leading AI labs." },
+  { emoji: "🎯", text: "Adaptive assessment engines like this one adjust question difficulty in real time based on your response patterns — similar to how GMAT and GRE exams work." },
+  { emoji: "📚", text: "The World Economic Forum's Future of Jobs Report (2025) lists AI and big data literacy as the fastest-growing skill demand globally — ahead of green skills and cybersecurity." },
+  { emoji: "🧪", text: "\"AI fluency\" is distinct from \"AI literacy\". Literacy means knowing what AI is. Fluency means being able to critically evaluate, direct, and improve AI outputs in your domain." },
+  { emoji: "🏋️", text: "Studies show that HR professionals who practise with AI tools for just 2 hours a week improve their output quality scores by 31% within 8 weeks." },
+  { emoji: "🎮", text: "Scenario-based learning (like this assessment) produces 75% better knowledge retention than passive reading, according to learning science research." },
+  { emoji: "🧭", text: "The six domains measured by AiQ — Interaction, Output Evaluation, Change, Ethics, Data Interpretation, and Governance — map directly to the CIPD's AI Competency Framework." },
+  // ── ROI & business impact ──────────────────────────────────────────────────
+  { emoji: "🌍", text: "The global AI market is projected to reach $1.8 trillion by 2030 — growing at roughly 37% per year." },
+  { emoji: "📈", text: "Organisations with a formal AI governance framework are 2.3x more likely to report positive ROI from their AI investments, according to Gartner." },
+  { emoji: "📱", text: "By 2026, Gartner predicts that 80% of HR technology vendors will have embedded generative AI into their core products — whether customers want it or not." },
+  { emoji: "💰", text: "The ROI of AI in HR is highest in talent acquisition (avg. 3.5x) and lowest in performance management (avg. 1.2x), according to Deloitte's 2024 HR Technology Report." },
+  { emoji: "📦", text: "Companies in the top quartile for AI adoption in HR report 18% lower voluntary turnover than industry peers, according to IBM's Institute for Business Value." },
+  { emoji: "🏗️", text: "The biggest barrier to AI ROI in HR isn't technology — it's change management. 67% of failed AI deployments cite poor adoption, not technical failure, as the root cause." },
+  { emoji: "💹", text: "Microsoft's 2025 Work Trend Index found that employees who use AI tools report 29% higher job satisfaction scores — but only when they feel in control of how the AI is used." },
+  // ── AI history & culture ───────────────────────────────────────────────────
+  { emoji: "🤖", text: "The term \"Artificial Intelligence\" was coined by John McCarthy in 1956 at the Dartmouth Conference — the same year Elvis Presley released his first album." },
+  { emoji: "🏆", text: "The Turing Test, proposed in 1950, asked whether a machine could converse indistinguishably from a human. Most experts now agree modern LLMs can pass it — but that's not the same as intelligence." },
+  { emoji: "♟️", text: "IBM's Deep Blue beat world chess champion Garry Kasparov in 1997 — a landmark moment. Kasparov later said the machine didn't \"understand\" chess; it just calculated faster." },
+  { emoji: "🖼️", text: "The first AI-generated artwork sold at Christie's auction house in 2018 for $432,500 — 43x its estimate. The \"artist\" was an algorithm called AICAN." },
+  { emoji: "🚗", text: "The first self-driving car test took place in 1986 at Carnegie Mellon. Nearly 40 years later, fully autonomous vehicles are still not commercially available at scale." },
+  { emoji: "🌐", text: "The term \"machine learning\" was coined by Arthur Samuel in 1959 while he was teaching a computer to play draughts — and beat him at it." },
+  // ── Human + AI ─────────────────────────────────────────────────────────────
+  { emoji: "🤝", text: "The most effective AI deployments in HR combine automation for repetitive tasks with human judgement for nuanced decisions — a model called \"human-in-the-loop\"." },
+  { emoji: "🧬", text: "Research from MIT shows that humans working alongside AI outperform both humans alone and AI alone on complex analytical tasks — the \"centaur\" model of collaboration." },
+  { emoji: "🎭", text: "AI can replicate the \"what\" of a decision but rarely the \"why\". HR professionals who understand this distinction are better placed to audit, override, and improve AI recommendations." },
+  { emoji: "🌈", text: "Diverse teams using AI tools make better decisions than homogeneous teams — because they're more likely to challenge AI outputs rather than defer to them uncritically." },
+  { emoji: "🧘", text: "A 2024 Harvard study found that employees are more likely to accept AI-assisted decisions when they're given a clear explanation and a human point of contact for appeals." },
+  { emoji: "🔑", text: "The most valuable HR skill in an AI-augmented workplace isn't technical — it's the ability to ask the right questions of AI outputs and know when to override them." },
+  // ── Emerging trends ────────────────────────────────────────────────────────
+  { emoji: "🤖", text: "Agentic AI — systems that plan and execute multi-step tasks autonomously — is the next frontier. Early HR applications include end-to-end onboarding workflows and benefits enrolment." },
+  { emoji: "🔊", text: "Voice AI in HR is growing fast: 34% of large US employers now use AI-powered voice tools for first-round candidate screening, up from 9% in 2022." },
+  { emoji: "🧑\u200d🤝\u200d🧑", text: "\"AI colleagues\" — persistent AI agents with memory and a defined role — are being piloted at several FTSE 100 companies as HR business partner assistants." },
+  { emoji: "🌏", text: "Multimodal AI (text + image + audio + video) is changing HR: AI can now assess presentation skills, body language, and vocal confidence in video interviews — raising significant ethical questions." },
+  { emoji: "🔋", text: "AI is beginning to generate its own training data through \"synthetic data\" — meaning future models may learn primarily from AI-generated content rather than human-written text." },
+  { emoji: "📡", text: "Real-time AI translation is enabling global HR teams to run performance conversations across 50+ languages simultaneously — breaking down one of the last barriers to truly global talent management." },
 ];
+
+/** Fisher-Yates shuffle — returns a new shuffled copy */
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function GeneratingState({ answeredCount, totalItems }: { answeredCount: number; totalItems: number }) {
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
   const [activeStep, setActiveStep] = useState(0);
-  const [factIndex, setFactIndex] = useState(() => Math.floor(Math.random() * AI_FACTS.length));
+  // Shuffle-without-replacement: maintain a queue of shuffled indices; refill when empty
+  const queueRef = useRef<number[]>([]);
+  const [factIndex, setFactIndex] = useState<number>(() => {
+    queueRef.current = shuffleArray(AI_FACTS.map((_, i) => i));
+    return queueRef.current.shift()!;
+  });
   const [factVisible, setFactVisible] = useState(true);
 
   // Advance generating steps
@@ -468,12 +528,16 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // Rotate facts every 4 seconds with a fade transition
+  // Rotate facts every 4 seconds — shuffle-without-replacement so no repeats
   useEffect(() => {
     const interval = setInterval(() => {
       setFactVisible(false);
       setTimeout(() => {
-        setFactIndex(prev => (prev + 1) % AI_FACTS.length);
+        if (queueRef.current.length === 0) {
+          // Refill with a fresh shuffle when all facts have been shown
+          queueRef.current = shuffleArray(AI_FACTS.map((_, i) => i));
+        }
+        setFactIndex(queueRef.current.shift()!);
         setFactVisible(true);
       }, 400);
     }, 4000);

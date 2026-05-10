@@ -2768,3 +2768,7 @@
 - [x] Create AIFactsLoader component with rotating AI bite-sized facts, animated progress bar, and pulsing brain/AI icon
 - [x] Wire component into AssessmentSessionPage question-generation loading state
 - [x] Write 30 curated AI facts relevant to HR/workplace AI
+
+## Enhancement: AI Facts — No-Repeat Shuffle
+- [x] Expand AI_FACTS pool from 30 to 75 unique entries across 7 themed categories
+- [x] Replace sequential rotation with Fisher-Yates shuffle-without-replacement (restart only when all shown)
