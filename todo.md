@@ -2693,3 +2693,39 @@
 - [x] D1: question_flags DB table (sessionId, itemId, userId, reason, comment, reviewed, reviewedBy, reviewedAt, createdAt)
 - [x] D1: tRPC flagQuestion mutation (assessment.flagQuestion) + assessment.getQuestionFlags (admin)
 - [x] D1: Admin review queue — QuestionFlagsQueue component in AssessmentContentPage (unreviewed/all toggle)
+
+## Cadence Principle + Dashboard Amendment v2
+
+### Documentation
+- [x] /docs/PLATFORM_PRINCIPLES.md created with cadence principle as working hypothesis
+- [x] Validation plan documented (what to observe in design partner conversations)
+
+### Block B1 — Remove Strategy Initiatives panel
+- [x] Remove dominant Strategy Initiatives panel from /learning dashboard
+- [x] Tests updated to reflect removal (no assertions on Strategy Initiatives panel)
+- [x] Internal links audited (no broken references to removed panel)
+
+### Block A1 — Greeting amendment
+- [x] Greeting preserves personalised current-focus reference (not generic counter)
+- [x] Third sentence compressed: "Your current focus is [domain] (connects to [initiative]). View full strategy →"
+- [x] "View full strategy →" link navigates to /ai-strategy
+- [x] Generate-strategy CTA appears for users without strategy
+- [x] First-time user copy unchanged from v2 spec
+
+### Block B2 — Modules-per-initiative filtered view
+- [x] Filtered view exists at /learning/initiative/[initiative-id] (route added to App.tsx, InitiativeModulesPage created)
+- [x] Strategy artefact Section 3 has per-initiative "See modules building this capability →" link
+- [x] Capability domain cards' "Connects to: [initiative]" lines are clickable → navigate to filtered view
+- [x] No regression from existing filtered view logic
+
+### Data sync investigation
+- [x] Investigated: linkedInitiativeIds on learningModules was never populated (always null)
+- [x] Fixed: getModulesByInitiative now uses capability-based matching via weightsJson as fallback
+- [x] Fixed: domainInitiativeMap in getLearningDashboard uses same weightsJson-based matching
+- [x] Single source of truth: strategyInitiativeLibrary.weightsJson → DOMAIN_KEYS_ORDER index mapping
+
+### Cross-cutting
+- [x] TypeScript: 0 errors
+- [x] Tests: 879/879 passing (36 test files)
+- [x] No regression on mobile rendering
+- [x] No regression on loading/error/empty states

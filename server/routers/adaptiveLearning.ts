@@ -2278,6 +2278,72 @@ Feedback principles:
 
       if (!focusDomain) focusDomain = "ai_workflow_design";
 
+      // B2: Build domain → top initiative map for clickable connects-to on domain cards
+      // Uses capability-based matching via weightsJson (primary) or linkedInitiativeIds (if populated)
+      const DOMAIN_KEYS_ORDER = [
+        "ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+        "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership",
+      ];
+      const domainInitiativeMap: Record<string, { initiativeId: string; name: string }> = {};
+      if (latestStrategy && plan) {
+        const planItems = await db.select({ moduleId: adaptivePlanItems.moduleId })
+          .from(adaptivePlanItems).where(eq(adaptivePlanItems.planId, plan.id));
+        const moduleIds = planItems.map(i => i.moduleId);
+        if (moduleIds.length > 0) {
+          const mods = await db.select({
+            id: learningModules.id,
+            capability: learningModules.capability,
+            linkedInitiativeIds: learningModules.linkedInitiativeIds,
+          }).from(learningModules).where(inArray(learningModules.id, moduleIds));
+
+          // Fetch all strategy initiatives + their weightsJson for capability matching
+          const stratInits = await db.select({
+            initiativeId: strategyInitiatives.initiativeId,
+            name: strategyInitiativeLibrary.name,
+            weightsJson: strategyInitiativeLibrary.weightsJson,
+          })
+          .from(strategyInitiatives)
+          .innerJoin(strategyInitiativeLibrary, eq(strategyInitiatives.initiativeId, strategyInitiativeLibrary.id))
+          .where(eq(strategyInitiatives.strategyId, latestStrategy.id));
+
+          // Build initiative → covered domains map via weightsJson
+          const initCoveredDomains: Record<string, Set<string>> = {};
+          for (const si of stratInits) {
+            const weights = (si.weightsJson as number[] | null) ?? [];
+            const covered = new Set<string>(DOMAIN_KEYS_ORDER.filter((_, i) => (weights[i] ?? 0) > 0));
+            initCoveredDomains[si.initiativeId] = covered.size > 0 ? covered : new Set(DOMAIN_KEYS_ORDER);
+          }
+          const initNameMap = Object.fromEntries(stratInits.map(i => [i.initiativeId, i.name]));
+
+          // Count initiative occurrences per domain (capability-based matching)
+          const domainInitCounts: Record<string, Record<string, number>> = {};
+          for (const mod of mods) {
+            // Primary: use linkedInitiativeIds if populated
+            const linked = (mod.linkedInitiativeIds as string[] | null) ?? [];
+            if (linked.length > 0) {
+              for (const initId of linked) {
+                if (!initNameMap[initId]) continue;
+                if (!domainInitCounts[mod.capability]) domainInitCounts[mod.capability] = {};
+                domainInitCounts[mod.capability][initId] = (domainInitCounts[mod.capability][initId] ?? 0) + 1;
+              }
+            } else {
+              // Fallback: capability-based matching via weightsJson
+              for (const si of stratInits) {
+                const covered = initCoveredDomains[si.initiativeId];
+                if (covered?.has(mod.capability)) {
+                  if (!domainInitCounts[mod.capability]) domainInitCounts[mod.capability] = {};
+                  domainInitCounts[mod.capability][si.initiativeId] = (domainInitCounts[mod.capability][si.initiativeId] ?? 0) + 1;
+                }
+              }
+            }
+          }
+          for (const [domain, counts] of Object.entries(domainInitCounts)) {
+            const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+            if (top) domainInitiativeMap[domain] = { initiativeId: top[0], name: initNameMap[top[0]] };
+          }
+        }
+      }
+
       return {
         firstName,
         totalModules,
@@ -2291,6 +2357,7 @@ Feedback principles:
         firstModuleId,
         firstModuleReasonJson,
         lastActivityAt,
+        domainInitiativeMap,
       };
     }),
 
@@ -2369,30 +2436,48 @@ Feedback principles:
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const userId = ctx.user.id;
 
+      // Resolve initiative name + capability domains via weightsJson
+      // weightsJson is an array of 6 numbers indexed by DOMAIN_KEYS order
+      const DOMAIN_KEYS_ORDER = [
+        "ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+        "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership",
+      ] as const;
+      const [initRow] = await db.select({ name: strategyInitiativeLibrary.name, weightsJson: strategyInitiativeLibrary.weightsJson })
+        .from(strategyInitiativeLibrary).where(eq(strategyInitiativeLibrary.id, input.initiativeId)).limit(1);
+
+      // Derive capability domains this initiative covers (weight > 0)
+      const weights = (initRow?.weightsJson as number[] | null) ?? [];
+      const coveredDomains = new Set<string>(
+        DOMAIN_KEYS_ORDER.filter((_, i) => (weights[i] ?? 0) > 0)
+      );
+      // Fallback: if no weights, include all domains (show all plan modules)
+      const matchAll = coveredDomains.size === 0;
+
       const [plan] = await db.select().from(adaptiveLearningPlans)
         .where(and(eq(adaptiveLearningPlans.userId, userId), eq(adaptiveLearningPlans.state, "active")))
         .orderBy(desc(adaptiveLearningPlans.generatedAt)).limit(1);
-      if (!plan) return { initiativeName: null, items: [] };
+      if (!plan) return { initiativeName: initRow?.name ?? null, items: [] };
 
       const items = await db.select().from(adaptivePlanItems)
         .where(eq(adaptivePlanItems.planId, plan.id))
         .orderBy(asc(adaptivePlanItems.orderIndex));
       const moduleIds = items.map(i => i.moduleId);
-      if (moduleIds.length === 0) return { initiativeName: null, items: [] };
+      if (moduleIds.length === 0) return { initiativeName: initRow?.name ?? null, items: [] };
 
       const mods = await db.select().from(learningModules)
         .where(inArray(learningModules.id, moduleIds));
       const modMap = Object.fromEntries(mods.map(m => [m.id, m]));
 
+      // Primary: match by linkedInitiativeIds (populated for newer modules)
+      // Fallback: match by capability domain overlap with initiative weightsJson
       const filtered = items.filter(item => {
         const mod = modMap[item.moduleId];
         if (!mod) return false;
         const linked = (mod.linkedInitiativeIds as string[] | null) ?? [];
-        return linked.includes(input.initiativeId);
+        if (linked.length > 0) return linked.includes(input.initiativeId);
+        // Fallback: capability-based matching
+        return matchAll || coveredDomains.has(mod.capability);
       });
-
-      const [initRow] = await db.select({ name: strategyInitiativeLibrary.name })
-        .from(strategyInitiativeLibrary).where(eq(strategyInitiativeLibrary.id, input.initiativeId)).limit(1);
 
       return {
         initiativeName: initRow?.name ?? null,

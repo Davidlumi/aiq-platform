@@ -48,6 +48,7 @@ import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
 import DomainPathwayPage from "./pages/learning/DomainPathwayPage";
 import TeamDashboardPage from "./pages/learning/TeamDashboardPage";
 import TeamLearningPage from "./pages/learning/TeamLearningPage";
+import InitiativeModulesPage from "./pages/learning/InitiativeModulesPage";
 import SimulationListPage from "./pages/simulation/SimulationListPage";
 import SimulationSessionPage from "./pages/simulation/SimulationSessionPage";
 import ReportsPage from "./pages/reports/ReportsPage";
@@ -177,6 +178,9 @@ function Router() {
       </Route>
       <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />
+      </Route>
+      <Route path="/learning/initiative/:initiativeId">
+        <ProtectedRoute component={InitiativeModulesPage} />
       </Route>
       <Route path="/development/:domainId">
         <ProtectedRoute component={DomainPathwayPage} />

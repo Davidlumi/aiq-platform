@@ -12,6 +12,7 @@
  *   Appendix       — Methodology (collapsed)
  */
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -565,6 +566,7 @@ function InitiativeSelectorModal({
 export default function AIStrategyPage() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
 
   const [businessLevel, setBusinessLevelRaw] = useState(3);
   const [peopleLevel, setPeopleLevelRaw]     = useState(3);
@@ -1911,6 +1913,12 @@ export default function AIStrategyPage() {
                                 )}
                               </div>
                               {outcome && <p className="text-[10px] text-muted-foreground">Outcome: {outcome}</p>}
+                              {/* B2: per-initiative link to filtered learning view */}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setLocation(`/learning/initiative/${init.id}`); }}
+                                className="mt-2 text-[10px] font-semibold text-primary hover:underline flex items-center gap-0.5">
+                                See modules building this capability →
+                              </button>
                             </div>
                           );
                         })}

@@ -15,7 +15,7 @@ import {
   BookOpen, FileText, HelpCircle, Layers, Video, MessageSquare,
   Users, Clock, CheckCircle2, Lock, Play,
   Brain, Target, Sparkles, ArrowRight,
-  ChevronDown, ChevronUp, TrendingUp, Zap, Flag,
+  ChevronDown, ChevronUp, TrendingUp, Flag,
   MessageCircle, ScanSearch, ShieldCheck, Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -184,13 +184,15 @@ function ModuleRow({
 
 // ── Block C: Domain card ───────────────────────────────────────────────────────
 function DomainCard({
-  domainKey, items, nextItem, domainScore, onStart,
+  domainKey, items, nextItem, domainScore, onStart, connectsTo, onViewInitiative,
 }: {
   domainKey: string;
   items: any[];
   nextItem: any | null;
   domainScore: number | null;
   onStart: (item: any) => void;
+  connectsTo?: { initiativeId: string; name: string } | null;
+  onViewInitiative?: (initiativeId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
@@ -233,6 +235,17 @@ function DomainCard({
             {/* C1: score shown small below progress */}
             {scoreDisplay && (
               <p className="text-[10px] text-muted-foreground mt-1">Score: {scoreDisplay}</p>
+            )}
+            {/* B2: connects-to initiative clickable link */}
+            {connectsTo && onViewInitiative && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Connects to:{" "}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onViewInitiative(connectsTo.initiativeId); }}
+                  className="text-primary hover:underline font-medium">
+                  {connectsTo.name}
+                </button>
+              </p>
             )}
           </div>
           <div className="flex-shrink-0 text-muted-foreground mt-1">
@@ -435,9 +448,8 @@ export default function LearningPlanPage() {
   const { data: dashboardCtx, isLoading: ctxLoading } = trpc.adaptiveLearning.getLearningDashboard.useQuery(
     undefined, { staleTime: 1000 * 60 * 3 }
   );
-  const { data: initiativesData, isLoading: initiativesLoading } = trpc.adaptiveLearning.getInFlightInitiatives.useQuery(
-    undefined, { staleTime: 1000 * 60 * 5 }
-  );
+  // B1: getInFlightInitiatives query removed — Strategy Initiatives panel removed per cadence principle
+  // B2: getModulesByInitiative retained for per-initiative filtered view (accessed from domain cards + strategy artefact)
   const { data: initiativeModules, isLoading: initiativeModulesLoading } = trpc.adaptiveLearning.getModulesByInitiative.useQuery(
     { initiativeId: initiativeFilter?.id ?? "" },
     { enabled: !!initiativeFilter?.id, staleTime: 1000 * 60 * 2 }
@@ -578,7 +590,7 @@ export default function LearningPlanPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
 
-      {/* Block A1+A3: Greeting + progress framing */}
+      {/* Block A1+A3: Greeting + progress framing (amended per cadence principle v2) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="relative w-14 h-14 flex-shrink-0">
@@ -599,26 +611,51 @@ export default function LearningPlanPage() {
             <h1 className="text-xl font-semibold text-foreground">
               {greeting}{firstName ? `, ${firstName}` : ""}
             </h1>
+            {/* A1 line 2: module count + strategy-aligned framing */}
             <p className="text-sm text-muted-foreground mt-0.5">
-              {completedCount} of {totalItems} modules complete
-              {remainingMins > 0 && (
-                <> · {remainingHours > 0 ? `${remainingHours}h ` : ""}{remainingMinRem}m remaining</>
-              )}
-              {focusDomainLabel && dashboardCtx?.lastActivityAt && (
-                <> · Last active in{" "}
-                  <span className="text-foreground font-medium">{focusDomainLabel}</span>
-                </>
-              )}
+              You&apos;re{" "}
+              <span className="text-foreground font-medium">{completedCount} module{completedCount !== 1 ? "s" : ""}</span>{" "}
+              into your strategy-aligned learning plan
+              {totalItems > 0 && (
+                <> — <span className="text-foreground font-medium">{totalItems} modules</span> curated from the full library based on your assessment and AI Strategy</>
+              )}.
             </p>
-            {dashboardCtx?.focusInitiative && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Linked to{" "}
-                <span className="text-foreground font-medium">
-                  {dashboardCtx.focusInitiative.name}
-                </span>
-                {" "}· {dashboardCtx.focusInitiative.phase}
+            {/* A1 line 3: personalised current-focus sentence */}
+            {focusDomainLabel && dashboardCtx?.strategyExists && dashboardCtx?.focusInitiative ? (
+              <p className="text-xs text-muted-foreground mt-1">
+                Your current focus is{" "}
+                <span className="text-foreground font-medium">{focusDomainLabel}</span>
+                {" "}(connects to your{" "}
+                <span className="text-foreground font-medium">{dashboardCtx.focusInitiative.name}</span>
+                {" "}initiative).{" "}
+                <button
+                  onClick={() => setLocation("/ai-strategy")}
+                  className="text-primary hover:underline font-medium">
+                  View full strategy →
+                </button>
               </p>
-            )}
+            ) : focusDomainLabel && dashboardCtx?.strategyExists ? (
+              <p className="text-xs text-muted-foreground mt-1">
+                Your current focus is{" "}
+                <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
+                <button
+                  onClick={() => setLocation("/ai-strategy")}
+                  className="text-primary hover:underline font-medium">
+                  View full strategy →
+                </button>
+              </p>
+            ) : focusDomainLabel ? (
+              // No strategy yet — generate CTA
+              <p className="text-xs text-muted-foreground mt-1">
+                Your current focus is{" "}
+                <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
+                <button
+                  onClick={() => setLocation("/ai-strategy")}
+                  className="text-primary hover:underline font-medium">
+                  Generate your AI Strategy to see how these modules connect to specific initiatives in your function →
+                </button>
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -648,27 +685,9 @@ export default function LearningPlanPage() {
         </button>
       )}
 
-      {/* Block B: Strategy linkage panel */}
-      {!initiativesLoading && initiativesData?.hasStrategy
-        && (initiativesData?.initiatives?.length ?? 0) > 0 && (
-        <div className="rounded-2xl border border-border bg-card/50 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-border/40">
-            <Zap className="h-4 w-4 text-primary" />
-            <p className="text-xs font-bold text-foreground uppercase tracking-widest">
-              Strategy Initiatives
-            </p>
-            <span className="ml-auto text-[10px] text-muted-foreground">
-              {initiativesData.initiatives.filter(i => i.status === "in_progress").length} in progress
-            </span>
-          </div>
-          <div className="p-4 space-y-2">
-            {initiativesData.initiatives.map(initiative => (
-              <InitiativeCard key={initiative.id} initiative={initiative}
-                onViewModules={(id, name) => setInitiativeFilter({ id, name })} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Block B1: Strategy Initiatives dominant panel removed per cadence principle.
+           Strategy context preserved via: (1) greeting A1 amendment, (2) connects-to on domain cards.
+           See /docs/PLATFORM_PRINCIPLES.md — Cadence Principle. */}
 
       {/* Block C: Domain cards grid */}
       <div>
@@ -682,7 +701,9 @@ export default function LearningPlanPage() {
             return (
               <DomainCard key={domainKey} domainKey={domainKey} items={capItems}
                 nextItem={nextItem} domainScore={domain?.score ?? null}
-                onStart={(item) => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)} />
+                onStart={(item) => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
+                connectsTo={dashboardCtx?.domainInitiativeMap?.[domainKey] ?? null}
+                onViewInitiative={(id) => setLocation(`/learning/initiative/${id}`)} />
             );
           })}
         </div>
