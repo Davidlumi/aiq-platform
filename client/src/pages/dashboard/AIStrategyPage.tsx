@@ -828,6 +828,8 @@ export default function AIStrategyPage() {
   }, [strategyData?.wontDo, businessLevel]);
 
   const isLoading = strategyQ.isLoading || orgContextQ.isLoading || companyAssessmentQ.isLoading || strategyAssessmentQ.isLoading;
+  // Must be declared before any early return (Rules of Hooks)
+  const subSectorOptions = useMemo(() => getSubSectors(sector), [sector]);
 
   // Trigger fade-in once all queries resolve
   useEffect(() => {
@@ -1095,7 +1097,6 @@ export default function AIStrategyPage() {
   }
 
   const sectorLabel      = SECTORS.find(s => s.value === sector)?.label;
-  const subSectorOptions = useMemo(() => getSubSectors(sector), [sector]);
   const subSectorLabel   = subSector ? getSubSectorLabel(sector, subSector) : null;
   const contextLabel     = subSectorLabel ? `${subSectorLabel} (${sectorLabel})` : (sectorLabel ?? sector);
   const bLevel           = BUSINESS_LEVELS[businessLevel];
