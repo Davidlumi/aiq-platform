@@ -210,7 +210,7 @@ function Router() {
         <ProtectedRoute component={AIStrategyPage} />
       </Route>
       <Route path="/strategy/builder">
-        <ProtectedRoute component={StrategyBuilderPage} />
+        <Redirect to="/ai-strategy" />
       </Route>
       <Route path="/ai-strategy/assessment">
         <ProtectedRoute component={HRAIStrategyAssessmentPage} />

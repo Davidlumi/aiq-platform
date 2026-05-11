@@ -40,7 +40,7 @@ import {
   Building2, Target, Users, TrendingUp, Shield, Zap, Layers, Lightbulb,
   CheckCircle2, Save, Info, BarChart3, Download, Check, ChevronRight,
   Sparkles, ArrowRight, AlertTriangle, Compass, GitMerge, BookOpen,
-  FileText, Quote, ChevronDown, ChevronUp, Pencil, X, DollarSign,
+  FileText, Quote, ChevronDown, ChevronUp, Pencil, X, PoundSterling,
   AlertCircle, Link2, LayoutGrid, List, Eye, Settings2, Ban,
   Lock, Unlock, Calendar, Share2, UserCheck, Clock, ExternalLink,
   TrendingDown, Activity,
@@ -337,7 +337,7 @@ function SectionDivider({ num, color, eyebrow, title, icon }: {
         <p className="text-[10px] font-bold tracking-widest uppercase mb-0" style={{ color }}>{eyebrow}</p>
         <h2 className="text-lg font-bold text-foreground leading-tight">{title}</h2>
       </div>
-      <div className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0" style={{ background: `${color}15`, color }}>
+      <div className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 border" style={{ background: `${color}22`, color, borderColor: `${color}40` }}>
         {num}
       </div>
     </div>
@@ -649,7 +649,7 @@ export default function AIStrategyPage() {
   const [contentVisible, setContentVisible] = useState(false);
   // C1: Collapsible subsection states (collapsed by default)
   const [onTrackCollapsed, setOnTrackCollapsed]           = useState(true);
-  const [guidingPrinciplesCollapsed, setGuidingPrinciplesCollapsed] = useState(true);
+  const [guidingPrinciplesCollapsed, setGuidingPrinciplesCollapsed] = useState(false);
   const [crossFuncCollapsed, setCrossFuncCollapsed]       = useState(true);
   const [riskDescCollapsed, setRiskDescCollapsed]         = useState<Record<number, boolean>>({});
   const [regDescCollapsed, setRegDescCollapsed]           = useState<Record<string, boolean>>({});
@@ -1316,6 +1316,12 @@ export default function AIStrategyPage() {
                     {saveStrategyMut.isPending ? "Saving…" : "Save & lock"}
                   </Button>
                 )}
+                {!isDirty && strategyData?.configured && (
+                  <Button size="sm" className="bg-green-500 hover:bg-green-400 text-black font-semibold h-7 text-xs px-3" onClick={handleSave} disabled={saveStrategyMut.isPending}>
+                    <Lock className="w-3 h-3 mr-1" />
+                    Lock strategy
+                  </Button>
+                )}
                 {!isDirty && !strategyData?.configured && (
                   <span className="text-[10px] text-muted-foreground">Configure inputs to generate</span>
                 )}
@@ -1699,7 +1705,7 @@ export default function AIStrategyPage() {
                 )}
                 {strategyData?.provenanceJson && (
                   <button onClick={() => { setProvenanceTarget("wontDo"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 ml-1">
-                    <Info className="w-3 h-3" />How?
+                    <Info className="w-3 h-3" />Why these exclusions?
                   </button>
                 )}
               </div>
@@ -1831,13 +1837,13 @@ export default function AIStrategyPage() {
               /* Executive view — phased timeline + headline counts */
               <div className="p-5">
                 {/* Horizontal phase bar */}
-                <div className="flex gap-2 mb-5">
+                <div className="flex gap-2 mb-5 overflow-x-auto pb-1 snap-x snap-mandatory sm:overflow-x-visible sm:pb-0">
                   {initiativesByPhase.map(({ phase, items }) => {
                     const meta = PHASE_LABELS[phase];
                     // Map Q1/Q2/Q3/Q4 to library phase IDs
                     const phaseIdMap: Record<string, string> = { Q1: "foundation", Q2: "build", Q3: "scale", Q4: "optimise" };
                     return (
-                      <div key={phase} className="flex-1 rounded-lg border border-white/8 p-3 text-center" style={{ borderTopColor: meta.color, borderTopWidth: "2px" }}>
+                      <div key={phase} className="flex-1 min-w-[100px] snap-start rounded-lg border border-white/8 p-3 text-center" style={{ borderTopColor: meta.color, borderTopWidth: "2px" }}>
                         <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: meta.color }}>{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
                         <p className="text-[10px] text-muted-foreground mb-2">{meta.months}</p>
                         <p className="text-2xl font-bold text-foreground">{items.length}</p>
@@ -1845,7 +1851,7 @@ export default function AIStrategyPage() {
                         {/* Live cost from engine */}
                         {liveCostEnvelope?.byPhase.find(p => p.phase === phaseIdMap[phase]) && (() => {
                           const cp = liveCostEnvelope.byPhase.find(p => p.phase === phaseIdMap[phase])!;
-                          return <p className="text-[10px] font-semibold mt-1" style={{ color: meta.color }}>£{cp.minGbk}k–{cp.maxGbk}k</p>;
+                          return <p className="text-[10px] font-semibold mt-1" style={{ color: meta.color }}>£{cp.minGbk}k–£{cp.maxGbk}k</p>;
                         })()}
                       </div>
                     );
@@ -1963,14 +1969,14 @@ export default function AIStrategyPage() {
           color="#FBBF24"
           eyebrow="Section 4 — Investment & Risk"
           title="What It Will Cost and What Could Go Wrong"
-          icon={<DollarSign className="w-4 h-4" />}
+          icon={<PoundSterling className="w-4 h-4" />}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Cost envelope */}
           <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-4 h-4 text-amber-400" />
+              <PoundSterling className="w-4 h-4 text-amber-400" />
               <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Cost Envelope by Phase</p>
               {liveCostEnvelope && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">Library v{liveCostEnvelope.libraryVersion}</span>}
               {strategyData?.provenanceJson && (
@@ -2004,7 +2010,7 @@ export default function AIStrategyPage() {
                             <p className="text-xs font-medium text-foreground">{meta.label.split("—")[1]?.trim() ?? meta.label}</p>
                             <p className="text-[10px] text-muted-foreground">{items.length} initiatives · {meta.months}</p>
                           </div>
-                          <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–{high}k</p>
+                          <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–£{high}k</p>
                         </div>
                         {isFoundationHigher && (
                           <p className="text-[10px] text-blue-400/70 mt-0.5 leading-relaxed">
@@ -2017,7 +2023,7 @@ export default function AIStrategyPage() {
                 })()}
                 <div className="border-t border-white/8 pt-3 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total (18-month envelope)</p>
-                  <p className="text-base font-bold text-amber-400">£{totalCostLow}k–{totalCostHigh}k</p>
+                  <p className="text-base font-bold text-amber-400">£{totalCostLow}k–£{totalCostHigh}k</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   {liveCostEnvelope?.caveat ?? "Indicative order-of-magnitude estimates. Excludes internal headcount, change management, and vendor licensing. Requires Finance sign-off before Phase 2 commitment."}
@@ -2083,7 +2089,7 @@ export default function AIStrategyPage() {
           return (
             <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-5 mt-5">
               <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="w-4 h-4 text-amber-400" />
+                <PoundSterling className="w-4 h-4 text-amber-400" />
                 <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Total Cost of Ownership (TCO)</p>
                 <span className="ml-auto text-[10px] text-muted-foreground">3-year horizon</span>
               </div>
@@ -2263,8 +2269,16 @@ export default function AIStrategyPage() {
           </div>
         )}
         {!valueEnvelopeQ.data && !valueEnvelopeQ.isLoading && selectedInitiativeIds.size === 0 && (
-          <div className="rounded-xl border border-white/8 bg-white/2 px-6 py-8 text-center text-sm text-muted-foreground">
-            Select initiatives in Section 3 to see the value envelope.
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/4 px-6 py-10 text-center">
+            <TrendingUp className="w-8 h-8 text-emerald-400/50 mx-auto mb-3" />
+            <p className="text-sm font-medium text-foreground mb-1">No initiatives selected yet</p>
+            <p className="text-xs text-muted-foreground max-w-xs mx-auto">Select initiatives in Section 3 (Plan) to calculate your value envelope, ROI scenarios, and reinvestment plan.</p>
+            <button
+              onClick={() => document.getElementById("plan")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="mt-4 text-xs text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition-colors"
+            >
+              Go to Section 3 →
+            </button>
           </div>
         )}
         {valueEnvelopeQ.data && (() => {
@@ -2711,6 +2725,9 @@ export default function AIStrategyPage() {
                               <span className="text-muted-foreground">ROI</span>
                               <span className={`font-semibold ${s.data.roi_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>{s.data.roi_pct}%</span>
                             </div>
+                            {s.data.roi_pct > 200 && (
+                              <p className="text-[10px] text-amber-400/80 mt-1.5 leading-snug">⚠️ High ROI — reflects 3-yr compounding. Validate with Finance before board presentation.</p>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -3279,7 +3296,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
                       <div className="grid grid-cols-3 gap-2">
                         <div>
                           <p className="text-[10px] text-muted-foreground">Base range</p>
-                          <p className="text-xs font-mono text-foreground">£{costData.baseRange[0]}k–{costData.baseRange[1]}k</p>
+                          <p className="text-xs font-mono text-foreground">£{costData.baseRange[0]}k–£{costData.baseRange[1]}k</p>
                         </div>
                         <div>
                           <p className="text-[10px] text-muted-foreground">Multipliers</p>

@@ -2775,3 +2775,17 @@
 
 ## Enhancement: Loading Screen Progress Bar
 - [x] Add time-based animated progress bar to GeneratingState so users can see how long they have to wait
+
+## QA Fixes — Strategy Dashboard Review (11 May 2026)
+- [x] Sidebar: reduce padding/item height so all 7 AI Strategy nav items are visible without scrolling
+- [x] AIStrategyPage: replace DollarSign icon with PoundSterling in TCO section
+- [x] AIStrategyPage: fix cost range formatting (£238k–£728k not £238k–728k) in roadmap phase cards
+- [x] AIStrategyPage: add credibility warning for scenario ROI > 200%
+- [x] AIStrategyPage: section nav bar — highlight active section on scroll (IntersectionObserver already in place, verified)
+- [x] AIStrategyPage: Section 5 empty state improved with icon, CTA, and link to Section 3
+- [x] AIStrategyPage: lock/unlock dead-end — show "Lock strategy" button when unlocked but unchanged
+- [x] AIStrategyPage: show guiding principles expanded by default (useState false→true)
+- [x] AIStrategyPage: rename "How?" toggle to "Why these exclusions?"
+- [x] AIStrategyPage: mobile — phase cards horizontal scroll with snap + min-w-[100px]
+- [x] AIStrategyPage: section number badge colour — increased opacity to 22% with accent border
+- [x] App.tsx: redirect /strategy/builder to /ai-strategy via wouter Redirect

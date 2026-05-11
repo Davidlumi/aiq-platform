@@ -251,11 +251,11 @@ function DashboardLayoutContent({
             {navSections.map(section => (
               <div key={section.section}>
                 {!isCollapsed && (
-                  <p className="px-4 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                  <p className="px-4 pt-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                     {section.section}
                   </p>
                 )}
-                <SidebarMenu className="px-2 py-0.5">
+                <SidebarMenu className="px-2 py-0">
                   {section.items.map(item => {
                     const isActive =
                       location === item.path ||
@@ -266,7 +266,7 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className={`h-9 transition-all font-normal relative ${
+                          className={`h-8 transition-all font-normal relative ${
                             isActive
                               ? "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:rounded-full before:bg-primary"  /* v2.2: 3px left active border */
                               : ""
