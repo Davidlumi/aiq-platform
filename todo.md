@@ -2816,3 +2816,13 @@
 - [x] Build polished PDF renderer — board-quality layout with AiQ branding, charts, tables
 - [x] Wire Export Board Pack button in AIStrategyPage.tsx to /api/pdf/board_pack
 - [x] TypeScript 0 errors, 899/899 tests passing, module loads cleanly
+
+## PDF Board Pack Rebuild (QA Fixes)
+- [ ] Fix blank pages — diagnose and fix PDFKit content rendering failures
+- [ ] Fix wrong KPI data on cover (assessment metrics shown instead of strategy metrics)
+- [ ] Fix "Test target" placeholder text on cover page
+- [ ] Fix "Content Library v1.3.0" wrong header text
+- [ ] Fix text overflow on guiding principles page
+- [ ] Rebuild with proper content density — 15-20 substantive pages, no blank pages
+- [ ] Add visual data elements: initiative table, financial summary table, roadmap timeline
+- [ ] Test PDF generation end-to-end with real strategy data

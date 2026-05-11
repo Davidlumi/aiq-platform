@@ -15,6 +15,7 @@
 import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
 import { generateBoardPackPDF } from "./pdfBoardPack";
+import { generateBoardPackPDFHtml } from "./pdfBoardPackHtml";
 import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
@@ -1394,6 +1395,16 @@ export function registerPdfRoutes(app: Express) {
       const filename = filenames[type];
       if (!filename) {
         res.status(400).json({ error: "Unknown PDF type" });
+        return;
+      }
+
+      // ── board_pack uses Puppeteer HTML renderer — handle before PDFDocument ──
+      if (type === "board_pack") {
+        const pdfBuffer = await generateBoardPackPDFHtml(user.id, user.tenantId);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Content-Length", String(pdfBuffer.length));
+        res.end(pdfBuffer);
         return;
       }
 
