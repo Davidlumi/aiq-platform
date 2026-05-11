@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ail_org_context ADD COLUMN commitments_json TEXT NULL AFTER wont_do_json;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute ALTER TABLE ail_org_context ADD COLUMN commitments_json TEXT NULL AFTER wont_do_json;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 483
+}

@@ -902,6 +902,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   wontDoJson: text("wont_do_json"),                                              // JSON: string[] - LLM-generated out-of-scope items
+  commitmentsJson: text("commitments_json"),                                        // JSON: string[] - user-editable "by end of period" commitments (3 items)
   structuredInputsJson: text("structured_inputs_json"),                          // JSON: B1 structured assessment inputs {business_outcomes, business_problems, timeline_months, risk_appetite, success_markers_ranked, hr_leadership_position, hr_processes_priority, governance_principles, voice_capture}
   operationalBaselineJson: text("operational_baseline_json"),                    // JSON: B2 operational baseline {hires_per_year, cost_per_hire_gbp, time_to_fill_days, voluntary_attrition_rate_pct, l_and_d_spend_per_fte_gbp, hr_cost_per_fte_gbp, _sector_default_used: {field: bool}}
   provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources

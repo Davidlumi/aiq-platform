@@ -2839,3 +2839,20 @@
 - [x] CRITICAL BUG FIXED: Removed 11 duplicate drawFooter() calls from slide sections
 - [x] Verified: only 2 drawFooter calls remain (inside newPage, and final page)
 - [x] TypeScript: 0 errors. Tests: 899/899 passing.
+
+## HR AI Strategy Dashboard Rebuild (11 May 2026)
+- [x] Phase 0: Discovery report — codebase, schema, components, design tokens, routing, auth
+- [x] Phase 0: Editability map for Ambition page confirmed (vision, commitments, wontDo, guidingPrinciples inline-editable; wizard-sourced fields display-only)
+- [x] Schema: Added commitmentsJson column to ail_org_context table
+- [x] Backend: Added commitmentsJson to getStrategyAssessment return and saveStrategyAssessment input
+- [x] Backend: Added patchStrategyField procedure for fine-grained field saves
+- [x] Phase 1: Built StrategyOverviewPage at /strategy (context bar, hero, six-card grid, next-steps footer)
+- [x] Phase 1: Wired /strategy route in App.tsx; /ai-strategy redirects to /strategy
+- [x] Phase 1: Updated AppShell navigation to point HR AI Strategy to /strategy
+- [x] Phase 2: Built StrategyDiagnosticPage at /strategy/diagnostic (domain radar, gap table, sector benchmark)
+- [x] Phase 2: Built StrategyAmbitionPage at /strategy/ambition (inline-editable vision, commitments, wontDo, guidingPrinciples)
+- [x] Phase 2: Built StrategyPlanPage at /strategy/plan (initiative roadmap by phase, detail modal)
+- [x] Phase 2: Built StrategyInvestmentRiskPage at /strategy/investment-risk (cost envelope, risk register)
+- [x] Phase 2: Built StrategyValuePage at /strategy/value (value envelope KPIs, per-initiative breakdown)
+- [x] Phase 2: Built StrategyMeasurementPage at /strategy/measurement (cadence, KPIs, governance)
+- [x] QA: TypeScript 0 errors. Tests: 899/899 passing.

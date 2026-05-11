@@ -85,7 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   // -- AI Strategy (CPO only) ---------------------------------------------------
   {
     label: "HR AI Strategy",
-    path: "/ai-strategy",
+    path: "/strategy",
     icon: Target,
     roles: CPO_ROLES,
     section: "aistrategy",

@@ -28,6 +28,13 @@ import MaturityProgressionPage from "./pages/dashboard/MaturityProgressionPage";
 import ManagerHubPage from "./pages/dashboard/ManagerHubPage";
 import ContentRequestsPage from "./pages/dashboard/ContentRequestsPage";
 import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
+import StrategyOverviewPage from "./pages/strategy/StrategyOverviewPage";
+import StrategyDiagnosticPage from "./pages/strategy/StrategyDiagnosticPage";
+import StrategyAmbitionPage from "./pages/strategy/StrategyAmbitionPage";
+import StrategyPlanPage from "./pages/strategy/StrategyPlanPage";
+import StrategyInvestmentRiskPage from "./pages/strategy/StrategyInvestmentRiskPage";
+import StrategyValuePage from "./pages/strategy/StrategyValuePage";
+import StrategyMeasurementPage from "./pages/strategy/StrategyMeasurementPage";
 import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
 import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
 import CompanyAssessmentResultsPage from "./pages/company/CompanyAssessmentResultsPage";
@@ -206,11 +213,32 @@ function Router() {
       <Route path="/reports">
         <ProtectedRoute component={ReportsPage} />
       </Route>
+      <Route path="/strategy">
+        <ProtectedRoute component={StrategyOverviewPage} />
+      </Route>
+      <Route path="/strategy/diagnostic">
+        <ProtectedRoute component={StrategyDiagnosticPage} />
+      </Route>
+      <Route path="/strategy/ambition">
+        <ProtectedRoute component={StrategyAmbitionPage} />
+      </Route>
+      <Route path="/strategy/plan">
+        <ProtectedRoute component={StrategyPlanPage} />
+      </Route>
+      <Route path="/strategy/investment-risk">
+        <ProtectedRoute component={StrategyInvestmentRiskPage} />
+      </Route>
+      <Route path="/strategy/value">
+        <ProtectedRoute component={StrategyValuePage} />
+      </Route>
+      <Route path="/strategy/measurement">
+        <ProtectedRoute component={StrategyMeasurementPage} />
+      </Route>
       <Route path="/ai-strategy">
         <ProtectedRoute component={AIStrategyPage} />
       </Route>
       <Route path="/strategy/builder">
-        <Redirect to="/ai-strategy" />
+        <Redirect to="/strategy" />
       </Route>
       <Route path="/ai-strategy/assessment">
         <ProtectedRoute component={HRAIStrategyAssessmentPage} />

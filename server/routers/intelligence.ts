@@ -452,13 +452,14 @@ export const intelligenceRouter = router({
       peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
       selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
       wontDoJson: ailOrgContext.wontDoJson,
+      commitmentsJson: ailOrgContext.commitmentsJson,
       structuredInputsJson: ailOrgContext.structuredInputsJson,
       operationalBaselineJson: ailOrgContext.operationalBaselineJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
     const row = rows[0] ?? null;
-    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[] };
+    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null };
     const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
     return {
       completed: !!row.strategyAssessmentCompletedAt,
@@ -471,6 +472,7 @@ export const intelligenceRouter = router({
       peopleAmbitionLevel: row.peopleAmbitionLevel ?? null,
       selectedInitiativeIds: (parse(row.selectedInitiativesJson) as string[] ?? []),
       wontDo: parse(row.wontDoJson ?? null) as string[] | null,
+      commitments: parse(row.commitmentsJson ?? null) as string[] | null,
       structuredInputs: parse(row.structuredInputsJson ?? null),
       operationalBaseline: parse(row.operationalBaselineJson ?? null),
     };
@@ -570,6 +572,7 @@ Return JSON with this exact structure:
       visionStatement: z.string(),
       guidingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })),
       wontDo: z.array(z.string()).optional(),
+      commitments: z.array(z.string()).optional(),
       businessAmbitionLevel: z.number().int().min(1).max(5),
       peopleAmbitionLevel: z.number().int().min(1).max(5),
       selectedInitiativeIds: z.array(z.string()).optional(),
@@ -595,6 +598,7 @@ Return JSON with this exact structure:
         visionStatement: input.visionStatement,
         guidingPrinciplesJson: JSON.stringify(input.guidingPrinciples),
         wontDoJson: input.wontDo ? JSON.stringify(input.wontDo) : null,
+        commitmentsJson: input.commitments !== undefined ? JSON.stringify(input.commitments) : undefined,
         provenanceJson: input.provenanceJson ?? null,
         structuredInputsJson: input.structuredInputsJson ?? null,
         operationalBaselineJson: input.operationalBaselineJson ?? null,
@@ -611,6 +615,39 @@ Return JSON with this exact structure:
       } else {
         await db.insert(ailOrgContext).values({ id: nanoid(), tenantId: ctx.user.tenantId, ...payload });
       }
+      return { success: true };
+    }),
+
+  /**
+   * Patch a single editable field on the strategy assessment.
+   * Used for auto-save on blur from section pages.
+   * Supported fields: visionStatement, wontDo, commitments, guidingPrinciples.
+   */
+  patchStrategyField: protectedProcedure
+    .input(z.discriminatedUnion("field", [
+      z.object({ field: z.literal("visionStatement"), value: z.string() }),
+      z.object({ field: z.literal("wontDo"), value: z.array(z.string()) }),
+      z.object({ field: z.literal("commitments"), value: z.array(z.string()) }),
+      z.object({ field: z.literal("guidingPrinciples"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
+    ]))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
+      let patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
+      if (input.field === "visionStatement") patch.visionStatement = input.value;
+      else if (input.field === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
+      else if (input.field === "commitments") patch.commitmentsJson = JSON.stringify(input.value);
+      else if (input.field === "guidingPrinciples") patch.guidingPrinciplesJson = JSON.stringify(input.value);
+      await db.update(ailOrgContext).set(patch).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { success: true };
     }),
 
