@@ -605,7 +605,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
 
   if (commentaryAmbition) aiCommentary(doc, commentaryAmbition, counter, orgName, libVer, hdr01);
 
-  drawFooter(doc, counter.n, orgName, libVer);
 
   // ══════════════════════════════════════════════════════════════════════════
   // SLIDE 2 — VISION & GUIDING PRINCIPLES
@@ -661,7 +660,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     }
   }
 
-  drawFooter(doc, counter.n, orgName, libVer);
 
   // ══════════════════════════════════════════════════════════════════════════
   // SLIDE 3 — CAPABILITY BASELINE
@@ -699,7 +697,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
 
   if (commentaryCapability) aiCommentary(doc, commentaryCapability, counter, orgName, libVer, hdr03);
 
-  drawFooter(doc, counter.n, orgName, libVer);
 
   // ══════════════════════════════════════════════════════════════════════════
   // SLIDE 4 — INITIATIVE PORTFOLIO
@@ -746,7 +743,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       }
     }
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -806,7 +802,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       }
     }
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -846,7 +841,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       doc.moveDown(0.8);
     }
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -907,7 +901,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
        .text(`Note: ${valueEnvelope.caveat}`, MARGIN + 8, doc.y + 5, { width: CONTENT_W - 16 });
     doc.y += 26;
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -985,7 +978,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       }
     }
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1056,7 +1048,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       }
     }
 
-    drawFooter(doc, counter.n, orgName, libVer);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1113,7 +1104,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     bullet(doc, kpi);
   }
 
-  drawFooter(doc, counter.n, orgName, libVer);
 
   // ══════════════════════════════════════════════════════════════════════════
   // SLIDE 11 — METHODOLOGY & ASSUMPTIONS
@@ -1170,5 +1160,4 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   drawFooter(doc, counter.n, orgName, libVer);
 
   // Final footer on last page
-  drawFooter(doc, counter.n, orgName, libVer);
 }

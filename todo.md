@@ -2830,3 +2830,12 @@
 ## Data Quality Fixes (QA)
 - [x] Fix "other" and "talent" role families in heatmap — updated DB records to hr_leadership
 - [x] Fix library.json git_sha showing unknown — updated to aiq-v1.3.0
+## PDF Board Pack Blank Pages Root Cause Fix (11 May 2026)
+- [x] CRITICAL BUG FIXED: Removed 11 duplicate drawFooter() calls from slide sections — newPage() already calls drawFooter() before adding a new page, so each slide section was calling it again (double/triple footer = blank pages between every slide)
+- [x] Verified: only 2 drawFooter calls remain — one inside newPage() (correct), one at end of document (correct)
+- [x] TypeScript: 0 errors. Tests: 899/899 passing.
+
+## PDF Board Pack Blank Pages Root Cause Fix (11 May 2026)
+- [x] CRITICAL BUG FIXED: Removed 11 duplicate drawFooter() calls from slide sections
+- [x] Verified: only 2 drawFooter calls remain (inside newPage, and final page)
+- [x] TypeScript: 0 errors. Tests: 899/899 passing.
