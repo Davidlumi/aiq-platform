@@ -2757,7 +2757,7 @@
 - [ ] C3: Strategy regeneration audit — check audit log, document cause of initiative change (deferred)
 
 ### Cross-cutting
-- [ ] PDF export: verify corrected vision + numbers + conditional reinvestment + CEO sponsorship appear in PDF (deferred)
+- [x] PDF export: verify corrected vision + numbers + conditional reinvestment + CEO sponsorship appear in PDF — fixed with PDFKit renderer (replaced broken Puppeteer), sectionLabel y-coordinate bug, typical_phase mapping, box text positioning
 - [ ] Backwards compatibility: implement Option C (legacy flag on existing strategies with regenerate prompt) (deferred)
 - [x] Existing tests: audit and update tests asserting specific calculation outputs (899/899 passing)
 
@@ -2818,7 +2818,7 @@
 - [x] TypeScript 0 errors, 899/899 tests passing, module loads cleanly
 
 ## PDF Board Pack Rebuild (QA Fixes)
-- [x] Fix blank pages — replaced PDFKit with Puppeteer HTML renderer, no blank pages
+- [x] Fix blank pages — replaced broken Puppeteer HTML renderer with PDFKit (zero system dependencies, works in production)
 - [x] Fix wrong KPI data on cover — cover now shows strategy KPIs (initiatives, investment, net value, payback)
 - [x] Fix "Test target" placeholder text on cover page — updated DB ambition target label
 - [x] Fix "Content Library v1.3.0" wrong header text — fixed library.json git_sha from unknown to aiq-v1.3.0
