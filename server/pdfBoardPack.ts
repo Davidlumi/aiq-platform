@@ -225,10 +225,11 @@ function progressBar(doc: PDFKitDoc, label: string, current: number | null, targ
 /** Section divider line */
 function sectionLabel(doc: PDFKitDoc, text: string) {
   doc.moveDown(0.4);
-  doc.rect(MARGIN, doc.y, CONTENT_W, 18).fill(C.navyMid);
+  const labelY = doc.y;
+  doc.rect(MARGIN, labelY, CONTENT_W, 18).fill(C.navyMid);
   doc.fontSize(7.5).font("Helvetica-Bold").fillColor(C.gold)
-     .text(text.toUpperCase(), MARGIN + 8, doc.y - 13, { width: CONTENT_W - 16 });
-  doc.moveDown(0.5);
+     .text(text.toUpperCase(), MARGIN + 8, labelY + 5, { width: CONTENT_W - 16 });
+  doc.y = labelY + 24;
 }
 
 /** Bullet point */
@@ -685,7 +686,10 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
 
     const phases: Record<string, typeof allInitiatives> = { phase_1: [], phase_2: [], phase_3: [] };
     for (const init of selectedInits) {
-      const ph = (init as any).phase ?? "phase_1";
+      const typicalPhase = (init as any).typical_phase ?? "foundation";
+      const ph = typicalPhase === "scale" || typicalPhase === "optimise" ? "phase_3"
+               : typicalPhase === "build" ? "phase_2"
+               : "phase_1";
       if (!phases[ph]) phases[ph] = [];
       phases[ph].push(init);
     }
@@ -706,10 +710,10 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
         doc.rect(MARGIN, iY, 3, 26).fill(ph.colour);
         doc.fontSize(8.5).font("Helvetica-Bold").fillColor(C.navy)
            .text((init as any).display_name ?? init.initiative_id, MARGIN + 10, iY, { width: CONTENT_W - 10 });
-        const desc = (init as any).description ?? "";
+        const desc = (init as any).short_description ?? (init as any).description ?? "";
         if (desc) {
           doc.fontSize(7.5).font("Helvetica").fillColor(C.slate)
-             .text(desc.slice(0, 200) + (desc.length > 200 ? "…" : ""), MARGIN + 10, iY + 13, { width: CONTENT_W - 10, lineGap: 1 });
+             .text(desc.slice(0, 200) + (desc.length > 200 ? "\u2026" : ""), MARGIN + 10, iY + 13, { width: CONTENT_W - 10, lineGap: 1 });
         }
         doc.y = iY + 30;
       }
@@ -963,13 +967,14 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     if (reinvestment) {
       sectionLabel(doc, `Reinvestment Plan — ${reinvestment.case === "both_positive" ? "Value Reinvestment" : reinvestment.case === "straddles_zero" ? "Selective Reinvestment" : "Foundation Investment"}`);
       needsPage(doc, 60, counter, orgName, libVer);
-      doc.rect(MARGIN, doc.y, CONTENT_W, 50).fill(C.tealPale);
-      doc.rect(MARGIN, doc.y, 3, 50).fill(C.teal);
+      const reinvY = doc.y;
+      doc.rect(MARGIN, reinvY, CONTENT_W, 50).fill(C.tealPale);
+      doc.rect(MARGIN, reinvY, 3, 50).fill(C.teal);
       doc.fontSize(9).font("Helvetica-Bold").fillColor(C.navy)
-         .text(reinvestment.headline, MARGIN + 10, doc.y + 6, { width: CONTENT_W - 20 });
+         .text(reinvestment.headline, MARGIN + 10, reinvY + 6, { width: CONTENT_W - 20 });
       doc.fontSize(7.5).font("Helvetica").fillColor(C.slate)
-         .text(reinvestment.narrative, MARGIN + 10, doc.y + 4, { width: CONTENT_W - 20, lineGap: 2 });
-      doc.y += 56;
+         .text(reinvestment.narrative, MARGIN + 10, reinvY + 22, { width: CONTENT_W - 20, lineGap: 2 });
+      doc.y = reinvY + 56;
 
       if (reinvestment.suggested_reinvestment_gbp) {
         needsPage(doc, 24, counter, orgName, libVer);
@@ -995,13 +1000,14 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     if (ceoSponsorship?.required) {
       needsPage(doc, 60, counter, orgName, libVer);
       sectionLabel(doc, "CEO Sponsorship Recommendation");
-      doc.rect(MARGIN, doc.y, CONTENT_W, 50).fill(C.goldPale);
-      doc.rect(MARGIN, doc.y, 3, 50).fill(C.gold);
+      const ceoY = doc.y;
+      doc.rect(MARGIN, ceoY, CONTENT_W, 50).fill(C.goldPale);
+      doc.rect(MARGIN, ceoY, 3, 50).fill(C.gold);
       doc.fontSize(9).font("Helvetica-Bold").fillColor(C.navy)
-         .text("CEO Sponsorship Recommended", MARGIN + 10, doc.y + 6, { width: CONTENT_W - 20 });
+         .text("CEO Sponsorship Recommended", MARGIN + 10, ceoY + 6, { width: CONTENT_W - 20 });
       doc.fontSize(7.5).font("Helvetica").fillColor(C.slate)
-         .text(ceoSponsorship.rationale, MARGIN + 10, doc.y + 4, { width: CONTENT_W - 20, lineGap: 2 });
-      doc.y += 56;
+         .text(ceoSponsorship.rationale, MARGIN + 10, ceoY + 22, { width: CONTENT_W - 20, lineGap: 2 });
+      doc.y = ceoY + 56;
 
       if (ceoSponsorship.suggested_framing) {
         needsPage(doc, 28, counter, orgName, libVer);
