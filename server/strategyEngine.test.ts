@@ -443,13 +443,15 @@ import {
 import { getInitiative, getAllInitiatives } from "./contentLibrary";
 
 // Minimal operational baseline for value envelope tests
+// hr_cost_per_fte_gbp = total HR function spend / total headcount (per-employee-served)
+// Correct UK 2026 range: £1,000–£2,000 per employee served
 const BASELINE = {
   hires_per_year: 100,
   cost_per_hire_gbp: 5000,
   time_to_fill_days: 30,
   voluntary_attrition_rate_pct: 12,
   l_and_d_spend_per_fte_gbp: 500,
-  hr_cost_per_fte_gbp: 45000,
+  hr_cost_per_fte_gbp: 1400,
 };
 
 // Helper: get a list of Initiative objects by IDs
@@ -568,7 +570,7 @@ describe("calculateValueEnvelope (A1, B4, B5)", () => {
     const result = calculateValueEnvelope([init], BASELINE, 36);
     const item = result.by_initiative.find(i => i.initiative_id === "skills_intelligence_platform");
     if (!item || !item.quantified_value_gbp) return;
-    expect(item.monetisation_breakdown).toMatch(/internal fills/i);
+    expect(item.monetisation_breakdown).toMatch(/internal mobility uplift/i);
   });
 
   it("returns empty by_initiative when no initiatives are selected", () => {
@@ -609,7 +611,7 @@ describe("skills_intelligence_platform formula — concentration guard", () => {
     time_to_fill_days: 38,
     voluntary_attrition_rate_pct: 15,
     l_and_d_spend_per_fte_gbp: 400,
-    hr_cost_per_fte_gbp: 12000,
+    hr_cost_per_fte_gbp: 1200, // per-employee-served (total HR spend / total headcount)
   };
   const SMALL_BASELINE = {
     ...LARGE_BASELINE,
@@ -676,7 +678,7 @@ describe("A5: NPV sanity — positive NPV for plausible profiles", () => {
     time_to_fill_days: 30,
     voluntary_attrition_rate_pct: 12,
     l_and_d_spend_per_fte_gbp: 500,
-    hr_cost_per_fte_gbp: 45000,
+    hr_cost_per_fte_gbp: 1400, // per-employee-served (UK 2026 benchmark: £1,000–£2,000)
     headcount: 1000,
   };
   const CORE_IDS = [
@@ -719,7 +721,7 @@ describe("A5: Multi-profile plausibility — value scales with org size", () => 
     time_to_fill_days: 25,
     voluntary_attrition_rate_pct: 10,
     l_and_d_spend_per_fte_gbp: 400,
-    hr_cost_per_fte_gbp: 40000,
+    hr_cost_per_fte_gbp: 1200, // per-employee-served
     headcount: 150,
   };
   const ENTERPRISE_BASELINE = {
@@ -728,7 +730,7 @@ describe("A5: Multi-profile plausibility — value scales with org size", () => 
     time_to_fill_days: 45,
     voluntary_attrition_rate_pct: 15,
     l_and_d_spend_per_fte_gbp: 800,
-    hr_cost_per_fte_gbp: 55000,
+    hr_cost_per_fte_gbp: 1600, // per-employee-served (large org, higher HR cost ratio)
     headcount: 10000,
   };
   const CORE_IDS = [
@@ -754,7 +756,7 @@ describe("A5: Multi-profile plausibility — value scales with org size", () => 
     const PLAUSIBLE_BASELINE = {
       hires_per_year: 100, cost_per_hire_gbp: 5000, time_to_fill_days: 30,
       voluntary_attrition_rate_pct: 12, l_and_d_spend_per_fte_gbp: 500,
-      hr_cost_per_fte_gbp: 45000, headcount: 1000,
+      hr_cost_per_fte_gbp: 1400, headcount: 1000, // per-employee-served
     };
     const small = calculateValueEnvelope(inits, SMALL_BASELINE, 36);
     const plausible = calculateValueEnvelope(inits, PLAUSIBLE_BASELINE, 36);
@@ -767,10 +769,11 @@ describe("A5: Multi-profile plausibility — value scales with org size", () => 
       // payback_period_months is a { low, high } range object
       const p = result.payback_period_months as { low: number; high: number };
       if (typeof p === 'object') {
-        expect(p.low).toBeGreaterThan(0);
+        // p.low can be 0 for large enterprises where payback < 1 month (rounds to 0)
+        expect(p.low).toBeGreaterThanOrEqual(0);
         expect(p.high).toBeGreaterThanOrEqual(p.low);
       } else {
-        expect(p).toBeGreaterThan(0);
+        expect(p).toBeGreaterThanOrEqual(0);
       }
     }
   });
@@ -790,7 +793,7 @@ describe("C1: reinvestment_plan — conditional on net value", () => {
     time_to_fill_days: 30,
     voluntary_attrition_rate_pct: 12,
     l_and_d_spend_per_fte_gbp: 500,
-    hr_cost_per_fte_gbp: 45000,
+    hr_cost_per_fte_gbp: 1400, // per-employee-served
     headcount: 1000,
   };
   const CORE_IDS = [
@@ -833,7 +836,7 @@ describe("C2: ceo_sponsorship — trigger logic", () => {
     time_to_fill_days: 30,
     voluntary_attrition_rate_pct: 12,
     l_and_d_spend_per_fte_gbp: 500,
-    hr_cost_per_fte_gbp: 45000,
+    hr_cost_per_fte_gbp: 1400, // per-employee-served
     headcount: 1000,
   };
   it("ceo_sponsorship is present on the result", () => {
@@ -869,7 +872,7 @@ describe("A5: Formula consistency — net value = total value - TCO", () => {
     time_to_fill_days: 30,
     voluntary_attrition_rate_pct: 12,
     l_and_d_spend_per_fte_gbp: 500,
-    hr_cost_per_fte_gbp: 45000,
+    hr_cost_per_fte_gbp: 1400, // per-employee-served
     headcount: 1000,
   };
   const CORE_IDS = [

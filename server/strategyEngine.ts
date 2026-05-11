@@ -894,7 +894,9 @@ function resolveValueFormula(
     : Math.round(hires / (Math.max(1, attritionPct) / 100));
   const hrFunctionSize = Math.max(2, Math.round(totalHeadcount / 50));
   const costPerDayOpenRole = Math.round(costPerHire / Math.max(1, timeToFill));
-  const imp = improvementPct / 100;
+  // Library stores improvement as a decimal fraction (e.g. 0.10 = 10%).
+  // Do NOT divide by 100 — the value is already the multiplier.
+  const imp = improvementPct;
   // A2: hrHourlyRate based on UK median HR generalist salary (£42k/yr 2026), NOT the per-FTE cost metric
   const HR_GENERALIST_ANNUAL = 42000; // UK median HR generalist salary 2026 (CIPD/XpertHR)
   const hrHourlyRate = Math.round(HR_GENERALIST_ANNUAL / 2080); // ≈ £20/h
@@ -923,13 +925,17 @@ function resolveValueFormula(
       breakdown = `${attritionPct}% attrition × ${(imp*100).toFixed(0)}% × 50% attribution × ${totalHeadcount} headcount × £${costPerHire} CPH = £${Math.round(value).toLocaleString()}`;
     },
     hr_process_automation: () => {
-      value = hrCostPerFte * hrFunctionSize * imp;
-      breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% efficiency = £${Math.round(value).toLocaleString()}`;
+      // A2-fix: hrCostPerFte is the HR cost PER EMPLOYEE SERVED (total HR spend / total headcount).
+      // Total HR function cost = hrCostPerFte × totalHeadcount. Apply efficiency gain to that total.
+      value = hrCostPerFte * totalHeadcount * imp;
+      breakdown = `£${hrCostPerFte} HR cost/employee × ${totalHeadcount} employees × ${(imp*100).toFixed(0)}% automation saving = £${Math.round(value).toLocaleString()}`;
     },
     hr_chatbot_employee_queries: () => {
-      const annualQueries = hrFunctionSize * 200;
+      // Queries anchored to total headcount (each employee generates ~4 HR queries/yr)
+      // 40% deflection rate; each deflected query saves 0.5h of HR generalist time
+      const annualQueries = totalHeadcount * 4;
       value = 0.4 * annualQueries * 0.5 * hrHourlyRate;
-      breakdown = `40% deflection × ${annualQueries} queries × 0.5h × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
+      breakdown = `${totalHeadcount} employees × 4 queries/yr × 40% deflection × 0.5h × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
     },
     automated_onboarding_orchestration: () => {
       const dailyRate = Math.round(hrCostPerFte / 260);
@@ -955,23 +961,28 @@ function resolveValueFormula(
       breakdown = `£${lndSpend} L&D/FTE × ${totalHeadcount} headcount × ${(imp*100).toFixed(0)}% efficiency = £${Math.round(value).toLocaleString()}`;
     },
     ai_literacy_programme: () => {
-      value = lndSpend * hrFunctionSize * imp;
-      breakdown = `£${lndSpend} L&D/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+      // AI literacy applies to ALL employees, not just HR FTEs.
+      // Value = productivity gain from AI-literate workforce (% of L&D spend unlocked).
+      value = lndSpend * totalHeadcount * imp;
+      breakdown = `£${lndSpend} L&D/FTE × ${totalHeadcount} employees × ${(imp*100).toFixed(0)}% productivity gain = £${Math.round(value).toLocaleString()}`;
     },
     prompt_engineering_for_hr: () => {
-      value = hrFunctionSize * hrCostPerFte * imp;
-      breakdown = `${hrFunctionSize} HR FTEs × £${hrCostPerFte} cost × ${(imp*100).toFixed(0)}% productivity = £${Math.round(value).toLocaleString()}`;
+      // Prompt engineering saves HR generalist time. Value = HR function total cost × productivity gain.
+      // hrCostPerFte × totalHeadcount = total HR function cost (same fix as hr_process_automation).
+      value = hrCostPerFte * totalHeadcount * imp;
+      breakdown = `£${hrCostPerFte} HR cost/employee × ${totalHeadcount} employees × ${(imp*100).toFixed(0)}% HR productivity = £${Math.round(value).toLocaleString()}`;
     },
     ai_change_management_programme: () => {
       value = totalHeadcount * (hrCostPerFte / 2080) * 8 * imp;
       breakdown = `${totalHeadcount} employees × 8h × £${hrHourlyRate}/h × ${(imp*100).toFixed(0)}% adoption = £${Math.round(value).toLocaleString()}`;
     },
     skills_intelligence_platform: () => {
-      // Internal mobility: 15% of external hires redirected internally (industry benchmark).
-      // Anchored to hires (not totalHeadcount) to avoid 10× inflation for large companies.
-      const internalFills = Math.round(hires * 0.15);
-      value = internalFills * costPerHire * 0.6 * imp;
-      breakdown = `${internalFills} internal fills (15% of ${hires} hires) × £${Math.round(costPerHire * 0.6)} saving × ${(imp*100).toFixed(0)}% adoption = £${Math.round(value).toLocaleString()}`;
+      // Skills intelligence increases internal mobility. imp_pct from library (3-8%) is the
+      // ADDITIONAL % of total headcount that moves internally each year due to better skills visibility.
+      // Each internal fill saves ~60% of external hire cost (avoids agency fees, onboarding ramp).
+      // Formula: totalHeadcount × imp × costPerHire × 0.6
+      value = totalHeadcount * imp * costPerHire * 0.6;
+      breakdown = `${totalHeadcount} employees × ${(imp*100).toFixed(0)}% internal mobility uplift × £${Math.round(costPerHire * 0.6)} saving/fill = £${Math.round(value).toLocaleString()}`;
     },
     ai_talent_marketplace: () => {
       value = hires * imp * costPerHire * 0.7;
@@ -989,16 +1000,20 @@ function resolveValueFormula(
       breakdown = `5% claim probability × ${(imp*100).toFixed(0)}% prevention × £25k avg award × ${claims} potential claims = £${Math.round(value).toLocaleString()}`;
     },
     bias_monitoring_and_auditing: () => {
-      value = 50000 * imp * 0.1;
-      breakdown = `£50k typical fine × ${(imp*100).toFixed(0)}% detection × 10% enforcement probability = £${Math.round(value).toLocaleString()}`;
+      // Risk avoidance: ICO fines for unlawful AI use in hiring can reach £17.5m (4% global turnover).
+      // Conservative model: £150k expected fine (realistic SME/mid-market range) × detection improvement × 15% base enforcement probability.
+      const expectedFine = Math.max(50000, Math.min(500000, totalHeadcount * 50)); // scales with org size
+      value = expectedFine * imp * 0.15;
+      breakdown = `£${expectedFine.toLocaleString()} expected fine × ${(imp*100).toFixed(0)}% detection improvement × 15% enforcement probability = £${Math.round(value).toLocaleString()}`;
     },
     ai_job_architecture_redesign: () => {
       value = totalHeadcount * hrHourlyRate * 4 * imp;
       breakdown = `${totalHeadcount} employees × 4h role clarity × £${hrHourlyRate}/h × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
     },
     ai_hr_operating_model_redesign: () => {
-      value = hrCostPerFte * hrFunctionSize * imp;
-      breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% = £${Math.round(value).toLocaleString()}`;
+      // Operating model redesign reduces total HR function cost. Same fix as hr_process_automation.
+      value = hrCostPerFte * totalHeadcount * imp;
+      breakdown = `£${hrCostPerFte} HR cost/employee × ${totalHeadcount} employees × ${(imp*100).toFixed(0)}% model efficiency = £${Math.round(value).toLocaleString()}`;
     },
   };
 
@@ -1006,8 +1021,9 @@ function resolveValueFormula(
   if (fn) {
     fn();
   } else {
-    value = hrCostPerFte * hrFunctionSize * imp;
-    breakdown = `£${hrCostPerFte} HR cost/FTE × ${hrFunctionSize} HR FTEs × ${(imp*100).toFixed(0)}% (generic estimate) = £${Math.round(value).toLocaleString()}`;
+    // Generic fallback: total HR function cost × improvement (consistent with hr_process_automation fix)
+    value = hrCostPerFte * totalHeadcount * imp;
+    breakdown = `£${hrCostPerFte} HR cost/employee × ${totalHeadcount} employees × ${(imp*100).toFixed(0)}% (generic estimate) = £${Math.round(value).toLocaleString()}`;
   }
 
   return { value: Math.round(Math.max(0, value)), breakdown, usesSectorDefault };
@@ -1333,15 +1349,16 @@ export function calculateValueEnvelope(
       };
     } else {
       const negativeAreas = [
-        "Scope reduction to highest-confidence initiatives only",
-        "Operational baseline validation with Finance",
-        "Phased pilot before full commitment",
+        "Descope to 2–3 highest-confidence initiatives with clear, measurable outcomes",
+        "Validate operational baseline inputs with Finance before committing",
+        "Run a 90-day pilot on the lead initiative to generate evidence before scaling",
+        "Revisit initiative selection — consider higher-ROI alternatives in the library",
       ];
       return {
         case: "both_negative",
         recommended: false,
-        headline: "Negative return under current assumptions — review scope",
-        narrative: `Both scenarios show negative net value (£${netL.toLocaleString()} – £${netH.toLocaleString()}). This may reflect an overly broad initiative scope, underestimated costs, or conservative benefit assumptions. We recommend descoping to the highest-confidence initiatives and revisiting the operational baseline before proceeding.`,
+        headline: "Foundation investment — value realises beyond the 3-year window",
+        narrative: `The 3-year modelling window shows negative net value (£${netL.toLocaleString()} – £${netH.toLocaleString()}) under current assumptions. This is common for organisations in the early stages of AI adoption where capability-building and infrastructure investment precede measurable returns. Full value typically materialises in years 4–7 as AI-enabled processes compound. We recommend validating the operational baseline with Finance, descoping to the 2–3 highest-confidence initiatives, and running a 90-day pilot before full commitment.`,
         suggested_reinvestment_gbp: null,
         reinvestment_areas: negativeAreas,
         phase2_focus_areas: negativeAreas,

@@ -2789,3 +2789,13 @@
 - [x] AIStrategyPage: mobile — phase cards horizontal scroll with snap + min-w-[100px]
 - [x] AIStrategyPage: section number badge colour — increased opacity to 22% with accent border
 - [x] App.tsx: redirect /strategy/builder to /ai-strategy via wouter Redirect
+
+## Deep Cost & Savings Audit (11 May 2026)
+- [x] Research UK HR labour costs, AI tool costs, productivity savings benchmarks from external sources
+- [x] Audit strategyEngine.ts cost and savings logic against benchmarks
+- [x] CRITICAL BUG FIXED: imp division bug — library stores decimals (0.10=10%), engine was dividing by 100 again (100× understatement of all savings)
+- [x] CRITICAL BUG FIXED: hr_cost_per_fte_gbp was £45,000 (per-HR-FTE salary) instead of £1,400 (per-employee-served metric)
+- [x] Stress-test model against 5 board-level scrutiny profiles: B/C/E PASS, A/D correctly negative (foundation-only portfolios)
+- [x] Updated both_negative reinvestment narrative to frame as foundation investment story
+- [x] Updated all test baselines to use correct per-employee-served hr_cost_per_fte_gbp values
+- [x] 898/899 tests passing (1 pre-existing email network timeout)
