@@ -4,7 +4,52 @@
  * Produces a polished A4 board-quality PDF with AI commentary.
  */
 
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import sparticuzChromium from "@sparticuz/chromium";
+import { execSync } from "child_process";
+import * as fs from "fs";
+
+/** Find the best available Chromium/Chrome executable at runtime.
+ *  Priority: env var > system binary > @sparticuz/chromium (bundled)
+ */
+async function resolveChromium(): Promise<{ executablePath: string; args: string[] }> {
+  const baseArgs = [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    "--disable-software-rasterizer",
+  ];
+
+  // 1. Explicit env override
+  if (process.env.CHROME_EXECUTABLE_PATH) {
+    return { executablePath: process.env.CHROME_EXECUTABLE_PATH, args: baseArgs };
+  }
+
+  // 2. Common Linux system paths
+  const candidates = [
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/local/bin/chromium",
+    "/snap/bin/chromium",
+  ];
+  for (const p of candidates) {
+    try { if (fs.existsSync(p)) return { executablePath: p, args: baseArgs }; } catch { /* skip */ }
+  }
+  for (const cmd of ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable"]) {
+    try {
+      const found = execSync(`which ${cmd} 2>/dev/null`, { stdio: ["pipe", "pipe", "ignore"] }).toString().trim();
+      if (found) return { executablePath: found, args: baseArgs };
+    } catch { /* not found */ }
+  }
+
+  // 3. Fall back to @sparticuz/chromium (bundled binary, works in any container)
+  sparticuzChromium.setGraphicsMode = false;
+  const executablePath = await sparticuzChromium.executablePath();
+  return { executablePath, args: [...sparticuzChromium.args, ...baseArgs] };
+}
 import { getDb, getTenantById } from "./db";
 import { ailOrgContext, users, assessmentSessions, assessmentScores } from "../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -786,9 +831,11 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
 </html>`;
 
   // ── Render to PDF via Puppeteer ───────────────────────────────────────────
+  const { executablePath, args: chromiumArgs } = await resolveChromium();
   const browser = await puppeteer.launch({
+    executablePath,
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: chromiumArgs,
   });
   try {
     const page = await browser.newPage();
