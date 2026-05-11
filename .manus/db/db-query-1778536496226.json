@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ail_org_context ADD COLUMN snapshot_domain_scores_json TEXT NULL COMMENT 'JSON: Record domain scores captured at strategy save time for drift detection';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute ALTER TABLE ail_org_context ADD COLUMN snapshot_domain_scores_json TEXT NULL COMMENT 'JSON: Record domain scores captured at strategy save time for drift detection';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 488
+}

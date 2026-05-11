@@ -315,6 +315,7 @@ export const intelligenceRouter = router({
       wontDoJson: ailOrgContext.wontDoJson,
       provenanceJson: ailOrgContext.provenanceJson,
       libraryVersion: ailOrgContext.libraryVersion,
+      snapshotDomainScoresJson: ailOrgContext.snapshotDomainScoresJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -325,6 +326,8 @@ export const intelligenceRouter = router({
       ambitionTargetScore: null, ambitionTargetDate: null, ambitionTargetLabel: null,
       selectedInitiativeIds: [] as string[],
       wontDo: [] as string[], provenanceJson: null as string | null, libraryVersion: null as string | null,
+      snapshotDomainScores: null as Record<string, number | null> | null,
+      currentDomainScores: {} as Record<string, number | null>,
     };
     let domainTargets: Record<string, number> | null = null;
     if (row.domainTargetsJson) {
@@ -356,6 +359,10 @@ export const intelligenceRouter = router({
     for (const k of DOMAIN_KEYS_STRAT) {
       currentDomainScores[k] = domainTotals[k].count > 0 ? Math.round(domainTotals[k].total / domainTotals[k].count) : null;
     }
+    let snapshotDomainScores: Record<string, number | null> | null = null;
+    if (row.snapshotDomainScoresJson) {
+      try { snapshotDomainScores = typeof row.snapshotDomainScoresJson === "string" ? JSON.parse(row.snapshotDomainScoresJson) : row.snapshotDomainScoresJson as Record<string, number | null>; } catch {}
+    }
     return {
       configured: !!(row.businessAmbitionLevel && row.peopleAmbitionLevel),
       businessAmbitionLevel: row.businessAmbitionLevel,
@@ -367,6 +374,7 @@ export const intelligenceRouter = router({
       ambitionTargetDate: row.ambitionTargetDate,
       ambitionTargetLabel: row.ambitionTargetLabel,
       currentDomainScores,
+      snapshotDomainScores,
       selectedInitiativeIds: (() => { try { return JSON.parse(row.selectedInitiativesJson ?? "[]") as string[]; } catch { return [] as string[]; } })(),
       wontDo: (() => { try { return row.wontDoJson ? JSON.parse(row.wontDoJson) as string[] : [] as string[]; } catch { return [] as string[]; } })(),
       provenanceJson: row.provenanceJson ?? null,
@@ -401,6 +409,33 @@ export const intelligenceRouter = router({
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
       const selectedInitiativesJson = JSON.stringify(input.selectedInitiativeIds ?? []);
+      // Capture current domain scores as snapshot at strategy save time (for drift detection)
+      const DOMAIN_KEYS_SNAP = ["ai_interaction","ai_output_evaluation","ai_workflow_design","workforce_ai_readiness","ai_ethics_trust","ai_change_leadership"] as const;
+      const snapTotals: Record<string, { total: number; count: number }> = {};
+      for (const k of DOMAIN_KEYS_SNAP) snapTotals[k] = { total: 0, count: 0 };
+      const tenantUsersSnap = await db.select({ id: users.id }).from(users).where(eq(users.tenantId, ctx.user.tenantId));
+      for (const u of tenantUsersSnap) {
+        const latestSession = await db.select({ id: assessmentSessions.id }).from(assessmentSessions)
+          .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+          .orderBy(desc(assessmentSessions.completedAt)).limit(1);
+        if (!latestSession[0]) continue;
+        const score = await db.select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson }).from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, latestSession[0].id)).limit(1);
+        if (!score[0]?.scoreBreakdownJson) continue;
+        const bd = score[0].scoreBreakdownJson as Record<string, unknown>;
+        const cap = bd.capabilityScores as Record<string, unknown> | undefined;
+        if (!cap) continue;
+        for (const k of DOMAIN_KEYS_SNAP) {
+          const v = cap[k];
+          const num = typeof v === "number" ? v : (v && typeof v === "object" && "score" in (v as any)) ? Number((v as any).score) : null;
+          if (num !== null && !isNaN(num)) { snapTotals[k].total += num; snapTotals[k].count++; }
+        }
+      }
+      const snapshotScores: Record<string, number | null> = {};
+      for (const k of DOMAIN_KEYS_SNAP) {
+        snapshotScores[k] = snapTotals[k].count > 0 ? Math.round(snapTotals[k].total / snapTotals[k].count) : null;
+      }
+      const snapshotDomainScoresJson = JSON.stringify(snapshotScores);
       if (existing.length > 0) {
         await db.update(ailOrgContext).set({
           businessAmbitionLevel: input.businessAmbitionLevel,
@@ -412,6 +447,7 @@ export const intelligenceRouter = router({
           ambitionTargetDate: input.ambitionTargetDate ?? null,
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,
           selectedInitiativesJson,
+          snapshotDomainScoresJson,
           updatedAt: new Date(),
         }).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       } else {
@@ -427,6 +463,7 @@ export const intelligenceRouter = router({
           ambitionTargetDate: input.ambitionTargetDate ?? null,
           ambitionTargetLabel: input.ambitionTargetLabel ?? null,
           selectedInitiativesJson,
+          snapshotDomainScoresJson,
         });
       }
       return { success: true };
