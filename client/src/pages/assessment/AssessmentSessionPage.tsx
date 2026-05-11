@@ -509,6 +509,9 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
+// Estimated generation time in ms — matches the last GENERATING_STEPS delay + a small buffer
+const ESTIMATED_GENERATION_MS = 7000;
+
 function GeneratingState({ answeredCount, totalItems }: { answeredCount: number; totalItems: number }) {
   const progress = totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0;
   const [activeStep, setActiveStep] = useState(0);
@@ -519,6 +522,22 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
     return queueRef.current.shift()!;
   });
   const [factVisible, setFactVisible] = useState(true);
+
+  // Time-based progress bar — counts up from 0 to ~95% over ESTIMATED_GENERATION_MS,
+  // then holds at 95% until the component unmounts (question arrived)
+  const startTimeRef = useRef(Date.now());
+  const [genProgress, setGenProgress] = useState(0);
+  useEffect(() => {
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      // Ease-out curve: fast start, slows near the end, caps at 95%
+      const raw = elapsed / ESTIMATED_GENERATION_MS;
+      const eased = 1 - Math.pow(1 - Math.min(raw, 1), 2); // ease-out quad
+      setGenProgress(Math.min(Math.round(eased * 95), 95));
+    };
+    const id = setInterval(tick, 80);
+    return () => clearInterval(id);
+  }, []);
 
   // Advance generating steps
   useEffect(() => {
@@ -545,6 +564,9 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
   }, []);
 
   const fact = AI_FACTS[factIndex];
+  // Remaining seconds label
+  const elapsed = Math.min((Date.now() - startTimeRef.current) / 1000, ESTIMATED_GENERATION_MS / 1000);
+  const remaining = Math.max(0, Math.ceil(ESTIMATED_GENERATION_MS / 1000 - elapsed));
 
   return (
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
@@ -564,25 +586,46 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
         className="rounded-2xl border border-white/10 overflow-hidden"
         style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(59,78,255,0.08) 100%)" }}
       >
-        {/* Top bar */}
-        <div className="flex items-center gap-2 px-5 py-3 border-b border-white/8">
-          <div className="relative flex items-center justify-center">
-            {/* Pulsing rings */}
-            <span className="absolute w-8 h-8 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.15)", animationDuration: "1.8s" }} />
-            <span className="absolute w-6 h-6 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.2)", animationDuration: "1.8s", animationDelay: "0.3s" }} />
-            <div className="relative w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)" }}>
-              <Sparkles className="w-3.5 h-3.5" style={{ color: "#10B981" }} />
+        {/* Top bar — generation progress */}
+        <div className="px-5 pt-4 pb-3 border-b border-white/8 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center shrink-0">
+              <span className="absolute w-8 h-8 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.15)", animationDuration: "1.8s" }} />
+              <span className="absolute w-6 h-6 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.2)", animationDuration: "1.8s", animationDelay: "0.3s" }} />
+              <div className="relative w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)" }}>
+                <Sparkles className="w-3.5 h-3.5" style={{ color: "#10B981" }} />
+              </div>
+            </div>
+            <p className="text-xs font-semibold" style={{ color: "#10B981" }}>Generating your next question…</p>
+            <div className="ml-auto flex items-center gap-1.5">
+              {[0,1,2].map(i => (
+                <span key={i} className="w-1.5 h-1.5 rounded-full" style={{
+                  background: "#10B981",
+                  opacity: 0.9,
+                  animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                }} />
+              ))}
             </div>
           </div>
-          <p className="text-xs font-semibold" style={{ color: "#10B981" }}>Generating your next question…</p>
-          <div className="ml-auto flex items-center gap-1">
-            {[0,1,2].map(i => (
-              <span key={i} className="w-1.5 h-1.5 rounded-full" style={{
-                background: "#10B981",
-                opacity: 0.9,
-                animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-              }} />
-            ))}
+          {/* Time-based generation progress bar */}
+          <div className="space-y-1">
+            <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-all"
+                style={{
+                  width: `${genProgress}%`,
+                  background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)",
+                  transition: "width 0.15s ease-out",
+                  boxShadow: "0 0 8px rgba(16,185,129,0.6)",
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground">{genProgress}% ready</span>
+              {remaining > 0 && (
+                <span className="text-[10px] text-muted-foreground">~{remaining}s remaining</span>
+              )}
+            </div>
           </div>
         </div>
 

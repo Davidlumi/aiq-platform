@@ -2772,3 +2772,6 @@
 ## Enhancement: AI Facts — No-Repeat Shuffle
 - [x] Expand AI_FACTS pool from 30 to 75 unique entries across 7 themed categories
 - [x] Replace sequential rotation with Fisher-Yates shuffle-without-replacement (restart only when all shown)
+
+## Enhancement: Loading Screen Progress Bar
+- [x] Add time-based animated progress bar to GeneratingState so users can see how long they have to wait
