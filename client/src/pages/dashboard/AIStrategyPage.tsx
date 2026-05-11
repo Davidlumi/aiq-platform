@@ -1328,10 +1328,10 @@ export default function AIStrategyPage() {
               </>
             )}
             {/* Export PDF — Executive view only */}
-            <a href="/api/pdf/ai_strategy" target="_blank" rel="noopener noreferrer">
+            <a href="/api/pdf/board_pack" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="h-7 text-xs px-3 border-white/15 text-foreground hover:bg-white/8">
                 <Download className="w-3 h-3 mr-1" />
-                Export (Executive PDF)
+                Export Board Pack
               </Button>
             </a>
           </div>

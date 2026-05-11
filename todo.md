@@ -2808,3 +2808,11 @@
 - [x] Fix 5: TCO internal costs — added internal_resource_gbp at 15% of implementation cost
 - [x] Fix 6: AI Literacy reclassification — qualitative_value_only: true in library.json
 - [x] Fix 7: Skills mobility cap — high improvement reduced from 0.08 to 0.05 in library.json
+
+## Feature: Polished PDF Board Pack Export (Strategy Dashboard)
+- [x] Read existing PDF export code and strategy data structures
+- [x] Design 12-slide board pack structure (cover, context, vision, principles, initiatives, roadmap, investment, value, risk, measurement, reinvestment, appendix)
+- [x] Build server-side PDF generation with AI commentary (invokeLLM per section) — pdfBoardPack.ts
+- [x] Build polished PDF renderer — board-quality layout with AiQ branding, charts, tables
+- [x] Wire Export Board Pack button in AIStrategyPage.tsx to /api/pdf/board_pack
+- [x] TypeScript 0 errors, 899/899 tests passing, module loads cleanly

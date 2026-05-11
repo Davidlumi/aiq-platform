@@ -14,6 +14,7 @@
 
 import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
+import { generateBoardPackPDF } from "./pdfBoardPack";
 import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
@@ -1387,6 +1388,7 @@ export function registerPdfRoutes(app: Express) {
         team_dashboard:     "aiq-team-dashboard.pdf",
         capability_profile: "aiq-capability-profile.pdf",
         ai_strategy:        "aiq-ai-strategy-report.pdf",
+        board_pack:         "aiq-hr-ai-strategy-board-pack.pdf",
       };
 
       const filename = filenames[type];
@@ -1420,6 +1422,9 @@ export function registerPdfRoutes(app: Express) {
           break;
         case "ai_strategy":
           await generateAIStrategyReport(doc, user.id, user.tenantId);
+          break;
+        case "board_pack":
+          await generateBoardPackPDF(doc, user.id, user.tenantId);
           break;
       }
 
