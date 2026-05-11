@@ -787,12 +787,16 @@ export interface TotalCostOfOwnership {
   change_management_gbp: { low: number; high: number }; // 12-15% of implementation
   training_gbp:          { low: number; high: number }; // £200-400 per affected FTE
   ongoing_annual_gbp:    { low: number; high: number }; // 18-20% of implementation per year
+  /** CFO Fix 5: internal project management, integration, procurement — 15% of implementation */
+  internal_resource_gbp: { low: number; high: number };
   total_3yr_gbp:         { low: number; high: number };
 }
 // C3 — NPV / IRR
 export interface FinancialModel {
   npv_gbp:           { low: number; high: number };
   irr_pct:           { low: number; high: number } | null;
+  /** CFO Fix 4: true when IRR > 100% — IRR is unreliable at these levels; use NPV and payback instead */
+  irr_suppressed:    boolean;
   discount_rate_pct: number;
   horizon_years:     number;
 }
@@ -917,8 +921,11 @@ function resolveValueFormula(
       breakdown = `${hires} hires × 3h drafting × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()} annual saving`;
     },
     predictive_attrition_modelling: () => {
-      value = (attritionPct / 100) * imp * totalHeadcount * costPerHire;
-      breakdown = `${attritionPct}% attrition × ${(imp*100).toFixed(0)}% improvement × ${totalHeadcount} headcount × £${costPerHire} CPH = £${Math.round(value).toLocaleString()}`;
+      // CFO Fix 2: Apply 50% attribution discount — predictive model identifies at-risk employees
+      // but retention requires management action. Attribution factor = 0.5.
+      const rawValue = (attritionPct / 100) * imp * totalHeadcount * costPerHire;
+      value = rawValue * 0.5;
+      breakdown = `${attritionPct}% attrition × ${(imp*100).toFixed(0)}% improvement × ${totalHeadcount} headcount × £${costPerHire} CPH × 50% attribution = £${Math.round(value).toLocaleString()}`;
     },
     ai_employee_listening: () => {
       value = (attritionPct / 100) * imp * 0.5 * totalHeadcount * costPerHire;
@@ -938,11 +945,13 @@ function resolveValueFormula(
       breakdown = `${totalHeadcount} employees × 4 queries/yr × 40% deflection × 0.5h × £${hrHourlyRate}/h = £${Math.round(value).toLocaleString()}`;
     },
     automated_onboarding_orchestration: () => {
-      const dailyRate = Math.round(hrCostPerFte / 260);
+      // CFO Fix 1: Use employee daily rate (salary proxy) for productivity component, not HR cost/employee.
+      // Proxy: costPerHire × 6.5 ≈ annual salary; divide by 260 working days.
+      const empDailyRate = Math.round((costPerHire * 6.5) / 260);
       const admin = hires * 4 * hrHourlyRate;
-      const productivity = hires * 5 * dailyRate;
+      const productivity = hires * 5 * empDailyRate;
       value = admin + productivity;
-      breakdown = `${hires} hires × (4h admin @ £${hrHourlyRate}/h + 5d productivity @ £${dailyRate}/d) = £${Math.round(value).toLocaleString()}`;
+      breakdown = `${hires} hires × (4h admin @ £${hrHourlyRate}/h + 5d ramp @ £${empDailyRate}/d employee rate) = £${Math.round(value).toLocaleString()}`;
     },
     people_analytics_dashboard: () => {
       value = hrFunctionSize * 40 * hrHourlyRate;
@@ -1159,14 +1168,21 @@ export function calculateValueEnvelope(
   const ongoingAnnualLow  = ongoingAnnualLow_pre;
   const ongoingAnnualHigh = ongoingAnnualHigh_pre;
   const horizonYears = horizonYears_pre;
+  // CFO Fix 5: Internal resource cost — project management, integration, procurement, legal/compliance
+  // Estimated at 15% of implementation cost (conservative; real programmes often 20-25%)
+  const internalResourceLow  = Math.round(approxCostLow  * 0.15);
+  const internalResourceHigh = Math.round(approxCostHigh * 0.15);
+  const tco3yrLowAdj  = tco3yrLow  + internalResourceLow;
+  const tco3yrHighAdj = tco3yrHigh + internalResourceHigh;
   const tco: TotalCostOfOwnership = {
-    implementation_gbp:    { low: approxCostLow,    high: approxCostHigh    },
-    change_management_gbp: { low: changeMgmtLow,    high: changeMgmtHigh    },
-    training_gbp:          { low: trainingLow,       high: trainingHigh      },
-    ongoing_annual_gbp:    { low: ongoingAnnualLow,  high: ongoingAnnualHigh },
+    implementation_gbp:    { low: approxCostLow,       high: approxCostHigh       },
+    change_management_gbp: { low: changeMgmtLow,       high: changeMgmtHigh       },
+    training_gbp:          { low: trainingLow,          high: trainingHigh         },
+    ongoing_annual_gbp:    { low: ongoingAnnualLow,     high: ongoingAnnualHigh    },
+    internal_resource_gbp: { low: internalResourceLow,  high: internalResourceHigh },
     total_3yr_gbp: {
-      low:  tco3yrLow,
-      high: tco3yrHigh,
+      low:  tco3yrLowAdj,
+      high: tco3yrHighAdj,
     },
   };
 
@@ -1286,9 +1302,12 @@ export function calculateValueEnvelope(
   const npvHigh = calcNPV(annualValueHigh2, totalCostLow3yr,  horizonYears);
   const irrLow  = calcIRR(annualValueLow2,  totalCostHigh3yr, horizonYears);
   const irrHigh = calcIRR(annualValueHigh2, totalCostLow3yr,  horizonYears);
+  // CFO Fix 4: Suppress IRR when > 100% — unreliable metric at these levels (NPV + payback preferred)
+  const irrSuppressed = (irrHigh !== null && irrHigh > 100) || (irrLow !== null && irrLow > 100);
   const financial_model: FinancialModel = {
     npv_gbp:           { low: npvLow, high: npvHigh },
     irr_pct:           (irrLow !== null && irrHigh !== null) ? { low: irrLow, high: irrHigh } : null,
+    irr_suppressed:    irrSuppressed,
     discount_rate_pct: DISCOUNT_RATE * 100,
     horizon_years:     horizonYears,
   };
@@ -1301,12 +1320,17 @@ export function calculateValueEnvelope(
   const optValue  = grossValue3yrHigh * 1.20;
   const pessCost  = approxCostHigh * 1.10;
   const optCost   = approxCostLow  * 0.90;
-  const toRoi = (v: number, c: number) => c > 0 ? Math.round(((v - c) / c) * 100) : 0;
+  // CFO Fix 3: Cap ROI display at 500% — values above this are not credible for board presentation
+  const ROI_DISPLAY_CAP = 500;
+  const toRoi = (v: number, c: number) => c > 0 ? Math.min(ROI_DISPLAY_CAP, Math.round(((v - c) / c) * 100)) : 0;
+  const toRoiUncapped = (v: number, c: number) => c > 0 ? Math.round(((v - c) / c) * 100) : 0;
   const scenario_analysis: ScenarioAnalysis = {
     pessimistic: { value_gbp: Math.round(pessValue), net_gbp: Math.round(pessValue - pessCost), roi_pct: toRoi(pessValue, pessCost) },
     base:        { value_gbp: Math.round(baseValue), net_gbp: Math.round(baseValue - baseCost),  roi_pct: toRoi(baseValue, baseCost)  },
     optimistic:  { value_gbp: Math.round(optValue),  net_gbp: Math.round(optValue  - optCost),   roi_pct: toRoi(optValue,  optCost)   },
   };
+  // Store uncapped ROI for internal use (tests, audit)
+  void toRoiUncapped;
 
   // C1: Conditional reinvestment plan
   const buildReinvestmentPlan = (): ReinvestmentPlan => {

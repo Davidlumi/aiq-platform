@@ -2799,3 +2799,12 @@
 - [x] Updated both_negative reinvestment narrative to frame as foundation investment story
 - [x] Updated all test baselines to use correct per-employee-served hr_cost_per_fte_gbp values
 - [x] 898/899 tests passing (1 pre-existing email network timeout)
+
+## CFO Board-Ready Fixes (7 items — 11 May 2026)
+- [x] Fix 1: Onboarding productivity rate — replaced hrCostPerFte/260 with employee daily rate proxy (£55k/260 = £212/day)
+- [x] Fix 2: Attrition attribution discount — applied 25% attribution factor to predictive_attrition_modelling
+- [x] Fix 3: Scenario ROI cap — capped at 500% in engine; UI shows ">500%" with warning
+- [x] Fix 4: IRR suppression — IRR hidden when > 100%; payback period shown instead
+- [x] Fix 5: TCO internal costs — added internal_resource_gbp at 15% of implementation cost
+- [x] Fix 6: AI Literacy reclassification — qualitative_value_only: true in library.json
+- [x] Fix 7: Skills mobility cap — high improvement reduced from 0.08 to 0.05 in library.json

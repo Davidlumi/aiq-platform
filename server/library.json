@@ -14,7 +14,7 @@
   "sources": {
     "src_lumi_framework_v3": {
       "source_id": "src_lumi_framework_v3",
-      "citation": "Lumi HR \u2014 HR AiQ Capability Framework v3 (Internal)",
+      "citation": "Lumi HR — HR AiQ Capability Framework v3 (Internal)",
       "source_type": "internal",
       "publication_date": "2026-01-01",
       "accessed": "2026-05-07",
@@ -25,7 +25,7 @@
     },
     "src_cipd_2025_capability": {
       "source_id": "src_cipd_2025_capability",
-      "citation": "CIPD \u2014 People Profession and AI: Skills and Capability Survey 2025",
+      "citation": "CIPD — People Profession and AI: Skills and Capability Survey 2025",
       "source_type": "primary",
       "url": "https://www.cipd.org/uk/knowledge/reports/people-profession-ai-skills/",
       "publication_date": "2025-06-01",
@@ -37,7 +37,7 @@
     },
     "src_mckinsey_lnd_2024": {
       "source_id": "src_mckinsey_lnd_2024",
-      "citation": "McKinsey & Company \u2014 Closing the AI Skills Gap: Learning and Development in the Age of AI (2024)",
+      "citation": "McKinsey & Company — Closing the AI Skills Gap: Learning and Development in the Age of AI (2024)",
       "source_type": "secondary",
       "url": "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/closing-the-ai-skills-gap",
       "publication_date": "2024-09-01",
@@ -49,7 +49,7 @@
     },
     "src_lumi_design_partners_2025": {
       "source_id": "src_lumi_design_partners_2025",
-      "citation": "Lumi HR \u2014 Design Partner Research 2025 (Internal)",
+      "citation": "Lumi HR — Design Partner Research 2025 (Internal)",
       "source_type": "internal",
       "publication_date": "2025-12-01",
       "accessed": "2026-05-07",
@@ -60,7 +60,7 @@
     },
     "src_eu_ai_act_2024": {
       "source_id": "src_eu_ai_act_2024",
-      "citation": "European Parliament \u2014 Regulation (EU) 2024/1689 on Artificial Intelligence (EU AI Act)",
+      "citation": "European Parliament — Regulation (EU) 2024/1689 on Artificial Intelligence (EU AI Act)",
       "source_type": "primary",
       "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689",
       "publication_date": "2024-07-12",
@@ -72,7 +72,7 @@
     },
     "src_ico_guidance_hr_ai_2025": {
       "source_id": "src_ico_guidance_hr_ai_2025",
-      "citation": "ICO \u2014 Guidance on AI and Employment: Data Protection Considerations for HR Use Cases (2025)",
+      "citation": "ICO — Guidance on AI and Employment: Data Protection Considerations for HR Use Cases (2025)",
       "source_type": "primary",
       "url": "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/",
       "publication_date": "2025-03-01",
@@ -84,7 +84,7 @@
     },
     "src_gartner_hr_tech_2025": {
       "source_id": "src_gartner_hr_tech_2025",
-      "citation": "Gartner \u2014 HR Technology Market Guide 2025",
+      "citation": "Gartner — HR Technology Market Guide 2025",
       "source_type": "secondary",
       "url": "https://www.gartner.com/en/human-resources/topics/hr-technology",
       "publication_date": "2025-04-01",
@@ -96,7 +96,7 @@
     },
     "src_gartner_data_readiness_2025": {
       "source_id": "src_gartner_data_readiness_2025",
-      "citation": "Gartner \u2014 Data and Analytics Readiness for AI: Enterprise Survey 2025",
+      "citation": "Gartner — Data and Analytics Readiness for AI: Enterprise Survey 2025",
       "source_type": "secondary",
       "url": "https://www.gartner.com/en/data-analytics/topics/data-readiness",
       "publication_date": "2025-02-01",
@@ -108,7 +108,7 @@
     },
     "src_deloitte_workforce_ai_2025": {
       "source_id": "src_deloitte_workforce_ai_2025",
-      "citation": "Deloitte \u2014 2025 Global Human Capital Trends: AI and the Future of Work",
+      "citation": "Deloitte — 2025 Global Human Capital Trends: AI and the Future of Work",
       "source_type": "secondary",
       "url": "https://www2.deloitte.com/global/en/pages/human-capital/articles/human-capital-trends.html",
       "publication_date": "2025-01-15",
@@ -120,7 +120,7 @@
     },
     "src_acas_ai_employment_2024": {
       "source_id": "src_acas_ai_employment_2024",
-      "citation": "Acas \u2014 Artificial Intelligence in the Workplace: Guidance for Employers (2024)",
+      "citation": "Acas — Artificial Intelligence in the Workplace: Guidance for Employers (2024)",
       "source_type": "primary",
       "url": "https://www.acas.org.uk/artificial-intelligence-in-the-workplace",
       "publication_date": "2024-11-01",
@@ -132,7 +132,7 @@
     },
     "src_wef_future_jobs_2025": {
       "source_id": "src_wef_future_jobs_2025",
-      "citation": "World Economic Forum \u2014 Future of Jobs Report 2025",
+      "citation": "World Economic Forum — Future of Jobs Report 2025",
       "source_type": "primary",
       "url": "https://www.weforum.org/reports/the-future-of-jobs-report-2025/",
       "publication_date": "2025-01-07",
@@ -144,7 +144,7 @@
     },
     "src_cipd_people_mgmt_2024": {
       "source_id": "src_cipd_people_mgmt_2024",
-      "citation": "CIPD \u2014 People Management and AI: Practical Guidance for HR Professionals (2024)",
+      "citation": "CIPD — People Management and AI: Practical Guidance for HR Professionals (2024)",
       "source_type": "primary",
       "url": "https://www.cipd.org/uk/knowledge/guides/ai-people-management/",
       "publication_date": "2024-10-01",
@@ -156,7 +156,7 @@
     },
     "src_ibm_ai_adoption_2025": {
       "source_id": "src_ibm_ai_adoption_2025",
-      "citation": "IBM Institute for Business Value \u2014 AI Adoption Index 2025",
+      "citation": "IBM Institute for Business Value — AI Adoption Index 2025",
       "source_type": "secondary",
       "url": "https://www.ibm.com/thought-leadership/institute-business-value/report/ai-adoption-index",
       "publication_date": "2025-05-01",
@@ -168,7 +168,7 @@
     },
     "src_pwc_workforce_upskilling_2025": {
       "source_id": "src_pwc_workforce_upskilling_2025",
-      "citation": "PwC \u2014 Workforce of the Future: Upskilling for the AI Economy (2025)",
+      "citation": "PwC — Workforce of the Future: Upskilling for the AI Economy (2025)",
       "source_type": "secondary",
       "url": "https://www.pwc.com/gx/en/issues/workforce/upskilling.html",
       "publication_date": "2025-03-01",
@@ -180,7 +180,7 @@
     },
     "src_nesta_ai_skills_2024": {
       "source_id": "src_nesta_ai_skills_2024",
-      "citation": "Nesta \u2014 AI Skills for the UK Economy: Mapping the Gap (2024)",
+      "citation": "Nesta — AI Skills for the UK Economy: Mapping the Gap (2024)",
       "source_type": "primary",
       "url": "https://www.nesta.org.uk/report/ai-skills-uk-economy/",
       "publication_date": "2024-07-01",
@@ -1716,7 +1716,7 @@
         "tier_id": "embracers",
         "display_name": "Embracers",
         "short_description": "HR professionals who adopt AI tools to improve their own productivity and the efficiency of HR operations. Focus is on using AI well, not leading AI transformation.\n",
-        "definition": "Embracers use AI as a productivity tool. They adopt sanctioned AI tools, follow usage guidelines, and apply AI to routine tasks to free up time for higher-value work. They are not expected to design AI workflows, lead change, or govern AI use \u2014 but they must be able to use AI safely and evaluate its outputs critically.\n",
+        "definition": "Embracers use AI as a productivity tool. They adopt sanctioned AI tools, follow usage guidelines, and apply AI to routine tasks to free up time for higher-value work. They are not expected to design AI workflows, lead change, or govern AI use — but they must be able to use AI safely and evaluate its outputs critically.\n",
         "capability_target_ranges": {
           "ai_workflow_design": [
             3.0,
@@ -1832,7 +1832,7 @@
         "framework_type": "ambition_tier",
         "tier_id": "transformative",
         "display_name": "Transformative",
-        "short_description": "HR functions that use AI to fundamentally redefine what HR does, how it operates, and how it creates value \u2014 including shaping the organisation's broader AI strategy and workforce transformation.\n",
+        "short_description": "HR functions that use AI to fundamentally redefine what HR does, how it operates, and how it creates value — including shaping the organisation's broader AI strategy and workforce transformation.\n",
         "definition": "Transformative HR functions use AI to redefine their operating model. They lead enterprise AI workforce strategy, design AI governance frameworks, and use AI to create new HR capabilities that did not previously exist. They are recognised internally and externally as AI leaders. The CHRO is a visible advocate for AI transformation at board level.\n",
         "capability_target_ranges": {
           "ai_workflow_design": [
@@ -1900,7 +1900,7 @@
         "short_description": "Reduction in time, cost, or headcount required to deliver HR processes.",
         "measurement_signals": [
           "Time-to-hire reduction (days)",
-          "HR admin cost per employee (\u00a3)",
+          "HR admin cost per employee (£)",
           "HR headcount ratio improvement",
           "Process cycle time reduction (%)"
         ],
@@ -2388,7 +2388,7 @@
           6
         ],
         "short_description": "Build the prerequisites for AI adoption: literacy, governance, data basics, and the change management infrastructure. Nothing in Build or Scale works without this.\n",
-        "purpose": "Foundation initiatives establish the conditions for everything that follows. They address the most common failure modes: low AI literacy leading to misuse, absent governance leading to regulatory exposure, and poor data quality blocking analytics. Foundation is not glamorous \u2014 it is the work that makes the rest possible.\n",
+        "purpose": "Foundation initiatives establish the conditions for everything that follows. They address the most common failure modes: low AI literacy leading to misuse, absent governance leading to regulatory exposure, and poor data quality blocking analytics. Foundation is not glamorous — it is the work that makes the rest possible.\n",
         "placement_criteria": [
           "Initiative requires no prior AI capability in the workforce",
           "Initiative addresses a prerequisite for higher-phase initiatives (literacy, data, governance)",
@@ -2620,7 +2620,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "monetisation_formula": "l_and_d_spend_per_fte × hr_function_size × improvement_pct",
           "sources": [
             "CIPD L&D Survey 2024",
             "McKinsey AI Upskilling ROI 2023"
@@ -2634,9 +2634,11 @@
         "qualitative_value": [
           "Faster AI adoption",
           "Reduced change resistance",
-          "Improved HR credibility"
+          "Improved HR credibility",
+          "Enables downstream AI initiative success"
         ],
-        "qualitative_value_only": false
+        "qualitative_value_only": true,
+        "qualitative_reclassification_note": "CFO Fix 6: L&D efficiency gains rarely materialise as cash savings — the budget is not reduced, more learning is delivered for the same spend. Reclassified as strategic/qualitative value. Quantified ROI should be built from hours-saved basis if needed."
       }
     },
     "ai_ethics_governance_framework": {
@@ -2673,7 +2675,7 @@
           "innovators": 1.0,
           "transformative": 1.3
         },
-        "caveat": "Excludes legal counsel fees for regulatory review. Budget \u00a35-15k separately for legal."
+        "caveat": "Excludes legal counsel fees for regulatory review. Budget £5-15k separately for legal."
       },
       "typical_risks": [
         {
@@ -2819,7 +2821,7 @@
             "low": 0.08,
             "high": 0.2
           },
-          "monetisation_formula": "hr_function_size \u00d7 hr_cost_per_fte \u00d7 improvement_pct",
+          "monetisation_formula": "hr_function_size × hr_cost_per_fte × improvement_pct",
           "sources": [
             "Stanford HAI Productivity Study 2024",
             "Accenture GenAI Workforce Report 2024"
@@ -2870,7 +2872,7 @@
           "innovators": 1.0,
           "transformative": 1.0
         },
-        "caveat": "Excludes legal review. Budget \u00a33-8k for legal counsel sign-off."
+        "caveat": "Excludes legal review. Budget £3-8k for legal counsel sign-off."
       },
       "typical_risks": [
         {
@@ -3113,7 +3115,7 @@
             "low": 0.15,
             "high": 0.35
           },
-          "monetisation_formula": "total_headcount \u00d7 8h \u00d7 hr_hourly_rate \u00d7 adoption_improvement_pct",
+          "monetisation_formula": "total_headcount × 8h × hr_hourly_rate × adoption_improvement_pct",
           "sources": [
             "Prosci Change Management ROI 2024",
             "Gartner Digital Adoption 2023"
@@ -3166,7 +3168,7 @@
           "innovators": 1.0,
           "transformative": 1.3
         },
-        "caveat": "Annual audit cost. Includes external auditor fees (\u00a315-40k/year). Excludes remediation."
+        "caveat": "Annual audit cost. Includes external auditor fees (£15-40k/year). Excludes remediation."
       },
       "typical_risks": [
         {
@@ -3226,7 +3228,7 @@
             "low": 0.5,
             "high": 0.9
           },
-          "monetisation_formula": "\u00a350k_typical_fine \u00d7 improvement_pct \u00d7 10%_enforcement_probability",
+          "monetisation_formula": "£50k_typical_fine × improvement_pct × 10%_enforcement_probability",
           "sources": [
             "ICO Enforcement Data 2024",
             "EU AI Act Impact Assessment 2024"
@@ -3338,7 +3340,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "monetisation_formula": "hr_cost_per_fte × hr_function_size × improvement_pct",
           "sources": [
             "Deloitte HR Automation ROI 2024",
             "KPMG Future of HR 2023"
@@ -3390,7 +3392,7 @@
           "innovators": 1.0,
           "transformative": 1.1
         },
-        "caveat": "Excludes AI tool licensing (budget \u00a35-20k/year). Assumes ATS integration is in scope."
+        "caveat": "Excludes AI tool licensing (budget £5-20k/year). Assumes ATS integration is in scope."
       },
       "typical_risks": [
         {
@@ -3441,7 +3443,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "hires_per_year \u00d7 3h_per_JD \u00d7 hr_hourly_rate \u00d7 improvement_pct",
+          "monetisation_formula": "hires_per_year × 3h_per_JD × hr_hourly_rate × improvement_pct",
           "sources": [
             "LinkedIn Talent Trends 2024",
             "CIPD Recruitment Survey 2024"
@@ -3553,7 +3555,7 @@
             "low": 0.3,
             "high": 0.5
           },
-          "monetisation_formula": "40%_deflection \u00d7 hr_function_size \u00d7 200_queries \u00d7 0.5h \u00d7 hr_hourly_rate",
+          "monetisation_formula": "40%_deflection × hr_function_size × 200_queries × 0.5h × hr_hourly_rate",
           "sources": [
             "ServiceNow HR Service Delivery Report 2024",
             "Gartner HR Technology 2023"
@@ -3666,7 +3668,7 @@
             "low": 0.2,
             "high": 0.4
           },
-          "monetisation_formula": "hr_function_size \u00d7 40h_per_year \u00d7 hr_hourly_rate",
+          "monetisation_formula": "hr_function_size × 40h_per_year × hr_hourly_rate",
           "sources": [
             "Visier People Analytics ROI 2024",
             "CIPD Analytics Report 2023"
@@ -3781,7 +3783,7 @@
             "low": 0.2,
             "high": 0.4
           },
-          "monetisation_formula": "total_headcount \u00d7 2h_per_cycle \u00d7 hr_hourly_rate",
+          "monetisation_formula": "total_headcount × 2h_per_cycle × hr_hourly_rate",
           "sources": [
             "Gartner Performance Management 2024",
             "Deloitte Human Capital Trends 2024"
@@ -3977,7 +3979,7 @@
             "low": 0.15,
             "high": 0.3
           },
-          "monetisation_formula": "hires \u00d7 4h_admin \u00d7 hr_hourly_rate + hires \u00d7 5d_productivity \u00d7 daily_rate",
+          "monetisation_formula": "hires × 4h_admin × hr_hourly_rate + hires × 5d_productivity × daily_rate",
           "sources": [
             "BambooHR Onboarding ROI 2024",
             "SHRM Onboarding Cost Study 2023"
@@ -4000,7 +4002,7 @@
       "initiative_id": "ai_assisted_cv_screening",
       "display_name": "AI-Assisted CV Screening",
       "category": "talent_acquisition",
-      "short_description": "Deployment of AI tools to screen and rank CVs against job requirements. Includes bias audit, transparency disclosure to candidates, and human review of AI rankings before shortlisting. High regulatory risk \u2014 requires governance framework.\n",
+      "short_description": "Deployment of AI tools to screen and rank CVs against job requirements. Includes bias audit, transparency disclosure to candidates, and human review of AI rankings before shortlisting. High regulatory risk — requires governance framework.\n",
       "capability_domains_addressed": [
         "ai_output_evaluation",
         "ai_ethics_and_trust"
@@ -4028,7 +4030,7 @@
           "innovators": 1.0,
           "transformative": 1.2
         },
-        "caveat": "Excludes ATS vendor costs. Legal review of candidate disclosure required (budget \u00a35-10k)."
+        "caveat": "Excludes ATS vendor costs. Legal review of candidate disclosure required (budget £5-10k)."
       },
       "typical_risks": [
         {
@@ -4092,7 +4094,7 @@
             "low": 0.3,
             "high": 0.6
           },
-          "monetisation_formula": "hires \u00d7 time_to_fill_reduction \u00d7 cost_per_hire_pct",
+          "monetisation_formula": "hires × time_to_fill_reduction × cost_per_hire_pct",
           "sources": [
             "LinkedIn Talent Solutions ROI 2024",
             "CIPD Resourcing Report 2024"
@@ -4208,7 +4210,7 @@
             "low": 0.05,
             "high": 0.15
           },
-          "monetisation_formula": "voluntary_attrition_rate \u00d7 total_headcount \u00d7 cost_per_hire \u00d7 improvement_pct",
+          "monetisation_formula": "voluntary_attrition_rate × total_headcount × cost_per_hire × improvement_pct",
           "sources": [
             "Gallup Employee Engagement 2024",
             "SHRM Turnover Cost Calculator 2023"
@@ -4322,9 +4324,9 @@
           "primary_metric": "Internal mobility rate improvement (external hire cost avoidance)",
           "typical_improvement_pct": {
             "low": 0.03,
-            "high": 0.08
+            "high": 0.05
           },
-          "monetisation_formula": "total_headcount \u00d7 5%_internal_fill \u00d7 cost_per_hire \u00d7 60%_saving",
+          "monetisation_formula": "total_headcount × 5%_internal_fill × cost_per_hire × 60%_saving",
           "sources": [
             "LinkedIn Workplace Learning Report 2024",
             "Deloitte Skills-Based Org 2024"
@@ -4333,7 +4335,8 @@
           "payback_months": {
             "low": 18,
             "high": 36
-          }
+          },
+          "cfo_note": "CFO Fix 7: High end capped at 5% (100 additional internal fills for 2000-person org) for base case. 8% remains as optimistic scenario assumption only."
         },
         "qualitative_value": [
           "Improved talent visibility",
@@ -4516,7 +4519,7 @@
             "low": 0.15,
             "high": 0.3
           },
-          "monetisation_formula": "l_and_d_spend_per_fte \u00d7 total_headcount \u00d7 improvement_pct",
+          "monetisation_formula": "l_and_d_spend_per_fte × total_headcount × improvement_pct",
           "sources": [
             "Josh Bersin Learning in the Flow of Work 2024",
             "LinkedIn Learning ROI 2024"
@@ -4629,7 +4632,7 @@
             "low": 0.4,
             "high": 0.8
           },
-          "monetisation_formula": "5%_claim_probability \u00d7 improvement_pct \u00d7 \u00a325k_avg_award \u00d7 headcount/100",
+          "monetisation_formula": "5%_claim_probability × improvement_pct × £25k_avg_award × headcount/100",
           "sources": [
             "EHRC Equal Pay Guidance 2024",
             "Korn Ferry Pay Equity Study 2023"
@@ -4826,7 +4829,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "monetisation_formula": "hr_cost_per_fte × hr_function_size × improvement_pct",
           "sources": [
             "Deloitte HR Transformation 2024",
             "KPMG Future of HR 2024"
@@ -5019,7 +5022,7 @@
             "low": 0.15,
             "high": 0.3
           },
-          "monetisation_formula": "managers \u00d7 20h_per_year \u00d7 manager_hourly_rate \u00d7 improvement_pct",
+          "monetisation_formula": "managers × 20h_per_year × manager_hourly_rate × improvement_pct",
           "sources": [
             "Gartner Manager Effectiveness 2024",
             "Harvard Business Review Coaching ROI 2023"
@@ -5136,7 +5139,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "hires \u00d7 improvement_pct \u00d7 cost_per_hire \u00d7 70%_saving",
+          "monetisation_formula": "hires × improvement_pct × cost_per_hire × 70%_saving",
           "sources": [
             "Gartner Talent Marketplace 2024",
             "Deloitte Internal Mobility 2023"
@@ -5159,7 +5162,7 @@
       "initiative_id": "ai_performance_calibration",
       "display_name": "AI-Assisted Performance Calibration",
       "category": "performance_management",
-      "short_description": "AI tool supporting performance calibration sessions: surfaces rating distribution anomalies, flags potential bias patterns (gender, ethnicity, tenure), and provides managers with evidence-based talking points. Does not replace human calibration \u2014 it prepares and informs it.\n",
+      "short_description": "AI tool supporting performance calibration sessions: surfaces rating distribution anomalies, flags potential bias patterns (gender, ethnicity, tenure), and provides managers with evidence-based talking points. Does not replace human calibration — it prepares and informs it.\n",
       "capability_domains_addressed": [
         "ai_output_evaluation",
         "ai_ethics_and_trust"
@@ -5252,7 +5255,7 @@
             "low": 0.2,
             "high": 0.4
           },
-          "monetisation_formula": "total_headcount \u00d7 1.5h_calibration \u00d7 hr_hourly_rate",
+          "monetisation_formula": "total_headcount × 1.5h_calibration × hr_hourly_rate",
           "sources": [
             "CEB/Gartner Performance Management 2024",
             "Deloitte Performance Trends 2023"
@@ -5275,7 +5278,7 @@
       "initiative_id": "ai_employee_listening",
       "display_name": "AI-Powered Employee Listening Programme",
       "category": "analytics",
-      "short_description": "Continuous employee listening using AI to analyse pulse survey data, exit interview themes, and open-text feedback at scale. Surfaces emerging themes, sentiment trends, and leading indicators of engagement risk \u2014 without requiring manual thematic analysis.\n",
+      "short_description": "Continuous employee listening using AI to analyse pulse survey data, exit interview themes, and open-text feedback at scale. Surfaces emerging themes, sentiment trends, and leading indicators of engagement risk — without requiring manual thematic analysis.\n",
       "capability_domains_addressed": [
         "ai_output_evaluation",
         "ai_interaction"
@@ -5467,7 +5470,7 @@
             "low": 0.05,
             "high": 0.15
           },
-          "monetisation_formula": "total_headcount \u00d7 4h_role_clarity \u00d7 hr_hourly_rate \u00d7 improvement_pct",
+          "monetisation_formula": "total_headcount × 4h_role_clarity × hr_hourly_rate × improvement_pct",
           "sources": [
             "Mercer Job Architecture ROI 2024",
             "Willis Towers Watson Role Clarity 2023"
@@ -5620,7 +5623,7 @@
           "innovators": 1.0,
           "transformative": 1.8
         },
-        "caveat": "Design and implementation consulting costs. Excludes recruitment costs for new roles (typically \u00a315-40k per hire) and restructuring costs."
+        "caveat": "Design and implementation consulting costs. Excludes recruitment costs for new roles (typically £15-40k per hire) and restructuring costs."
       },
       "typical_risks": [
         {
@@ -5684,7 +5687,7 @@
             "low": 0.1,
             "high": 0.25
           },
-          "monetisation_formula": "hr_cost_per_fte \u00d7 hr_function_size \u00d7 improvement_pct",
+          "monetisation_formula": "hr_cost_per_fte × hr_function_size × improvement_pct",
           "sources": [
             "Deloitte HR Transformation 2024",
             "KPMG Future of HR 2024"
@@ -6668,7 +6671,7 @@
       "display_name": "HR AI Vision Statement",
       "artefact_type": "vision",
       "version": "1.2",
-      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Current HR AI maturity: {{current_maturity_score}}/10\n- Target maturity: {{target_maturity_score}}/10\n- Ambition tier: {{ambition_tier}}\n- Primary business driver: {{primary_business_driver}}\n- Strategy horizon: {{strategy_horizon_months}} months\n\nWrite a 2-3 sentence HR AI vision statement for this organisation.\n\nRequirements:\n- Name the sector and business context explicitly\n- State what HR will be able to do differently as a result of this strategy\n- Include one specific, falsifiable outcome (a number, a capability, a behaviour)\n- Write in third person (\"{{company_name}}'s HR function will...\")\n- Do NOT use generic phrases like \"world-class\", \"best-in-class\", \"cutting-edge\", \"transformative journey\", \"unlock potential\", \"empower employees\", or \"leverage AI\"\n- Do NOT write a values statement \u2014 write a capability statement\n- Do NOT mention \"AI\" in every sentence \u2014 focus on what the capability enables\n\nOutput: Vision statement only. No preamble, no bullet points.\n",
+      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Current HR AI maturity: {{current_maturity_score}}/10\n- Target maturity: {{target_maturity_score}}/10\n- Ambition tier: {{ambition_tier}}\n- Primary business driver: {{primary_business_driver}}\n- Strategy horizon: {{strategy_horizon_months}} months\n\nWrite a 2-3 sentence HR AI vision statement for this organisation.\n\nRequirements:\n- Name the sector and business context explicitly\n- State what HR will be able to do differently as a result of this strategy\n- Include one specific, falsifiable outcome (a number, a capability, a behaviour)\n- Write in third person (\"{{company_name}}'s HR function will...\")\n- Do NOT use generic phrases like \"world-class\", \"best-in-class\", \"cutting-edge\", \"transformative journey\", \"unlock potential\", \"empower employees\", or \"leverage AI\"\n- Do NOT write a values statement — write a capability statement\n- Do NOT mention \"AI\" in every sentence — focus on what the capability enables\n\nOutput: Vision statement only. No preamble, no bullet points.\n",
       "golden_example": {
         "context": {
           "company_name": "Meridian Retail Group",
@@ -6680,7 +6683,7 @@
           "primary_business_driver": "Reduce time-to-hire and improve manager quality",
           "strategy_horizon_months": "18"
         },
-        "output": "Meridian Retail Group's HR function will operate as a data-driven partner to the business \u2014 using AI to cut time-to-hire by 40%, give every store manager a weekly people insight they can act on, and free HR professionals from administrative work to focus on the decisions that require human judgement. By the end of 2027, no significant people decision at Meridian will be made without a data point behind it.\n"
+        "output": "Meridian Retail Group's HR function will operate as a data-driven partner to the business — using AI to cut time-to-hire by 40%, give every store manager a weekly people insight they can act on, and free HR professionals from administrative work to focus on the decisions that require human judgement. By the end of 2027, no significant people decision at Meridian will be made without a data point behind it.\n"
       },
       "forbidden_phrases": [
         "world-class",
@@ -6712,7 +6715,7 @@
       "display_name": "HR AI Strategy Guiding Principles",
       "artefact_type": "principles",
       "version": "1.1",
-      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Ambition tier: {{ambition_tier}}\n- Primary business driver: {{primary_business_driver}}\n- Top 3 capability gaps: {{top_capability_gaps}}\n- Top regulatory risk: {{top_regulatory_risk}}\n\nWrite exactly 5 guiding principles for this organisation's HR AI strategy.\n\nRequirements:\n- Each principle must be specific to this organisation's context \u2014 not generic\n- Each principle must include an explicit trade-off or constraint (what this means we WON'T do)\n- Each principle must be falsifiable \u2014 it should be possible to test whether the organisation is following it\n- Write as short, declarative statements (max 25 words each)\n- Do NOT use generic principles like \"put people first\", \"be ethical\", \"embrace innovation\"\n- Do NOT repeat the vision statement\n- Principles should address: governance, capability, data, change, and outcomes\n\nFormat: Return as a JSON array of objects with keys: title (max 6 words), statement (max 25 words), trade_off (max 20 words).\n",
+      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Ambition tier: {{ambition_tier}}\n- Primary business driver: {{primary_business_driver}}\n- Top 3 capability gaps: {{top_capability_gaps}}\n- Top regulatory risk: {{top_regulatory_risk}}\n\nWrite exactly 5 guiding principles for this organisation's HR AI strategy.\n\nRequirements:\n- Each principle must be specific to this organisation's context — not generic\n- Each principle must include an explicit trade-off or constraint (what this means we WON'T do)\n- Each principle must be falsifiable — it should be possible to test whether the organisation is following it\n- Write as short, declarative statements (max 25 words each)\n- Do NOT use generic principles like \"put people first\", \"be ethical\", \"embrace innovation\"\n- Do NOT repeat the vision statement\n- Principles should address: governance, capability, data, change, and outcomes\n\nFormat: Return as a JSON array of objects with keys: title (max 6 words), statement (max 25 words), trade_off (max 20 words).\n",
       "golden_example": {
         "context": {
           "company_name": "Meridian Retail Group",
@@ -6725,7 +6728,7 @@
         "output": [
           {
             "title": "Human sign-off on every hire",
-            "statement": "No candidate will be rejected by AI alone \u2014 every shortlist requires a trained recruiter to review and approve.",
+            "statement": "No candidate will be rejected by AI alone — every shortlist requires a trained recruiter to review and approve.",
             "trade_off": "This means slower time-to-shortlist than fully automated competitors."
           },
           {
@@ -6735,7 +6738,7 @@
           },
           {
             "title": "Managers own the insight",
-            "statement": "People analytics outputs go to the manager accountable for the decision \u2014 not to HR as an intermediary.",
+            "statement": "People analytics outputs go to the manager accountable for the decision — not to HR as an intermediary.",
             "trade_off": "This means investing in manager AI literacy before dashboard rollout."
           },
           {
@@ -6783,7 +6786,7 @@
       "display_name": "What We Won't Do (Out-of-Scope List)",
       "artefact_type": "constraints",
       "version": "1.0",
-      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Ambition tier: {{ambition_tier}}\n- Strategy horizon: {{strategy_horizon_months}} months\n- In-scope initiatives: {{initiative_list}}\n- Top regulatory risk: {{top_regulatory_risk}}\n- Maturity gap: {{maturity_gap}} points\n\nWrite 4-5 explicit out-of-scope items for this HR AI strategy.\n\nRequirements:\n- Each item must be a specific AI use case or capability that is NOT in this strategy\n- Each item must include a brief reason why it is out of scope (capacity, risk, sequencing, or strategic choice)\n- Items should be genuinely tempting \u2014 things a CHRO might reasonably want to do but has chosen not to\n- Do NOT include trivially out-of-scope items (e.g., \"we won't build our own AI model\")\n- At least one item should reference a regulatory or risk reason\n- At least one item should reference a sequencing reason (not yet, not now)\n- Write in first person plural (\"We will not...\")\n\nFormat: Return as a JSON array of objects with keys: item (max 15 words), reason (max 25 words).\n",
+      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Ambition tier: {{ambition_tier}}\n- Strategy horizon: {{strategy_horizon_months}} months\n- In-scope initiatives: {{initiative_list}}\n- Top regulatory risk: {{top_regulatory_risk}}\n- Maturity gap: {{maturity_gap}} points\n\nWrite 4-5 explicit out-of-scope items for this HR AI strategy.\n\nRequirements:\n- Each item must be a specific AI use case or capability that is NOT in this strategy\n- Each item must include a brief reason why it is out of scope (capacity, risk, sequencing, or strategic choice)\n- Items should be genuinely tempting — things a CHRO might reasonably want to do but has chosen not to\n- Do NOT include trivially out-of-scope items (e.g., \"we won't build our own AI model\")\n- At least one item should reference a regulatory or risk reason\n- At least one item should reference a sequencing reason (not yet, not now)\n- Write in first person plural (\"We will not...\")\n\nFormat: Return as a JSON array of objects with keys: item (max 15 words), reason (max 25 words).\n",
       "golden_example": {
         "context": {
           "company_name": "Meridian Retail Group",
@@ -6847,7 +6850,7 @@
       "display_name": "Delivery Risk Statement",
       "artefact_type": "risk",
       "version": "1.0",
-      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Initiative: {{initiative_name}}\n- Risk trigger: {{risk_trigger}}\n- Risk severity: {{risk_severity}}\n- Recommended action: {{recommended_action}}\n\nWrite a concise risk statement for this delivery risk.\n\nRequirements:\n- State the risk in plain English (what could go wrong, not a generic category)\n- Include the likely consequence if the risk materialises\n- Write for a CHRO who will present this to a board \u2014 be direct, not hedged\n- Max 3 sentences\n- Do NOT use jargon like \"risk appetite\", \"risk tolerance\", \"risk register\"\n- Do NOT use passive voice\n\nOutput: Risk statement only. No preamble.\n",
+      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Initiative: {{initiative_name}}\n- Risk trigger: {{risk_trigger}}\n- Risk severity: {{risk_severity}}\n- Recommended action: {{recommended_action}}\n\nWrite a concise risk statement for this delivery risk.\n\nRequirements:\n- State the risk in plain English (what could go wrong, not a generic category)\n- Include the likely consequence if the risk materialises\n- Write for a CHRO who will present this to a board — be direct, not hedged\n- Max 3 sentences\n- Do NOT use jargon like \"risk appetite\", \"risk tolerance\", \"risk register\"\n- Do NOT use passive voice\n\nOutput: Risk statement only. No preamble.\n",
       "golden_example": {
         "context": {
           "company_name": "Meridian Retail Group",
@@ -6856,7 +6859,7 @@
           "risk_severity": "very_high",
           "recommended_action": "Add bias monitoring before go-live"
         },
-        "output": "If Meridian deploys AI CV screening before the bias audit is complete, the tool may produce discriminatory shortlists \u2014 creating exposure under the Equality Act 2010 and the EU AI Act. An employment tribunal claim or ICO investigation at this stage would delay the entire talent acquisition programme by 12-18 months and damage Meridian's employer brand.\n"
+        "output": "If Meridian deploys AI CV screening before the bias audit is complete, the tool may produce discriminatory shortlists — creating exposure under the Equality Act 2010 and the EU AI Act. An employment tribunal claim or ICO investigation at this stage would delay the entire talent acquisition programme by 12-18 months and damage Meridian's employer brand.\n"
       },
       "output_schema": {
         "type": "string",
@@ -6874,7 +6877,7 @@
       "display_name": "Executive Strategy Narrative",
       "artefact_type": "narrative",
       "version": "1.0",
-      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Current HR AI maturity: {{current_maturity_score}}/10\n- Target maturity: {{target_maturity_score}}/10\n- Gap: {{maturity_gap}} points\n- Ambition tier: {{ambition_tier}}\n- Number of initiatives: {{initiative_count}}\n- Strategy horizon: {{strategy_horizon_months}} months\n- Top 3 initiatives: {{top_initiatives}}\n- Total investment envelope: {{investment_envelope}}\n\nWrite a 150-200 word executive narrative for this HR AI strategy.\n\nRequirements:\n- Open with the current situation (where HR is today)\n- State the ambition (where HR needs to be)\n- Name the 2-3 most important initiatives and why they matter\n- Close with the investment ask and the primary business outcome\n- Write in third person\n- Be specific \u2014 use the numbers provided\n- Do NOT use generic phrases (see forbidden list)\n- Do NOT repeat the vision statement verbatim\n\nOutput: Narrative only. No preamble, no headers.\n",
+      "prompt_template": "You are an expert HR strategy consultant writing for a CHRO audience.\n\nContext:\n- Organisation: {{company_name}} ({{sector}}, {{org_size}} employees)\n- Current HR AI maturity: {{current_maturity_score}}/10\n- Target maturity: {{target_maturity_score}}/10\n- Gap: {{maturity_gap}} points\n- Ambition tier: {{ambition_tier}}\n- Number of initiatives: {{initiative_count}}\n- Strategy horizon: {{strategy_horizon_months}} months\n- Top 3 initiatives: {{top_initiatives}}\n- Total investment envelope: {{investment_envelope}}\n\nWrite a 150-200 word executive narrative for this HR AI strategy.\n\nRequirements:\n- Open with the current situation (where HR is today)\n- State the ambition (where HR needs to be)\n- Name the 2-3 most important initiatives and why they matter\n- Close with the investment ask and the primary business outcome\n- Write in third person\n- Be specific — use the numbers provided\n- Do NOT use generic phrases (see forbidden list)\n- Do NOT repeat the vision statement verbatim\n\nOutput: Narrative only. No preamble, no headers.\n",
       "golden_example": {
         "context": {
           "company_name": "Meridian Retail Group",
@@ -6887,9 +6890,9 @@
           "initiative_count": "7",
           "strategy_horizon_months": "18",
           "top_initiatives": "AI Literacy Programme, People Analytics Dashboard, Predictive Attrition Modelling",
-          "investment_envelope": "\u00a3280,000-\u00a3420,000"
+          "investment_envelope": "£280,000-£420,000"
         },
-        "output": "Meridian's HR function currently operates at 4.2/10 on the AiQ capability scale \u2014 below the retail sector median of 4.8 and significantly below the 6.8 required to deliver the Innovators ambition. The gap is concentrated in AI Workflow Design and Workforce AI Readiness, where HR professionals can use AI tools but cannot yet redesign processes around them or develop others. This 18-month strategy closes that gap through seven initiatives. The AI Literacy Programme builds the foundation; the People Analytics Dashboard gives managers the visibility they currently lack; and Predictive Attrition Modelling converts that data into decisions that reduce regrettable attrition. The total investment envelope is \u00a3280,000-\u00a3420,000 over 18 months. The primary return is a 40% reduction in time-to-hire and a 15-25% reduction in regrettable attrition \u2014 outcomes worth \u00a31.2-2.1m annually at Meridian's current attrition cost.\n"
+        "output": "Meridian's HR function currently operates at 4.2/10 on the AiQ capability scale — below the retail sector median of 4.8 and significantly below the 6.8 required to deliver the Innovators ambition. The gap is concentrated in AI Workflow Design and Workforce AI Readiness, where HR professionals can use AI tools but cannot yet redesign processes around them or develop others. This 18-month strategy closes that gap through seven initiatives. The AI Literacy Programme builds the foundation; the People Analytics Dashboard gives managers the visibility they currently lack; and Predictive Attrition Modelling converts that data into decisions that reduce regrettable attrition. The total investment envelope is £280,000-£420,000 over 18 months. The primary return is a 40% reduction in time-to-hire and a 15-25% reduction in regrettable attrition — outcomes worth £1.2-2.1m annually at Meridian's current attrition cost.\n"
       },
       "forbidden_phrases": [
         "world-class",

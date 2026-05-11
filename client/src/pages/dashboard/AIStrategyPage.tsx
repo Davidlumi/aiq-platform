@@ -2657,36 +2657,64 @@ export default function AIStrategyPage() {
                         <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmt(fm.npv_gbp.low)}</p>
                       </div>
                       <div className="rounded-lg border border-white/8 bg-white/2 px-4 py-3">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Internal Rate of Return</p>
-                        {fm.irr_pct ? (
-                          (() => {
-                            const fmtIrr = (v: number) => !isFinite(v) || v < 0 ? 'N/A' : `${v.toFixed(1)}%`;
-                            return (
-                              <>
-                                <p className="text-xl font-bold text-violet-400">{fmtIrr(fm.irr_pct.high)}</p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmtIrr(fm.irr_pct.low)}</p>
-                              </>
-                            );
-                          })()
+                        {(fm as any).irr_suppressed ? (
+                          // CFO Fix 4: IRR unreliable at this scale — show payback instead
+                          <>
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</p>
+                            <p className="text-xl font-bold text-violet-400">
+                              {ve.payback_period_months
+                                ? ve.payback_period_months.low === 0
+                                  ? '<1 mo'
+                                  : `${ve.payback_period_months.low}–${ve.payback_period_months.high} mo`
+                                : '—'}
+                            </p>
+                            <p className="text-[10px] text-amber-400/80 mt-0.5">IRR suppressed — use NPV &amp; payback</p>
+                          </>
                         ) : (
-                          <p className="text-xl font-bold text-muted-foreground">—</p>
+                          <>
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Internal Rate of Return</p>
+                            {fm.irr_pct ? (
+                              (() => {
+                                const fmtIrr = (v: number) => !isFinite(v) || v < 0 ? 'N/A' : `${v.toFixed(1)}%`;
+                                return (
+                                  <>
+                                    <p className="text-xl font-bold text-violet-400">{fmtIrr(fm.irr_pct.high)}</p>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmtIrr(fm.irr_pct.low)}</p>
+                                  </>
+                                );
+                              })()
+                            ) : (
+                              <p className="text-xl font-bold text-muted-foreground">—</p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
                       DCF model discounts projected annual cashflows at {fm.discount_rate_pct}% over {fm.horizon_years} years. NPV &gt; 0 indicates the strategy creates value above the cost of capital. IRR is the break-even discount rate.
                     </p>
-                    {/* A3.2: IRR credibility banner when IRR > 40% */}
-                    {fm.irr_pct && fm.irr_pct.high > 40 && isFinite(fm.irr_pct.high) && (
+                    {/* CFO Fix 4: IRR suppressed banner or high-IRR warning */}
+                    {(fm as any).irr_suppressed ? (
                       <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
                         <p className="text-[11px] text-amber-300/90 leading-relaxed">
-                          <strong className="text-amber-300">Indicative figure — sanity check before relying.</strong>{" "}
-                          IRR of {fm.irr_pct.high.toFixed(1)}% is materially higher than typical transformation programme returns (15–40%).
-                          Possible reasons: value concentration in a single initiative, optimistic improvement assumptions, or implementation costs understated.
-                          Recommended: review with Finance before relying on this figure for capital decisions.
+                          <strong className="text-amber-300">IRR not shown — unreliable at this investment scale.</strong>{" "}
+                          When annual value significantly exceeds implementation cost, IRR becomes mathematically extreme and loses meaning as a decision metric.
+                          Use <strong className="text-amber-300">NPV and payback period</strong> as the primary financial metrics for board presentation.
                         </p>
                       </div>
+                    ) : (
+                      fm.irr_pct && fm.irr_pct.high > 40 && isFinite(fm.irr_pct.high) && (
+                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                            <strong className="text-amber-300">Indicative figure — sanity check before relying.</strong>{" "}
+                            IRR of {fm.irr_pct.high.toFixed(1)}% is materially higher than typical transformation programme returns (15–40%).
+                            Possible reasons: value concentration in a single initiative, optimistic improvement assumptions, or implementation costs understated.
+                            Recommended: review with Finance before relying on this figure for capital decisions.
+                          </p>
+                        </div>
+                      )
                     )}
                   </div>
                 );
@@ -2723,9 +2751,14 @@ export default function AIStrategyPage() {
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-muted-foreground">ROI</span>
-                              <span className={`font-semibold ${s.data.roi_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>{s.data.roi_pct}%</span>
+                              <span className={`font-semibold ${s.data.roi_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {s.data.roi_pct >= 500 ? ">500%" : `${s.data.roi_pct}%`}
+                              </span>
                             </div>
-                            {s.data.roi_pct > 200 && (
+                            {s.data.roi_pct >= 500 && (
+                              <p className="text-[10px] text-amber-400/80 mt-1.5 leading-snug">⚠️ ROI capped at 500% for display. Use NPV for board presentation.</p>
+                            )}
+                            {s.data.roi_pct > 200 && s.data.roi_pct < 500 && (
                               <p className="text-[10px] text-amber-400/80 mt-1.5 leading-snug">⚠️ High ROI — reflects 3-yr compounding. Validate with Finance before board presentation.</p>
                             )}
                           </div>
