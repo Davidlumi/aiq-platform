@@ -1,0 +1,16 @@
+{
+  "query": "SELECT role_family, job_function, first_name, last_name FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND (role_family IS NULL OR role_family = '' OR role_family = 'other') ORDER BY first_name LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT role_family, job_function, first_name, last_name FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND (role_family IS NULL OR role_family = '' OR role_family = 'other') ORDER BY first_name LIMIT 20;",
+  "rows": [
+    {
+      "role_family": "NULL",
+      "job_function": "other",
+      "first_name": "Roger",
+      "last_name": "Hunt"
+    }
+  ],
+  "messages": [],
+  "stdout": "role_family\tjob_function\tfirst_name\tlast_name\nNULL\tother\tRoger\tHunt\n",
+  "stderr": "",
+  "execution_time_ms": 274
+}

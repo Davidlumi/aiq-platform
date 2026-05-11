@@ -1,0 +1,16 @@
+{
+  "query": "SELECT role_family, job_function, first_name, last_name FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND role_family NOT IN ('business_partnering', 'talent_acquisition', 'learning_development', 'reward_analytics', 'er_specialists', 'operations_tech', 'hr_leadership') ORDER BY role_family;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT role_family, job_function, first_name, last_name FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND role_family NOT IN ('business_partnering', 'talent_acquisition', 'learning_development', 'reward_analytics', 'er_specialists', 'operations_tech', 'hr_leadership') ORDER BY role_family;",
+  "rows": [
+    {
+      "role_family": "talent",
+      "job_function": "Head of Talent",
+      "first_name": "Sarah",
+      "last_name": "Thornton"
+    }
+  ],
+  "messages": [],
+  "stdout": "role_family\tjob_function\tfirst_name\tlast_name\ntalent\tHead of Talent\tSarah\tThornton\n",
+  "stderr": "",
+  "execution_time_ms": 284
+}

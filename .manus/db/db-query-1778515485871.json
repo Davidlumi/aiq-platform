@@ -1,0 +1,38 @@
+{
+  "query": "SELECT role_family, COUNT(*) as count FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') GROUP BY role_family ORDER BY count DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT role_family, COUNT(*) as count FROM users WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') GROUP BY role_family ORDER BY count DESC;",
+  "rows": [
+    {
+      "role_family": "er_specialists",
+      "count": "12"
+    },
+    {
+      "role_family": "reward_analytics",
+      "count": "11"
+    },
+    {
+      "role_family": "business_partnering",
+      "count": "8"
+    },
+    {
+      "role_family": "talent_acquisition",
+      "count": "6"
+    },
+    {
+      "role_family": "learning_development",
+      "count": "6"
+    },
+    {
+      "role_family": "operations_tech",
+      "count": "5"
+    },
+    {
+      "role_family": "hr_leadership",
+      "count": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "role_family\tcount\ner_specialists\t12\nreward_analytics\t11\nbusiness_partnering\t8\ntalent_acquisition\t6\nlearning_development\t6\noperations_tech\t5\nhr_leadership\t3\n",
+  "stderr": "",
+  "execution_time_ms": 266
+}

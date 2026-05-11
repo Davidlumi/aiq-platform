@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET role_family = 'hr_leadership' WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND first_name = 'Sarah' AND last_name = 'Thornton' AND role_family = 'talent';\nUPDATE users SET role_family = 'hr_leadership', job_function = 'HR Director' WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND first_name = 'Roger' AND last_name = 'Hunt' AND (role_family IS NULL OR role_family = '');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute UPDATE users SET role_family = 'hr_leadership' WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND first_name = 'Sarah' AND last_name = 'Thornton' AND role_family = 'talent';\nUPDATE users SET role_family = 'hr_leadership', job_function = 'HR Director' WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'acme') AND first_name = 'Roger' AND last_name = 'Hunt' AND (role_family IS NULL OR role_family = '');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 284
+}

@@ -279,17 +279,20 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
     ? sector.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Not specified";
 
-  // Phase groupings
-  const phases: Record<string, typeof allInitiatives> = { phase_1: [], phase_2: [], phase_3: [] };
+  // Phase groupings — use typical_phase field (foundation/build/scale/optimise)
+  const phases: Record<string, typeof allInitiatives> = { foundation: [], build: [], scale: [], optimise: [] };
   for (const init of selectedInits) {
-    const ph = (init as any).phase ?? "phase_1";
+    const ph = (init as any).typical_phase ?? "foundation";
     if (!phases[ph]) phases[ph] = [];
     phases[ph].push(init);
   }
+  // Determine timeline based on total duration from org context
+  const totalMonths = (structuredInputs as any)?.timeline_months ?? 18;
   const phaseConfig = [
-    { key: "phase_1", label: "Phase 1 — Foundation", period: "0–6 months",   colour: "#2D6A5E" },
-    { key: "phase_2", label: "Phase 2 — Build",      period: "6–12 months",  colour: "#C8A96E" },
-    { key: "phase_3", label: "Phase 3 — Scale",      period: "12–18 months", colour: "#0A1628" },
+    { key: "foundation", label: "Foundation", period: `Months 1–${Math.round(totalMonths * 0.2)}`,   colour: "#2D6A5E" },
+    { key: "build",      label: "Build",      period: `Months ${Math.round(totalMonths * 0.2) + 1}–${Math.round(totalMonths * 0.4)}`,  colour: "#C8A96E" },
+    { key: "scale",      label: "Scale",      period: `Months ${Math.round(totalMonths * 0.4) + 1}–${Math.round(totalMonths * 0.7)}`, colour: "#0A1628" },
+    { key: "optimise",   label: "Optimise",   period: `Months ${Math.round(totalMonths * 0.7) + 1}–${totalMonths}`, colour: "#7c3aed" },
   ];
 
   const pageStyle = `
@@ -473,7 +476,7 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
                 <div class="phase-dot" style="background:${ph.colour};margin-top:4px;"></div>
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:8.5pt;font-weight:700;color:#0A1628;">${(init as any).display_name ?? init.initiative_id}</div>
-                  <div style="font-size:7pt;color:#64748b;margin-top:2px;">${((init as any).description ?? "").slice(0, 160)}${((init as any).description ?? "").length > 160 ? "…" : ""}</div>
+                  <div style="font-size:7pt;color:#64748b;margin-top:2px;">${((init as any).short_description ?? (init as any).description ?? "").slice(0, 160)}${((init as any).short_description ?? (init as any).description ?? "").length > 160 ? "…" : ""}</div>
                   <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
                     ${category ? `<span class="badge badge-blue">${category.replace(/_/g, " ")}</span>` : ""}
                     ${aiType ? `<span class="badge badge-green">${aiType}</span>` : ""}

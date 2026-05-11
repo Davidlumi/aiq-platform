@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE ail_org_context SET ambition_target_label = 'AI-fluent HR function — every professional can design, govern, and deploy AI in people processes' WHERE ambition_target_label = 'Test target';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute UPDATE ail_org_context SET ambition_target_label = 'AI-fluent HR function — every professional can design, govern, and deploy AI in people processes' WHERE ambition_target_label = 'Test target';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 274
+}
