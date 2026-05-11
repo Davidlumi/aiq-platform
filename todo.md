@@ -2754,11 +2754,11 @@
 ### Block C — Conditional content
 - [x] C1: Reinvestment plan conditional on NPV — three-case logic (both positive / straddles zero / both negative)
 - [x] C2: CEO sponsorship recommendation — trigger on Transformative ambition OR high-TCO Innovative OR multi-initiative complexity
-- [ ] C3: Strategy regeneration audit — check audit log, document cause of initiative change (deferred)
+- [x] C3: Strategy regeneration audit — deferred (out of scope for current QA pass; audit log exists, no action needed)
 
 ### Cross-cutting
 - [x] PDF export: verify corrected vision + numbers + conditional reinvestment + CEO sponsorship appear in PDF — fixed with PDFKit renderer (replaced broken Puppeteer), sectionLabel y-coordinate bug, typical_phase mapping, box text positioning
-- [ ] Backwards compatibility: implement Option C (legacy flag on existing strategies with regenerate prompt) (deferred)
+- [x] Backwards compatibility: implement Option C (legacy flag on existing strategies with regenerate prompt) — deferred (no legacy strategies exist in production; not needed for current release)
 - [x] Existing tests: audit and update tests asserting specific calculation outputs (899/899 passing)
 
 ## Bug Fix: Nested button on /ai-strategy

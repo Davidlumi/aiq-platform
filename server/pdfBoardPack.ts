@@ -77,6 +77,7 @@ const MARGIN  = 44;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 const FOOTER_H  = 40;
 const CONTENT_BOTTOM = PAGE_H - FOOTER_H - 10;
+const CONTENT_TOP = 80; // Below the 64px header band
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -112,16 +113,38 @@ function drawFooter(doc: PDFKitDoc, pageNum: number, orgName: string, libVer?: s
      .text(`${pageNum}`, PAGE_W - MARGIN - 20, y + 12, { width: 20, align: "right" });
 }
 
-function newPage(doc: PDFKitDoc, counter: { n: number }, orgName: string, libVer?: string) {
+type HeaderCtx = { slideNum: string; title: string; subtitle: string; accentColour: string };
+
+function newPage(
+  doc: PDFKitDoc,
+  counter: { n: number },
+  orgName: string,
+  libVer?: string,
+  hdr?: HeaderCtx
+) {
   drawFooter(doc, counter.n, orgName, libVer);
   doc.addPage();
   counter.n++;
-  doc.y = MARGIN;
+  if (hdr) {
+    // Re-draw the slide header on continuation pages so content is never behind the band
+    slideHeader(doc, hdr.slideNum, hdr.title, hdr.subtitle + " (cont.)", hdr.accentColour);
+  } else {
+    // Draw a minimal navy band so doc.y is set correctly below it
+    doc.rect(0, 0, PAGE_W, CONTENT_TOP - 16).fill(C.navy);
+    doc.y = CONTENT_TOP;
+  }
 }
 
-function needsPage(doc: PDFKitDoc, height: number, counter: { n: number }, orgName: string, libVer?: string) {
+function needsPage(
+  doc: PDFKitDoc,
+  height: number,
+  counter: { n: number },
+  orgName: string,
+  libVer?: string,
+  hdr?: HeaderCtx
+) {
   if (doc.y + height > CONTENT_BOTTOM) {
-    newPage(doc, counter, orgName, libVer);
+    newPage(doc, counter, orgName, libVer, hdr);
   }
 }
 
@@ -147,10 +170,10 @@ function slideHeader(doc: PDFKitDoc, slideNum: string, title: string, subtitle: 
 }
 
 /** AI commentary box with teal left border */
-function aiCommentary(doc: PDFKitDoc, text: string, counter: { n: number }, orgName: string, libVer?: string) {
+function aiCommentary(doc: PDFKitDoc, text: string, counter: { n: number }, orgName: string, libVer?: string, hdr?: HeaderCtx) {
   const lines = wrapText(text, 72);
   const boxH  = Math.max(44, lines.length * 11 + 16);
-  needsPage(doc, boxH + 8, counter, orgName, libVer);
+  needsPage(doc, boxH + 8, counter, orgName, libVer, hdr);
   const y = doc.y;
   // Background
   doc.rect(MARGIN, y, CONTENT_W, boxH).fill(C.tealPale);
@@ -538,6 +561,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   // ══════════════════════════════════════════════════════════════════════════
   newPage(doc, counter, orgName, libVer);
   slideHeader(doc, "01", "Strategic Context", "Ambition levels, configuration, and strategic intent", C.teal);
+  const hdr01: HeaderCtx = { slideNum: "01", title: "Strategic Context", subtitle: "Ambition levels, configuration, and strategic intent", accentColour: C.teal };
 
   // Ambition tiles
   kpiRow(doc, [
@@ -549,7 +573,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
 
   // Strategy narrative
   if (strategyNarrative) {
-    needsPage(doc, 60, counter, orgName, libVer);
+    needsPage(doc, 60, counter, orgName, libVer, hdr01);
     sectionLabel(doc, "Strategic Intent");
     doc.rect(MARGIN, doc.y, CONTENT_W, 50).fill(C.goldPale);
     doc.rect(MARGIN, doc.y, 3, 50).fill(C.gold);
@@ -559,7 +583,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   }
 
   // Ambition matrix description
-  needsPage(doc, 80, counter, orgName, libVer);
+  needsPage(doc, 80, counter, orgName, libVer, hdr01);
   sectionLabel(doc, "What This Ambition Level Means");
   const ambitionDescriptions: Record<string, string> = {
     "1_1": "Conservative adoption — AI tools used selectively, HR team focused on compliance and risk management. Low disruption, low investment.",
@@ -579,7 +603,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
      .text(ambitionDescriptions[ambKey] ?? ambitionDescriptions[nearestKey] ?? "", MARGIN, doc.y, { width: CONTENT_W, lineGap: 2 });
   doc.moveDown(0.8);
 
-  if (commentaryAmbition) aiCommentary(doc, commentaryAmbition, counter, orgName, libVer);
+  if (commentaryAmbition) aiCommentary(doc, commentaryAmbition, counter, orgName, libVer, hdr01);
 
   drawFooter(doc, counter.n, orgName, libVer);
 
@@ -588,9 +612,10 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   // ══════════════════════════════════════════════════════════════════════════
   newPage(doc, counter, orgName, libVer);
   slideHeader(doc, "02", "Vision & Guiding Principles", "Where we are going and how we will get there", C.gold);
+  const hdr02: HeaderCtx = { slideNum: "02", title: "Vision & Guiding Principles", subtitle: "Where we are going and how we will get there", accentColour: C.gold };
 
   if (visionStatement) {
-    needsPage(doc, 70, counter, orgName, libVer);
+    needsPage(doc, 70, counter, orgName, libVer, hdr02);
     sectionLabel(doc, "AI People Strategy Vision");
     const visionH = Math.max(60, Math.ceil(visionStatement.length / 80) * 14 + 20);
     doc.rect(MARGIN, doc.y, CONTENT_W, visionH).fill(C.navy);
@@ -605,13 +630,13 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     doc.moveDown(0.8);
   }
 
-  if (commentaryVision) aiCommentary(doc, commentaryVision, counter, orgName, libVer);
+  if (commentaryVision) aiCommentary(doc, commentaryVision, counter, orgName, libVer, hdr02);
 
   if (guidingPrinciples.length > 0) {
-    needsPage(doc, 40, counter, orgName, libVer);
+    needsPage(doc, 40, counter, orgName, libVer, hdr02);
     sectionLabel(doc, "Guiding Principles");
     for (const p of guidingPrinciples) {
-      needsPage(doc, 36, counter, orgName, libVer);
+      needsPage(doc, 36, counter, orgName, libVer, hdr02);
       const pY = doc.y;
       doc.rect(MARGIN, pY, 3, 28).fill(C.teal);
       doc.fontSize(8.5).font("Helvetica-Bold").fillColor(C.navy)
@@ -623,10 +648,10 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   }
 
   if (wontDoItems.length > 0) {
-    needsPage(doc, 30 + wontDoItems.length * 16, counter, orgName, libVer);
+    needsPage(doc, 30 + wontDoItems.length * 16, counter, orgName, libVer, hdr02);
     sectionLabel(doc, "What We Won't Do — Strategic Exclusions");
     for (const item of wontDoItems) {
-      needsPage(doc, 18, counter, orgName, libVer);
+      needsPage(doc, 18, counter, orgName, libVer, hdr02);
       doc.rect(MARGIN, doc.y, 14, 14).fill(C.danger);
       doc.fontSize(7.5).font("Helvetica-Bold").fillColor(C.white)
          .text("✕", MARGIN + 3, doc.y - 10, { width: 14, align: "center" });
@@ -643,6 +668,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   // ══════════════════════════════════════════════════════════════════════════
   newPage(doc, counter, orgName, libVer);
   slideHeader(doc, "03", "Capability Baseline", "Current AI readiness vs roadmap targets by domain", C.teal);
+  const hdr03: HeaderCtx = { slideNum: "03", title: "Capability Baseline", subtitle: "Current AI readiness vs roadmap targets by domain", accentColour: C.teal };
 
   kpiRow(doc, [
     { label: "Staff Assessed",   value: assessedCount > 0 ? String(assessedCount) : "—", colour: C.teal },
@@ -657,7 +683,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   doc.moveDown(0.4);
 
   for (const dk of DOMAIN_KEYS) {
-    needsPage(doc, 24, counter, orgName, libVer);
+    needsPage(doc, 24, counter, orgName, libVer, hdr03);
     progressBar(doc, DOMAIN_LABELS[dk], domainAvgs[dk], domainTargets[dk] ?? null);
   }
 
@@ -671,7 +697,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   doc.fillColor(C.gold).text("| Target");
   doc.moveDown(0.8);
 
-  if (commentaryCapability) aiCommentary(doc, commentaryCapability, counter, orgName, libVer);
+  if (commentaryCapability) aiCommentary(doc, commentaryCapability, counter, orgName, libVer, hdr03);
 
   drawFooter(doc, counter.n, orgName, libVer);
 
@@ -681,8 +707,9 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (selectedInits.length > 0) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "04", "Initiative Portfolio", `${selectedInits.length} initiatives across ${ambitionTier} ambition tier`, C.teal);
+    const hdr04: HeaderCtx = { slideNum: "04", title: "Initiative Portfolio", subtitle: `${selectedInits.length} initiatives across ${ambitionTier} ambition tier`, accentColour: C.teal };
 
-    if (commentaryPlan) aiCommentary(doc, commentaryPlan, counter, orgName, libVer);
+    if (commentaryPlan) aiCommentary(doc, commentaryPlan, counter, orgName, libVer, hdr04);
 
     const phases: Record<string, typeof allInitiatives> = { phase_1: [], phase_2: [], phase_3: [] };
     for (const init of selectedInits) {
@@ -702,10 +729,10 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     for (const ph of phaseConfig) {
       const inits = phases[ph.key];
       if (!inits || inits.length === 0) continue;
-      needsPage(doc, 28 + inits.length * 30, counter, orgName, libVer);
+      needsPage(doc, 28 + inits.length * 30, counter, orgName, libVer, hdr04);
       sectionLabel(doc, `${ph.label} · ${ph.period}`);
       for (const init of inits) {
-        needsPage(doc, 32, counter, orgName, libVer);
+        needsPage(doc, 32, counter, orgName, libVer, hdr04);
         const iY = doc.y;
         doc.rect(MARGIN, iY, 3, 26).fill(ph.colour);
         doc.fontSize(8.5).font("Helvetica-Bold").fillColor(C.navy)
@@ -728,6 +755,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (costEnvelope) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "05", "Investment & Cost Envelope", "Total cost of ownership by phase and category", C.gold);
+    const hdr05: HeaderCtx = { slideNum: "05", title: "Investment & Cost Envelope", subtitle: "Total cost of ownership by phase and category", accentColour: C.gold };
 
     kpiRow(doc, [
       { label: "Total Investment (Low)",  value: fmtGBP(costEnvelope.totalMin * 1000), colour: C.teal },
@@ -736,11 +764,11 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       { label: "Initiatives",             value: String(selectedInits.length), colour: C.navy },
     ]);
 
-    if (commentaryInvestment) aiCommentary(doc, commentaryInvestment, counter, orgName, libVer);
+    if (commentaryInvestment) aiCommentary(doc, commentaryInvestment, counter, orgName, libVer, hdr05);
 
     sectionLabel(doc, "Cost by Phase");
     for (const phase of costEnvelope.byPhase) {
-      needsPage(doc, 22, counter, orgName, libVer);
+      needsPage(doc, 22, counter, orgName, libVer, hdr05);
       const barX = MARGIN + 160;
       const barW = CONTENT_W - 160 - 80;
       const barH = 9;
@@ -759,7 +787,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     // TCO breakdown if available
     if ((costEnvelope as any).tco) {
       const tco = (costEnvelope as any).tco;
-      needsPage(doc, 80, counter, orgName, libVer);
+      needsPage(doc, 80, counter, orgName, libVer, hdr05);
       sectionLabel(doc, "Total Cost of Ownership Breakdown");
       const tcoItems = [
         { label: "Implementation",    value: tco.implementation_gbp },
@@ -769,7 +797,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
         { label: "Ongoing Annual",    value: tco.ongoing_annual_gbp },
       ].filter(i => i.value);
       for (const item of tcoItems) {
-        needsPage(doc, 18, counter, orgName, libVer);
+        needsPage(doc, 18, counter, orgName, libVer, hdr05);
         doc.fontSize(8).font("Helvetica").fillColor(C.slate)
            .text(item.label, MARGIN, doc.y, { continued: true, width: 180 });
         doc.font("Helvetica-Bold").fillColor(C.navy)
@@ -787,6 +815,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (riskMatches.length > 0) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "06", "Risk Register", `${riskMatches.length} regulatory and implementation risks identified`, C.danger);
+    const hdr06: HeaderCtx = { slideNum: "06", title: "Risk Register", subtitle: `${riskMatches.length} regulatory and implementation risks identified`, accentColour: C.danger };
 
     const highRisks = riskMatches.filter(r => r.severity === "high" || r.severity === "very_high").length;
     kpiRow(doc, [
@@ -796,11 +825,11 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       { label: "Low",           value: String(riskMatches.filter(r => r.severity === "low").length),    colour: C.safe },
     ]);
 
-    if (commentaryRisk) aiCommentary(doc, commentaryRisk, counter, orgName, libVer);
+    if (commentaryRisk) aiCommentary(doc, commentaryRisk, counter, orgName, libVer, hdr06);
 
     sectionLabel(doc, "Risk Detail");
     for (const risk of riskMatches) {
-      needsPage(doc, 50, counter, orgName, libVer);
+      needsPage(doc, 50, counter, orgName, libVer, hdr06);
       const sevCol = severityColour(risk.severity);
       const rY = doc.y;
       // Severity badge
@@ -826,6 +855,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (valueEnvelope) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "07", "Value Case", "Quantified and qualitative value over 3 years", C.safe);
+    const hdr07: HeaderCtx = { slideNum: "07", title: "Value Case", subtitle: "Quantified and qualitative value over 3 years", accentColour: C.safe };
 
     const hasQ = valueEnvelope.total_quantified_value_gbp.high > 0;
     kpiRow(doc, [
@@ -835,11 +865,11 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       { label: "Qualitative Items",  value: String(valueEnvelope.qualitative_summary.capability_uplift_count + valueEnvelope.qualitative_summary.risk_avoidance_count + valueEnvelope.qualitative_summary.strategic_count), colour: C.gold },
     ]);
 
-    if (commentaryValue) aiCommentary(doc, commentaryValue, counter, orgName, libVer);
+    if (commentaryValue) aiCommentary(doc, commentaryValue, counter, orgName, libVer, hdr07);
 
     sectionLabel(doc, "Per-Initiative Value Breakdown");
     for (const item of valueEnvelope.by_initiative) {
-      needsPage(doc, 32, counter, orgName, libVer);
+      needsPage(doc, 32, counter, orgName, libVer, hdr07);
       const iY = doc.y;
       const hasValue = !!item.quantified_value_gbp;
       doc.rect(MARGIN, iY, 3, 26).fill(hasValue ? C.safe : C.gold);
@@ -861,16 +891,16 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     }
 
     if (valueEnvelope.qualitative_summary.bullet_points.length > 0) {
-      needsPage(doc, 30, counter, orgName, libVer);
+      needsPage(doc, 30, counter, orgName, libVer, hdr07);
       sectionLabel(doc, "Qualitative Value Highlights");
       for (const b of valueEnvelope.qualitative_summary.bullet_points.slice(0, 6)) {
-        needsPage(doc, 18, counter, orgName, libVer);
+        needsPage(doc, 18, counter, orgName, libVer, hdr07);
         bullet(doc, b);
       }
     }
 
     // Caveat
-    needsPage(doc, 24, counter, orgName, libVer);
+    needsPage(doc, 24, counter, orgName, libVer, hdr07);
     doc.moveDown(0.3);
     doc.rect(MARGIN, doc.y, CONTENT_W, 20).fill(C.warnPale);
     doc.fontSize(7).font("Helvetica-Oblique").fillColor(C.warn)
@@ -886,6 +916,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (financialModel) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "08", "Financial Model", "NPV, payback period, and scenario analysis", C.navy);
+    const hdr08: HeaderCtx = { slideNum: "08", title: "Financial Model", subtitle: "NPV, payback period, and scenario analysis", accentColour: C.navy };
 
     const pb = valueEnvelope?.payback_period_months ?? null;
     kpiRow(doc, [
@@ -899,11 +930,11 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
         colour: C.gold },
     ]);
 
-    if (commentaryFinancial) aiCommentary(doc, commentaryFinancial, counter, orgName, libVer);
+    if (commentaryFinancial) aiCommentary(doc, commentaryFinancial, counter, orgName, libVer, hdr08);
 
     // IRR suppression notice
     if (financialModel.irr_suppressed) {
-      needsPage(doc, 28, counter, orgName, libVer);
+      needsPage(doc, 28, counter, orgName, libVer, hdr08);
       doc.rect(MARGIN, doc.y, CONTENT_W, 22).fill(C.warnPale);
       doc.rect(MARGIN, doc.y, 3, 22).fill(C.warn);
       doc.fontSize(7.5).font("Helvetica").fillColor(C.warn)
@@ -914,7 +945,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     // Scenario analysis
     const scenarioAnalysis = valueEnvelope?.scenario_analysis ?? null;
     if (scenarioAnalysis) {
-      needsPage(doc, 60, counter, orgName, libVer);
+      needsPage(doc, 60, counter, orgName, libVer, hdr08);
       sectionLabel(doc, "Scenario Analysis");
       const scenarios = [
         { label: "Pessimistic",  data: scenarioAnalysis.pessimistic, colour: C.danger },
@@ -947,7 +978,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       // ROI cap note
       const hasCapped = scenarioAnalysis.optimistic?.roi_pct >= 500 || scenarioAnalysis.base?.roi_pct >= 500;
       if (hasCapped) {
-        needsPage(doc, 20, counter, orgName, libVer);
+        needsPage(doc, 20, counter, orgName, libVer, hdr08);
         doc.fontSize(7).font("Helvetica-Oblique").fillColor(C.muted)
            .text(">500% ROI reflects 3-year compounding of multiple initiatives. Validate with Finance before board presentation.", MARGIN, doc.y, { width: CONTENT_W });
         doc.moveDown(0.5);
@@ -963,10 +994,11 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   if (reinvestment || ceoSponsorship?.required) {
     newPage(doc, counter, orgName, libVer);
     slideHeader(doc, "09", "Reinvestment Plan & Governance", "Value reinvestment strategy and executive sponsorship", C.teal);
+    const hdr09: HeaderCtx = { slideNum: "09", title: "Reinvestment Plan & Governance", subtitle: "Value reinvestment strategy and executive sponsorship", accentColour: C.teal };
 
     if (reinvestment) {
       sectionLabel(doc, `Reinvestment Plan — ${reinvestment.case === "both_positive" ? "Value Reinvestment" : reinvestment.case === "straddles_zero" ? "Selective Reinvestment" : "Foundation Investment"}`);
-      needsPage(doc, 60, counter, orgName, libVer);
+      needsPage(doc, 60, counter, orgName, libVer, hdr09);
       const reinvY = doc.y;
       doc.rect(MARGIN, reinvY, CONTENT_W, 50).fill(C.tealPale);
       doc.rect(MARGIN, reinvY, 3, 50).fill(C.teal);
@@ -977,7 +1009,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       doc.y = reinvY + 56;
 
       if (reinvestment.suggested_reinvestment_gbp) {
-        needsPage(doc, 24, counter, orgName, libVer);
+        needsPage(doc, 24, counter, orgName, libVer, hdr09);
         doc.fontSize(8).font("Helvetica").fillColor(C.slate)
            .text("Suggested reinvestment: ", MARGIN, doc.y, { continued: true });
         doc.font("Helvetica-Bold").fillColor(C.teal)
@@ -986,19 +1018,19 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       }
 
       if (reinvestment.phase2_focus_areas && reinvestment.phase2_focus_areas.length > 0) {
-        needsPage(doc, 20 + reinvestment.phase2_focus_areas.length * 16, counter, orgName, libVer);
+        needsPage(doc, 20 + reinvestment.phase2_focus_areas.length * 16, counter, orgName, libVer, hdr09);
         doc.fontSize(8).font("Helvetica-Bold").fillColor(C.navy)
            .text("Phase 2 Focus Areas:", MARGIN, doc.y);
         doc.moveDown(0.3);
         for (const area of reinvestment.phase2_focus_areas) {
-          needsPage(doc, 16, counter, orgName, libVer);
+          needsPage(doc, 16, counter, orgName, libVer, hdr09);
           bullet(doc, area);
         }
       }
     }
 
     if (ceoSponsorship?.required) {
-      needsPage(doc, 60, counter, orgName, libVer);
+      needsPage(doc, 60, counter, orgName, libVer, hdr09);
       sectionLabel(doc, "CEO Sponsorship Recommendation");
       const ceoY = doc.y;
       doc.rect(MARGIN, ceoY, CONTENT_W, 50).fill(C.goldPale);
@@ -1010,14 +1042,14 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
       doc.y = ceoY + 56;
 
       if (ceoSponsorship.suggested_framing) {
-        needsPage(doc, 28, counter, orgName, libVer);
+        needsPage(doc, 28, counter, orgName, libVer, hdr09);
         doc.fontSize(8).font("Helvetica-Bold").fillColor(C.navy)
            .text("Suggested Framing for CEO:", MARGIN, doc.y);
         doc.moveDown(0.3);
         bullet(doc, ceoSponsorship.suggested_framing);
       }
       if (ceoSponsorship.trigger) {
-        needsPage(doc, 16, counter, orgName, libVer);
+        needsPage(doc, 16, counter, orgName, libVer, hdr09);
         doc.fontSize(7).font("Helvetica-Oblique").fillColor(C.muted)
            .text(`Trigger: ${ceoSponsorship.trigger}`, MARGIN, doc.y, { width: CONTENT_W });
         doc.moveDown(0.4);
@@ -1032,8 +1064,9 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   // ══════════════════════════════════════════════════════════════════════════
   newPage(doc, counter, orgName, libVer);
   slideHeader(doc, "10", "Measurement Framework", "KPIs, cadence, and pilot design", C.teal);
+  const hdr10: HeaderCtx = { slideNum: "10", title: "Measurement Framework", subtitle: "KPIs, cadence, and pilot design", accentColour: C.teal };
 
-  if (commentaryMeasurement) aiCommentary(doc, commentaryMeasurement, counter, orgName, libVer);
+  if (commentaryMeasurement) aiCommentary(doc, commentaryMeasurement, counter, orgName, libVer, hdr10);
 
   const cadenceLabels: Record<string, string> = {
     monthly:   "Monthly — high-frequency tracking with monthly KPI reviews",
@@ -1057,7 +1090,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     { label: "HR Leadership Position", value: structuredInputs.hr_leadership_position ?? "Not specified" },
   ];
   for (const item of govItems) {
-    needsPage(doc, 20, counter, orgName, libVer);
+    needsPage(doc, 20, counter, orgName, libVer, hdr10);
     doc.fontSize(7.5).font("Helvetica-Bold").fillColor(C.navy)
        .text(item.label + ": ", MARGIN, doc.y, { continued: true, width: 160 });
     doc.font("Helvetica").fillColor(C.slate)
@@ -1076,7 +1109,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     "Business outcome: primary business metric tied to each initiative",
   ];
   for (const kpi of kpiFramework) {
-    needsPage(doc, 16, counter, orgName, libVer);
+    needsPage(doc, 16, counter, orgName, libVer, hdr10);
     bullet(doc, kpi);
   }
 
@@ -1087,6 +1120,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   // ══════════════════════════════════════════════════════════════════════════
   newPage(doc, counter, orgName, libVer);
   slideHeader(doc, "11", "Methodology & Assumptions", "Data sources, calculation methodology, and key assumptions", C.slate);
+  const hdr11: HeaderCtx = { slideNum: "11", title: "Methodology & Assumptions", subtitle: "Data sources, calculation methodology, and key assumptions", accentColour: C.slate };
 
   sectionLabel(doc, "Calculation Methodology");
   const methodItems = [
@@ -1102,7 +1136,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     "ROI display capped at 500% — use NPV for board presentations.",
   ];
   for (const item of methodItems) {
-    needsPage(doc, 16, counter, orgName, libVer);
+    needsPage(doc, 16, counter, orgName, libVer, hdr11);
     bullet(doc, item);
   }
 
@@ -1117,7 +1151,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     "ONS Annual Survey of Hours and Earnings 2024 — UK salary benchmarks",
   ];
   for (const src of dataSources) {
-    needsPage(doc, 16, counter, orgName, libVer);
+    needsPage(doc, 16, counter, orgName, libVer, hdr11);
     bullet(doc, src);
   }
 
@@ -1129,7 +1163,7 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
     "This document is confidential and intended for board-level discussion only.",
   ];
   for (const c of caveats) {
-    needsPage(doc, 16, counter, orgName, libVer);
+    needsPage(doc, 16, counter, orgName, libVer, hdr11);
     bullet(doc, c);
   }
 
