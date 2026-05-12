@@ -25,11 +25,11 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronDown, TrendingUp, Target,
+import { ChevronDown, TrendingUp, Target,
   RotateCcw, BookOpen, ChevronRight, AlertCircle,
-  RefreshCw, Play,
+  RefreshCw, Play, Loader2,
 } from "lucide-react";
+import { ShimmerBlock } from "@/components/ui/loading";
 import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS, DOMAIN_KEYS, type DomainKey } from "@shared/brand";
 import { getDomainIcon } from "@/lib/brand-icons";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -175,29 +175,101 @@ function SectionHeading({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-// ─── Skeleton blocks ──────────────────────────────────────────────────────────
+// ─── Skeleton blocks (branded aiq-shimmer) ────────────────────────────────────
 
 function HeroSkeleton() {
   return (
-    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden animate-pulse">
-      <div className="h-10 border-b border-white/6 bg-white/4" />
+    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden">
+      <div className="h-10 border-b border-white/6">
+        <ShimmerBlock className="h-full w-full rounded-none" />
+      </div>
       <div className="flex gap-6 p-6">
-        <div className="w-28 h-28 rounded-full bg-white/8 shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="h-4 w-2/3 bg-white/8 rounded" />
-          <div className="h-3 w-full bg-white/8 rounded" />
-          <div className="h-3 w-5/6 bg-white/8 rounded" />
+        <ShimmerBlock className="w-28 h-28 rounded-full shrink-0" />
+        <div className="flex-1 space-y-3 pt-1">
+          <ShimmerBlock className="h-4 w-2/3" />
+          <ShimmerBlock className="h-3 w-full" />
+          <ShimmerBlock className="h-3 w-5/6" />
         </div>
       </div>
     </div>
   );
 }
 
-function SectionSkeleton({ rows = 2 }: { rows?: number }) {
+/** Skeleton for a cross-cutting bullet card (2 bullets = 2 shimmer rows each) */
+function CrossCuttingCardSkeleton() {
   return (
-    <div className="space-y-3 animate-pulse">
+    <div className="bg-[#111827] border border-white/8 rounded-xl p-5">
+      {/* Icon + title row */}
+      <div className="flex items-center gap-2 mb-4">
+        <ShimmerBlock className="w-6 h-6 rounded-full" />
+        <ShimmerBlock className="h-3 w-28" />
+      </div>
+      {/* Two bullet placeholders */}
+      <div className="space-y-4">
+        {[1, 2].map(i => (
+          <div key={i} className="space-y-1.5">
+            <ShimmerBlock className="h-3 w-full" brand />
+            <ShimmerBlock className="h-3 w-5/6" />
+            <ShimmerBlock className="h-3 w-3/4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Skeleton for a domain detail card narrative area */
+function DomainNarrativeSkeleton() {
+  return (
+    <div className="space-y-1.5">
+      <ShimmerBlock className="h-2.5 w-full" />
+      <ShimmerBlock className="h-2.5 w-4/5" />
+    </div>
+  );
+}
+
+/** Skeleton for the full domain grid (6 cards) */
+function DomainGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="bg-[#111827] border border-white/8 rounded-xl p-5 flex flex-col gap-3">
+          {/* Icon + title | score */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShimmerBlock className="w-6 h-6 rounded" />
+              <ShimmerBlock className="h-3 w-28" />
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <ShimmerBlock className="h-4 w-8" brand />
+              <ShimmerBlock className="h-2 w-14" />
+            </div>
+          </div>
+          {/* Bar */}
+          <ShimmerBlock className="h-1.5 w-full rounded-full" />
+          {/* Narrative */}
+          <DomainNarrativeSkeleton />
+          {/* Full breakdown link */}
+          <ShimmerBlock className="h-2.5 w-24 mt-auto" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Skeleton for the dev plan rows */
+function DevPlanSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden divide-y divide-white/6">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-20 bg-white/4 rounded-xl" />
+        <div key={i} className="flex items-center gap-4 px-5 py-4">
+          <ShimmerBlock className="w-2 h-2 rounded-full shrink-0" />
+          <ShimmerBlock className="h-3 w-32" brand />
+          <ShimmerBlock className="h-3 w-12" />
+          <div className="flex-1" />
+          <ShimmerBlock className="h-3 w-40" />
+          <ShimmerBlock className="h-7 w-16 rounded-md" />
+        </div>
       ))}
     </div>
   );
@@ -469,9 +541,17 @@ export default function AssessmentResultsPage() {
         <section aria-labelledby="hero-heading" className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden">
           {/* Header strip */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-white/6">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30" id="hero-heading">
-              Your AI Capability Profile
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30" id="hero-heading">
+                Your AI Capability Profile
+              </p>
+              {profileQuery.isLoading && (
+                <span className="flex items-center gap-1.5 text-[10px] text-white/35">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Generating insights…
+                </span>
+              )}
+            </div>
             <Button
               size="sm" variant="outline"
               className="h-7 px-3 text-xs border-white/15 text-white/60 hover:text-white hover:border-white/30 bg-transparent"
@@ -508,7 +588,12 @@ export default function AssessmentResultsPage() {
             </span>
           ))}
         </div>
-        {isLoading ? <SectionSkeleton rows={2} /> : (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CrossCuttingCardSkeleton />
+            <CrossCuttingCardSkeleton />
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* What you do well */}
             <div className="bg-[#111827] border border-white/8 rounded-xl p-5">
@@ -519,8 +604,14 @@ export default function AssessmentResultsPage() {
                 <h3 className="text-sm font-semibold text-white">What you do well</h3>
               </div>
               {profileQuery.isLoading ? (
-                <div className="space-y-3 animate-pulse">
-                  {[1, 2].map(i => <div key={i} className="h-12 bg-white/4 rounded" />)}
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="space-y-1.5">
+                      <ShimmerBlock className="h-3 w-full" brand />
+                      <ShimmerBlock className="h-3 w-5/6" />
+                      <ShimmerBlock className="h-3 w-3/4" />
+                    </div>
+                  ))}
                 </div>
               ) : (profileQuery.data as any)?.profile?.crossCuttingStrengths?.length ? (
                 <ul className="space-y-4">
@@ -556,8 +647,14 @@ export default function AssessmentResultsPage() {
                 <h3 className="text-sm font-semibold text-white">Where to grow</h3>
               </div>
               {profileQuery.isLoading ? (
-                <div className="space-y-3 animate-pulse">
-                  {[1, 2].map(i => <div key={i} className="h-12 bg-white/4 rounded" />)}
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="space-y-1.5">
+                      <ShimmerBlock className="h-3 w-full" brand />
+                      <ShimmerBlock className="h-3 w-5/6" />
+                      <ShimmerBlock className="h-3 w-3/4" />
+                    </div>
+                  ))}
                 </div>
               ) : (profileQuery.data as any)?.profile?.crossCuttingGrowth?.length ? (
                 <ul className="space-y-4">
@@ -590,7 +687,7 @@ export default function AssessmentResultsPage() {
       {/* ── 4. DOMAIN DETAIL ─────────────────────────────────────────────── */}
       <section aria-labelledby="domain-detail-heading">
         <SectionHeading label="Domain detail · best to worst" />
-        {isLoading ? <SectionSkeleton rows={6} /> : (
+        {isLoading ? <DomainGridSkeleton /> : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {sortedDomains.map(domain => {
               const level = getLevelInfo(domain.score);
@@ -630,7 +727,7 @@ export default function AssessmentResultsPage() {
 
                   {/* Inline narrative — surfaced by default, no click required */}
                   {profileQuery.isLoading ? (
-                    <div className="h-8 bg-white/4 rounded animate-pulse" />
+                    <DomainNarrativeSkeleton />
                   ) : narrative ? (
                     <p className="text-xs text-white/60 leading-relaxed">{narrative}</p>
                   ) : null}
@@ -667,7 +764,7 @@ export default function AssessmentResultsPage() {
           </Link>
         </div>
 
-        {isLoading || planQuery.isLoading ? <SectionSkeleton rows={3} /> : (
+        {isLoading || planQuery.isLoading ? <DevPlanSkeleton rows={3} /> : (
           devPriorities.length === 0 ? (
             <div className="bg-[#111827] border border-white/8 rounded-xl p-5 text-sm text-white/50">
               All your domain scores are at or above target. Consider revisiting in 6 months.
