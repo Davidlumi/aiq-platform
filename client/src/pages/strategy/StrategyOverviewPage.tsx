@@ -760,7 +760,28 @@ export default function StrategyOverviewPage() {
   const ambitionGap      = ambitionGapQ.data as any;
   const allInitiatives   = (initiativesQ.data ?? []) as any[];
   const visionStatement  = (strategyAssessmentQ.data as any)?.visionStatement ?? null;
-  const commitments      = ((strategyAssessmentQ.data as any)?.commitments ?? []) as string[];
+  // Commitments: prefer persisted commitmentsJson; fall back to success_markers_ranked from structuredInputs
+  const assessmentStructuredInputs = (strategyAssessmentQ.data as any)?.structuredInputs as Record<string, any> | null;
+  const rawCommitments = ((strategyAssessmentQ.data as any)?.commitments ?? []) as string[];
+  const commitments = useMemo<string[]>(() => {
+    if (rawCommitments && rawCommitments.length > 0) return rawCommitments;
+    // Fallback: derive from success_markers_ranked using plain-English labels
+    const SUCCESS_MARKER_LABELS: Record<string, string> = {
+      productivity_gains:              "Productivity gains across HR and the business",
+      improved_speed_of_decision:      "Improved speed of decision-making",
+      team_capability_uplift:          "Team capability uplift in AI skills",
+      cost_reduction:                  "Cost reduction through automation",
+      employee_experience:             "Improved employee experience",
+      risk_reduction:                  "Reduced compliance and operational risk",
+      data_quality:                    "Better data quality and HR analytics",
+      retention_improvement:           "Improved retention through better people insights",
+      hiring_quality:                  "Higher quality of hire",
+      manager_effectiveness:           "Increased manager effectiveness",
+    };
+    const ranked = assessmentStructuredInputs?.success_markers_ranked as string[] | undefined;
+    if (!ranked || ranked.length === 0) return [];
+    return ranked.slice(0, 3).map(id => SUCCESS_MARKER_LABELS[id] ?? id.replace(/_/g, " "));
+  }, [rawCommitments, assessmentStructuredInputs]);
 
   const businessLevel = strategyData?.businessAmbitionLevel ?? orgContext?.businessAmbitionLevel ?? 3;
   const peopleLevel   = strategyData?.peopleAmbitionLevel   ?? orgContext?.peopleAmbitionLevel   ?? 3;
@@ -806,16 +827,24 @@ export default function StrategyOverviewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInits.length]);
 
-  // Value envelope — use the procedure with selected IDs
+  // Value envelope — pass solutionDeliveryConfidence and planHorizonMonths for accurate numbers
+  const solutionConfidence = (assessmentStructuredInputs?.solution_delivery_confidence as number | undefined) ?? 3;
+  const planHorizonMonths  = (assessmentStructuredInputs?.timeline_months as number | undefined) ?? 18;
   const valueEnvWithIdsQ = trpc.intelligence.calculateValueEnvelope.useQuery(
-    { selectedInitiativeIds: Array.from(selectedInitiativeIds) },
+    {
+      selectedInitiativeIds: Array.from(selectedInitiativeIds),
+      solutionDeliveryConfidence: solutionConfidence,
+      planHorizonMonths: Math.max(planHorizonMonths, 12),
+    },
     { enabled: selectedInitiativeIds.size > 0 }
   );
   const valueEnv  = valueEnvWithIdsQ.data as any;
   const netLow    = valueEnv?.net_value_gbp?.low  ?? null;
   const netHigh   = valueEnv?.net_value_gbp?.high ?? null;
   const netMid    = netLow != null && netHigh != null ? (netLow + netHigh) / 2 : null;
-  const valueGated = netMid != null && netMid < 0;
+  // Only show Finance gating when even the optimistic scenario is negative (netHigh < 0)
+  // If netLow < 0 but netHigh > 0, show the range with a note rather than blocking the value
+  const valueGated = netHigh != null && netHigh < 0;
 
   // Review cadence
   const structuredInputs = useMemo(() => {
