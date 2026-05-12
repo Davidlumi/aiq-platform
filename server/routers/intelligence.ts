@@ -849,6 +849,8 @@ Return JSON with this exact structure:
       }).optional(),
       planHorizonMonths: z.number().min(6).max(60).default(36),
       solutionDeliveryConfidence: z.number().min(1).max(5).optional(),
+      /** Session-scoped DCF discount rate override (0.02–0.20). Defaults to 0.08 in engine. */
+      discountRate: z.number().min(0.02).max(0.20).optional(),
     }))
     .query(({ input }) => {
       const lib = getContentLibrary();
@@ -859,7 +861,8 @@ Return JSON with this exact structure:
         selected,
         input.operationalBaseline ?? {},
         input.planHorizonMonths,
-        input.solutionDeliveryConfidence
+        input.solutionDeliveryConfidence,
+        input.discountRate
       ) as ValueEnvelope;
     }),
   /**

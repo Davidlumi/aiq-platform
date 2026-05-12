@@ -1080,7 +1080,8 @@ export function calculateValueEnvelope(
     _sector_default_used?: Record<string, boolean>;
   },
   planHorizonMonths: number,
-  solutionDeliveryConfidence?: number | null
+  solutionDeliveryConfidence?: number | null,
+  discountRateOverride?: number | null
 ): ValueEnvelope {
   const libMeta = getLibraryMeta();
   const byInitiative: ValueEnvelopeInitiative[] = [];
@@ -1296,7 +1297,9 @@ export function calculateValueEnvelope(
   };
 
   // C3: NPV / IRR
-  const DISCOUNT_RATE = 0.08; // UK default per v1.2 brief Block C3
+  const DISCOUNT_RATE = (discountRateOverride != null && discountRateOverride >= 0.02 && discountRateOverride <= 0.20)
+    ? discountRateOverride
+    : 0.08; // UK default per v1.2 brief Block C3
   const calcNPV = (annualCashflow: number, totalCost: number, years: number): number => {
     let npv = -totalCost;
     for (let y = 1; y <= years; y++) {

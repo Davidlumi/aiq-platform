@@ -2872,3 +2872,22 @@
 - [x] Frontend: StrategyInvestmentRiskPage — Block 8: Solution delivery confidence bar
 - [x] Tests: 7 risk acknowledgement vitest tests — all passing
 - [x] TypeScript: 0 errors
+
+## Value Page — Full Implementation (Section 05) per brief
+- [x] Backend: Add discountRate parameter to calculateValueEnvelope (session-scoped, no DB persistence)
+- [x] Frontend: StrategyValuePage — Block 1: Hero arithmetic strip (Gross − TCO = Net) with TCO link to investment-risk
+- [x] Frontend: StrategyValuePage — Block 1: 3 primary value cards (Net primary, Payback info-blue, Qualitative count)
+- [x] Frontend: StrategyValuePage — Block 2: Permanent caveat banner (not dismissible)
+- [x] Frontend: StrategyValuePage — Block 3: Value summary 3-year horizon bar chart (high estimate, hover for low)
+- [x] Frontend: StrategyValuePage — Block 4: Value by initiative horizontal bar chart (sorted desc, colour by value type, click for modal)
+- [x] Frontend: StrategyValuePage — Block 5: Per-initiative table (collapsed default, Confidence column, click for drill-down modal)
+- [x] Frontend: StrategyValuePage — Block 5: Per-initiative drill-down modal (6 sections: header, methodology, bottom-up calc, assumptions, sensitivity, sources)
+- [x] Frontend: StrategyValuePage — Block 6: Three-tier analysis with reconciliation line
+- [x] Frontend: StrategyValuePage — Block 7: Interactive DCF financial model (adjustable rate 2-20%, NPV recalculates, IRR suppression warning, sensitivity hint at 15%)
+- [x] Frontend: StrategyValuePage — Block 8: Three-scenario analysis (stressed conservative with assumption deltas, base, optimistic)
+- [x] Frontend: StrategyValuePage — Block 9: Qualitative highlights (collapsed default, Why not monetised explanation)
+- [x] Frontend: StrategyValuePage — Block 10: Future reinvestment guidance (5-case logic, explicit don't-commit framing)
+- [x] Frontend: StrategyValuePage — Block 11: CEO sponsorship recommendation (conditional on scale criteria)
+- [x] Frontend: StrategyValuePage — Empty/loading/error states for each block
+- [x] Frontend: StrategyValuePage — Mobile responsive (hero wraps vertical, cards stack, modals as bottom sheets)
+- [x] Tests: Vitest tests for value page procedures
