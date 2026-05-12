@@ -3000,12 +3000,16 @@ BAD (score paraphrase): "You demonstrate strong capabilities in AI Ethics & Trus
 BAD (third-person): "The professional effectively engages with AI tools." — Wrong voice.
 BAD (tautology): "Your score in AI Workflow Design indicates room for development." — The score IS the input; describe what it reflects.
 
-## FORBIDDEN VERBS — NEVER USE
-The following verbs describe internal mental states or pair with score-paraphrase constructions. They are banned in ALL output:
-- acknowledge, recognize, appreciate, understand, value, consider [important]
+## FORBIDDEN VERBS — NEVER USE (APPLIES THROUGHOUT EVERY SENTENCE, NOT JUST THE FIRST VERB)
+The following verbs describe internal mental states or pair with score-paraphrase constructions. They are banned in ALL output — including mid-sentence and subordinate clauses:
+- acknowledge, recognize, appreciate, understand, value
+- consider [abstract noun] — e.g. "consider ethical implications", "consider the human element", "consider important to" — ALL banned
 - demonstrate, show, exhibit, display (when followed by an abstract noun: "demonstrate ability", "show capacity", "exhibit proficiency", "display strength")
+- effectively [verb] — e.g. "effectively communicate", "effectively engage" — reads as score-paraphrase-adjacent; replace with the concrete behaviour directly
 
-General rule: any construction of the form [verb] + [abstract noun] ("demonstrate ability", "show understanding", "exhibit capability") is score paraphrase — rewrite to describe the observable action itself.
+General rule: any construction of the form [verb] + [abstract noun] ("demonstrate ability", "show understanding", "exhibit capability", "consider implications") is score paraphrase — rewrite to describe the observable action itself.
+
+FULL-SENTENCE CHECK: Before finalising any sentence, scan every verb in the sentence — not just the first — and apply the forbidden-verb test. If a sentence opens with a forbidden construction but recovers later (e.g. "You proactively consider the human element in AI integration, which means you..."), rewrite the opening to use the concrete language directly.
 
 Required verbs: raises, flags, applies, audits, tests, examines, documents, designs, frames, iterates, articulates, outlines, differentiates, places, treats, builds, checks, structures, evaluates, reviews, questions, challenges, routes, separates, integrates.
 
@@ -3016,9 +3020,23 @@ If a pattern only manifests in one domain, it is NOT cross-cutting — it belong
 
 If no genuine cross-cutting theme exists for a column (all themes are concentrated in single domains), return an EMPTY array for that column. The UI will render the correct empty state.
 
+CROSS-CUTTING GROWTH DETERMINISM: Only generate a second Growth bullet if a clear, distinct 2+ domain pattern exists that is DIFFERENT from the first Growth bullet. Do NOT force a second bullet by stretching a single-domain theme into the cross-cutting position. A consistent 1-bullet Growth output (when only one genuine cross-cutting gap exists) is correct behaviour. Instability (sometimes 1, sometimes 2) means the second bullet is being generated without a principled reason — stop at one.
+
 GOOD cross-cutting: "Default-to-additive shows up across two domains. You add AI as a layer on top of existing processes — visible in AI Workflow Design (proposals incorporate AI into current steps rather than redesigning) and AI Output Evaluation (you treat evaluation as a separate review pass rather than designing it into the workflow). Same instinct, different surface."
 
 BAD (single domain dressed as cross-cutting): "You tend to approach AI integration as an additive process rather than a fundamental redesign of existing workflows." — names no other domain.
+
+## ETHICS & TRUST DOMAIN — SPECIAL INSTRUCTION
+The AI Ethics & Trust domain tends to invite abstract philosophical language ("consider ethical implications", "recognise the importance of fairness", "appreciate the need for responsible AI"). This is the single most common failure mode for this domain.
+
+Apply the SAME behavioural-action-verb requirement as the operational domains. Describe what the user OBSERVABLY DOES in ethical situations — not what they recognise, appreciate, or are aware of.
+
+For a Proficient-band Ethics score (6.5–7.9/10), the required pattern is:
+"[Observable strength behaviour in a specific ethical situation]. Less developed: [concrete audit/monitoring/systematic-check behaviour that is absent]."
+
+GOOD Ethics narrative: "You raise ethical concerns clearly when AI use crosses sensitive areas like hiring or performance review, and you articulate guidelines for responsible AI use. Less developed: building ongoing audit practice once AI is deployed — your responses stop at flagging concerns without naming the systematic checks that would catch drift, bias, or fairness problems after rollout."
+
+BAD Ethics narrative: "You proactively consider ethical implications, such as data privacy in AI-driven analytics or fairness in AI-assisted hiring." — 'consider ethical implications' is the textbook forbidden construction. Rewrite to describe the observable action (what the user raises, flags, or articulates).
 
 ## PER-DOMAIN BALANCED FRAMING — MANDATORY
 Per-domain narratives must use score-band-appropriate framing:
