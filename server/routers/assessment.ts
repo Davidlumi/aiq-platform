@@ -2970,23 +2970,55 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       const roleCtx = input.roleLabel ? ` (${input.roleLabel})` : "";
 
       try {
+        const narrativePath = hasResponseData ? "full" : "fallback";
+        const pathNote = hasResponseData
+          ? `Response-pattern data IS available. Include scenario counts in evidence sentences where they add specificity (e.g. "You explicitly framed prompts in 11 of 12 interaction scenarios").`
+          : `Only aggregated scores are available (no per-scenario counts). Describe behavioural patterns in general second-person terms without scenario counts.`;
         const response = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an expert AI capability coach specialising in HR professionals. Analyse assessment results and produce structured, behavioural insights — not score paraphrases. Rules:
-- Cross-cutting bullets MUST span 2+ domains. Never restate a per-domain finding.
-- Each bullet: bold claim sentence (what the person DOES, not how good they are) + 1 sentence of evidence (include scenario counts if available).
-- Per-domain narratives: 1-2 sentences of domain-specific behaviour. Must differ from cross-cutting bullets.
-- Avoid evaluative adjectives: excellent, exceptional, outstanding. Let scores and behaviours speak.
-- Avoid amber/red framing for low scores — this is a capability profile, not a risk dashboard.
-- Return ONLY valid JSON matching the schema exactly.`,
+              content: `You are an expert AI capability coach writing personalised assessment feedback for HR professionals.
+
+## VOICE REQUIREMENT — MANDATORY
+Every sentence MUST use second person ("you", "your"). NEVER use:
+- "The professional [does X]"
+- "This individual [does X]"
+- "They [do X]"
+- "One demonstrates [X]"
+- Passive voice that hides the subject ("AI tools are effectively engaged with")
+
+## BEHAVIOURAL REQUIREMENT — MANDATORY
+Every bullet and narrative sentence must describe a specific behaviour observed in the user's responses — NOT a paraphrase of their score.
+
+APPLY THIS ACCEPTANCE TEST before finalising any sentence: Remove all numerical references (scores, scenario counts). Does the sentence still carry a specific, falsifiable behavioural claim? If YES — keep it. If it becomes vague ("you effectively engage with AI tools") — rewrite to describe the actual behaviour.
+
+GOOD: "Context-setting is habitual, not situational. You explicitly framed prompts in 11 of 12 interaction scenarios, regardless of complexity."
+GOOD: "You're comfortable adding AI to single tasks. Less developed: designing workflows where AI is the default and humans handle exceptions."
+
+BAD (score paraphrase): "You demonstrate strong capabilities in AI Ethics & Trust." — No specific behaviour.
+BAD (third-person): "The professional effectively engages with AI tools." — Wrong voice.
+BAD (tautology): "Your score in AI Workflow Design indicates room for development." — The score IS the input; describe what it reflects.
+
+## CROSS-CUTTING vs PER-DOMAIN
+- Cross-cutting bullets: themes spanning 2+ domains. Name the domains involved. Do NOT restate per-domain findings.
+- Per-domain narratives: specific to that domain. Do NOT restate cross-cutting themes. If a cross-cutting bullet covers "default-to-manual across two domains", the per-domain narrative describes what that looks like specifically in THAT domain.
+
+## PATH NOTE
+${pathNote}
+
+## FORMATTING
+- Return ONLY valid JSON matching the schema exactly.
+- No evaluative adjectives: excellent, exceptional, outstanding.
+- No amber/red urgency framing — this is a capability profile, not a risk dashboard.`,
             },
             {
               role: "user",
-              content: `HR professional${roleCtx} — overall AI capability: ${overallStr}\n\nDomain scores:\n${domainLines}\n\nGenerate:\n1. 2-4 cross-cutting strength bullets (themes spanning 2+ domains)
-2. 1-3 cross-cutting growth bullets (genuine cross-domain gaps only; if none, return empty array)
-3. Per-domain inline narrative (1-2 sentences each, domain-specific behaviour, not cross-cutting themes)`,
+              content: `You are writing feedback for this HR professional${roleCtx}.
+
+Overall AI capability: ${overallStr}
+
+Domain scores (sorted highest to lowest):\n${domainLines}\n\nGenerate:\n1. 2-3 cross-cutting strength bullets (themes spanning 2+ domains; use second person; include scenario counts if available)\n2. 1-3 cross-cutting growth bullets (genuine cross-domain gaps only; second person; if none exist, return empty array)\n3. Per-domain inline narrative (1-2 sentences each; second person; domain-specific behaviour; must NOT restate cross-cutting themes)`,
             },
           ],
           response_format: {

@@ -1,12 +1,20 @@
 /**
- * AssessmentResultsPage — Individual AI Capability Assessment Dashboard (brief v1)
+ * AssessmentResultsPage — Individual AI Capability Assessment Dashboard (brief v2)
  *
- * Layout (top to bottom):
- *   1. Top bar — assessment date selector + in-progress indicator (no full-width banner)
- *   2. Hero — score circle, cohort anchor, narrative headline, badges row
- *   3. Cross-cutting patterns — What you do well / Where to grow
- *   4. Domain detail — 6 cards sorted by score desc, inline narrative
- *   5. Development plan — 3 priority rows, target score auto-derived, module names
+ * v2 changes:
+ *   - Hero simplified: cohort anchor removed, CIPD/calibration badges removed
+ *   - Hero: two-strip layout (header strip + content strip)
+ *   - Doughnut: level-appropriate colour (green ≥80, blue 65–79, muted-blue 50–64, tertiary <50)
+ *   - Hero headline: N themes derived from actual priority count
+ *   - Domain colour palette: updated to v2 spec hex values
+ *   - Domain cards: score + level stacked vertically (right-aligned column)
+ *   - Domain cards: bar fill = domain colour
+ *   - Domain cards: domain colour only on icon/icon-bg/bar — NOT on text
+ *   - Cross-cutting bullets: domain reference dots after domain name
+ *   - Development plan: N priorities matches headline theme count
+ *   - Development plan: marginal-target fix (within 0.2 of next threshold → half-step)
+ *   - Development plan: coloured dot prefix on each priority row
+ *   - Development plan: empty-state row for domains with no modules
  *
  * Full path: per-scenario response patterns from backend.
  * Fallback: if generateCapabilityProfile fails, scores + bars render without narrative.
@@ -18,68 +26,57 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  ChevronDown, TrendingUp, Target, HelpCircle,
+  ChevronDown, TrendingUp, Target,
   RotateCcw, BookOpen, ChevronRight, AlertCircle,
   RefreshCw, Play,
 } from "lucide-react";
-import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_KEYS, type DomainKey } from "@shared/brand";
+import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS, DOMAIN_KEYS, type DomainKey } from "@shared/brand";
 import { getDomainIcon } from "@/lib/brand-icons";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-// ─── Level thresholds (brief spec: no amber/red for low scores) ───────────────
+// ─── Level thresholds (v2: bar colour = domain colour, passed in) ─────────────
 
 const LEVEL_THRESHOLDS = [
-  { label: "EXPERT",     min: 80, barColour: "#4477AA" },
-  { label: "PROFICIENT", min: 65, barColour: "#718096" },
-  { label: "DEVELOPING", min: 50, barColour: "rgba(68,119,170,0.55)" },
-  { label: "BEGINNER",   min: 35, barColour: "rgba(113,128,150,0.45)" },
-  { label: "NOVICE",     min:  0, barColour: "rgba(113,128,150,0.35)" },
+  { label: "EXPERT",     min: 80 },
+  { label: "PROFICIENT", min: 65 },
+  { label: "DEVELOPING", min: 50 },
+  { label: "BEGINNER",   min: 35 },
+  { label: "NOVICE",     min:  0 },
 ] as const;
 
-function getLevelInfo(score: number): { label: string; barColour: string; nextThreshold: number } {
+function getLevelInfo(score: number): { label: string; nextThreshold: number } {
   for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
     if (score >= LEVEL_THRESHOLDS[i].min) {
-      const nextThreshold = i === 0 ? Math.min(score + 5, 100) : LEVEL_THRESHOLDS[i - 1].min;
-      return { ...LEVEL_THRESHOLDS[i], nextThreshold };
+      let nextThreshold: number;
+      if (i === 0) {
+        nextThreshold = Math.min(score + 5, 100);
+      } else {
+        const rawNext = LEVEL_THRESHOLDS[i - 1].min;
+        // Marginal-target fix: if within 2 raw pts of next threshold, use half-step
+        const gap = rawNext - score;
+        nextThreshold = gap <= 2 ? Math.round(score + gap / 2) : rawNext;
+      }
+      return { label: LEVEL_THRESHOLDS[i].label, nextThreshold };
     }
   }
-  return { label: "NOVICE", barColour: "rgba(113,128,150,0.35)", nextThreshold: 35 };
+  return { label: "NOVICE", nextThreshold: 35 };
 }
 
-function getCipdLevel(score: number) {
-  if (score >= 75) return {
-    label: "Chartered Fellow", colour: "#68D391",
-    tooltip: "Your performance aligns with Chartered Fellow level of the CIPD Profession Map (score ≥7.5/10). Levels: Foundation → Associate → Chartered Member → Chartered Fellow.",
-  };
-  if (score >= 55) return {
-    label: "Chartered Member", colour: "#90CDF4",
-    tooltip: "Your performance aligns with Chartered Member level of the CIPD Profession Map (score ≥5.5/10).",
-  };
-  return {
-    label: "Associate", colour: "#F6AD55",
-    tooltip: "Your performance aligns with Associate level of the CIPD Profession Map (score <5.5/10).",
-  };
+// ─── Doughnut colour by score band (v2 spec) ─────────────────────────────────
+function getDoughnutColour(score: number): string {
+  if (score >= 80) return "#4ADE80";  // green — expert
+  if (score >= 65) return "#60A5FA";  // blue — proficient
+  if (score >= 50) return "#93C5FD";  // muted-blue — developing
+  return "rgba(148,163,184,0.55)";    // tertiary — beginner/novice
 }
 
-function getCalibLabel(diff: number) {
-  const abs = Math.abs(diff);
-  if (abs < 0.15) return {
-    label: "Well calibrated", colour: "#68D391",
-    tooltip: "Your self-assessed confidence broadly matched your demonstrated capability. Well-calibrated self-awareness is a strong predictor of effective AI use.",
-  };
-  if (diff > 0.15) return {
-    label: "Optimistic", colour: "#F6AD55",
-    tooltip: "You rated your confidence higher than your scores suggest. This is common — the assessment is designed to surface gaps that feel familiar but aren't yet fluent.",
-  };
-  return {
-    label: "Cautious", colour: "#90CDF4",
-    tooltip: "You underestimated your own capability. Your scores were stronger than your confidence suggested.",
-  };
-}
-
-function getHeroHeadline(score: number, growthThemes: string[]) {
-  const themeStr = growthThemes.length > 0
-    ? `Two themes to develop: ${growthThemes.slice(0, 2).join(", ")}.`
+// ─── Hero headline (v2: N derived from actual priority count) ─────────────────
+function getHeroHeadline(score: number, priorityCount: number, growthThemes: string[]): {
+  headline: string; sub: string;
+} {
+  const themeNames = growthThemes.slice(0, 2).join(" and ");
+  const themeStr = priorityCount > 0
+    ? `${priorityCount} ${priorityCount === 1 ? "theme" : "themes"} to develop${themeNames ? `, led by ${themeNames}` : ""}.`
     : "Continue building depth across all domains.";
   if (score >= 81) return {
     headline: `Mature AI fluency. ${themeStr}`,
@@ -94,90 +91,73 @@ function getHeroHeadline(score: number, growthThemes: string[]) {
     sub: "You're building a solid foundation. The domain detail below shows where your practice is strongest and where to focus next.",
   };
   return {
-    headline: "You're at the start of building AI capability. Several themes to develop.",
+    headline: `You're at the start of building AI capability. ${themeStr}`,
     sub: "The sections below show your current profile across all six domains and a suggested development path.",
   };
 }
 
-// ─── Score Circle ─────────────────────────────────────────────────────────────
-
-function ScoreCircle({ score, size = 120 }: { score: number; size?: number }) {
-  const r = (size - 16) / 2;
+// ─── Score Doughnut (v2: r=50 scaled, sw=11 scaled, level-appropriate colour) ──
+function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 50 * (size / 120);
   const circ = 2 * Math.PI * r;
   const fill = (score / 100) * circ;
+  const sw = 11 * (size / 120);
   const displayScore = (score / 10).toFixed(1);
   const level = getLevelInfo(score);
+  const colour = getDoughnutColour(score);
   return (
     <svg
       width={size} height={size}
       aria-label={`Overall AI capability score: ${displayScore} out of 10. Level: ${level.label}`}
       role="img" className="shrink-0"
     >
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={8} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
       <circle
-        cx={size/2} cy={size/2} r={r} fill="none"
-        stroke="#68D391" strokeWidth={8} strokeLinecap="round"
+        cx={cx} cy={cy} r={r} fill="none"
+        stroke={colour} strokeWidth={sw} strokeLinecap="round"
         strokeDasharray={`${fill} ${circ}`}
-        transform={`rotate(-90 ${size/2} ${size/2})`}
+        transform={`rotate(-90 ${cx} ${cy})`}
         style={{ transition: "stroke-dasharray 0.8s ease" }}
       />
-      <text x={size/2} y={size/2-4} textAnchor="middle" fill="#F7F8FA" fontSize={size*0.22} fontWeight="700" fontFamily="Sora, sans-serif">
+      <text x={cx} y={cy - 4} textAnchor="middle" fill="#F7F8FA" fontSize={size * 0.22} fontWeight="700" fontFamily="Sora, sans-serif">
         {displayScore}
       </text>
-      <text x={size/2} y={size/2+size*0.14} textAnchor="middle" fill="rgba(247,248,250,0.5)" fontSize={size*0.1} fontFamily="Sora, sans-serif">
+      <text x={cx} y={cy + size * 0.14} textAnchor="middle" fill="rgba(247,248,250,0.45)" fontSize={size * 0.1} fontFamily="Sora, sans-serif">
         /10
       </text>
     </svg>
   );
 }
 
-// ─── Domain Progress Bar ──────────────────────────────────────────────────────
-
-function DomainBar({ score }: { score: number }) {
+// ─── Domain Progress Bar (v2: bar fill = domain colour) ──────────────────────
+function DomainBar({ score, domainColour }: { score: number; domainColour: string }) {
   const level = getLevelInfo(score);
   return (
     <div
       role="progressbar"
       aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}
-      aria-valuetext={`${(score/10).toFixed(1)} out of 10 — ${level.label}`}
+      aria-valuetext={`${(score / 10).toFixed(1)} out of 10 — ${level.label}`}
       className="w-full h-1.5 rounded-full overflow-hidden"
       style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
     >
       <div
         className="h-full rounded-full transition-all duration-700"
-        style={{ width: `${score}%`, backgroundColor: level.barColour }}
+        style={{ width: `${score}%`, backgroundColor: domainColour }}
       />
     </div>
   );
 }
 
-// ─── Tooltip Badge ────────────────────────────────────────────────────────────
-
-function TooltipBadge({ label, colour, tooltip, prefix }: {
-  label: string; colour: string; tooltip: string; prefix?: string;
-}) {
-  const [open, setOpen] = useState(false);
+// ─── Domain Dot (v2: 6×6 inline-block, aria-hidden) ──────────────────────────
+function DomainDot({ colour }: { colour: string }) {
   return (
-    <div className="relative inline-flex">
-      <button
-        className="flex items-center gap-1.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded"
-        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
-        onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
-        type="button"
-      >
-        {prefix && <span className="text-[10px] text-white/30 uppercase tracking-widest">{prefix}</span>}
-        <span style={{ color: colour }} className="font-semibold">{label}</span>
-        <HelpCircle className="w-3 h-3 text-white/30 shrink-0" />
-      </button>
-      {open && (
-        <div
-          role="tooltip"
-          className="absolute bottom-full left-0 mb-2 z-50 w-64 bg-[#1a2332] border border-white/10 rounded-lg p-3 text-xs text-white/70 shadow-xl"
-        >
-          {tooltip}
-        </div>
-      )}
-    </div>
+    <span
+      aria-hidden="true"
+      className="inline-block rounded-full shrink-0"
+      style={{ width: 6, height: 6, backgroundColor: colour, marginBottom: 1 }}
+    />
   );
 }
 
@@ -196,16 +176,14 @@ function SectionHeading({ label, sub }: { label: string; sub?: string }) {
 
 function HeroSkeleton() {
   return (
-    <div className="bg-[#111827] border border-white/8 rounded-xl p-6 flex gap-6 animate-pulse">
-      <div className="w-28 h-28 rounded-full bg-white/8 shrink-0" />
-      <div className="flex-1 space-y-3">
-        <div className="h-4 w-2/3 bg-white/8 rounded" />
-        <div className="h-3 w-full bg-white/8 rounded" />
-        <div className="h-3 w-5/6 bg-white/8 rounded" />
-        <div className="h-px bg-white/8 my-2" />
-        <div className="flex gap-4">
-          <div className="h-3 w-24 bg-white/8 rounded" />
-          <div className="h-3 w-24 bg-white/8 rounded" />
+    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden animate-pulse">
+      <div className="h-10 border-b border-white/6 bg-white/4" />
+      <div className="flex gap-6 p-6">
+        <div className="w-28 h-28 rounded-full bg-white/8 shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="h-4 w-2/3 bg-white/8 rounded" />
+          <div className="h-3 w-full bg-white/8 rounded" />
+          <div className="h-3 w-5/6 bg-white/8 rounded" />
         </div>
       </div>
     </div>
@@ -332,40 +310,32 @@ export default function AssessmentResultsPage() {
   const breakdown = resultsQuery.data?.score?.breakdown as Record<string, any> | undefined;
   const capabilityScores = (breakdown?.capabilityScores ?? {}) as Record<string, { score: number }>;
 
-  // Sorted domains (desc by score) — domain score appears only here and in dev plan
+  // Sorted domains (desc by score)
   const sortedDomains = useMemo(() =>
     DOMAIN_KEYS
       .map(key => ({
         key, name: DOMAIN_LABELS[key],
         score: capabilityScores[key]?.score ?? 0,
         colour: DOMAIN_COLOURS[key],
+        bgColour: DOMAIN_BG_COLOURS[key],
         Icon: getDomainIcon(key),
       }))
       .sort((a, b) => b.score - a.score),
     [capabilityScores]
   );
 
-  const cipd = getCipdLevel(overallScore);
-  const confCalib = resultsQuery.data?.confidenceCalibration as any;
-  const confDiff = confCalib
-    ? ((confCalib.overconfidentCount ?? 0) - (confCalib.underconfidentCount ?? 0)) / Math.max(confCalib.totalAnswers ?? 1, 1)
-    : 0;
-  const calib = getCalibLabel(confDiff);
+  // Dev plan: lowest-scoring domains below their next threshold (max 3)
+  const devPriorities = useMemo(() => {
+    const belowTarget = sortedDomains.filter(d => {
+      const { nextThreshold } = getLevelInfo(d.score);
+      return d.score < nextThreshold;
+    });
+    return belowTarget.slice(-3).reverse();
+  }, [sortedDomains]);
 
-  // Cohort anchor — average percentile across all domains
-  const percentileData = (resultsQuery.data as any)?.percentileData ?? {};
-  const percentileValues = Object.values(percentileData) as Array<{ percentile: number; normGroupLabel: string; isSynthetic: boolean }>;
-  const overallPercentile = percentileValues.length > 0
-    ? Math.round(percentileValues.reduce((sum, p) => sum + p.percentile, 0) / percentileValues.length)
-    : null;
-  const firstPercentile = percentileValues[0] ?? null;
-
-  // Hero headline
-  const growthThemes = useMemo(() => sortedDomains.slice(-2).map(d => d.name), [sortedDomains]);
-  const { headline, sub } = getHeroHeadline(overallScore, growthThemes);
-
-  // Dev plan: 3 lowest-scoring domains
-  const devPriorities = useMemo(() => sortedDomains.slice(-3).reverse(), [sortedDomains]);
+  // Hero headline: N = devPriorities.length, themes = names of lowest-scoring priorities
+  const growthThemes = useMemo(() => devPriorities.slice(0, 2).map(d => d.name), [devPriorities]);
+  const { headline, sub } = getHeroHeadline(overallScore, devPriorities.length, growthThemes);
 
   // Plan items grouped by capability
   const planItems = useMemo(() => {
@@ -477,49 +447,29 @@ export default function AssessmentResultsPage() {
       {isLoading ? <HeroSkeleton /> : resultsQuery.error ? (
         <ErrorBlock message="Could not load your assessment results." onRetry={() => resultsQuery.refetch()} />
       ) : (
-        <section aria-labelledby="hero-heading" className="bg-[#111827] border border-white/8 rounded-xl p-6">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30 mb-4" id="hero-heading">
-            Your AI Capability Profile
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 items-start">
-            {/* Score circle + cohort anchor */}
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <ScoreCircle score={overallScore} size={120} />
-              {/* Cohort anchor — only when data available */}
-              {overallPercentile !== null && firstPercentile && (
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-white/80">
-                    Top {100 - overallPercentile}%
-                    <span className="text-white/40 font-normal"> · {firstPercentile.normGroupLabel}</span>
-                  </p>
-                  <p className="text-[10px] text-white/30 mt-0.5">*See footnote below</p>
-                </div>
-              )}
-            </div>
-            {/* Narrative — no AI-Ready badge, headline adapts to score */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold text-white leading-snug mb-2">{headline}</h1>
-              <p className="text-sm text-white/60 leading-relaxed">{sub}</p>
-            </div>
-          </div>
-
-          {/* Badges row */}
-          <div className="mt-5 pt-4 border-t border-white/8 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <TooltipBadge label={cipd.label} colour={cipd.colour} tooltip={cipd.tooltip} prefix="CIPD alignment:" />
-            <TooltipBadge label={calib.label} colour={calib.colour} tooltip={calib.tooltip} prefix="Confidence:" />
-            {/* Cohort footnote — inline text in DOM for screen readers */}
-            {overallPercentile !== null && firstPercentile && (
-              <p className="text-[10px] text-white/30">
-                *Synthetic benchmark · {firstPercentile.normGroupLabel}
-              </p>
-            )}
+        <section aria-labelledby="hero-heading" className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden">
+          {/* Header strip */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-white/6">
+            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30" id="hero-heading">
+              Your AI Capability Profile
+            </p>
             <Button
               size="sm" variant="outline"
-              className="ml-auto h-7 px-3 text-xs border-white/15 text-white/60 hover:text-white hover:border-white/30 bg-transparent"
+              className="h-7 px-3 text-xs border-white/15 text-white/60 hover:text-white hover:border-white/30 bg-transparent"
               onClick={() => navigate("/assessment")}
             >
               <RotateCcw className="w-3 h-3 mr-1" /> Reassess
             </Button>
+          </div>
+          {/* Content strip — doughnut + narrative, no cohort anchor, no badges */}
+          <div className="flex flex-col sm:flex-row gap-6 items-start px-6 py-5">
+            <div className="shrink-0">
+              <ScoreDoughnut score={overallScore} size={120} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-semibold text-white leading-snug mb-2">{headline}</h1>
+              <p className="text-sm text-white/60 leading-relaxed">{sub}</p>
+            </div>
           </div>
         </section>
       )}
@@ -546,10 +496,18 @@ export default function AssessmentResultsPage() {
                 </div>
               ) : (profileQuery.data as any)?.profile?.crossCuttingStrengths?.length ? (
                 <ul className="space-y-4">
-                  {((profileQuery.data as any).profile.crossCuttingStrengths as Array<{ claim: string; evidence: string }>).map((bullet, i) => (
+                  {((profileQuery.data as any).profile.crossCuttingStrengths as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
                       <span className="text-white/55">{bullet.evidence}</span>
+                      {bullet.domains && bullet.domains.length > 0 && (
+                        <span className="inline-flex items-center gap-1 ml-2 align-middle">
+                          {bullet.domains.map((dk) => {
+                            const c = DOMAIN_COLOURS[dk as DomainKey];
+                            return c ? <DomainDot key={dk} colour={c} /> : null;
+                          })}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -572,10 +530,18 @@ export default function AssessmentResultsPage() {
                 </div>
               ) : (profileQuery.data as any)?.profile?.crossCuttingGrowth?.length ? (
                 <ul className="space-y-4">
-                  {((profileQuery.data as any).profile.crossCuttingGrowth as Array<{ claim: string; evidence: string }>).map((bullet, i) => (
+                  {((profileQuery.data as any).profile.crossCuttingGrowth as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
                       <span className="text-white/55">{bullet.evidence}</span>
+                      {bullet.domains && bullet.domains.length > 0 && (
+                        <span className="inline-flex items-center gap-1 ml-2 align-middle">
+                          {bullet.domains.map((dk) => {
+                            const c = DOMAIN_COLOURS[dk as DomainKey];
+                            return c ? <DomainDot key={dk} colour={c} /> : null;
+                          })}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -600,27 +566,33 @@ export default function AssessmentResultsPage() {
                 <article
                   key={domain.key}
                   className="bg-[#111827] border border-white/8 rounded-xl p-5 flex flex-col gap-3"
-                  aria-label={`${domain.name}: ${(domain.score/10).toFixed(1)} out of 10, ${level.label}`}
+                  aria-label={`${domain.name}: ${(domain.score / 10).toFixed(1)} out of 10, ${level.label}`}
                 >
-                  {/* Top row: domain title + score + level */}
+                  {/* Top row: icon+title | score+level vertical stack (v2) */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
+                      {/* Domain colour on icon/icon-bg only — NOT on text */}
                       <div
                         className="w-6 h-6 rounded flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${domain.colour}20` }}
+                        style={{ backgroundColor: domain.bgColour }}
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color: domain.colour }} />
                       </div>
                       <h3 className="text-sm font-semibold text-white truncate">{domain.name}</h3>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-sm font-bold text-white tabular-nums">{(domain.score/10).toFixed(1)}</span>
-                      <span className="text-[10px] font-semibold tracking-widest uppercase text-white/40">{level.label}</span>
+                    {/* Score + level: vertical stack, right-aligned (v2 spec) */}
+                    <div className="flex flex-col items-end shrink-0 gap-0.5">
+                      <span className="text-sm font-bold text-white tabular-nums leading-none">
+                        {(domain.score / 10).toFixed(1)}
+                      </span>
+                      <span className="text-[9px] font-semibold tracking-widest uppercase text-white/35 leading-none">
+                        {level.label}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Progress bar — level-semantic colours, no amber/red */}
-                  <DomainBar score={domain.score} />
+                  {/* Progress bar — domain colour fill (v2 spec) */}
+                  <DomainBar score={domain.score} domainColour={domain.colour} />
 
                   {/* Inline narrative — surfaced by default, no click required */}
                   {profileQuery.isLoading ? (
@@ -651,7 +623,7 @@ export default function AssessmentResultsPage() {
       <section aria-labelledby="dev-plan-heading">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/40">
-            Your development plan · 3 priorities
+            Your development plan · {devPriorities.length} {devPriorities.length === 1 ? "priority" : "priorities"}
           </h2>
           <Link
             href="/learning"
@@ -662,19 +634,17 @@ export default function AssessmentResultsPage() {
         </div>
 
         {isLoading || planQuery.isLoading ? <SectionSkeleton rows={3} /> : (
-          devPriorities.every(d => d.score >= 80) ? (
+          devPriorities.length === 0 ? (
             <div className="bg-[#111827] border border-white/8 rounded-xl p-5 text-sm text-white/50">
-              All your domain scores are above target. Consider revisiting in 6 months.
+              All your domain scores are at or above target. Consider revisiting in 6 months.
             </div>
           ) : (
             <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden divide-y divide-white/6">
-              {devPriorities.filter(d => d.score < 80).map(domain => {
+              {devPriorities.map(domain => {
                 const level = getLevelInfo(domain.score);
-                // Target score = next level threshold above current
                 const target = level.nextThreshold;
                 const items = planItems[domain.key] ?? [];
                 const totalMins = items.reduce((sum: number, item: any) => sum + (item.module?.durationMins ?? 0), 0);
-                // Time formatting: hours for ≥60 mins, mins otherwise
                 const timeStr = totalMins >= 60
                   ? `~${(totalMins / 60).toFixed(1)} hours`
                   : totalMins > 0 ? `~${totalMins} mins` : null;
@@ -683,27 +653,28 @@ export default function AssessmentResultsPage() {
                 const extraCount = Math.max(0, items.length - 2);
                 return (
                   <div key={domain.key} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
-                    {/* Domain + score → target */}
+                    {/* Coloured dot prefix + domain name + score → target (v2) */}
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div
-                        className="w-5 h-5 rounded flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${domain.colour}20` }}
-                      >
-                        <domain.Icon className="w-3 h-3" style={{ color: domain.colour }} />
-                      </div>
+                      <DomainDot colour={domain.colour} />
                       <span className="text-sm font-medium text-white truncate">{domain.name}</span>
                       <span className="text-xs text-white/40 tabular-nums shrink-0">
-                        {(domain.score/10).toFixed(1)} → {(target/10).toFixed(1)}
+                        {(domain.score / 10).toFixed(1)} → {(target / 10).toFixed(1)}
                       </span>
                     </div>
                     {/* Module info */}
                     <div className="text-xs text-white/50 flex-1 min-w-0">
                       {timeStr && <span className="mr-2">{timeStr}</span>}
-                      {firstModule && <span className="text-white/60">{firstModule.title}</span>}
-                      {secondModule && <span className="text-white/40">, {secondModule.title}</span>}
-                      {extraCount > 0 && <span className="text-white/30"> +{extraCount} more</span>}
+                      {firstModule ? (
+                        <>
+                          <span className="text-white/60">{firstModule.title}</span>
+                          {secondModule && <span className="text-white/40">, {secondModule.title}</span>}
+                          {extraCount > 0 && <span className="text-white/30"> +{extraCount} more</span>}
+                        </>
+                      ) : (
+                        <span className="text-white/30 italic">No modules assigned yet</span>
+                      )}
                     </div>
-                    {/* Start button */}
+                    {/* Start button — only when module available */}
                     {firstModule && (
                       <Button
                         size="sm"

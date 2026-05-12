@@ -50,26 +50,26 @@ export const DOMAIN_SHORT_LABELS: Record<DomainKey, string> = {
 };
 
 // ─── Domain Colours ───────────────────────────────────────────────────────────
-// Paul Tol Bright palette — colorblind-safe, vibrant on dark backgrounds
+// v2 palette — spec'd hex values per brief (individual assessment dashboard v2)
 
 /** Primary accent colour per domain */
 export const DOMAIN_COLOURS: Record<DomainKey, string> = {
-  ai_interaction:         "#4477AA",  // Tol blue
-  ai_output_evaluation:   "#EE6677",  // Tol rose
-  ai_workflow_design:     "#228833",  // Tol green
-  workforce_ai_readiness: "#CCBB44",  // Tol yellow
-  ai_ethics_trust:        "#AA3377",  // Tol purple
-  ai_change_leadership:   "#66CCEE",  // Tol cyan
+  ai_interaction:         "#3B82F6",  // blue-500
+  ai_output_evaluation:   "#F59E0B",  // amber-400 (domain identity, NOT a low-score signal)
+  ai_workflow_design:     "#10B981",  // emerald-500
+  workforce_ai_readiness: "#F43F5E",  // rose-500
+  ai_ethics_trust:        "#A855F7",  // purple-500
+  ai_change_leadership:   "#6366F1",  // indigo-500
 };
 
-/** Translucent background fill (12% opacity) for cards/chips */
+/** Translucent background fill (15% opacity) for icon boxes and chips */
 export const DOMAIN_BG_COLOURS: Record<DomainKey, string> = {
-  ai_interaction:         "rgba(68,119,170,0.12)",
-  ai_output_evaluation:   "rgba(238,102,119,0.12)",
-  ai_workflow_design:     "rgba(34,136,51,0.12)",
-  workforce_ai_readiness: "rgba(204,187,68,0.12)",
-  ai_ethics_trust:        "rgba(170,51,119,0.12)",
-  ai_change_leadership:   "rgba(102,204,238,0.12)",
+  ai_interaction:         "rgba(59,130,246,0.15)",
+  ai_output_evaluation:   "rgba(245,158,11,0.15)",
+  ai_workflow_design:     "rgba(16,185,129,0.15)",
+  workforce_ai_readiness: "rgba(244,63,94,0.15)",
+  ai_ethics_trust:        "rgba(168,85,247,0.15)",
+  ai_change_leadership:   "rgba(99,102,241,0.15)",
 };
 
 // ─── Domain Icons (Lucide names — import in client code) ──────────────────────

@@ -2963,24 +2963,45 @@ test
 ## HR AI Strategy Dashboard Redesign (strategic document brief)
 
 ### Backend
-- [ ] Update generateLeadershipTalkingPoints AI prompt to 5-bullet strategy-document structure
-- [ ] Add dismissedStaleNotice support to saveLeadershipTalkingPoints mutation
-- [ ] Add dismissedStaleNotice to getTalkingPoints return type
+- [x] Update generateLeadershipTalkingPoints AI prompt to 5-bullet strategy-document structure
+- [x] Add dismissedStaleNotice support to saveLeadershipTalkingPoints mutation
+- [x] Add dismissedStaleNotice to getTalkingPoints return type
 
 ### Frontend — StrategyOverviewPage full rewrite
-- [ ] Top bar: inline context line (sector · business tier · HR tier · Updated date by name) + Review overdue pill + Edit/Export buttons
-- [ ] Hero: HR AI STRATEGY label + serif italic vision quote with left border + supporting strategic line (N initiatives · value, no execution status)
-- [ ] Capability bridge section: tinted background block, TODAY score, gap bar, WHERE WE NEED TO BE score, Build capability button
-- [ ] Capability edge cases: no assessment, no ambition, stale assessment (>6 months), score above target
-- [ ] 4-card 2x2 grid: Card 1 ambition (list), Card 2 plan (list), Card 3 cost (value-style), Card 4 value (value-style)
-- [ ] Card 1: commitments list with teal bullets, Top-tier ambition tag, See full ambition link
-- [ ] Card 2: initiative titles list with violet bullets, N initiatives · duration tag, See the full plan link
-- [ ] Card 3: cost headline amber, between/over/compliance sub-line, See the costs link
-- [ ] Card 4: value headline green, between/over/estimated sub-line, gating for negative value, See what this is worth link
-- [ ] Remove Next steps footer (Assign owners / Schedule kickoff)
-- [ ] Remove Measurement card
-- [ ] Talking points: collapsed teaser by default, expanded with 5 bullets, stale banner with Regenerate/Keep current, dismissedStaleNotice
-- [ ] Loading skeletons per block, error states per block
-- [ ] Accessibility: blockquote for vision, progressbar aria for bridge bar, aria-expanded for talking points
-- [ ] Telemetry events wired
-- [ ] Acceptance criteria checklist pass (20 items)
+- [x] Top bar: inline context line (sector · business tier · HR tier · Updated date by name) + Review overdue pill + Edit/Export buttons
+- [x] Hero: HR AI STRATEGY label + serif italic vision quote with left border + supporting strategic line (N initiatives · value, no execution status)
+- [x] Capability bridge section: tinted background block, TODAY score, gap bar, WHERE WE NEED TO BE score, Build capability button
+- [x] Capability edge cases: no assessment, no ambition, stale assessment (>6 months), score above target
+- [x] 4-card 2x2 grid: Card 1 ambition (list), Card 2 plan (list), Card 3 cost (value-style), Card 4 value (value-style)
+- [x] Card 1: commitments list with teal bullets, Top-tier ambition tag, See full ambition link
+- [x] Card 2: initiative titles list with violet bullets, N initiatives · duration tag, See the full plan link
+- [x] Card 3: cost headline amber, between/over/compliance sub-line, See the costs link
+- [x] Card 4: value headline green, between/over/estimated sub-line, gating for negative value, See what this is worth link
+- [x] Remove Next steps footer (Assign owners / Schedule kickoff)
+- [x] Remove Measurement card
+- [x] Talking points: collapsed teaser by default, expanded with 5 bullets, stale banner with Regenerate/Keep current, dismissedStaleNotice
+- [x] Loading skeletons per block, error states per block
+- [x] Accessibility: blockquote for vision, progressbar aria for bridge bar, aria-expanded for talking points
+- [x] Telemetry events wired
+- [x] Acceptance criteria checklist pass (20 items)
+
+## Individual Assessment Dashboard v2
+
+### Backend
+- [ ] Update domain colour palette in shared/brand.ts to brief spec hex values
+- [ ] Replace generateCapabilityProfile LLM prompt with v2 second-person behavioural spec (voice requirement, acceptance test, anti-patterns, positive examples)
+- [ ] Fix marginal-target logic: if score within 0.2 of next level threshold, target next half-step instead
+
+### Frontend — AssessmentResultsPage v2 rewrite
+- [ ] Hero: two-strip layout (header strip + content strip), remove cohort/CIPD/calibration badges/footnote
+- [ ] Hero doughnut: 120x120 SVG, r=50, stroke-width 11, level-appropriate colour (green ≥8.0, blue 6.5–7.9, muted-blue 5.0–6.4, tertiary <5.0)
+- [ ] Hero headline: derive N from actual priority count; "N themes to develop, led by X and Y"
+- [ ] Domain cards: vertical score+level stack (right-aligned column), domain colour on bar fill (not grey)
+- [ ] Domain cards: domain colour only on icons/icon-bg/bar/dots — NOT on text (scores, titles, narratives, links)
+- [ ] Cross-cutting bullets: domain reference dots (6x6px inline-block, aria-hidden, domain colour) after domain name
+- [ ] Development plan: N priorities matches headline theme count; marginal-target fix applied
+- [ ] Development plan: time formatting (hours for ≥60 mins, mins for <60 mins, no mixing)
+- [ ] Development plan: empty-state row for domains with no modules
+- [ ] Development plan: coloured dot prefix on each priority row domain name
+- [ ] Remove cohort anchor entirely (isSynthetic=true confirmed)
+- [ ] Acceptance criteria checklist pass (17 items)
