@@ -1238,25 +1238,34 @@ Return JSON with this exact structure:
       };
       const systemPrompt = `You are generating exactly 5 talking points for a CPO to use when briefing their CEO about an HR AI strategy. This is a STRATEGIC DOCUMENT briefing — not an operational update. Each bullet must be grounded in the specific strategy data provided.
 
-PRODUCE EXACTLY 5 BULLETS in this order:
-1. VISION-LED — Open with the strategy vision (paraphrased or quoted briefly) plus the strategic intent. Must reference the specific vision text.
-2. CAPABILITY STORY — Name the current capability score and the gap. Frame as "what HR needs to be able to do", not where they are operationally. Include the specific numbers (e.g. 5.2/10 today, 7.3/10 needed, 2.1-point gap).
-3. STRATEGIC DELIVERY — Name the initiative count and duration. Optionally name the most distinctive initiative title from the list provided.
-4. FINANCIAL IMPACT — Indicate value and cost with explicit caveat that values are indicative until Finance confirms. Use the specific figures from the data.
-5. STRATEGIC DEPENDENCY — The single most important strategic dependency (something the strategy assumes or requires that is not yet in place). Phrased as a strategic frame, not a task.
+PRODUCE EXACTLY 5 BULLETS in this MANDATORY FIXED ORDER (order matters — render position is fixed):
 
-EACH BULLET: 20-40 words, plain English, speakable aloud.
+1. VISION-LED OPENING. Anchor to the verbatim vision statement. Pick up the vision's key terms and themes in punchy first-person language. Do NOT quote the vision directly. Do NOT invent themes that aren't in it. Must feel like the CPO's own words, not a summary.
+
+2. AMBITION FRAMING. Name the strategic tier (Transformative / Ambitious / Progressive / Exploratory / Cautious) and articulate WHY this tier is the right choice for the business context. Reference the sector and the HR-as-innovator / HR-as-champion framing where present. One clause reason tied to business context — not a generic platitude.
+
+3. CAPABILITY GAP. Include ALL FOUR of: today's capability score, target capability score, the point gap, and the score-level descriptor (foundational / proficient / solid / mature). Frame as "what HR needs to be able to do to deliver this." All four data points must be present.
+
+4. FINANCIAL IMPACT. Reference BOTH the specific cost figure AND the specific value figure with their abbreviated formats (£k / £M) as they appear on the dashboard. Translate the financial value into 2–3 specific drivers — these drivers MUST be pulled from the vision statement and/or the named initiatives, not generated freely. Place the finance-confirmation caveat at the END (so it reads as due diligence, not hedging).
+
+5. STRATEGIC DEPENDENCY. ONE key risk, blocker, or precondition — the single most material one. If multiple dependencies exist (cross-functional alignment, executive sponsorship, regulatory approval, data governance), pick the most material one and frame it specifically. Do NOT list multiple dependencies.
+
+EACH BULLET: one paragraph, 25–45 words, plain English, speakable aloud. Each must reference at least one specific fact from the dashboard data.
+
+CALIBRATION EXAMPLE (for a retail HR strategy with 9 initiatives, 5.2/10 capability, £660k cost, £21.5M value):
+1. We're building an AI-fluent HR function, integrating AI into critical people processes over the next 18 months to reduce admin burden, speed up decision-making, and enable HR to operate as strategic partners.
+2. We're committing to Transformative ambition — the top tier — because retail's pace and our role in the customer experience require HR to be an active innovator, not a fast follower.
+3. Today HR's AI capability scores 5.2 out of 10, at foundational level. To deliver this strategy we need to be at 7.3 — a 2.1 point gap to close over 18 months, with capability development running alongside the 9 initiatives.
+4. We're investing roughly £660k over three years to unlock an estimated £21.5M in business value — driven by efficiency gains, faster decisions, and reduced admin burden. Finance will confirm the model as pilots progress.
+5. This is contingent on strong cross-functional alignment with IT and Legal for data governance. Without it, ambition outpaces capacity to deliver responsibly.
 
 ANTI-PATTERNS — NEVER produce output like these:
-BAD: "We're building an AI-fluent HR function, integrating AI into critical people processes over the next 18 months to reduce admin burden and enhance employee experience." — generic prose, no strategy-specific numbers.
-BAD: "Need to assign owners to Foundation initiatives." — operational task, not strategic.
-BAD: "Executive sponsorship, particularly from the CEO, will be crucial to champion this transformative shift." — generic platitude not tied to this strategy's specifics.
-BAD: "Foundation phase is active" or "2 of 9 underway" — execution tracking, not strategy.
-
-GOOD PATTERNS:
-GOOD: "Our vision is to transform the retail experience through AI, with HR as a strategic partner reducing admin burden and enabling faster decisions."
-GOOD: "HR capability today is at 5.2/10 (foundational); a 2.1-point gap separates us from the 7.3 needed to deliver this strategy."
-GOOD: "The strategy depends on cross-functional alignment, particularly Legal engagement on the responsible-AI commitments."
+BAD: Generic prose with no strategy-specific numbers — "We're building an AI-fluent HR function to reduce admin burden." (missing scores, cost, value)
+BAD: Operational task — "Need to assign owners to Foundation initiatives."
+BAD: Generic platitude — "Executive sponsorship will be crucial to champion this transformative shift." (not tied to this strategy's specifics)
+BAD: Execution tracking — "Foundation phase is active" or "2 of 9 underway"
+BAD: Multiple dependencies in bullet 5 — "This depends on IT alignment, Legal sign-off, and executive sponsorship." (pick ONE)
+BAD: Bullet 3 missing any of the four data points — "HR needs to improve its capability to deliver this strategy." (no scores, no gap, no descriptor)
 
 Return format: JSON array of exactly 5 strings, no other text.`;
       let bullets: string[];

@@ -615,7 +615,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                   aria-label="Copy talking points"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+                  <span className="hidden sm:inline">{copied ? "Copied" : "Copy all"}</span>
                 </Button>
                 <Button
                   variant="ghost" size="sm"
@@ -644,58 +644,80 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
               <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="flex-1 min-w-0">Strategy has changed since these were generated.</span>
-                <button className="font-semibold underline underline-offset-2 hover:no-underline" onClick={doGenerate} disabled={generateMut.isPending}>
+                {/* Both actions symmetric — same weight, both underlined; user chooses without nudge */}
+                <button className="underline underline-offset-2 hover:no-underline" onClick={doGenerate} disabled={generateMut.isPending}>
                   Regenerate
                 </button>
-                <button className="text-amber-300/70 hover:text-amber-300 underline underline-offset-2" onClick={handleKeepCurrent}>
+                <button className="underline underline-offset-2 hover:no-underline" onClick={handleKeepCurrent}>
                   Keep current
                 </button>
               </div>
             )}
+            {/* Category labels for the 5 fixed-order talking points */}
+            {/* P3-7: small tertiary labels make coverage visible and help CPO navigate */}
+            {(() => {
+              const TP_CATEGORIES = ["Vision", "Ambition", "Capability gap", "Financial impact", "Strategic dependency"];
+              return null; // labels rendered inline below
+            })()}
             {/* Bullets */}
-            <div className="space-y-2" role="list" aria-label="CEO talking points">
+            <div className="space-y-3" role="list" aria-label="CEO talking points">
               {(tpQ.isLoading || generateMut.isPending) ? (
                 [1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="flex items-start gap-2">
-                    <Skeleton className="h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0" />
-                    <Skeleton className="h-4 w-full rounded" />
+                  <div key={i} className="flex flex-col gap-1">
+                    <Skeleton className="h-2.5 w-20 rounded" />
+                    <div className="flex items-start gap-2">
+                      <Skeleton className="h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0" />
+                      <Skeleton className="h-4 w-full rounded" />
+                    </div>
                   </div>
                 ))
               ) : data?.bullets?.length ? (
-                data.bullets.map((bullet, idx) => (
-                  <div key={idx} role="listitem" className="group flex items-start gap-2">
-                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" aria-hidden="true" />
-                    {editingIdx === idx ? (
-                      <div className="flex-1 flex flex-col gap-1.5">
-                        <Textarea
-                          ref={editRef}
-                          value={editValue}
-                          onChange={e => setEditValue(e.target.value)}
-                          className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
-                          onKeyDown={e => {
-                            if (e.key === "Escape") cancelEdit();
-                            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(idx); }
-                          }}
-                        />
-                        <div className="flex gap-1.5">
-                          <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(idx)}>Save</Button>
-                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
-                        </div>
+                data.bullets.map((bullet, idx) => {
+                  const TP_CATEGORIES = ["Vision", "Ambition", "Capability gap", "Financial impact", "Strategic dependency"];
+                  const categoryLabel = TP_CATEGORIES[idx];
+                  return (
+                    <div key={idx} role="listitem" className="group flex flex-col gap-0.5">
+                      {/* Category label — tertiary text, makes coverage visible */}
+                      {categoryLabel && (
+                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50 pl-[18px]">
+                          {categoryLabel}
+                        </span>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" aria-hidden="true" />
+                        {editingIdx === idx ? (
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <Textarea
+                              ref={editRef}
+                              value={editValue}
+                              onChange={e => setEditValue(e.target.value)}
+                              className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
+                              onKeyDown={e => {
+                                if (e.key === "Escape") cancelEdit();
+                                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(idx); }
+                              }}
+                            />
+                            <div className="flex gap-1.5">
+                              <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(idx)}>Save</Button>
+                              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
+                            <p className="text-sm text-foreground leading-relaxed">{bullet}</p>
+                            <button
+                              className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
+                              onClick={() => startEdit(idx)}
+                              aria-label={`Edit bullet ${idx + 1}`}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                        <p className="text-sm text-foreground leading-relaxed">{bullet}</p>
-                        <button
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
-                          onClick={() => startEdit(idx)}
-                          aria-label={`Edit bullet ${idx + 1}`}
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
+                    </div>
+                  );
+                })
               ) : (
                 <p className="text-sm text-muted-foreground">No talking points yet. Click Regenerate to generate them.</p>
               )}
@@ -947,7 +969,8 @@ export default function StrategyOverviewPage() {
     contextParts.push(`HR as ${singularLabel}`);
   }
   if (savedAt) {
-    const dateStr = new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    // Include year throughout — strategy documents reference a planning period; year-free dates obscure document vintage
+    const dateStr = new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
     // Full name for strategic document attribution
     contextParts.push(`Updated ${dateStr}${savedByName ? ` by ${savedByName}` : ""}`);
   }
