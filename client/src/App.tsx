@@ -168,6 +168,9 @@ function Router() {
       <Route path="/assessment">
         <ProtectedRoute component={AssessmentPage} />
       </Route>
+      <Route path="/assessment/results">
+        <ProtectedRoute component={AssessmentResultsPage} />
+      </Route>
       <Route path="/assessment/:sessionId/results">
         <ProtectedRoute component={AssessmentResultsPage} />
       </Route>

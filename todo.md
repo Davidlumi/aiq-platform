@@ -2942,3 +2942,20 @@
 - [x] Remove sub-sector pill from context bar (screenshot shows only 3 pills: sector, business tier, HR tier)
 - [x] Hero label: change "HR AI strategy" to "HR AI STRATEGY" (all-caps, matching screenshot)
 - [x] Talking points block heading: change "What to tell your CEO" to "WHAT TO TELL YOUR CEO" (all-caps, matching screenshot)
+test
+
+## Individual Assessment Dashboard Redesign (brief v1)
+
+### Backend
+- [ ] Extend assessment.results to aggregate per-domain response counts (outcomeClass distribution per domain)
+- [ ] Extend assessment.results to include percentileData (per-domain percentile from normEngine)
+- [ ] Add assessment.generateCapabilityProfile LLM procedure
+
+### Frontend
+- [ ] Top bar: compact assessment date selector + in-progress indicator (no full-width banner)
+- [ ] Hero block: score circle (no AI-Ready badge), cohort anchor, narrative headline + sub-narrative, badges row
+- [ ] Cross-cutting patterns section: two cards with LLM bullets, empty/fallback states
+- [ ] Domain detail section: 6 cards sorted by score desc, progress bar with level semantics, inline narrative
+- [ ] Development plan: 3 priority rows, target score auto-derived, module names + hours, Start button
+- [ ] Loading skeletons, error states, responsive layout, accessibility, telemetry
+- [ ] Acceptance criteria checklist pass (11 criteria)

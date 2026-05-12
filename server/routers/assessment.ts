@@ -2246,6 +2246,59 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       // Extract llmNarrative from scoreBreakdownJson if present
       const llmNarrativeFromBreakdown = (breakdown.llmNarrative as { strengths: string; gaps: string; priorities: string } | null) ?? null;
 
+      // ── Per-domain response pattern aggregation (for behavioural narrative) ──
+      const domainResponsePatterns: Record<string, {
+        total: number; strong: number; acceptable: number; weak: number; poor: number;
+        avgConfidence: number; strongRate: number;
+      }> = {};
+      const itemCapCacheForPatterns: Record<string, string> = {};
+      for (const sc of scenarioCallbacks) { itemCapCacheForPatterns[sc.itemId] = sc.capabilityKey; }
+      for (const answer of allAnswers) {
+        let capKey: string | null = itemCapCacheForPatterns[answer.itemId] ?? null;
+        if (!capKey) {
+          const itemRow = await db.select({ metadataJson: assessmentItems.metadataJson }).from(assessmentItems).where(eq(assessmentItems.id, answer.itemId)).limit(1);
+          if (itemRow[0]) {
+            const meta = (typeof itemRow[0].metadataJson === "string" ? JSON.parse(itemRow[0].metadataJson as string) : (itemRow[0].metadataJson ?? {})) as Record<string, unknown>;
+            capKey = (meta.capability_key as string) ?? null;
+            if (capKey) itemCapCacheForPatterns[answer.itemId] = capKey;
+          }
+        }
+        if (!capKey) continue;
+        if (!domainResponsePatterns[capKey]) domainResponsePatterns[capKey] = { total: 0, strong: 0, acceptable: 0, weak: 0, poor: 0, avgConfidence: 0, strongRate: 0 };
+        const dp = domainResponsePatterns[capKey];
+        dp.total++;
+        const oc = answer.outcomeClass ?? "weak";
+        if (oc === "strong") dp.strong++;
+        else if (oc === "acceptable") dp.acceptable++;
+        else if (oc === "poor") dp.poor++;
+        else dp.weak++;
+        if (answer.confidenceScore !== null) dp.avgConfidence += parseFloat(String(answer.confidenceScore ?? 0.5));
+      }
+      for (const dp of Object.values(domainResponsePatterns)) {
+        if (dp.total > 0) {
+          dp.avgConfidence = Math.round((dp.avgConfidence / dp.total) * 100);
+          dp.strongRate = Math.round(((dp.strong + dp.acceptable) / dp.total) * 100) / 100;
+        }
+      }
+
+      // ── Per-domain percentile data (synthetic norm benchmarks) ───────────────
+      const { computeAllPercentiles } = await import("../assessment/normEngine");
+      const sessionMetaForPercentile = (session[0].sessionMetadataJson ?? {}) as Record<string, unknown>;
+      const roleFamilyForPercentile = (sessionMetaForPercentile.roleFamily as string) ?? null;
+      const seniorityForPercentile = (sessionMetaForPercentile.seniority as string) ?? null;
+      const capScoresForPercentile: Record<string, { score: number }> = {};
+      for (const [k, v] of Object.entries(enrichedCapScores)) { capScoresForPercentile[k] = { score: v.score }; }
+      let percentileData: Record<string, { percentile: number; percentileBand: string; percentileBandLabel: string; normGroupLabel: string; isSynthetic: boolean }> = {};
+      try {
+        const allPercentiles = computeAllPercentiles(capScoresForPercentile as any, roleFamilyForPercentile, seniorityForPercentile);
+        percentileData = Object.fromEntries(
+          Object.entries(allPercentiles).map(([k, v]) => [k, {
+            percentile: v.percentile, percentileBand: v.percentileBand,
+            percentileBandLabel: v.percentileBandLabel, normGroupLabel: v.normGroupLabel, isSynthetic: v.isSynthetic,
+          }])
+        );
+      } catch {}
+
       return {
         session: session[0],
         score: {
@@ -2263,6 +2316,8 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         competenceConfidenceMatrix,
         blindSpots,
         llmNarrative: llmNarrativeFromBreakdown,
+        domainResponsePatterns,
+        percentileData,
       };
     }),
   // ── Get user's assessment history ──────────────────────────────────────────
@@ -2865,6 +2920,141 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         return { narrative: null };
       } catch {
         return { narrative: null };
+      }
+    }),
+
+  // ── AI-generated capability profile: cross-cutting + per-domain narratives ──
+  // Used by the redesigned individual assessment dashboard (brief v1)
+  generateCapabilityProfile: protectedProcedure
+    .input(z.object({
+      sessionId: z.string(),
+      domainScores: z.array(z.object({
+        key: z.string(),
+        name: z.string(),
+        score: z.number(),
+        total: z.number().optional(),
+        strong: z.number().optional(),
+        acceptable: z.number().optional(),
+        weak: z.number().optional(),
+        poor: z.number().optional(),
+        strongRate: z.number().optional(),
+      })),
+      overallScore: z.number(),
+      roleLabel: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { profile: null };
+      // Verify session belongs to user
+      const sessionRows = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.id, input.sessionId), eq(assessmentSessions.userId, ctx.user.id)))
+        .limit(1);
+      if (!sessionRows[0] || !sessionRows[0].completedAt) return { profile: null };
+
+      const hasResponseData = input.domainScores.some(d => (d.total ?? 0) > 0);
+      const domainLines = input.domainScores
+        .sort((a, b) => b.score - a.score)
+        .map(d => {
+          const scoreStr = `${(d.score / 10).toFixed(1)}/10`;
+          if (hasResponseData && (d.total ?? 0) > 0) {
+            const strongCount = (d.strong ?? 0) + (d.acceptable ?? 0);
+            return `${d.name}: ${scoreStr} (${strongCount} of ${d.total} scenarios strong/acceptable)`;
+          }
+          return `${d.name}: ${scoreStr}`;
+        })
+        .join("\n");
+
+      const overallStr = `${(input.overallScore / 10).toFixed(1)}/10`;
+      const roleCtx = input.roleLabel ? ` (${input.roleLabel})` : "";
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert AI capability coach specialising in HR professionals. Analyse assessment results and produce structured, behavioural insights — not score paraphrases. Rules:
+- Cross-cutting bullets MUST span 2+ domains. Never restate a per-domain finding.
+- Each bullet: bold claim sentence (what the person DOES, not how good they are) + 1 sentence of evidence (include scenario counts if available).
+- Per-domain narratives: 1-2 sentences of domain-specific behaviour. Must differ from cross-cutting bullets.
+- Avoid evaluative adjectives: excellent, exceptional, outstanding. Let scores and behaviours speak.
+- Avoid amber/red framing for low scores — this is a capability profile, not a risk dashboard.
+- Return ONLY valid JSON matching the schema exactly.`,
+            },
+            {
+              role: "user",
+              content: `HR professional${roleCtx} — overall AI capability: ${overallStr}\n\nDomain scores:\n${domainLines}\n\nGenerate:\n1. 2-4 cross-cutting strength bullets (themes spanning 2+ domains)
+2. 1-3 cross-cutting growth bullets (genuine cross-domain gaps only; if none, return empty array)
+3. Per-domain inline narrative (1-2 sentences each, domain-specific behaviour, not cross-cutting themes)`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "capability_profile",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  crossCuttingStrengths: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        claim: { type: "string", description: "Bold claim sentence — what the person does, not a score paraphrase" },
+                        evidence: { type: "string", description: "Supporting evidence, include scenario counts if available" },
+                        domains: { type: "array", items: { type: "string" }, description: "Domain keys this pattern spans" },
+                      },
+                      required: ["claim", "evidence", "domains"],
+                      additionalProperties: false,
+                    },
+                  },
+                  crossCuttingGrowth: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        claim: { type: "string", description: "Bold claim sentence — what to develop, not a score paraphrase" },
+                        evidence: { type: "string", description: "Supporting evidence across domains" },
+                        domains: { type: "array", items: { type: "string" }, description: "Domain keys this gap spans" },
+                      },
+                      required: ["claim", "evidence", "domains"],
+                      additionalProperties: false,
+                    },
+                  },
+                  domainNarratives: {
+                    type: "object",
+                    properties: {
+                      ai_interaction: { type: "string" },
+                      ai_output_evaluation: { type: "string" },
+                      ai_workflow_design: { type: "string" },
+                      workforce_ai_readiness: { type: "string" },
+                      ai_ethics_trust: { type: "string" },
+                      ai_change_leadership: { type: "string" },
+                    },
+                    required: ["ai_interaction", "ai_output_evaluation", "ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"],
+                    additionalProperties: false,
+                  },
+                },
+                required: ["crossCuttingStrengths", "crossCuttingGrowth", "domainNarratives"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = (response as any)?.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = typeof content === "string" ? JSON.parse(content) : content;
+          return { profile: parsed as {
+            crossCuttingStrengths: Array<{ claim: string; evidence: string; domains: string[] }>;
+            crossCuttingGrowth: Array<{ claim: string; evidence: string; domains: string[] }>;
+            domainNarratives: Record<string, string>;
+          } };
+        }
+        return { profile: null };
+      } catch {
+        return { profile: null };
       }
     }),
 
