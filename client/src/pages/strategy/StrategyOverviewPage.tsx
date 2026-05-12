@@ -768,12 +768,11 @@ export default function StrategyOverviewPage() {
   const pLevel = PEOPLE_LEVELS[peopleLevel];
 
   const selectedInitiativeIds = useMemo<Set<string>>(() => {
-    try {
-      const raw = strategyData?.selectedInitiativesJson;
-      if (!raw) return new Set();
-      return new Set(JSON.parse(raw) as string[]);
-    } catch { return new Set(); }
-  }, [strategyData?.selectedInitiativesJson]);
+    // getStrategy returns selectedInitiativeIds as a parsed string[] (not raw JSON)
+    const ids = strategyData?.selectedInitiativeIds;
+    if (!ids || !Array.isArray(ids)) return new Set<string>();
+    return new Set<string>(ids as string[]);
+  }, [strategyData?.selectedInitiativeIds]);
 
   const selectedInits = useMemo(
     () => allInitiatives.filter((i: any) => selectedInitiativeIds.has(i.id)),

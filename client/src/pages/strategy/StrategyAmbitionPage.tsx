@@ -495,6 +495,20 @@ export default function StrategyAmbitionPage() {
     },
   });
 
+  // Auto-save commitments derived from wizard answers to commitmentsJson if not yet persisted
+  // This bridges the gap between structuredInputs.success_markers_ranked (wizard) and commitmentsJson (DB)
+  useEffect(() => {
+    if (
+      commitments.length > 0 &&
+      assessment !== undefined &&
+      (!assessment?.commitments || assessment.commitments.length === 0)
+    ) {
+      const statements = commitments.map(c => c.statement);
+      patchMutation.mutate({ field: "commitments", value: statements });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(commitments.map(c => c.statement)), assessment?.commitments?.length]);
+
   const patch = useCallback(async (
     field: "visionStatement" | "wontDo" | "commitments" | "guidingPrinciples",
     value: unknown
