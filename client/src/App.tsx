@@ -21,13 +21,10 @@ import AppShell from "./components/AppShell";
 import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
 import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
-import AIStrategyPage from "./pages/dashboard/AIStrategyPage";
-import HRAIStrategyAssessmentPage from "./pages/dashboard/HRAIStrategyAssessmentPage";
 import ImplementationTrackerPage from "./pages/dashboard/ImplementationTrackerPage";
 import MaturityProgressionPage from "./pages/dashboard/MaturityProgressionPage";
 import ManagerHubPage from "./pages/dashboard/ManagerHubPage";
 import ContentRequestsPage from "./pages/dashboard/ContentRequestsPage";
-import StrategyBuilderPage from "./pages/strategy/StrategyBuilderPage";
 import StrategyOverviewPage from "./pages/strategy/StrategyOverviewPage";
 import StrategyDiagnosticPage from "./pages/strategy/StrategyDiagnosticPage";
 import StrategyAmbitionPage from "./pages/strategy/StrategyAmbitionPage";
@@ -238,13 +235,10 @@ function Router() {
         <ProtectedRoute component={StrategyMeasurementPage} />
       </Route>
       <Route path="/ai-strategy">
-        <ProtectedRoute component={AIStrategyPage} />
+        <Redirect to="/strategy" />
       </Route>
       <Route path="/strategy/builder">
         <Redirect to="/strategy" />
-      </Route>
-      <Route path="/ai-strategy/assessment">
-        <ProtectedRoute component={HRAIStrategyAssessmentPage} />
       </Route>
       <Route path="/implementation-tracker">
         <ProtectedRoute component={ImplementationTrackerPage} />

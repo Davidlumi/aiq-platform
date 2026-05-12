@@ -208,7 +208,7 @@ export default function CompanyAssessmentResultsPage() {
           <span className="text-sm text-white/40">Results</span>
         </div>
         <Button
-          onClick={() => navigate(`/ai-strategy`)}
+          onClick={() => navigate(`/strategy`)}
           className="bg-violet-600 hover:bg-violet-700 text-white text-sm"
         >
           Open Strategy Builder
@@ -537,7 +537,7 @@ export default function CompanyAssessmentResultsPage() {
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Button
-              onClick={() => navigate("/ai-strategy")}
+              onClick={() => navigate("/strategy")}
               className="bg-violet-600 hover:bg-violet-700 text-white px-8"
             >
               Open AI Strategy Builder

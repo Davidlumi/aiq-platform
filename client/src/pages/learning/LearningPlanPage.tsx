@@ -629,7 +629,7 @@ export default function LearningPlanPage() {
                 <span className="text-foreground font-medium">{dashboardCtx.focusInitiative.name}</span>
                 {" "}initiative).{" "}
                 <button
-                  onClick={() => setLocation("/ai-strategy")}
+                  onClick={() => setLocation("/strategy")}
                   className="text-primary hover:underline font-medium">
                   View full strategy →
                 </button>
@@ -639,7 +639,7 @@ export default function LearningPlanPage() {
                 Your current focus is{" "}
                 <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
                 <button
-                  onClick={() => setLocation("/ai-strategy")}
+                  onClick={() => setLocation("/strategy")}
                   className="text-primary hover:underline font-medium">
                   View full strategy →
                 </button>
@@ -650,7 +650,7 @@ export default function LearningPlanPage() {
                 Your current focus is{" "}
                 <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
                 <button
-                  onClick={() => setLocation("/ai-strategy")}
+                  onClick={() => setLocation("/strategy")}
                   className="text-primary hover:underline font-medium">
                   Generate your AI Strategy to see how these modules connect to specific initiatives in your function →
                 </button>

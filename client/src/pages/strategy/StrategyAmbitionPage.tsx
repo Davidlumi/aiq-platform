@@ -707,7 +707,7 @@ export default function StrategyAmbitionPage() {
               Complete the Build Strategy wizard to generate a vision statement, guiding principles, and ambition framing.
             </p>
           </div>
-          <Button size="sm" className="h-8 text-xs" onClick={() => navigate("/ai-strategy/assessment")}>
+          <Button size="sm" className="h-8 text-xs" onClick={() => navigate("/strategy/diagnostic")}>
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />Build Strategy
           </Button>
         </div>
@@ -727,7 +727,7 @@ export default function StrategyAmbitionPage() {
         className="text-xs text-amber-400 hover:text-amber-300 font-medium whitespace-nowrap flex items-center gap-1 transition-colors"
         onClick={() => {
           (window as any).umami?.track("strategy.ambition.wizard-banner.clicked");
-          navigate("/ai-strategy/assessment");
+          navigate("/strategy/diagnostic");
         }}
       >
         Re-run assessment →

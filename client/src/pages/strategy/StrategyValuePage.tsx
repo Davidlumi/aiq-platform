@@ -573,7 +573,7 @@ export default function StrategyValuePage() {
         <div className="rounded-xl border border-white/8 bg-white/2 p-8 text-center">
           <TrendingUp className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground mb-4">Generate your strategy to see its value.</p>
-          <Button size="sm" variant="outline" className="text-xs border-white/15" onClick={() => navigate("/ai-strategy/assessment")}>
+          <Button size="sm" variant="outline" className="text-xs border-white/15" onClick={() => navigate("/strategy/diagnostic")}>
             Build your strategy <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
         </div>

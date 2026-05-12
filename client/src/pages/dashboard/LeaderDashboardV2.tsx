@@ -390,7 +390,7 @@ export default function LeaderDashboardV2() {
       result.push({ type: "medium", priority: "Domain gap", title: `${weakestDomain.domainName} is the weakest domain`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} · ${weakestDomain.totalAssessed} assessed.`, linkLabel: "View breakdown", linkHref: "/admin/org-context" });
     }
     if (ambitionGap?.configured && ambitionGap.gapRaw !== null && ambitionGap.gapRaw > 0) {
-      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/ai-strategy" });
+      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/strategy" });
     }
     return result.slice(0, 3);
   }, [main, ambitionGap]);
@@ -449,7 +449,7 @@ export default function LeaderDashboardV2() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Function snapshot</p>
           <p className="text-base font-medium text-foreground leading-relaxed mb-4">{heroNarrative.text}</p>
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/ai-strategy">
+            <Link href="/strategy">
               <Button size="sm">View strategic roadmap</Button>
             </Link>
           </div>
@@ -476,7 +476,7 @@ export default function LeaderDashboardV2() {
                 <Link href="/admin/org-context">
                   <Button size="sm" className="gap-1.5"><MapPin className="w-3.5 h-3.5" />Configure AI roadmap</Button>
                 </Link>
-                <Link href="/ai-strategy">
+                <Link href="/strategy">
                   <Button size="sm" variant="outline" className="gap-1.5">Preview strategy builder</Button>
                 </Link>
               </div>
@@ -519,7 +519,7 @@ export default function LeaderDashboardV2() {
         <div className="bg-card rounded-xl border border-border p-5">
           <p className="text-sm font-semibold text-foreground mb-4">Readiness distribution</p>
           <ReadinessDonut distribution={levelDistribution} />
-          <Link href="/ai-strategy">
+          <Link href="/strategy">
             <span className="text-xs font-semibold text-primary hover:text-primary/80 mt-4 inline-block">Strategic view →</span>
           </Link>
         </div>
@@ -613,7 +613,7 @@ export default function LeaderDashboardV2() {
                 <div className="w-6 h-0" style={{ borderTop: "2px dashed var(--primary)" }} />
                 <span className="text-xs text-muted-foreground">Target {target.toFixed(1)}</span>
               </div>
-              <Link href="/ai-strategy">
+              <Link href="/strategy">
                 <span className="text-xs font-semibold text-primary hover:text-primary/80">View roadmap →</span>
               </Link>
             </div>

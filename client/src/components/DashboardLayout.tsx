@@ -86,8 +86,8 @@ const MY_TEAM_CPO: NavSection = {
 const AI_STRATEGY: NavSection = {
   section: "AI Strategy",
   items: [
-    { icon: Target,            label: "HR AI Strategy",        path: "/ai-strategy" },
-    { icon: Sparkles,          label: "Build Strategy",         path: "/ai-strategy/assessment" },
+    { icon: Target,            label: "HR AI Strategy",        path: "/strategy" },
+    { icon: Sparkles,          label: "Build Strategy",         path: "/strategy/diagnostic" },
     { icon: Building2,         label: "Company Assessment",     path: "/company-assessment" },
     { icon: BarChart3,         label: "Implementation Tracker", path: "/implementation-tracker" },
     { icon: TrendingUp,        label: "Maturity Progression",   path: "/maturity-progression" },

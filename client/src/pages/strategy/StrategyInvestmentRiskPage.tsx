@@ -360,7 +360,7 @@ export default function StrategyInvestmentRiskPage() {
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">No strategy configured yet</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">Complete the HR AI Strategy assessment to generate your investment envelope, risk register, and regulatory framework analysis.</p>
-            <Button size="sm" className="text-xs h-8" onClick={() => navigate("/ai-strategy/assessment")}>
+            <Button size="sm" className="text-xs h-8" onClick={() => navigate("/strategy/diagnostic")}>
               Start strategy assessment <ArrowRight className="w-3 h-3 ml-1.5" />
             </Button>
           </div>

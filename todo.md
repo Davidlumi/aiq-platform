@@ -2988,20 +2988,20 @@ test
 ## Individual Assessment Dashboard v2
 
 ### Backend
-- [ ] Update domain colour palette in shared/brand.ts to brief spec hex values
-- [ ] Replace generateCapabilityProfile LLM prompt with v2 second-person behavioural spec (voice requirement, acceptance test, anti-patterns, positive examples)
-- [ ] Fix marginal-target logic: if score within 0.2 of next level threshold, target next half-step instead
+- [x] Update domain colour palette in shared/brand.ts to brief spec hex values
+- [x] Replace generateCapabilityProfile LLM prompt with v2 second-person behavioural spec (voice requirement, acceptance test, anti-patterns, positive examples)
+- [x] Fix marginal-target logic: if score within 0.2 of next level threshold, target next half-step instead
 
 ### Frontend — AssessmentResultsPage v2 rewrite
-- [ ] Hero: two-strip layout (header strip + content strip), remove cohort/CIPD/calibration badges/footnote
-- [ ] Hero doughnut: 120x120 SVG, r=50, stroke-width 11, level-appropriate colour (green ≥8.0, blue 6.5–7.9, muted-blue 5.0–6.4, tertiary <5.0)
-- [ ] Hero headline: derive N from actual priority count; "N themes to develop, led by X and Y"
-- [ ] Domain cards: vertical score+level stack (right-aligned column), domain colour on bar fill (not grey)
-- [ ] Domain cards: domain colour only on icons/icon-bg/bar/dots — NOT on text (scores, titles, narratives, links)
-- [ ] Cross-cutting bullets: domain reference dots (6x6px inline-block, aria-hidden, domain colour) after domain name
-- [ ] Development plan: N priorities matches headline theme count; marginal-target fix applied
-- [ ] Development plan: time formatting (hours for ≥60 mins, mins for <60 mins, no mixing)
-- [ ] Development plan: empty-state row for domains with no modules
-- [ ] Development plan: coloured dot prefix on each priority row domain name
-- [ ] Remove cohort anchor entirely (isSynthetic=true confirmed)
-- [ ] Acceptance criteria checklist pass (17 items)
+- [x] Hero: two-strip layout (header strip + content strip), remove cohort/CIPD/calibration badges/footnote
+- [x] Hero doughnut: 120x120 SVG, r=50, stroke-width 11, level-appropriate colour (green ≥8.0, blue 6.5–7.9, muted-blue 5.0–6.4, tertiary <5.0)
+- [x] Hero headline: derive N from actual priority count; "N themes to develop, led by X and Y"
+- [x] Domain cards: vertical score+level stack (right-aligned column), domain colour on bar fill (not grey)
+- [x] Domain cards: domain colour only on icons/icon-bg/bar/dots — NOT on text (scores, titles, narratives, links)
+- [x] Cross-cutting bullets: domain reference dots (6x6px inline-block, aria-hidden, domain colour) after domain name
+- [x] Development plan: N priorities matches headline theme count; marginal-target fix applied
+- [x] Development plan: time formatting (hours for ≥60 mins, mins for <60 mins, no mixing)
+- [x] Development plan: empty-state row for domains with no modules
+- [x] Development plan: coloured dot prefix on each priority row domain name
+- [x] Remove cohort anchor entirely (isSynthetic=true confirmed)
+- [x] Acceptance criteria checklist pass (17 items)

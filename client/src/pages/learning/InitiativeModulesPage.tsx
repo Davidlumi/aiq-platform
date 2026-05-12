@@ -204,7 +204,7 @@ export default function InitiativeModulesPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setLocation("/ai-strategy")}
+          onClick={() => setLocation("/strategy")}
           className="flex-shrink-0 gap-1.5 text-xs">
           <ChevronDown className="h-3 w-3 -rotate-90" />
           View full strategy

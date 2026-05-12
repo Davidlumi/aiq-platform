@@ -1346,7 +1346,7 @@ export default function AIStrategyPage() {
             <p className="text-xs font-semibold text-amber-300">Content library updated to v{libMeta?.version}</p>
             <p className="text-xs text-muted-foreground">Your strategy was generated with library v{strategyData?.libraryVersion}. Regenerate the vision and principles to incorporate the latest guidance.</p>
           </div>
-          <a href="/ai-strategy/assessment">
+          <a href="/strategy/diagnostic">
             <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 h-7 text-xs flex-shrink-0">
               <Sparkles className="w-3 h-3 mr-1.5" />Regenerate
             </Button>
@@ -1730,7 +1730,7 @@ export default function AIStrategyPage() {
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 Complete the Build Strategy wizard to generate a vision statement and guiding principles.
               </p>
-              <a href="/ai-strategy/assessment">
+              <a href="/strategy/diagnostic">
                 <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10 h-7 text-xs">
                   <Sparkles className="w-3 h-3 mr-1.5" />Build Strategy
                 </Button>

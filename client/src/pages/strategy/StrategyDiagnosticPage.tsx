@@ -383,7 +383,7 @@ export default function StrategyDiagnosticPage() {
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0"
-              onClick={() => navigate("/ai-strategy")}>
+              onClick={() => navigate("/strategy")}>
               <RefreshCw className="w-3.5 h-3.5" />
               Re-run assessment
             </Button>
@@ -442,7 +442,7 @@ export default function StrategyDiagnosticPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Complete the HR AI Capability Assessment to see your diagnostic baseline.
               </p>
-              <Button size="sm" onClick={() => navigate("/ai-strategy")}>Start assessment</Button>
+              <Button size="sm" onClick={() => navigate("/strategy")}>Start assessment</Button>
             </CardContent>
           </Card>
         ) : (

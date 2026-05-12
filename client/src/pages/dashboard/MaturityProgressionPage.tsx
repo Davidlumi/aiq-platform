@@ -137,7 +137,7 @@ function RefreshSuggestionCard({ suggestion, onUpdate }: { suggestion: any; onUp
               className="h-7 text-xs"
               asChild
             >
-              <Link href="/ai-strategy/assessment">
+              <Link href="/strategy/diagnostic">
                 Reassess <ArrowRight className="w-3 h-3 ml-1" />
               </Link>
             </Button>
@@ -179,7 +179,7 @@ export default function MaturityProgressionPage() {
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/ai-strategy/assessment">
+          <Link href="/strategy/diagnostic">
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             Reassess Now
           </Link>
@@ -244,7 +244,7 @@ export default function MaturityProgressionPage() {
               <h3 className="text-base font-semibold mb-2">No assessment history yet</h3>
               <p className="text-sm text-muted-foreground mb-4">Complete your first assessment to start tracking maturity progression.</p>
               <Button size="sm" asChild>
-                <Link href="/ai-strategy/assessment">Start Assessment</Link>
+                <Link href="/strategy/diagnostic">Start Assessment</Link>
               </Button>
             </div>
           ) : (

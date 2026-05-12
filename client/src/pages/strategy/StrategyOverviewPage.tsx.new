@@ -680,7 +680,7 @@ export default function StrategyOverviewPage() {
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           You haven't set up a strategy yet. Run the strategy wizard to define your ambition, select initiatives, and generate your board-ready strategy.
         </p>
-        <Button onClick={() => navigate("/ai-strategy/assessment")} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={() => navigate("/strategy/diagnostic")} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Sparkles className="w-4 h-4 mr-2" />
           Build strategy
         </Button>

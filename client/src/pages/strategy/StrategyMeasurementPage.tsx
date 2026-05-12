@@ -734,7 +734,7 @@ export default function StrategyMeasurementPage() {
           variant="outline"
           size="sm"
           className="text-xs h-7 border-white/15 hover:border-white/30 text-muted-foreground"
-          onClick={() => navigate("/ai-strategy/assessment")}
+          onClick={() => navigate("/strategy/diagnostic")}
         >
           <Sparkles className="w-3 h-3 mr-1.5" aria-hidden="true" />
           Re-run wizard
@@ -754,7 +754,7 @@ export default function StrategyMeasurementPage() {
               size="sm"
               variant="outline"
               className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-7 text-xs"
-              onClick={() => navigate("/ai-strategy/assessment")}
+              onClick={() => navigate("/strategy/diagnostic")}
             >
               <Sparkles className="w-3 h-3 mr-1.5" aria-hidden="true" />
               Generate your strategy

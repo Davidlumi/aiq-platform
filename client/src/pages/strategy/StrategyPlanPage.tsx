@@ -738,7 +738,7 @@ export default function StrategyPlanPage() {
               size="sm"
               variant="outline"
               className="text-xs bg-transparent border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500"
-              onClick={() => navigate("/ai-strategy")}
+              onClick={() => navigate("/strategy")}
             >
               Edit selection
             </Button>

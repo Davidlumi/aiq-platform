@@ -1123,7 +1123,7 @@ export default function CoachPage() {
                         Your HR AI Strategy has been saved.
                       </p>
                       <div className="flex gap-3">
-                        <Link href="/ai-strategy">
+                        <Link href="/strategy">
                           <Button className="bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-black font-medium">
                             <BarChart2 className="w-4 h-4 mr-2" />
                             View strategy dashboard

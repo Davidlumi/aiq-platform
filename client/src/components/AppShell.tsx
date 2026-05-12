@@ -92,7 +92,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Build Strategy",
-    path: "/ai-strategy/assessment",
+    path: "/strategy/diagnostic",
     icon: Sparkles,
     roles: CPO_ROLES,
     section: "aistrategy",
