@@ -2891,3 +2891,20 @@
 - [x] Frontend: StrategyValuePage — Empty/loading/error states for each block
 - [x] Frontend: StrategyValuePage — Mobile responsive (hero wraps vertical, cards stack, modals as bottom sheets)
 - [x] Tests: Vitest tests for value page procedures
+
+## Strategy Dashboard Rebuild (Leadership View) per brief
+- [x] Schema: add leadershipTalkingPointsJson column to ailOrgContext
+- [x] DB migration: ALTER TABLE ail_org_context ADD COLUMN leadership_talking_points_json
+- [x] Backend: generateLeadershipTalkingPoints procedure (AI-generated, 3-5 bullets)
+- [x] Backend: saveLeadershipTalkingPoints procedure (full replace + per-bullet edit)
+- [x] Backend: getTalkingPoints procedure (read current bullets + metadata)
+- [x] Frontend: StrategyOverviewPage — hero: replace 4 KPI tiles with narrative-only hero + analytical sub-line
+- [x] Frontend: StrategyOverviewPage — talking points block (AI-generated, editable, regeneratable, copy, collapse, stale detection)
+- [x] Frontend: StrategyOverviewPage — card grid: central-estimate headlines (midpoint for ranges), range sub-lines, flag+action pairs
+- [x] Frontend: StrategyOverviewPage — Value card: wire calculateValueEnvelope for real net value headline
+- [x] Frontend: StrategyOverviewPage — Cost card: wire calculateCostEnvelope for real central estimate
+- [x] Frontend: StrategyOverviewPage — Plan card: flag with DPIA action text
+- [x] Frontend: StrategyOverviewPage — Measurement card: overdue flag + schedule action
+- [x] Frontend: StrategyOverviewPage — Diagnostic card: drift indicator badge
+- [x] Frontend: StrategyOverviewPage — responsive grid 3×2 desktop, 2×3 tablet, 1×6 mobile
+- [x] Tests: vitest tests for generateLeadershipTalkingPoints and saveLeadershipTalkingPoints

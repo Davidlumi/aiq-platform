@@ -451,12 +451,9 @@ export default function StrategyOverviewPage() {
   // ── Queries ───────────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
   const strategyAssessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
-  const ambitionGapQ        = trpc.dashboardV2.leader.ambitionGap.useQuery();
-  const companyQ            = trpc.companyAssessment.getMyAssessmentResults.useQuery();
-  const initiativesQ        = trpc.strategy.listInitiatives.useQuery(
-    { tenantId: user?.tenantId ?? "" },
-    { enabled: !!user?.tenantId }
-  );
+  const ambitionGapQ        = trpc.intelligence.getAmbitionGap.useQuery();
+  const companyQ            = trpc.assessment.getCompanyResults.useQuery();
+  const initiativesQ        = trpc.contentLibrary.listInitiatives.useQuery();
   const orgContextQ         = trpc.intelligence.orgContext.useQuery();
   const [liveRisks, setLiveRisks] = useState<any[] | null>(null);
   const evaluateRiskMut     = trpc.intelligence.evaluateRiskRules.useMutation();

@@ -1097,4 +1097,122 @@ Return JSON with this exact structure:
       ));
       return { success: true };
     }),
+
+  // ─── Leadership Talking Points ───────────────────────────────────────────────
+
+  /**
+   * Get the current leadership talking points for the org.
+   */
+  getTalkingPoints: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select({ leadershipTalkingPointsJson: ailOrgContext.leadershipTalkingPointsJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!rows.length || !rows[0].leadershipTalkingPointsJson) return null;
+      try {
+        return JSON.parse(rows[0].leadershipTalkingPointsJson) as {
+          bullets: string[];
+          generatedAt: number;
+          userEdited: boolean;
+          strategyHash: string;
+        };
+      } catch { return null; }
+    }),
+
+  /**
+   * Generate (or regenerate) leadership talking points using the LLM.
+   * Stores the result in ail_org_context.leadership_talking_points_json.
+   */
+  generateLeadershipTalkingPoints: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found" });
+      const ctx2 = rows[0];
+      const businessLevel = ctx2.businessAmbitionLevel ?? 3;
+      const peopleLevel   = ctx2.peopleAmbitionLevel ?? 3;
+      const BUSINESS_LABELS: Record<number, string> = { 1: "Cautious", 2: "Exploratory", 3: "Progressive", 4: "Ambitious", 5: "Transformative" };
+      const PEOPLE_LABELS:   Record<number, string> = { 1: "Followers", 2: "Adopters", 3: "Practitioners", 4: "Champions", 5: "Innovators" };
+      const bLabel = BUSINESS_LABELS[businessLevel] ?? "Progressive";
+      const selectedIds: string[] = ctx2.selectedInitiativesJson ? JSON.parse(ctx2.selectedInitiativesJson) : [];
+      const structuredInputs = ctx2.structuredInputsJson ? JSON.parse(ctx2.structuredInputsJson) : {};
+      const timelineMonths = structuredInputs.timeline_months ?? 18;
+      const hashSource = JSON.stringify({ selectedIds, businessLevel, peopleLevel, timelineMonths });
+      const strategyHash = Buffer.from(hashSource).toString("base64").slice(0, 32);
+      const promptData = {
+        orgName: (ctx2 as any).companyName ?? "The HR function",
+        businessAmbition: bLabel,
+        peopleAmbition: PEOPLE_LABELS[peopleLevel] ?? "Practitioners",
+        initiativeCount: selectedIds.length,
+        timelineMonths,
+        visionStatement: ctx2.visionStatement ?? null,
+        riskAppetite: structuredInputs.risk_appetite ?? "moderate",
+      };
+      const systemPrompt = `You are an expert HR strategy advisor helping a CPO prepare for a board conversation. Generate 3-5 concise bullet points they can use to brief their CEO about the HR AI strategy.\n\nEach bullet should be:\n- 20-35 words\n- Written as plain English, not analyst-speak\n- Speakable aloud in a board meeting without translation\n- Honest about uncertainty (use "indicative", "confirm with Finance" where appropriate)\n\nChoose 3 bullets for a simple strategy, up to 5 if there are multiple material dependencies.\n\nCover in this order, when applicable:\n1. Current capability state and what's needed\n2. Strategy summary (initiatives, timeline, current phase)\n3. Value vs cost with caveats\n4. Top regulatory or organisational dependency\n5. Optional: second material dependency or executive sponsorship recommendation\n\nReturn ONLY a JSON array of 3-5 strings, no other text, no markdown fences.`;
+      let bullets: string[];
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user",   content: `Strategy data:\n${JSON.stringify(promptData, null, 2)}` },
+          ],
+        });
+        const rawContent = response.choices?.[0]?.message?.content;
+        const raw = typeof rawContent === "string" ? rawContent : "[]";
+        const cleaned = raw.replace(/```json?/g, "").replace(/```/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        bullets = Array.isArray(parsed) ? parsed : (parsed.bullets ?? []);
+        if (!Array.isArray(bullets) || bullets.length === 0) throw new Error("Empty");
+      } catch {
+        const capScore = (ctx2.ambitionTargetScore ?? 55) / 10;
+        const leadClause = capScore < 3.1 ? `${promptData.orgName} is in the early stages of HR capability build.`
+          : capScore < 5.6 ? `${promptData.orgName} has built foundational HR capability.`
+          : capScore < 7.6 ? `${promptData.orgName} has solid HR capability across most domains.`
+          : `${promptData.orgName} has mature HR capability.`;
+        bullets = [
+          leadClause,
+          `This strategy closes the capability gap through ${promptData.initiativeCount} initiatives over ${promptData.timelineMonths} months. Foundation phase is active.`,
+          `Indicative cost and value estimates are available in the Investment & Risk and Value sections. Confirm with Finance before committing.`,
+        ];
+      }
+      const payload = JSON.stringify({ bullets, generatedAt: Date.now(), userEdited: false, strategyHash });
+      await db.update(ailOrgContext)
+        .set({ leadershipTalkingPointsJson: payload })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { bullets, generatedAt: Date.now(), userEdited: false, strategyHash };
+    }),
+
+  /**
+   * Save (update) leadership talking points.
+   * userEdited=false: full replace after regenerate.
+   * userEdited=true: inline edit by user.
+   */
+  saveLeadershipTalkingPoints: protectedProcedure
+    .input(z.object({
+      bullets: z.array(z.string().max(500)).min(1).max(10),
+      userEdited: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select({ leadershipTalkingPointsJson: ailOrgContext.leadershipTalkingPointsJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      let strategyHash = "";
+      if (rows.length && rows[0].leadershipTalkingPointsJson) {
+        try { strategyHash = JSON.parse(rows[0].leadershipTalkingPointsJson).strategyHash ?? ""; } catch {}
+      }
+      const payload = JSON.stringify({ bullets: input.bullets, generatedAt: Date.now(), userEdited: input.userEdited, strategyHash });
+      await db.update(ailOrgContext)
+        .set({ leadershipTalkingPointsJson: payload })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
 });

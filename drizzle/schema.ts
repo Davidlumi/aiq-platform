@@ -908,6 +908,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   operationalBaselineJson: text("operational_baseline_json"),                    // JSON: B2 operational baseline {hires_per_year, cost_per_hire_gbp, time_to_fill_days, voluntary_attrition_rate_pct, l_and_d_spend_per_fte_gbp, hr_cost_per_fte_gbp, _sector_default_used: {field: bool}}
   provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources
   libraryVersion: varchar("library_version", { length: 20 }),                   // content library version used when strategy was generated
+  leadershipTalkingPointsJson: text("leadership_talking_points_json"),           // JSON: { bullets: string[], generatedAt: number, userEdited: boolean, strategyHash: string }
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
