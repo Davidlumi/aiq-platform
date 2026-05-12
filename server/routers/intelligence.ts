@@ -23,7 +23,7 @@ import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
 import { getDb, getUserRoleKeys } from "../db";
-import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users, strategyInitiatives, strategyInitiativeLibrary } from "../../drizzle/schema";
+import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users, strategyInitiatives, strategyInitiativeLibrary, riskAcknowledgements } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { nanoid } from "nanoid";
 import { eq, desc, and } from "drizzle-orm";
@@ -993,6 +993,105 @@ Return JSON with this exact structure:
         tenantId: ctx.user.tenantId,
         ...input,
       });
+      return { success: true };
+    }),
+
+  /**
+   * Get all active (non-revoked) risk acknowledgements for the tenant.
+   */
+  getRiskAcknowledgements: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select().from(riskAcknowledgements)
+      .where(and(
+        eq(riskAcknowledgements.tenantId, ctx.user.tenantId),
+      ));
+    // Return all acks (both active and revoked) so UI can show audit log
+    return rows.map(r => ({
+      id: r.id,
+      itemId: r.itemId,
+      itemType: r.itemType,
+      acknowledgedBy: r.acknowledgedBy,
+      acknowledgedAt: r.acknowledgedAt,
+      note: r.note,
+      revokedAt: r.revokedAt,
+      revokedBy: r.revokedBy,
+    }));
+  }),
+
+  /**
+   * Acknowledge a risk or framework item.
+   */
+  acknowledgeRisk: protectedProcedure
+    .input(z.object({
+      itemId: z.string().max(128),
+      itemType: z.enum(["risk", "framework"]),
+      note: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Check if already acknowledged (active)
+      const existing = await db.select({ id: riskAcknowledgements.id })
+        .from(riskAcknowledgements)
+        .where(and(
+          eq(riskAcknowledgements.tenantId, ctx.user.tenantId),
+          eq(riskAcknowledgements.itemId, input.itemId),
+        ))
+        .limit(1);
+      if (existing.length > 0) {
+        // Already acknowledged — update note if provided
+        await db.update(riskAcknowledgements).set({
+          note: input.note ?? null,
+          revokedAt: null,
+          revokedBy: null,
+          acknowledgedBy: ctx.user.id,
+          acknowledgedAt: Date.now(),
+        }).where(eq(riskAcknowledgements.id, existing[0].id));
+        return { id: existing[0].id, created: false };
+      }
+      const id = nanoid();
+      await db.insert(riskAcknowledgements).values({
+        id,
+        tenantId: ctx.user.tenantId,
+        itemId: input.itemId,
+        itemType: input.itemType,
+        acknowledgedBy: ctx.user.id,
+        acknowledgedAt: Date.now(),
+        note: input.note ?? null,
+      });
+      return { id, created: true };
+    }),
+
+  /**
+   * Revoke (un-acknowledge) a risk or framework item.
+   */
+  revokeRiskAcknowledgement: protectedProcedure
+    .input(z.object({
+      itemId: z.string().max(128),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(riskAcknowledgements).set({
+        revokedAt: Date.now(),
+        revokedBy: ctx.user.id,
+      }).where(and(
+        eq(riskAcknowledgements.tenantId, ctx.user.tenantId),
+        eq(riskAcknowledgements.itemId, input.itemId),
+      ));
       return { success: true };
     }),
 });

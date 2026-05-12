@@ -45,6 +45,8 @@ export interface RiskRuleMatch {
   recommendedAction: string;
   regulatoryBasis: string[];
   sources: string[];
+  /** Discriminator: 'risk' = acknowledgeable risk; 'note' = informational regulatory note (no acknowledge affordance) */
+  type: "risk" | "note";
 }
 
 export interface CostEnvelope {
@@ -395,6 +397,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (hasHighRiskAiAct && !hasGovernanceFramework) {
     matches.push({
       ruleId: "rr_high_risk_ai_without_governance",
+      type: "risk" as const,
       displayName: "High-Risk AI Without Governance Framework",
       riskStatement: "One or more initiatives involve high-risk AI use cases under the EU AI Act (hiring, attrition, pay equity) but no AI ethics or governance framework is in scope. This creates significant regulatory exposure and potential ICO enforcement action.",
       severity: "very_high",
@@ -408,6 +411,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (ids.has("ai_assisted_cv_screening") && !ids.has("bias_monitoring_and_auditing")) {
     matches.push({
       ruleId: "rr_cv_screening_without_bias_audit",
+      type: "risk" as const,
       displayName: "CV Screening Without Bias Audit",
       riskStatement: "AI-assisted CV screening is in scope but bias monitoring is not. This creates significant legal exposure under the Equality Act 2010 and EU AI Act. Discriminatory shortlists could result in employment tribunal claims and ICO enforcement action.",
       severity: "very_high",
@@ -421,6 +425,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (hasAnalytics && !ids.has("hr_data_quality_audit")) {
     matches.push({
       ruleId: "rr_analytics_without_data_quality",
+      type: "risk" as const,
       displayName: "Analytics Initiative Without Data Quality Foundation",
       riskStatement: "Analytics initiatives are planned but no data quality audit is in scope. HR analytics built on poor-quality data produces unreliable outputs that can lead to poor decisions and erode trust in the analytics function.",
       severity: "high",
@@ -434,6 +439,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (hasScaleOptimise && !ids.has("ai_literacy_programme")) {
     matches.push({
       ruleId: "rr_scale_without_foundation_literacy",
+      type: "risk" as const,
       displayName: "Scale-Phase Initiatives Without AI Literacy Foundation",
       riskStatement: "Scale-phase AI initiatives are planned but no AI literacy programme is in scope. Deploying advanced AI tools to a workforce without AI literacy leads to low adoption, misuse, and wasted investment.",
       severity: "high",
@@ -447,6 +453,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (ambitionTier === "transformative" && !hasExecSponsor) {
     matches.push({
       ruleId: "rr_transformative_without_exec_sponsor",
+      type: "risk" as const,
       displayName: "Transformative Ambition Without Executive Sponsor",
       riskStatement: "A Transformative AI ambition requires board-level executive sponsorship to succeed. Without it, the programme will stall at the first cross-functional dependency (IT budget, Legal sign-off, Finance approval).",
       severity: "high",
@@ -460,6 +467,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (ids.has("predictive_attrition_modelling") && !hasDataGovernanceInitiative) {
     matches.push({
       ruleId: "rr_attrition_model_without_gdpr_controls",
+      type: "risk" as const,
       displayName: "Attrition Modelling Without GDPR Data Controls",
       riskStatement: "Predictive attrition modelling processes sensitive personal data at scale. Without appropriate GDPR controls (lawful basis, data minimisation, access controls), the organisation risks ICO enforcement action and employee trust damage.",
       severity: "high",
@@ -475,6 +483,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (foundationCount > 5 && (orgSize === "small" || orgSize === "medium")) {
     matches.push({
       ruleId: "rr_too_many_initiatives_year_one",
+      type: "risk" as const,
       displayName: "Too Many Foundation Initiatives for Org Size",
       riskStatement: `${foundationCount} Foundation-phase initiatives are planned for a ${orgSize} organisation. This exceeds typical delivery capacity and risks initiative fatigue, poor quality, and programme failure.`,
       severity: "medium",
@@ -488,6 +497,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (ids.has("ai_pay_equity_analysis")) {
     matches.push({
       ruleId: "rr_pay_equity_without_legal_privilege",
+      type: "risk" as const,
       displayName: "Pay Equity Analysis Without Legal Privilege",
       riskStatement: "AI-powered pay equity analysis generates data that could be disclosable in employment tribunal proceedings unless conducted under legal professional privilege. Without this protection, findings could be used against the organisation.",
       severity: "high",
@@ -501,6 +511,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
   if (ids.has("manager_ai_coaching_toolkit") || ids.has("ai_employee_listening")) {
     matches.push({
       ruleId: "rr_wellbeing_monitoring_without_consent",
+      type: "risk" as const,
       displayName: "Employee Monitoring Without Consent Framework",
       riskStatement: "AI tools that analyse employee communication, sentiment, or behaviour require explicit consent and a published transparency statement. Without these, the organisation risks ICO enforcement action and significant employee trust damage.",
       severity: "medium",
@@ -516,6 +527,7 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
     if (scaleCount < 3) {
       matches.push({
         ruleId: "rr_coe_without_scale_foundation",
+        type: "risk" as const,
         displayName: "AI Centre of Excellence Without Scale Foundation",
         riskStatement: "An AI Centre of Excellence is planned but fewer than 3 Scale-phase initiatives are in scope. A CoE without a programme to govern is a cost centre, not a capability. It will struggle to justify its existence and will likely be defunded.",
         severity: "medium",
@@ -524,6 +536,24 @@ export function evaluateRiskRules(input: RiskEvalInput): RiskRuleMatch[] {
         sources: ["Deloitte Workforce AI 2025", "Lumi Design Partners 2025"],
       });
     }
+  }
+
+  // rr_era_2025_automated_decision_making — informational note (not acknowledgeable risk)
+  const automatedDecisionInitiatives = [
+    "ai_assisted_cv_screening", "predictive_attrition_modelling", "ai_pay_equity_analysis",
+    "ai_performance_calibration", "ai_job_architecture_redesign",
+  ];
+  if (automatedDecisionInitiatives.some(id => ids.has(id))) {
+    matches.push({
+      ruleId: "rr_era_2025_automated_decisions",
+      type: "note" as const,
+      displayName: "Employment Rights Act 2025: Human Review Rights",
+      riskStatement: "One or more selected initiatives involve automated decision-making in employment processes. Under the Employment Rights Act 2025, workers have the right to request a human review of any AI-assisted employment decision. Ensure all such initiatives include a documented human-review workflow before deployment.",
+      severity: "high",
+      recommendedAction: "Document a human-review workflow for each initiative involving automated employment decisions. Include this in your AI Register and communicate the right to human review to affected workers.",
+      regulatoryBasis: ["Employment Rights Act 2025", "ERA 1996 (as amended)"],
+      sources: ["Employment Rights Act 2025", "ACAS AI in Employment 2024", "Lumi Design Partners 2025"],
+    });
   }
 
   return matches;

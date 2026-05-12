@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS risk_acknowledgements (\n  id VARCHAR(36) PRIMARY KEY,\n  tenant_id VARCHAR(36) NOT NULL,\n  item_id VARCHAR(128) NOT NULL,\n  item_type ENUM('risk', 'framework') NOT NULL,\n  acknowledged_by VARCHAR(36) NOT NULL,\n  acknowledged_at BIGINT NOT NULL,\n  note TEXT,\n  revoked_at BIGINT,\n  revoked_by VARCHAR(36),\n  INDEX idx_risk_ack_tenant (tenant_id),\n  INDEX idx_risk_ack_item (item_id),\n  INDEX idx_risk_ack_active (tenant_id, item_id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute CREATE TABLE IF NOT EXISTS risk_acknowledgements (\n  id VARCHAR(36) PRIMARY KEY,\n  tenant_id VARCHAR(36) NOT NULL,\n  item_id VARCHAR(128) NOT NULL,\n  item_type ENUM('risk', 'framework') NOT NULL,\n  acknowledged_by VARCHAR(36) NOT NULL,\n  acknowledged_at BIGINT NOT NULL,\n  note TEXT,\n  revoked_at BIGINT,\n  revoked_by VARCHAR(36),\n  INDEX idx_risk_ack_tenant (tenant_id),\n  INDEX idx_risk_ack_item (item_id),\n  INDEX idx_risk_ack_active (tenant_id, item_id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 351
+}

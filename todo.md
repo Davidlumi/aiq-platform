@@ -2856,3 +2856,19 @@
 - [x] Phase 2: Built StrategyValuePage at /strategy/value (value envelope KPIs, per-initiative breakdown)
 - [x] Phase 2: Built StrategyMeasurementPage at /strategy/measurement (cadence, KPIs, governance)
 - [x] QA: TypeScript 0 errors. Tests: 899/899 passing.
+
+## Investment & Risk Page — Full Implementation (Section 04)
+- [x] DB schema: riskAcknowledgements table (id, tenantId, itemId, itemType, acknowledgedBy, acknowledgedAt, note, revokedAt, revokedBy)
+- [x] Backend: strategyEngine.ts — added type discriminator (risk|note) to RiskRuleMatch interface
+- [x] Backend: strategyEngine.ts — added ERA 2025 informational note rule
+- [x] Backend: intelligence.ts — added getRiskAcknowledgements, acknowledgeRisk, revokeRiskAcknowledgement procedures
+- [x] Frontend: StrategyInvestmentRiskPage — Block 1: Hero (cost envelope total, phase breakdown, ambition tier pill)
+- [x] Frontend: StrategyInvestmentRiskPage — Block 2: TCO breakdown (implementation, change mgmt, training, ongoing, internal resource)
+- [x] Frontend: StrategyInvestmentRiskPage — Block 3: Phase cost waterfall bar chart
+- [x] Frontend: StrategyInvestmentRiskPage — Block 4: Risk register with acknowledge/revoke affordance and modal
+- [x] Frontend: StrategyInvestmentRiskPage — Block 5: UK Standing Frameworks (UK GDPR, EU AI Act, ERA 2025, Equality Act 2010, ICO Guidance)
+- [x] Frontend: StrategyInvestmentRiskPage — Block 6: EU AI Act flagged initiatives
+- [x] Frontend: StrategyInvestmentRiskPage — Block 7: Cross-functional dependencies (IT/Data, Legal/Compliance, L&D, Finance, Exec Sponsor)
+- [x] Frontend: StrategyInvestmentRiskPage — Block 8: Solution delivery confidence bar
+- [x] Tests: 7 risk acknowledgement vitest tests — all passing
+- [x] TypeScript: 0 errors

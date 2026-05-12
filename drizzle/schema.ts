@@ -2189,3 +2189,21 @@ export const questionFlags = mysqlTable("question_flags", {
   reviewedIdx: index("idx_qf_reviewed").on(t.reviewed),
 }));
 export type QuestionFlag = typeof questionFlags.$inferSelect;
+
+// ─── Risk Acknowledgements ─────────────────────────────────────────────────
+export const riskAcknowledgements = mysqlTable("risk_acknowledgements", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  itemId: varchar("item_id", { length: 128 }).notNull(),
+  itemType: mysqlEnum("item_type", ["risk", "framework"]).notNull(),
+  acknowledgedBy: varchar("acknowledged_by", { length: 36 }).notNull(),
+  acknowledgedAt: bigint("acknowledged_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  note: text("note"),
+  revokedAt: bigint("revoked_at", { mode: "number" }),
+  revokedBy: varchar("revoked_by", { length: 36 }),
+}, (t) => ({
+  tenantIdx: index("idx_risk_ack_tenant").on(t.tenantId),
+  itemIdx: index("idx_risk_ack_item").on(t.itemId),
+  activeIdx: index("idx_risk_ack_active").on(t.tenantId, t.itemId),
+}));
+export type RiskAcknowledgement = typeof riskAcknowledgements.$inferSelect;
