@@ -1,0 +1,15 @@
+{
+  "query": "SELECT selected_initiatives_json, business_ambition_level, people_ambition_level FROM ail_org_context WHERE id = 'eDDhKB2SJa1bx7968UcE2';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT selected_initiatives_json, business_ambition_level, people_ambition_level FROM ail_org_context WHERE id = 'eDDhKB2SJa1bx7968UcE2';",
+  "rows": [
+    {
+      "selected_initiatives_json": "[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]",
+      "business_ambition_level": "5",
+      "people_ambition_level": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "selected_initiatives_json\tbusiness_ambition_level\tpeople_ambition_level\n[\"init-22\",\"init-23\",\"init-20\",\"init-09\",\"init-18\",\"init-17\",\"init-07\",\"init-03\",\"init-12\"]\t5\t5\n",
+  "stderr": "",
+  "execution_time_ms": 258
+}

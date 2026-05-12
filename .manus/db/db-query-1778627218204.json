@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, tenant_id, vision_statement, strategy_assessment_completed_at, strategy_saved_at FROM ail_org_context ORDER BY updated_at DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT id, tenant_id, vision_statement, strategy_assessment_completed_at, strategy_saved_at FROM ail_org_context ORDER BY updated_at DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "eDDhKB2SJa1bx7968UcE2",
+      "tenant_id": "tenant-acme-ltd",
+      "vision_statement": "Our vision is to transform the retail experience and internal operations through AI, reducing administrative burden, speeding up decision-making, and enhancing both customer and employee experiences. HR will lead this transformation by championing responsible AI adoption, fostering an AI-fluent workforce, and strategically integrating AI across critical people processes.",
+      "strategy_assessment_completed_at": "2026-05-12 21:39:53",
+      "strategy_saved_at": "2026-05-12 21:39:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttenant_id\tvision_statement\tstrategy_assessment_completed_at\tstrategy_saved_at\neDDhKB2SJa1bx7968UcE2\ttenant-acme-ltd\tOur vision is to transform the retail experience and internal operations through AI, reducing administrative burden, speeding up decision-making, and enhancing both customer and employee experiences. HR will lead this transformation by championing responsible AI adoption, fostering an AI-fluent workforce, and strategically integrating AI across critical people processes.\t2026-05-12 21:39:53\t2026-05-12 21:39:53\n",
+  "stderr": "",
+  "execution_time_ms": 293
+}
