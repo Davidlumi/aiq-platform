@@ -347,12 +347,35 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
           </div>
         </div>
 
-        {/* Stale banner */}
+        {/* Generated-at timestamp — brief: show below block heading */}
+        {!collapsed && data?.generatedAt && (
+          <p className="text-[10px] text-muted-foreground/60 mb-2">
+            Generated {new Date(data.generatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+            {data.userEdited ? " \u00b7 edited" : ""}
+          </p>
+        )}
+
+        {/* Stale banner — brief: must include both Regenerate and Keep current actions */}
         {!collapsed && isStale && (
           <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="flex-1 min-w-0">Strategy has changed since these were generated.</span>
-            <button className="font-semibold underline underline-offset-2 hover:no-underline" onClick={doGenerate}>Regenerate</button>
+            <button
+              className="font-semibold underline underline-offset-2 hover:no-underline"
+              onClick={doGenerate}
+              disabled={generateMut.isPending}
+            >Regenerate</button>
+            <button
+              className="text-amber-300/70 hover:text-amber-300 underline underline-offset-2"
+              onClick={async () => {
+                // Keep current: mark as user-edited so stale banner disappears
+                if (!data) return;
+                try {
+                  await saveMut.mutateAsync({ bullets: data.bullets, userEdited: true });
+                  utils.intelligence.getTalkingPoints.setData(undefined, { ...data, userEdited: true, strategyHash });
+                } catch { /* ignore */ }
+              }}
+            >Keep current</button>
           </div>
         )}
 
@@ -611,6 +634,10 @@ export default function StrategyOverviewPage() {
       headline: selectedInitiativeIds.size > 0
         ? `${selectedInitiativeIds.size} initiative${selectedInitiativeIds.size !== 1 ? "s" : ""} \u00b7 18 months`
         : "No initiatives selected",
+      // P1: Foundation phase sub-text must include range sub-line when foundation initiatives exist
+      rangeSub: foundationCount > 0 && foundationCostLow > 0
+        ? `Foundation phase ${fmtMidpoint(foundationCostLow, foundationCostHigh)} \u00b7 range ${fmt(foundationCostLow)}\u2013${fmt(foundationCostHigh)}`
+        : undefined,
       sub: foundationCount > 0
         ? `Foundation phase active. ${foundationCount} of ${selectedInitiativeIds.size} in flight.`
         : "Select initiatives to build your plan.",
@@ -628,19 +655,33 @@ export default function StrategyOverviewPage() {
         ? { type: "warning", text: `${highRiskCount} high-risk item${highRiskCount !== 1 ? "s" : ""} \u00b7 review now` }
         : undefined,
     },
-    value: {
-      headline: valueEnv?.net_value_gbp
-        ? `${fmtMidpoint(valueEnv.net_value_gbp.low * 1000, valueEnv.net_value_gbp.high * 1000)} estimated`
-        : selectedInitiativeIds.size > 0 && valueEnvQ.isLoading ? "Calculating\u2026" : "\u2014",
-      rangeSub: valueEnv?.net_value_gbp
-        ? `range ${fmt(valueEnv.net_value_gbp.low * 1000)}\u2013${fmt(valueEnv.net_value_gbp.high * 1000)} net over 3 years`
-        : undefined,
-      sub: valueEnv ? "Indicative \u2014 confirm with Finance." : "Value model runs when initiatives and baseline are confirmed.",
-      // Brief: Card 05 flag is ALWAYS info-blue, never positive/green — flag colour follows semantic meaning, not section accent
-      flag: valueEnv?.net_value_gbp
-        ? { type: "info" as const, text: "Strong return potential" }
-        : { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" },
-    },
+    value: (() => {
+      const netLow  = valueEnv?.net_value_gbp?.low  ?? null;
+      const netHigh = valueEnv?.net_value_gbp?.high ?? null;
+      // P0-1: values are already in £ pounds — do NOT multiply by 1000
+      // P0-1: if midpoint is negative, show Finance review state instead of negative number
+      const netMid  = netLow != null && netHigh != null ? (netLow + netHigh) / 2 : null;
+      const needsReview = netMid != null && netMid < 0;
+      return {
+        headline: needsReview
+          ? "Value calculation needs Finance review"
+          : netMid != null
+          ? `${fmtMidpoint(netLow!, netHigh!)} estimated`
+          : selectedInitiativeIds.size > 0 && valueEnvQ.isLoading ? "Calculating\u2026" : "\u2014",
+        rangeSub: !needsReview && netLow != null && netHigh != null
+          ? `range ${fmt(netLow)}\u2013${fmt(netHigh)} net over 3 years`
+          : undefined,
+        sub: needsReview
+          ? "Net value is negative at the low end \u2014 confirm cost and value assumptions with Finance."
+          : valueEnv ? "Indicative \u2014 confirm with Finance." : "Value model runs when initiatives and baseline are confirmed.",
+        // Brief: Card 05 flag is ALWAYS info-blue — flag colour follows semantic meaning, not section accent
+        flag: needsReview
+          ? { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" }
+          : netMid != null
+          ? { type: "info" as const, text: "Strong return potential" }
+          : { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" },
+      };
+    })(),
     measurement: {
       headline: cadenceId ? cadenceLabel : "Cadence not set",
       // Brief: NEVER show empty-state copy ("Set a review date...") when a cadence is already set
@@ -777,12 +818,32 @@ export default function StrategyOverviewPage() {
             </div>
           ) : (
             <>
-              {/* Vision quote tier — brief: italicised, above narrative headline, truncated at 80 words */}
-              {visionStatement && (
-                <blockquote className="text-sm italic text-muted-foreground/80 border-l-2 border-blue-500/40 pl-3 mb-3 max-w-3xl line-clamp-3">
-                  &ldquo;{visionStatement.split(/\s+/).slice(0, 80).join(" ")}{visionStatement.split(/\s+/).length > 80 ? "\u2026" : ""}&rdquo;
-                </blockquote>
-              )}
+              {/* Vision quote tier — brief: truncate at sentence boundary (≤80 words), show 'Read full vision' link */}
+              {visionStatement && (() => {
+                const words = visionStatement.split(/\s+/);
+                let truncated = visionStatement;
+                let isTruncated = false;
+                if (words.length > 80) {
+                  // Find last sentence boundary within 80 words
+                  const first80 = words.slice(0, 80).join(" ");
+                  const sentenceEnd = first80.search(/[.!?][^.!?]*$/);
+                  truncated = sentenceEnd > 0 ? first80.slice(0, sentenceEnd + 1) : first80;
+                  isTruncated = true;
+                }
+                return (
+                  <blockquote className="text-sm italic text-muted-foreground/80 border-l-2 border-blue-500/40 pl-3 mb-3 max-w-3xl">
+                    &ldquo;{truncated}{isTruncated ? "\u2026" : ""}&rdquo;
+                    {isTruncated && (
+                      <button
+                        className="ml-2 text-[11px] text-blue-400 hover:text-blue-300 not-italic underline underline-offset-2"
+                        onClick={() => navigate("/strategy/ambition")}
+                      >
+                        Read full vision
+                      </button>
+                    )}
+                  </blockquote>
+                );
+              })()}
               <p className="text-xl sm:text-2xl font-semibold text-foreground leading-relaxed mb-2 max-w-3xl">
                 {heroHeadline}
               </p>
@@ -874,40 +935,50 @@ export default function StrategyOverviewPage() {
                     View {card.title.toLowerCase()}
                   </span>
                   <ArrowRight className="w-3 h-3" style={{ color: card.accent }} aria-hidden="true" />
-                </div>
-              </div>
+                </div>              </div>
             );
           })}
         </div>
 
-        {/* ══ NEXT STEPS FOOTER ════════════════════════════════════════════════ */}
-        <div className="rounded-2xl border border-white/8 bg-white/3 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Next steps</p>
-            <p className="text-sm text-foreground">
-              Appoint owners for Foundation initiatives and schedule your kickoff session.
-            </p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
-              onClick={() => toast.info("Owner assignment coming soon")}
-            >
-              <Users className="w-3.5 h-3.5 mr-1.5" />
-              Assign owners
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => toast.info("Kickoff scheduling coming soon")}
-            >
-              <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              Schedule kickoff
-            </Button>
-          </div>
-        </div>
+        {/* ══ NEXT STEPS FOOTER ══════════════════════════════════════════════════════════════════════ */}
+        {(() => {
+          const incompleteCount = SECTION_CARDS.filter(c => {
+            const d = cardData[c.id];
+            return !d || d.headline === "\u2014" || d.headline === "Cadence not set" || d.headline === "No initiatives selected";
+          }).length;
+          const nextStepsText = foundationCount > 0
+            ? `Appoint owners for ${foundationCount} Foundation initiative${foundationCount !== 1 ? "s" : ""} and schedule your kickoff session.`
+            : incompleteCount > 0
+            ? `${incompleteCount} section${incompleteCount !== 1 ? "s" : ""} still to complete before your strategy is board-ready.`
+            : "Your strategy is board-ready. Export the board pack or schedule a review.";
+          return (
+            <div className="rounded-2xl border border-white/8 bg-white/3 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Next steps</p>
+                <p className="text-sm text-foreground">{nextStepsText}</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
+                  onClick={() => toast.info("Owner assignment coming soon")}
+                >
+                  <Users className="w-3.5 h-3.5 mr-1.5" />
+                  Assign owners
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => toast.info("Kickoff scheduling coming soon")}
+                >
+                  <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                  Schedule kickoff
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </TooltipProvider>

@@ -2917,3 +2917,23 @@
 - [x] Context bar: updated line — add user name and next-review countdown (currently shows date only)
 - [x] Hero block: add vision quote tier (italicised, above narrative headline, truncated at 80 words)
 - [x] Measurement card: fix sub-text — never show "Set a review date..." when cadence is already set
+
+## Dashboard Fixes Brief — Iteration 2 (12 May 2026)
+
+### P0 — Blocking
+- [x] P0-1: Fix value card negative number bug — trace calculateValueEnvelope, gate negative net to info state "Value calculation needs Finance review"
+- [x] P0-1: Apply shared formatGbp to Card 05 value headline and range sub-line (same code path as Card 04)
+- [x] P0-2: Vision truncation — truncate at last complete sentence before ~80-word cap, not at character limit; append … after complete sentence
+- [x] P0-2: Add "Read full vision →" link below vision quote, linking to /strategy/ambition
+- [x] P0-3: Confirm context bar is built and visible (not just cropped in screenshot)
+
+### P1 — Spec gaps
+- [x] P1-4: Update generateLeadershipTalkingPoints LLM prompt to canonical brief spec (data-grounded, every bullet has a number/date/named entity, bullet 1 vision-led, exec sponsorship bullet 6 or omitted)
+- [x] P1-5: Add "Keep current" action to stale banner alongside Regenerate
+- [x] P1-6: Show "Generated [date]" timestamp below talking points block heading
+- [x] P1-7: Card 06 headline shows actual cadence value, not "Review cadence" meta-label
+- [x] P1-8: Card 04 Foundation phase sub-text uses estimated + range pattern (not just estimated)
+- [x] P1-9: Confirm Card 04 flag logic — shows active (un-acknowledged) framework count, disappears when all acknowledged
+
+### P2 — Polish
+- [x] P2-11: Next steps footer count — "Appoint owners for the [N] Foundation initiatives" with real count; "Foundation phase ready" when all assigned

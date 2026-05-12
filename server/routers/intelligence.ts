@@ -1145,16 +1145,125 @@ Return JSON with this exact structure:
       const timelineMonths = structuredInputs.timeline_months ?? 18;
       const hashSource = JSON.stringify({ selectedIds, businessLevel, peopleLevel, timelineMonths });
       const strategyHash = Buffer.from(hashSource).toString("base64").slice(0, 32);
+      // ── Enrich prompt data with capability scores, cost/value ranges, initiative names, risks ──
+      const orgName = (ctx2 as any).companyName ?? "The HR function";
+      // Get latest capability score from assessmentScores via assessmentSessions
+      let capabilityScoreRaw: number | null = null;
+      try {
+        const latestUser = await db.select({ id: users.id }).from(users)
+          .where(eq(users.tenantId, ctx.user.tenantId)).limit(1);
+        if (latestUser.length) {
+          const latestSession = await db.select({ id: assessmentSessions.id }).from(assessmentSessions)
+            .where(and(eq(assessmentSessions.userId, latestUser[0].id), eq(assessmentSessions.state, "completed")))
+            .orderBy(desc(assessmentSessions.completedAt)).limit(1);
+          if (latestSession.length) {
+            const scoreRow = await db.select({ overallScore: assessmentScores.overallScore }).from(assessmentScores)
+              .where(eq(assessmentScores.sessionId, latestSession[0].id)).limit(1);
+            if (scoreRow.length) capabilityScoreRaw = Number(scoreRow[0].overallScore);
+          }
+        }
+      } catch { /* non-blocking */ }
+      // Derive capability on 0-10 scale (overallScore is 0-1)
+      const capNow = capabilityScoreRaw != null ? Math.round(capabilityScoreRaw * 100) / 10 : null;
+      const capTarget = ctx2.ambitionTargetScore != null ? ctx2.ambitionTargetScore / 10 : null;
+      const capGap = capNow != null && capTarget != null ? Math.round((capTarget - capNow) * 10) / 10 : null;
+      // Get initiative names from content library
+      let initiativeNames: string[] = [];
+      try {
+        const allLibInits = getAllInitiatives();
+        const nameMap = new Map(allLibInits.map(i => [i.initiative_id, i.display_name ?? i.initiative_id]));
+        initiativeNames = selectedIds.map(id => nameMap.get(id) ?? id).slice(0, 10);
+      } catch { /* non-blocking */ }
+      // Get cost envelope
+      let costMin: number | null = null, costMax: number | null = null;
+      try {
+        const resolvedCostIds = resolveInitiativeIds(selectedIds);
+        const costEnv = calculateCostEnvelope(
+          resolvedCostIds,
+          "medium",
+          businessLevel >= 4 ? "transformative" : businessLevel >= 2 ? "progressive" : "cautious",
+        );
+        costMin = costEnv.totalMin; costMax = costEnv.totalMax;
+      } catch { /* non-blocking */ }
+      // Get value envelope
+      let valueMin: number | null = null, valueMax: number | null = null;
+      try {
+        const allInits = getAllInitiatives();
+        const resolvedValIds = resolveInitiativeIds(selectedIds);
+        const selected = allInits.filter(i => resolvedValIds.includes(i.initiative_id));
+        const valEnv = calculateValueEnvelope(
+          selected,
+          {},
+          36,
+          null,
+          0.08,
+        );
+        valueMin = valEnv.net_value_gbp?.low ?? null;
+        valueMax = valEnv.net_value_gbp?.high ?? null;
+      } catch { /* non-blocking */ }
+      // Get top risks
+      let topRisks: string[] = [];
+      try {
+        const risks = evaluateRiskRules({
+          ambitionTier: businessLevel >= 4 ? "transformative" : businessLevel >= 2 ? "progressive" : "cautious",
+          orgSize: "medium",
+          selectedInitiativeIds: selectedIds,
+          hasExecSponsor: false,
+          hasDataGovernanceInitiative: selectedIds.some(id => id.includes("data_governance") || id.includes("data_quality")),
+        });
+        topRisks = risks.filter(r => r.severity === "high").map(r => r.displayName).slice(0, 3);
+      } catch { /* non-blocking */ }
+      const fmtGbp = (n: number) => {
+        if (n >= 1_000_000) return `\u00a3${(n / 1_000_000).toFixed(1)}M`;
+        if (n >= 1_000) return `\u00a3${Math.round(n / 1_000)}k`;
+        return `\u00a3${Math.round(n)}`;
+      };
       const promptData = {
-        orgName: (ctx2 as any).companyName ?? "The HR function",
+        orgName,
         businessAmbition: bLabel,
         peopleAmbition: PEOPLE_LABELS[peopleLevel] ?? "Practitioners",
         initiativeCount: selectedIds.length,
+        initiativeNames,
         timelineMonths,
         visionStatement: ctx2.visionStatement ?? null,
-        riskAppetite: structuredInputs.risk_appetite ?? "moderate",
+        capabilityScore: capNow != null ? `${capNow}/10` : null,
+        capabilityTarget: capTarget != null ? `${capTarget}/10` : null,
+        capabilityGap: capGap != null ? `${capGap} points` : null,
+        costEstimated: costMin != null && costMax != null ? fmtGbp((costMin + costMax) / 2 * 1000) : null,
+        costRange: costMin != null && costMax != null ? `${fmtGbp(costMin * 1000)}\u2013${fmtGbp(costMax * 1000)}` : null,
+        valueEstimated: valueMin != null && valueMax != null ? fmtGbp((valueMin + valueMax) / 2) : null,
+        valueRange: valueMin != null && valueMax != null ? `${fmtGbp(valueMin)}\u2013${fmtGbp(valueMax)}` : null,
+        topRisks,
+        sector: ctx2.sector ?? null,
       };
-      const systemPrompt = `You are an expert HR strategy advisor helping a CPO prepare for a board conversation. Generate 3-5 concise bullet points they can use to brief their CEO about the HR AI strategy.\n\nEach bullet should be:\n- 20-35 words\n- Written as plain English, not analyst-speak\n- Speakable aloud in a board meeting without translation\n- Honest about uncertainty (use "indicative", "confirm with Finance" where appropriate)\n\nChoose 3 bullets for a simple strategy, up to 5 if there are multiple material dependencies.\n\nCover in this order, when applicable:\n1. Current capability state and what's needed\n2. Strategy summary (initiatives, timeline, current phase)\n3. Value vs cost with caveats\n4. Top regulatory or organisational dependency\n5. Optional: second material dependency or executive sponsorship recommendation\n\nReturn ONLY a JSON array of 3-5 strings, no other text, no markdown fences.`;
+      const systemPrompt = `You are generating talking points a CPO will use to brief their CEO about an HR AI strategy. Each bullet must be a data-grounded brief, not a paraphrase of the strategy's topic.
+
+REQUIREMENTS:
+- 3-5 bullets total. Choose 3 for simple strategies, up to 5 for complex ones with multiple material dependencies.
+- Each bullet: 20-35 words, plain English, speakable aloud.
+- EVERY bullet must contain at least one specific number, date, or named entity from the strategy data: capability score, gap points, initiative count, timeline in months, phase name, value range, cost range, named regulation, named dependency, named ambition tier.
+- Bullet 1 must open with the vision (quoted directly or tightly paraphrased), tied to capability state.
+- Vary sentence starters. Do not start multiple bullets with "We're..." or "This strategy...".
+- Honest about uncertainty (use "indicative", "confirm with Finance" where appropriate).
+- Executive sponsorship recommendation, if needed, goes in bullet 6 or is omitted — never bullet 4.
+
+COVERAGE ORDER (when applicable):
+1. Vision lead — opens the brief with the user's vision
+2. Capability state — score, gap, what's needed
+3. Strategy summary — initiative count, timeline, current phase
+4. Value vs cost — estimated + range, with caveats
+5. Key dependency — named, with action required
+6. Optional: second dependency or executive sponsorship
+
+ANTI-PATTERN (do not generate output like this):
+"We're building an AI-fluent HR function, integrating AI into critical people processes over the next 18 months to reduce admin burden and enhance employee experience."
+— generic prose, paraphrased from topic, no specific numbers, could apply to any HR AI strategy.
+
+GOOD PATTERN:
+"Our vision: transform the retail experience and internal operations through AI, reducing administrative burden and enabling HR to operate as strategic partners."
+"Acme has built foundational HR capability at 5.2/10. A 2.1-point gap separates us from the 7.3 needed to deliver our Transformative ambition."
+
+Return format: JSON array of 3-6 strings, no other text.`;
       let bullets: string[];
       try {
         const response = await invokeLLM({
