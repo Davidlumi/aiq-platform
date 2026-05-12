@@ -1273,6 +1273,13 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         const parsed = JSON.parse(cleaned);
         bullets = Array.isArray(parsed) ? parsed : (parsed.bullets ?? []);
         if (!Array.isArray(bullets) || bullets.length === 0) throw new Error("Empty");
+        // Enforce exactly 5 bullets — LLM occasionally returns 4
+        bullets = bullets.slice(0, 5);
+        // If LLM returned fewer than 5, pad with a strategic dependency fallback
+        if (bullets.length < 5) {
+          const fallbackFifth = `The strategy assumes cross-functional alignment — particularly Legal engagement on responsible-AI commitments and data governance.`;
+          while (bullets.length < 5) bullets.push(fallbackFifth);
+        }
       } catch {
         const capScore = (ctx2.ambitionTargetScore ?? 55) / 10;
         const leadClause = capScore < 3.1 ? `${promptData.orgName} is in the early stages of HR capability build.`

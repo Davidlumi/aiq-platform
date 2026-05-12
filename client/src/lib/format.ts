@@ -6,6 +6,11 @@
  *
  * Brief spec: £XXk (under £1M), £X.XM (under £1B), £X.XB (£1B+)
  * "Estimated" is the user-facing word for midpoint values.
+ *
+ * Negative values: formatter preserves the sign, e.g. -£760k (not £-760k).
+ * This prevents raw unformatted numbers from leaking into the UI even if the
+ * value-gating logic hasn't fired yet. The value-gating rule in
+ * StrategyOverviewPage is the primary failsafe; this formatter is the backstop.
  */
 
 /**
@@ -15,13 +20,16 @@
  *   formatGbp(33_000_000)     → "£33.0M"
  *   formatGbp(1_200_000_000)  → "£1.2B"
  *   formatGbp(500)            → "£500"
+ *   formatGbp(-760_000)       → "-£760k"  (sign preserved, never "£-760000")
  */
 export function formatGbp(n: number): string {
   if (!isFinite(n) || isNaN(n)) return "—";
-  if (n >= 1_000_000_000) return `£${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000)     return `£${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)         return `£${Math.round(n / 1_000)}k`;
-  return `£${Math.round(n)}`;
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return `${sign}£${(abs / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000)     return `${sign}£${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)         return `${sign}£${Math.round(abs / 1_000)}k`;
+  return `${sign}£${Math.round(abs)}`;
 }
 
 /**

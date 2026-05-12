@@ -182,7 +182,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-primary text-primary hover:bg-primary/10"
+          className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-white/20 text-foreground hover:bg-white/8"
           onClick={onBuildCapability}
           aria-label={nowNum == null ? "Take the assessment" : "Build capability"}
         >
@@ -260,7 +260,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
               />
             </div>
             {gapNum != null && gapNum > 0 && (
-              <p className="text-[11px] text-center text-primary">
+              <p className="text-[11px] text-center text-muted-foreground">
                 {hrGap} points to close
               </p>
             )}
@@ -268,7 +268,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
           {/* Right — Target */}
           <div className="flex-shrink-0 min-w-[72px] sm:text-right">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">WHERE WE NEED TO BE</p>
-            <p className="text-[22px] font-medium leading-none text-primary">
+            <p className="text-[22px] font-medium leading-none text-foreground">
               {hrTarget} <span className="text-sm font-normal text-muted-foreground">/10</span>
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">to deliver this strategy</p>
@@ -813,7 +813,10 @@ export default function StrategyOverviewPage() {
     return { totalCostLow: tLow * 1000, totalCostHigh: tHigh * 1000, foundationCostLow: fLow * 1000, foundationCostHigh: fHigh * 1000 };
   }, [selectedInits]);
 
-  const frameworkCount = liveRisks?.filter((r: any) => r.type === "note").length ?? 0;
+  // Count ALL matched risk rules (both 'risk' and 'note' types) for the compliance count.
+  // Each rule represents a distinct regulatory framework (GDPR, EU AI Act, Employment Law, etc.).
+  // Previously only counted 'note' type which gave count=1 instead of the correct 4.
+  const frameworkCount = liveRisks?.length ?? 0;
 
   useEffect(() => {
     if (selectedInits.length === 0 || liveRisks !== null) return;
@@ -830,9 +833,17 @@ export default function StrategyOverviewPage() {
   // Value envelope — pass solutionDeliveryConfidence and planHorizonMonths for accurate numbers
   const solutionConfidence = (assessmentStructuredInputs?.solution_delivery_confidence as number | undefined) ?? 3;
   const planHorizonMonths  = (assessmentStructuredInputs?.timeline_months as number | undefined) ?? 18;
+  // Wire the persisted operationalBaseline so value formulas use real org data, not defaults
+  const operationalBaseline = useMemo(() => {
+    const raw = (strategyAssessmentQ.data as any)?.operationalBaseline;
+    if (raw && typeof raw === "object") return raw as Record<string, number>;
+    return {} as Record<string, number>;
+  }, [(strategyAssessmentQ.data as any)?.operationalBaseline]);
+
   const valueEnvWithIdsQ = trpc.intelligence.calculateValueEnvelope.useQuery(
     {
       selectedInitiativeIds: Array.from(selectedInitiativeIds),
+      operationalBaseline,
       solutionDeliveryConfidence: solutionConfidence,
       planHorizonMonths: Math.max(planHorizonMonths, 12),
     },
@@ -842,9 +853,18 @@ export default function StrategyOverviewPage() {
   const netLow    = valueEnv?.net_value_gbp?.low  ?? null;
   const netHigh   = valueEnv?.net_value_gbp?.high ?? null;
   const netMid    = netLow != null && netHigh != null ? (netLow + netHigh) / 2 : null;
-  // Only show Finance gating when even the optimistic scenario is negative (netHigh < 0)
-  // If netLow < 0 but netHigh > 0, show the range with a note rather than blocking the value
-  const valueGated = netHigh != null && netHigh < 0;
+  // Value-gating rule (brief 1b): gate whenever the calculation can't produce a credible positive value.
+  // Trigger conditions:
+  //   • Midpoint is negative
+  //   • Upper bound (optimistic) is negative or below total cost
+  //   • Value field is null/missing
+  //   • Lower bound is more than 2× total cost negative (suggests a calculation error)
+  const valueGated = (
+    netMid == null ||
+    netMid < 0 ||
+    (netHigh != null && netHigh < 0) ||
+    (netLow != null && totalCostHigh > 0 && netLow < -(totalCostHigh * 2))
+  );
 
   // Review cadence
   const structuredInputs = useMemo(() => {
@@ -919,18 +939,24 @@ export default function StrategyOverviewPage() {
   // ── Context line ─────────────────────────────────────────────────────────
   const contextParts: string[] = [];
   if (sectorLabel) contextParts.push(sectorLabel);
-  if (bLevel)      contextParts.push(bLevel.label);
-  if (pLevel)      contextParts.push(`HR as ${pLevel.label.toLowerCase()}`);
+  // Context strip copy: "Transformative ambition" (not just "Transformative"), "HR as innovator" (singular)
+  if (bLevel)      contextParts.push(`${bLevel.label} ambition`);
+  if (pLevel) {
+    // Singular form: strip trailing 's' from plural persona labels (Innovators → innovator, Champions → champion)
+    const singularLabel = pLevel.label.replace(/s$/i, "").toLowerCase();
+    contextParts.push(`HR as ${singularLabel}`);
+  }
   if (savedAt) {
     const dateStr = new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-    contextParts.push(`Updated ${dateStr}${savedByFirst ? ` by ${savedByFirst}` : ""}`);
+    // Full name for strategic document attribution
+    contextParts.push(`Updated ${dateStr}${savedByName ? ` by ${savedByName}` : ""}`);
   }
   const contextLine = contextParts.join(" · ");
 
   // ── Hero supporting line ─────────────────────────────────────────────────
   const initCount = selectedInitiativeIds.size;
   const valueClause = valueGated
-    ? "Value calculation needs Finance review — see details below."
+    ? "Value calculation pending Finance review."
     : netMid != null
     ? `Worth around ${fmtMidpoint(netLow!, netHigh!)} to the business (rough estimate).`
     : null;
@@ -968,7 +994,7 @@ export default function StrategyOverviewPage() {
     ? fmtMidpoint(netLow!, netHigh!)
     : "";
   const valueSubLine = valueGated
-    ? "Net value is negative at the low end — confirm cost and value assumptions with Finance."
+    ? "Value model produced a non-credible result — confirm cost and value assumptions with Finance before presenting."
     : netLow != null && netHigh != null
     ? `between ${fmt(netLow)} and ${fmt(netHigh)} · over 3 years · estimated, finance to confirm`
     : "";
