@@ -30,6 +30,7 @@ import {
   BookOpen, Scale, Eye, Layers, BarChart2, Loader2,
 } from "lucide-react";
 import { SOLUTION_DELIVERY_OPTIONS } from "@/../../shared/strategyInputs";
+import { formatGbp, formatGbpK } from "@/lib/format";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PHASE_COLORS: Record<string, string> = {
@@ -334,8 +335,9 @@ export default function StrategyInvestmentRiskPage() {
 
   const costEnv = costEnvQ.data;
   const tco     = valueEnvQ.data?.tco;
-  const fmt    = (n: number) => n >= 1000 ? `£${(n / 1000).toFixed(1)}M` : `£${Math.round(n)}k`;
-  const fmtGbk = (n: number) => `£${n}k`;
+  // Shared currency formatter — see client/src/lib/format.ts
+  const fmt    = formatGbp;
+  const fmtGbk = formatGbpK;
 
   const isLoading   = assessmentQ.isLoading || strategyQ.isLoading;
   const hasStrategy = !!(assessmentQ.data?.completed && selectedIds.length > 0);

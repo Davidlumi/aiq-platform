@@ -89,14 +89,8 @@ const SECTORS = [
   { value: "other",                 label: "Other" },
 ];
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `\u00a3${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `\u00a3${Math.round(n / 1_000)}k`;
-  return `\u00a3${n}`;
-}
-function fmtMidpoint(low: number, high: number): string {
-  return fmt(Math.round((low + high) / 2));
-}
+// Currency formatting — shared utility (see client/src/lib/format.ts)
+import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
 function daysUntil(dateStr?: string | null): number | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
@@ -472,7 +466,8 @@ export default function StrategyOverviewPage() {
   const peopleLevel   = strategyData?.peopleAmbitionLevel   ?? orgContext?.peopleAmbitionLevel   ?? 3;
   const bLevel = BUSINESS_LEVELS[businessLevel];
   const pLevel = PEOPLE_LEVELS[peopleLevel];
-  const sectorLabel = SECTORS.find(s => s.value === (orgContext?.sector ?? companyResults?.companySector))?.label ?? "";
+  const sectorLabel    = SECTORS.find(s => s.value === (orgContext?.sector ?? companyResults?.companySector))?.label ?? "";
+  const subSectorLabel = orgContext?.subSector ? String(orgContext.subSector).replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : null;
 
   const selectedInitiativeIds = useMemo(() => {
     const ids = strategyData?.selectedInitiativeIds ?? [];
@@ -558,8 +553,15 @@ export default function StrategyOverviewPage() {
   const frameworkCount = liveRisks?.filter((r: any) => r.type === "note").length ?? 0;
 
   const savedAt    = strategyData?.strategySavedAt;
+  // Brief: updated line must show date + user + next-review countdown
+  const savedByName = user ? ((user.firstName || user.lastName) ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() : user.email) : null;
   const savedLabel = savedAt
-    ? `Updated ${new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
+    ? [
+        `Updated ${new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`,
+        savedByName ? `by ${savedByName}` : null,
+        daysToReview != null && daysToReview > 0 ? `\u00b7 Next review in ${daysToReview} day${daysToReview !== 1 ? "s" : ""}` : null,
+        daysToReview != null && daysToReview <= 0 ? `\u00b7 Review overdue` : null,
+      ].filter(Boolean).join(" ")
     : "Not yet saved";
 
   const strategyHash = useMemo(() => {
@@ -634,17 +636,21 @@ export default function StrategyOverviewPage() {
         ? `range ${fmt(valueEnv.net_value_gbp.low * 1000)}\u2013${fmt(valueEnv.net_value_gbp.high * 1000)} net over 3 years`
         : undefined,
       sub: valueEnv ? "Indicative \u2014 confirm with Finance." : "Value model runs when initiatives and baseline are confirmed.",
+      // Brief: Card 05 flag is ALWAYS info-blue, never positive/green — flag colour follows semantic meaning, not section accent
       flag: valueEnv?.net_value_gbp
-        ? { type: "positive", text: "Strong return potential" }
-        : { type: "info", text: "Indicative \u00b7 confirm with Finance" },
+        ? { type: "info" as const, text: "Strong return potential" }
+        : { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" },
     },
     measurement: {
       headline: cadenceId ? cadenceLabel : "Cadence not set",
-      sub: daysToReview != null && daysToReview > 0
-        ? `Progress reviews and capability re-scoring. Next review in ${daysToReview} days.`
-        : "Set a review date to track progress.",
-      flag: daysToReview != null && daysToReview <= 0
-        ? { type: "warning", text: "First review overdue \u00b7 schedule now" }
+      // Brief: NEVER show empty-state copy ("Set a review date...") when a cadence is already set
+      sub: cadenceId
+        ? (daysToReview != null && daysToReview > 0
+          ? `Progress reviews and capability re-scoring. Next review in ${daysToReview} days.`
+          : "Progress reviews and capability re-scoring.")
+        : "Set a review cadence to track progress.",
+      flag: daysToReview != null && daysToReview <= 0 && cadenceId
+        ? { type: "warning" as const, text: "First review overdue \u00b7 schedule now" }
         : undefined,
     },
   };
@@ -705,6 +711,12 @@ export default function StrategyOverviewPage() {
                 {sectorLabel}
               </Badge>
             )}
+            {/* Sub-sector pill — 4th pill per brief spec */}
+            {subSectorLabel && (
+              <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5 bg-white/6 border border-white/10 text-foreground/80">
+                {subSectorLabel}
+              </Badge>
+            )}
             {bLevel && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -753,18 +765,24 @@ export default function StrategyOverviewPage() {
             </Button>
           </div>
         </div>
-
-        {/* ══ HERO BLOCK ═══════════════════════════════════════════════════════ */}
+        {/* ══ HERO BLOCK ════════════════════════════════════════════════════════════════ */}
         <div className="mb-8">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">HR AI strategy</p>
           {isLoading ? (
             <div className="space-y-2">
+              <Skeleton className="h-5 w-2/3 rounded mb-2" />
               <Skeleton className="h-7 w-full rounded" />
               <Skeleton className="h-7 w-3/4 rounded" />
               <Skeleton className="h-4 w-2/3 rounded mt-2" />
             </div>
           ) : (
             <>
+              {/* Vision quote tier — brief: italicised, above narrative headline, truncated at 80 words */}
+              {visionStatement && (
+                <blockquote className="text-sm italic text-muted-foreground/80 border-l-2 border-blue-500/40 pl-3 mb-3 max-w-3xl line-clamp-3">
+                  &ldquo;{visionStatement.split(/\s+/).slice(0, 80).join(" ")}{visionStatement.split(/\s+/).length > 80 ? "\u2026" : ""}&rdquo;
+                </blockquote>
+              )}
               <p className="text-xl sm:text-2xl font-semibold text-foreground leading-relaxed mb-2 max-w-3xl">
                 {heroHeadline}
               </p>
@@ -773,9 +791,7 @@ export default function StrategyOverviewPage() {
               )}
             </>
           )}
-        </div>
-
-        {/* ══ TALKING POINTS BLOCK ═════════════════════════════════════════════ */}
+        </div>  {/* ══ TALKING POINTS BLOCK ═════════════════════════════════════════════ */}
         <TalkingPointsBlock
           strategyHash={strategyHash}
           hasStrategy={hasStrategy}

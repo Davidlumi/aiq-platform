@@ -2908,3 +2908,12 @@
 - [x] Frontend: StrategyOverviewPage — Diagnostic card: drift indicator badge
 - [x] Frontend: StrategyOverviewPage — responsive grid 3×2 desktop, 2×3 tablet, 1×6 mobile
 - [x] Tests: vitest tests for generateLeadershipTalkingPoints and saveLeadershipTalkingPoints
+
+## Dashboard Brief Acceptance Criteria Gaps (12 May 2026)
+- [x] Shared currency formatter: create client/src/lib/format.ts with formatGbp(n) → £XXk / £X.XM / £X.XB
+- [x] Replace local fmt() in StrategyOverviewPage, StrategyInvestmentRiskPage, StrategyValuePage with shared formatter
+- [x] Card 05 flag: change "Strong return potential" from type "positive" (green) to type "info" (blue)
+- [x] Context bar: add sub-sector pill (4th pill per brief spec)
+- [x] Context bar: updated line — add user name and next-review countdown (currently shows date only)
+- [x] Hero block: add vision quote tier (italicised, above narrative headline, truncated at 80 words)
+- [x] Measurement card: fix sub-text — never show "Set a review date..." when cadence is already set
