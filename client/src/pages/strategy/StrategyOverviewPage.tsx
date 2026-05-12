@@ -130,9 +130,9 @@ function VisionQuote({ text, onReadMore }: { text: string; onReadMore: () => voi
       <p
         style={{
           fontFamily: "Georgia, 'Times New Roman', serif",
-          fontSize: "24px",
+          fontSize: "15px",
           fontStyle: "italic",
-          lineHeight: 1.45,
+          lineHeight: 1.55,
           fontWeight: 400,
           color: "hsl(var(--foreground))",
         }}
@@ -1064,8 +1064,7 @@ export default function StrategyOverviewPage() {
 
         {/* ══ STRATEGY CARDS — 2×2 GRID ════════════════════════════════════════ */}
         <div
-          className="grid gap-3 mb-8"
-          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+          className="grid grid-cols-2 gap-3 mb-8"
           role="list"
           aria-label="Strategy sections"
         >

@@ -237,6 +237,9 @@ function Router() {
       <Route path="/ai-strategy">
         <Redirect to="/strategy" />
       </Route>
+      <Route path="/ai-strategy/assessment">
+        <Redirect to="/strategy/ambition" />
+      </Route>
       <Route path="/strategy/builder">
         <Redirect to="/strategy" />
       </Route>
