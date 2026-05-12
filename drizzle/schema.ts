@@ -1564,6 +1564,7 @@ export const strategyInitiatives = mysqlTable("strategy_initiatives", {
   statusStartedAt: bigint("status_started_at", { mode: "number" }),
   statusCompletedAt: bigint("status_completed_at", { mode: "number" }),
   statusReason: text("status_reason"),
+  functionOverride: varchar("function_override", { length: 100 }),   // user-editable HR function override
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
   strategyIdx: index("idx_strategy_initiatives_strategy").on(t.strategyId),

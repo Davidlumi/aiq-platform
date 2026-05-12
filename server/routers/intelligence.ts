@@ -23,7 +23,7 @@ import {
   getNarrativeContext,
 } from "../ail/narrativeEngine";
 import { getDb, getUserRoleKeys } from "../db";
-import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users } from "../../drizzle/schema";
+import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users, strategyInitiatives, strategyInitiativeLibrary } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { nanoid } from "nanoid";
 import { eq, desc, and } from "drizzle-orm";
@@ -862,6 +862,121 @@ Return JSON with this exact structure:
         input.solutionDeliveryConfidence
       ) as ValueEnvelope;
     }),
+  /**
+   * Get per-initiative state (status, phase, functionOverride) joined with library data.
+   * Used by the Plan page to show initiative list with inline editing.
+   */
+  getStrategyInitiatives: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    // Get the tenant's strategy context to find selectedInitiativeIds
+    const ctxRows = await db.select({
+      selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+    }).from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    if (!ctxRows[0]) return [];
+    let selectedIds: string[] = [];
+    try { selectedIds = JSON.parse(ctxRows[0].selectedInitiativesJson ?? "[]") as string[]; } catch {}
+    if (!selectedIds.length) return [];
+    // Fetch all library entries for selected IDs
+    const libRows = await db.select().from(strategyInitiativeLibrary);
+    const libMap = new Map(libRows.map(r => [r.id, r]));
+    // Fetch per-initiative state rows for this tenant's users' strategies
+    // We use a simple approach: get all strategyInitiatives rows where initiativeId is in selectedIds
+    // and the strategy belongs to this tenant (via ailOrgContext)
+    // Since strategyInitiatives is linked to a strategyId (from the strategies table),
+    // we fall back to returning library data with null state for now if no rows exist.
+    // The Plan page will upsert state rows on first status/phase edit.
+    const stateRows = await db.select().from(strategyInitiatives)
+      .where(eq(strategyInitiatives.strategyId, ctx.user.tenantId)); // use tenantId as strategyId proxy for AIL context
+    const stateMap = new Map(stateRows.map(r => [r.initiativeId, r]));
+    return selectedIds.map(id => {
+      const lib = libMap.get(id);
+      const state = stateMap.get(id);
+      return {
+        id,
+        name: lib?.name ?? id,
+        description: lib?.description ?? null,
+        category: lib?.category ?? null,
+        aiType: lib?.aiType ?? null,
+        decisionAuthority: lib?.decisionAuthority ?? null,
+        regulatoryFlag: lib?.regulatoryFlag ?? null,
+        complexity: lib?.complexity ?? 3,
+        isUserDefined: lib?.isUserDefined === 1,
+        // per-initiative mutable state
+        stateId: state?.id ?? null,
+        status: state?.status ?? "not_started",
+        statusReason: state?.statusReason ?? null,
+        targetQuarter: state?.targetQuarter ?? "Q2",
+        functionOverride: state?.functionOverride ?? null,
+        criticality: state?.criticality ?? 1,
+        notes: state?.notes ?? null,
+      };
+    });
+  }),
+
+  /**
+   * Patch a single initiative's mutable state (status, phase, functionOverride, notes).
+   * Upserts a strategyInitiatives row keyed by tenantId+initiativeId.
+   */
+  patchStrategyInitiative: protectedProcedure
+    .input(z.object({
+      initiativeId: z.string(),
+      status: z.enum(["not_started", "in_progress", "paused", "completed", "cancelled"]).optional(),
+      statusReason: z.string().nullable().optional(),
+      targetQuarter: z.string().optional(),
+      functionOverride: z.string().nullable().optional(),
+      criticality: z.number().int().min(1).max(5).optional(),
+      notes: z.string().nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await db.select({ id: strategyInitiatives.id })
+        .from(strategyInitiatives)
+        .where(and(
+          eq(strategyInitiatives.strategyId, ctx.user.tenantId),
+          eq(strategyInitiatives.initiativeId, input.initiativeId),
+        ))
+        .limit(1);
+      const patch: Partial<typeof strategyInitiatives.$inferInsert> = {};
+      if (input.status !== undefined) patch.status = input.status;
+      if (input.statusReason !== undefined) patch.statusReason = input.statusReason;
+      if (input.targetQuarter !== undefined) patch.targetQuarter = input.targetQuarter;
+      if (input.functionOverride !== undefined) patch.functionOverride = input.functionOverride;
+      if (input.criticality !== undefined) patch.criticality = input.criticality;
+      if (input.notes !== undefined) patch.notes = input.notes;
+      if (existing.length > 0) {
+        await db.update(strategyInitiatives).set(patch)
+          .where(and(
+            eq(strategyInitiatives.strategyId, ctx.user.tenantId),
+            eq(strategyInitiatives.initiativeId, input.initiativeId),
+          ));
+      } else {
+        await db.insert(strategyInitiatives).values({
+          id: nanoid(),
+          strategyId: ctx.user.tenantId,
+          initiativeId: input.initiativeId,
+          status: input.status ?? "not_started",
+          statusReason: input.statusReason ?? null,
+          targetQuarter: input.targetQuarter ?? "Q2",
+          functionOverride: input.functionOverride ?? null,
+          criticality: input.criticality ?? 1,
+          notes: input.notes ?? null,
+        });
+      }
+      return { success: true };
+    }),
+
   /**
    * Process assessment completion through the AIL.
    */
