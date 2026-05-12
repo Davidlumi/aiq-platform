@@ -3005,3 +3005,16 @@ test
 - [x] Development plan: coloured dot prefix on each priority row domain name
 - [x] Remove cohort anchor entirely (isSynthetic=true confirmed)
 - [x] Acceptance criteria checklist pass (17 items)
+
+## Individual Assessment Dashboard — Fix Brief (manus_brief_individual_assessment_dashboard_fixes.md)
+
+- [x] P1-1: Verify/fix doughnut fill formula (stroke-dasharray = score/100 × circumference) — was already correct
+- [x] P1-2: Fix doughnut colour rule — 7.8 (Proficient) → info-blue, not green; getDoughnutColour returns {colour, opacity}
+- [x] P2-3: Cross-cutting bullets MUST name 2+ domains (both Strengths and Growth); empty array if no genuine cross-cutting theme
+- [x] P2-4: Per-domain narratives for Proficient-band domains carry balanced framing with "Less developed:" clause
+- [x] P2-5: Expanded forbidden verb list added to prompt (acknowledge, recognize, appreciate, understand, value, demonstrate, show, exhibit, display)
+- [x] P2-6: No-duplication rule — per-domain narratives must add concrete HR-specific detail not in cross-cutting bullet
+- [x] P2-7: Marginal-target rule — gap ≤ 0.2 (2 raw pts) → target = next threshold + 5 (0.5/10)
+- [x] P3-8: Inline domain dots pattern with legend row in cross-cutting section heading area
+- [x] P3-9: Empty-state CTA on dev plan rows with no modules: "Talk to your L&D team →"
+- [x] P3-10: Recency context in top bar date: "27 Apr 2026 · 15 days ago"

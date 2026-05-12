@@ -49,12 +49,15 @@ function getLevelInfo(score: number): { label: string; nextThreshold: number } {
     if (score >= LEVEL_THRESHOLDS[i].min) {
       let nextThreshold: number;
       if (i === 0) {
+        // Already Expert — target half-step above current
         nextThreshold = Math.min(score + 5, 100);
       } else {
         const rawNext = LEVEL_THRESHOLDS[i - 1].min;
-        // Marginal-target fix: if within 2 raw pts of next threshold, use half-step
+        // Marginal-target fix (brief v2 + fix brief): if within 2 raw pts (0.2/10) of next
+        // level threshold, target half-step BEYOND the threshold (not just the threshold).
+        // e.g. 7.9 → gap 0.1 ≤ 0.2 → target = 8.0 + 0.5 = 8.5
         const gap = rawNext - score;
-        nextThreshold = gap <= 2 ? Math.round(score + gap / 2) : rawNext;
+        nextThreshold = gap <= 2 ? rawNext + 5 : rawNext;
       }
       return { label: LEVEL_THRESHOLDS[i].label, nextThreshold };
     }
@@ -62,12 +65,12 @@ function getLevelInfo(score: number): { label: string; nextThreshold: number } {
   return { label: "NOVICE", nextThreshold: 35 };
 }
 
-// ─── Doughnut colour by score band (v2 spec) ─────────────────────────────────
-function getDoughnutColour(score: number): string {
-  if (score >= 80) return "#4ADE80";  // green — expert
-  if (score >= 65) return "#60A5FA";  // blue — proficient
-  if (score >= 50) return "#93C5FD";  // muted-blue — developing
-  return "rgba(148,163,184,0.55)";    // tertiary — beginner/novice
+// ─── Doughnut colour by score band (v2 spec, fix brief: 7.8 = Proficient → info-blue) ──
+function getDoughnutColour(score: number): { colour: string; opacity: number } {
+  if (score >= 80) return { colour: "var(--color-text-success, #4ADE80)", opacity: 1 };   // Expert → green
+  if (score >= 65) return { colour: "var(--color-text-info, #60A5FA)",    opacity: 1 };   // Proficient → info-blue
+  if (score >= 50) return { colour: "var(--color-text-info, #60A5FA)",    opacity: 0.6 }; // Developing → muted info-blue
+  return { colour: "rgba(148,163,184,0.55)", opacity: 1 };                                // Beginner/Novice → tertiary
 }
 
 // ─── Hero headline (v2: N derived from actual priority count) ─────────────────
@@ -106,7 +109,7 @@ function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) 
   const sw = 11 * (size / 120);
   const displayScore = (score / 10).toFixed(1);
   const level = getLevelInfo(score);
-  const colour = getDoughnutColour(score);
+  const { colour, opacity } = getDoughnutColour(score);
   return (
     <svg
       width={size} height={size}
@@ -116,7 +119,7 @@ function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) 
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
       <circle
         cx={cx} cy={cy} r={r} fill="none"
-        stroke={colour} strokeWidth={sw} strokeLinecap="round"
+        stroke={colour} strokeOpacity={opacity} strokeWidth={sw} strokeLinecap="round"
         strokeDasharray={`${fill} ${circ}`}
         transform={`rotate(-90 ${cx} ${cy})`}
         style={{ transition: "stroke-dasharray 0.8s ease" }}
@@ -386,10 +389,26 @@ export default function AssessmentResultsPage() {
             <span className="text-[10px] font-semibold tracking-widest uppercase text-white/30 mr-1">Assessment</span>
             {activeSessionId && (() => {
               const s = completedSessions.find((s: any) => s.id === activeSessionId);
-              const d = s?.completedAt
-                ? new Date(s.completedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+              const completedAt = s?.completedAt ? new Date(s.completedAt) : null;
+              const d = completedAt
+                ? completedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                 : "—";
-              return <span className="font-medium text-white/80">{d}</span>;
+              // Recency context: compute days ago at render time (P3 fix)
+              const daysAgo = completedAt
+                ? Math.floor((Date.now() - completedAt.getTime()) / (1000 * 60 * 60 * 24))
+                : null;
+              const recency = daysAgo === null ? null
+                : daysAgo === 0 ? "today"
+                : daysAgo === 1 ? "1 day ago"
+                : `${daysAgo} days ago`;
+              return (
+                <>
+                  <span className="font-medium text-white/80">{d}</span>
+                  {recency && (
+                    <span className="text-[10px] text-white/30 ml-1">· {recency}</span>
+                  )}
+                </>
+              );
             })()}
             {completedSessions.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-white/40" />}
           </button>
@@ -480,6 +499,15 @@ export default function AssessmentResultsPage() {
           label="The patterns we see across your responses"
           sub="Cross-cutting themes that show up in multiple domains. For domain-specific detail, see below."
         />
+        {/* Domain colour legend for inline dots (fix brief item 8: inline pattern requires legend) */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4">
+          {DOMAIN_KEYS.map(dk => (
+            <span key={dk} className="flex items-center gap-1.5 text-[10px] text-white/35">
+              <DomainDot colour={DOMAIN_COLOURS[dk]} />
+              {DOMAIN_LABELS[dk]}
+            </span>
+          ))}
+        </div>
         {isLoading ? <SectionSkeleton rows={2} /> : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* What you do well */}
@@ -498,21 +526,24 @@ export default function AssessmentResultsPage() {
                 <ul className="space-y-4">
                   {((profileQuery.data as any).profile.crossCuttingStrengths as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
+                      {/* Inline dots: rendered immediately after each domain name mention (fix brief item 8) */}
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
-                      <span className="text-white/55">{bullet.evidence}</span>
-                      {bullet.domains && bullet.domains.length > 0 && (
-                        <span className="inline-flex items-center gap-1 ml-2 align-middle">
-                          {bullet.domains.map((dk) => {
-                            const c = DOMAIN_COLOURS[dk as DomainKey];
-                            return c ? <DomainDot key={dk} colour={c} /> : null;
-                          })}
-                        </span>
-                      )}
+                      <span className="text-white/55">
+                        {bullet.evidence}
+                        {bullet.domains && bullet.domains.length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 ml-1.5 align-middle">
+                            {bullet.domains.map((dk) => {
+                              const c = DOMAIN_COLOURS[dk as DomainKey];
+                              return c ? <DomainDot key={dk} colour={c} /> : null;
+                            })}
+                          </span>
+                        )}
+                      </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-white/40 italic">No cross-cutting strengths identified. See domain detail below.</p>
+                <p className="text-xs text-white/40 italic">Your strengths are concentrated in specific domains — see below.</p>
               )}
             </div>
 
@@ -532,16 +563,19 @@ export default function AssessmentResultsPage() {
                 <ul className="space-y-4">
                   {((profileQuery.data as any).profile.crossCuttingGrowth as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
+                      {/* Inline dots: rendered at end of evidence sentence (fix brief item 8) */}
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
-                      <span className="text-white/55">{bullet.evidence}</span>
-                      {bullet.domains && bullet.domains.length > 0 && (
-                        <span className="inline-flex items-center gap-1 ml-2 align-middle">
-                          {bullet.domains.map((dk) => {
-                            const c = DOMAIN_COLOURS[dk as DomainKey];
-                            return c ? <DomainDot key={dk} colour={c} /> : null;
-                          })}
-                        </span>
-                      )}
+                      <span className="text-white/55">
+                        {bullet.evidence}
+                        {bullet.domains && bullet.domains.length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 ml-1.5 align-middle">
+                            {bullet.domains.map((dk) => {
+                              const c = DOMAIN_COLOURS[dk as DomainKey];
+                              return c ? <DomainDot key={dk} colour={c} /> : null;
+                            })}
+                          </span>
+                        )}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -674,6 +708,16 @@ export default function AssessmentResultsPage() {
                         <span className="text-white/30 italic">No modules assigned yet</span>
                       )}
                     </div>
+                    {/* Empty-state CTA (fix brief item 9): shown when no modules available */}
+                    {!firstModule && (
+                      <button
+                        type="button"
+                        className="text-xs text-[#60A5FA] underline underline-offset-2 hover:text-[#93C5FD] transition-colors shrink-0"
+                        onClick={() => toast.info("Talk to your L\u0026D team about adding modules for this domain.")}
+                      >
+                        Talk to your L&D team →
+                      </button>
+                    )}
                     {/* Start button — only when module available */}
                     {firstModule && (
                       <Button

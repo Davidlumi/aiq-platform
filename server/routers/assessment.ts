@@ -3000,9 +3000,50 @@ BAD (score paraphrase): "You demonstrate strong capabilities in AI Ethics & Trus
 BAD (third-person): "The professional effectively engages with AI tools." — Wrong voice.
 BAD (tautology): "Your score in AI Workflow Design indicates room for development." — The score IS the input; describe what it reflects.
 
+## FORBIDDEN VERBS — NEVER USE
+The following verbs describe internal mental states or pair with score-paraphrase constructions. They are banned in ALL output:
+- acknowledge, recognize, appreciate, understand, value, consider [important]
+- demonstrate, show, exhibit, display (when followed by an abstract noun: "demonstrate ability", "show capacity", "exhibit proficiency", "display strength")
+
+General rule: any construction of the form [verb] + [abstract noun] ("demonstrate ability", "show understanding", "exhibit capability") is score paraphrase — rewrite to describe the observable action itself.
+
+Required verbs: raises, flags, applies, audits, tests, examines, documents, designs, frames, iterates, articulates, outlines, differentiates, places, treats, builds, checks, structures, evaluates, reviews, questions, challenges, routes, separates, integrates.
+
+## CROSS-CUTTING RULE — MANDATORY
+Every cross-cutting bullet (in BOTH Strengths AND Growth) MUST reference at least two domains by name within the bullet itself.
+
+If a pattern only manifests in one domain, it is NOT cross-cutting — it belongs in that domain's per-domain narrative, NOT in the cross-cutting section.
+
+If no genuine cross-cutting theme exists for a column (all themes are concentrated in single domains), return an EMPTY array for that column. The UI will render the correct empty state.
+
+GOOD cross-cutting: "Default-to-additive shows up across two domains. You add AI as a layer on top of existing processes — visible in AI Workflow Design (proposals incorporate AI into current steps rather than redesigning) and AI Output Evaluation (you treat evaluation as a separate review pass rather than designing it into the workflow). Same instinct, different surface."
+
+BAD (single domain dressed as cross-cutting): "You tend to approach AI integration as an additive process rather than a fundamental redesign of existing workflows." — names no other domain.
+
+## PER-DOMAIN BALANCED FRAMING — MANDATORY
+Per-domain narratives must use score-band-appropriate framing:
+
+- Expert (8.0+/10): describe what the user does well. Single-tone strength framing is appropriate.
+- Proficient (6.5–7.9/10): describe BOTH what's there AND what's developing. Use the pattern: "[strength behaviour]. Less developed: [growth behaviour]." — the "Less developed" clause is REQUIRED for Proficient-band domains.
+- Developing (5.0–6.4/10) and below: lead with what's developing; mention what's present as foundation.
+
+Example for a Proficient domain (AI Workflow Design, 7.4/10):
+CURRENT (wrong): "You identify opportunities to integrate AI into specific tasks within existing HR processes."
+REQUIRED: "You identify opportunities to integrate AI into specific HR tasks confidently. Less developed: designing workflows with AI as the default and human review as the exception — you place humans-in-the-loop in steps where automation would work cleanly."
+
+## NO-DUPLICATION RULE — MANDATORY
+Per-domain narratives must NOT restate what's already in a cross-cutting bullet. They must add concrete domain-specific detail.
+
+SPECIFICITY TEST: Read the cross-cutting bullet and the per-domain narrative side by side. The per-domain narrative MUST contain at least one concrete specific — an HR sub-process name (screening, scheduling, onboarding, performance review, succession planning), an observed-vs-expected behaviour pattern, or a response-level specific — that does NOT appear in the cross-cutting bullet. If removing that concrete detail leaves the same content as the cross-cutting bullet, rewrite with sharper specifics.
+
+Example:
+Cross-cutting Growth bullet: "Default-to-additive across AI Workflow Design and AI Output Evaluation."
+Per-domain AI Workflow Design (adds specifics): "You design AI to handle specific HR tasks — screening, scheduling, summarising — but keep the human approval gate at the end of every step. Less developed: workflows where AI is the action layer and humans review by exception, not by default."
+Per-domain AI Output Evaluation (adds DIFFERENT specifics): "You evaluate AI output as a separate review pass after the AI does its work. Less developed: designing evaluation criteria into the AI workflow itself, so quality checking is structural rather than manual."
+
 ## CROSS-CUTTING vs PER-DOMAIN
 - Cross-cutting bullets: themes spanning 2+ domains. Name the domains involved. Do NOT restate per-domain findings.
-- Per-domain narratives: specific to that domain. Do NOT restate cross-cutting themes. If a cross-cutting bullet covers "default-to-manual across two domains", the per-domain narrative describes what that looks like specifically in THAT domain.
+- Per-domain narratives: specific to that domain. Do NOT restate cross-cutting themes.
 
 ## PATH NOTE
 ${pathNote}
@@ -3018,7 +3059,7 @@ ${pathNote}
 
 Overall AI capability: ${overallStr}
 
-Domain scores (sorted highest to lowest):\n${domainLines}\n\nGenerate:\n1. 2-3 cross-cutting strength bullets (themes spanning 2+ domains; use second person; include scenario counts if available)\n2. 1-3 cross-cutting growth bullets (genuine cross-domain gaps only; second person; if none exist, return empty array)\n3. Per-domain inline narrative (1-2 sentences each; second person; domain-specific behaviour; must NOT restate cross-cutting themes)`,
+Domain scores (sorted highest to lowest):\n${domainLines}\n\nGenerate:\n1. 2-3 cross-cutting strength bullets (MUST name 2+ domains per bullet; if no genuine cross-cutting strength exists, return empty array)\n2. 1-3 cross-cutting growth bullets (MUST name 2+ domains per bullet; if no genuine cross-cutting gap exists, return empty array)\n3. Per-domain inline narrative (1-2 sentences each; second person; use balanced framing for Proficient-band domains with "Less developed:" clause; must add domain-specific concrete detail NOT already in cross-cutting bullets)`,
             },
           ],
           response_format: {
