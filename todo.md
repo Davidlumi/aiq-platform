@@ -2947,15 +2947,40 @@ test
 ## Individual Assessment Dashboard Redesign (brief v1)
 
 ### Backend
-- [ ] Extend assessment.results to aggregate per-domain response counts (outcomeClass distribution per domain)
-- [ ] Extend assessment.results to include percentileData (per-domain percentile from normEngine)
-- [ ] Add assessment.generateCapabilityProfile LLM procedure
+- [x] Extend assessment.results to aggregate per-domain response counts (outcomeClass distribution per domain)
+- [x] Extend assessment.results to include percentileData (per-domain percentile from normEngine)
+- [x] Add assessment.generateCapabilityProfile LLM procedure
 
 ### Frontend
-- [ ] Top bar: compact assessment date selector + in-progress indicator (no full-width banner)
-- [ ] Hero block: score circle (no AI-Ready badge), cohort anchor, narrative headline + sub-narrative, badges row
-- [ ] Cross-cutting patterns section: two cards with LLM bullets, empty/fallback states
-- [ ] Domain detail section: 6 cards sorted by score desc, progress bar with level semantics, inline narrative
-- [ ] Development plan: 3 priority rows, target score auto-derived, module names + hours, Start button
-- [ ] Loading skeletons, error states, responsive layout, accessibility, telemetry
-- [ ] Acceptance criteria checklist pass (11 criteria)
+- [x] Top bar: compact assessment date selector + in-progress indicator (no full-width banner)
+- [x] Hero block: score circle (no AI-Ready badge), cohort anchor, narrative headline + sub-narrative, badges row
+- [x] Cross-cutting patterns section: two cards with LLM bullets, empty/fallback states
+- [x] Domain detail section: 6 cards sorted by score desc, progress bar with level semantics, inline narrative
+- [x] Development plan: 3 priority rows, target score auto-derived, module names + hours, Start button
+- [x] Loading skeletons, error states, responsive layout, accessibility, telemetry
+- [x] Acceptance criteria checklist pass (11 criteria)
+
+## HR AI Strategy Dashboard Redesign (strategic document brief)
+
+### Backend
+- [ ] Update generateLeadershipTalkingPoints AI prompt to 5-bullet strategy-document structure
+- [ ] Add dismissedStaleNotice support to saveLeadershipTalkingPoints mutation
+- [ ] Add dismissedStaleNotice to getTalkingPoints return type
+
+### Frontend — StrategyOverviewPage full rewrite
+- [ ] Top bar: inline context line (sector · business tier · HR tier · Updated date by name) + Review overdue pill + Edit/Export buttons
+- [ ] Hero: HR AI STRATEGY label + serif italic vision quote with left border + supporting strategic line (N initiatives · value, no execution status)
+- [ ] Capability bridge section: tinted background block, TODAY score, gap bar, WHERE WE NEED TO BE score, Build capability button
+- [ ] Capability edge cases: no assessment, no ambition, stale assessment (>6 months), score above target
+- [ ] 4-card 2x2 grid: Card 1 ambition (list), Card 2 plan (list), Card 3 cost (value-style), Card 4 value (value-style)
+- [ ] Card 1: commitments list with teal bullets, Top-tier ambition tag, See full ambition link
+- [ ] Card 2: initiative titles list with violet bullets, N initiatives · duration tag, See the full plan link
+- [ ] Card 3: cost headline amber, between/over/compliance sub-line, See the costs link
+- [ ] Card 4: value headline green, between/over/estimated sub-line, gating for negative value, See what this is worth link
+- [ ] Remove Next steps footer (Assign owners / Schedule kickoff)
+- [ ] Remove Measurement card
+- [ ] Talking points: collapsed teaser by default, expanded with 5 bullets, stale banner with Regenerate/Keep current, dismissedStaleNotice
+- [ ] Loading skeletons per block, error states per block
+- [ ] Accessibility: blockquote for vision, progressbar aria for bridge bar, aria-expanded for talking points
+- [ ] Telemetry events wired
+- [ ] Acceptance criteria checklist pass (20 items)

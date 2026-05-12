@@ -1,41 +1,38 @@
 /**
- * StrategyOverviewPage — /strategy
+ * StrategyOverviewPage — HR AI Strategy dashboard
+ * Brief: manus_brief_hr_ai_strategy_dashboard_strategy_doc.md
  *
- * Leadership-framed overview dashboard.
  * Layout (top to bottom):
- *   1. Context bar   — org pills + last-updated + action buttons
- *   2. Hero block    — narrative headline + analytical sub-line (no KPI tiles)
- *   3. Talking points block — "What to tell your CEO" (AI-generated, editable, regeneratable)
- *   4. Six-card grid — 3×2, central-estimate headlines, flag+action pairs
- *   5. Next steps footer
+ *  1. Top bar — context line + review-overdue pill + action buttons
+ *  2. Hero — HR AI STRATEGY label, vision quote (serif italic), supporting strategic line
+ *  3. Capability section — bridge (today → needed) + Build capability button
+ *  4. Strategy cards — 2×2 grid: ambition, plan, cost, value
+ *  5. Talking points — collapsed teaser by default; expandable
  */
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  BarChart3, Target, Users, TrendingUp, Shield, Layers,
-  Sparkles, AlertTriangle, Info, ArrowRight, Download,
-  Pencil, Calendar, CheckCircle2, Building2,
-  ChevronDown, ChevronUp,
-  Activity, PoundSterling,
-  Copy, RefreshCw, Check,
+  Clock, Pencil, Download, ArrowRight,
+  MessageCircle, ChevronDown, ChevronUp,
+  Copy, RefreshCw, Check, AlertTriangle, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const BUSINESS_LEVELS: Record<number, { label: string; description: string; requiredMaturity: number }> = {
-  1: { label: "Cautious",       description: "AI used selectively in low-risk, back-office processes.",                              requiredMaturity: 1.0   },
-  2: { label: "Exploratory",    description: "Piloting AI in specific workflows. Building internal confidence before wider rollout.", requiredMaturity: 1.875 },
-  3: { label: "Progressive",    description: "AI embedded in core HR processes. HR professionals use AI tools confidently.",         requiredMaturity: 2.75  },
-  4: { label: "Ambitious",      description: "AI is a strategic differentiator. HR leads AI adoption across the business.",          requiredMaturity: 3.625 },
-  5: { label: "Transformative", description: "AI is central to the business model. HR professionals are AI-native practitioners.",   requiredMaturity: 4.5   },
+const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
+  1: { label: "Cautious",       description: "AI used selectively in low-risk, back-office processes." },
+  2: { label: "Exploratory",    description: "Piloting AI in specific workflows. Building internal confidence before wider rollout." },
+  3: { label: "Progressive",    description: "AI embedded in core HR processes. HR professionals use AI tools confidently." },
+  4: { label: "Ambitious",      description: "AI is a strategic differentiator. HR leads AI adoption across the business." },
+  5: { label: "Transformative", description: "AI is central to the business model. HR professionals are AI-native practitioners." },
 };
 const PEOPLE_LEVELS: Record<number, { label: string; description: string }> = {
   1: { label: "Followers",     description: "HR people use AI tools as directed." },
@@ -44,7 +41,16 @@ const PEOPLE_LEVELS: Record<number, { label: string; description: string }> = {
   4: { label: "Champions",     description: "HR people advocate for AI, coach others, and contribute to AI governance." },
   5: { label: "Innovators",    description: "HR people design AI-enabled processes, lead change, and shape the AI strategy." },
 };
+// Ambition tier → required capability score (0–100 raw, divide by 10 for display)
 const AMBITION_TIER_BASE: Record<number, number> = { 1: 38, 2: 46, 3: 55, 4: 63, 5: 73 };
+// Plain-English tier label for card 1 tier tag
+const AMBITION_TIER_PLAIN: Record<number, string> = {
+  1: "Foundational ambition",
+  2: "Exploratory ambition",
+  3: "Progressive ambition",
+  4: "Strong ambition",
+  5: "Top-tier ambition",
+};
 const FOUNDATION_CATEGORIES = new Set(["Change & Capability", "Governance & Ethics", "HR Operations"]);
 const SCALE_CATEGORIES      = new Set(["People Analytics", "HR Business Partnering"]);
 const OPTIMISE_CATEGORIES   = new Set(["Ethics & Governance", "Governance & Ethics", "People Analytics", "HR Business Partnering"]);
@@ -89,8 +95,6 @@ const SECTORS = [
   { value: "other",                 label: "Other" },
 ];
 
-// Currency formatting — shared utility (see client/src/lib/format.ts)
-import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
 function daysUntil(dateStr?: string | null): number | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
@@ -98,100 +102,327 @@ function daysUntil(dateStr?: string | null): number | null {
   return Math.ceil((d.getTime() - Date.now()) / 86400000);
 }
 
-// ─── Section card definitions ─────────────────────────────────────────────────
-interface SectionCard {
-  id: string;
-  num: string;
-  title: string;
-  slug: string;
-  icon: React.ReactNode;
-  accent: string;
-  accentBg: string;
-  accentBorder: string;
+function capLevelLabel(score: number): string {
+  if (score < 3.1) return "novice level";
+  if (score < 5.6) return "foundational level";
+  if (score < 7.6) return "solid level";
+  return "mature level";
 }
 
-const SECTION_CARDS: SectionCard[] = [
-  {
-    id: "diagnostic",
-    num: "01",
-    title: "Where we are",
-    slug: "/strategy/diagnostic",
-    icon: <BarChart3 className="w-[18px] h-[18px]" />,
-    accent: "#3b82f6",
-    accentBg: "bg-blue-500/5",
-    accentBorder: "border-blue-500/20",
-  },
-  {
-    id: "ambition",
-    num: "02",
-    title: "Where we're going",
-    slug: "/strategy/ambition",
-    icon: <Target className="w-[18px] h-[18px]" />,
-    accent: "#14b8a6",
-    accentBg: "bg-teal-500/5",
-    accentBorder: "border-teal-500/20",
-  },
-  {
-    id: "plan",
-    num: "03",
-    title: "How we get there",
-    slug: "/strategy/plan",
-    icon: <Layers className="w-[18px] h-[18px]" />,
-    accent: "#a855f7",
-    accentBg: "bg-purple-500/5",
-    accentBorder: "border-purple-500/20",
-  },
-  {
-    id: "investment-risk",
-    num: "04",
-    title: "What it costs",
-    slug: "/strategy/investment-risk",
-    icon: <PoundSterling className="w-[18px] h-[18px]" />,
-    accent: "#f59e0b",
-    accentBg: "bg-amber-500/5",
-    accentBorder: "border-amber-500/20",
-  },
-  {
-    id: "value",
-    num: "05",
-    title: "What this is worth",
-    slug: "/strategy/value",
-    icon: <TrendingUp className="w-[18px] h-[18px]" />,
-    accent: "#22c55e",
-    accentBg: "bg-green-500/5",
-    accentBorder: "border-green-500/20",
-  },
-  {
-    id: "measurement",
-    num: "06",
-    title: "How we'll measure",
-    slug: "/strategy/measurement",
-    icon: <Activity className="w-[18px] h-[18px]" />,
-    accent: "#94a3b8",
-    accentBg: "bg-slate-500/5",
-    accentBorder: "border-slate-500/20",
-  },
-];
+// ─── Vision Quote ─────────────────────────────────────────────────────────────
+function VisionQuote({ text, onReadMore }: { text: string; onReadMore: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const words = text.split(/\s+/);
+  const isTruncatable = words.length > 80;
+  let displayText = text;
+  let isTruncated = false;
+  if (isTruncatable && !expanded) {
+    const first80 = words.slice(0, 80).join(" ");
+    const sentenceEnd = first80.search(/[.!?][^.!?]*$/);
+    displayText = sentenceEnd > 0 ? first80.slice(0, sentenceEnd + 1) : first80;
+    isTruncated = true;
+  }
+  return (
+    <blockquote
+      className="border-l-[3px] pl-7 mb-4 max-w-3xl"
+      style={{ borderColor: "var(--color-text-info, hsl(var(--primary)))" }}
+    >
+      <p
+        style={{
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontSize: "24px",
+          fontStyle: "italic",
+          lineHeight: 1.45,
+          fontWeight: 400,
+          color: "hsl(var(--foreground))",
+        }}
+      >
+        &ldquo;{displayText}{isTruncated ? "\u2026" : ""}&rdquo;
+      </p>
+      {isTruncatable && (
+        <button
+          className="mt-2 text-[12px] not-italic underline underline-offset-2 hover:no-underline text-primary"
+          onClick={() => {
+            if (expanded) { setExpanded(false); } else { setExpanded(true); onReadMore(); }
+          }}
+        >
+          {expanded ? "Read less" : "Read more"}
+        </button>
+      )}
+    </blockquote>
+  );
+}
 
-// ─── Card skeleton ────────────────────────────────────────────────────────────
+// ─── Capability Bridge ────────────────────────────────────────────────────────
+interface CapabilityBridgeProps {
+  hrNow: string | null;
+  hrTarget: string;
+  hrGap: string | null;
+  hasAmbition: boolean;
+  isLoading: boolean;
+  onBuildCapability: () => void;
+}
+function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBuildCapability }: CapabilityBridgeProps) {
+  const nowNum    = hrNow != null ? Number(hrNow) : null;
+  const targetNum = Number(hrTarget);
+  const gapNum    = hrGap != null ? Number(hrGap) : null;
+  const isAboveTarget = nowNum != null && nowNum >= targetNum;
+
+  return (
+    <section
+      className="rounded-xl mb-8 px-5 py-4"
+      style={{ background: "hsl(var(--muted)/0.35)" }}
+      aria-label="Capability section"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          WHAT HR NEEDS TO BE ABLE TO DO
+        </h2>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-primary text-primary hover:bg-primary/10"
+          onClick={onBuildCapability}
+          aria-label={nowNum == null ? "Take the assessment" : "Build capability"}
+        >
+          {nowNum == null ? "Take the assessment" : "Build capability"}
+          <ArrowRight className="w-3 h-3" aria-hidden="true" />
+        </Button>
+      </div>
+
+      {/* Bridge */}
+      {isLoading ? (
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-20 rounded" />
+          <Skeleton className="h-2 flex-1 rounded" />
+          <Skeleton className="h-10 w-20 rounded" />
+        </div>
+      ) : !hasAmbition ? (
+        <p className="text-sm text-muted-foreground">
+          Set your ambition first to see what capability you need.
+        </p>
+      ) : nowNum == null ? (
+        <p className="text-sm text-muted-foreground">
+          No assessment yet — take it to see your capability bridge.
+        </p>
+      ) : isAboveTarget ? (
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
+            <p className="text-[22px] font-medium leading-none text-foreground">
+              {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
+          </div>
+          <p className="text-sm text-muted-foreground flex-1">
+            You&apos;re at the level needed for this ambition.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Left — Today */}
+          <div className="flex-shrink-0 min-w-[72px]">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
+            <p className="text-[22px] font-medium leading-none text-foreground">
+              {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
+          </div>
+          {/* Middle — Bar */}
+          <div className="flex-1 min-w-[100px] flex flex-col gap-1">
+            <div
+              className="relative h-[4px] rounded-sm w-full bg-background"
+              role="progressbar"
+              aria-valuenow={nowNum}
+              aria-valuemin={0}
+              aria-valuemax={10}
+              aria-valuetext={`${hrNow} of 10, target ${hrTarget}`}
+            >
+              {/* Current fill */}
+              <div
+                className="absolute left-0 top-0 h-full rounded-sm bg-foreground"
+                style={{ width: `${Math.min(nowNum * 10, 100)}%` }}
+              />
+              {/* Gap fill */}
+              <div
+                className="absolute top-0 h-full bg-primary opacity-60"
+                style={{
+                  left: `${Math.min(nowNum * 10, 100)}%`,
+                  width: `${Math.max(0, Math.min((targetNum - nowNum) * 10, 100 - nowNum * 10))}%`,
+                }}
+              />
+              {/* Target marker */}
+              <div
+                className="absolute top-[-3px] bottom-[-3px] w-[2px] rounded-sm bg-primary"
+                style={{ left: `${Math.min(targetNum * 10, 100)}%` }}
+                aria-hidden="true"
+              />
+            </div>
+            {gapNum != null && gapNum > 0 && (
+              <p className="text-[11px] text-center text-primary">
+                {hrGap} points to close
+              </p>
+            )}
+          </div>
+          {/* Right — Target */}
+          <div className="flex-shrink-0 min-w-[72px] sm:text-right">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">WHERE WE NEED TO BE</p>
+            <p className="text-[22px] font-medium leading-none text-primary">
+              {hrTarget} <span className="text-sm font-normal text-muted-foreground">/10</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">to deliver this strategy</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Card Skeleton ────────────────────────────────────────────────────────────
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/3 p-4 space-y-3 min-h-[180px]">
-      <Skeleton className="h-8 w-8 rounded-lg" />
-      <Skeleton className="h-4 w-3/4 rounded" />
-      <Skeleton className="h-6 w-1/2 rounded" />
+    <div className="rounded-xl border border-white/8 bg-background p-5 space-y-3 min-h-[180px]">
+      <Skeleton className="h-4 w-1/2 rounded" />
       <Skeleton className="h-3 w-full rounded" />
-      <Skeleton className="h-3 w-2/3 rounded" />
+      <Skeleton className="h-3 w-4/5 rounded" />
+      <Skeleton className="h-3 w-3/5 rounded" />
+      <Skeleton className="h-3 w-2/3 rounded mt-2" />
     </div>
   );
 }
 
-function CardError({ title }: { title: string }) {
+// ─── List Card (cards 1 & 2) ──────────────────────────────────────────────────
+interface ListCardProps {
+  accentColor: string;
+  title: string;
+  tierTag: string;
+  items: string[];
+  extraCount: number;
+  footerLink: string;
+  footerLabel: string;
+  emptyMessage: string;
+  emptyCta: string;
+  emptyCtaHref: string;
+  onNavigate: (href: string) => void;
+  onCardClick: () => void;
+}
+function ListCard({ accentColor, title, tierTag, items, extraCount, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, onNavigate, onCardClick }: ListCardProps) {
   return (
-    <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 flex flex-col items-center justify-center min-h-[180px] text-center gap-2">
-      <AlertTriangle className="w-5 h-5 text-red-400" />
-      <p className="text-xs text-red-300 font-medium">{title}</p>
-      <p className="text-[10px] text-muted-foreground">Failed to load</p>
+    <div
+      className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
+      style={{ borderTop: `2px solid ${accentColor}`, padding: "1.25rem" }}
+      onClick={onCardClick}
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardClick(); } }}
+      role="article"
+    >
+      {/* Title row */}
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h3 className="text-[14px] font-medium text-foreground">{title}</h3>
+        {tierTag && (
+          <span className="text-[10px] font-bold uppercase tracking-wide flex-shrink-0" style={{ color: accentColor }}>
+            {tierTag}
+          </span>
+        )}
+      </div>
+      {/* Body */}
+      {items.length === 0 ? (
+        <div className="flex-1 flex flex-col justify-center gap-1.5 py-2">
+          <p className="text-[13px] text-muted-foreground">{emptyMessage}</p>
+          <button
+            className="text-[12px] underline underline-offset-2 text-left hover:no-underline"
+            style={{ color: accentColor }}
+            onClick={e => { e.stopPropagation(); onNavigate(emptyCtaHref); }}
+          >
+            {emptyCta}
+          </button>
+        </div>
+      ) : (
+        <ul className="flex-1 flex flex-col gap-2 mb-3" aria-label={title}>
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-[13px] text-foreground leading-snug">
+              <span
+                className="mt-[5px] w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: accentColor }}
+                aria-hidden="true"
+              />
+              {item}
+            </li>
+          ))}
+          {extraCount > 0 && (
+            <li className="text-[12px] text-muted-foreground pl-[14px]">+ {extraCount} more</li>
+          )}
+        </ul>
+      )}
+      {/* Footer link */}
+      {items.length > 0 && (
+        <button
+          className="flex items-center gap-1 text-[12px] font-medium mt-auto pt-1 w-fit"
+          style={{ color: accentColor }}
+          onClick={e => { e.stopPropagation(); onNavigate(footerLink); }}
+          aria-label={footerLabel}
+        >
+          {footerLabel}
+          <ArrowRight className="w-3 h-3" aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Value Card (cards 3 & 4) ─────────────────────────────────────────────────
+interface ValueCardProps {
+  accentColor: string;
+  title: string;
+  headline: string;
+  subLine: string;
+  footerLink: string;
+  footerLabel: string;
+  emptyMessage: string;
+  emptyCta: string;
+  emptyCtaHref: string;
+  isEmpty: boolean;
+  onNavigate: (href: string) => void;
+  onCardClick: () => void;
+}
+function ValueCard({ accentColor, title, headline, subLine, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, isEmpty, onNavigate, onCardClick }: ValueCardProps) {
+  return (
+    <div
+      className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
+      style={{ borderTop: `2px solid ${accentColor}`, padding: "1.25rem" }}
+      onClick={onCardClick}
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardClick(); } }}
+      role="article"
+    >
+      <h3 className="text-[14px] font-medium text-foreground mb-2">{title}</h3>
+      {isEmpty ? (
+        <div className="flex-1 flex flex-col justify-center gap-1.5 py-2">
+          <p className="text-[13px] text-muted-foreground">{emptyMessage}</p>
+          <button
+            className="text-[12px] underline underline-offset-2 text-left hover:no-underline"
+            style={{ color: accentColor }}
+            onClick={e => { e.stopPropagation(); onNavigate(emptyCtaHref); }}
+          >
+            {emptyCta}
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="text-[17px] font-medium mb-1.5 leading-snug" style={{ color: accentColor }}>{headline}</p>
+          <p className="text-[12px] text-muted-foreground leading-snug flex-1">{subLine}</p>
+          <button
+            className="flex items-center gap-1 text-[12px] font-medium mt-auto pt-2 w-fit"
+            style={{ color: accentColor }}
+            onClick={e => { e.stopPropagation(); onNavigate(footerLink); }}
+            aria-label={footerLabel}
+          >
+            {footerLabel}
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -202,6 +433,7 @@ interface TalkingPointsData {
   generatedAt: number;
   userEdited: boolean;
   strategyHash: string;
+  dismissedStaleNotice?: boolean;
 }
 
 interface TalkingPointsBlockProps {
@@ -211,8 +443,9 @@ interface TalkingPointsBlockProps {
 }
 
 function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: TalkingPointsBlockProps) {
+  // Collapsed by default per brief
   const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem("aiq_tp_collapsed") === "true"; } catch { return false; }
+    try { return localStorage.getItem("aiq_tp_collapsed") !== "false"; } catch { return true; }
   });
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -220,226 +453,263 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
   const [copied, setCopied] = useState(false);
   const editRef = useRef<HTMLTextAreaElement>(null);
 
-  const tpQ = trpc.intelligence.getTalkingPoints.useQuery(undefined, { enabled: hasStrategy });
+  const tpQ        = trpc.intelligence.getTalkingPoints.useQuery(undefined, { enabled: hasStrategy });
   const generateMut = trpc.intelligence.generateLeadershipTalkingPoints.useMutation();
-  const saveMut = trpc.intelligence.saveLeadershipTalkingPoints.useMutation();
-  const utils = trpc.useUtils();
+  const saveMut     = trpc.intelligence.saveLeadershipTalkingPoints.useMutation();
+  const utils       = trpc.useUtils();
 
-  const data: TalkingPointsData | null = tpQ.data ?? null;
-  const isStale = !!(data && !data.userEdited && data.strategyHash && strategyHash && data.strategyHash !== strategyHash);
+  const data: TalkingPointsData | null = (tpQ.data as TalkingPointsData | null) ?? null;
+  const isStale = !!(
+    data &&
+    !data.dismissedStaleNotice &&
+    !data.userEdited &&
+    data.strategyHash &&
+    strategyHash &&
+    data.strategyHash !== strategyHash
+  );
+  const bulletCount = data?.bullets?.length ?? 0;
 
   function toggleCollapse() {
     const next = !collapsed;
     setCollapsed(next);
     try { localStorage.setItem("aiq_tp_collapsed", String(next)); } catch {}
+    (window as any).umami?.track(next ? "strategy.talking-points.collapsed" : "strategy.talking-points.expanded");
   }
 
   async function doGenerate() {
+    (window as any).umami?.track("strategy.talking-points.regenerated");
     try {
       const result = await generateMut.mutateAsync();
       utils.intelligence.getTalkingPoints.setData(undefined, result);
-      toast.success("Talking points regenerated");
+      setCollapsed(false);
+      try { localStorage.setItem("aiq_tp_collapsed", "false"); } catch {}
     } catch {
-      toast.error("Couldn't generate talking points. Try again.");
+      toast.error("Couldn't generate talking points. Please try again.");
     }
   }
 
   function handleRegenerate() {
-    if (data?.userEdited) {
-      setShowRegenerateConfirm(true);
-    } else {
-      doGenerate();
-    }
+    if (data?.userEdited) { setShowRegenerateConfirm(true); return; }
+    doGenerate();
   }
 
-  async function handleCopy() {
-    if (!data?.bullets) return;
-    const text = data.bullets.map(b => `- ${b}`).join("\n");
-    try {
-      await navigator.clipboard.writeText(text);
+  function handleCopy() {
+    if (!data?.bullets?.length) return;
+    navigator.clipboard.writeText(data.bullets.join("\n")).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error("Copy failed");
-    }
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   function startEdit(idx: number) {
     setEditingIdx(idx);
-    setEditValue(data?.bullets[idx] ?? "");
+    setEditValue(data?.bullets?.[idx] ?? "");
     setTimeout(() => editRef.current?.focus(), 50);
   }
-
+  function cancelEdit() { setEditingIdx(null); setEditValue(""); }
   async function saveEdit(idx: number) {
     if (!data) return;
     const newBullets = [...data.bullets];
-    newBullets[idx] = editValue.trim() || data.bullets[idx];
-    setEditingIdx(null);
-    const optimistic: TalkingPointsData = { ...data, bullets: newBullets, userEdited: true };
-    utils.intelligence.getTalkingPoints.setData(undefined, optimistic);
+    newBullets[idx] = editValue.trim() || newBullets[idx];
     try {
       await saveMut.mutateAsync({ bullets: newBullets, userEdited: true });
-    } catch {
-      utils.intelligence.getTalkingPoints.setData(undefined, data);
-      toast.error("Save failed");
-    }
-  }
-
-  function cancelEdit() {
+      utils.intelligence.getTalkingPoints.setData(undefined, { ...data, bullets: newBullets, userEdited: true } as any);
+    } catch { toast.error("Couldn't save edit."); }
     setEditingIdx(null);
+    setEditValue("");
   }
 
-  // Auto-generate if no talking points yet and strategy exists
-  useEffect(() => {
-    if (hasStrategy && hasInitiatives && tpQ.isFetched && !tpQ.data && !generateMut.isPending) {
-      doGenerate();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasStrategy, hasInitiatives, tpQ.isFetched]);
+  async function handleKeepCurrent() {
+    if (!data) return;
+    (window as any).umami?.track("strategy.talking-points.keep-current-clicked");
+    try {
+      await saveMut.mutateAsync({ bullets: data.bullets, userEdited: false, dismissedStaleNotice: true } as any);
+      utils.intelligence.getTalkingPoints.setData(undefined, { ...data, dismissedStaleNotice: true } as any);
+    } catch { /* ignore */ }
+  }
 
+  // Not enough data to generate
   if (!hasStrategy || !hasInitiatives) {
     return (
-      <div className="rounded-2xl border border-white/8 bg-white/3 p-5 mb-6">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">WHAT TO TELL YOUR CEO</p>
-        <p className="text-sm text-muted-foreground">Add initiatives to your plan to generate CEO talking points.</p>
+      <div
+        className="rounded-xl mb-8 px-4 py-3 flex items-center justify-between gap-3"
+        style={{ border: "0.5px solid hsl(var(--border))" }}
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MessageCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>What to tell your CEO</span>
+        </div>
+        <p className="text-xs text-muted-foreground">Add initiatives to generate talking points.</p>
+      </div>
+    );
+  }
+
+  // Never generated
+  if (!tpQ.isLoading && !data?.bullets?.length) {
+    return (
+      <div
+        className="rounded-xl mb-8 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-white/3 transition-colors"
+        style={{ border: "0.5px solid hsl(var(--border))" }}
+        onClick={doGenerate}
+        tabIndex={0}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doGenerate(); } }}
+        role="button"
+        aria-label="Generate talking points"
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MessageCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <span>Generate 5 talking points for briefing</span>
+        </div>
+        {generateMut.isPending
+          ? <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" aria-hidden="true" />
+          : <ArrowRight className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+        }
       </div>
     );
   }
 
   return (
     <>
-      <div className="rounded-2xl border border-white/10 bg-white/4 p-5 mb-6 shadow-sm">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">WHAT TO TELL YOUR CEO</p>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-              onClick={handleCopy}
-              disabled={!data?.bullets?.length}
-              aria-label="Copy talking points"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-              onClick={handleRegenerate}
-              disabled={generateMut.isPending}
-              aria-label="Regenerate talking points"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${generateMut.isPending ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Regenerate</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-              onClick={toggleCollapse}
-              aria-label={collapsed ? "Expand talking points" : "Collapse talking points"}
-            >
-              {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Generated-at timestamp — brief: show below block heading */}
-        {!collapsed && data?.generatedAt && (
-          <p className="text-[10px] text-muted-foreground/60 mb-2">
-            Generated {new Date(data.generatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
-            {data.userEdited ? " \u00b7 edited" : ""}
-          </p>
-        )}
-
-        {/* Stale banner — brief: must include both Regenerate and Keep current actions */}
-        {!collapsed && isStale && (
-          <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
-            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="flex-1 min-w-0">Strategy has changed since these were generated.</span>
-            <button
-              className="font-semibold underline underline-offset-2 hover:no-underline"
-              onClick={doGenerate}
-              disabled={generateMut.isPending}
-            >Regenerate</button>
-            <button
-              className="text-amber-300/70 hover:text-amber-300 underline underline-offset-2"
-              onClick={async () => {
-                // Keep current: mark as user-edited so stale banner disappears
-                if (!data) return;
-                try {
-                  await saveMut.mutateAsync({ bullets: data.bullets, userEdited: true });
-                  utils.intelligence.getTalkingPoints.setData(undefined, { ...data, userEdited: true, strategyHash });
-                } catch { /* ignore */ }
-              }}
-            >Keep current</button>
-          </div>
-        )}
-
-        {/* Bullets */}
-        {!collapsed && (
-          <div className="space-y-2" role="list" aria-label="CEO talking points">
-            {(tpQ.isLoading || generateMut.isPending) ? (
-              [1, 2, 3].map(i => (
-                <div key={i} className="flex items-start gap-2">
-                  <Skeleton className="h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0" />
-                  <Skeleton className="h-4 w-full rounded" />
-                </div>
-              ))
-            ) : data?.bullets?.length ? (
-              data.bullets.map((bullet, idx) => (
-                <div key={idx} role="listitem" className="group flex items-start gap-2">
-                  <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" aria-hidden="true" />
-                  {editingIdx === idx ? (
-                    <div className="flex-1 flex flex-col gap-1.5">
-                      <Textarea
-                        ref={editRef}
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
-                        onKeyDown={e => {
-                          if (e.key === "Escape") cancelEdit();
-                          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(idx); }
-                        }}
-                      />
-                      <div className="flex gap-1.5">
-                        <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(idx)}>Save</Button>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
+      <div
+        className="rounded-xl mb-8"
+        style={{ border: "0.5px solid hsl(var(--border))" }}
+      >
+        {/* Collapsed teaser */}
+        {collapsed ? (
+          <button
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/3 transition-colors rounded-xl"
+            onClick={toggleCollapse}
+            aria-expanded={false}
+            aria-controls="talking-points-body"
+          >
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+              <span>
+                What to tell your CEO
+                {bulletCount > 0 && (
+                  <span className="ml-1 text-muted-foreground/60">· {bulletCount} talking points ready</span>
+                )}
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+          </button>
+        ) : (
+          <div id="talking-points-body" className="p-5">
+            {/* Header row */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                What to tell your CEO
+              </h2>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {data?.generatedAt && (
+                  <span className="text-[10px] text-muted-foreground/60 hidden sm:block">
+                    Generated {new Date(data.generatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                    {data.userEdited ? " · edited" : ""}
+                  </span>
+                )}
+                <Button
+                  variant="ghost" size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  onClick={handleCopy}
+                  disabled={!data?.bullets?.length}
+                  aria-label="Copy talking points"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  onClick={handleRegenerate}
+                  disabled={generateMut.isPending}
+                  aria-label="Regenerate talking points"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${generateMut.isPending ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">Regenerate</span>
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={toggleCollapse}
+                  aria-label="Collapse talking points"
+                  aria-expanded={true}
+                  aria-controls="talking-points-body"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            {/* Stale banner */}
+            {isStale && (
+              <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="flex-1 min-w-0">Strategy has changed since these were generated.</span>
+                <button className="font-semibold underline underline-offset-2 hover:no-underline" onClick={doGenerate} disabled={generateMut.isPending}>
+                  Regenerate
+                </button>
+                <button className="text-amber-300/70 hover:text-amber-300 underline underline-offset-2" onClick={handleKeepCurrent}>
+                  Keep current
+                </button>
+              </div>
+            )}
+            {/* Bullets */}
+            <div className="space-y-2" role="list" aria-label="CEO talking points">
+              {(tpQ.isLoading || generateMut.isPending) ? (
+                [1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0" />
+                    <Skeleton className="h-4 w-full rounded" />
+                  </div>
+                ))
+              ) : data?.bullets?.length ? (
+                data.bullets.map((bullet, idx) => (
+                  <div key={idx} role="listitem" className="group flex items-start gap-2">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" aria-hidden="true" />
+                    {editingIdx === idx ? (
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <Textarea
+                          ref={editRef}
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
+                          onKeyDown={e => {
+                            if (e.key === "Escape") cancelEdit();
+                            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(idx); }
+                          }}
+                        />
+                        <div className="flex gap-1.5">
+                          <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(idx)}>Save</Button>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                      <p className="text-sm text-foreground leading-relaxed">{bullet}</p>
-                      <button
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
-                        onClick={() => startEdit(idx)}
-                        aria-label={`Edit bullet ${idx + 1}`}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No talking points yet. Click Regenerate to generate them.</p>
+                    ) : (
+                      <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
+                        <p className="text-sm text-foreground leading-relaxed">{bullet}</p>
+                        <button
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
+                          onClick={() => startEdit(idx)}
+                          aria-label={`Edit bullet ${idx + 1}`}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No talking points yet. Click Regenerate to generate them.</p>
+              )}
+            </div>
+            {generateMut.isError && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-red-400">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Couldn&apos;t generate talking points.</span>
+                <button className="underline" onClick={doGenerate}>Retry</button>
+              </div>
             )}
           </div>
         )}
-
-        {/* Error state */}
-        {!collapsed && generateMut.isError && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-red-400">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Couldn't generate talking points.</span>
-            <button className="underline" onClick={doGenerate}>Retry</button>
-          </div>
-        )}
       </div>
-
       {/* Regenerate confirm modal */}
       <Dialog open={showRegenerateConfirm} onOpenChange={setShowRegenerateConfirm}>
         <DialogContent className="max-w-sm">
@@ -452,7 +722,9 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => { setShowRegenerateConfirm(false); doGenerate(); }}
-            >Regenerate</Button>
+            >
+              Regenerate
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -465,100 +737,63 @@ export default function StrategyOverviewPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
 
-  // ── Queries ───────────────────────────────────────────────────────────────
+  // ── Data queries ──────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
   const strategyAssessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
-  const ambitionGapQ        = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const companyQ            = trpc.companyAssessment.getMyAssessmentResults.useQuery();
+  const ambitionGapQ        = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const initiativesQ        = trpc.strategy.listInitiatives.useQuery(
     { tenantId: user?.tenantId ?? "" },
     { enabled: !!user?.tenantId }
   );
   const orgContextQ         = trpc.intelligence.orgContext.useQuery();
+  const valueEnvQ           = trpc.intelligence.calculateValueEnvelope.useQuery(
+    { selectedInitiativeIds: [] },
+    { enabled: false }
+  );
   const [liveRisks, setLiveRisks] = useState<any[] | null>(null);
   const evaluateRiskMut     = trpc.intelligence.evaluateRiskRules.useMutation();
 
-  const strategyData        = strategyQ.data as any;
-  const structuredInputs    = (strategyAssessmentQ.data as any)?.structuredInputs as any;
-  const orgContext          = orgContextQ.data as any;
-  const companyResults      = companyQ.data as any;
-  const ambitionGap         = ambitionGapQ.data as any;
-  const allInitiatives      = (initiativesQ.data ?? []) as any[];
+  const strategyData     = strategyQ.data as any;
+  const orgContext       = orgContextQ.data as any;
+  const companyResults   = companyQ.data as any;
+  const ambitionGap      = ambitionGapQ.data as any;
+  const allInitiatives   = (initiativesQ.data ?? []) as any[];
+  const visionStatement  = (strategyAssessmentQ.data as any)?.visionStatement ?? null;
+  const commitments      = ((strategyAssessmentQ.data as any)?.commitments ?? []) as string[];
 
   const businessLevel = strategyData?.businessAmbitionLevel ?? orgContext?.businessAmbitionLevel ?? 3;
   const peopleLevel   = strategyData?.peopleAmbitionLevel   ?? orgContext?.peopleAmbitionLevel   ?? 3;
   const bLevel = BUSINESS_LEVELS[businessLevel];
   const pLevel = PEOPLE_LEVELS[peopleLevel];
-  const sectorLabel    = SECTORS.find(s => s.value === (orgContext?.sector ?? companyResults?.companySector))?.label ?? "";
-  const subSectorLabel = orgContext?.subSector ? String(orgContext.subSector).replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : null;
 
-  const selectedInitiativeIds = useMemo(() => {
-    const ids = strategyData?.selectedInitiativeIds ?? [];
-    return new Set<string>(Array.isArray(ids) ? ids : []);
-  }, [strategyData?.selectedInitiativeIds]);
+  const selectedInitiativeIds = useMemo<Set<string>>(() => {
+    try {
+      const raw = strategyData?.selectedInitiativesJson;
+      if (!raw) return new Set();
+      return new Set(JSON.parse(raw) as string[]);
+    } catch { return new Set(); }
+  }, [strategyData?.selectedInitiativesJson]);
 
   const selectedInits = useMemo(
     () => allInitiatives.filter((i: any) => selectedInitiativeIds.has(i.id)),
     [allInitiatives, selectedInitiativeIds]
   );
 
-  const initiativesByPhase = useMemo(() => {
-    const groups: Record<string, any[]> = {};
+  // Cost envelope
+  const { totalCostLow, totalCostHigh, foundationCostLow, foundationCostHigh } = useMemo(() => {
+    let tLow = 0, tHigh = 0, fLow = 0, fHigh = 0;
     for (const init of selectedInits) {
-      const phase = assignPhase(init as { category: string; complexity: number | string; name: string });
-      if (!groups[phase]) groups[phase] = [];
-      groups[phase].push(init);
+      const phase = assignPhase({ category: init.category ?? "", complexity: init.complexity ?? 2, name: init.name ?? "" });
+      const costs = PHASE_COST_PER_INIT[phase] ?? PHASE_COST_PER_INIT["unknown"];
+      tLow  += costs.low;
+      tHigh += costs.high;
+      if (phase === "Q1") { fLow += costs.low; fHigh += costs.high; }
     }
-    return groups;
+    return { totalCostLow: tLow * 1000, totalCostHigh: tHigh * 1000, foundationCostLow: fLow * 1000, foundationCostHigh: fHigh * 1000 };
   }, [selectedInits]);
 
-  const totalCostLow  = useMemo(() =>
-    Object.entries(initiativesByPhase).reduce((s, [ph, items]) => s + items.length * (PHASE_COST_PER_INIT[ph]?.low ?? 20), 0) * 1000,
-    [initiativesByPhase]
-  );
-  const totalCostHigh = useMemo(() =>
-    Object.entries(initiativesByPhase).reduce((s, [ph, items]) => s + items.length * (PHASE_COST_PER_INIT[ph]?.high ?? 60), 0) * 1000,
-    [initiativesByPhase]
-  );
-  const foundationCount    = (initiativesByPhase["Q1"] ?? []).length;
-  const foundationCostLow  = foundationCount * (PHASE_COST_PER_INIT["Q1"]?.low ?? 20) * 1000;
-  const foundationCostHigh = foundationCount * (PHASE_COST_PER_INIT["Q1"]?.high ?? 60) * 1000;
-
-  const valueEnvQ = trpc.intelligence.calculateValueEnvelope.useQuery(
-    { selectedInitiativeIds: Array.from(selectedInitiativeIds) },
-    { enabled: selectedInitiativeIds.size > 0 }
-  );
-  const valueEnv = valueEnvQ.data as any;
-
-  const overallTarget = useMemo(() => AMBITION_TIER_BASE[businessLevel] ?? 55, [businessLevel]);
-  const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
-  const hrTarget = (overallTarget / 10).toFixed(1);
-  const hrGap    = hrNow != null ? ((overallTarget - ambitionGap!.functionAvgRaw!) / 10).toFixed(1) : null;
-
-  const hasRegFlag = selectedInits.some((i: any) => i.regulatoryFlag);
-
-  const hasDrift = useMemo(() => {
-    if (!companyResults || !strategyData?.ambitionTargetScore) return false;
-    const currentScore = companyResults.overallScore * 20;
-    return Math.abs(currentScore - strategyData.ambitionTargetScore) >= 6;
-  }, [companyResults, strategyData]);
-
-  const weakDomainCount = useMemo(() => {
-    const scores = strategyData?.currentDomainScores as Record<string, number> | null | undefined;
-    if (!scores) return 0;
-    return Object.values(scores).filter(v => v !== null && v !== undefined && (v as number) < overallTarget).length;
-  }, [strategyData, overallTarget]);
-
-  const cadenceId = structuredInputs?.measurement_cadence as string | undefined;
-  const cadenceLabel = cadenceId === "twice_yearly" ? "Twice-yearly review"
-    : cadenceId === "quarterly" ? "Quarterly review"
-    : cadenceId === "annual" ? "Annual review"
-    : cadenceId === "monthly" ? "Monthly review"
-    : "Review cadence";
-  const reviewDate   = strategyData?.ambitionTargetDate;
-  const daysToReview = daysUntil(reviewDate);
-
-  const visionStatement = (strategyAssessmentQ.data as any)?.visionStatement ?? null;
+  const frameworkCount = liveRisks?.filter((r: any) => r.type === "note").length ?? 0;
 
   useEffect(() => {
     if (selectedInits.length === 0 || liveRisks !== null) return;
@@ -572,152 +807,144 @@ export default function StrategyOverviewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInits.length]);
 
-  const highRiskCount  = liveRisks?.filter(r => r.severity === "high" || r.severity === "very_high").length ?? 0;
-  const frameworkCount = liveRisks?.filter((r: any) => r.type === "note").length ?? 0;
+  // Value envelope — use the procedure with selected IDs
+  const valueEnvWithIdsQ = trpc.intelligence.calculateValueEnvelope.useQuery(
+    { selectedInitiativeIds: Array.from(selectedInitiativeIds) },
+    { enabled: selectedInitiativeIds.size > 0 }
+  );
+  const valueEnv  = valueEnvWithIdsQ.data as any;
+  const netLow    = valueEnv?.net_value_gbp?.low  ?? null;
+  const netHigh   = valueEnv?.net_value_gbp?.high ?? null;
+  const netMid    = netLow != null && netHigh != null ? (netLow + netHigh) / 2 : null;
+  const valueGated = netMid != null && netMid < 0;
 
-  const savedAt    = strategyData?.strategySavedAt;
-  // Brief: updated line must show date + user + next-review countdown
-  const savedByName = user ? ((user.firstName || user.lastName) ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() : user.email) : null;
-  const savedLabel = savedAt
-    ? [
-        `Updated ${new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`,
-        savedByName ? `by ${savedByName}` : null,
-        daysToReview != null && daysToReview > 0 ? `\u00b7 Next review in ${daysToReview} day${daysToReview !== 1 ? "s" : ""}` : null,
-        daysToReview != null && daysToReview <= 0 ? `\u00b7 Review overdue` : null,
-      ].filter(Boolean).join(" ")
-    : "Not yet saved";
+  // Review cadence
+  const structuredInputs = useMemo(() => {
+    try { return JSON.parse(strategyData?.structuredInputsJson ?? "{}"); } catch { return {}; }
+  }, [strategyData?.structuredInputsJson]);
+  const cadenceId   = structuredInputs?.measurement_cadence as string | undefined;
+  const nextReview  = strategyData?.ambitionTargetDate ?? null;
+  const daysToReview = daysUntil(nextReview);
+  const isReviewOverdue = daysToReview != null && daysToReview <= 0 && !!cadenceId;
 
+  // Updated by
+  const savedAt      = strategyData?.strategySavedAt;
+  const savedByName  = user ? ((user.firstName || user.lastName)
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+    : user.email)
+    : null;
+  const savedByFirst = savedByName?.split(" ")[0] ?? savedByName;
+
+  // Sector label
+  const sectorLabel = SECTORS.find(s => s.value === (orgContext?.sector ?? companyResults?.companySector))?.label ?? "";
+
+  // Capability
+  const overallTarget = useMemo(() => AMBITION_TIER_BASE[businessLevel] ?? 55, [businessLevel]);
+  const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
+  const hrTarget = (overallTarget / 10).toFixed(1);
+  const hrGap    = hrNow != null ? ((overallTarget - ambitionGap!.functionAvgRaw!) / 10).toFixed(1) : null;
+
+  // Strategy hash for talking points stale detection
   const strategyHash = useMemo(() => {
     const ids = Array.from(selectedInitiativeIds).sort().join(",");
     return btoa(`${ids}|${businessLevel}|${peopleLevel}`).slice(0, 32);
   }, [selectedInitiativeIds, businessLevel, peopleLevel]);
 
-  function handleExportBoardPack() {
-    window.open("/api/pdf/board_pack", "_blank", "noopener,noreferrer");
-  }
-
   const isLoading   = strategyQ.isLoading || strategyAssessmentQ.isLoading;
   const hasStrategy = (strategyData?.configured ?? false) as boolean;
 
-  function trackCardClick(sectionId: string) {
-    (window as any).umami?.track("strategy_card_click", { section: sectionId });
+  // Telemetry on mount
+  useEffect(() => {
+    if (!isLoading) {
+      (window as any).umami?.track("strategy.dashboard.viewed", {
+        ambitionTier: businessLevel,
+        capabilityToday: hrNow,
+        capabilityRequired: hrTarget,
+        valueGated,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  // Value gating telemetry
+  useEffect(() => {
+    if (valueGated) { (window as any).umami?.track("strategy.value.gated"); }
+  }, [valueGated]);
+
+  function handleExportBoardPack() {
+    (window as any).umami?.track("strategy.export.clicked");
+    window.open("/api/pdf/board_pack", "_blank", "noopener,noreferrer");
+  }
+  function handleEditStrategy() {
+    (window as any).umami?.track("strategy.edit.clicked");
+    navigate("/strategy/ambition");
+  }
+  function handleBuildCapability() {
+    (window as any).umami?.track("strategy.capability.build-clicked");
+    navigate("/assessment");
+  }
+  function handleReviewOverdueClick() {
+    (window as any).umami?.track("strategy.review.scheduled-clicked");
+    toast.info("Review scheduling coming soon");
   }
 
-  // ── Card data ─────────────────────────────────────────────────────────────
-  const cardData: Record<string, {
-    headline: string;
-    rangeSub?: string;
-    sub: string;
-    flag?: { type: "warning" | "info" | "positive"; text: string };
-  }> = {
-    diagnostic: {
-      headline: hrNow
-        ? `${hrNow}/10 \u00b7 ${Number(hrNow) < 3.1 ? "early stage" : Number(hrNow) < 5.6 ? "foundational" : Number(hrNow) < 7.6 ? "solid" : "mature"}`
-        : companyResults ? `${companyResults.overallScore.toFixed(1)}/5 org maturity` : "\u2014",
-      sub: weakDomainCount > 0
-        ? `HR capability today. ${weakDomainCount} domain${weakDomainCount !== 1 ? "s" : ""} below the level needed.`
-        : companyResults
-        ? `Organisation maturity ${companyResults.overallScore.toFixed(1)}/5. HR aligned with ambition.`
-        : "Run the company assessment to see maturity data.",
-      flag: hasDrift
-        ? { type: "info", text: "Capability re-assessed \u2014 revisit priorities?" }
-        : weakDomainCount >= 3
-        ? { type: "warning", text: "Start with Data & Analytics" }
-        : undefined,
-    },
-    ambition: {
-      headline: bLevel && pLevel ? `${bLevel.label} \u00b7 ${pLevel.label}` : "\u2014",
-      sub: visionStatement ? "Vision set. Three commitments active." : "Vision statement not yet set.",
-      flag: visionStatement ? { type: "positive", text: "Ambition foundations complete" } : undefined,
-    },
-    plan: {
-      headline: selectedInitiativeIds.size > 0
-        ? `${selectedInitiativeIds.size} initiative${selectedInitiativeIds.size !== 1 ? "s" : ""} \u00b7 18 months`
-        : "No initiatives selected",
-      // P1: Foundation phase sub-text must include range sub-line when foundation initiatives exist
-      rangeSub: foundationCount > 0 && foundationCostLow > 0
-        ? `Foundation phase ${fmtMidpoint(foundationCostLow, foundationCostHigh)} \u00b7 range ${fmt(foundationCostLow)}\u2013${fmt(foundationCostHigh)}`
-        : undefined,
-      sub: foundationCount > 0
-        ? `Foundation phase active. ${foundationCount} of ${selectedInitiativeIds.size} in flight.`
-        : "Select initiatives to build your plan.",
-      flag: hasRegFlag ? { type: "warning", text: "Needs DPIA review \u00b7 engage Legal" } : undefined,
-    },
-    "investment-risk": {
-      headline: totalCostLow > 0 ? `${fmtMidpoint(totalCostLow, totalCostHigh)} estimated` : "\u2014",
-      rangeSub: totalCostLow > 0 ? `range ${fmt(totalCostLow)}\u2013${fmt(totalCostHigh)} over 3 years` : undefined,
-      sub: totalCostLow > 0
-        ? `All-in cost. Foundation phase ${fmtMidpoint(foundationCostLow, foundationCostHigh)} estimated.`
-        : "Cost estimate will appear once initiatives are selected.",
-      flag: frameworkCount > 0
-        ? { type: "warning", text: `${frameworkCount} framework${frameworkCount !== 1 ? "s" : ""} \u00b7 engage Legal` }
-        : highRiskCount > 0
-        ? { type: "warning", text: `${highRiskCount} high-risk item${highRiskCount !== 1 ? "s" : ""} \u00b7 review now` }
-        : undefined,
-    },
-    value: (() => {
-      const netLow  = valueEnv?.net_value_gbp?.low  ?? null;
-      const netHigh = valueEnv?.net_value_gbp?.high ?? null;
-      // P0-1: values are already in £ pounds — do NOT multiply by 1000
-      // P0-1: if midpoint is negative, show Finance review state instead of negative number
-      const netMid  = netLow != null && netHigh != null ? (netLow + netHigh) / 2 : null;
-      const needsReview = netMid != null && netMid < 0;
-      return {
-        headline: needsReview
-          ? "Value calculation needs Finance review"
-          : netMid != null
-          ? `${fmtMidpoint(netLow!, netHigh!)} estimated`
-          : selectedInitiativeIds.size > 0 && valueEnvQ.isLoading ? "Calculating\u2026" : "\u2014",
-        rangeSub: !needsReview && netLow != null && netHigh != null
-          ? `range ${fmt(netLow)}\u2013${fmt(netHigh)} net over 3 years`
-          : undefined,
-        sub: needsReview
-          ? "Net value is negative at the low end \u2014 confirm cost and value assumptions with Finance."
-          : valueEnv ? "Indicative \u2014 confirm with Finance." : "Value model runs when initiatives and baseline are confirmed.",
-        // Brief: Card 05 flag is ALWAYS info-blue — flag colour follows semantic meaning, not section accent
-        flag: needsReview
-          ? { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" }
-          : netMid != null
-          ? { type: "info" as const, text: "Strong return potential" }
-          : { type: "info" as const, text: "Indicative \u00b7 confirm with Finance" },
-      };
-    })(),
-    measurement: {
-      headline: cadenceId ? cadenceLabel : "Cadence not set",
-      // Brief: NEVER show empty-state copy ("Set a review date...") when a cadence is already set
-      sub: cadenceId
-        ? (daysToReview != null && daysToReview > 0
-          ? `Progress reviews and capability re-scoring. Next review in ${daysToReview} days.`
-          : "Progress reviews and capability re-scoring.")
-        : "Set a review cadence to track progress.",
-      flag: daysToReview != null && daysToReview <= 0 && cadenceId
-        ? { type: "warning" as const, text: "First review overdue \u00b7 schedule now" }
-        : undefined,
-    },
-  };
+  // ── Context line ─────────────────────────────────────────────────────────
+  const contextParts: string[] = [];
+  if (sectorLabel) contextParts.push(sectorLabel);
+  if (bLevel)      contextParts.push(bLevel.label);
+  if (pLevel)      contextParts.push(`HR as ${pLevel.label.toLowerCase()}`);
+  if (savedAt) {
+    const dateStr = new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    contextParts.push(`Updated ${dateStr}${savedByFirst ? ` by ${savedByFirst}` : ""}`);
+  }
+  const contextLine = contextParts.join(" · ");
 
-  // ── Narrative hero headline ───────────────────────────────────────────────
-  const capScore = hrNow ? Number(hrNow) : null;
-  const orgName  = companyResults?.companyName ?? "The HR function";
-  const leadClause = capScore == null ? null
-    : capScore < 3.1 ? `${orgName} is in the early stages of HR capability build.`
-    : capScore < 5.6 ? `${orgName} has built foundational HR capability.`
-    : capScore < 7.6 ? `${orgName} has solid HR capability across most domains.`
-    : `${orgName} has mature HR capability.`;
-
-  const heroHeadline = leadClause && bLevel && selectedInitiativeIds.size > 0
-    ? `${leadClause} This strategy closes the gap to a ${bLevel.label} ambition through ${selectedInitiativeIds.size} initiative${selectedInitiativeIds.size !== 1 ? "s" : ""} over 18 months.`
-    : leadClause && bLevel
-    ? `${leadClause} This strategy targets a ${bLevel.label} ambition over 18 months.`
-    : bLevel
-    ? `This strategy defines how the HR function will build AI capability to ${bLevel.label} standards.`
-    : "Build your HR AI strategy to define ambition, plan initiatives, and track value.";
-
-  const heroSubLine = hrNow && hrGap && Number(hrGap) > 0
-    ? `Capability today: ${hrNow}/10 \u00b7 capability needed: ${hrTarget}/10 \u00b7 gap to close: ${hrGap} points \u00b7 Foundation phase active`
-    : hrNow
-    ? `Capability today: ${hrNow}/10 \u00b7 capability needed: ${hrTarget}/10 \u00b7 aligned with ambition`
+  // ── Hero supporting line ─────────────────────────────────────────────────
+  const initCount = selectedInitiativeIds.size;
+  const valueClause = valueGated
+    ? "Value calculation needs Finance review — see details below."
+    : netMid != null
+    ? `Worth around ${fmtMidpoint(netLow!, netHigh!)} to the business (rough estimate).`
     : null;
+  const heroSupportingLine = initCount > 0
+    ? `${initCount} initiative${initCount !== 1 ? "s" : ""} over the next 18 months.${valueClause ? ` ${valueClause}` : ""}`
+    : null;
+
+  // ── Card 1: Ambition (list-style) ────────────────────────────────────────
+  const ambitionAccent = "#2DD4BF";
+  const ambitionItems  = commitments.slice(0, 3);
+  const ambitionExtra  = Math.max(0, commitments.length - 3);
+  const ambitionTierTag = AMBITION_TIER_PLAIN[businessLevel] ?? "";
+
+  // ── Card 2: Plan (list-style) ────────────────────────────────────────────
+  const planAccent  = "#A78BFA";
+  const planItems   = selectedInits.slice(0, 3).map((i: any) => i.name ?? i.id);
+  const planExtra   = Math.max(0, selectedInitiativeIds.size - 3);
+  const planTierTag = selectedInitiativeIds.size > 0
+    ? `${selectedInitiativeIds.size} initiative${selectedInitiativeIds.size !== 1 ? "s" : ""} · 18 months`
+    : "";
+
+  // ── Card 3: Cost (value-style) ───────────────────────────────────────────
+  const costAccent   = "#F59E0B";
+  const costHeadline = totalCostLow > 0 ? fmtMidpoint(totalCostLow, totalCostHigh) : "";
+  const costSubLine  = totalCostLow > 0
+    ? `between ${fmt(totalCostLow)} and ${fmt(totalCostHigh)} · over 3 years${frameworkCount > 0 ? ` · affected by ${frameworkCount} compliance rule${frameworkCount !== 1 ? "s" : ""}` : ""}`
+    : "";
+  const costIsEmpty  = totalCostLow === 0;
+
+  // ── Card 4: Value (value-style) ──────────────────────────────────────────
+  const valueAccent   = "#22C55E";
+  const valueHeadline = valueGated
+    ? "Value calculation needs Finance review"
+    : netMid != null
+    ? fmtMidpoint(netLow!, netHigh!)
+    : "";
+  const valueSubLine = valueGated
+    ? "Net value is negative at the low end — confirm cost and value assumptions with Finance."
+    : netLow != null && netHigh != null
+    ? `between ${fmt(netLow)} and ${fmt(netHigh)} · over 3 years · estimated, finance to confirm`
+    : "";
+  const valueIsEmpty = netMid == null && !valueGated;
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!isLoading && !hasStrategy) {
@@ -728,7 +955,7 @@ export default function StrategyOverviewPage() {
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-3">Build your HR AI Strategy</h1>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          You haven't set up a strategy yet. Run the strategy wizard to define your ambition, select initiatives, and generate your board-ready strategy.
+          You haven&apos;t set up a strategy yet. Run the strategy wizard to define your ambition, select initiatives, and generate your board-ready strategy.
         </p>
         <Button onClick={() => navigate("/ai-strategy/assessment")} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Sparkles className="w-4 h-4 mr-2" />
@@ -742,238 +969,202 @@ export default function StrategyOverviewPage() {
     <TooltipProvider>
       <div className="max-w-5xl mx-auto pb-16 px-0">
 
-        {/* ══ CONTEXT BAR ══════════════════════════════════════════════════════ */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-8 pt-2">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mr-1">Strategy context</span>
-            {sectorLabel && (
-              <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5 bg-white/6 border border-white/10 text-foreground">
-                <Building2 className="w-3 h-3 mr-1 opacity-60" />
-                {sectorLabel}
-              </Badge>
+        {/* ══ TOP BAR ══════════════════════════════════════════════════════════ */}
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-8 pt-2">
+          {/* Left: context line + review overdue pill */}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            {isLoading ? (
+              <Skeleton className="h-4 w-72 rounded" />
+            ) : (
+              <p className="text-[12px] text-muted-foreground leading-snug">{contextLine}</p>
             )}
-
-            {bLevel && (
+            {isReviewOverdue && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 cursor-help">
-                    {bLevel.label} \u00b7 business
-                  </Badge>
+                  <button
+                    className="flex items-center gap-1.5 w-fit rounded-full px-2 py-[2px] text-[11px] font-medium bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors"
+                    onClick={handleReviewOverdueClick}
+                    aria-label="Review overdue — schedule now"
+                  >
+                    <Clock className="w-3 h-3" aria-hidden="true" />
+                    Review overdue · schedule
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  <p className="font-semibold mb-1">{bLevel.label} business ambition</p>
-                  <p>{bLevel.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {pLevel && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 text-purple-300 cursor-help">
-                    {pLevel.label} \u00b7 HR
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  <p className="font-semibold mb-1">{pLevel.label} HR people ambition</p>
-                  <p>{pLevel.description}</p>
+                <TooltipContent side="bottom" className="text-xs">
+                  Strategy review is overdue. Click to schedule.
                 </TooltipContent>
               </Tooltip>
             )}
           </div>
+          {/* Right: action buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[11px] text-muted-foreground hidden sm:block">{savedLabel}</span>
             <Button
               variant="outline"
               size="sm"
               className="h-7 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
-              onClick={() => navigate("/strategy/ambition")}
+              onClick={handleEditStrategy}
             >
               <Pencil className="w-3 h-3 mr-1.5" />
               Edit strategy
             </Button>
             <Button
+              variant="outline"
               size="sm"
-              className="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+              className="h-7 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
               onClick={handleExportBoardPack}
             >
               <Download className="w-3 h-3 mr-1.5" />
-              Export board pack
+              Export for the board
             </Button>
           </div>
         </div>
-        {/* ══ HERO BLOCK ════════════════════════════════════════════════════════════════ */}
+
+        {/* ══ HERO BLOCK ════════════════════════════════════════════════════════ */}
         <div className="mb-8">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">HR AI STRATEGY</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-4">HR AI STRATEGY</p>
           {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-2/3 rounded mb-2" />
-              <Skeleton className="h-7 w-full rounded" />
-              <Skeleton className="h-7 w-3/4 rounded" />
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-full rounded" />
+              <Skeleton className="h-6 w-4/5 rounded" />
+              <Skeleton className="h-6 w-3/4 rounded" />
               <Skeleton className="h-4 w-2/3 rounded mt-2" />
             </div>
           ) : (
             <>
-              {/* Vision quote tier — brief: truncate at sentence boundary (≤80 words), show 'Read full vision' link */}
-              {visionStatement && (() => {
-                const words = visionStatement.split(/\s+/);
-                let truncated = visionStatement;
-                let isTruncated = false;
-                if (words.length > 80) {
-                  // Find last sentence boundary within 80 words
-                  const first80 = words.slice(0, 80).join(" ");
-                  const sentenceEnd = first80.search(/[.!?][^.!?]*$/);
-                  truncated = sentenceEnd > 0 ? first80.slice(0, sentenceEnd + 1) : first80;
-                  isTruncated = true;
-                }
-                return (
-                  <blockquote className="text-sm italic text-muted-foreground/80 border-l-2 border-blue-500/40 pl-3 mb-3 max-w-3xl">
-                    &ldquo;{truncated}{isTruncated ? "\u2026" : ""}&rdquo;
-                    {isTruncated && (
-                      <button
-                        className="ml-2 text-[11px] text-blue-400 hover:text-blue-300 not-italic underline underline-offset-2"
-                        onClick={() => navigate("/strategy/ambition")}
-                      >
-                        Read full vision
-                      </button>
-                    )}
-                  </blockquote>
-                );
-              })()}
-              <p className="text-xl sm:text-2xl font-semibold text-foreground leading-relaxed mb-2 max-w-3xl">
-                {heroHeadline}
-              </p>
-              {heroSubLine && (
-                <p className="text-sm text-muted-foreground/70">{heroSubLine}</p>
+              {visionStatement ? (
+                <VisionQuote text={visionStatement} onReadMore={() => navigate("/strategy/ambition")} />
+              ) : (
+                <div className="border-l-[3px] border-primary/40 pl-7 mb-4">
+                  <p className="text-sm text-muted-foreground italic">
+                    No vision set yet —{" "}
+                    <button className="underline underline-offset-2 hover:no-underline" onClick={() => navigate("/strategy/ambition")}>
+                      define your strategy ambition first
+                    </button>
+                  </p>
+                </div>
+              )}
+              {heroSupportingLine && (
+                <p className="text-[15px] text-muted-foreground leading-[1.6] max-w-[740px] mt-3">
+                  {heroSupportingLine}
+                </p>
               )}
             </>
           )}
-        </div>  {/* ══ TALKING POINTS BLOCK ═════════════════════════════════════════════ */}
+        </div>
+
+        {/* ══ CAPABILITY SECTION ═══════════════════════════════════════════════ */}
+        <CapabilityBridge
+          hrNow={hrNow}
+          hrTarget={hrTarget}
+          hrGap={hrGap}
+          hasAmbition={hasStrategy}
+          isLoading={ambitionGapQ.isLoading}
+          onBuildCapability={handleBuildCapability}
+        />
+
+        {/* ══ STRATEGY CARDS — 2×2 GRID ════════════════════════════════════════ */}
+        <div
+          className="grid gap-3 mb-8"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+          role="list"
+          aria-label="Strategy sections"
+        >
+          {/* Card 1 — Where we're going */}
+          <div role="listitem">
+            {isLoading ? <CardSkeleton /> : (
+              <ListCard
+                accentColor={ambitionAccent}
+                title="Where we're going"
+                tierTag={ambitionTierTag}
+                items={ambitionItems}
+                extraCount={ambitionExtra}
+                footerLink="/strategy/ambition"
+                footerLabel="See full ambition"
+                emptyMessage="No commitments set yet — define your strategy ambition."
+                emptyCta="Go to ambition wizard →"
+                emptyCtaHref="/strategy/ambition"
+                onNavigate={navigate}
+                onCardClick={() => {
+                  (window as any).umami?.track("strategy.card.clicked", { card: "ambition" });
+                  navigate("/strategy/ambition");
+                }}
+              />
+            )}
+          </div>
+          {/* Card 2 — How we get there */}
+          <div role="listitem">
+            {isLoading || initiativesQ.isLoading ? <CardSkeleton /> : (
+              <ListCard
+                accentColor={planAccent}
+                title="How we get there"
+                tierTag={planTierTag}
+                items={planItems}
+                extraCount={planExtra}
+                footerLink="/strategy/plan"
+                footerLabel="See the full plan"
+                emptyMessage="No initiatives defined yet — build your plan."
+                emptyCta="Go to plan flow →"
+                emptyCtaHref="/strategy/plan"
+                onNavigate={navigate}
+                onCardClick={() => {
+                  (window as any).umami?.track("strategy.card.clicked", { card: "plan" });
+                  navigate("/strategy/plan");
+                }}
+              />
+            )}
+          </div>
+          {/* Card 3 — What it costs */}
+          <div role="listitem">
+            {isLoading ? <CardSkeleton /> : (
+              <ValueCard
+                accentColor={costAccent}
+                title="What it costs"
+                headline={costHeadline}
+                subLine={costSubLine}
+                footerLink="/strategy/investment-risk"
+                footerLabel="See the costs"
+                emptyMessage="Cost not estimated yet — work through the plan."
+                emptyCta="Go to plan →"
+                emptyCtaHref="/strategy/plan"
+                isEmpty={costIsEmpty}
+                onNavigate={navigate}
+                onCardClick={() => {
+                  (window as any).umami?.track("strategy.card.clicked", { card: "cost" });
+                  navigate("/strategy/investment-risk");
+                }}
+              />
+            )}
+          </div>
+          {/* Card 4 — What this is worth */}
+          <div role="listitem">
+            {isLoading || (valueEnvWithIdsQ.isLoading && selectedInitiativeIds.size > 0) ? <CardSkeleton /> : (
+              <ValueCard
+                accentColor={valueAccent}
+                title="What this is worth"
+                headline={valueHeadline}
+                subLine={valueSubLine}
+                footerLink="/strategy/value"
+                footerLabel="See what this is worth"
+                emptyMessage="Value not estimated yet — work through the plan."
+                emptyCta="Go to plan →"
+                emptyCtaHref="/strategy/plan"
+                isEmpty={valueIsEmpty}
+                onNavigate={navigate}
+                onCardClick={() => {
+                  (window as any).umami?.track("strategy.card.clicked", { card: "value" });
+                  navigate("/strategy/value");
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* ══ TALKING POINTS ═══════════════════════════════════════════════════ */}
         <TalkingPointsBlock
           strategyHash={strategyHash}
           hasStrategy={hasStrategy}
           hasInitiatives={selectedInitiativeIds.size > 0}
         />
-
-        {/* ══ SIX-CARD GRID ════════════════════════════════════════════════════ */}
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[10px] mb-8"
-          role="list"
-          aria-label="Strategy sections"
-        >
-          {SECTION_CARDS.map(card => {
-            const cData = cardData[card.id];
-            const isCardLoading = isLoading
-              || (card.id === "diagnostic" && ambitionGapQ.isLoading)
-              || (card.id === "plan" && initiativesQ.isLoading)
-              || (card.id === "value" && valueEnvQ.isLoading && selectedInitiativeIds.size > 0);
-            const isCardError = card.id === "diagnostic" && strategyQ.isError;
-
-            if (isCardError) return <CardError key={card.id} title={card.title} />;
-            if (isCardLoading) return <CardSkeleton key={card.id} />;
-
-            const flagColors = {
-              warning:  { bg: "bg-amber-500/10", border: "border-amber-500/20", text: "text-amber-300",  icon: <AlertTriangle className="w-3 h-3 flex-shrink-0" /> },
-              info:     { bg: "bg-blue-500/10",  border: "border-blue-500/20",  text: "text-blue-300",   icon: <Info className="w-3 h-3 flex-shrink-0" /> },
-              positive: { bg: "bg-green-500/10", border: "border-green-500/20", text: "text-green-300",  icon: <CheckCircle2 className="w-3 h-3 flex-shrink-0" /> },
-            };
-            const flagStyle = cData?.flag ? flagColors[cData.flag.type] : null;
-
-            return (
-              <div
-                key={card.id}
-                role="listitem"
-                className={`rounded-2xl border ${card.accentBorder} ${card.accentBg} p-4 flex flex-col gap-2 cursor-pointer hover:border-opacity-60 hover:bg-white/5 transition-all duration-150 min-h-[180px]`}
-                tabIndex={0}
-                onClick={() => { trackCardClick(card.id); navigate(card.slug); }}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(card.slug); } }}
-                aria-label={`${card.num} ${card.title}`}
-              >
-                {/* Card header */}
-                <div className="flex items-center justify-between">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${card.accent}20`, color: card.accent }}
-                    aria-hidden="true"
-                  >
-                    {card.icon}
-                  </div>
-                  <span className="text-[11px] font-bold text-muted-foreground/60 tabular-nums">{card.num}</span>
-                </div>
-
-                {/* Title */}
-                <p className="text-sm font-semibold text-foreground leading-snug">{card.title}</p>
-
-                {/* Headline value */}
-                <p className="text-base font-bold leading-tight" style={{ color: card.accent }}>
-                  {cData?.headline ?? "\u2014"}
-                </p>
-
-                {/* Range sub-line */}
-                {cData?.rangeSub && (
-                  <p className="text-[11px] text-muted-foreground/60 leading-tight -mt-1">{cData.rangeSub}</p>
-                )}
-
-                {/* Sub-text */}
-                <p className="text-[11px] text-muted-foreground leading-snug flex-1">{cData?.sub ?? ""}</p>
-
-                {/* Flag line */}
-                {cData?.flag && flagStyle && (
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${flagStyle.bg} border ${flagStyle.border}`}>
-                    <span className={flagStyle.text}>{flagStyle.icon}</span>
-                    <span className={`text-[11px] font-medium ${flagStyle.text} leading-tight`}>{cData.flag.text}</span>
-                  </div>
-                )}
-
-                {/* View link */}
-                <div className="flex items-center gap-1 mt-auto pt-1">
-                  <span className="text-[11px] font-medium" style={{ color: card.accent }}>
-                    View {card.title.toLowerCase()}
-                  </span>
-                  <ArrowRight className="w-3 h-3" style={{ color: card.accent }} aria-hidden="true" />
-                </div>              </div>
-            );
-          })}
-        </div>
-
-        {/* ══ NEXT STEPS FOOTER ══════════════════════════════════════════════════════════════════════ */}
-        {(() => {
-          const incompleteCount = SECTION_CARDS.filter(c => {
-            const d = cardData[c.id];
-            return !d || d.headline === "\u2014" || d.headline === "Cadence not set" || d.headline === "No initiatives selected";
-          }).length;
-          const nextStepsText = foundationCount > 0
-            ? `Appoint owners for ${foundationCount} Foundation initiative${foundationCount !== 1 ? "s" : ""} and schedule your kickoff session.`
-            : incompleteCount > 0
-            ? `${incompleteCount} section${incompleteCount !== 1 ? "s" : ""} still to complete before your strategy is board-ready.`
-            : "Your strategy is board-ready. Export the board pack or schedule a review.";
-          return (
-            <div className="rounded-2xl border border-white/8 bg-white/3 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Next steps</p>
-                <p className="text-sm text-foreground">{nextStepsText}</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
-                  onClick={() => toast.info("Owner assignment coming soon")}
-                >
-                  <Users className="w-3.5 h-3.5 mr-1.5" />
-                  Assign owners
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => toast.info("Kickoff scheduling coming soon")}
-                >
-                  <Calendar className="w-3.5 h-3.5 mr-1.5" />
-                  Schedule kickoff
-                </Button>
-              </div>
-            </div>
-          );
-        })()}
 
       </div>
     </TooltipProvider>

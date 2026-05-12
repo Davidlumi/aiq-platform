@@ -1236,34 +1236,29 @@ Return JSON with this exact structure:
         topRisks,
         sector: ctx2.sector ?? null,
       };
-      const systemPrompt = `You are generating talking points a CPO will use to brief their CEO about an HR AI strategy. Each bullet must be a data-grounded brief, not a paraphrase of the strategy's topic.
+      const systemPrompt = `You are generating exactly 5 talking points for a CPO to use when briefing their CEO about an HR AI strategy. This is a STRATEGIC DOCUMENT briefing — not an operational update. Each bullet must be grounded in the specific strategy data provided.
 
-REQUIREMENTS:
-- 3-5 bullets total. Choose 3 for simple strategies, up to 5 for complex ones with multiple material dependencies.
-- Each bullet: 20-35 words, plain English, speakable aloud.
-- EVERY bullet must contain at least one specific number, date, or named entity from the strategy data: capability score, gap points, initiative count, timeline in months, phase name, value range, cost range, named regulation, named dependency, named ambition tier.
-- Bullet 1 must open with the vision (quoted directly or tightly paraphrased), tied to capability state.
-- Vary sentence starters. Do not start multiple bullets with "We're..." or "This strategy...".
-- Honest about uncertainty (use "indicative", "confirm with Finance" where appropriate).
-- Executive sponsorship recommendation, if needed, goes in bullet 6 or is omitted — never bullet 4.
+PRODUCE EXACTLY 5 BULLETS in this order:
+1. VISION-LED — Open with the strategy vision (paraphrased or quoted briefly) plus the strategic intent. Must reference the specific vision text.
+2. CAPABILITY STORY — Name the current capability score and the gap. Frame as "what HR needs to be able to do", not where they are operationally. Include the specific numbers (e.g. 5.2/10 today, 7.3/10 needed, 2.1-point gap).
+3. STRATEGIC DELIVERY — Name the initiative count and duration. Optionally name the most distinctive initiative title from the list provided.
+4. FINANCIAL IMPACT — Indicate value and cost with explicit caveat that values are indicative until Finance confirms. Use the specific figures from the data.
+5. STRATEGIC DEPENDENCY — The single most important strategic dependency (something the strategy assumes or requires that is not yet in place). Phrased as a strategic frame, not a task.
 
-COVERAGE ORDER (when applicable):
-1. Vision lead — opens the brief with the user's vision
-2. Capability state — score, gap, what's needed
-3. Strategy summary — initiative count, timeline, current phase
-4. Value vs cost — estimated + range, with caveats
-5. Key dependency — named, with action required
-6. Optional: second dependency or executive sponsorship
+EACH BULLET: 20-40 words, plain English, speakable aloud.
 
-ANTI-PATTERN (do not generate output like this):
-"We're building an AI-fluent HR function, integrating AI into critical people processes over the next 18 months to reduce admin burden and enhance employee experience."
-— generic prose, paraphrased from topic, no specific numbers, could apply to any HR AI strategy.
+ANTI-PATTERNS — NEVER produce output like these:
+BAD: "We're building an AI-fluent HR function, integrating AI into critical people processes over the next 18 months to reduce admin burden and enhance employee experience." — generic prose, no strategy-specific numbers.
+BAD: "Need to assign owners to Foundation initiatives." — operational task, not strategic.
+BAD: "Executive sponsorship, particularly from the CEO, will be crucial to champion this transformative shift." — generic platitude not tied to this strategy's specifics.
+BAD: "Foundation phase is active" or "2 of 9 underway" — execution tracking, not strategy.
 
-GOOD PATTERN:
-"Our vision: transform the retail experience and internal operations through AI, reducing administrative burden and enabling HR to operate as strategic partners."
-"Acme has built foundational HR capability at 5.2/10. A 2.1-point gap separates us from the 7.3 needed to deliver our Transformative ambition."
+GOOD PATTERNS:
+GOOD: "Our vision is to transform the retail experience through AI, with HR as a strategic partner reducing admin burden and enabling faster decisions."
+GOOD: "HR capability today is at 5.2/10 (foundational); a 2.1-point gap separates us from the 7.3 needed to deliver this strategy."
+GOOD: "The strategy depends on cross-functional alignment, particularly Legal engagement on the responsible-AI commitments."
 
-Return format: JSON array of 3-6 strings, no other text.`;
+Return format: JSON array of exactly 5 strings, no other text.`;
       let bullets: string[];
       try {
         const response = await invokeLLM({
@@ -1284,10 +1279,17 @@ Return format: JSON array of 3-6 strings, no other text.`;
           : capScore < 5.6 ? `${promptData.orgName} has built foundational HR capability.`
           : capScore < 7.6 ? `${promptData.orgName} has solid HR capability across most domains.`
           : `${promptData.orgName} has mature HR capability.`;
+        const capNowFallback = promptData.capabilityScore ?? "(not yet assessed)";  
+        const capTargetFallback = promptData.capabilityTarget ?? "(target not set)";
+        const capGapFallback = promptData.capabilityGap ?? "(gap not calculated)";
         bullets = [
           leadClause,
-          `This strategy closes the capability gap through ${promptData.initiativeCount} initiatives over ${promptData.timelineMonths} months. Foundation phase is active.`,
-          `Indicative cost and value estimates are available in the Investment & Risk and Value sections. Confirm with Finance before committing.`,
+          `HR capability today is at ${capNowFallback}; a ${capGapFallback} gap separates us from the ${capTargetFallback} needed to deliver this strategy.`,
+          `The strategy closes this gap through ${promptData.initiativeCount} initiative${promptData.initiativeCount !== 1 ? "s" : ""} over ${promptData.timelineMonths} months.`,
+          promptData.costRange && promptData.valueRange
+            ? `Indicative investment: ${promptData.costRange} over 3 years. Estimated value: ${promptData.valueRange} net. Confirm with Finance before committing.`
+            : `Cost and value estimates are available once initiatives are confirmed. Confirm with Finance before committing.`,
+          `The strategy assumes cross-functional alignment — particularly Legal engagement on responsible-AI commitments and data governance.`,
         ];
       }
       const payload = JSON.stringify({ bullets, generatedAt: Date.now(), userEdited: false, strategyHash });
@@ -1306,6 +1308,7 @@ Return format: JSON array of 3-6 strings, no other text.`;
     .input(z.object({
       bullets: z.array(z.string().max(500)).min(1).max(10),
       userEdited: z.boolean(),
+      dismissedStaleNotice: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -1318,7 +1321,13 @@ Return format: JSON array of 3-6 strings, no other text.`;
       if (rows.length && rows[0].leadershipTalkingPointsJson) {
         try { strategyHash = JSON.parse(rows[0].leadershipTalkingPointsJson).strategyHash ?? ""; } catch {}
       }
-      const payload = JSON.stringify({ bullets: input.bullets, generatedAt: Date.now(), userEdited: input.userEdited, strategyHash });
+      const payload = JSON.stringify({
+        bullets: input.bullets,
+        generatedAt: Date.now(),
+        userEdited: input.userEdited,
+        strategyHash,
+        dismissedStaleNotice: input.dismissedStaleNotice ?? false,
+      });
       await db.update(ailOrgContext)
         .set({ leadershipTalkingPointsJson: payload })
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
