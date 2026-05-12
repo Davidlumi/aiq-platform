@@ -2937,3 +2937,8 @@
 
 ### P2 — Polish
 - [x] P2-11: Next steps footer count — "Appoint owners for the [N] Foundation initiatives" with real count; "Foundation phase ready" when all assigned
+
+## Dashboard Screenshot Pixel-Match (12 May 2026)
+- [x] Remove sub-sector pill from context bar (screenshot shows only 3 pills: sector, business tier, HR tier)
+- [x] Hero label: change "HR AI strategy" to "HR AI STRATEGY" (all-caps, matching screenshot)
+- [x] Talking points block heading: change "What to tell your CEO" to "WHAT TO TELL YOUR CEO" (all-caps, matching screenshot)

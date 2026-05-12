@@ -300,7 +300,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
   if (!hasStrategy || !hasInitiatives) {
     return (
       <div className="rounded-2xl border border-white/8 bg-white/3 p-5 mb-6">
-        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">What to tell your CEO</p>
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2">WHAT TO TELL YOUR CEO</p>
         <p className="text-sm text-muted-foreground">Add initiatives to your plan to generate CEO talking points.</p>
       </div>
     );
@@ -311,7 +311,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
       <div className="rounded-2xl border border-white/10 bg-white/4 p-5 mb-6 shadow-sm">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">What to tell your CEO</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">WHAT TO TELL YOUR CEO</p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Button
               variant="ghost"
@@ -752,12 +752,7 @@ export default function StrategyOverviewPage() {
                 {sectorLabel}
               </Badge>
             )}
-            {/* Sub-sector pill — 4th pill per brief spec */}
-            {subSectorLabel && (
-              <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5 bg-white/6 border border-white/10 text-foreground/80">
-                {subSectorLabel}
-              </Badge>
-            )}
+
             {bLevel && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -808,7 +803,7 @@ export default function StrategyOverviewPage() {
         </div>
         {/* ══ HERO BLOCK ════════════════════════════════════════════════════════════════ */}
         <div className="mb-8">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">HR AI strategy</p>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">HR AI STRATEGY</p>
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-5 w-2/3 rounded mb-2" />
