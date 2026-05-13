@@ -3254,3 +3254,19 @@ test
 - [x] Clamp tier values in useState initialiser (not just useEffect) in VisionModal
 - [x] Clamp businessTier/hrTier in StrategyAmbitionPage draftSection callback before passing to draftAmbitionSection
 - [x] Relax backend max constraint to max(5) as a belt-and-suspenders fallback
+
+## Ambition Page Content & Visualisation Patch (13 May 2026)
+
+- [x] Fix 1a: Replace default principles with 5 new ones (titles, descriptions, capability tags)
+- [x] Fix 1b: Replace default exclusions with 5 new ones
+- [x] Fix 1c: Replace default outcomes with 4 new ones (today/target/date/derived summary/tests-principle)
+- [x] Fix 2a: From-to bars on each outcome (muted gray today bar, teal target bar, 5px tall, 3px radius, normalised within outcome)
+- [x] Fix 2b: Baseline-TBD treatment for outcome 3 (dashed empty today track, "Not measured" italic, baseline study date in meta)
+- [x] Fix 2c: Principle cross-reference line "↪ Tests principle N: title" below meta (live cross-reference, auto-renumbers)
+- [x] Fix 3a: Header ambition pills strip (Business: Transformative, HR: Innovator) + time horizon (By end of FY27 · over 18 months)
+- [x] Fix 3b: Header "Our approach:" line (teal label + muted prose)
+- [x] Fix 3c: Remove "4 of 4 sections built" teal progress bar from header
+- [x] Fix 4: Add section captions to all 4 sections (Vision, Principles, Exclusions, Outcomes) with correct bold treatment
+- [x] Fix 5: Capability domain tags on principle cards (9px, teal-tinted border, correct styling)
+- [x] Fix 6: Footer "Next: How we get there →" forward action (both buttons when unreviewed, only forward when reviewed)
+- [x] Fix 7: Remove Re-draft button from Vision section (keep pencil edit only)

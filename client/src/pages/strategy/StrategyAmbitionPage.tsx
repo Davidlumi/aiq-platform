@@ -5,9 +5,10 @@
  * Edit modals for all 4 sections. Review-date footer.
  */
 import { useState, useMemo, useCallback, useRef } from "react";
+import { Link } from "wouter";
 import {
   Pencil, Sparkles, Plus, Trash2, ChevronRight,
-  CheckCircle2, Clock, X, Shield,
+  CheckCircle2, Clock, X, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,20 +55,39 @@ interface Outcome {
   ai_drafted: boolean;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
+//// ─── Constants ───────────────────────────────────────────────────────────
+// Six canonical capability domains (brief Fix 5)
 const CAPABILITY_TAGS = [
-  "AI Foundations", "AI Interaction", "AI Output Evaluation",
-  "AI Workflow Design", "AI Ethics & Trust",
-  "Workforce AI Readiness", "AI Change Leadership",
+  "Output evaluation", "AI interaction", "Ethics & trust",
+  "Workflow design", "Workforce readiness", "Change leadership",
 ];
-
 const BUSINESS_TIER_LABELS: Record<number, string> = {
   1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative",
 };
 const HR_TIER_LABELS: Record<number, string> = {
   1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led",
 };
+// Default AI-drafted content (brief Fix 1 §§7–9)
+const DEFAULT_PRINCIPLES: Principle[] = [
+  { number: 1, title: "Human-in-the-loop on consequential decisions", description: "AI prepares and proposes; humans decide on hiring, promotion, performance, and termination.", capability_tags: ["Output evaluation", "AI interaction"], ai_drafted: true },
+  { number: 2, title: "Trust and ethics in deployment", description: "Fairness, bias monitoring, privacy, and explainability are non-negotiable. Employees know when AI is used in decisions affecting them.", capability_tags: ["Ethics & trust"], ai_drafted: true },
+  { number: 3, title: "Reshape work, then add AI", description: "We don't bolt AI onto existing HR processes. We redesign the work first, then deploy AI into the new design.", capability_tags: ["Workflow design"], ai_drafted: true },
+  { number: 4, title: "Build skills first, deploy second", description: "We build AI literacy across HR before we deploy. The team is ready before the tool lands.", capability_tags: ["Workforce readiness"], ai_drafted: true },
+  { number: 5, title: "We deploy at people's pace", description: "AI deployment speed is set by what the workforce can absorb, not by what the technology can do. We won't deploy faster than the team can adopt responsibly. Held by the sequencing of outcomes below — skills and redesign precede deployment.", capability_tags: ["Change leadership"], ai_drafted: true },
+];
+const DEFAULT_EXCLUSIONS: Exclusion[] = [
+  { text: "We will not deploy AI in promotion or termination decisions in this period.", ai_drafted: true },
+  { text: "We will not let any vendor's AI make shortlist cuts without HR review.", ai_drafted: true },
+  { text: "We will not use generative AI for performance reviews this fiscal year.", ai_drafted: true },
+  { text: "We will not deploy frontier AI in HR without a dedicated ethics review.", ai_drafted: true },
+  { text: "We will not deploy AI in payroll, benefits, compensation, or HR operations in this period.", ai_drafted: true },
+];
+const DEFAULT_OUTCOMES: Outcome[] = [
+  { number: 1, title: "Reduce admin time per hire", unit: "h", baseline_value: 6, baseline_status: "measured", baseline_study_date: null, target_value: 3, target_date: "Q4 2026", derived_summary: "50% reduction", tests_principle: 3, ai_drafted: true },
+  { number: 2, title: "HR team at AI Practitioner level", unit: "%", baseline_value: 22, baseline_status: "measured", baseline_study_date: null, target_value: 85, target_date: "Q4 2026", derived_summary: "~4× growth", tests_principle: 4, ai_drafted: true },
+  { number: 3, title: "Hiring decisions with documented human reviewer", unit: "%", baseline_value: null, baseline_status: "not_measured", baseline_study_date: "Q4 2025", target_value: 100, target_date: "Q1 2026", derived_summary: "Baseline study scheduled Q4 2025", tests_principle: 1, ai_drafted: true },
+  { number: 4, title: "Employee trust in HR's AI use", unit: "%", baseline_value: 48, baseline_status: "measured", baseline_study_date: null, target_value: 80, target_date: "Q3 2027", derived_summary: "+32 points", tests_principle: 2, ai_drafted: true },
+];
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -178,23 +198,45 @@ function VisionSection({
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="Vision Statement" onEdit={onOpenModal} />
-      <blockquote className="border-l-2 border-primary pl-4 text-base italic leading-relaxed text-foreground">
-        "{vision}"
+      {/* Serif italic quote per brief */}
+      <blockquote
+        className="border-l-2 pl-4 text-base italic leading-relaxed text-foreground"
+        style={{ borderColor: "#5DCAA5", fontFamily: "Georgia, 'Times New Roman', serif" }}
+      >
+        “{vision}”
       </blockquote>
-      {visionInputs && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {visionInputs.businessAmbitionTier != null && (
-            <Badge variant="secondary" className="text-xs">
-              Business: {BUSINESS_TIER_LABELS[visionInputs.businessAmbitionTier] ?? visionInputs.businessAmbitionTier}
-            </Badge>
-          )}
-          {visionInputs.hrDeliveryTier != null && (
-            <Badge variant="secondary" className="text-xs">
-              HR: {HR_TIER_LABELS[visionInputs.hrDeliveryTier] ?? visionInputs.hrDeliveryTier}
-            </Badge>
-          )}
-        </div>
-      )}
+      {/* AI-drafted caption + tier badges */}
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <span
+          className="text-[10px] flex items-center gap-1"
+          style={{ color: "#7a8294" }}
+        >
+          <Sparkles className="w-3 h-3" style={{ color: "#5DCAA5" }} />
+          AI-drafted · edit to refine
+        </span>
+        {visionInputs?.businessAmbitionTier != null && (
+          <span
+            style={{
+              fontSize: 10, padding: "2px 8px", borderRadius: 999,
+              border: "0.5px solid rgba(255,255,255,0.12)",
+              color: "#9ca3b0", background: "transparent",
+            }}
+          >
+            Business: {BUSINESS_TIER_LABELS[visionInputs.businessAmbitionTier] ?? visionInputs.businessAmbitionTier}
+          </span>
+        )}
+        {visionInputs?.hrDeliveryTier != null && (
+          <span
+            style={{
+              fontSize: 10, padding: "2px 8px", borderRadius: 999,
+              border: "0.5px solid rgba(255,255,255,0.12)",
+              color: "#9ca3b0", background: "transparent",
+            }}
+          >
+            HR: {HR_TIER_LABELS[visionInputs.hrDeliveryTier] ?? visionInputs.hrDeliveryTier}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -223,32 +265,61 @@ function PrinciplesSection({
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="Guiding Principles" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
-      <div className="space-y-4">
-        {principles.map((p) => (
-          <div key={p.number} className="flex gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
-              {p.number}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start gap-2 flex-wrap">
-                <p className="text-sm font-semibold text-foreground">{p.title}</p>
-                {p.ai_drafted && (
-                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70">
-                    AI
-                  </Badge>
-                )}
+      {/* Fix 4: Section caption */}
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+        The decision rules we’ll hold to as we deploy AI across HR.
+      </p>
+      {/* Fix 5: 2-col grid, numbered badges, capability tags */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {principles.map((p, idx) => {
+          const isOddLast = principles.length % 2 !== 0 && idx === principles.length - 1;
+          return (
+            <div
+              key={p.number}
+              className={`rounded-lg border border-border/40 bg-background/40 p-4 flex flex-col gap-2${
+                isOddLast ? " sm:col-span-2" : ""
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                <div
+                  className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold"
+                  style={{ background: "rgba(93,202,165,0.1)", color: "#5DCAA5" }}
+                >
+                  {String(p.number).padStart(2, "0")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold text-foreground leading-snug">{p.title}</p>
+                    {p.ai_drafted && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70 flex-shrink-0">
+                        AI
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{p.description}</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-0.5">{p.description}</p>
               {p.capability_tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
+                <div className="flex flex-wrap gap-1 mt-1">
                   {p.capability_tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5">{tag}</Badge>
+                    <span
+                      key={tag}
+                      className="whitespace-nowrap"
+                      style={{
+                        fontSize: 9, letterSpacing: "0.04em",
+                        padding: "2px 7px", borderRadius: 999,
+                        border: "0.5px solid rgba(93,202,165,0.25)",
+                        color: "#7ec9ab", background: "transparent",
+                      }}
+                    >
+                      {tag}
+                    </span>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -278,6 +349,10 @@ function ExclusionsSection({
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="What We Won't Do" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      {/* Fix 4: Section caption */}
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+        A strategy that makes no cuts is a wishlist. These are the choices we’ve explicitly ruled out for this period.
+      </p>
       <ul className="space-y-2">
         {exclusions.map((ex, i) => (
           <li key={i} className="flex items-start gap-2.5">
@@ -295,34 +370,79 @@ function ExclusionsSection({
   );
 }
 
-// ─── Outcomes Section ─────────────────────────────────────────────────────────
+// ─── Outcomes Section ─────────────────────────────────────────────────────────────────
 
+/**
+ * Two-bar from-to visualisation per brief Fix 2.
+ * Today bar: muted gray #5b6376, 5px tall, 3px radius.
+ * Target bar: teal #5DCAA5, same dimensions.
+ * Width normalised within the outcome: larger value = 100%, smaller is proportional.
+ * TBD baseline: dashed empty today track, "Not measured" italic label.
+ */
 function FromToBar({
-  baseline, target, unit,
-}: { baseline: number | null; target: number; unit: string }) {
-  const isTbd = baseline === null;
-  const pct = isTbd ? 0 : Math.min(100, Math.round((baseline / (target || 1)) * 100));
+  outcome,
+}: { outcome: Outcome }) {
+  const isTbd = outcome.baseline_status === "not_measured" || outcome.baseline_value === null;
+  const todayVal = outcome.baseline_value;
+  const targetVal = outcome.target_value;
+  const unit = outcome.unit;
+
+  // Normalise: larger of the two gets 100% width
+  const maxVal = Math.max(todayVal ?? 0, targetVal, 1);
+  const todayPct = isTbd ? 0 : Math.round(((todayVal ?? 0) / maxVal) * 100);
+  const targetPct = Math.round((targetVal / maxVal) * 100);
+
   return (
-    <div className="mt-2">
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-        <span>{isTbd ? "TBD baseline" : `${baseline} ${unit}`}</span>
-        <span className="text-primary font-medium">{target} {unit}</span>
+    <div className="mt-3 space-y-1.5">
+      {/* Today row */}
+      <div className="flex items-center gap-2">
+        <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Today</span>
+        <div
+          className="flex-1 relative"
+          style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)" }}
+        >
+          {isTbd ? (
+            <div
+              style={{
+                position: "absolute", inset: 0, borderRadius: 3,
+                border: "0.5px dashed rgba(255,255,255,0.15)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                position: "absolute", left: 0, top: 0, bottom: 0,
+                width: `${todayPct}%`, borderRadius: 3,
+                background: "#5b6376",
+              }}
+            />
+          )}
+        </div>
+        <span
+          className="w-14 text-right text-[11px] flex-shrink-0"
+          style={isTbd ? { color: "#7a8294", fontStyle: "italic" } : { color: "#9ca3b0" }}
+        >
+          {isTbd ? "Not measured" : `${todayVal} ${unit}`}
+        </span>
       </div>
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        {isTbd ? (
+      {/* Target row */}
+      <div className="flex items-center gap-2">
+        <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Target</span>
+        <div
+          className="flex-1 relative"
+          style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)" }}
+        >
           <div
-            className="h-full w-full"
             style={{
-              background:
-                "repeating-linear-gradient(90deg, hsl(var(--muted-foreground)/0.3) 0px, hsl(var(--muted-foreground)/0.3) 4px, transparent 4px, transparent 8px)",
+              position: "absolute", left: 0, top: 0, bottom: 0,
+              width: `${targetPct}%`, borderRadius: 3,
+              background: "#5DCAA5",
             }}
           />
-        ) : (
-          <div
-            className="h-full bg-primary/60 rounded-full transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        )}
+        </div>
+        <span className="w-14 text-right text-[11px] flex-shrink-0" style={{ color: "#5DCAA5" }}>
+          {targetVal}{unit === "%" ? "" : " "}{unit}
+        </span>
       </div>
     </div>
   );
@@ -351,6 +471,12 @@ function OutcomesSection({
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="Outcomes" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      {/* Fix 4: Section caption */}
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+        What these choices commit us to.{" "}
+        <span style={{ color: "#9ca3b0", fontWeight: 500 }}>Each outcome tests one of our principles</span>
+        {" "}— together they make the strategy measurable, not aspirational.
+      </p>
       <div className="space-y-5">
         {outcomes.map((o) => {
           const linkedPrinciple = o.tests_principle != null
@@ -375,11 +501,20 @@ function OutcomesSection({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{o.derived_summary}</p>
-                  <FromToBar baseline={o.baseline_value} target={o.target_value} unit={o.unit} />
+                  <FromToBar outcome={o} />
+                  {/* Meta line: date + baseline study date for TBD outcomes */}
+                  <div className="mt-2 text-[10px]" style={{ color: "#9ca3b0" }}>
+                    By {o.target_date}
+                    {o.baseline_status === "not_measured" && o.baseline_study_date && (
+                      <span> · Baseline study scheduled {o.baseline_study_date}</span>
+                    )}
+                  </div>
+                  {/* Principle cross-reference line */}
                   {linkedPrinciple && (
-                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <Shield className="w-3 h-3" />
-                      Tests principle {linkedPrinciple.number}: {linkedPrinciple.title}
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px]">
+                      <span style={{ color: "#5DCAA5" }}>↪</span>
+                      <span style={{ color: "#9ca3b0" }}>Tests principle {linkedPrinciple.number}:</span>
+                      <span style={{ color: "#7ec9ab" }}>{linkedPrinciple.title}</span>
                     </div>
                   )}
                 </div>
@@ -977,32 +1112,56 @@ export default function StrategyAmbitionPage() {
   return (
     <TooltipProvider>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
+        {/* Header — Fix 3 */}
         <div>
+          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <span>HR AI Strategy</span>
             <ChevronRight className="w-3 h-3" />
             <span>Ambition</span>
           </div>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Where we're going</h1>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-        {bLabel && <Badge variant="secondary" className="text-xs">{bLabel}</Badge>}
-          {hrLabel && <Badge variant="secondary" className="text-xs">{hrLabel}</Badge>}
-            </div>
+          {/* Section 02 eyebrow */}
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "#5DCAA5" }}>
+            Section 02
+          </p>
+          {/* Title with teal dot */}
+          <h1 className="text-2xl font-bold text-foreground">
+            Where we’re going<span style={{ color: "#5DCAA5" }}>.</span>
+          </h1>
+          {/* Ambition pills + time horizon strip */}
+          <div className="flex items-center gap-2 flex-wrap mt-3">
+            {bLabel && (
+              <span
+                style={{
+                  fontSize: 11, padding: "3px 10px", borderRadius: 999,
+                  border: "0.5px solid rgba(93,202,165,0.5)",
+                  color: "#5DCAA5", background: "transparent",
+                }}
+              >
+                Business: {bLabel}
+              </span>
+            )}
+            {hrLabel && (
+              <span
+                style={{
+                  fontSize: 11, padding: "3px 10px", borderRadius: 999,
+                  border: "0.5px solid rgba(93,202,165,0.5)",
+                  color: "#5DCAA5", background: "transparent",
+                }}
+              >
+                HR: {hrLabel}
+              </span>
+            )}
+            <span style={{ color: "#6c7385", fontSize: 11 }}>·</span>
+            <span style={{ color: "#9ca3b0", fontSize: 11 }}>🕒 By end of FY27 · over 18 months</span>
           </div>
-          {/* Progress bar */}
-          <div className="flex items-center gap-3 mt-4">
-            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-primary/60 rounded-full transition-all"
-                style={{ width: `${(builtCount / 4) * 100}%` }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground flex-shrink-0">
-              {builtCount} of 4 sections built
+          {/* Our approach line */}
+          <div className="mt-2" style={{ marginBottom: "0.5rem" }}>
+            <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 500 }}>Our approach:</span>
+            {" "}
+            <span style={{ color: "#7a8294", fontSize: 11, lineHeight: 1.5 }}>
+              {sections?.approachLine ||
+                "AI everywhere across HR, growing what HR can do strategically — not just making existing work faster."}
             </span>
           </div>
         </div>
@@ -1036,8 +1195,9 @@ export default function StrategyAmbitionPage() {
           onDraft={() => draftSection("outcomes")}
         />
 
-        {/* Review footer */}
-        <div className="border-t border-border/40 pt-6 flex items-center justify-between">
+        {/* Review footer — Fix 6 */}
+        <div className="border-t border-border/40 pt-6 flex items-center justify-between gap-3">
+          {/* Left: review state */}
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
             {lastReviewedAt ? (
               <>
@@ -1055,13 +1215,36 @@ export default function StrategyAmbitionPage() {
               </>
             )}
           </div>
-          <Button
-            variant="outline" size="sm"
-            className="h-8 text-xs gap-1.5"
-            onClick={markReviewed}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" /> Mark as reviewed
-          </Button>
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!lastReviewedAt && (
+              <Button
+                variant="outline" size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={markReviewed}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" /> Mark as reviewed
+              </Button>
+            )}
+            <Link href="/strategy/journey">
+              <button
+                className="h-8 px-3 text-xs flex items-center gap-1.5 rounded-md transition-colors"
+                style={{ background: "transparent", border: "0.5px solid rgba(255,255,255,0.2)" }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(93,202,165,0.5)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#5DCAA5";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "";
+                }}
+              >
+                <span style={{ color: "#6c7385" }}>Next:</span>
+                <span className="text-foreground">How we get there</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
