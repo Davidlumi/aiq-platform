@@ -285,7 +285,13 @@ export function VisionModal({
   // ── Re-init on open ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
-      const init = initialInputs ?? DEFAULT_INPUTS;
+      const raw = initialInputs ?? DEFAULT_INPUTS;
+      // Clamp tier values to 1–4: stored DB values may be on the 1–5 assessment scale
+      const init: VisionInputs = {
+        ...raw,
+        businessAmbitionTier: Math.min(Math.max(raw.businessAmbitionTier ?? 2, 1), 4),
+        hrDeliveryTier: Math.min(Math.max(raw.hrDeliveryTier ?? 2, 1), 4),
+      };
       setInputs(init);
       setSavedInputs(init);
       setDraftText(initialDraft ?? "");
