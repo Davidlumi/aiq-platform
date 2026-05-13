@@ -876,8 +876,9 @@ export default function StrategyAmbitionPage() {
     return parts.join(" · ") || "an HR function";
   }, [strategy]);
 
-  const businessTier = sections?.businessAmbitionLevel ?? null;
-  const hrTier = sections?.peopleAmbitionLevel ?? null;
+  // Clamp to 1–4: assessment wizard uses a 1–5 scale but tier sliders/backend expect 1–4
+  const businessTier = sections?.businessAmbitionLevel != null ? Math.min(Math.max(sections.businessAmbitionLevel, 1), 4) : null;
+  const hrTier = sections?.peopleAmbitionLevel != null ? Math.min(Math.max(sections.peopleAmbitionLevel, 1), 4) : null;
 
   const visionInputs = useMemo((): VisionInputs | null => {
     try {

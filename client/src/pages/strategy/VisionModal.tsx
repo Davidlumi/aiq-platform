@@ -90,6 +90,17 @@ const GOVERNANCE_LABELS: Record<string, string> = {
   performance_management: "Performance mgmt", salary_benchmarking: "Salary benchmarking",
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Clamp tier values to the 1–4 range the backend and sliders expect. */
+function clampTiers(raw: VisionInputs): VisionInputs {
+  return {
+    ...raw,
+    businessAmbitionTier: Math.min(Math.max(raw.businessAmbitionTier ?? 2, 1), 4),
+    hrDeliveryTier: Math.min(Math.max(raw.hrDeliveryTier ?? 2, 1), 4),
+  };
+}
+
 // ─── Threshold check ──────────────────────────────────────────────────────────
 
 function isThresholdMet(inputs: VisionInputs): boolean {
@@ -239,9 +250,9 @@ export function VisionModal({
   capabilityLabel,
   capabilityCount,
 }: VisionModalProps) {
-  // ── Inputs state ─────────────────────────────────────────────────────────────
-  const [inputs, setInputs] = useState<VisionInputs>(() => initialInputs ?? DEFAULT_INPUTS);
-  const [savedInputs, setSavedInputs] = useState<VisionInputs>(() => initialInputs ?? DEFAULT_INPUTS);
+  // ── Inputs state ───────────────────────────────────────────────────────────
+  const [inputs, setInputs] = useState<VisionInputs>(() => clampTiers(initialInputs ?? DEFAULT_INPUTS));
+  const [savedInputs, setSavedInputs] = useState<VisionInputs>(() => clampTiers(initialInputs ?? DEFAULT_INPUTS));
 
   // ── Draft state ───────────────────────────────────────────────────────────────
   const [draftText, setDraftText] = useState<string>(initialDraft ?? "");
@@ -285,13 +296,7 @@ export function VisionModal({
   // ── Re-init on open ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
-      const raw = initialInputs ?? DEFAULT_INPUTS;
-      // Clamp tier values to 1–4: stored DB values may be on the 1–5 assessment scale
-      const init: VisionInputs = {
-        ...raw,
-        businessAmbitionTier: Math.min(Math.max(raw.businessAmbitionTier ?? 2, 1), 4),
-        hrDeliveryTier: Math.min(Math.max(raw.hrDeliveryTier ?? 2, 1), 4),
-      };
+      const init = clampTiers(initialInputs ?? DEFAULT_INPUTS);
       setInputs(init);
       setSavedInputs(init);
       setDraftText(initialDraft ?? "");

@@ -738,8 +738,9 @@ Return JSON with this exact structure:
     .input(z.object({
       // Section 1 — Your ambition
       outcomeChased: z.enum(["cost", "growth", "talent_supply", "customer_experience", "employee_experience"]).nullable(),
-      businessAmbitionTier: z.number().int().min(1).max(4),
-      hrDeliveryTier: z.number().int().min(1).max(4),
+      // Accept 1–5 to be tolerant of assessment-scale values; clamp to 1–4 before persisting
+      businessAmbitionTier: z.number().int().min(1).max(5),
+      hrDeliveryTier: z.number().int().min(1).max(5),
       augmentationPhilosophy: z.enum(["amplify", "automate", "substitute"]).nullable(),
       // Section 2 — Where AI plays
       painAreas: z.array(z.string()),
@@ -762,9 +763,15 @@ Return JSON with this exact structure:
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
       if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
+      // Clamp tiers to 1–4 before persisting (frontend also clamps, this is belt-and-suspenders)
+      const clamped = {
+        ...input,
+        businessAmbitionTier: Math.min(Math.max(input.businessAmbitionTier, 1), 4),
+        hrDeliveryTier: Math.min(Math.max(input.hrDeliveryTier, 1), 4),
+      };
       await db.update(ailOrgContext)
         .set({
-          visionInputsJson: JSON.stringify(input),
+          visionInputsJson: JSON.stringify(clamped),
           visionInputsUpdatedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -779,8 +786,9 @@ Return JSON with this exact structure:
   generateVisionDraft: protectedProcedure
     .input(z.object({
       outcomeChased: z.enum(["cost", "growth", "talent_supply", "customer_experience", "employee_experience"]).nullable(),
-      businessAmbitionTier: z.number().int().min(1).max(4),
-      hrDeliveryTier: z.number().int().min(1).max(4),
+      // Accept 1–5 to be tolerant of assessment-scale values; clamp to 1–4 before use
+      businessAmbitionTier: z.number().int().min(1).max(5),
+      hrDeliveryTier: z.number().int().min(1).max(5),
       augmentationPhilosophy: z.enum(["amplify", "automate", "substitute"]).nullable(),
       painAreas: z.array(z.string()),
       painAreasOther: z.array(z.string()),
@@ -792,14 +800,13 @@ Return JSON with this exact structure:
       orgDescriptor: z.string().nullable().optional(),
       capabilityScore: z.number().nullable().optional(),
       capabilityLabel: z.string().nullable().optional(),
-      capabilityCount: z.number().nullable().optional(),
+       capabilityCount: z.number().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-
       // Map enums to human-readable labels
       const OUTCOME_LABELS: Record<string, string> = {
         cost: "cost reduction", growth: "business growth", talent_supply: "talent supply",

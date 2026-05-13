@@ -3248,3 +3248,9 @@ test
 - [x] Clamp businessAmbitionTier and hrDeliveryTier to max 4 when loading initialInputs in VisionModal (stored DB values may be 1–5 from assessment scale)
 - [x] Clamp same values in StrategyOverviewPage before passing as initialInputs (handled in VisionModal re-init, no page-level change needed)
 - [x] Relax draftAmbitionSection backend to accept null/undefined tiers gracefully (already nullable.optional — confirmed)
+
+## VisionModal Tier Slider Fix — Round 2
+
+- [x] Clamp tier values in useState initialiser (not just useEffect) in VisionModal
+- [x] Clamp businessTier/hrTier in StrategyAmbitionPage draftSection callback before passing to draftAmbitionSection
+- [x] Relax backend max constraint to max(5) as a belt-and-suspenders fallback
