@@ -899,6 +899,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   aspirationAnswersJson: text("aspiration_answers_json"),                    // JSON: answers to business AI aspiration questions
   hrRoleAnswersJson: text("hr_role_answers_json"),                           // JSON: answers to HR role questions
   visionStatement: text("vision_statement"),                                // AI-drafted + user-edited vision statement
+  userVisionInput: text("user_vision_input"),                                // Verbatim vision text entered directly by the user (not AI-generated)
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   wontDoJson: text("wont_do_json"),                                              // JSON: string[] - LLM-generated out-of-scope items

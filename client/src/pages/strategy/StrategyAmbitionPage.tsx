@@ -510,7 +510,7 @@ export default function StrategyAmbitionPage() {
   }, [JSON.stringify(commitments.map(c => c.statement)), assessment?.commitments?.length]);
 
   const patch = useCallback(async (
-    field: "visionStatement" | "wontDo" | "commitments" | "guidingPrinciples",
+    field: "visionStatement" | "userVisionInput" | "wontDo" | "commitments" | "guidingPrinciples",
     value: unknown
   ) => {
     await patchMutation.mutateAsync({ field, value } as any);
@@ -524,7 +524,9 @@ export default function StrategyAmbitionPage() {
     setVisionSaveStatus("saving");
     (window as any).umami?.track("strategy.ambition.block.edit-saved", { block: "vision", field: "visionStatement" });
     try {
+      // Save as both visionStatement (display) and userVisionInput (TP1 anchor)
       await patch("visionStatement", visionDraft);
+      await patch("userVisionInput", visionDraft);
       setVisionSaveStatus("saved");
       setTimeout(() => setVisionSaveStatus(null), 1500);
       setVisionEditing(false);
@@ -532,6 +534,7 @@ export default function StrategyAmbitionPage() {
       fireToast("Vision saved", () => {
         (window as any).umami?.track("strategy.ambition.undo.clicked", { action: "vision" });
         patch("visionStatement", prev).then(() => {
+          patch("userVisionInput", prev);
           setVisionDraft(prev);
           utils.intelligence.getStrategyAssessment.invalidate();
         });
@@ -806,9 +809,12 @@ export default function StrategyAmbitionPage() {
           {visionEditing && !isMobile ? (
             <div>
               <VisionEditor value={visionDraft} onChange={setVisionDraft} />
+              <p className="text-xs text-muted-foreground mt-2">
+                Your edited text will be saved as your own vision and used as the anchor for your CEO talking points.
+              </p>
               <div className="flex items-center gap-2 mt-3">
                 <Button size="sm" className="h-7 text-xs px-3" onClick={handleVisionSave} disabled={visionSaveStatus === "saving"}>
-                  {visionSaveStatus === "saving" ? "Saving…" : "Save"}
+                  {visionSaveStatus === "saving" ? "Saving…" : "Save as my vision"}
                 </Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-muted-foreground" onClick={() => { setVisionDraft(assessment.visionStatement ?? ""); setVisionEditing(false); }}>
                   Cancel
@@ -816,14 +822,30 @@ export default function StrategyAmbitionPage() {
               </div>
             </div>
           ) : assessment.visionStatement ? (
-            <p
-              className="text-base leading-relaxed text-foreground"
-              style={{ fontFamily: "Georgia, 'Times New Roman', serif", lineHeight: "1.6" }}
-            >
-              <span className="text-teal-400/60 text-2xl leading-none mr-1 align-top">"</span>
-              {assessment.visionStatement}
-              <span className="text-teal-400/60 text-2xl leading-none ml-1 align-bottom">"</span>
-            </p>
+            <div>
+              {/* Source badge */}
+              <div className="flex items-center gap-1.5 mb-3">
+                {(assessment as any).userVisionInput ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/20 font-medium">
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2H7v3a1 1 0 1 1-2 0V7H2a1 1 0 0 1 0-2h3V2a1 1 0 0 1 1-1z" clipRule="evenodd" fillRule="evenodd"/></svg>
+                    Your words
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground border border-white/10 font-medium">
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2a4 4 0 1 0 0 8A4 4 0 0 0 6 2zM0 6a6 6 0 1 1 12 0A6 6 0 0 1 0 6z" clipRule="evenodd" fillRule="evenodd"/><path d="M6 5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1zm0-2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                    AI-drafted · Edit to make it yours
+                  </span>
+                )}
+              </div>
+              <p
+                className="text-base leading-relaxed text-foreground"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", lineHeight: "1.6" }}
+              >
+                <span className="text-teal-400/60 text-2xl leading-none mr-1 align-top">"</span>
+                {assessment.visionStatement}
+                <span className="text-teal-400/60 text-2xl leading-none ml-1 align-bottom">"</span>
+              </p>
+            </div>
           ) : (
             <div className="flex items-center gap-3 py-2">
               <p className="text-sm text-muted-foreground italic flex-1">Vision pending. Generate your strategy or write your own.</p>

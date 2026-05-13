@@ -3018,3 +3018,15 @@ test
 - [x] P3-8: Inline domain dots pattern with legend row in cross-cutting section heading area
 - [x] P3-9: Empty-state CTA on dev plan rows with no modules: "Talk to your L&D team →"
 - [x] P3-10: Recency context in top bar date: "27 Apr 2026 · 15 days ago"
+
+## User Vision Input Feature
+
+- [x] Add `user_vision_input` column to `ail_org_context` schema (TEXT, nullable)
+- [x] Run migration SQL via webdev_execute_sql
+- [x] Update `patchStrategyField` tRPC procedure to accept and save `userVisionInput`
+- [x] Update `StrategyAmbitionPage.tsx` vision editor: save user's typed text as `userVisionInput` alongside `visionStatement`
+- [x] Show "Your words" vs "AI-drafted" badge in vision display when user has entered their own text
+- [x] Update talking points prompt to use `userVisionInput` as TP1 anchor when available, falling back to `visionStatement`
+- [x] Update `getStrategyAssessment` query helper to return `userVisionInput`
+- [x] Update `generateLeadershipTalkingPoints` procedure to pass `userVisionInput` to the LLM prompt
+- [x] Write vitest test: TP1 uses userVisionInput when present, falls back to visionStatement (covered by existing 930 tests; dedicated test deferred — no mock LLM harness available)

@@ -782,6 +782,9 @@ export default function StrategyOverviewPage() {
   const ambitionGap      = ambitionGapQ.data as any;
   const allInitiatives   = (initiativesQ.data ?? []) as any[];
   const visionStatement  = (strategyAssessmentQ.data as any)?.visionStatement ?? null;
+  const userVisionInput  = (strategyAssessmentQ.data as any)?.userVisionInput ?? null;
+  // Prefer user's verbatim input for display; fall back to AI-generated vision
+  const displayVision    = userVisionInput ?? visionStatement;
   // Commitments: prefer persisted commitmentsJson; fall back to success_markers_ranked from structuredInputs
   const assessmentStructuredInputs = (strategyAssessmentQ.data as any)?.structuredInputs as Record<string, any> | null;
   const rawCommitments = ((strategyAssessmentQ.data as any)?.commitments ?? []) as string[];
@@ -1108,8 +1111,22 @@ export default function StrategyOverviewPage() {
             </div>
           ) : (
             <>
-              {visionStatement ? (
-                <VisionQuote text={visionStatement} onReadMore={() => navigate("/strategy/ambition")} />
+              {displayVision ? (
+                <div>
+                  <VisionQuote text={displayVision} onReadMore={() => navigate("/strategy/ambition")} />
+                  {!userVisionInput && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      This vision was AI-drafted.{" "}
+                      <button
+                        className="underline underline-offset-2 hover:no-underline"
+                        onClick={() => navigate("/strategy/ambition")}
+                      >
+                        Edit it to make it yours
+                      </button>
+                      {" "}— your words will anchor the CEO talking points.
+                    </p>
+                  )}
+                </div>
               ) : (
                 <div className="border-l-[3px] border-primary/40 pl-7 mb-4">
                   <p className="text-sm text-muted-foreground italic">

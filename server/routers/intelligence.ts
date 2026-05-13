@@ -483,6 +483,7 @@ export const intelligenceRouter = router({
       aspirationAnswersJson: ailOrgContext.aspirationAnswersJson,
       hrRoleAnswersJson: ailOrgContext.hrRoleAnswersJson,
       visionStatement: ailOrgContext.visionStatement,
+      userVisionInput: ailOrgContext.userVisionInput,
       guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
       strategyAssessmentCompletedAt: ailOrgContext.strategyAssessmentCompletedAt,
       businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
@@ -496,13 +497,14 @@ export const intelligenceRouter = router({
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
     const row = rows[0] ?? null;
-    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null };
+    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, userVisionInput: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null };
     const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
     return {
       completed: !!row.strategyAssessmentCompletedAt,
       aspirationAnswers: parse(row.aspirationAnswersJson),
       hrRoleAnswers: parse(row.hrRoleAnswersJson),
       visionStatement: row.visionStatement ?? null,
+      userVisionInput: row.userVisionInput ?? null,
       guidingPrinciples: parse(row.guidingPrinciplesJson) as Array<{ title: string; description: string }> | null,
       completedAt: row.strategyAssessmentCompletedAt ?? null,
       businessAmbitionLevel: row.businessAmbitionLevel ?? null,
@@ -663,6 +665,7 @@ Return JSON with this exact structure:
   patchStrategyField: protectedProcedure
     .input(z.discriminatedUnion("field", [
       z.object({ field: z.literal("visionStatement"), value: z.string() }),
+      z.object({ field: z.literal("userVisionInput"), value: z.string() }),
       z.object({ field: z.literal("wontDo"), value: z.array(z.string()) }),
       z.object({ field: z.literal("commitments"), value: z.array(z.string()) }),
       z.object({ field: z.literal("guidingPrinciples"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
@@ -681,6 +684,7 @@ Return JSON with this exact structure:
       if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
       let patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
       if (input.field === "visionStatement") patch.visionStatement = input.value;
+      else if (input.field === "userVisionInput") patch.userVisionInput = input.value;
       else if (input.field === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
       else if (input.field === "commitments") patch.commitmentsJson = JSON.stringify(input.value);
       else if (input.field === "guidingPrinciples") patch.guidingPrinciplesJson = JSON.stringify(input.value);
@@ -1225,7 +1229,8 @@ Return JSON with this exact structure:
         initiativeCount: selectedIds.length,
         initiativeNames,
         timelineMonths,
-        visionStatement: ctx2.visionStatement ?? null,
+        // Prefer user's verbatim input over AI-generated vision for TP1 anchor
+        visionStatement: ctx2.userVisionInput ?? ctx2.visionStatement ?? null,
         capabilityScore: capNow != null ? `${capNow}/10` : null,
         capabilityTarget: capTarget != null ? `${capTarget}/10` : null,
         capabilityGap: capGap != null ? `${capGap} points` : null,
