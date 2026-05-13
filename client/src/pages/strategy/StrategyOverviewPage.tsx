@@ -1121,9 +1121,9 @@ export default function StrategyOverviewPage() {
                         className="underline underline-offset-2 hover:no-underline"
                         onClick={() => navigate("/strategy/ambition")}
                       >
-                        Edit it to make it yours
-                      </button>
-                      {" "}— your words will anchor the CEO talking points.
+                         Edit to make it yours
+                       </button>
+                       {" "}— your words will anchor the CEO talking points.
                     </p>
                   )}
                 </div>

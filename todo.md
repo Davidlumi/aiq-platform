@@ -3053,16 +3053,24 @@ test
 
 ## Learning Plan Dashboard Patch Brief (manus_brief_individual_learning_plan_dashboard_fixes.md)
 
-- [ ] Fix 1 (P0): Add hero greeting strip above Continue Learning card (time-of-day greeting + state-aware progress sentence + divider)
-- [ ] Fix 2 (P0): Replace AI_READY/DEVELOPING enum values with Expert/Proficient/Developing level descriptors (score-based mapping)
-- [ ] Fix 3 (P0): Render progress bar on ALL 6 cards including On-target and No-modules-yet states
-- [ ] Fix 4 (P0): AI Output Evaluation → No modules yet (not On target); implement correct state logic table
-- [ ] Fix 5 (P0): Correct 3 domain icons — Ethics→Scale, Output Evaluation→Eye, Change Leadership→Compass
-- [ ] Fix 6 (P1): Drop /10 suffix from all scores on cards and modal
-- [ ] Fix 7 (P1): Level descriptor at 9px uppercase tertiary, stacked right of score
-- [ ] Fix 8 (P1): Bar fill = score × 10 % (not score/100); verify all 6 bars visually differ
-- [ ] Fix 9 (P1): See full activity link in primary text colour with underline-offset-3
-- [ ] Fix 10 (P1): Chat icon in activity strip → info-blue or neutral (not success-green)
-- [ ] Fix 11 (P2): Workflow Design icon bg tint at exactly rgba(16,185,129,0.15)
-- [ ] Fix 12 (P2): Trim card vertical padding to ~130px active height
-- [ ] Fix 13 (P2): Confirm hover state (cursor-pointer + border/bg lift) on all domain cards
+- [x] Fix 1 (P0): Add hero greeting strip above Continue Learning card (time-of-day greeting + state-aware progress sentence + divider)
+- [x] Fix 2 (P0): Replace AI_READY/DEVELOPING enum values with Expert/Proficient/Developing level descriptors (score-based mapping)
+- [x] Fix 3 (P0): Render progress bar on ALL 6 cards including On-target and No-modules-yet states
+- [x] Fix 4 (P0): AI Output Evaluation → No modules yet (not On target); implement correct state logic table
+- [x] Fix 5 (P0): Correct 3 domain icons — Ethics→Scale, Output Evaluation→Eye, Change Leadership→Compass
+- [x] Fix 6 (P1): Drop /10 suffix from all scores on cards and modal
+- [x] Fix 7 (P1): Level descriptor at 9px uppercase tertiary, stacked right of score
+- [x] Fix 8 (P1): Bar fill = score × 10 % (not score/100); verify all 6 bars visually differ
+- [x] Fix 9 (P1): See full activity link in primary text colour with underline-offset-3
+- [x] Fix 10 (P1): Chat icon in activity strip → info-blue or neutral (not success-green)
+- [x] Fix 11 (P2): Workflow Design icon bg tint at exactly rgba(16,185,129,0.15)
+- [x] Fix 12 (P2): Trim card vertical padding to ~130px active height
+- [x] Fix 13 (P2): Confirm hover state (cursor-pointer + border/bg lift) on all domain cards
+
+## HR AI Strategy Dashboard Sign-off Brief
+
+- [x] Item 1: Decision logged — keep supporting line as-is (Option A). Cost has its own card below.
+- [x] Item 2: Vision banner copy — drop second "it": "Edit to make it yours" (not "Edit it to make it yours")
+- [x] Item 3: Confirmed — ailOrgContext.updatedAt (MySQL onUpdateNow) and leadershipTalkingPointsJson.generatedAt (Unix ms in JSON) are separate fields
+- [x] Item 4: Verified — isStale fires when data.strategyHash !== strategyHash; banner renders with symmetric Regenerate + Keep current buttons
+- [x] Regression: all 7 items verified — context strip, vision quote serif italic, capability section, four cards, TP_CATEGORIES labels, value positive, stale banner
