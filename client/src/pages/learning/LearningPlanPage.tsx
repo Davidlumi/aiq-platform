@@ -15,7 +15,7 @@ import { trpc } from "@/lib/trpc";
 import {
   MessageSquare, Eye, Workflow, Users, Scale, Compass,
   BookOpen, Video, FileText, HelpCircle, Brain, Target, Layers,
-  CheckCircle2, Lock, Play, ArrowRight, X, MessageCircle,
+  CheckCircle2, Check, Lock, Play, ArrowRight, X, MessageCircle,
   Sparkles, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -134,49 +134,55 @@ function ModalModuleRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors",
-        isNext && "rounded-xl",
-        isCompleted && "opacity-70",
+        "flex items-start gap-3 px-5 py-3.5 transition-colors",
         isLocked && "opacity-40",
       )}
-      style={isNext ? { backgroundColor: `${domainColour}0a` } : undefined}
     >
-      <ModuleStatusIcon status={item.status} domainColour={domainColour} isNext={isNext} />
+      {/* Status icon */}
+      <div className="flex-shrink-0 mt-0.5">
+        {isCompleted ? (
+          <div
+            className="w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: `${domainColour}22`, border: `1.5px solid ${domainColour}` }}
+          >
+            <Check className="h-2.5 w-2.5" style={{ color: domainColour }} />
+          </div>
+        ) : isLocked ? (
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-muted/30">
+            <Lock className="h-2.5 w-2.5 text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="w-5 h-5 rounded-full border border-border/50 bg-transparent" />
+        )}
+      </div>
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <p className={cn(
-          "text-[13px] font-medium leading-snug",
-          isCompleted && "line-through decoration-muted-foreground/40 text-muted-foreground",
+          "text-[13px] leading-snug",
+          isNext ? "font-semibold text-foreground" : isCompleted ? "font-medium text-muted-foreground" : "font-medium text-foreground/80",
         )}>
           {mod.title ?? "Module"}
         </p>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          <span className="inline-flex items-center gap-1">
-            <TypeIcon className="h-2.5 w-2.5" aria-hidden="true" />
-            {typeLabel}
-          </span>
-          {durationLabel && <> · {durationLabel}</>}
-          {" · "}{statusText}
+        <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+          <TypeIcon className="h-2.5 w-2.5 flex-shrink-0" aria-hidden="true" />
+          <span>{typeLabel}</span>
+          {durationLabel && <><span>·</span><span>{durationLabel}</span></>}
+          <span>·</span>
+          <span>{statusText}</span>
         </p>
       </div>
+      {/* CTA */}
       {isCompleted ? (
         <button
           onClick={onReview}
-          className="text-[11px] font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 flex-shrink-0"
+          className="text-[12px] font-medium text-foreground/70 hover:text-foreground underline underline-offset-2 flex-shrink-0 mt-0.5"
         >
           Review
         </button>
-      ) : isLocked ? null : isNext ? (
+      ) : isLocked ? null : (
         <button
           onClick={onStart}
-          className="text-[11px] font-semibold px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors"
-          style={{ backgroundColor: domainColour, color: "#fff" }}
-        >
-          Start
-        </button>
-      ) : (
-        <button
-          onClick={onStart}
-          className="text-[11px] font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 flex-shrink-0"
+          className="text-[12px] font-medium text-foreground hover:text-foreground/70 underline underline-offset-2 flex-shrink-0 mt-0.5"
         >
           Start
         </button>
@@ -237,38 +243,42 @@ function DomainModal({
       {/* Sheet */}
       <div
         ref={modalRef}
-        className="relative w-full sm:max-w-lg bg-card border border-border rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+        className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+        style={{ backgroundColor: "hsl(var(--card))" }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-border/40 flex-shrink-0">
+        <div className="flex items-center gap-3 px-5 pt-5 pb-4 flex-shrink-0">
+          {/* Domain icon */}
           <div
-            className="w-[26px] h-[26px] rounded-md flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${colour}26` }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${colour}22` }}
             aria-hidden="true"
           >
-            <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
+            <DomainIcon className="h-4.5 w-4.5" style={{ color: colour }} />
           </div>
+          {/* Title + score + level */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">{label}</h2>
+            <h2 className="text-[15px] font-semibold text-foreground leading-tight">{label}</h2>
             {scoreDisplay && (
-              <p className="text-[11px] text-muted-foreground">
-                <span className="tabular-nums font-medium text-foreground">{scoreDisplay}</span>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                <span className="tabular-nums font-semibold text-foreground">{scoreDisplay}</span>
                 {levelLabel && (
-                  <>
-                    {" · "}
-                    <span className="uppercase tracking-widest text-[9px]">{levelLabel}</span>
-                  </>
+                  <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    · {levelLabel}
+                  </span>
                 )}
               </p>
             )}
           </div>
+          {/* Close button — circular outline */}
           <button
             ref={closeRef}
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            style={{ border: `1.5px solid ${colour}`, color: colour }}
             aria-label="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
 
@@ -276,12 +286,12 @@ function DomainModal({
         <div className="overflow-y-auto flex-1">
           {hasModules ? (
             <>
-              {/* Progress summary */}
-              <div className="px-5 py-3 border-b border-border/30">
-                <div className="flex items-center gap-3">
+              {/* Progress bar — full width, prominent */}
+              <div className="px-5 pb-4">
+                <div className="flex items-center gap-3 mb-1.5">
                   <div
-                    className="flex-1 h-1.5 rounded-full overflow-hidden"
-                    style={{ backgroundColor: `${colour}20` }}
+                    className="flex-1 h-2 rounded-full overflow-hidden"
+                    style={{ backgroundColor: `${colour}22` }}
                     role="progressbar"
                     aria-valuenow={completedCount}
                     aria-valuemin={0}
@@ -296,13 +306,13 @@ function DomainModal({
                       }}
                     />
                   </div>
-                  <span className="text-[11px] text-muted-foreground tabular-nums flex-shrink-0">
+                  <span className="text-[11px] text-muted-foreground tabular-nums flex-shrink-0 whitespace-nowrap">
                     {completedCount} of {totalCount} modules done
                   </span>
                 </div>
               </div>
               {/* Module list */}
-              <div className="py-2">
+              <div className="pb-2">
                 {items.map((item: any) => (
                   <ModalModuleRow
                     key={item.id}

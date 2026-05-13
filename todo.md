@@ -3074,3 +3074,13 @@ test
 - [x] Item 3: Confirmed — ailOrgContext.updatedAt (MySQL onUpdateNow) and leadershipTalkingPointsJson.generatedAt (Unix ms in JSON) are separate fields
 - [x] Item 4: Verified — isStale fires when data.strategyHash !== strategyHash; banner renders with symmetric Regenerate + Keep current buttons
 - [x] Regression: all 7 items verified — context strip, vision quote serif italic, capability section, four cards, TP_CATEGORIES labels, value positive, stale banner
+
+## Learning Plan Modal Redesign (screenshot match)
+
+- [x] Modal header: domain icon (coloured bg tint) + domain name + score + level pill (PROFICIENT/EXPERT/DEVELOPING)
+- [x] Modal progress bar: full-width coloured bar with "X of Y modules done" count right-aligned
+- [x] Module rows: completed rows show green check + muted text + "Review" underlined CTA; next row shows bold text + "Start" underlined CTA; locked rows show lock icon + muted text
+- [x] Module row metadata: modality icon + modality label + duration + status text
+- [x] Modal footer: "Browse more modules in [Domain] →" link in domain accent colour
+- [x] Close button: circular outline button top-right (not X icon inside card)
+- [x] Modal background: dark card (#1a2235 approx) with rounded-2xl, no inner border
