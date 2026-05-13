@@ -1228,10 +1228,11 @@ export default function StrategyAmbitionPage() {
         }}
         initialInputs={(assessment as any)?.visionInputs as VisionInputs | null | undefined}
         initialDraft={assessment?.visionStatement ?? null}
-        sector={(assessment as any)?.sector ?? null}
-        headcount={(assessment as any)?.headcount ?? null}
-        businessAmbitionLabel={bLevel?.label ?? null}
-        peopleAmbitionLabel={pLevel?.label ?? null}
+        orgDescriptor={[
+          companyResults?.companyName,
+          (assessment as any)?.sector,
+          (assessment as any)?.headcount ? `${Number((assessment as any).headcount).toLocaleString()} employees` : null,
+        ].filter(Boolean).join(" · ") || null}
         companyName={companyResults?.companyName ?? null}
         capabilityScore={companyResults?.overallScore ?? null}
         capabilityLabel={companyResults?.maturityLabel ?? null}

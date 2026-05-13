@@ -736,14 +736,19 @@ Return JSON with this exact structure:
    */
   saveVisionInputs: protectedProcedure
     .input(z.object({
-      ambitionStatement: z.string(),
-      aiRoleInHR: z.string(),
-      aiRoleInBusiness: z.string(),
-      timeHorizonMonths: z.number().int().min(6).max(60),
-      geographicScope: z.string(),
-      constraints: z.string(),
-      successLooksLike: z.string(),
-      whatWontChange: z.string(),
+      // Section 1 — Your ambition
+      outcomeChased: z.enum(["cost", "growth", "talent_supply", "customer_experience", "employee_experience"]).nullable(),
+      businessAmbitionTier: z.number().int().min(1).max(4),
+      hrDeliveryTier: z.number().int().min(1).max(4),
+      augmentationPhilosophy: z.enum(["amplify", "automate", "substitute"]).nullable(),
+      // Section 2 — Where AI plays
+      painAreas: z.array(z.string()),
+      painAreasOther: z.array(z.string()),
+      reinvestmentTargets: z.array(z.string()),
+      reinvestmentTargetsOther: z.array(z.string()),
+      // Section 3 — Time and boundaries
+      timeHorizonYears: z.number().int().refine(v => [1, 3, 5].includes(v), { message: "Must be 1, 3, or 5" }),
+      governanceLocks: z.array(z.string()),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -768,52 +773,83 @@ Return JSON with this exact structure:
     }),
 
   /**
-   * Vision Modal - Generate an AI vision draft from the 8 structured modal inputs.
+   * Vision Modal - Generate an AI vision draft from the brief-spec structured inputs.
+   * Prompt follows vision_modal_build_brief.md § 6 requirements.
    */
   generateVisionDraft: protectedProcedure
     .input(z.object({
-      ambitionStatement: z.string(),
-      aiRoleInHR: z.string(),
-      aiRoleInBusiness: z.string(),
-      timeHorizonMonths: z.number().int().min(6).max(60),
-      geographicScope: z.string(),
-      constraints: z.string(),
-      successLooksLike: z.string(),
-      whatWontChange: z.string(),
-      sector: z.string(),
-      orgSize: z.string().optional(),
+      outcomeChased: z.enum(["cost", "growth", "talent_supply", "customer_experience", "employee_experience"]).nullable(),
+      businessAmbitionTier: z.number().int().min(1).max(4),
+      hrDeliveryTier: z.number().int().min(1).max(4),
+      augmentationPhilosophy: z.enum(["amplify", "automate", "substitute"]).nullable(),
+      painAreas: z.array(z.string()),
+      painAreasOther: z.array(z.string()),
+      reinvestmentTargets: z.array(z.string()),
+      reinvestmentTargetsOther: z.array(z.string()),
+      timeHorizonYears: z.number().int().refine(v => [1, 3, 5].includes(v), { message: "Must be 1, 3, or 5" }),
+      governanceLocks: z.array(z.string()),
+      // Context
+      orgDescriptor: z.string().nullable().optional(),
+      capabilityScore: z.number().nullable().optional(),
+      capabilityLabel: z.string().nullable().optional(),
+      capabilityCount: z.number().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const timeLabel = input.timeHorizonMonths <= 12
-        ? `${input.timeHorizonMonths} months`
-        : `${Math.round(input.timeHorizonMonths / 12)} years`;
+
+      // Map enums to human-readable labels
+      const OUTCOME_LABELS: Record<string, string> = {
+        cost: "cost reduction", growth: "business growth", talent_supply: "talent supply",
+        customer_experience: "customer experience", employee_experience: "employee experience",
+      };
+      const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
+      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led" };
+      const PHILOSOPHY_VERBS: Record<string, string> = {
+        amplify: "use AI to amplify what our people do",
+        automate: "automate routine processes end-to-end",
+        substitute: "replace headcount in areas where AI can do the work",
+      };
+
+      const outcomeLabel = input.outcomeChased ? OUTCOME_LABELS[input.outcomeChased] : "strategic improvement";
+      const philosophyVerb = input.augmentationPhilosophy ? PHILOSOPHY_VERBS[input.augmentationPhilosophy] : "apply AI thoughtfully";
+      const allPainAreas = [...input.painAreas, ...input.painAreasOther];
+      const allReinvestment = [...input.reinvestmentTargets, ...input.reinvestmentTargetsOther];
+      const timeLabel = input.timeHorizonYears === 1 ? "1 year" : `${input.timeHorizonYears} years`;
+      const govLocks = input.governanceLocks.length > 0 ? input.governanceLocks.join(", ") : "hiring, firing, pay and promotion";
+
       const systemPrompt = [
         "You are an expert HR strategy consultant writing for a CHRO audience.",
-        "Your task: write a single board-ready AI vision statement (2-3 sentences, 40-70 words) that:",
-        "- Opens with a concrete outcome claim, NOT We will or Our vision is",
-        "- Names the specific HR processes or business outcomes AI will change",
-        "- Anchors to the user own words - do not paraphrase or genericise",
-        "- Reflects the time horizon and geographic scope provided",
-        "- Ends with the HR function specific role in making this happen",
-        "FORBIDDEN OPENERS: We will, Our vision, Our goal, We aim, We seek, We aspire",
-        "Return ONLY the vision statement text - no quotes, no preamble, no JSON.",
+        "Write a single board-ready AI vision statement: 2-3 sentences, max 80 words.",
+        "Requirements:",
+        "- Open with a concrete outcome claim. NEVER start with: We will, Our vision, Our goal, We aim, We seek, We aspire, Our ambition",
+        "- Reference the org descriptor (sector and scale) if provided",
+        "- Name the time horizon explicitly",
+        "- Use the augmentation philosophy as a plain-English verb phrase",
+        "- Name the strategic outcome being chased",
+        "- Reference at least 2 pain areas and 1 reinvestment target",
+        "- State the governance posture (people sign off on: " + govLocks + ")",
+        "- End with the HR function's specific role",
+        "FORBIDDEN WORDS: AI-fluent workforce, responsible AI adoption, championing, fundamentally reshape, transformative AI capabilities, strategic partner, strategic enabler",
+        "FORBIDDEN: any percentage or number not present in the inputs",
+        "Return ONLY the vision statement text. No quotes, no preamble, no JSON.",
       ].join("\n");
+
       const userPrompt = [
-        `Sector: ${input.sector}${input.orgSize ? ` (${input.orgSize})` : ""}`,
+        input.orgDescriptor ? `Organisation: ${input.orgDescriptor}` : "Organisation: not specified",
         `Time horizon: ${timeLabel}`,
-        `Geographic scope: ${input.geographicScope}`,
-        "",
-        `Ambition statement: ${input.ambitionStatement}`,
-        `AI role in HR: ${input.aiRoleInHR}`,
-        `AI role in business: ${input.aiRoleInBusiness}`,
-        `Constraints: ${input.constraints}`,
-        `Success looks like: ${input.successLooksLike}`,
-        `What will NOT change: ${input.whatWontChange}`,
-      ].join("\n");
+        `Strategic outcome: ${outcomeLabel}`,
+        `Business ambition tier: ${BUSINESS_TIER_LABELS[input.businessAmbitionTier] ?? input.businessAmbitionTier}`,
+        `HR delivery tier: ${HR_TIER_LABELS[input.hrDeliveryTier] ?? input.hrDeliveryTier}`,
+        `Augmentation philosophy: ${philosophyVerb}`,
+        `Pain areas: ${allPainAreas.length > 0 ? allPainAreas.join(", ") : "not specified"}`,
+        `Reinvestment targets: ${allReinvestment.length > 0 ? allReinvestment.join(", ") : "not specified"}`,
+        `Governance locks (humans must sign off): ${govLocks}`,
+        input.capabilityScore != null ? `HR AI capability score: ${input.capabilityScore.toFixed(1)}/10 (${input.capabilityLabel ?? ""})` : "",
+      ].filter(Boolean).join("\n");
+
       const resp = await invokeLLM({
         messages: [
           { role: "system", content: systemPrompt },

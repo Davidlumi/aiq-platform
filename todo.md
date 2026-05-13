@@ -3110,3 +3110,16 @@ test
 - [x] P1: Hero strip bottom border renders at 0.5px tertiary (borderBottom inline style)
 - [x] P1: Whole-card click target works on all six cards (DomainCard is a full-surface button)
 - [x] Regression: level descriptors, no /10, greeting, progress sentence, activity strip, domain icons, ordering, Continue Learning card
+
+## Vision Modal — Full Rebuild (vision_modal_build_brief.md)
+
+- [x] Backend: update saveVisionInputs to brief-spec data model (outcomeChased, businessAmbitionTier, hrDeliveryTier, augmentationPhilosophy, painAreas, painAreasOther, reinvestmentTargets, reinvestmentTargetsOther, timeHorizonYears, governanceLocks)
+- [x] Backend: update generateVisionDraft prompt to use brief-spec inputs with human-readable label mapping
+- [x] VisionModal: Section 1 — 5 outcome cards (single-select), 4-stop business tier slider, 4-stop HR delivery tier slider, 3 philosophy cards
+- [x] VisionModal: Section 2 — pain area chips (multi-select + Other inline input), reinvestment chips (multi-select + Other inline input)
+- [x] VisionModal: Section 3 — time horizon pill toggle (1/3/5 yrs), governance lock chips (4 pre-locked defaults + 4 optional)
+- [x] VisionModal: draft block with threshold check (outcomeChased + philosophy + ≥1 pain + ≥1 reinvest), skeleton, editable textarea, stale tag, Regenerate
+- [x] VisionModal: footer (Cancel + Save), autosave every 5s, unsaved-changes guard on Esc/backdrop
+- [x] VisionModal: context strip with orgDescriptor (sector · headcount) and capability score (both with empty states)
+- [x] Wire to StrategyAmbitionPage with orgDescriptor built from companyName · sector · headcount
+- [x] TypeScript: 0 errors · Tests: 930/930 passing
