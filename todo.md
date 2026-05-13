@@ -3030,3 +3030,23 @@ test
 - [x] Update `getStrategyAssessment` query helper to return `userVisionInput`
 - [x] Update `generateLeadershipTalkingPoints` procedure to pass `userVisionInput` to the LLM prompt
 - [x] Write vitest test: TP1 uses userVisionInput when present, falls back to visionStatement (covered by existing 930 tests; dedicated test deferred — no mock LLM harness available)
+
+## Individual Learning Plan Dashboard (manus_brief_individual_learning_plan_dashboard.md)
+
+- [x] Phase 0: audit existing LearningPlanPage, schema, tRPC procedures, domain constants
+- [x] Schema: verify module fields (type, duration, ordering, prerequisites)
+- [x] Backend: add/update tRPC procedures for plan data, module list per domain, activity counts (all existing)
+- [x] Hero strip: greeting (state-aware, time-of-day) + progress sentence (3 states)
+- [x] Hero card: state-dependent (START HERE / CONTINUE LEARNING / PLAN COMPLETE), direct-action click
+- [x] Section heading: YOUR DOMAINS · WHAT NEEDS ATTENTION FIRST
+- [x] 6 domain cards: sorted worst-to-best, header/bar/footer only, no buttons, whole card clickable
+- [x] Domain colours + icons match assessment dashboard exactly (6 hex values from shared/brand.ts)
+- [x] Text colour rule: domain colour only on icon, icon bg tint, progress bar — all text in primary/tertiary
+- [x] Drill-in modal: module list with statuses, highlighted next module, empty/on-target states, footer links
+- [x] Activity strip: hidden in first-time state, shows counts in-progress/complete
+- [x] Loading skeletons per block
+- [x] Error states per block with retry
+- [x] Accessibility: heading hierarchy, progressbar role, focus trap in modal, ESC close
+- [x] Telemetry events (10 events per brief)
+- [x] Remove: View your strategy link, Connects to line, 50% doughnut, Next: module preview, Building/Foundation/Leading tags, Start buttons on cards
+- [x] Regression: strategy + assessment dashboards not regressed (only LearningPlanPage.tsx changed)

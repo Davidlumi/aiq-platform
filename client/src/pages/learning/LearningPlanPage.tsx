@@ -1,29 +1,27 @@
 /**
- * LearningPlanPage — v2 Rebuild
+ * LearningPlanPage — v3 Rebuild
+ * Implements manus_brief_individual_learning_plan_dashboard.md
  *
- * Block A: Header zone (A1 contextual greeting, A2 continue-learning strip, A3 progress framing)
- * Block B: Strategy linkage (B1 in-flight initiatives panel, B2 modules-per-initiative route)
- * Block C: Domain cards (C1 score demoted, C2 subtle tints, C3 readiness badge removed)
- * Block D: Recent activity (D1 compact completions, D2 coaching conversations)
+ * Sections:
+ *   A. Hero strip: greeting + progress sentence (3 lifecycle states)
+ *   B. Hero card: state-dependent direct-action card (START HERE / CONTINUE / COMPLETE)
+ *   C. Domain cards grid: 6 cards sorted worst-to-best, whole card clickable, no buttons
+ *   D. Domain drill-in modal: module list, statuses, highlighted next, empty/on-target states
+ *   E. Activity strip: hidden in first-time state, compact counts in-progress/complete
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  BookOpen, FileText, HelpCircle, Layers, Video, MessageSquare,
-  Users, Clock, CheckCircle2, Lock, Play,
-  Brain, Target, Sparkles, ArrowRight,
-  ChevronDown, ChevronUp, TrendingUp, Flag,
-  MessageCircle, ScanSearch, ShieldCheck, Workflow,
+  MessageSquare, ScanSearch, Workflow, Users, ShieldCheck, TrendingUp,
+  BookOpen, Video, FileText, HelpCircle, Brain, Target, Layers,
+  CheckCircle2, Lock, Play, ArrowRight, X, MessageCircle,
+  Clock, Sparkles, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS,
-} from "../../../../shared/dashboard";
+import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS } from "../../../../shared/brand";
 
-// ── Domain icon map ────────────────────────────────────────────────────────────
+// ─── Domain icon map (matches assessment dashboard exactly) ───────────────────
 const DOMAIN_ICONS: Record<string, React.ElementType> = {
   ai_interaction:         MessageSquare,
   ai_output_evaluation:   ScanSearch,
@@ -33,8 +31,18 @@ const DOMAIN_ICONS: Record<string, React.ElementType> = {
   ai_change_leadership:   TrendingUp,
 };
 
-// ── Modality icons ─────────────────────────────────────────────────────────────
-const MODALITY_ICONS: Record<string, React.ElementType> = {
+// ─── Module type labels ───────────────────────────────────────────────────────
+const MODULE_TYPE_LABELS: Record<string, string> = {
+  tutorial:   "Explainer",
+  practical:  "Practical Activity",
+  case_study: "Case Study",
+  quiz:       "Knowledge Check",
+  scenario:   "Scenario Practice",
+  video:      "Video Lesson",
+  reflection: "Guided Reflection",
+  coaching:   "AI Coaching",
+};
+const MODULE_TYPE_ICONS: Record<string, React.ElementType> = {
   tutorial:   BookOpen,
   video:      Video,
   scenario:   FileText,
@@ -45,28 +53,7 @@ const MODALITY_ICONS: Record<string, React.ElementType> = {
   reflection: Layers,
 };
 
-const LESSON_FORMAT_LABELS: Record<string, string> = {
-  tutorial:   "Explainer",
-  practical:  "Practical Activity",
-  case_study: "Case Study",
-  quiz:       "Knowledge Check",
-  scenario:   "Scenario Practice",
-  video:      "Video Lesson",
-  reflection: "Guided Reflection",
-  coaching:   "AI Coaching",
-};
-
-function getLearningPhase(levelLabel: string): { label: string; color: string; bg: string } {
-  const l = (levelLabel ?? "").toLowerCase();
-  if (l === "foundation" || l === "beginner" || l === "emerging")
-    return { label: "Foundation", color: "#6366F1", bg: "#6366F118" };
-  if (l === "developing" || l === "practitioner")
-    return { label: "Building", color: "#C8B07A", bg: "#C8B07A18" };
-  if (l === "advanced" || l === "expert" || l === "capable" || l === "strong")
-    return { label: "Leading", color: "#047857", bg: "#04785718" };
-  return { label: "Foundation", color: "#6366F1", bg: "#6366F118" };
-}
-
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -74,406 +61,584 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-function relativeTime(ts: number | null): string {
+function relativeAge(ts: number | null): string {
   if (!ts) return "";
-  const diff = Date.now() - ts;
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const days = Math.floor((Date.now() - ts) / 86400000);
   if (days === 0) return "today";
   if (days === 1) return "yesterday";
   if (days < 7) return `${days} days ago`;
   if (days < 14) return "last week";
-  return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  return `${Math.floor(days / 30)} months ago`;
 }
 
-// ── Module row ─────────────────────────────────────────────────────────────────
-function ModuleRow({
-  item, index, isNext, onStart,
+// Derive lifecycle state from plan data
+type PlanState = "first-time" | "in-progress" | "complete";
+function getPlanState(totalModules: number, completedModules: number): PlanState {
+  if (totalModules === 0 || completedModules === 0) return "first-time";
+  if (completedModules >= totalModules) return "complete";
+  return "in-progress";
+}
+
+// ─── Module status icon ───────────────────────────────────────────────────────
+function ModuleStatusIcon({ status, domainColour, isNext }: {
+  status: string; domainColour: string; isNext: boolean;
+}) {
+  if (status === "completed")
+    return <CheckCircle2 className="h-4 w-4 flex-shrink-0" style={{ color: "#047857" }} aria-hidden="true" />;
+  if (status === "locked")
+    return <Lock className="h-4 w-4 flex-shrink-0 text-muted-foreground/40" aria-hidden="true" />;
+  if (isNext)
+    return (
+      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `${domainColour}22` }}>
+        <Play className="h-2.5 w-2.5" style={{ color: domainColour }} aria-hidden="true" />
+      </div>
+    );
+  // available but not next
+  return (
+    <div className="w-4 h-4 rounded-full border border-border/50 flex-shrink-0" aria-hidden="true" />
+  );
+}
+
+// ─── Modal module row ─────────────────────────────────────────────────────────
+function ModalModuleRow({
+  item, isNext, domainColour, onStart, onReview,
 }: {
-  item: any; index: number; isNext: boolean; onStart: () => void;
+  item: any; isNext: boolean; domainColour: string;
+  onStart: () => void; onReview: () => void;
 }) {
   const mod = item.module ?? {};
-  const ModalityIcon = MODALITY_ICONS[mod.modality] ?? BookOpen;
   const isCompleted = item.status === "completed";
   const isLocked = item.status === "locked";
-  const isInProgress = item.status === "in_progress"
-    || (item.startedAt && !item.completedAt && !isCompleted && !isLocked);
+  const TypeIcon = MODULE_TYPE_ICONS[mod.modality] ?? BookOpen;
+  const typeLabel = MODULE_TYPE_LABELS[mod.modality] ?? mod.modality ?? "Module";
+  const durationLabel = mod.durationMins ? `${mod.durationMins} min` : null;
+  const statusText = isCompleted ? "Completed" : isLocked ? "Locked" : isNext ? "Up next" : "Available";
+
   return (
-    <div className={cn(
-      "flex items-center gap-3 p-3 rounded-xl border transition-all",
-      isNext ? "border-primary/30 bg-primary/5"
-        : isCompleted ? "border-border/30 bg-muted/15"
-        : isLocked ? "border-border/20 bg-muted/8 opacity-55"
-        : "border-border bg-card hover:border-border/70"
-    )}>
-      <div className={cn(
-        "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold",
-        isCompleted ? "bg-[#047857]/15 text-[#047857]"
-          : isLocked ? "bg-muted text-muted-foreground"
-          : isNext ? "bg-primary/15 text-primary"
-          : "bg-muted/50 text-muted-foreground"
-      )}>
-        {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" />
-          : isLocked ? <Lock className="h-3 w-3" />
-          : index + 1}
-      </div>
+    <div
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors",
+        isNext && "rounded-xl",
+        isCompleted && "opacity-70",
+        isLocked && "opacity-40",
+      )}
+      style={isNext ? { backgroundColor: `${domainColour}0a` } : undefined}
+    >
+      <ModuleStatusIcon status={item.status} domainColour={domainColour} isNext={isNext} />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-          <span className={cn("text-sm font-medium leading-snug truncate",
-            isCompleted && "text-muted-foreground line-through decoration-muted-foreground/40")}>
-            {mod.title ?? "Module"}
+        <p className={cn(
+          "text-[13px] font-medium leading-snug",
+          isCompleted && "line-through decoration-muted-foreground/40 text-muted-foreground",
+        )}>
+          {mod.title ?? "Module"}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          <span className="inline-flex items-center gap-1">
+            <TypeIcon className="h-2.5 w-2.5" aria-hidden="true" />
+            {typeLabel}
           </span>
-          {isNext && (
-            <span className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1 flex-shrink-0">
-              Next
-            </span>
-          )}
-          {isInProgress && !isNext && (
-            <span className="text-[10px] font-medium text-[#C8B07A] flex-shrink-0">In progress</span>
-          )}
-        </div>
-        {(() => {
-          const body = typeof mod.bodyJson === "string"
-            ? (() => { try { return JSON.parse(mod.bodyJson); } catch { return {}; } })()
-            : (mod.bodyJson ?? {});
-          const hook = body?.introduction?.hook;
-          return hook
-            ? <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2 pr-2">{hook}</p>
-            : null;
-        })()}
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          {mod.modality && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-              <ModalityIcon className="h-2.5 w-2.5" />
-              {LESSON_FORMAT_LABELS[mod.modality] ?? mod.modality}
-            </span>
-          )}
-          {mod.levelLabel && (() => {
-            const phase = getLearningPhase(mod.levelLabel);
-            return (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                style={{ color: phase.color, backgroundColor: phase.bg }}>
-                {phase.label}
-              </span>
-            );
-          })()}
-          {mod.durationMins && (
-            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-              <Clock className="h-2.5 w-2.5" />{mod.durationMins} min
-            </span>
-          )}
-        </div>
+          {durationLabel && <> · {durationLabel}</>}
+          {" · "}{statusText}
+        </p>
       </div>
       {isCompleted ? (
-        <span className="flex items-center gap-1 text-xs font-medium text-[#047857] flex-shrink-0">
-          <CheckCircle2 className="h-3.5 w-3.5" />Completed
-        </span>
-      ) : isLocked ? null : (
-        <button onClick={onStart} className={cn(
-          "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all flex-shrink-0",
-          isNext
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-muted text-foreground hover:bg-muted/80"
-        )}>
-          <Play className="h-3 w-3" />
-          {isInProgress ? "Resume" : "Start"}
+        <button
+          onClick={onReview}
+          className="text-[11px] font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 flex-shrink-0"
+        >
+          Review
+        </button>
+      ) : isLocked ? null : isNext ? (
+        <button
+          onClick={onStart}
+          className="text-[11px] font-semibold px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors"
+          style={{ backgroundColor: domainColour, color: "#fff" }}
+        >
+          Start
+        </button>
+      ) : (
+        <button
+          onClick={onStart}
+          className="text-[11px] font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 flex-shrink-0"
+        >
+          Start
         </button>
       )}
     </div>
   );
 }
 
-// ── Block C: Domain card ───────────────────────────────────────────────────────
-function DomainCard({
-  domainKey, items, nextItem, domainScore, onStart, connectsTo, onViewInitiative,
+// ─── Domain drill-in modal ────────────────────────────────────────────────────
+function DomainModal({
+  domainKey, items, nextItemId, domainScore, levelLabel, growthArea,
+  onClose, onStart,
 }: {
-  domainKey: string;
-  items: any[];
-  nextItem: any | null;
-  domainScore: number | null;
-  onStart: (item: any) => void;
-  connectsTo?: { initiativeId: string; name: string } | null;
-  onViewInitiative?: (initiativeId: string) => void;
+  domainKey: string; items: any[]; nextItemId: string | null;
+  domainScore: number | null; levelLabel: string | null; growthArea: string | null;
+  onClose: () => void; onStart: (item: any) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
   const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#4477AA";
-  const bgColour = DOMAIN_BG_COLOURS[domainKey as keyof typeof DOMAIN_BG_COLOURS] ?? "rgba(68,119,170,0.12)";
+  const DomainIcon = DOMAIN_ICONS[domainKey] ?? BookOpen;
+  const completedCount = items.filter(i => i.status === "completed").length;
+  const totalCount = items.length;
+  const scoreDisplay = domainScore !== null && domainScore > 0
+    ? (domainScore / 10).toFixed(1)
+    : null;
+
+  // Determine modal state
+  const hasModules = totalCount > 0;
+  const isOnTarget = !hasModules && domainScore !== null && domainScore >= 70;
+  const isEmpty = !hasModules && !isOnTarget;
+
+  // Focus trap
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${label} learning modules`}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Sheet */}
+      <div
+        ref={modalRef}
+        className="relative w-full sm:max-w-lg bg-card border border-border rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-border/40 flex-shrink-0">
+          <div
+            className="w-[26px] h-[26px] rounded-md flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${colour}26` }}
+            aria-hidden="true"
+          >
+            <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">{label}</h2>
+            {scoreDisplay && levelLabel && (
+              <p className="text-[11px] text-muted-foreground">
+                <span className="tabular-nums font-medium text-foreground">{scoreDisplay}</span>
+                <span className="text-muted-foreground">/10</span>
+                {" · "}
+                <span className="uppercase tracking-widest text-[9px]">{levelLabel}</span>
+              </p>
+            )}
+          </div>
+          <button
+            ref={closeRef}
+            onClick={onClose}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1">
+          {hasModules ? (
+            <>
+              {/* Progress summary */}
+              <div className="px-5 py-3 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex-1 h-1.5 rounded-full overflow-hidden"
+                    style={{ backgroundColor: `${colour}20` }}
+                    role="progressbar"
+                    aria-valuenow={completedCount}
+                    aria-valuemin={0}
+                    aria-valuemax={totalCount}
+                    aria-valuetext={`${completedCount} of ${totalCount} modules done`}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: totalCount > 0 ? `${Math.round((completedCount / totalCount) * 100)}%` : "0%",
+                        backgroundColor: colour,
+                      }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground tabular-nums flex-shrink-0">
+                    {completedCount} of {totalCount} modules done
+                  </span>
+                </div>
+              </div>
+              {/* Module list */}
+              <div className="py-2">
+                {items.map((item: any) => (
+                  <ModalModuleRow
+                    key={item.id}
+                    item={item}
+                    isNext={item.id === nextItemId}
+                    domainColour={colour}
+                    onStart={() => { onClose(); onStart(item); }}
+                    onReview={() => { onClose(); onStart(item); }}
+                  />
+                ))}
+              </div>
+            </>
+          ) : isOnTarget ? (
+            <div className="px-5 py-8 text-center space-y-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto"
+                style={{ backgroundColor: `${colour}18` }}
+              >
+                <CheckCircle2 className="h-5 w-5" style={{ color: colour }} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">You're on target</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  No modules in your plan — your current capability meets the requirement for this domain.
+                </p>
+                {growthArea && (
+                  <p className="text-xs text-muted-foreground mt-2 italic">"{growthArea}"</p>
+                )}
+              </div>
+              <button
+                onClick={() => { onClose(); setLocation("/learning/library"); }}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Browse {label} modules to extend →
+              </button>
+            </div>
+          ) : (
+            /* Empty priority state */
+            <div className="px-5 py-8 text-center space-y-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto"
+                style={{ backgroundColor: `${colour}18` }}
+              >
+                <DomainIcon className="h-5 w-5" style={{ color: colour }} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">No modules in your plan yet</p>
+                {growthArea && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Assessment growth area: <span className="text-foreground">{growthArea}</span>
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your L&D team can add modules for this domain to your plan.
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  className="text-xs font-medium text-primary hover:underline"
+                  onClick={() => { onClose(); }}
+                >
+                  Talk to your L&D team →
+                </button>
+                <button
+                  onClick={() => { onClose(); setLocation("/learning/library"); }}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  Browse {label} in the library →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {hasModules && (
+          <div className="px-5 py-3 border-t border-border/30 flex-shrink-0">
+            <button
+              onClick={() => { onClose(); setLocation("/learning/library"); }}
+              className="text-[12px] font-medium text-primary hover:underline underline-offset-2"
+            >
+              Browse more modules in {label} →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Domain card ──────────────────────────────────────────────────────────────
+function DomainCard({
+  domainKey, items, nextItemId, domainScore, levelLabel, onClick,
+}: {
+  domainKey: string; items: any[]; nextItemId: string | null;
+  domainScore: number | null; levelLabel: string | null;
+  onClick: () => void;
+}) {
+  const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
+  const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#4477AA";
   const DomainIcon = DOMAIN_ICONS[domainKey] ?? BookOpen;
   const completedCount = items.filter(i => i.status === "completed").length;
   const totalCount = items.length;
   const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const nextInDomain = items.find(i => i.status === "in_progress" || i.status === "available");
-  const hasNext = items.some(i => nextItem && i.id === nextItem.id);
-  // C1: score demoted to small text
   const scoreDisplay = domainScore !== null && domainScore > 0
-    ? `${(domainScore / 10).toFixed(1)} / 10`
+    ? (domainScore / 10).toFixed(1)
     : null;
+  const levelUpper = levelLabel ? levelLabel.toUpperCase() : null;
+
+  // Card state text
+  let statusText: string;
+  if (totalCount === 0 && domainScore !== null && domainScore >= 70) {
+    statusText = "On target";
+  } else if (totalCount === 0) {
+    statusText = "No modules yet";
+  } else {
+    statusText = `${completedCount} of ${totalCount} modules done`;
+  }
 
   return (
-    // C2: subtle domain tint on card background
-    <div className="rounded-2xl border border-border overflow-hidden"
-      style={{ backgroundColor: bgColour, boxShadow: "var(--card-shadow)" }}>
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full text-left p-5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-2xl border border-border/60 overflow-hidden transition-all hover:border-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label={`${label} — ${statusText}. Click to view modules.`}
+    >
+      {/* Card header */}
+      <div className="p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${colour}22` }}>
-            <DomainIcon className="h-5 w-5" style={{ color: colour }} />
+          {/* Icon in tinted box — 26×26, rgba at 0.15 */}
+          <div
+            className="w-[26px] h-[26px] rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ backgroundColor: `${colour}26` }}
+            aria-hidden="true"
+          >
+            <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
           </div>
           <div className="flex-1 min-w-0">
-            {/* C3: no readiness badge — just domain name */}
-            <h3 className="text-sm font-semibold text-foreground mb-2">{label}</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, backgroundColor: colour }} />
-              </div>
-              <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                {totalCount === 0 ? "No gaps" : `${completedCount}/${totalCount}`}
-              </span>
-            </div>
-            {/* C1: score shown small below progress */}
+            <h3 className="text-[13px] font-semibold text-foreground leading-snug">{label}</h3>
             {scoreDisplay && (
-              <p className="text-[10px] text-muted-foreground mt-1">Score: {scoreDisplay}</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-[16px] font-semibold tabular-nums text-foreground leading-none">
+                  {scoreDisplay}
+                </span>
+                <span className="text-[11px] text-muted-foreground">/10</span>
+              </div>
             )}
-            {/* B2: connects-to initiative clickable link */}
-            {connectsTo && onViewInitiative && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Connects to:{" "}
-                <button
-                  onClick={(e) => { e.stopPropagation(); onViewInitiative(connectsTo.initiativeId); }}
-                  className="text-primary hover:underline font-medium">
-                  {connectsTo.name}
-                </button>
+            {levelUpper && (
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mt-0.5">
+                {levelUpper}
               </p>
             )}
           </div>
-          <div className="flex-shrink-0 text-muted-foreground mt-1">
-            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </div>
         </div>
-        {!open && nextInDomain && (
-          <div className="mt-3 flex items-center gap-2 pt-3 border-t border-border/30">
-            <Play className="h-3 w-3 text-primary flex-shrink-0" />
-            <span className="text-xs text-muted-foreground truncate flex-1">
-              {hasNext ? "Next up: " : ""}{nextInDomain.module?.title ?? "Continue"}
-            </span>
-            <span className="text-xs font-semibold text-primary flex-shrink-0">
-              {nextInDomain.status === "in_progress" ? "Resume →" : "Start →"}
-            </span>
+      </div>
+
+      {/* Progress bar */}
+      {totalCount > 0 && (
+        <div className="px-4 pb-3">
+          <div
+            className="h-1 rounded-full overflow-hidden"
+            style={{ backgroundColor: `${colour}20` }}
+            role="progressbar"
+            aria-valuenow={completedCount}
+            aria-valuemin={0}
+            aria-valuemax={totalCount}
+            aria-valuetext={statusText}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${pct}%`, backgroundColor: colour }}
+            />
           </div>
-        )}
-      </button>
-      {open && (
-        <div className="px-5 pb-5 pt-3 border-t border-border/30 space-y-2">
-          {items.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-3 text-center">
-              No modules assigned for this domain.
-            </p>
-          ) : (
-            items.map((item: any, i: number) => (
-              <ModuleRow key={item.id} item={item} index={i}
-                isNext={!!(nextItem && item.id === nextItem.id)}
-                onStart={() => onStart(item)} />
-            ))
-          )}
         </div>
       )}
-    </div>
+
+      {/* Card footer */}
+      <div className="flex items-center justify-between px-4 pb-4">
+        <span className="text-[11px] text-muted-foreground">{statusText}</span>
+        <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
+          View <ChevronRight className="h-3 w-3" aria-hidden="true" />
+        </span>
+      </div>
+    </button>
   );
 }
 
-// ── Block B: Initiative card ───────────────────────────────────────────────────
-function InitiativeCard({
-  initiative, onViewModules,
+// ─── Hero card ────────────────────────────────────────────────────────────────
+function HeroCard({
+  planState, nextItem, totalModules, completedModules, lastAssessedAt,
+  onAction,
 }: {
-  initiative: {
-    id: string; initiativeId: string; name: string; category: string;
-    phase: string; status: string; moduleCount: number; completedCount: number;
-  };
-  onViewModules: (initiativeId: string, initiativeName: string) => void;
+  planState: PlanState; nextItem: any | null; totalModules: number;
+  completedModules: number; lastAssessedAt: number | null;
+  onAction: () => void;
 }) {
-  const pct = initiative.moduleCount > 0
-    ? Math.round((initiative.completedCount / initiative.moduleCount) * 100)
-    : 0;
-  const statusColor = initiative.status === "in_progress"
-    ? { color: "#C8B07A", bg: "#C8B07A18", label: "In progress" }
-    : initiative.status === "completed"
-    ? { color: "#047857", bg: "#04785718", label: "Completed" }
-    : { color: "#888", bg: "#88888818", label: "Planned" };
+  const mod = nextItem?.module ?? {};
+  const domainKey = mod.capability ?? "";
+  const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "var(--primary)";
+  const DomainIcon = DOMAIN_ICONS[domainKey] ?? BookOpen;
 
-  return (
-    <div className="flex items-start gap-3 p-3 rounded-xl border border-border/60 bg-card/60 hover:bg-card/80 transition-colors">
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-        <Flag className="h-4 w-4 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium text-foreground leading-snug">{initiative.name}</p>
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{ color: statusColor.color, backgroundColor: statusColor.bg }}>
-            {statusColor.label}
-          </span>
-        </div>
-        <p className="text-[10px] text-muted-foreground mb-2">
-          {initiative.category} · {initiative.phase}
-        </p>
-        {initiative.moduleCount > 0 && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex-1 h-1 rounded-full bg-muted/50 overflow-hidden">
-              <div className="h-full rounded-full bg-primary/60 transition-all duration-500"
-                style={{ width: `${pct}%` }} />
-            </div>
-            <span className="text-[10px] text-muted-foreground tabular-nums flex-shrink-0">
-              {initiative.completedCount}/{initiative.moduleCount} modules
-            </span>
+  if (planState === "first-time") {
+    return (
+      <button
+        onClick={onAction}
+        className="w-full text-left p-5 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label="Start your first module"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
           </div>
-        )}
-        {initiative.moduleCount > 0 ? (
-          <button
-            onClick={() => onViewModules(initiative.initiativeId, initiative.name)}
-            className="text-[10px] font-semibold text-primary hover:underline">
-            View linked modules →
-          </button>
-        ) : (
-          <p className="text-[10px] text-muted-foreground italic">
-            No modules linked to this initiative yet
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Block D: Recent completion row ────────────────────────────────────────────
-function CompletionRow({ completion }: {
-  completion: {
-    id: string; moduleId: string; completedAt: number | null;
-    title: string; capability: string | null; durationMins: number | null;
-    levelLabel: string | null; hasCoachingFeedback: boolean;
-  };
-}) {
-  const colour = completion.capability
-    ? (DOMAIN_COLOURS[completion.capability as keyof typeof DOMAIN_COLOURS] ?? "#888")
-    : "#888";
-  const DomainIcon = completion.capability
-    ? (DOMAIN_ICONS[completion.capability] ?? BookOpen)
-    : BookOpen;
-
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-border/30 last:border-0">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${colour}18` }}>
-        <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{completion.title}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          {completion.durationMins && (
-            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-              <Clock className="h-2.5 w-2.5" />{completion.durationMins} min
-            </span>
-          )}
-          {completion.levelLabel && (() => {
-            const phase = getLearningPhase(completion.levelLabel);
-            return (
-              <span className="text-[10px] font-semibold" style={{ color: phase.color }}>
-                {phase.label}
-              </span>
-            );
-          })()}
-          {completion.hasCoachingFeedback && (
-            <span className="text-[10px] text-primary flex items-center gap-0.5">
-              <MessageCircle className="h-2.5 w-2.5" />Coaching
-            </span>
-          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
+              START HERE
+            </p>
+            <p className="text-sm font-semibold text-foreground truncate">
+              {mod.title ?? "Begin your learning plan"}
+            </p>
+            {mod.durationMins && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Module 1 of {totalModules} · {mod.durationMins} min
+              </p>
+            )}
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
         </div>
-      </div>
-      <span className="text-[10px] text-muted-foreground flex-shrink-0">
-        {relativeTime(completion.completedAt)}
-      </span>
-    </div>
-  );
-}
-
-// ── Block D: Coaching conversation row ────────────────────────────────────────
-function CoachingRow({ conv, onOpen }: {
-  conv: {
-    id: string; moduleId: string | null; moduleTitle: string;
-    moduleCapability: string | null; messageCount: number;
-    lastActiveAt: number | null; lastMessage: string | null;
-  };
-  onOpen: (id: string) => void;
-}) {
-  const colour = conv.moduleCapability
-    ? (DOMAIN_COLOURS[conv.moduleCapability as keyof typeof DOMAIN_COLOURS] ?? "#888")
-    : "#888";
-
-  return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-border/30 last:border-0">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-        style={{ backgroundColor: `${colour}18` }}>
-        <MessageCircle className="h-3.5 w-3.5" style={{ color: colour }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{conv.moduleTitle}</p>
-        {conv.lastMessage && (
-          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{conv.lastMessage}…</p>
-        )}
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-[10px] text-muted-foreground">{conv.messageCount} messages</span>
-          <span className="text-[10px] text-muted-foreground">·</span>
-          <span className="text-[10px] text-muted-foreground">{relativeTime(conv.lastActiveAt)}</span>
-        </div>
-      </div>
-      <button onClick={() => onOpen(conv.id)}
-        className="text-[10px] font-semibold text-primary hover:underline flex-shrink-0 mt-1">
-        View →
       </button>
+    );
+  }
+
+  if (planState === "complete") {
+    const ageText = lastAssessedAt ? `Last assessed ${relativeAge(lastAssessedAt)}` : null;
+    return (
+      <button
+        onClick={onAction}
+        className="w-full text-left p-5 rounded-2xl border border-[#047857]/30 bg-[#047857]/5 hover:bg-[#047857]/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#047857]"
+        aria-label="Plan complete — start reassessment"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#047857]/15 flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="h-5 w-5 text-[#047857]" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-[#047857] uppercase tracking-widest mb-0.5">
+              PLAN COMPLETE — TIME TO REASSESS
+            </p>
+            <p className="text-sm font-semibold text-foreground">
+              {completedModules} modules completed
+            </p>
+            {ageText && (
+              <p className="text-xs text-muted-foreground mt-0.5">{ageText}</p>
+            )}
+          </div>
+          <ArrowRight className="h-5 w-5 text-[#047857] flex-shrink-0" aria-hidden="true" />
+        </div>
+      </button>
+    );
+  }
+
+  // in-progress
+  const isResume = nextItem?.status === "in_progress";
+  return (
+    <button
+      onClick={onAction}
+      className="w-full text-left p-5 rounded-2xl border border-border/60 bg-card hover:border-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label={`${isResume ? "Resume" : "Continue"}: ${mod.title ?? "next module"}`}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${colour}1a` }}
+        >
+          <DomainIcon className="h-5 w-5" style={{ color: colour }} aria-hidden="true" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+            style={{ color: colour }}
+          >
+            CONTINUE LEARNING
+          </p>
+          <p className="text-sm font-semibold text-foreground truncate">
+            {isResume ? "Resume: " : ""}{mod.title ?? "Next module"}
+          </p>
+          {mod.durationMins && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey}
+              {" · "}{mod.durationMins} min
+            </p>
+          )}
+        </div>
+        <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+      </div>
+    </button>
+  );
+}
+
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+function PageSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-5" aria-busy="true" aria-label="Loading learning plan">
+      {/* Hero strip skeleton */}
+      <div className="space-y-1.5">
+        <div className="h-6 w-48 rounded-md bg-muted/40 animate-pulse" />
+        <div className="h-4 w-80 rounded-md bg-muted/30 animate-pulse" />
+      </div>
+      {/* Hero card skeleton */}
+      <div className="h-20 rounded-2xl bg-muted/30 animate-pulse" />
+      {/* Section heading skeleton */}
+      <div className="h-4 w-40 rounded-md bg-muted/30 animate-pulse" />
+      {/* Domain cards skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="h-28 rounded-2xl bg-muted/30 animate-pulse" />
+        ))}
+      </div>
     </div>
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function LearningPlanPage() {
   const [, setLocation] = useLocation();
-  const [initiativeFilter, setInitiativeFilter] = useState<{ id: string; name: string } | null>(null);
+  const [modalDomain, setModalDomain] = useState<string | null>(null);
 
-  const { data: plan, isLoading: planLoading } = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
-    {}, { staleTime: 1000 * 60 * 2 }
-  );
-  const { data: dashData, isLoading: dashLoading } = trpc.dashboardV2.individual.main.useQuery(
-    undefined, { staleTime: 1000 * 60 * 5, retry: false }
-  );
-  const { data: dashboardCtx, isLoading: ctxLoading } = trpc.adaptiveLearning.getLearningDashboard.useQuery(
-    undefined, { staleTime: 1000 * 60 * 3 }
-  );
-  // B1: getInFlightInitiatives query removed — Strategy Initiatives panel removed per cadence principle
-  // B2: getModulesByInitiative retained for per-initiative filtered view (accessed from domain cards + strategy artefact)
-  const { data: initiativeModules, isLoading: initiativeModulesLoading } = trpc.adaptiveLearning.getModulesByInitiative.useQuery(
-    { initiativeId: initiativeFilter?.id ?? "" },
-    { enabled: !!initiativeFilter?.id, staleTime: 1000 * 60 * 2 }
-  );
-  const { data: completionsData, isLoading: completionsLoading } = trpc.adaptiveLearning.getRecentCompletions.useQuery(
-    undefined, { staleTime: 1000 * 60 * 3 }
-  );
-  const { data: coachingConvs, isLoading: coachingLoading } = trpc.adaptiveLearning.getActiveCoachingConversations.useQuery(
-    undefined, { staleTime: 1000 * 60 * 3 }
-  );
+  const { data: plan, isLoading: planLoading, error: planError, refetch: refetchPlan } =
+    trpc.adaptiveLearning.getAdaptivePlan.useQuery({}, { staleTime: 1000 * 60 * 2 });
+
+  const { data: dashData, isLoading: dashLoading } =
+    trpc.dashboardV2.individual.main.useQuery(undefined, { staleTime: 1000 * 60 * 5, retry: false });
+
+  const { data: dashboardCtx, isLoading: ctxLoading } =
+    trpc.adaptiveLearning.getLearningDashboard.useQuery(undefined, { staleTime: 1000 * 60 * 3 });
+
+  const { data: completionsData } =
+    trpc.adaptiveLearning.getRecentCompletions.useQuery(undefined, { staleTime: 1000 * 60 * 3 });
+
+  const { data: coachingConvs } =
+    trpc.adaptiveLearning.getActiveCoachingConversations.useQuery(undefined, { staleTime: 1000 * 60 * 3 });
 
   const isLoading = planLoading || dashLoading || ctxLoading;
 
+  // ── Derived data ────────────────────────────────────────────────────────────
   const items: any[] = plan?.items ?? [];
-  const totalItems = items.length;
-  const completedCount = items.filter(i => i.status === "completed").length;
-  const pct = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
-  const nextItem = items.find(i => i.status === "in_progress" || i.status === "available");
-  const remainingMins = items
-    .filter(i => i.status !== "completed")
-    .reduce((acc: number, i: any) => acc + (i.module?.durationMins ?? 15), 0);
-  const remainingHours = Math.floor(remainingMins / 60);
-  const remainingMinRem = remainingMins % 60;
+  const totalModules = items.length;
+  const completedModules = items.filter(i => i.status === "completed").length;
+  const planState = getPlanState(totalModules, completedModules);
 
+  const nextItem = useMemo(
+    () => items.find(i => i.status === "in_progress" || i.status === "available") ?? null,
+    [items]
+  );
+
+  // Group items by domain
   const grouped = useMemo(() => {
     const map = new Map<string, any[]>();
     DOMAIN_KEYS.forEach(k => map.set(k, []));
@@ -485,297 +650,208 @@ export default function LearningPlanPage() {
     return map;
   }, [items]);
 
-  const allDomainKeys = useMemo(() => {
-    const extra: string[] = [];
-    grouped.forEach((_, k) => {
-      if (!DOMAIN_KEYS.includes(k as any)) extra.push(k);
-    });
-    return [...DOMAIN_KEYS, ...extra];
-  }, [grouped]);
-
+  // Domain scores from dashboardV2 (0–100 integers)
   const domainMap = useMemo(() => {
     const map: Record<string, { score: number; rating: string }> = {};
     for (const d of (dashData?.domains ?? [])) map[d.key] = { score: d.score, rating: d.rating };
     return map;
   }, [dashData]);
 
+  // Sort domains worst-to-best by score (ascending)
+  const sortedDomainKeys = useMemo(() => {
+    return [...DOMAIN_KEYS].sort((a, b) => {
+      const sa = domainMap[a]?.score ?? 0;
+      const sb = domainMap[b]?.score ?? 0;
+      return sa - sb; // ascending = worst first
+    });
+  }, [domainMap]);
+
   const firstName = dashboardCtx?.firstName ?? "";
-  const greeting = getGreeting();
-  const focusDomainLabel = dashboardCtx?.focusDomain
-    ? (DOMAIN_LABELS[dashboardCtx.focusDomain as keyof typeof DOMAIN_LABELS] ?? dashboardCtx.focusDomain)
-    : null;
+  const greeting = planState === "first-time" ? "Welcome" : getGreeting();
 
-  // ── Loading skeleton ──────────────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <div className="max-w-5xl mx-auto space-y-4">
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-14 rounded-xl" />
-        <Skeleton className="h-24 rounded-2xl" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
+  // Progress sentence
+  const progressSentence = useMemo(() => {
+    if (planState === "first-time") {
+      return `${totalModules} module${totalModules !== 1 ? "s" : ""} curated from your assessment — ready to start.`;
+    }
+    if (planState === "complete") {
+      return `All ${totalModules} modules complete. Time to reassess and refresh your plan.`;
+    }
+    return `${completedModules} of ${totalModules} modules done — keep going.`;
+  }, [planState, totalModules, completedModules]);
 
-  // ── No plan state ─────────────────────────────────────────────────────────
-  if (!plan) {
-    return (
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center py-20 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-            <BookOpen className="h-8 w-8 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-2">No Learning Plan Yet</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Complete an assessment to get a personalised learning plan tailored to your capability gaps.
-            </p>
-          </div>
-          <Button onClick={() => setLocation("/assessment")} className="gap-2">
-            <Sparkles className="h-4 w-4" />Start Assessment
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Activity strip visibility
+  const modulesLast30 = completionsData?.totalLast30Days ?? 0;
+  const coachingCount = coachingConvs?.length ?? 0;
+  const showActivityStrip = planState !== "first-time" && (modulesLast30 > 0 || coachingCount > 0);
 
-  // ── Block B2: Initiative modules view ─────────────────────────────────────
-  if (initiativeFilter) {
-    const filteredItems: any[] = initiativeModules?.items ?? [];
+  // Telemetry: dashboard viewed
+  useEffect(() => {
+    if (!isLoading) {
+      // telemetry: learning.dashboard.viewed
+      console.debug("[telemetry] learning.dashboard.viewed", { state: planState, modulesCompleted: completedModules, totalModules });
+    }
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDomainCardClick = useCallback((domainKey: string) => {
+    console.debug("[telemetry] learning.domain.card.clicked", { domain: domainKey, cardState: planState });
+    setModalDomain(domainKey);
+  }, [planState]);
+
+  const handleModalClose = useCallback(() => {
+    setModalDomain(null);
+  }, []);
+
+  const handleHeroAction = useCallback(() => {
+    console.debug("[telemetry] learning.hero.clicked", { state: planState, moduleId: nextItem?.moduleId });
+    if (planState === "complete") {
+      setLocation("/assessment");
+    } else if (nextItem) {
+      setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`);
+    }
+  }, [planState, nextItem, setLocation]);
+
+  const handleModuleStart = useCallback((item: any) => {
+    setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`);
+  }, [setLocation]);
+
+  // ── Loading ─────────────────────────────────────────────────────────────────
+  if (isLoading) return <PageSkeleton />;
+
+  // ── Error ───────────────────────────────────────────────────────────────────
+  if (planError) {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-3xl mx-auto py-16 text-center space-y-4">
+        <p className="text-sm text-muted-foreground">Could not load your learning plan.</p>
         <button
-          onClick={() => setInitiativeFilter(null)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ChevronDown className="h-4 w-4 rotate-90" />Back to Learning Plan
+          onClick={() => refetchPlan()}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          Try again →
         </button>
-        <div className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-card">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Flag className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">Initiative</p>
-            <h2 className="text-base font-semibold text-foreground">{initiativeFilter.name}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Modules from your learning plan linked to this initiative
-            </p>
-          </div>
+      </div>
+    );
+  }
+
+  // ── No plan ─────────────────────────────────────────────────────────────────
+  if (!plan || totalModules === 0) {
+    return (
+      <div className="max-w-3xl mx-auto py-16 text-center space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+          <BookOpen className="h-7 w-7 text-primary" aria-hidden="true" />
         </div>
-        {initiativeModulesLoading ? (
-          <div className="space-y-2">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">
-              No modules in your plan are linked to this initiative.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {filteredItems.map((item: any, i: number) => (
-              <ModuleRow key={item.id} item={item} index={i}
-                isNext={!!(nextItem && item.id === nextItem.id)}
-                onStart={() => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)} />
+        <div>
+          <h2 className="text-lg font-semibold mb-1">No learning plan yet</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            Complete an assessment to get a personalised plan tailored to your capability gaps.
+          </p>
+        </div>
+        <button
+          onClick={() => setLocation("/assessment")}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+        >
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          Start assessment →
+        </button>
+      </div>
+    );
+  }
+
+  // ── Modal data ──────────────────────────────────────────────────────────────
+  const modalItems = modalDomain ? (grouped.get(modalDomain) ?? []) : [];
+  const modalNextItemId = modalDomain
+    ? (modalItems.find(i => nextItem && i.id === nextItem.id)?.id ?? null)
+    : null;
+  const modalDomainScore = modalDomain ? (domainMap[modalDomain]?.score ?? null) : null;
+  const modalLevelLabel = modalDomain ? (domainMap[modalDomain]?.rating ?? null) : null;
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  return (
+    <>
+      <div className="max-w-3xl mx-auto space-y-6">
+
+        {/* A. Hero strip */}
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">
+            {greeting}{firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">{progressSentence}</p>
+        </div>
+
+        {/* B. Hero card */}
+        <HeroCard
+          planState={planState}
+          nextItem={nextItem}
+          totalModules={totalModules}
+          completedModules={completedModules}
+          lastAssessedAt={(dashboardCtx as any)?.lastAssessedAt ?? null}
+          onAction={handleHeroAction}
+        />
+
+        {/* C. Domain cards grid */}
+        <div>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+            Your domains · What needs attention first
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {sortedDomainKeys.map(domainKey => (
+              <DomainCard
+                key={domainKey}
+                domainKey={domainKey}
+                items={grouped.get(domainKey) ?? []}
+                nextItemId={nextItem?.id ?? null}
+                domainScore={domainMap[domainKey]?.score ?? null}
+                levelLabel={domainMap[domainKey]?.rating ?? null}
+                onClick={() => handleDomainCardClick(domainKey)}
+              />
             ))}
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
 
-  // ── Main layout ───────────────────────────────────────────────────────────
-  return (
-    <div className="max-w-5xl mx-auto space-y-6">
-
-      {/* Block A1+A3: Greeting + progress framing (amended per cadence principle v2) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative w-14 h-14 flex-shrink-0">
-            <svg viewBox="0 0 56 56" className="w-full h-full -rotate-90">
-              <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" strokeWidth="4"
-                className="text-muted/30" />
-              <circle cx="28" cy="28" r="22" fill="none" stroke="var(--primary)" strokeWidth="4"
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 22}`}
-                strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct / 100)}`}
-                className="transition-all duration-700" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold text-foreground tabular-nums">{pct}%</span>
+        {/* E. Activity strip */}
+        {showActivityStrip && (
+          <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-border/50">
+            <div className="flex items-center gap-6">
+              <span className="text-[12px] text-muted-foreground flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#047857]" aria-hidden="true" />
+                <strong className="text-foreground">{modulesLast30}</strong>
+                {" "}module{modulesLast30 !== 1 ? "s" : ""} completed in the last 30 days
+              </span>
+              {coachingCount > 0 && (
+                <span className="text-[12px] text-muted-foreground flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                  <strong className="text-foreground">{coachingCount}</strong>
+                  {" "}AI coaching conversation{coachingCount !== 1 ? "s" : ""}
+                </span>
+              )}
             </div>
+            <button
+              onClick={() => {
+                console.debug("[telemetry] learning.activity-see-all.clicked");
+                setLocation("/learning/activity");
+              }}
+              className="text-[12px] font-medium text-primary hover:underline underline-offset-2 flex-shrink-0"
+            >
+              See full activity →
+            </button>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {greeting}{firstName ? `, ${firstName}` : ""}
-            </h1>
-            {/* A1 line 2: module count + strategy-aligned framing */}
-            <p className="text-sm text-muted-foreground mt-0.5">
-              You&apos;re{" "}
-              <span className="text-foreground font-medium">{completedCount} module{completedCount !== 1 ? "s" : ""}</span>{" "}
-              into your strategy-aligned learning plan
-              {totalItems > 0 && (
-                <> — <span className="text-foreground font-medium">{totalItems} modules</span> curated from the full library based on your assessment and AI Strategy</>
-              )}.
-            </p>
-            {/* A1 line 3: personalised current-focus sentence */}
-            {focusDomainLabel && dashboardCtx?.strategyExists && dashboardCtx?.focusInitiative ? (
-              <p className="text-xs text-muted-foreground mt-1">
-                Your current focus is{" "}
-                <span className="text-foreground font-medium">{focusDomainLabel}</span>
-                {" "}(connects to your{" "}
-                <span className="text-foreground font-medium">{dashboardCtx.focusInitiative.name}</span>
-                {" "}initiative).{" "}
-                <button
-                  onClick={() => setLocation("/strategy")}
-                  className="text-primary hover:underline font-medium">
-                  View full strategy →
-                </button>
-              </p>
-            ) : focusDomainLabel && dashboardCtx?.strategyExists ? (
-              <p className="text-xs text-muted-foreground mt-1">
-                Your current focus is{" "}
-                <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
-                <button
-                  onClick={() => setLocation("/strategy")}
-                  className="text-primary hover:underline font-medium">
-                  View full strategy →
-                </button>
-              </p>
-            ) : focusDomainLabel ? (
-              // No strategy yet — generate CTA
-              <p className="text-xs text-muted-foreground mt-1">
-                Your current focus is{" "}
-                <span className="text-foreground font-medium">{focusDomainLabel}</span>.{" "}
-                <button
-                  onClick={() => setLocation("/strategy")}
-                  className="text-primary hover:underline font-medium">
-                  Generate your AI Strategy to see how these modules connect to specific initiatives in your function →
-                </button>
-              </p>
-            ) : null}
-          </div>
-        </div>
+        )}
+
       </div>
 
-      {/* Block A2: Continue Learning strip */}
-      {nextItem && (
-        <button
-          className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors text-left"
-          onClick={() => setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`)}>
-          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-            <Play className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
-              Continue Learning
-            </p>
-            <p className="text-sm font-semibold truncate">{nextItem.module?.title ?? "Next Module"}</p>
-            {nextItem.module?.capability && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {DOMAIN_LABELS[nextItem.module.capability as keyof typeof DOMAIN_LABELS]
-                  ?? nextItem.module.capability}
-                {nextItem.module?.durationMins && ` · ${nextItem.module.durationMins} min`}
-              </p>
-            )}
-          </div>
-          <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" />
-        </button>
+      {/* D. Domain drill-in modal */}
+      {modalDomain && (
+        <DomainModal
+          domainKey={modalDomain}
+          items={modalItems}
+          nextItemId={modalNextItemId}
+          domainScore={modalDomainScore}
+          levelLabel={modalLevelLabel}
+          growthArea={null}
+          onClose={handleModalClose}
+          onStart={handleModuleStart}
+        />
       )}
-
-      {/* Block B1: Strategy Initiatives dominant panel removed per cadence principle.
-           Strategy context preserved via: (1) greeting A1 amendment, (2) connects-to on domain cards.
-           See /docs/PLATFORM_PRINCIPLES.md — Cadence Principle. */}
-
-      {/* Block C: Domain cards grid */}
-      <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-          Capability Domains
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {allDomainKeys.map(domainKey => {
-            const capItems = grouped.get(domainKey) ?? [];
-            const domain = domainMap[domainKey];
-            return (
-              <DomainCard key={domainKey} domainKey={domainKey} items={capItems}
-                nextItem={nextItem} domainScore={domain?.score ?? null}
-                onStart={(item) => setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`)}
-                connectsTo={dashboardCtx?.domainInitiativeMap?.[domainKey] ?? null}
-                onViewInitiative={(id) => setLocation(`/learning/initiative/${id}`)} />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Block D: Recent activity */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {/* D1: Recent completions */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-border/40">
-            <CheckCircle2 className="h-4 w-4 text-[#047857]" />
-            <p className="text-xs font-bold text-foreground uppercase tracking-widest">
-              Recent Completions
-            </p>
-            {!completionsLoading && (completionsData?.totalLast30Days ?? 0) > 0 && (
-              <span className="ml-auto text-[10px] text-muted-foreground">
-                {completionsData!.totalLast30Days} in 30 days
-              </span>
-            )}
-          </div>
-          <div className="px-5 py-2">
-            {completionsLoading ? (
-              <div className="space-y-2 py-2">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 rounded-lg" />)}
-              </div>
-            ) : (completionsData?.completions?.length ?? 0) === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-xs text-muted-foreground">No completions in the last 30 days.</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Start a module above to begin your journey.
-                </p>
-              </div>
-            ) : (
-              completionsData!.completions.map(c => <CompletionRow key={c.id} completion={c} />)
-            )}
-          </div>
-        </div>
-
-        {/* D2: Coaching conversations */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-border/40">
-            <MessageCircle className="h-4 w-4 text-primary" />
-            <p className="text-xs font-bold text-foreground uppercase tracking-widest">AI Coaching</p>
-            {!coachingLoading && (coachingConvs?.length ?? 0) > 0 && (
-              <span className="ml-auto text-[10px] text-muted-foreground">
-                {coachingConvs!.length} conversation{coachingConvs!.length !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <div className="px-5 py-2">
-            {coachingLoading ? (
-              <div className="space-y-2 py-2">
-                {[1, 2].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}
-              </div>
-            ) : (coachingConvs?.length ?? 0) === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-xs text-muted-foreground">No coaching conversations yet.</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Complete a module to unlock AI coaching feedback.
-                </p>
-              </div>
-            ) : (
-              coachingConvs!.map(conv => (
-                <CoachingRow key={conv.id} conv={conv}
-                  onOpen={(id) => setLocation(`/learning/coaching/${id}`)} />
-              ))
-            )}
-          </div>
-        </div>
-
-      </div>
-    </div>
+    </>
   );
 }
