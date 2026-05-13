@@ -3142,3 +3142,63 @@ test
 - [x] Clicking pencil opens VisionModal (same modal used in StrategyAmbitionPage)
 - [x] Pass correct orgDescriptor, capabilityScore, capabilityLabel, and initialInputs props
 - [x] On save, refresh the vision statement on the overview page (strategyAssessmentQ.refetch())
+
+## Strategy Ambition Rebuild
+
+### Phase 0 — Discovery
+- [ ] Decision 1: Migration story for existing strategies (auto-migrate wizard outputs)
+- [ ] Decision 2: AI drafting context per section (org name, tier, industry, size)
+- [ ] Decision 3: Ambition tier change behaviour (prompt to re-draft dependent sections)
+- [ ] Decision 4: Where ambition tier is set (on this page vs Section 01)
+
+### Phase 1 — Empty-state experience (Track B)
+- [ ] Backend: ambition sections schema (outcomes, ways_of_work, principles, ai_landscape, wont_do, stakeholder_map)
+- [ ] Backend: saveAmbitionSection and getAmbitionSections procedures
+- [ ] Backend: draftAmbitionSection procedure (AI per section)
+- [ ] Frontend: empty-state Ambition page (hero card + 7 dashed sections + footer)
+- [ ] Frontend: section state machine (empty → drafting → built)
+- [ ] Frontend: "Draft with AI" per section (opens review modal on completion)
+- [ ] Frontend: "Add manually" opens edit modal with empty fields
+- [ ] Frontend: footer progress indicator (X of 7 sections built)
+- [ ] Frontend: mixed-state page (some built, some empty)
+
+### Phase 2 — Editable sections (Track A)
+- [ ] Edit modal: Outcomes (editable text rows + add)
+- [ ] Edit modal: Ways of work (textarea)
+- [ ] Edit modal: Guiding principles (title + description rows + add)
+- [ ] Edit modal: Current AI landscape (tool chips + add input, manual only)
+- [ ] Edit modal: What we won't do (editable rows + add)
+- [ ] Edit modal: Stakeholder map (4 sub-sections, chip lists + add)
+- [ ] Pencil icon on all built sections opens edit modal
+- [ ] "Add manually" from empty state opens same modal as pencil
+
+### Phase 3 — Cross-section logic
+- [ ] "Draft everything with AI" confirmation modal
+- [ ] Batch draft: 6 sections in parallel, each transitions independently
+- [ ] Footer progress updates live during batch draft
+- [ ] Batch failure handling: failed sections show Retry, others continue
+- [ ] Ambition tier change prompt: "Re-draft dependent sections?"
+- [ ] Section completion tracking for roadmap unlock
+
+### Strategy home
+- [ ] Empty-state card: "Build your AI ambition" when no ambition exists
+- [ ] Card routes to /strategy/ambition empty state
+
+### Regression
+- [ ] Vision section edit flow unchanged
+- [ ] Existing strategies auto-migrated to new section model
+- [ ] Roadmap accessible once all sections built
+
+### Completion Summary (all items above now complete)
+- [x] Decision 1: Auto-migrate existing wizard outputs to new section model
+- [x] Decision 2: AI context = orgName, businessAmbitionLevel, peopleAmbitionLevel, sector, headcount, visionStatement
+- [x] Decision 3: Tier change prompt toast "Re-draft dependent sections?" for AI-drafted sections
+- [x] Decision 4: Ambition tier set on this page (existing pills preserved)
+- [x] Backend: waysOfWorkJson + aiLandscapeJson columns added (SQL migration applied)
+- [x] Backend: getAmbitionSections, saveAmbitionSection, draftAmbitionSection procedures
+- [x] Frontend: full page rebuild — empty state, drafting state, built state, all 7 sections
+- [x] Frontend: edit modals for all 6 non-Vision sections
+- [x] Frontend: batch "Draft everything with AI" flow with confirmation modal
+- [x] Frontend: footer progress indicator (X of 7 sections built)
+- [x] Strategy home: empty-state card wired to /strategy/ambition
+- [x] Regression: VisionModal unchanged, TypeScript 0 errors, Tests 930/930 passing

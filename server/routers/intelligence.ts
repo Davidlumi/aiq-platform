@@ -864,6 +864,187 @@ Return JSON with this exact structure:
     }),
 
   /**
+   * Ambition Rebuild — Get all section content for the Ambition page.
+   * Returns the 7 sections with their current content and built status.
+   */
+  getAmbitionSections: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select({
+        visionStatement: ailOrgContext.visionStatement,
+        commitmentsJson: ailOrgContext.commitmentsJson,
+        waysOfWorkJson: ailOrgContext.waysOfWorkJson,
+        guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
+        aiLandscapeJson: ailOrgContext.aiLandscapeJson,
+        wontDoJson: ailOrgContext.wontDoJson,
+        structuredInputsJson: ailOrgContext.structuredInputsJson,
+        businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
+        peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
+        visionInputsJson: ailOrgContext.visionInputsJson,
+      })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const parse = (s: string | null | undefined) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+      if (!rows.length) return {
+        vision: null,
+        outcomes: null,
+        waysOfWork: null,
+        principles: null,
+        aiLandscape: null,
+        wontDo: null,
+        stakeholderMap: null,
+      };
+      const r = rows[0];
+      const si = parse(r.structuredInputsJson) as Record<string, unknown> | null;
+      // Auto-migrate: if aiLandscapeJson is null but structuredInputs has existing_ai_tools, use that
+      const aiLandscape: string[] | null = parse(r.aiLandscapeJson) ??
+        (Array.isArray(si?.existing_ai_tools) && (si!.existing_ai_tools as string[]).filter(t => t !== "none").length > 0
+          ? (si!.existing_ai_tools as string[]).filter(t => t !== "none")
+          : null);
+      // Auto-migrate: stakeholder map from structuredInputs
+      const smRaw = si?.stakeholder_map as { executive_sponsors?: string[]; gatekeepers?: string[]; affected_groups?: string[]; potential_resistors?: string[]; notes?: string } | undefined;
+      const stakeholderMap = smRaw && ((smRaw.executive_sponsors?.length ?? 0) + (smRaw.gatekeepers?.length ?? 0) + (smRaw.affected_groups?.length ?? 0) + (smRaw.potential_resistors?.length ?? 0)) > 0
+        ? smRaw
+        : null;
+      return {
+        vision: r.visionStatement ?? null,
+        outcomes: parse(r.commitmentsJson) as string[] | null,
+        waysOfWork: r.waysOfWorkJson ?? null,
+        principles: parse(r.guidingPrinciplesJson) as Array<{ title: string; description: string }> | null,
+        aiLandscape,
+        wontDo: parse(r.wontDoJson) as string[] | null,
+        stakeholderMap,
+      };
+    }),
+
+  /**
+   * Ambition Rebuild — Save a single section's content.
+   * Supported sections: outcomes, waysOfWork, principles, aiLandscape, wontDo, stakeholderMap.
+   * Vision is handled by patchStrategyField + saveVisionInputs.
+   */
+  saveAmbitionSection: protectedProcedure
+    .input(z.discriminatedUnion("section", [
+      z.object({ section: z.literal("outcomes"), value: z.array(z.string()) }),
+      z.object({ section: z.literal("waysOfWork"), value: z.string() }),
+      z.object({ section: z.literal("principles"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
+      z.object({ section: z.literal("aiLandscape"), value: z.array(z.string()) }),
+      z.object({ section: z.literal("wontDo"), value: z.array(z.string()) }),
+      z.object({ section: z.literal("stakeholderMap"), value: z.object({
+        executive_sponsors: z.array(z.string()),
+        gatekeepers: z.array(z.string()),
+        affected_groups: z.array(z.string()),
+        potential_resistors: z.array(z.string()),
+        notes: z.string().optional(),
+      }) }),
+    ]))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
+      const patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
+      if (input.section === "outcomes") patch.commitmentsJson = JSON.stringify(input.value);
+      else if (input.section === "waysOfWork") patch.waysOfWorkJson = input.value;
+      else if (input.section === "principles") patch.guidingPrinciplesJson = JSON.stringify(input.value);
+      else if (input.section === "aiLandscape") patch.aiLandscapeJson = JSON.stringify(input.value);
+      else if (input.section === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
+      else if (input.section === "stakeholderMap") {
+        // Merge into structuredInputsJson to keep backward compat
+        const rows2 = await db.select({ structuredInputsJson: ailOrgContext.structuredInputsJson })
+          .from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+        const si2 = rows2[0]?.structuredInputsJson ? JSON.parse(rows2[0].structuredInputsJson) : {};
+        si2.stakeholder_map = input.value;
+        patch.structuredInputsJson = JSON.stringify(si2);
+      }
+      await db.update(ailOrgContext).set(patch).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  /**
+   * Ambition Rebuild — AI-draft a single section.
+   * Returns the drafted content for the section.
+   */
+  draftAmbitionSection: protectedProcedure
+    .input(z.object({
+      section: z.enum(["outcomes", "waysOfWork", "principles", "wontDo", "stakeholderMap"]),
+      orgDescriptor: z.string().nullable().optional(),
+      businessAmbitionTier: z.number().int().min(1).max(4).nullable().optional(),
+      hrDeliveryTier: z.number().int().min(1).max(4).nullable().optional(),
+      visionStatement: z.string().nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
+      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led" };
+      const bLabel = input.businessAmbitionTier ? BUSINESS_TIER_LABELS[input.businessAmbitionTier] ?? "" : "";
+      const hrLabel = input.hrDeliveryTier ? HR_TIER_LABELS[input.hrDeliveryTier] ?? "" : "";
+      const orgCtx = input.orgDescriptor ?? "an HR function";
+      const visionCtx = input.visionStatement ? `Vision: ${input.visionStatement}` : "";
+
+      const PROMPTS: Record<string, { system: string; user: string }> = {
+        outcomes: {
+          system: "You are an HR strategy consultant. Write 3-5 concrete, measurable outcomes that the HR function will achieve by the end of the strategy period. Each outcome is one short sentence (max 12 words). Return a JSON array of strings only.",
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+        waysOfWork: {
+          system: "You are an HR strategy consultant. Write a 2-3 sentence paragraph describing how AI will change the ways of work for the HR function. Be specific to the ambition tier. Return plain text only.",
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+        principles: {
+          system: "You are an HR strategy consultant. Write 4-5 guiding principles for responsible AI adoption in HR. Each has a short title (3-5 words) and a one-sentence description. Return a JSON array of objects with 'title' and 'description' fields only.",
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+        wontDo: {
+          system: "You are an HR strategy consultant. Write 3-5 things the HR function explicitly will NOT do with AI in this strategy period. Each is one short sentence (max 12 words). Return a JSON array of strings only.",
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+        stakeholderMap: {
+          system: "You are an HR strategy consultant. Identify likely stakeholders for an AI in HR strategy. Return a JSON object with keys: executive_sponsors (array of 2-3 role titles), gatekeepers (array of 2-3 role titles), affected_groups (array of 3-4 groups), potential_resistors (array of 2-3 groups). Return JSON only.",
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+      };
+
+      const prompt = PROMPTS[input.section];
+      if (!prompt) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid section" });
+
+      const resp = await invokeLLM({
+        messages: [
+          { role: "system", content: prompt.system },
+          { role: "user", content: prompt.user },
+        ],
+      });
+      const raw = resp?.choices?.[0]?.message?.content;
+      if (!raw || typeof raw !== "string") {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM did not return a draft" });
+      }
+
+      // Parse JSON sections
+      if (["outcomes", "principles", "wontDo", "stakeholderMap"].includes(input.section)) {
+        try {
+          const jsonMatch = raw.match(/\[[\s\S]*?\]|\{[\s\S]*?\}/);
+          const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+          return { draft: parsed };
+        } catch {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM returned invalid JSON" });
+        }
+      }
+      return { draft: raw.trim() };
+    }),
+
+  /**
    * P1.3 — Evaluate risk rules against current strategy context.
    * Returns auto-populated risk register entries with sourceRuleId.
    */

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ail_org_context\n  ADD COLUMN IF NOT EXISTS ways_of_work_json TEXT COMMENT 'JSON: string (free-text paragraph) - editable ways of work',\n  ADD COLUMN IF NOT EXISTS ai_landscape_json TEXT COMMENT 'JSON: string[] - current AI tools in use (editable, manual only)';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute ALTER TABLE ail_org_context\n  ADD COLUMN IF NOT EXISTS ways_of_work_json TEXT COMMENT 'JSON: string (free-text paragraph) - editable ways of work',\n  ADD COLUMN IF NOT EXISTS ai_landscape_json TEXT COMMENT 'JSON: string[] - current AI tools in use (editable, manual only)';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 994
+}

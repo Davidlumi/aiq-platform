@@ -905,6 +905,8 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   wontDoJson: text("wont_do_json"),                                              // JSON: string[] - LLM-generated out-of-scope items
+  waysOfWorkJson: text("ways_of_work_json"),                                      // JSON: string (free-text paragraph) - editable ways of work
+  aiLandscapeJson: text("ai_landscape_json"),                                     // JSON: string[] - current AI tools in use (editable, manual only)
   commitmentsJson: text("commitments_json"),                                        // JSON: string[] - user-editable "by end of period" commitments (3 items)
   snapshotDomainScoresJson: text("snapshot_domain_scores_json"),                    // JSON: Record<string, number|null> — domain scores captured at strategy save time, used for drift detection
   structuredInputsJson: text("structured_inputs_json"),                          // JSON: B1 structured assessment inputs {business_outcomes, business_problems, timeline_months, risk_appetite, success_markers_ranked, hr_leadership_position, hr_processes_priority, governance_principles, voice_capture}
