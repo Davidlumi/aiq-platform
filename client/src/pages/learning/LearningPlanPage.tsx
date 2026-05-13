@@ -193,11 +193,11 @@ function ModalModuleRow({
 
 // ─── Domain drill-in modal ────────────────────────────────────────────────────
 function DomainModal({
-  domainKey, items, nextItemId, domainScore, levelLabel, growthArea,
+  domainKey, items, nextItemId, domainScore, targetScore, levelLabel, growthArea,
   onClose, onStart,
 }: {
   domainKey: string; items: any[]; nextItemId: string | null;
-  domainScore: number | null; levelLabel: string | null; growthArea: string | null;
+  domainScore: number | null; targetScore: number | null; levelLabel: string | null; growthArea: string | null;
   onClose: () => void; onStart: (item: any) => void;
 }) {
   const [, setLocation] = useLocation();
@@ -210,9 +210,11 @@ function DomainModal({
     ? (domainScore / 10).toFixed(1)
     : null;
 
-  // Determine modal state
+  // Determine modal state — use targetScore from gap analysis; fall back to 80 if unavailable
   const hasModules = totalCount > 0;
-  const isOnTarget = !hasModules && domainScore !== null && domainScore >= 70;
+  const isOnTarget = !hasModules && domainScore !== null
+    ? (targetScore !== null ? domainScore >= targetScore : domainScore >= 80)
+    : false;
   const isEmpty = !hasModules && !isOnTarget;
 
   // Focus trap
@@ -694,11 +696,11 @@ export default function LearningPlanPage() {
     return map;
   }, [dashData]);
 
-  // Target score map from gapHeatmap (0-100 scale)
+  // Target score map from gapHeatmap (0-100 scale); null when no benchmark exists
   const targetScoreMap = useMemo(() => {
-    const map: Record<string, number> = {};
+    const map: Record<string, number | null> = {};
     for (const g of (dashData?.gapHeatmap ?? [])) {
-      if (g.domain) map[g.domain] = g.targetScore ?? 0;
+      if (g.domain) map[g.domain] = g.targetScore ?? null;
     }
     return map;
   }, [dashData]);
@@ -816,6 +818,7 @@ export default function LearningPlanPage() {
     ? (modalItems.find(i => nextItem && i.id === nextItem.id)?.id ?? null)
     : null;
   const modalDomainScore = modalDomain ? (domainMap[modalDomain]?.score ?? null) : null;
+  const modalTargetScore = modalDomain ? (targetScoreMap[modalDomain] ?? null) : null;
   // Use score-based level for modal (bypasses DB enum like AI_READY)
   const modalLevelLabel = scoreToLevel(modalDomainScore);
 
@@ -824,8 +827,11 @@ export default function LearningPlanPage() {
     <>
       <div className="max-w-3xl mx-auto space-y-6">
 
-        {/* A. Hero strip */}
-        <div>
+        {/* A. Hero strip — 0.5px tertiary bottom border, pt-3 above, mb-5 below */}
+        <div
+          className="pb-3 mb-5"
+          style={{ borderBottom: "0.5px solid hsl(var(--border))" }}
+        >
           <h1 className="text-xl font-semibold text-foreground">
             {greeting}{firstName ? `, ${firstName}` : ""}
           </h1>
@@ -900,6 +906,7 @@ export default function LearningPlanPage() {
           items={modalItems}
           nextItemId={modalNextItemId}
           domainScore={modalDomainScore}
+          targetScore={modalTargetScore}
           levelLabel={modalLevelLabel}
           growthArea={null}
           onClose={handleModalClose}

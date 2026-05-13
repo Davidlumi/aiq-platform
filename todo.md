@@ -3099,3 +3099,14 @@ test
 - [x] VisionModal: footer (Cancel + Save), autosave every 5s, unsaved-changes confirmation on Esc/outside click
 - [x] Wire modal to StrategyAmbitionPage: Complete button (empty state) + pencil icon (filled state)
 - [x] Acceptance criteria: TypeScript 0 errors, 930/930 tests passing
+
+## Learning Plan Dashboard — State-Determination Patch
+
+- [x] Phase 0: Confirm target value source per domain in data model (benchmark from gapAnalysisEngine, exposed via dashboardV2 gapHeatmap.targetScore)
+- [x] P0: Fix state-determination — distinguish `on-target` (score >= target, 0 modules) vs `no-modules` (score < target, 0 modules)
+- [x] P0: AI Output Evaluation shows `No modules yet` (italic, tertiary) — root cause: targetScoreMap used ?? 0 fallback instead of ?? null
+- [x] P0: AI Output Evaluation modal shows no-modules state with L&D team link — DomainModal now receives targetScore prop
+- [x] P0: AI Interaction continues to show `On target` and on-target modal
+- [x] P1: Hero strip bottom border renders at 0.5px tertiary (borderBottom inline style)
+- [x] P1: Whole-card click target works on all six cards (DomainCard is a full-surface button)
+- [x] Regression: level descriptors, no /10, greeting, progress sentence, activity strip, domain icons, ordering, Continue Learning card
