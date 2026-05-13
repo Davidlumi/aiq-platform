@@ -264,7 +264,7 @@ function DomainModal({
       <div
         ref={modalRef}
         className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: "hsl(var(--card))" }}
+        style={{ backgroundColor: "var(--card)" }}
       >
         {/* Header — mirrors card: icon + title left, score + level stacked right, X rightmost */}
         <div className="flex items-center gap-3 px-5 pt-5 pb-4 flex-shrink-0">
