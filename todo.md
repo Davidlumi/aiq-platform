@@ -3135,3 +3135,10 @@ test
 - [x] Regression: AI Output Evaluation = No modules yet; AI Interaction = On target (preserved)
 - [x] Regression: no-modules and on-target modal states render correctly (preserved)
 - [x] TypeScript: 0 errors · Tests: 930/930 passing
+
+## Strategy Overview — Vision Card Pencil Icon
+
+- [x] Add pencil icon button to the HR AI Strategy vision card header on StrategyOverviewPage
+- [x] Clicking pencil opens VisionModal (same modal used in StrategyAmbitionPage)
+- [x] Pass correct orgDescriptor, capabilityScore, capabilityLabel, and initialInputs props
+- [x] On save, refresh the vision statement on the overview page (strategyAssessmentQ.refetch())

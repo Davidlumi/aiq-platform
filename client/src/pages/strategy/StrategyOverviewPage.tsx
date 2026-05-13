@@ -18,11 +18,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Clock, Pencil, Download, ArrowRight,
+import { Clock, Pencil, Download, ArrowRight,
   MessageCircle, ChevronDown, ChevronUp,
   Copy, RefreshCw, Check, AlertTriangle, Sparkles,
 } from "lucide-react";
+import { VisionModal, type VisionInputs } from "./VisionModal";
 import { toast } from "sonner";
 import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
 
@@ -775,6 +775,7 @@ export default function StrategyOverviewPage() {
   );
   const [liveRisks, setLiveRisks] = useState<any[] | null>(null);
   const evaluateRiskMut     = trpc.intelligence.evaluateRiskRules.useMutation();
+  const [visionModalOpen, setVisionModalOpen] = useState(false);
 
   const strategyData     = strategyQ.data as any;
   const orgContext       = orgContextQ.data as any;
@@ -1101,7 +1102,17 @@ export default function StrategyOverviewPage() {
 
         {/* ══ HERO BLOCK ════════════════════════════════════════════════════════ */}
         <div className="mb-8">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-4">HR AI STRATEGY</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em]">HR AI STRATEGY</p>
+            <button
+              onClick={() => setVisionModalOpen(true)}
+              className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              aria-label="Edit vision statement"
+              title="Edit vision statement"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          </div>
           {isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-6 w-full rounded" />
@@ -1260,6 +1271,30 @@ export default function StrategyOverviewPage() {
         />
 
       </div>
+
+      {/* ══ VISION MODAL ═══════════════════════════════════════════════════════ */}
+      <VisionModal
+        isOpen={visionModalOpen}
+        onClose={() => setVisionModalOpen(false)}
+        onSaved={(visionText) => {
+          setVisionModalOpen(false);
+          strategyAssessmentQ.refetch();
+          (window as any).umami?.track("strategy.overview.vision-modal.saved");
+          void visionText;
+        }}
+        initialInputs={(strategyAssessmentQ.data as any)?.visionInputs as VisionInputs | null | undefined}
+        initialDraft={displayVision}
+        orgDescriptor={[
+          companyResults?.companyName,
+          sectorLabel || null,
+          orgContext?.headcount ? `${Number(orgContext.headcount).toLocaleString()} employees` : null,
+        ].filter(Boolean).join(" · ") || null}
+        companyName={companyResults?.companyName ?? null}
+        capabilityScore={companyResults?.overallScore ?? null}
+        capabilityLabel={companyResults?.maturityLabel ?? null}
+        capabilityCount={companyResults ? 1 : null}
+      />
+
     </TooltipProvider>
   );
 }
