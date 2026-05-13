@@ -13,23 +13,38 @@ import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
-  MessageSquare, ScanSearch, Workflow, Users, ShieldCheck, TrendingUp,
+  MessageSquare, Eye, Workflow, Users, Scale, Compass,
   BookOpen, Video, FileText, HelpCircle, Brain, Target, Layers,
   CheckCircle2, Lock, Play, ArrowRight, X, MessageCircle,
-  Clock, Sparkles, ChevronRight,
+  Sparkles, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS } from "../../../../shared/brand";
 
-// ─── Domain icon map (matches assessment dashboard exactly) ───────────────────
+// ─── Domain icon map (Tabler-semantic equivalents in Lucide) ─────────────────
 const DOMAIN_ICONS: Record<string, React.ElementType> = {
-  ai_interaction:         MessageSquare,
-  ai_output_evaluation:   ScanSearch,
-  ai_workflow_design:     Workflow,
-  workforce_ai_readiness: Users,
-  ai_ethics_trust:        ShieldCheck,
-  ai_change_leadership:   TrendingUp,
+  ai_interaction:         MessageSquare,  // ti-messages
+  ai_output_evaluation:   Eye,            // ti-eye (Fix 5)
+  ai_workflow_design:     Workflow,       // ti-route
+  workforce_ai_readiness: Users,          // ti-users
+  ai_ethics_trust:        Scale,          // ti-scale (Fix 5)
+  ai_change_leadership:   Compass,        // ti-compass (Fix 5)
 };
+
+// ─── Score → level descriptor (bypasses DB enum like AI_READY) ─────────────────
+function scoreToLevel(score: number | null): string | null {
+  if (score === null || score <= 0) return null;
+  const s = score / 10; // convert 0-100 to 0-10
+  if (s >= 8.0) return "EXPERT";
+  if (s >= 7.0) return "PROFICIENT";
+  return "DEVELOPING";
+}
+
+// ─── Score bar fill: assessment score as percentage ──────────────────────────
+function scoreToPct(score: number | null): number {
+  if (!score || score <= 0) return 0;
+  return Math.round(score); // score is 0-100, bar shows 0-100%
+}
 
 // ─── Module type labels ───────────────────────────────────────────────────────
 const MODULE_TYPE_LABELS: Record<string, string> = {
@@ -235,12 +250,15 @@ function DomainModal({
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-semibold text-foreground">{label}</h2>
-            {scoreDisplay && levelLabel && (
+            {scoreDisplay && (
               <p className="text-[11px] text-muted-foreground">
                 <span className="tabular-nums font-medium text-foreground">{scoreDisplay}</span>
-                <span className="text-muted-foreground">/10</span>
-                {" · "}
-                <span className="uppercase tracking-widest text-[9px]">{levelLabel}</span>
+                {levelLabel && (
+                  <>
+                    {" · "}
+                    <span className="uppercase tracking-widest text-[9px]">{levelLabel}</span>
+                  </>
+                )}
               </p>
             )}
           </div>
@@ -377,10 +395,10 @@ function DomainModal({
 
 // ─── Domain card ──────────────────────────────────────────────────────────────
 function DomainCard({
-  domainKey, items, nextItemId, domainScore, levelLabel, onClick,
+  domainKey, items, nextItemId, domainScore, targetScore, onClick,
 }: {
   domainKey: string; items: any[]; nextItemId: string | null;
-  domainScore: number | null; levelLabel: string | null;
+  domainScore: number | null; targetScore: number | null;
   onClick: () => void;
 }) {
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
@@ -388,18 +406,26 @@ function DomainCard({
   const DomainIcon = DOMAIN_ICONS[domainKey] ?? BookOpen;
   const completedCount = items.filter(i => i.status === "completed").length;
   const totalCount = items.length;
-  const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  // Bar shows assessment score (Fix 8: score × 10 % = score/10 × 100%)
+  const barPct = scoreToPct(domainScore);
+  // Score display without /10 suffix (Fix 6)
   const scoreDisplay = domainScore !== null && domainScore > 0
     ? (domainScore / 10).toFixed(1)
     : null;
-  const levelUpper = levelLabel ? levelLabel.toUpperCase() : null;
+  // Level descriptor from score (Fix 2 + 7: quiet, stacked right)
+  const levelUpper = scoreToLevel(domainScore);
 
-  // Card state text
+  // Card state text (Fix 4: On-target vs No-modules based on score vs target)
+  const isOnTarget = totalCount === 0 && domainScore !== null
+    ? (targetScore !== null ? domainScore >= targetScore : domainScore >= 80)
+    : false;
   let statusText: string;
-  if (totalCount === 0 && domainScore !== null && domainScore >= 70) {
+  let statusItalic = false;
+  if (totalCount === 0 && isOnTarget) {
     statusText = "On target";
   } else if (totalCount === 0) {
     statusText = "No modules yet";
+    statusItalic = true;
   } else {
     statusText = `${completedCount} of ${totalCount} modules done`;
   }
@@ -407,62 +433,63 @@ function DomainCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left rounded-2xl border border-border/60 overflow-hidden transition-all hover:border-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="w-full text-left rounded-2xl border border-border/60 overflow-hidden transition-all cursor-pointer hover:border-border hover:bg-muted/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-label={`${label} — ${statusText}. Click to view modules.`}
     >
       {/* Card header */}
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Icon in tinted box — 26×26, rgba at 0.15 */}
-          <div
-            className="w-[26px] h-[26px] rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ backgroundColor: `${colour}26` }}
-            aria-hidden="true"
-          >
-            <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
+      <div className="px-5 pt-4 pb-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            {/* Icon in tinted box — 26×26, rgba(colour, 0.15) = colour + '26' */}
+            <div
+              className="w-[26px] h-[26px] rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ backgroundColor: `${colour}26` }}
+              aria-hidden="true"
+            >
+              <DomainIcon className="h-3.5 w-3.5" style={{ color: colour }} />
+            </div>
+            <h3 className="text-[13px] font-semibold text-foreground leading-snug pt-0.5">{label}</h3>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-[13px] font-semibold text-foreground leading-snug">{label}</h3>
-            {scoreDisplay && (
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-[16px] font-semibold tabular-nums text-foreground leading-none">
-                  {scoreDisplay}
+          {/* Score + level — right-aligned, stacked (Fix 6 + 7) */}
+          {scoreDisplay && (
+            <div className="flex flex-col items-end flex-shrink-0">
+              <span className="text-[16px] font-medium tabular-nums text-foreground leading-none">
+                {scoreDisplay}
+              </span>
+              {levelUpper && (
+                <span
+                  className="text-[9px] font-semibold uppercase text-muted-foreground mt-1"
+                  style={{ letterSpacing: "0.06em" }}
+                >
+                  {levelUpper}
                 </span>
-                <span className="text-[11px] text-muted-foreground">/10</span>
-              </div>
-            )}
-            {levelUpper && (
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mt-0.5">
-                {levelUpper}
-              </p>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Progress bar */}
-      {totalCount > 0 && (
-        <div className="px-4 pb-3">
+      {/* Progress bar — always rendered, shows assessment score % (Fix 3 + 8) */}
+      <div className="px-5 pt-2.5 pb-0">
+        <div
+          className="h-1 rounded-sm overflow-hidden"
+          style={{ backgroundColor: `${colour}20` }}
+          role="progressbar"
+          aria-valuenow={barPct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuetext={`${scoreDisplay ?? "?"}/10 — ${statusText}`}
+        >
           <div
-            className="h-1 rounded-full overflow-hidden"
-            style={{ backgroundColor: `${colour}20` }}
-            role="progressbar"
-            aria-valuenow={completedCount}
-            aria-valuemin={0}
-            aria-valuemax={totalCount}
-            aria-valuetext={statusText}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, backgroundColor: colour }}
-            />
-          </div>
+            className="h-full rounded-sm transition-all duration-500"
+            style={{ width: `${barPct}%`, backgroundColor: colour }}
+          />
         </div>
-      )}
+      </div>
 
       {/* Card footer */}
-      <div className="flex items-center justify-between px-4 pb-4">
-        <span className="text-[11px] text-muted-foreground">{statusText}</span>
+      <div className="flex items-center justify-between px-5 pt-2.5 pb-4">
+        <span className={`text-[11px] text-muted-foreground${statusItalic ? " italic" : ""}`}>{statusText}</span>
         <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
           View <ChevronRight className="h-3 w-3" aria-hidden="true" />
         </span>
@@ -657,6 +684,21 @@ export default function LearningPlanPage() {
     return map;
   }, [dashData]);
 
+  // Target score map from gapHeatmap (0-100 scale)
+  const targetScoreMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const g of (dashData?.gapHeatmap ?? [])) {
+      if (g.domain) map[g.domain] = g.targetScore ?? 0;
+    }
+    return map;
+  }, [dashData]);
+
+  // Focus domain name for in-progress progress sentence
+  const focusDomainName = useMemo(() => {
+    if (!nextItem?.module?.capability) return null;
+    return DOMAIN_LABELS[nextItem.module.capability as keyof typeof DOMAIN_LABELS] ?? null;
+  }, [nextItem]);
+
   // Sort domains worst-to-best by score (ascending)
   const sortedDomainKeys = useMemo(() => {
     return [...DOMAIN_KEYS].sort((a, b) => {
@@ -669,16 +711,17 @@ export default function LearningPlanPage() {
   const firstName = dashboardCtx?.firstName ?? "";
   const greeting = planState === "first-time" ? "Welcome" : getGreeting();
 
-  // Progress sentence
+  // Progress sentence (Fix 1: state-aware with focus domain)
   const progressSentence = useMemo(() => {
     if (planState === "first-time") {
-      return `${totalModules} module${totalModules !== 1 ? "s" : ""} curated from your assessment — ready to start.`;
+      return `Your learning plan is ready — ${totalModules} module${totalModules !== 1 ? "s" : ""} curated from your recent assessment.`;
     }
     if (planState === "complete") {
-      return `All ${totalModules} modules complete. Time to reassess and refresh your plan.`;
+      return `You've completed all ${totalModules} modules in your plan.`;
     }
-    return `${completedModules} of ${totalModules} modules done — keep going.`;
-  }, [planState, totalModules, completedModules]);
+    const focusPart = focusDomainName ? ` Current focus: ${focusDomainName}.` : "";
+    return `You're ${completedModules} of ${totalModules} modules into your plan.${focusPart}`;
+  }, [planState, totalModules, completedModules, focusDomainName]);
 
   // Activity strip visibility
   const modulesLast30 = completionsData?.totalLast30Days ?? 0;
@@ -763,7 +806,8 @@ export default function LearningPlanPage() {
     ? (modalItems.find(i => nextItem && i.id === nextItem.id)?.id ?? null)
     : null;
   const modalDomainScore = modalDomain ? (domainMap[modalDomain]?.score ?? null) : null;
-  const modalLevelLabel = modalDomain ? (domainMap[modalDomain]?.rating ?? null) : null;
+  // Use score-based level for modal (bypasses DB enum like AI_READY)
+  const modalLevelLabel = scoreToLevel(modalDomainScore);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -801,7 +845,7 @@ export default function LearningPlanPage() {
                 items={grouped.get(domainKey) ?? []}
                 nextItemId={nextItem?.id ?? null}
                 domainScore={domainMap[domainKey]?.score ?? null}
-                levelLabel={domainMap[domainKey]?.rating ?? null}
+                targetScore={targetScoreMap[domainKey] ?? null}
                 onClick={() => handleDomainCardClick(domainKey)}
               />
             ))}
@@ -819,7 +863,7 @@ export default function LearningPlanPage() {
               </span>
               {coachingCount > 0 && (
                 <span className="text-[12px] text-muted-foreground flex items-center gap-1.5">
-                  <MessageCircle className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                  <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                   <strong className="text-foreground">{coachingCount}</strong>
                   {" "}AI coaching conversation{coachingCount !== 1 ? "s" : ""}
                 </span>
@@ -830,7 +874,7 @@ export default function LearningPlanPage() {
                 console.debug("[telemetry] learning.activity-see-all.clicked");
                 setLocation("/learning/activity");
               }}
-              className="text-[12px] font-medium text-primary hover:underline underline-offset-2 flex-shrink-0"
+              className="text-[12px] font-medium text-foreground underline underline-offset-[3px] hover:text-foreground/80 flex-shrink-0"
             >
               See full activity →
             </button>

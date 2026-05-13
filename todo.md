@@ -3050,3 +3050,19 @@ test
 - [x] Telemetry events (10 events per brief)
 - [x] Remove: View your strategy link, Connects to line, 50% doughnut, Next: module preview, Building/Foundation/Leading tags, Start buttons on cards
 - [x] Regression: strategy + assessment dashboards not regressed (only LearningPlanPage.tsx changed)
+
+## Learning Plan Dashboard Patch Brief (manus_brief_individual_learning_plan_dashboard_fixes.md)
+
+- [ ] Fix 1 (P0): Add hero greeting strip above Continue Learning card (time-of-day greeting + state-aware progress sentence + divider)
+- [ ] Fix 2 (P0): Replace AI_READY/DEVELOPING enum values with Expert/Proficient/Developing level descriptors (score-based mapping)
+- [ ] Fix 3 (P0): Render progress bar on ALL 6 cards including On-target and No-modules-yet states
+- [ ] Fix 4 (P0): AI Output Evaluation → No modules yet (not On target); implement correct state logic table
+- [ ] Fix 5 (P0): Correct 3 domain icons — Ethics→Scale, Output Evaluation→Eye, Change Leadership→Compass
+- [ ] Fix 6 (P1): Drop /10 suffix from all scores on cards and modal
+- [ ] Fix 7 (P1): Level descriptor at 9px uppercase tertiary, stacked right of score
+- [ ] Fix 8 (P1): Bar fill = score × 10 % (not score/100); verify all 6 bars visually differ
+- [ ] Fix 9 (P1): See full activity link in primary text colour with underline-offset-3
+- [ ] Fix 10 (P1): Chat icon in activity strip → info-blue or neutral (not success-green)
+- [ ] Fix 11 (P2): Workflow Design icon bg tint at exactly rgba(16,185,129,0.15)
+- [ ] Fix 12 (P2): Trim card vertical padding to ~130px active height
+- [ ] Fix 13 (P2): Confirm hover state (cursor-pointer + border/bg lift) on all domain cards
