@@ -3270,3 +3270,18 @@ test
 - [x] Fix 5: Capability domain tags on principle cards (9px, teal-tinted border, correct styling)
 - [x] Fix 6: Footer "Next: How we get there →" forward action (both buttons when unreviewed, only forward when reviewed)
 - [x] Fix 7: Remove Re-draft button from Vision section (keep pencil edit only)
+
+## Home Dashboard Design Patch (13 May 2026)
+
+- [x] Change 1: Replace top bar with H2 page header (teal dot + "HR AI Strategy" title, subtitle with accent terms, meta line, action buttons top-right)
+- [x] Change 1b: Remove old "HR AI STRATEGY" eyebrow above vision quote
+- [x] Change 2: Strategic summary callout (teal-tinted left-border callout, teal numbers, italic rough estimate)
+- [x] Change 3: Vision in a card (card bg/border/radius, VISION STATEMENT eyebrow, caption, edit pencil, remove teal left bar)
+- [x] Change 4: Capability gap bar — two discrete segments (gray today + teal gap) instead of gradient
+- [x] Change 5: Rename "Build capability →" CTA to "See learning plan →"
+- [x] Change 6: Consistent data-rich eyebrows on all four cards (BY FY27 · 18 MONTHS, 9 INITIATIVES · 18 MONTHS, £660K INVESTMENT · 3 YRS, £21.5M VALUE · 3 YRS)
+- [x] Change 7: Where we're going card shows specific outcomes with from-to numbers (Admin time, HR practitioner %, trust %) + "+ 1 more outcome" affordance
+- [x] Change 8: What this is worth card — green #34d399 for top border, big number, footer link
+- [x] Change 9: CEO panel restructured as label-content rows with hairline separators
+- [x] Change 10: Add PRINCIPLES row between Ambition and Capability gap in CEO panel
+- [x] Change 11: Append trust outcome text to Financial impact row in CEO panel

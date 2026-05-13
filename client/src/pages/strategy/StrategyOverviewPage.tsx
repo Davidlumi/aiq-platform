@@ -184,97 +184,112 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
           size="sm"
           className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-white/20 text-foreground hover:bg-white/8"
           onClick={onBuildCapability}
-          aria-label={nowNum == null ? "Take the assessment" : "Build capability"}
+          aria-label={nowNum == null ? "Take the assessment" : "See learning plan"}
         >
-          {nowNum == null ? "Take the assessment" : "Build capability"}
+          {nowNum == null ? "Take the assessment" : "See learning plan"}
           <ArrowRight className="w-3 h-3" aria-hidden="true" />
         </Button>
       </div>
 
-      {/* Bridge */}
-      {isLoading ? (
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-20 rounded" />
-          <Skeleton className="h-2 flex-1 rounded" />
-          <Skeleton className="h-10 w-20 rounded" />
-        </div>
-      ) : !hasAmbition ? (
-        <p className="text-sm text-muted-foreground">
-          Set your ambition first to see what capability you need.
-        </p>
-      ) : nowNum == null ? (
-        <p className="text-sm text-muted-foreground">
-          No assessment yet — take it to see your capability bridge.
-        </p>
-      ) : isAboveTarget ? (
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
-            <p className="text-[22px] font-medium leading-none text-foreground">
-              {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
-          </div>
-          <p className="text-sm text-muted-foreground flex-1">
-            You&apos;re at the level needed for this ambition.
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {/* Left — Today */}
-          <div className="flex-shrink-0 min-w-[72px]">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
-            <p className="text-[22px] font-medium leading-none text-foreground">
-              {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
-          </div>
-          {/* Middle — Bar */}
-          <div className="flex-1 min-w-[100px] flex flex-col gap-1">
-            <div
-              className="relative h-[4px] rounded-sm w-full bg-background"
-              role="progressbar"
-              aria-valuenow={nowNum}
-              aria-valuemin={0}
-              aria-valuemax={10}
-              aria-valuetext={`${hrNow} of 10, target ${hrTarget}`}
-            >
-              {/* Current fill */}
-              <div
-                className="absolute left-0 top-0 h-full rounded-sm bg-foreground"
-                style={{ width: `${Math.min(nowNum * 10, 100)}%` }}
-              />
-              {/* Gap fill */}
-              <div
-                className="absolute top-0 h-full bg-primary opacity-60"
-                style={{
-                  left: `${Math.min(nowNum * 10, 100)}%`,
-                  width: `${Math.max(0, Math.min((targetNum - nowNum) * 10, 100 - nowNum * 10))}%`,
-                }}
-              />
-              {/* Target marker */}
-              <div
-                className="absolute top-[-3px] bottom-[-3px] w-[2px] rounded-sm bg-primary"
-                style={{ left: `${Math.min(targetNum * 10, 100)}%` }}
-                aria-hidden="true"
-              />
+          {/* Bridge — Change 4: two discrete segments */}
+          {isLoading ? (
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-10 w-20 rounded" />
+              <Skeleton className="h-2 flex-1 rounded" />
+              <Skeleton className="h-10 w-20 rounded" />
             </div>
-            {gapNum != null && gapNum > 0 && (
-              <p className="text-[11px] text-center text-muted-foreground">
-                {hrGap} points to close
-              </p>
-            )}
-          </div>
-          {/* Right — Target */}
-          <div className="flex-shrink-0 min-w-[72px] sm:text-right">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">WHERE WE NEED TO BE</p>
-            <p className="text-[22px] font-medium leading-none text-foreground">
-              {hrTarget} <span className="text-sm font-normal text-muted-foreground">/10</span>
+          ) : !hasAmbition ? (
+            <p className="text-sm text-muted-foreground">
+              Set your ambition first to see what capability you need.
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">to deliver this strategy</p>
-          </div>
-        </div>
-      )}
+          ) : nowNum == null ? (
+            <p className="text-sm text-muted-foreground">
+              No assessment yet — take it to see your capability bridge.
+            </p>
+          ) : isAboveTarget ? (
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
+                <p className="text-[22px] font-medium leading-none text-foreground">
+                  {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
+              </div>
+              <p className="text-sm text-muted-foreground flex-1">
+                You&apos;re at the level needed for this ambition.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Left — Today */}
+              <div className="flex-shrink-0 min-w-[72px]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">TODAY</p>
+                <p className="text-[22px] font-medium leading-none text-foreground">
+                  {hrNow} <span className="text-sm text-muted-foreground font-normal">/10</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{capLevelLabel(nowNum)}</p>
+              </div>
+              {/* Middle — Two-segment bar (gray today + teal gap) */}
+              <div className="flex-1 min-w-[100px] flex flex-col gap-1">
+                <div
+                  className="relative h-[5px] rounded-sm w-full"
+                  style={{ background: "rgba(255,255,255,0.06)" }}
+                  role="progressbar"
+                  aria-valuenow={nowNum}
+                  aria-valuemin={0}
+                  aria-valuemax={10}
+                  aria-valuetext={`${hrNow} of 10, target ${hrTarget}`}
+                >
+                  {/* Segment 1: today (gray) */}
+                  <div
+                    style={{
+                      position: "absolute", left: 0, top: 0, height: "100%",
+                      width: `${Math.min(nowNum / 10 * 100, 100)}%`,
+                      background: "#9ca3af",
+                      borderRadius: "3px 0 0 3px",
+                    }}
+                  />
+                  {/* Segment 2: gap (teal) */}
+                  {gapNum != null && gapNum > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${Math.min(nowNum / 10 * 100, 100)}%`,
+                        top: 0, height: "100%",
+                        width: `${Math.max(0, Math.min((targetNum - nowNum) / 10 * 100, 100 - nowNum / 10 * 100))}%`,
+                        background: "#5DCAA5",
+                        borderRadius: "0 3px 3px 0",
+                      }}
+                    />
+                  )}
+                  {/* Target marker */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: `${Math.min(targetNum / 10 * 100, 100)}%`,
+                      top: -3, bottom: -3, width: 2,
+                      background: "#5DCAA5",
+                      borderRadius: 1,
+                    }}
+                    aria-hidden="true"
+                  />
+                </div>
+                {gapNum != null && gapNum > 0 && (
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    {hrGap} points to close
+                  </p>
+                )}
+              </div>
+              {/* Right — Target */}
+              <div className="flex-shrink-0 min-w-[72px] sm:text-right">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">WHERE WE NEED TO BE</p>
+                <p className="text-[22px] font-medium leading-none text-foreground">
+                  {hrTarget} <span className="text-sm font-normal text-muted-foreground">/10</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">to deliver this strategy</p>
+              </div>
+            </div>
+          )}
     </section>
   );
 }
@@ -293,8 +308,11 @@ function CardSkeleton() {
 }
 
 // ─── List Card (cards 1 & 2) ──────────────────────────────────────────────────
+interface OutcomeRow { label: string; from: string; to: string; unit?: string; }
 interface ListCardProps {
   accentColor: string;
+  eyebrow?: string;
+  eyebrowColor?: string;
   title: string;
   tierTag: string;
   items: string[];
@@ -306,8 +324,12 @@ interface ListCardProps {
   emptyCtaHref: string;
   onNavigate: (href: string) => void;
   onCardClick: () => void;
+  // Change 7: outcomes for "Where we're going" card
+  outcomeRows?: OutcomeRow[];
+  outcomeExtra?: number;
 }
-function ListCard({ accentColor, title, tierTag, items, extraCount, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, onNavigate, onCardClick }: ListCardProps) {
+function ListCard({ accentColor, eyebrow, eyebrowColor, title, tierTag, items, extraCount, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, onNavigate, onCardClick, outcomeRows, outcomeExtra }: ListCardProps) {
+  const showOutcomes = outcomeRows && outcomeRows.length > 0;
   return (
     <div
       className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
@@ -317,17 +339,53 @@ function ListCard({ accentColor, title, tierTag, items, extraCount, footerLink, 
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardClick(); } }}
       role="article"
     >
+      {/* Eyebrow (Change 6) */}
+      {eyebrow && (
+        <span
+          style={{
+            fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase",
+            fontWeight: 500, color: eyebrowColor ?? accentColor, display: "block", marginBottom: 6,
+          }}
+        >
+          {eyebrow}
+        </span>
+      )}
       {/* Title row */}
       <div className="flex items-center justify-between mb-3 gap-2">
         <h3 className="text-[14px] font-medium text-foreground">{title}</h3>
-        {tierTag && (
+        {tierTag && !eyebrow && (
           <span className="text-[10px] font-bold uppercase tracking-wide flex-shrink-0" style={{ color: accentColor }}>
             {tierTag}
           </span>
         )}
       </div>
       {/* Body */}
-      {items.length === 0 ? (
+      {showOutcomes ? (
+        /* Change 7: outcome rows with from-to numbers */
+        <ul className="flex-1 flex flex-col gap-2 mb-3" aria-label={title}>
+          {outcomeRows!.map((row, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-[13px] leading-snug">
+              <span
+                className="mt-[5px] w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: accentColor }}
+                aria-hidden="true"
+              />
+              <span style={{ color: "#9ca3b0" }}>{row.label}:</span>
+              {" "}
+              <span style={{ color: "#5DCAA5", fontWeight: 500 }}>{row.from} → {row.to}{row.unit ? row.unit : ""}</span>
+            </li>
+          ))}
+          {(outcomeExtra ?? 0) > 0 && (
+            <li
+              className="text-[12px] pl-[14px] underline underline-offset-2 hover:no-underline cursor-pointer"
+              style={{ color: accentColor }}
+              onClick={e => { e.stopPropagation(); onNavigate(footerLink); }}
+            >
+              + {outcomeExtra} more outcome{(outcomeExtra ?? 0) !== 1 ? "s" : ""}
+            </li>
+          )}
+        </ul>
+      ) : items.length === 0 ? (
         <div className="flex-1 flex flex-col justify-center gap-1.5 py-2">
           <p className="text-[13px] text-muted-foreground">{emptyMessage}</p>
           <button
@@ -356,7 +414,7 @@ function ListCard({ accentColor, title, tierTag, items, extraCount, footerLink, 
         </ul>
       )}
       {/* Footer link */}
-      {items.length > 0 && (
+      {(showOutcomes || items.length > 0) && (
         <button
           className="flex items-center gap-1 text-[12px] font-medium mt-auto pt-1 w-fit"
           style={{ color: accentColor }}
@@ -374,6 +432,8 @@ function ListCard({ accentColor, title, tierTag, items, extraCount, footerLink, 
 // ─── Value Card (cards 3 & 4) ─────────────────────────────────────────────────
 interface ValueCardProps {
   accentColor: string;
+  eyebrow?: string;
+  eyebrowColor?: string;
   title: string;
   headline: string;
   subLine: string;
@@ -386,7 +446,7 @@ interface ValueCardProps {
   onNavigate: (href: string) => void;
   onCardClick: () => void;
 }
-function ValueCard({ accentColor, title, headline, subLine, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, isEmpty, onNavigate, onCardClick }: ValueCardProps) {
+function ValueCard({ accentColor, eyebrow, eyebrowColor, title, headline, subLine, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, isEmpty, onNavigate, onCardClick }: ValueCardProps) {
   return (
     <div
       className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
@@ -396,6 +456,17 @@ function ValueCard({ accentColor, title, headline, subLine, footerLink, footerLa
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCardClick(); } }}
       role="article"
     >
+      {/* Eyebrow (Change 6) */}
+      {eyebrow && (
+        <span
+          style={{
+            fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase",
+            fontWeight: 500, color: eyebrowColor ?? accentColor, display: "block", marginBottom: 6,
+          }}
+        >
+          {eyebrow}
+        </span>
+      )}
       <h3 className="text-[14px] font-medium text-foreground mb-2">{title}</h3>
       {isEmpty ? (
         <div className="flex-1 flex flex-col justify-center gap-1.5 py-2">
@@ -659,66 +730,90 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
               const TP_CATEGORIES = ["Vision", "Ambition", "Capability gap", "Financial impact", "Strategic dependency"];
               return null; // labels rendered inline below
             })()}
-            {/* Bullets */}
-            <div className="space-y-3" role="list" aria-label="CEO talking points">
+            {/* Change 9: Label-content row layout */}
+            <div role="list" aria-label="CEO talking points">
               {(tpQ.isLoading || generateMut.isPending) ? (
-                [1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="flex flex-col gap-1">
-                    <Skeleton className="h-2.5 w-20 rounded" />
-                    <div className="flex items-start gap-2">
-                      <Skeleton className="h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0" />
-                      <Skeleton className="h-4 w-full rounded" />
-                    </div>
+                [1, 2, 3, 4, 5, 6].map(i => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 py-[7px]"
+                    style={{ borderBottom: i < 6 ? "0.5px solid rgba(255,255,255,0.04)" : undefined }}
+                  >
+                    <Skeleton className="h-2.5 w-[90px] flex-shrink-0 mt-1 rounded" />
+                    <Skeleton className="h-4 w-full rounded" />
                   </div>
                 ))
-              ) : data?.bullets?.length ? (
-                data.bullets.map((bullet, idx) => {
-                  const TP_CATEGORIES = ["Vision", "Ambition", "Capability gap", "Financial impact", "Strategic dependency"];
-                  const categoryLabel = TP_CATEGORIES[idx];
-                  return (
-                    <div key={idx} role="listitem" className="group flex flex-col gap-0.5">
-                      {/* Category label — tertiary text, makes coverage visible */}
-                      {categoryLabel && (
-                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50 pl-[18px]">
-                          {categoryLabel}
-                        </span>
-                      )}
-                      <div className="flex items-start gap-2">
-                        <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" aria-hidden="true" />
-                        {editingIdx === idx ? (
-                          <div className="flex-1 flex flex-col gap-1.5">
-                            <Textarea
-                              ref={editRef}
-                              value={editValue}
-                              onChange={e => setEditValue(e.target.value)}
-                              className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
-                              onKeyDown={e => {
-                                if (e.key === "Escape") cancelEdit();
-                                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(idx); }
-                              }}
-                            />
-                            <div className="flex gap-1.5">
-                              <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(idx)}>Save</Button>
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                            <p className="text-sm text-foreground leading-relaxed">{bullet}</p>
-                            <button
-                              className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
-                              onClick={() => startEdit(idx)}
-                              aria-label={`Edit bullet ${idx + 1}`}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </button>
-                          </div>
+              ) : data?.bullets?.length ? (() => {
+                // Change 10: Insert Principles row between Ambition (idx 1) and Capability gap (idx 2)
+                // Original order: Vision(0), Ambition(1), Capability gap(2), Financial impact(3), Strategic dependency(4)
+                // New order: Vision(0), Ambition(1), [Principles — static], Capability gap(2), Financial impact(3), Strategic dependency(4)
+                const LABELS = ["VISION", "AMBITION", "CAPABILITY GAP", "FINANCIAL IMPACT", "STRATEGIC DEPENDENCY"];
+                const PRINCIPLES_ROW = "We've committed to five operating principles — including humans deciding on hiring, promotion, and termination; building HR's AI literacy before deploying tools; and matching deployment pace to what the workforce can absorb.";
+                // Build rows: [0,1] from bullets, then static Principles, then [2,3,4] from bullets
+                const rows: Array<{ label: string; content: string; idx: number | null }> = [];
+                data.bullets.forEach((bullet, idx) => {
+                  if (idx === 2) {
+                    // Insert Principles row before Capability gap
+                    rows.push({ label: "PRINCIPLES", content: PRINCIPLES_ROW, idx: null });
+                  }
+                  // Change 11: Append trust outcome to Financial impact row (idx 3)
+                  const content = idx === 3
+                    ? bullet + " Employee trust in HR\u2019s AI use is also a measured outcome, targeting 80% (up from 48%) by Q3 2027."
+                    : bullet;
+                  rows.push({ label: LABELS[idx] ?? `POINT ${idx + 1}`, content, idx });
+                });
+                return rows.map((row, rowIdx) => (
+                  <div
+                    key={rowIdx}
+                    role="listitem"
+                    className="group flex items-start gap-3 py-[7px]"
+                    style={{ borderBottom: rowIdx < rows.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : undefined }}
+                  >
+                    {/* Left column: label */}
+                    <span
+                      style={{
+                        fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase",
+                        fontWeight: 500, color: "#7ec9ab", flexShrink: 0,
+                        width: 90, paddingTop: 2, lineHeight: 1.4,
+                      }}
+                    >
+                      {row.label}
+                    </span>
+                    {/* Right column: content */}
+                    {row.idx !== null && editingIdx === row.idx ? (
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <Textarea
+                          ref={editRef}
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
+                          onKeyDown={e => {
+                            if (e.key === "Escape") cancelEdit();
+                            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(row.idx!); }
+                          }}
+                        />
+                        <div className="flex gap-1.5">
+                          <Button size="sm" className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={() => saveEdit(row.idx!)}>Save</Button>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={cancelEdit}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
+                        <p style={{ fontSize: 12, color: "#cfd2d8", lineHeight: 1.55 }}>{row.content}</p>
+                        {row.idx !== null && (
+                          <button
+                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
+                            onClick={() => startEdit(row.idx!)}
+                            aria-label={`Edit ${row.label} talking point`}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
                         )}
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
+                    )}
+                  </div>
+                ));
+              })() : (
                 <p className="text-sm text-muted-foreground">No talking points yet. Click Regenerate to generate them.</p>
               )}
             </div>
@@ -991,11 +1086,20 @@ export default function StrategyOverviewPage() {
     ? `${initCount} initiative${initCount !== 1 ? "s" : ""} over the next 18 months.${valueClause ? ` ${valueClause}` : ""}`
     : null;
 
-  // ── Card 1: Ambition (list-style) ────────────────────────────────────────
+  // ── Card 1: Ambition (list-style) ────────────────────────────────────────────
   const ambitionAccent = "#2DD4BF";
   const ambitionItems  = commitments.slice(0, 3);
   const ambitionExtra  = Math.max(0, commitments.length - 3);
   const ambitionTierTag = AMBITION_TIER_PLAIN[businessLevel] ?? "";
+  // Change 6: eyebrow for ambition card
+  const ambitionEyebrow = "BY FY27 · 18 MONTHS";
+  // Change 7: outcomes from Ambition page (hardcoded from default outcomes)
+  const ambitionOutcomeRows: OutcomeRow[] = hasStrategy ? [
+    { label: "Admin time per hire", from: "6h", to: "3h" },
+    { label: "HR at AI Practitioner level", from: "22%", to: "85%" },
+    { label: "Employee trust in HR's AI use", from: "48%", to: "80%" },
+  ] : [];
+  const ambitionOutcomeExtra = hasStrategy ? 1 : 0;
 
   // ── Card 2: Plan (list-style) ────────────────────────────────────────────
   const planAccent  = "#A78BFA";
@@ -1003,6 +1107,10 @@ export default function StrategyOverviewPage() {
   const planExtra   = Math.max(0, selectedInitiativeIds.size - 3);
   const planTierTag = selectedInitiativeIds.size > 0
     ? `${selectedInitiativeIds.size} initiative${selectedInitiativeIds.size !== 1 ? "s" : ""} · 18 months`
+    : "";
+  // Change 6: eyebrow for plan card
+  const planEyebrow = selectedInitiativeIds.size > 0
+    ? `${selectedInitiativeIds.size} INITIATIVE${selectedInitiativeIds.size !== 1 ? "S" : ""} · 18 MONTHS`
     : "";
 
   // ── Card 3: Cost (value-style) ───────────────────────────────────────────
@@ -1012,9 +1120,12 @@ export default function StrategyOverviewPage() {
     ? `between ${fmt(totalCostLow)} and ${fmt(totalCostHigh)} · over 3 years${frameworkCount > 0 ? ` · affected by ${frameworkCount} compliance rule${frameworkCount !== 1 ? "s" : ""}` : ""}`
     : "";
   const costIsEmpty  = totalCostLow === 0;
+  // Change 6: eyebrow for cost card
+  const costEyebrow = totalCostLow > 0 ? `${fmtMidpoint(totalCostLow, totalCostHigh).replace("~", "").trim()} INVESTMENT · 3 YRS` : "";
 
-  // ── Card 4: Value (value-style) ──────────────────────────────────────────
-  const valueAccent   = "#22C55E";
+  // ── Card 4: Value (value-style) ───────────────────────────────────────────
+  // Change 8: canonical green accent for value card
+  const valueAccent   = "#34d399";
   const valueHeadline = valueGated
     ? "Value calculation needs Finance review"
     : netMid != null
@@ -1050,20 +1161,46 @@ export default function StrategyOverviewPage() {
     <TooltipProvider>
       <div className="max-w-5xl mx-auto pb-16 px-0">
 
-        {/* ══ TOP BAR ══════════════════════════════════════════════════════════ */}
+        {/* ══ PAGE HEADER (Change 1) ════════════════════════════════════════ */}
         <div className="flex flex-wrap items-start justify-between gap-3 mb-8 pt-2">
-          {/* Left: context line + review overdue pill */}
-          <div className="flex flex-col gap-1.5 min-w-0">
+          {/* Left: H2 title + subtitle + meta */}
+          <div className="flex flex-col gap-0.5 min-w-0">
+            {/* H2 title with 7px teal dot */}
+            <div className="flex items-center gap-2">
+              <span
+                style={{ width: 7, height: 7, borderRadius: "50%", background: "#5DCAA5", flexShrink: 0, display: "inline-block" }}
+                aria-hidden="true"
+              />
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: "#fff", lineHeight: 1.2 }}>HR AI Strategy</h2>
+            </div>
+            {/* Subtitle: accent terms in #cfd2d8, separators in #4a5160 */}
             {isLoading ? (
-              <Skeleton className="h-4 w-72 rounded" />
+              <Skeleton className="h-3.5 w-72 rounded mt-1" />
             ) : (
-              <p className="text-[12px] text-muted-foreground leading-snug">{contextLine}</p>
+              <p className="text-[12px] leading-snug mt-0.5" style={{ color: "#9ca3b0" }}>
+                {[sectorLabel, bLevel && `${bLevel.label} ambition`, pLevel && `HR as ${pLevel.label.replace(/s$/i, "").toLowerCase()}`]
+                  .filter(Boolean)
+                  .map((part, i, arr) => (
+                    <React.Fragment key={i}>
+                      <span style={{ color: "#cfd2d8" }}>{part}</span>
+                      {i < arr.length - 1 && <span style={{ color: "#4a5160" }}> · </span>}
+                    </React.Fragment>
+                  ))}
+              </p>
             )}
+            {/* Meta line: Updated [date] by [user] */}
+            {savedAt && (
+              <p className="text-[11px] mt-0.5" style={{ color: "#7a8294" }}>
+                Updated {new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                {savedByName ? ` by ${savedByName}` : ""}
+              </p>
+            )}
+            {/* Review overdue pill */}
             {isReviewOverdue && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="flex items-center gap-1.5 w-fit rounded-full px-2 py-[2px] text-[11px] font-medium bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors"
+                    className="flex items-center gap-1.5 w-fit rounded-full px-2 py-[2px] text-[11px] font-medium bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors mt-1"
                     onClick={handleReviewOverdueClick}
                     aria-label="Review overdue — schedule now"
                   >
@@ -1077,8 +1214,8 @@ export default function StrategyOverviewPage() {
               </Tooltip>
             )}
           </div>
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Right: action buttons (unchanged styling) */}
+          <div className="flex items-center gap-2 flex-shrink-0 mt-1">
             <Button
               variant="outline"
               size="sm"
@@ -1100,21 +1237,10 @@ export default function StrategyOverviewPage() {
           </div>
         </div>
 
-        {/* ══ HERO BLOCK ════════════════════════════════════════════════════════ */}
+        {/* ══ HERO BLOCK (Changes 2+3) ══════════════════════════════════════════ */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em]">HR AI STRATEGY</p>
-            <button
-              onClick={() => setVisionModalOpen(true)}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-              aria-label="Edit vision statement"
-              title="Edit vision statement"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-          </div>
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               <Skeleton className="h-6 w-full rounded" />
               <Skeleton className="h-6 w-4/5 rounded" />
               <Skeleton className="h-6 w-3/4 rounded" />
@@ -1122,37 +1248,96 @@ export default function StrategyOverviewPage() {
             </div>
           ) : (
             <>
-              {displayVision ? (
-                <div>
-                  <VisionQuote text={displayVision} onReadMore={() => navigate("/strategy/ambition")} />
-                  {!userVisionInput && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      This vision was AI-drafted.{" "}
-                      <button
-                        className="underline underline-offset-2 hover:no-underline"
-                        onClick={() => navigate("/strategy/ambition")}
-                      >
-                         Edit to make it yours
-                       </button>
-                       {" "}— your words will anchor the CEO talking points.
-                    </p>
-                  )}
+              {/* Change 2: Strategic summary callout */}
+              {heroSupportingLine && (() => {
+                // Parse the supporting line to highlight "N initiatives" and "£X.XM"
+                const line = heroSupportingLine;
+                const parts: React.ReactNode[] = [];
+                // Match pattern: "N initiatives" and "£X.XM" and "(rough estimate)"
+                const regex = /(\d+ initiatives?|£[\d.,]+[KMBkm]?(?:\s*[KMBkm])?|\(rough estimate\))/g;
+                let last = 0;
+                let m: RegExpExecArray | null;
+                while ((m = regex.exec(line)) !== null) {
+                  if (m.index > last) parts.push(line.slice(last, m.index));
+                  const match = m[0];
+                  if (match.startsWith("(")) {
+                    parts.push(<em key={m.index} style={{ fontStyle: "italic", fontSize: 12, color: "#7a8294" }}>{match}</em>);
+                  } else {
+                    parts.push(<span key={m.index} style={{ color: "#5DCAA5", fontWeight: 500 }}>{match}</span>);
+                  }
+                  last = m.index + match.length;
+                }
+                if (last < line.length) parts.push(line.slice(last));
+                return (
+                  <div
+                    className="mb-4"
+                    style={{
+                      background: "rgba(93,202,165,0.04)",
+                      borderLeft: "2px solid rgba(93,202,165,0.5)",
+                      borderRadius: "0 6px 6px 0",
+                      padding: "0.65rem 0.9rem",
+                      fontSize: 14,
+                      fontWeight: 400,
+                      color: "#E9ECF2",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {parts}
+                  </div>
+                );
+              })()}
+
+              {/* Change 3: Vision in a card */}
+              <div
+                className="rounded-[10px] mb-4"
+                style={{
+                  background: "rgba(255,255,255,0.015)",
+                  border: "0.5px solid rgba(255,255,255,0.08)",
+                  padding: "0.95rem 1rem",
+                }}
+              >
+                {/* VISION STATEMENT eyebrow + edit pencil */}
+                <div className="flex items-center justify-between mb-1.5">
+                  <span
+                    style={{
+                      fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em",
+                      color: "#6c7385", fontWeight: 600,
+                    }}
+                  >
+                    Vision Statement
+                  </span>
+                  <button
+                    onClick={() => setVisionModalOpen(true)}
+                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+                    aria-label="Edit vision statement"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
                 </div>
-              ) : (
-                <div className="border-l-[3px] border-primary/40 pl-7 mb-4">
+                {/* Caption */}
+                <p className="text-[11px] mb-2" style={{ color: "#7a8294" }}>
+                  AI-drafted ·{" "}
+                  <button
+                    className="underline underline-offset-2 hover:no-underline"
+                    style={{ color: "#9ca3b0" }}
+                    onClick={() => navigate("/strategy/ambition")}
+                  >
+                    Edit to make it yours
+                  </button>
+                  {" "}— your words will anchor the CEO talking points below.
+                </p>
+                {/* Vision quote (no left bar — card provides the frame) */}
+                {displayVision ? (
+                  <VisionQuote text={displayVision} onReadMore={() => navigate("/strategy/ambition")} />
+                ) : (
                   <p className="text-sm text-muted-foreground italic">
                     No vision set yet —{" "}
                     <button className="underline underline-offset-2 hover:no-underline" onClick={() => navigate("/strategy/ambition")}>
                       define your strategy ambition first
                     </button>
                   </p>
-                </div>
-              )}
-              {heroSupportingLine && (
-                <p className="text-[15px] text-muted-foreground leading-[1.6] max-w-[740px] mt-3">
-                  {heroSupportingLine}
-                </p>
-              )}
+                )}
+              </div>
             </>
           )}
         </div>
@@ -1178,6 +1363,8 @@ export default function StrategyOverviewPage() {
             {isLoading ? <CardSkeleton /> : (
               <ListCard
                 accentColor={ambitionAccent}
+                eyebrow={ambitionEyebrow}
+                eyebrowColor="#7ec9ab"
                 title="Where we're going"
                 tierTag={ambitionTierTag}
                 items={ambitionItems}
@@ -1192,6 +1379,8 @@ export default function StrategyOverviewPage() {
                   (window as any).umami?.track("strategy.card.clicked", { card: "ambition" });
                   navigate("/strategy/ambition");
                 }}
+                outcomeRows={ambitionOutcomeRows}
+                outcomeExtra={ambitionOutcomeExtra}
               />
             )}
           </div>
@@ -1200,6 +1389,8 @@ export default function StrategyOverviewPage() {
             {isLoading || initiativesQ.isLoading ? <CardSkeleton /> : (
               <ListCard
                 accentColor={planAccent}
+                eyebrow={planEyebrow}
+                eyebrowColor="#b9a6f5"
                 title="How we get there"
                 tierTag={planTierTag}
                 items={planItems}
@@ -1222,6 +1413,8 @@ export default function StrategyOverviewPage() {
             {isLoading ? <CardSkeleton /> : (
               <ValueCard
                 accentColor={costAccent}
+                eyebrow={costEyebrow}
+                eyebrowColor="#fbbf24"
                 title="What it costs"
                 headline={costHeadline}
                 subLine={costSubLine}
@@ -1244,6 +1437,8 @@ export default function StrategyOverviewPage() {
             {isLoading || (valueEnvWithIdsQ.isLoading && selectedInitiativeIds.size > 0) ? <CardSkeleton /> : (
               <ValueCard
                 accentColor={valueAccent}
+                eyebrow={!valueIsEmpty ? "£" + (netMid != null ? fmtMidpoint(netLow!, netHigh!).replace("~", "").trim() : "") + " VALUE · 3 YRS" : ""}
+                eyebrowColor="#6ee7b7"
                 title="What this is worth"
                 headline={valueHeadline}
                 subLine={valueSubLine}
