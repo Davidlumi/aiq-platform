@@ -42,6 +42,7 @@ import {
   WizardSourcedBlock,
   MobileEditSheet,
 } from "@/components/strategy/EditableBlocks";
+import { VisionModal, type VisionInputs } from "./VisionModal";
 import {
   EXISTING_AI_TOOLS,
   AI_PHILOSOPHY_OPTIONS,
@@ -441,6 +442,7 @@ export default function StrategyAmbitionPage() {
     : [];
 
   // ── Edit state ────────────────────────────────────────────────────────────
+  const [visionModalOpen, setVisionModalOpen]     = useState(false);
   const [visionEditing, setVisionEditing]         = useState(false);
   const [visionDraft, setVisionDraft]             = useState("");
   const [visionSaveStatus, setVisionSaveStatus]   = useState<"saving" | "saved" | null>(null);
@@ -770,13 +772,8 @@ export default function StrategyAmbitionPage() {
           editLabel="Edit vision statement"
           isEditing={visionEditing && !isMobile}
           onEditStart={() => {
-            if (isMobile) {
-              setMobileVisionOpen(true);
-              (window as any).umami?.track("strategy.ambition.block.edit-opened", { block: "vision", surface: "bottom-sheet" });
-            } else {
-              setVisionEditing(true);
-              (window as any).umami?.track("strategy.ambition.block.edit-opened", { block: "vision", surface: "inline" });
-            }
+            setVisionModalOpen(true);
+            (window as any).umami?.track("strategy.ambition.vision-modal.opened", { trigger: "pencil-icon" });
           }}
           saveStatus={visionSaveStatus}
           className="border-teal-500/20 bg-teal-500/4"
@@ -848,9 +845,16 @@ export default function StrategyAmbitionPage() {
             </div>
           ) : (
             <div className="flex items-center gap-3 py-2">
-              <p className="text-sm text-muted-foreground italic flex-1">Vision pending. Generate your strategy or write your own.</p>
-              <Button size="sm" variant="outline" className="h-7 text-xs border-teal-500/30 text-teal-400" onClick={() => setVisionEditing(true)}>
-                Write vision
+              <p className="text-sm text-muted-foreground italic flex-1">Vision pending. Define your strategic intent to generate a board-ready draft.</p>
+              <Button
+                size="sm"
+                className="h-7 text-xs bg-teal-600 hover:bg-teal-500 text-white"
+                onClick={() => {
+                  setVisionModalOpen(true);
+                  (window as any).umami?.track("strategy.ambition.vision-modal.opened", { trigger: "complete-button" });
+                }}
+              >
+                Complete
               </Button>
             </div>
           )}
@@ -1211,6 +1215,28 @@ export default function StrategyAmbitionPage() {
         </div>
 
       </SectionPageLayout>
+
+      {/* ── Vision Modal ──────────────────────────────────────────────────── */}
+      <VisionModal
+        isOpen={visionModalOpen}
+        onClose={() => setVisionModalOpen(false)}
+        onSaved={(visionText) => {
+          setVisionDraft(visionText);
+          setVisionModalOpen(false);
+          assessmentQ.refetch();
+          (window as any).umami?.track("strategy.ambition.vision-modal.saved");
+        }}
+        initialInputs={(assessment as any)?.visionInputs as VisionInputs | null | undefined}
+        initialDraft={assessment?.visionStatement ?? null}
+        sector={(assessment as any)?.sector ?? null}
+        headcount={(assessment as any)?.headcount ?? null}
+        businessAmbitionLabel={bLevel?.label ?? null}
+        peopleAmbitionLabel={pLevel?.label ?? null}
+        companyName={companyResults?.companyName ?? null}
+        capabilityScore={companyResults?.overallScore ?? null}
+        capabilityLabel={companyResults?.maturityLabel ?? null}
+        capabilityCount={companyResults ? 1 : null}
+      />
     </TooltipProvider>
   );
 }

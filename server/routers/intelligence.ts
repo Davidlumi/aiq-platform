@@ -493,11 +493,15 @@ export const intelligenceRouter = router({
       commitmentsJson: ailOrgContext.commitmentsJson,
       structuredInputsJson: ailOrgContext.structuredInputsJson,
       operationalBaselineJson: ailOrgContext.operationalBaselineJson,
+      visionInputsJson: ailOrgContext.visionInputsJson,
+      visionInputsUpdatedAt: ailOrgContext.visionInputsUpdatedAt,
+      sector: ailOrgContext.sector,
+      headcount: ailOrgContext.headcount,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
     const row = rows[0] ?? null;
-    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, userVisionInput: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null };
+    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, userVisionInput: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null, visionInputs: null, visionInputsUpdatedAt: null, sector: null, headcount: null };
     const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
     return {
       completed: !!row.strategyAssessmentCompletedAt,
@@ -514,6 +518,10 @@ export const intelligenceRouter = router({
       commitments: parse(row.commitmentsJson ?? null) as string[] | null,
       structuredInputs: parse(row.structuredInputsJson ?? null),
       operationalBaseline: parse(row.operationalBaselineJson ?? null),
+      visionInputs: parse(row.visionInputsJson ?? null),
+      visionInputsUpdatedAt: row.visionInputsUpdatedAt ?? null,
+      sector: row.sector ?? null,
+      headcount: row.headcount ?? null,
     };
   }),
 
@@ -721,6 +729,102 @@ Return JSON with this exact structure:
         orgType: input.orgType ?? orgCtx?.orgType ?? null,
         orgSize: input.orgSize ?? null,
       });
+    }),
+
+  /**
+   * Vision Modal - Save the 8 structured vision inputs from the modal.
+   */
+  saveVisionInputs: protectedProcedure
+    .input(z.object({
+      ambitionStatement: z.string(),
+      aiRoleInHR: z.string(),
+      aiRoleInBusiness: z.string(),
+      timeHorizonMonths: z.number().int().min(6).max(60),
+      geographicScope: z.string(),
+      constraints: z.string(),
+      successLooksLike: z.string(),
+      whatWontChange: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const existing = await db.select({ id: ailOrgContext.id })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
+      await db.update(ailOrgContext)
+        .set({
+          visionInputsJson: JSON.stringify(input),
+          visionInputsUpdatedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  /**
+   * Vision Modal - Generate an AI vision draft from the 8 structured modal inputs.
+   */
+  generateVisionDraft: protectedProcedure
+    .input(z.object({
+      ambitionStatement: z.string(),
+      aiRoleInHR: z.string(),
+      aiRoleInBusiness: z.string(),
+      timeHorizonMonths: z.number().int().min(6).max(60),
+      geographicScope: z.string(),
+      constraints: z.string(),
+      successLooksLike: z.string(),
+      whatWontChange: z.string(),
+      sector: z.string(),
+      orgSize: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const timeLabel = input.timeHorizonMonths <= 12
+        ? `${input.timeHorizonMonths} months`
+        : `${Math.round(input.timeHorizonMonths / 12)} years`;
+      const systemPrompt = [
+        "You are an expert HR strategy consultant writing for a CHRO audience.",
+        "Your task: write a single board-ready AI vision statement (2-3 sentences, 40-70 words) that:",
+        "- Opens with a concrete outcome claim, NOT We will or Our vision is",
+        "- Names the specific HR processes or business outcomes AI will change",
+        "- Anchors to the user own words - do not paraphrase or genericise",
+        "- Reflects the time horizon and geographic scope provided",
+        "- Ends with the HR function specific role in making this happen",
+        "FORBIDDEN OPENERS: We will, Our vision, Our goal, We aim, We seek, We aspire",
+        "Return ONLY the vision statement text - no quotes, no preamble, no JSON.",
+      ].join("\n");
+      const userPrompt = [
+        `Sector: ${input.sector}${input.orgSize ? ` (${input.orgSize})` : ""}`,
+        `Time horizon: ${timeLabel}`,
+        `Geographic scope: ${input.geographicScope}`,
+        "",
+        `Ambition statement: ${input.ambitionStatement}`,
+        `AI role in HR: ${input.aiRoleInHR}`,
+        `AI role in business: ${input.aiRoleInBusiness}`,
+        `Constraints: ${input.constraints}`,
+        `Success looks like: ${input.successLooksLike}`,
+        `What will NOT change: ${input.whatWontChange}`,
+      ].join("\n");
+      const resp = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      });
+      const draft = resp?.choices?.[0]?.message?.content;
+      if (!draft || typeof draft !== "string") {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM did not return a vision draft" });
+      }
+      return { visionDraft: draft.trim() };
     }),
 
   /**

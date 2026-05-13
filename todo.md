@@ -3084,3 +3084,18 @@ test
 - [x] Modal footer: "Browse more modules in [Domain] →" link in domain accent colour
 - [x] Close button: circular outline button top-right (not X icon inside card)
 - [x] Modal background: dark card (#1a2235 approx) with rounded-2xl, no inner border
+
+## Vision Modal (vision_modal_build_brief.md)
+
+- [x] Schema: add vision_inputs JSON column and vision_inputs_updated_at timestamp to ail_org_context
+- [x] Backend: saveVisionInputs tRPC procedure (autosave + save)
+- [x] Backend: generateVisionDraft tRPC procedure (LLM call with 8 inputs + context)
+- [x] Backend: getStrategyAssessment returns vision_inputs, org descriptor, capability score+label+count
+- [x] VisionModal: context strip (org descriptor + capability score, both with empty states)
+- [x] VisionModal: Section 1 — ambition statement + AI role in HR (textarea inputs)
+- [x] VisionModal: Section 2 — AI role in business + geographic scope
+- [x] VisionModal: Section 3 — time horizon pill toggle, constraints, success looks like, what won't change
+- [x] VisionModal: draft block (placeholder → skeleton → editable textarea), stale tag, Regenerate button
+- [x] VisionModal: footer (Cancel + Save), autosave every 5s, unsaved-changes confirmation on Esc/outside click
+- [x] Wire modal to StrategyAmbitionPage: Complete button (empty state) + pencil icon (filled state)
+- [x] Acceptance criteria: TypeScript 0 errors, 930/930 tests passing
