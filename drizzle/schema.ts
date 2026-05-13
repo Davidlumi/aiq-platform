@@ -902,9 +902,16 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   userVisionInput: text("user_vision_input"),                                // Verbatim vision text entered directly by the user (not AI-generated)
   visionInputsJson: text("vision_inputs_json"),                              // JSON: VisionModalInputs {ambitionStatement, aiRoleInHR, aiRoleInBusiness, timeHorizonMonths, geographicScope, constraints, successLooksLike, whatWontChange}
   visionInputsUpdatedAt: timestamp("vision_inputs_updated_at"),              // When vision modal inputs were last saved
-  guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description}] x5 principles
+  guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description, capability_tags: string[], ai_drafted: boolean}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
-  wontDoJson: text("wont_do_json"),                                              // JSON: string[] - LLM-generated out-of-scope items
+  wontDoJson: text("wont_do_json"),                                              // JSON: {text: string, ai_drafted: boolean}[] - exclusion items
+  outcomesJson: text("outcomes_json"),                                              // JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}]
+  approachLine: text("approach_line"),                                              // AI-generated posture statement (editable)
+  visionAiFirstDraft: text("vision_ai_first_draft"),                                // Original AI draft of vision (preserved for comparison)
+  visionLastEditedBy: varchar("vision_last_edited_by", { length: 36 }),             // user_id of last editor
+  visionLastEditedAt: timestamp("vision_last_edited_at"),                           // when vision was last manually edited
+  lastReviewedAt: timestamp("last_reviewed_at"),                                    // when ambition page was last reviewed
+  lastReviewedBy: varchar("last_reviewed_by", { length: 100 }),                     // display name of reviewer
   waysOfWorkJson: text("ways_of_work_json"),                                      // JSON: string (free-text paragraph) - editable ways of work
   aiLandscapeJson: text("ai_landscape_json"),                                     // JSON: string[] - current AI tools in use (editable, manual only)
   commitmentsJson: text("commitments_json"),                                        // JSON: string[] - user-editable "by end of period" commitments (3 items)

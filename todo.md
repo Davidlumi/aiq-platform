@@ -3202,3 +3202,43 @@ test
 - [x] Frontend: footer progress indicator (X of 7 sections built)
 - [x] Strategy home: empty-state card wired to /strategy/ambition
 - [x] Regression: VisionModal unchanged, TypeScript 0 errors, Tests 930/930 passing
+
+## Ambition Page Final Build (brief: ambition-page-final-build-brief.md)
+
+### Removals
+- [x] Remove deprecated banner "Some sections of your ambition can only be changed by re-running the strategy assessment"
+- [x] Remove "Current AI Landscape" section from Ambition page (moves to How We Get There)
+- [x] Remove "Stakeholder Map" section from Ambition page (moves to How We Get There)
+- [x] Remove footer progress indicator (replaced with review-date footer)
+
+### Page structure (4 sections in fixed order)
+- [x] Header: breadcrumb, Section 02 eyebrow, title with teal dot, ambition pills + time horizon strip, "Our approach" line
+- [x] Section 1: Vision statement (serif italic quote, AI-drafted caption, edit modal)
+- [x] Section 2: Guiding principles (2-col grid, numbered badges, capability tags, odd-last-spans-full)
+- [x] Section 3: What we won't do (× list, AI suggest, edit modal)
+- [x] Section 4: Outcomes (numbered rows, from-to bars, TBD baseline pattern, principle ref line)
+- [x] Footer: last-reviewed date + "Next: How we get there →" button
+
+### DB schema
+- [x] ailOrgContext: add guidingPrinciplesJson (structured), exclusionsJson (structured), outcomesJson (structured), approachLine (text), lastReviewedAt (timestamp), lastReviewedBy (text)
+- [x] Vision fields: aiFirstDraft (text), lastEditedBy (text), lastEditedAt (timestamp) on ailOrgContext
+
+### Backend
+- [x] getAmbitionPage procedure returns all 4 sections + header data + footer data
+- [x] saveAmbitionSection updated for new data model (principles, exclusions, outcomes)
+- [x] draftAmbitionSection updated with correct prompts per section
+
+### Frontend
+- [x] Rebuild StrategyAmbitionPage with 4-section layout
+- [x] From-to bar visualisation (5px tall, 3px radius, normalised within outcome)
+- [x] TBD baseline pattern (dashed empty track, "Not measured" italic, baseline study date in meta)
+- [x] Principle numbered badges (01-05) with capability domain tags
+- [x] Outcome → principle cross-reference line "↪ Tests principle N: title"
+- [x] Auto-renumber principles when added/removed; update outcome references
+- [x] "Our approach" line (teal label + muted prose, AI-generated, editable)
+
+### Edit modals
+- [x] Vision modal: side-by-side AI draft vs current, confirmation before save
+- [x] Principles modal: per-card (title, description, tag picker), add/delete, coverage warning
+- [x] Exclusions modal: list edit + add + AI suggest button
+- [x] Outcomes modal: title, unit, baseline radio (measured/not measured), target, derived summary, principle ref dropdown

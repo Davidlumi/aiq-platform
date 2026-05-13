@@ -873,49 +873,62 @@ Return JSON with this exact structure:
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const rows = await db.select({
         visionStatement: ailOrgContext.visionStatement,
-        commitmentsJson: ailOrgContext.commitmentsJson,
-        waysOfWorkJson: ailOrgContext.waysOfWorkJson,
+        visionAiFirstDraft: ailOrgContext.visionAiFirstDraft,
+        visionLastEditedBy: ailOrgContext.visionLastEditedBy,
+        visionLastEditedAt: ailOrgContext.visionLastEditedAt,
         guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
-        aiLandscapeJson: ailOrgContext.aiLandscapeJson,
         wontDoJson: ailOrgContext.wontDoJson,
-        structuredInputsJson: ailOrgContext.structuredInputsJson,
+        outcomesJson: ailOrgContext.outcomesJson,
+        approachLine: ailOrgContext.approachLine,
         businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
         peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
         visionInputsJson: ailOrgContext.visionInputsJson,
+        lastReviewedAt: ailOrgContext.lastReviewedAt,
+        lastReviewedBy: ailOrgContext.lastReviewedBy,
       })
         .from(ailOrgContext)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
       const parse = (s: string | null | undefined) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
       if (!rows.length) return {
-        vision: null,
-        outcomes: null,
-        waysOfWork: null,
-        principles: null,
-        aiLandscape: null,
-        wontDo: null,
-        stakeholderMap: null,
+        vision: null, visionAiFirstDraft: null, visionLastEditedBy: null, visionLastEditedAt: null,
+        principles: null, wontDo: null, outcomes: null, approachLine: null,
+        businessAmbitionLevel: null, peopleAmbitionLevel: null,
+        lastReviewedAt: null, lastReviewedBy: null,
       };
       const r = rows[0];
-      const si = parse(r.structuredInputsJson) as Record<string, unknown> | null;
-      // Auto-migrate: if aiLandscapeJson is null but structuredInputs has existing_ai_tools, use that
-      const aiLandscape: string[] | null = parse(r.aiLandscapeJson) ??
-        (Array.isArray(si?.existing_ai_tools) && (si!.existing_ai_tools as string[]).filter(t => t !== "none").length > 0
-          ? (si!.existing_ai_tools as string[]).filter(t => t !== "none")
-          : null);
-      // Auto-migrate: stakeholder map from structuredInputs
-      const smRaw = si?.stakeholder_map as { executive_sponsors?: string[]; gatekeepers?: string[]; affected_groups?: string[]; potential_resistors?: string[]; notes?: string } | undefined;
-      const stakeholderMap = smRaw && ((smRaw.executive_sponsors?.length ?? 0) + (smRaw.gatekeepers?.length ?? 0) + (smRaw.affected_groups?.length ?? 0) + (smRaw.potential_resistors?.length ?? 0)) > 0
-        ? smRaw
-        : null;
+      // Auto-migrate: principles from old {title,description}[] to new {title,description,capability_tags,ai_drafted}[]
+      const rawPrinciples = parse(r.guidingPrinciplesJson) as Array<{ title: string; description: string; capability_tags?: string[]; ai_drafted?: boolean }> | null;
+      const principles = rawPrinciples ? rawPrinciples.map((p, i) => ({
+        number: i + 1,
+        title: p.title,
+        description: p.description,
+        capability_tags: p.capability_tags ?? [],
+        ai_drafted: p.ai_drafted ?? false,
+      })) : null;
+      // Auto-migrate: wontDo from old string[] to new {text,ai_drafted}[]
+      const rawWontDo = parse(r.wontDoJson);
+      const wontDo = rawWontDo ? (Array.isArray(rawWontDo)
+        ? rawWontDo.map((item: unknown) => typeof item === "string" ? { text: item, ai_drafted: false } : item)
+        : null) : null;
       return {
         vision: r.visionStatement ?? null,
-        outcomes: parse(r.commitmentsJson) as string[] | null,
-        waysOfWork: r.waysOfWorkJson ?? null,
-        principles: parse(r.guidingPrinciplesJson) as Array<{ title: string; description: string }> | null,
-        aiLandscape,
-        wontDo: parse(r.wontDoJson) as string[] | null,
-        stakeholderMap,
+        visionAiFirstDraft: r.visionAiFirstDraft ?? null,
+        visionLastEditedBy: r.visionLastEditedBy ?? null,
+        visionLastEditedAt: r.visionLastEditedAt ?? null,
+        principles,
+        wontDo: wontDo as Array<{ text: string; ai_drafted: boolean }> | null,
+        outcomes: parse(r.outcomesJson) as Array<{
+          number: number; title: string; unit: string;
+          baseline_value: number | null; baseline_status: "measured" | "not_measured";
+          baseline_study_date: string | null; target_value: number; target_date: string;
+          derived_summary: string; tests_principle: number | null; ai_drafted: boolean;
+        }> | null,
+        approachLine: r.approachLine ?? null,
+        businessAmbitionLevel: r.businessAmbitionLevel ?? null,
+        peopleAmbitionLevel: r.peopleAmbitionLevel ?? null,
+        lastReviewedAt: r.lastReviewedAt ?? null,
+        lastReviewedBy: r.lastReviewedBy ?? null,
       };
     }),
 
@@ -926,18 +939,32 @@ Return JSON with this exact structure:
    */
   saveAmbitionSection: protectedProcedure
     .input(z.discriminatedUnion("section", [
-      z.object({ section: z.literal("outcomes"), value: z.array(z.string()) }),
-      z.object({ section: z.literal("waysOfWork"), value: z.string() }),
-      z.object({ section: z.literal("principles"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
-      z.object({ section: z.literal("aiLandscape"), value: z.array(z.string()) }),
-      z.object({ section: z.literal("wontDo"), value: z.array(z.string()) }),
-      z.object({ section: z.literal("stakeholderMap"), value: z.object({
-        executive_sponsors: z.array(z.string()),
-        gatekeepers: z.array(z.string()),
-        affected_groups: z.array(z.string()),
-        potential_resistors: z.array(z.string()),
-        notes: z.string().optional(),
-      }) }),
+      z.object({ section: z.literal("principles"), value: z.array(z.object({
+        number: z.number().int(),
+        title: z.string(),
+        description: z.string(),
+        capability_tags: z.array(z.string()).default([]),
+        ai_drafted: z.boolean().default(false),
+      })) }),
+      z.object({ section: z.literal("wontDo"), value: z.array(z.object({
+        text: z.string(),
+        ai_drafted: z.boolean().default(false),
+      })) }),
+      z.object({ section: z.literal("outcomes"), value: z.array(z.object({
+        number: z.number().int(),
+        title: z.string(),
+        unit: z.string(),
+        baseline_value: z.number().nullable(),
+        baseline_status: z.enum(["measured", "not_measured"]),
+        baseline_study_date: z.string().nullable(),
+        target_value: z.number(),
+        target_date: z.string(),
+        derived_summary: z.string(),
+        tests_principle: z.number().int().nullable(),
+        ai_drafted: z.boolean().default(false),
+      })) }),
+      z.object({ section: z.literal("approachLine"), value: z.string() }),
+      z.object({ section: z.literal("markReviewed"), value: z.object({ reviewerName: z.string() }) }),
     ]))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -952,18 +979,13 @@ Return JSON with this exact structure:
         .limit(1);
       if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
       const patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
-      if (input.section === "outcomes") patch.commitmentsJson = JSON.stringify(input.value);
-      else if (input.section === "waysOfWork") patch.waysOfWorkJson = input.value;
-      else if (input.section === "principles") patch.guidingPrinciplesJson = JSON.stringify(input.value);
-      else if (input.section === "aiLandscape") patch.aiLandscapeJson = JSON.stringify(input.value);
+      if (input.section === "principles") patch.guidingPrinciplesJson = JSON.stringify(input.value);
       else if (input.section === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
-      else if (input.section === "stakeholderMap") {
-        // Merge into structuredInputsJson to keep backward compat
-        const rows2 = await db.select({ structuredInputsJson: ailOrgContext.structuredInputsJson })
-          .from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
-        const si2 = rows2[0]?.structuredInputsJson ? JSON.parse(rows2[0].structuredInputsJson) : {};
-        si2.stakeholder_map = input.value;
-        patch.structuredInputsJson = JSON.stringify(si2);
+      else if (input.section === "outcomes") patch.outcomesJson = JSON.stringify(input.value);
+      else if (input.section === "approachLine") patch.approachLine = input.value;
+      else if (input.section === "markReviewed") {
+        patch.lastReviewedAt = new Date();
+        patch.lastReviewedBy = input.value.reviewerName;
       }
       await db.update(ailOrgContext).set(patch).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { success: true };
@@ -975,11 +997,12 @@ Return JSON with this exact structure:
    */
   draftAmbitionSection: protectedProcedure
     .input(z.object({
-      section: z.enum(["outcomes", "waysOfWork", "principles", "wontDo", "stakeholderMap"]),
+      section: z.enum(["principles", "wontDo", "outcomes", "approachLine"]),
       orgDescriptor: z.string().nullable().optional(),
       businessAmbitionTier: z.number().int().min(1).max(4).nullable().optional(),
       hrDeliveryTier: z.number().int().min(1).max(4).nullable().optional(),
       visionStatement: z.string().nullable().optional(),
+      existingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -993,27 +1016,44 @@ Return JSON with this exact structure:
       const hrLabel = input.hrDeliveryTier ? HR_TIER_LABELS[input.hrDeliveryTier] ?? "" : "";
       const orgCtx = input.orgDescriptor ?? "an HR function";
       const visionCtx = input.visionStatement ? `Vision: ${input.visionStatement}` : "";
+      const principlesCtx = input.existingPrinciples?.length
+        ? `Guiding principles: ${input.existingPrinciples.map(p => p.title).join("; ")}`
+        : "";
 
       const PROMPTS: Record<string, { system: string; user: string }> = {
-        outcomes: {
-          system: "You are an HR strategy consultant. Write 3-5 concrete, measurable outcomes that the HR function will achieve by the end of the strategy period. Each outcome is one short sentence (max 12 words). Return a JSON array of strings only.",
-          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
-        },
-        waysOfWork: {
-          system: "You are an HR strategy consultant. Write a 2-3 sentence paragraph describing how AI will change the ways of work for the HR function. Be specific to the ambition tier. Return plain text only.",
-          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
-        },
         principles: {
-          system: "You are an HR strategy consultant. Write 4-5 guiding principles for responsible AI adoption in HR. Each has a short title (3-5 words) and a one-sentence description. Return a JSON array of objects with 'title' and 'description' fields only.",
+          system: `You are an HR strategy consultant. Write 4-5 guiding principles for responsible AI adoption in HR. Each has:
+- number (1-based integer)
+- title (3-5 words)
+- description (one sentence, max 20 words)
+- capability_tags (array of 1-3 relevant HR capability domains from: ["AI Foundations", "AI Interaction", "AI Output Evaluation", "AI Workflow Design", "AI Ethics & Trust", "Workforce AI Readiness", "AI Change Leadership"])
+- ai_drafted: true
+Return a JSON array of objects with these exact fields only.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         wontDo: {
-          system: "You are an HR strategy consultant. Write 3-5 things the HR function explicitly will NOT do with AI in this strategy period. Each is one short sentence (max 12 words). Return a JSON array of strings only.",
+          system: `You are an HR strategy consultant. Write 4-6 things the HR function explicitly will NOT do with AI in this strategy period. Each is one short sentence (max 15 words). Return a JSON array of objects with fields: text (string), ai_drafted: true.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
-        stakeholderMap: {
-          system: "You are an HR strategy consultant. Identify likely stakeholders for an AI in HR strategy. Return a JSON object with keys: executive_sponsors (array of 2-3 role titles), gatekeepers (array of 2-3 role titles), affected_groups (array of 3-4 groups), potential_resistors (array of 2-3 groups). Return JSON only.",
+        outcomes: {
+          system: `You are an HR strategy consultant. Write 3-5 measurable outcomes for an AI in HR strategy. Each outcome has:
+- number (1-based integer)
+- title (short outcome name, 3-6 words)
+- unit (e.g. "% reduction", "days", "£ per hire", "score")
+- baseline_value: null (TBD)
+- baseline_status: "not_measured"
+- baseline_study_date: null
+- target_value (realistic number)
+- target_date ("Q4 2026" format)
+- derived_summary (one sentence: "Reduce X from TBD to Y by Z")
+- tests_principle: null
+- ai_drafted: true
+Return a JSON array of objects with these exact fields only.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
+        },
+        approachLine: {
+          system: `You are an HR strategy consultant. Write a single sentence (max 25 words) describing the organisation's AI posture in HR — the strategic stance that anchors all decisions. Start with the org name if provided. Return plain text only.`,
+          user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}. ${principlesCtx}`,
         },
       };
 
@@ -1031,17 +1071,16 @@ Return JSON with this exact structure:
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM did not return a draft" });
       }
 
+      if (input.section === "approachLine") return { draft: raw.trim() };
+
       // Parse JSON sections
-      if (["outcomes", "principles", "wontDo", "stakeholderMap"].includes(input.section)) {
-        try {
-          const jsonMatch = raw.match(/\[[\s\S]*?\]|\{[\s\S]*?\}/);
-          const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-          return { draft: parsed };
-        } catch {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM returned invalid JSON" });
-        }
+      try {
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+        return { draft: parsed };
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM returned invalid JSON" });
       }
-      return { draft: raw.trim() };
     }),
 
   /**

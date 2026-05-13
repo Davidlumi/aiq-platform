@@ -1,1165 +1,1114 @@
 /**
- * StrategyAmbitionPage — /strategy/ambition
- * Section 02: Where we're going
- *
- * Rebuilt per strategy-ambition-rebuild-brief.md
- *
- * Three states per section: empty | drafting | built
- * Phase 1: empty-state page with hero card + 7 dashed sections
- * Phase 2: edit modals for all 6 non-Vision sections
- * Phase 3: batch "Draft everything with AI" flow
+ * StrategyAmbitionPage — Final Build (ambition-page-final-build-brief.md)
+ * 4 sections: Vision, Guiding Principles, What We Won't Do, Outcomes
+ * Each section: empty (dashed) → drafting (spinner) → built (content + pencil)
+ * Edit modals for all 4 sections. Review-date footer.
  */
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { useState, useMemo, useCallback, useRef } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  ArrowRight, Target, Sparkles, AlertCircle, Plus, Trash2,
-  Pencil, Loader2, CheckCircle2, Info, UserCheck, Lock as LockIcon,
-  Users, X, RefreshCw,
+  Pencil, Sparkles, Plus, Trash2, ChevronRight,
+  CheckCircle2, Clock, X, Shield,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import SectionPageLayout from "@/components/SectionPageLayout";
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { VisionModal, type VisionInputs } from "./VisionModal";
-import {
-  EXISTING_AI_TOOLS,
-  EXECUTIVE_SPONSORS,
-  GATEKEEPERS,
-  AFFECTED_GROUPS,
-  POTENTIAL_RESISTORS,
-} from "@/../../shared/strategyInputs";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SectionKey = "vision" | "outcomes" | "waysOfWork" | "principles" | "aiLandscape" | "wontDo" | "stakeholderMap";
-type SectionState = "empty" | "drafting" | "built";
+interface Principle {
+  number: number;
+  title: string;
+  description: string;
+  capability_tags: string[];
+  ai_drafted: boolean;
+}
 
-interface Principle { title: string; description: string; }
-interface StakeholderMap {
-  executive_sponsors: string[];
-  gatekeepers: string[];
-  affected_groups: string[];
-  potential_resistors: string[];
-  notes?: string;
+interface Exclusion {
+  text: string;
+  ai_drafted: boolean;
+}
+
+interface Outcome {
+  number: number;
+  title: string;
+  unit: string;
+  baseline_value: number | null;
+  baseline_status: "measured" | "not_measured";
+  baseline_study_date: string | null;
+  target_value: number;
+  target_date: string;
+  derived_summary: string;
+  tests_principle: number | null;
+  ai_drafted: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const BUSINESS_LEVELS: Record<number, { label: string; waysOfWork: string }> = {
-  1: { label: "Cautious",       waysOfWork: "AI will be introduced carefully, with human oversight at every step." },
-  2: { label: "Exploratory",    waysOfWork: "AI will be piloted in low-risk processes to build confidence and capability." },
-  3: { label: "Progressive",    waysOfWork: "AI will augment HR workflows, with humans retaining decision authority." },
-  4: { label: "Ambitious",      waysOfWork: "AI will be embedded across most HR processes, driving significant efficiency and insight." },
-  5: { label: "Transformative", waysOfWork: "AI will fundamentally reshape how HR operates, enabling new business models." },
+const CAPABILITY_TAGS = [
+  "AI Foundations", "AI Interaction", "AI Output Evaluation",
+  "AI Workflow Design", "AI Ethics & Trust",
+  "Workforce AI Readiness", "AI Change Leadership",
+];
+
+const BUSINESS_TIER_LABELS: Record<number, string> = {
+  1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative",
+};
+const HR_TIER_LABELS: Record<number, string> = {
+  1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led",
 };
 
-const PEOPLE_LEVELS: Record<number, { label: string; expectation: string; tooltip: string }> = {
-  1: { label: "AI-Aware",     expectation: "HR teams will understand AI basics and know when to escalate.", tooltip: "HR staff understand AI concepts and can identify when AI is being used, but do not yet use it directly." },
-  2: { label: "AI-Assisted",  expectation: "HR teams will use AI tools confidently in day-to-day work.", tooltip: "HR staff use AI tools in their day-to-day work with guidance and support." },
-  3: { label: "AI-Augmented", expectation: "HR teams will co-design AI solutions and interpret AI outputs critically.", tooltip: "HR staff work alongside AI systems, critically evaluating outputs and co-designing solutions." },
-  4: { label: "AI-Native",    expectation: "HR teams will build, configure, and govern AI tools independently.", tooltip: "HR staff build, configure, and govern AI tools without external dependency." },
-  5: { label: "AI-Led",       expectation: "HR teams will lead enterprise AI strategy and set the standard for the organisation.", tooltip: "HR leads enterprise AI strategy, setting the standard for the wider organisation." },
-};
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const SECTION_META: Record<SectionKey, { label: string; hint: string; aiEligible: boolean }> = {
-  vision:         { label: "Vision Statement",                   hint: "Define your strategic intent — generate a board-ready draft.",                          aiEligible: true },
-  outcomes:       { label: "By the end of this strategy period", hint: "3–5 measurable outcomes HR will achieve.",                                              aiEligible: true },
-  waysOfWork:     { label: "How AI will change ways of work",    hint: "Describe how AI reshapes HR delivery at your ambition tier.",                           aiEligible: true },
-  principles:     { label: "Guiding Principles",                 hint: "4–5 principles that govern responsible AI adoption in HR.",                             aiEligible: true },
-  aiLandscape:    { label: "Current AI Landscape",               hint: "Tools already deployed in HR — initiatives will complement rather than duplicate these.", aiEligible: false },
-  wontDo:         { label: "What We Won't Do",                   hint: "A strategy that makes no cuts is a wishlist. Define your explicit out-of-scope.",        aiEligible: true },
-  stakeholderMap: { label: "Stakeholder Map",                    hint: "Executive sponsors, gatekeepers, affected groups, and potential resistors.",             aiEligible: true },
-};
-
-const AI_ELIGIBLE_SECTIONS: SectionKey[] = ["outcomes", "waysOfWork", "principles", "wontDo", "stakeholderMap"];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
+function SectionHeader({
+  label, onEdit, onDraft, isDrafting,
+}: {
+  label: string; onEdit?: () => void; onDraft?: () => void; isDrafting?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
+        {label}
+      </p>
+      <div className="flex items-center gap-1.5">
+        {onDraft && !isDrafting && (
+          <Button
+            variant="ghost" size="sm"
+            className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+            onClick={onDraft}
+          >
+            <Sparkles className="w-3 h-3" /> Re-draft
+          </Button>
+        )}
+        {isDrafting && (
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            Drafting…
+          </span>
+        )}
+        {onEdit && (
+          <Button
+            variant="ghost" size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={onEdit}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function EmptySection({
-  sectionKey,
-  onDraftWithAI,
-  onAddManually,
-  isDrafting,
+  label, hint, onDraft, onManual, aiEligible = true,
 }: {
-  sectionKey: SectionKey;
-  onDraftWithAI?: () => void;
-  onAddManually: () => void;
-  isDrafting?: boolean;
+  label: string; hint: string; onDraft?: () => void;
+  onManual: () => void; aiEligible?: boolean;
 }) {
-  const meta = SECTION_META[sectionKey];
   return (
-    <div className="rounded-xl border border-dashed border-border/50 bg-card/30 p-6">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">{meta.label}</p>
-      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{meta.hint}</p>
-      <div className="flex items-center gap-2 flex-wrap">
-        {meta.aiEligible && onDraftWithAI && (
-          <Button
-            size="sm"
-            className="h-7 text-xs bg-teal-600 hover:bg-teal-500 text-white"
-            onClick={onDraftWithAI}
-            disabled={isDrafting}
-          >
-            {isDrafting ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Drafting…</> : <><Sparkles className="w-3 h-3 mr-1.5" />Draft with AI</>}
+    <div className="rounded-xl border border-dashed border-border/60 p-6 bg-card/30">
+      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
+        {label}
+      </p>
+      <p className="text-sm text-muted-foreground mb-4">{hint}</p>
+      <div className="flex items-center gap-2">
+        {aiEligible && onDraft && (
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={onDraft}>
+            <Sparkles className="w-3 h-3" /> Draft with AI
           </Button>
         )}
         <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-xs"
-          onClick={onAddManually}
+          size="sm" variant="ghost"
+          className="gap-1.5 text-xs h-8 text-muted-foreground"
+          onClick={onManual}
         >
-          <Plus className="w-3 h-3 mr-1.5" />Add manually
+          <Plus className="w-3 h-3" /> Add manually
         </Button>
       </div>
     </div>
   );
 }
 
-function DraftingSection({ sectionKey, onCancel }: { sectionKey: SectionKey; onCancel: () => void }) {
-  const meta = SECTION_META[sectionKey];
+function DraftingSection({ label }: { label: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-teal-500/30 bg-teal-500/4 p-6">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">{meta.label}</p>
+    <div className="rounded-xl border border-dashed border-primary/30 p-6 bg-primary/5">
+      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
+        {label}
+      </p>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin text-teal-400 flex-shrink-0" />
-        <span>Drafting with AI…</span>
-        <button
-          type="button"
-          className="ml-auto text-xs text-muted-foreground/60 hover:text-muted-foreground underline transition-colors"
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
+        <span className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        Generating with AI…
       </div>
     </div>
   );
 }
 
-function BuiltSectionHeader({ label, onEdit }: { label: string; onEdit: () => void }) {
+// ─── Vision Section ───────────────────────────────────────────────────────────
+
+function VisionSection({
+  vision, visionInputs, onOpenModal,
+}: {
+  vision: string | null;
+  visionInputs: VisionInputs | null;
+  onOpenModal: () => void;
+}) {
+  if (!vision) {
+    return (
+      <EmptySection
+        label="Vision Statement"
+        hint="Define where your HR function is going with AI — the north star for every initiative."
+        onDraft={onOpenModal}
+        onManual={onOpenModal}
+        aiEligible
+      />
+    );
+  }
   return (
-    <div className="flex items-center justify-between mb-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{label}</p>
-      <button
-        type="button"
-        className="text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 rounded"
-        onClick={onEdit}
-        aria-label={`Edit ${label}`}
-      >
-        <Pencil className="w-3.5 h-3.5" />
-      </button>
+    <div className="rounded-xl border border-border/50 bg-card p-6">
+      <SectionHeader label="Vision Statement" onEdit={onOpenModal} />
+      <blockquote className="border-l-2 border-primary pl-4 text-base italic leading-relaxed text-foreground">
+        "{vision}"
+      </blockquote>
+      {visionInputs && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {visionInputs.businessAmbitionTier != null && (
+            <Badge variant="secondary" className="text-xs">
+              Business: {BUSINESS_TIER_LABELS[visionInputs.businessAmbitionTier] ?? visionInputs.businessAmbitionTier}
+            </Badge>
+          )}
+          {visionInputs.hrDeliveryTier != null && (
+            <Badge variant="secondary" className="text-xs">
+              HR: {HR_TIER_LABELS[visionInputs.hrDeliveryTier] ?? visionInputs.hrDeliveryTier}
+            </Badge>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Guiding Principles Section ───────────────────────────────────────────────
+
+function PrinciplesSection({
+  principles, isDrafting, onEdit, onDraft,
+}: {
+  principles: Principle[] | null;
+  isDrafting: boolean;
+  onEdit: () => void;
+  onDraft: () => void;
+}) {
+  if (isDrafting) return <DraftingSection label="Guiding Principles" />;
+  if (!principles || principles.length === 0) {
+    return (
+      <EmptySection
+        label="Guiding Principles"
+        hint="The 4–5 non-negotiable rules that govern every AI decision in HR."
+        onDraft={onDraft}
+        onManual={onEdit}
+      />
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-6">
+      <SectionHeader label="Guiding Principles" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      <div className="space-y-4">
+        {principles.map((p) => (
+          <div key={p.number} className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+              {p.number}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-2 flex-wrap">
+                <p className="text-sm font-semibold text-foreground">{p.title}</p>
+                {p.ai_drafted && (
+                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70">
+                    AI
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-0.5">{p.description}</p>
+              {p.capability_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {p.capability_tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5">{tag}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── What We Won't Do Section ─────────────────────────────────────────────────
+
+function ExclusionsSection({
+  exclusions, isDrafting, onEdit, onDraft,
+}: {
+  exclusions: Exclusion[] | null;
+  isDrafting: boolean;
+  onEdit: () => void;
+  onDraft: () => void;
+}) {
+  if (isDrafting) return <DraftingSection label="What We Won't Do" />;
+  if (!exclusions || exclusions.length === 0) {
+    return (
+      <EmptySection
+        label="What We Won't Do"
+        hint="Explicit out-of-scope decisions that protect focus and manage expectations."
+        onDraft={onDraft}
+        onManual={onEdit}
+      />
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-6">
+      <SectionHeader label="What We Won't Do" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      <ul className="space-y-2">
+        {exclusions.map((ex, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <X className="w-3.5 h-3.5 text-destructive/60 mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-foreground">{ex.text}</span>
+            {ex.ai_drafted && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70 flex-shrink-0">
+                AI
+              </Badge>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ─── Outcomes Section ─────────────────────────────────────────────────────────
+
+function FromToBar({
+  baseline, target, unit,
+}: { baseline: number | null; target: number; unit: string }) {
+  const isTbd = baseline === null;
+  const pct = isTbd ? 0 : Math.min(100, Math.round((baseline / (target || 1)) * 100));
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+        <span>{isTbd ? "TBD baseline" : `${baseline} ${unit}`}</span>
+        <span className="text-primary font-medium">{target} {unit}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        {isTbd ? (
+          <div
+            className="h-full w-full"
+            style={{
+              background:
+                "repeating-linear-gradient(90deg, hsl(var(--muted-foreground)/0.3) 0px, hsl(var(--muted-foreground)/0.3) 4px, transparent 4px, transparent 8px)",
+            }}
+          />
+        ) : (
+          <div
+            className="h-full bg-primary/60 rounded-full transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OutcomesSection({
+  outcomes, principles, isDrafting, onEdit, onDraft,
+}: {
+  outcomes: Outcome[] | null;
+  principles: Principle[] | null;
+  isDrafting: boolean;
+  onEdit: () => void;
+  onDraft: () => void;
+}) {
+  if (isDrafting) return <DraftingSection label="Outcomes" />;
+  if (!outcomes || outcomes.length === 0) {
+    return (
+      <EmptySection
+        label="Outcomes"
+        hint="3–5 measurable results that prove the strategy is working."
+        onDraft={onDraft}
+        onManual={onEdit}
+      />
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-6">
+      <SectionHeader label="Outcomes" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      <div className="space-y-5">
+        {outcomes.map((o) => {
+          const linkedPrinciple = o.tests_principle != null
+            ? principles?.find(p => p.number === o.tests_principle)
+            : null;
+          return (
+            <div key={o.number} className="border border-border/40 rounded-lg p-4 bg-background/40">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                  {o.number}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-foreground">{o.title}</p>
+                    <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-muted-foreground">
+                      {o.target_date}
+                    </Badge>
+                    {o.ai_drafted && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70">
+                        AI
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{o.derived_summary}</p>
+                  <FromToBar baseline={o.baseline_value} target={o.target_value} unit={o.unit} />
+                  {linkedPrinciple && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Shield className="w-3 h-3" />
+                      Tests principle {linkedPrinciple.number}: {linkedPrinciple.title}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 // ─── Edit Modals ──────────────────────────────────────────────────────────────
 
-function OutcomesModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: string[]; onSave: (v: string[]) => Promise<void>; }) {
-  const [items, setItems] = useState<string[]>(initial.length ? initial : [""]);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) setItems(initial.length ? [...initial] : [""]); }, [open, JSON.stringify(initial)]);
-  const handleSave = async () => {
-    const clean = items.filter(s => s.trim());
-    if (!clean.length) return;
-    setSaving(true);
-    try { await onSave(clean); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
-  };
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>By the end of this strategy period</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 py-2 max-h-80 overflow-y-auto">
-          {items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-teal-500/15 flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-teal-400">{i + 1}</span>
-              </div>
-              <input
-                value={item}
-                onChange={e => { const n = [...items]; n[i] = e.target.value; setItems(n); }}
-                className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="Outcome statement…"
-              />
-              <button type="button" className="text-muted-foreground/40 hover:text-red-400 transition-colors" onClick={() => setItems(items.filter((_, j) => j !== i))}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <button type="button" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1" onClick={() => setItems([...items, ""])}>
-            <Plus className="w-3.5 h-3.5" />Add outcome
-          </button>
-        </div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function WaysOfWorkModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: string; onSave: (v: string) => Promise<void>; }) {
-  const [text, setText] = useState(initial);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) setText(initial); }, [open, initial]);
-  const handleSave = async () => {
-    if (!text.trim()) return;
-    setSaving(true);
-    try { await onSave(text.trim()); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
-  };
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>How AI will change ways of work</DialogTitle>
-        </DialogHeader>
-        <div className="py-2">
-          <textarea
-            value={text}
-            onChange={e => setText(e.target.value)}
-            rows={6}
-            className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary/50"
-            placeholder="Describe how AI will reshape HR delivery at your ambition tier…"
-          />
-        </div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function PrinciplesModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: Principle[]; onSave: (v: Principle[]) => Promise<void>; }) {
-  const [items, setItems] = useState<Principle[]>(initial.length ? initial : [{ title: "", description: "" }]);
+  open, onClose, initial, onSave, isDrafting, onDraft,
+}: {
+  open: boolean; onClose: () => void;
+  initial: Principle[] | null;
+  onSave: (v: Principle[]) => Promise<void>;
+  isDrafting: boolean;
+  onDraft: () => void;
+}) {
+  const [items, setItems] = useState<Principle[]>(() => initial ?? []);
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) setItems(initial.length ? initial.map(p => ({ ...p })) : [{ title: "", description: "" }]); }, [open, JSON.stringify(initial)]);
-  const handleSave = async () => {
-    const clean = items.filter(p => p.title.trim());
-    if (!clean.length) return;
-    setSaving(true);
-    try { await onSave(clean); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
-  };
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>Guiding Principles</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2 max-h-80 overflow-y-auto">
-          {items.map((p, i) => (
-            <div key={i} className="space-y-2 rounded-lg border border-border/40 bg-muted/10 p-3">
-              <div className="flex items-center gap-2">
-                <input
-                  value={p.title}
-                  onChange={e => { const n = [...items]; n[i] = { ...n[i], title: e.target.value }; setItems(n); }}
-                  className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  placeholder="Principle title…"
-                />
-                <button type="button" className="text-muted-foreground/40 hover:text-red-400 transition-colors" onClick={() => setItems(items.filter((_, j) => j !== i))}>
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <textarea
-                value={p.description}
-                onChange={e => { const n = [...items]; n[i] = { ...n[i], description: e.target.value }; setItems(n); }}
-                rows={2}
-                className="w-full bg-muted/30 border border-border rounded-lg px-3 py-1.5 text-sm text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="One-sentence description…"
-              />
-            </div>
-          ))}
-          <button type="button" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => setItems([...items, { title: "", description: "" }])}>
-            <Plus className="w-3.5 h-3.5" />Add principle
-          </button>
-        </div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
-function AILandscapeModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: string[]; onSave: (v: string[]) => Promise<void>; }) {
-  const [selected, setSelected] = useState<string[]>(initial);
-  const [customInput, setCustomInput] = useState("");
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) { setSelected([...initial]); setCustomInput(""); } }, [open, JSON.stringify(initial)]);
-  const toggle = (id: string) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const addCustom = () => {
-    const v = customInput.trim();
-    if (v && !selected.includes(v)) setSelected([...selected, v]);
-    setCustomInput("");
-  };
-  const handleSave = async () => {
-    setSaving(true);
-    try { await onSave(selected); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
-  };
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>Current AI Landscape</DialogTitle>
-        </DialogHeader>
-        <div className="py-2">
-          <p className="text-xs text-muted-foreground mb-3">Select tools already deployed in HR.</p>
-          <div className="flex flex-wrap gap-2 mb-4 max-h-48 overflow-y-auto">
-            {EXISTING_AI_TOOLS.map(t => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => toggle(t.id)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selected.includes(t.id) ? "border-teal-500/50 bg-teal-500/15 text-teal-300" : "border-border/60 bg-muted/20 text-muted-foreground hover:border-border"}`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              value={customInput}
-              onChange={e => setCustomInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && addCustom()}
-              className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-              placeholder="Add a tool not listed…"
-            />
-            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={addCustom}>Add</Button>
-          </div>
-          {selected.filter(id => !EXISTING_AI_TOOLS.find(t => t.id === id)).length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {selected.filter(id => !EXISTING_AI_TOOLS.find(t => t.id === id)).map(id => (
-                <span key={id} className="text-xs px-2.5 py-1 rounded-full border border-teal-500/50 bg-teal-500/15 text-teal-300 flex items-center gap-1">
-                  {id}
-                  <button type="button" onClick={() => setSelected(selected.filter(x => x !== id))}><X className="w-3 h-3" /></button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+  const prevInitial = useRef(initial);
+  if (initial !== prevInitial.current) {
+    prevInitial.current = initial;
+    setItems(initial ?? []);
+  }
 
-function WontDoModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: string[]; onSave: (v: string[]) => Promise<void>; }) {
-  const [items, setItems] = useState<string[]>(initial.length ? initial : [""]);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) setItems(initial.length ? [...initial] : [""]); }, [open, JSON.stringify(initial)]);
-  const handleSave = async () => {
-    const clean = items.filter(s => s.trim());
-    if (!clean.length) return;
-    setSaving(true);
-    try { await onSave(clean); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
-  };
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>What We Won't Do</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 py-2 max-h-80 overflow-y-auto">
-          {items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-red-400 text-xs flex-shrink-0">×</span>
-              <input
-                value={item}
-                onChange={e => { const n = [...items]; n[i] = e.target.value; setItems(n); }}
-                className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="Out-of-scope item…"
-              />
-              <button type="button" className="text-muted-foreground/40 hover:text-red-400 transition-colors" onClick={() => setItems(items.filter((_, j) => j !== i))}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <button type="button" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1" onClick={() => setItems([...items, ""])}>
-            <Plus className="w-3.5 h-3.5" />Add exclusion
-          </button>
-        </div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function StakeholderModal({
-  open, onClose, initial, onSave,
-}: { open: boolean; onClose: () => void; initial: StakeholderMap | null; onSave: (v: StakeholderMap) => Promise<void>; }) {
-  const empty: StakeholderMap = { executive_sponsors: [], gatekeepers: [], affected_groups: [], potential_resistors: [], notes: "" };
-  const [data, setData] = useState<StakeholderMap>(initial ?? empty);
-  const [inputs, setInputs] = useState({ executive_sponsors: "", gatekeepers: "", affected_groups: "", potential_resistors: "" });
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (open) { setData(initial ?? empty); setInputs({ executive_sponsors: "", gatekeepers: "", affected_groups: "", potential_resistors: "" }); } }, [open, JSON.stringify(initial)]);
-
-  const GROUPS: Array<{ key: keyof Omit<StakeholderMap, "notes">; label: string; options: readonly { id: string; label: string }[]; color: string }> = [
-    { key: "executive_sponsors",  label: "Executive Sponsors",  options: EXECUTIVE_SPONSORS,  color: "#60A5FA" },
-    { key: "gatekeepers",         label: "Gatekeepers",         options: GATEKEEPERS,         color: "#FBBF24" },
-    { key: "affected_groups",     label: "Affected Groups",     options: AFFECTED_GROUPS,     color: "#4ADE80" },
-    { key: "potential_resistors", label: "Potential Resistors", options: POTENTIAL_RESISTORS, color: "#F87171" },
-  ];
-
-  const toggle = (key: keyof Omit<StakeholderMap, "notes">, id: string) => {
-    setData(prev => ({
+  const add = () =>
+    setItems(prev => [
       ...prev,
-      [key]: (prev[key] as string[]).includes(id) ? (prev[key] as string[]).filter(x => x !== id) : [...(prev[key] as string[]), id],
-    }));
-  };
-  const addCustom = (key: keyof Omit<StakeholderMap, "notes">) => {
-    const v = inputs[key].trim();
-    if (v && !(data[key] as string[]).includes(v)) {
-      setData(prev => ({ ...prev, [key]: [...(prev[key] as string[]), v] }));
-    }
-    setInputs(prev => ({ ...prev, [key]: "" }));
-  };
+      { number: prev.length + 1, title: "", description: "", capability_tags: [], ai_drafted: false },
+    ]);
+  const remove = (i: number) =>
+    setItems(prev =>
+      prev.filter((_, idx) => idx !== i).map((p, idx) => ({ ...p, number: idx + 1 })),
+    );
+  const update = (i: number, field: keyof Principle, val: unknown) =>
+    setItems(prev => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
+  const toggleTag = (i: number, tag: string) =>
+    setItems(prev =>
+      prev.map((p, idx) =>
+        idx === i
+          ? {
+              ...p,
+              capability_tags: p.capability_tags.includes(tag)
+                ? p.capability_tags.filter(t => t !== tag)
+                : [...p.capability_tags, tag],
+            }
+          : p,
+      ),
+    );
 
-  const handleSave = async () => {
+  const save = async () => {
     setSaving(true);
-    try { await onSave(data); onClose(); } catch { toast.error("Save failed"); } finally { setSaving(false); }
+    try {
+      await onSave(items);
+      onClose();
+    } catch {
+      toast.error("Failed to save principles");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">Section 02 · Ambition</p>
-          <DialogTitle>Stakeholder Map</DialogTitle>
+          <DialogTitle>Guiding Principles</DialogTitle>
+          <DialogDescription>4–5 non-negotiable rules that govern every AI decision in HR.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          {GROUPS.map(g => (
-            <div key={g.key} className="rounded-lg border border-border/40 bg-muted/10 p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: g.color }}>{g.label}</p>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {g.options.map(o => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => toggle(g.key, o.id)}
-                    className="text-xs px-2 py-0.5 rounded-full border transition-colors"
-                    style={(data[g.key] as string[]).includes(o.id)
-                      ? { borderColor: `${g.color}50`, background: `${g.color}20`, color: g.color }
-                      : { borderColor: "hsl(var(--border) / 0.6)", background: "hsl(var(--muted) / 0.2)", color: "hsl(var(--muted-foreground))" }
-                    }
-                  >
-                    {o.label}
-                  </button>
-                ))}
-                {(data[g.key] as string[]).filter(id => !g.options.find(o => o.id === id)).map(id => (
-                  <span key={id} className="text-xs px-2 py-0.5 rounded-full border flex items-center gap-1" style={{ borderColor: `${g.color}50`, background: `${g.color}20`, color: g.color }}>
-                    {id}
-                    <button type="button" onClick={() => toggle(g.key, id)}><X className="w-3 h-3" /></button>
-                  </span>
-                ))}
-              </div>
+          {items.map((p, i) => (
+            <div key={i} className="border border-border/50 rounded-lg p-4 space-y-3 bg-card/50">
               <div className="flex items-center gap-2">
-                <input
-                  value={inputs[g.key]}
-                  onChange={e => setInputs(prev => ({ ...prev, [g.key]: e.target.value }))}
-                  onKeyDown={e => e.key === "Enter" && addCustom(g.key)}
-                  className="flex-1 bg-muted/30 border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  placeholder="Add custom…"
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  {i + 1}
+                </div>
+                <Input
+                  value={p.title}
+                  onChange={e => update(i, "title", e.target.value)}
+                  placeholder="Principle title (3–5 words)"
+                  className="flex-1 h-8 text-sm"
                 />
-                <button type="button" className="text-xs text-muted-foreground hover:text-foreground transition-colors" onClick={() => addCustom(g.key)}>Add</button>
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+                  onClick={() => remove(i)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <Textarea
+                value={p.description}
+                onChange={e => update(i, "description", e.target.value)}
+                placeholder="One-sentence description…"
+                className="text-sm min-h-[60px] resize-none"
+              />
+              <div>
+                <p className="text-[11px] text-muted-foreground mb-1.5">Capability tags</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {CAPABILITY_TAGS.map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(i, tag)}
+                      className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                        p.capability_tags.includes(tag)
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "border-border/50 text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Notes (optional)</p>
-            <textarea
-              value={data.notes ?? ""}
-              onChange={e => setData(prev => ({ ...prev, notes: e.target.value }))}
-              rows={2}
-              className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary/50"
-              placeholder="Any additional context…"
-            />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8" onClick={add}>
+              <Plus className="w-3 h-3" /> Add principle
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-xs h-8 text-muted-foreground"
+              onClick={onDraft}
+              disabled={isDrafting}
+            >
+              {isDrafting
+                ? <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                : <Sparkles className="w-3 h-3" />}
+              {isDrafting ? "Drafting…" : "Re-draft with AI"}
+            </Button>
           </div>
         </div>
         <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── Review Draft Modal ───────────────────────────────────────────────────────
-
-function ReviewDraftModal({
-  open, onClose, sectionKey, draft, onAccept,
+function ExclusionsModal({
+  open, onClose, initial, onSave, isDrafting, onDraft,
 }: {
-  open: boolean;
-  onClose: () => void;
-  sectionKey: SectionKey;
-  draft: unknown;
-  onAccept: () => void;
+  open: boolean; onClose: () => void;
+  initial: Exclusion[] | null;
+  onSave: (v: Exclusion[]) => Promise<void>;
+  isDrafting: boolean;
+  onDraft: () => void;
 }) {
-  const meta = SECTION_META[sectionKey];
-  const renderDraft = () => {
-    if (!draft) return null;
-    if (typeof draft === "string") return <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{draft}</p>;
-    if (Array.isArray(draft)) {
-      if (draft.length && typeof draft[0] === "object" && "title" in draft[0]) {
-        return (
-          <div className="space-y-3">
-            {(draft as Principle[]).map((p, i) => (
-              <div key={i} className="rounded-lg border border-border/40 bg-muted/10 p-3">
-                <p className="text-sm font-semibold text-foreground mb-1">{p.title}</p>
-                <p className="text-xs text-muted-foreground">{p.description}</p>
-              </div>
-            ))}
-          </div>
-        );
-      }
-      return (
-        <ol className="space-y-2">
-          {(draft as string[]).map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-              <span className="w-5 h-5 rounded-full bg-teal-500/15 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold text-teal-400">{i + 1}</span>
-              {item}
-            </li>
-          ))}
-        </ol>
-      );
-    }
-    if (typeof draft === "object") {
-      const sm = draft as StakeholderMap;
-      return (
-        <div className="space-y-2 text-sm text-muted-foreground">
-          {sm.executive_sponsors?.length > 0 && <p><strong className="text-foreground">Sponsors:</strong> {sm.executive_sponsors.join(", ")}</p>}
-          {sm.gatekeepers?.length > 0 && <p><strong className="text-foreground">Gatekeepers:</strong> {sm.gatekeepers.join(", ")}</p>}
-          {sm.affected_groups?.length > 0 && <p><strong className="text-foreground">Affected Groups:</strong> {sm.affected_groups.join(", ")}</p>}
-          {sm.potential_resistors?.length > 0 && <p><strong className="text-foreground">Resistors:</strong> {sm.potential_resistors.join(", ")}</p>}
-        </div>
-      );
-    }
-    return null;
+  const [items, setItems] = useState<Exclusion[]>(() => initial ?? []);
+  const [saving, setSaving] = useState(false);
+  const [newText, setNewText] = useState("");
+
+  const prevInitial = useRef(initial);
+  if (initial !== prevInitial.current) {
+    prevInitial.current = initial;
+    setItems(initial ?? []);
+  }
+
+  const add = () => {
+    if (!newText.trim()) return;
+    setItems(prev => [...prev, { text: newText.trim(), ai_drafted: false }]);
+    setNewText("");
   };
+  const remove = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
+  const update = (i: number, val: string) =>
+    setItems(prev => prev.map((ex, idx) => (idx === i ? { ...ex, text: val } : ex)));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSave(items);
+      onClose();
+    } catch {
+      toast.error("Failed to save exclusions");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5">AI Draft · Review</p>
-          <DialogTitle>{meta.label}</DialogTitle>
+          <DialogTitle>What We Won't Do</DialogTitle>
+          <DialogDescription>Explicit out-of-scope decisions that protect focus.</DialogDescription>
         </DialogHeader>
-        <div className="py-2">{renderDraft()}</div>
-        <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Discard</button>
-          <Button size="sm" className="h-8 text-xs bg-teal-600 hover:bg-teal-500 text-white" onClick={onAccept}>
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />Accept draft
+        <div className="space-y-2 py-2">
+          {items.map((ex, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <X className="w-3.5 h-3.5 text-destructive/50 flex-shrink-0" />
+              <Input
+                value={ex.text}
+                onChange={e => update(i, e.target.value)}
+                className="flex-1 h-8 text-sm"
+              />
+              <Button
+                variant="ghost" size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+                onClick={() => remove(i)}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 mt-2">
+            <Input
+              value={newText}
+              onChange={e => setNewText(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && add()}
+              placeholder="Add an exclusion…"
+              className="flex-1 h-8 text-sm"
+            />
+            <Button variant="outline" size="sm" className="h-8 px-3" onClick={add}>Add</Button>
+          </div>
+          <Button
+            variant="ghost" size="sm"
+            className="gap-1.5 text-xs h-8 text-muted-foreground mt-1"
+            onClick={onDraft}
+            disabled={isDrafting}
+          >
+            {isDrafting
+              ? <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              : <Sparkles className="w-3 h-3" />}
+            {isDrafting ? "Drafting…" : "Suggest with AI"}
           </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── Batch Confirm Modal ──────────────────────────────────────────────────────
+function OutcomeRow({
+  outcome, index, principles, onChange, onRemove,
+}: {
+  outcome: Outcome; index: number; principles: Principle[] | null;
+  onChange: (field: keyof Outcome, val: unknown) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="border border-border/50 rounded-lg p-4 space-y-3 bg-card/50">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
+          {index + 1}
+        </div>
+        <Input
+          value={outcome.title}
+          onChange={e => onChange("title", e.target.value)}
+          placeholder="Outcome title (3–6 words)"
+          className="flex-1 h-8 text-sm"
+        />
+        <Button
+          variant="ghost" size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+          onClick={onRemove}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Unit</Label>
+          <Input
+            value={outcome.unit}
+            onChange={e => onChange("unit", e.target.value)}
+            placeholder="e.g. % reduction"
+            className="h-8 text-sm mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Target date</Label>
+          <Input
+            value={outcome.target_date}
+            onChange={e => onChange("target_date", e.target.value)}
+            placeholder="Q4 2026"
+            className="h-8 text-sm mt-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground mb-1.5 block">Baseline</Label>
+        <RadioGroup
+          value={outcome.baseline_status}
+          onValueChange={v => onChange("baseline_status", v)}
+          className="flex gap-4"
+        >
+          <div className="flex items-center gap-1.5">
+            <RadioGroupItem value="measured" id={`m-${index}`} />
+            <Label htmlFor={`m-${index}`} className="text-xs cursor-pointer">Measured</Label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <RadioGroupItem value="not_measured" id={`nm-${index}`} />
+            <Label htmlFor={`nm-${index}`} className="text-xs cursor-pointer">TBD / not yet measured</Label>
+          </div>
+        </RadioGroup>
+        {outcome.baseline_status === "measured" && (
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div>
+              <Label className="text-[11px] text-muted-foreground">Baseline value</Label>
+              <Input
+                type="number"
+                value={outcome.baseline_value ?? ""}
+                onChange={e => onChange("baseline_value", e.target.value ? Number(e.target.value) : null)}
+                className="h-8 text-sm mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[11px] text-muted-foreground">Study date</Label>
+              <Input
+                value={outcome.baseline_study_date ?? ""}
+                onChange={e => onChange("baseline_study_date", e.target.value || null)}
+                placeholder="Q1 2025"
+                className="h-8 text-sm mt-1"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground">Target value</Label>
+        <Input
+          type="number"
+          value={outcome.target_value}
+          onChange={e => onChange("target_value", Number(e.target.value))}
+          className="h-8 text-sm mt-1"
+        />
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground">Summary sentence</Label>
+        <Textarea
+          value={outcome.derived_summary}
+          onChange={e => onChange("derived_summary", e.target.value)}
+          placeholder="Reduce X from TBD to Y by Z"
+          className="text-sm min-h-[56px] resize-none mt-1"
+        />
+      </div>
+      {principles && principles.length > 0 && (
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Tests principle (optional)</Label>
+          <select
+            value={outcome.tests_principle ?? ""}
+            onChange={e => onChange("tests_principle", e.target.value ? Number(e.target.value) : null)}
+            className="mt-1 w-full h-8 text-sm rounded-md border border-input bg-background px-2 text-foreground"
+          >
+            <option value="">— none —</option>
+            {principles.map(p => (
+              <option key={p.number} value={p.number}>{p.number}. {p.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
 
-function BatchConfirmModal({ open, onClose, onConfirm, count }: { open: boolean; onClose: () => void; onConfirm: () => void; count: number }) {
+function OutcomesModal({
+  open, onClose, initial, principles, onSave, isDrafting, onDraft,
+}: {
+  open: boolean; onClose: () => void;
+  initial: Outcome[] | null;
+  principles: Principle[] | null;
+  onSave: (v: Outcome[]) => Promise<void>;
+  isDrafting: boolean;
+  onDraft: () => void;
+}) {
+  const [items, setItems] = useState<Outcome[]>(() => initial ?? []);
+  const [saving, setSaving] = useState(false);
+
+  const prevInitial = useRef(initial);
+  if (initial !== prevInitial.current) {
+    prevInitial.current = initial;
+    setItems(initial ?? []);
+  }
+
+  const add = () =>
+    setItems(prev => [
+      ...prev,
+      {
+        number: prev.length + 1, title: "", unit: "",
+        baseline_value: null, baseline_status: "not_measured",
+        baseline_study_date: null, target_value: 0, target_date: "",
+        derived_summary: "", tests_principle: null, ai_drafted: false,
+      },
+    ]);
+  const remove = (i: number) =>
+    setItems(prev =>
+      prev.filter((_, idx) => idx !== i).map((o, idx) => ({ ...o, number: idx + 1 })),
+    );
+  const update = (i: number, field: keyof Outcome, val: unknown) =>
+    setItems(prev => prev.map((o, idx) => (idx === i ? { ...o, [field]: val } : o)));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSave(items);
+      onClose();
+    } catch {
+      toast.error("Failed to save outcomes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Draft everything with AI?</DialogTitle>
+          <DialogTitle>Outcomes</DialogTitle>
+          <DialogDescription>3–5 measurable results that prove the strategy is working.</DialogDescription>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground py-2">
-          This will draft {count} sections. You can edit anything afterwards. Continue?
-        </p>
+        <div className="space-y-4 py-2">
+          {items.map((o, i) => (
+            <OutcomeRow
+              key={i}
+              outcome={o}
+              index={i}
+              principles={principles}
+              onChange={(field, val) => update(i, field, val)}
+              onRemove={() => remove(i)}
+            />
+          ))}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8" onClick={add}>
+              <Plus className="w-3 h-3" /> Add outcome
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-xs h-8 text-muted-foreground"
+              onClick={onDraft}
+              disabled={isDrafting}
+            >
+              {isDrafting
+                ? <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                : <Sparkles className="w-3 h-3" />}
+              {isDrafting ? "Drafting…" : "Re-draft with AI"}
+            </Button>
+          </div>
+        </div>
         <DialogFooter>
-          <button type="button" className="text-sm text-muted-foreground hover:text-foreground underline transition-colors mr-auto" onClick={onClose}>Cancel</button>
-          <Button size="sm" className="h-8 text-xs bg-teal-600 hover:bg-teal-500 text-white" onClick={onConfirm}>
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" />Draft {count} sections
-          </Button>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StrategyAmbitionPage() {
-  const [, navigate] = useLocation();
+  const { user } = useAuth();
 
-  // Queries
-  const assessmentQ     = trpc.intelligence.getStrategyAssessment.useQuery();
-  const sectionsQ       = trpc.intelligence.getAmbitionSections.useQuery();
-  const companyResultsQ = trpc.companyAssessment.getMyAssessmentResults.useQuery();
+  const sectionsQ = trpc.intelligence.getAmbitionSections.useQuery();
+  const strategyQ = trpc.intelligence.getStrategyAssessment.useQuery();
 
-  const assessment     = assessmentQ.data;
-  const sections       = sectionsQ.data;
-  const companyResults = companyResultsQ.data;
+  const saveSectionM = trpc.intelligence.saveAmbitionSection.useMutation();
+  const draftSectionM = trpc.intelligence.draftAmbitionSection.useMutation();
+  const patchStrategyM = trpc.intelligence.patchStrategyField.useMutation();
 
-  // Derived
-  const businessLevel = assessment?.businessAmbitionLevel ?? 3;
-  const peopleLevel   = assessment?.peopleAmbitionLevel   ?? 3;
-  const bLevel        = BUSINESS_LEVELS[businessLevel];
-  const pLevel        = PEOPLE_LEVELS[peopleLevel];
+  const [visionOpen, setVisionOpen] = useState(false);
+  const [principlesOpen, setPrinciplesOpen] = useState(false);
+  const [exclusionsOpen, setExclusionsOpen] = useState(false);
+  const [outcomesOpen, setOutcomesOpen] = useState(false);
 
-  const utils = trpc.useUtils();
+  const [drafting, setDrafting] = useState<Set<string>>(new Set());
+  const setDraftingSection = (s: string, v: boolean) =>
+    setDrafting(prev => {
+      const next = new Set(prev);
+      if (v) next.add(s); else next.delete(s);
+      return next;
+    });
 
-  // ── Section states ─────────────────────────────────────────────────────────
-  const sectionStates = useMemo((): Record<SectionKey, SectionState> => {
-    if (!sections) return { vision: "empty", outcomes: "empty", waysOfWork: "empty", principles: "empty", aiLandscape: "empty", wontDo: "empty", stakeholderMap: "empty" };
-    return {
-      vision:         sections.vision ? "built" : "empty",
-      outcomes:       sections.outcomes && sections.outcomes.length > 0 ? "built" : "empty",
-      waysOfWork:     sections.waysOfWork ? "built" : "empty",
-      principles:     sections.principles && sections.principles.length > 0 ? "built" : "empty",
-      aiLandscape:    sections.aiLandscape && sections.aiLandscape.length > 0 ? "built" : "empty",
-      wontDo:         sections.wontDo && sections.wontDo.length > 0 ? "built" : "empty",
-      stakeholderMap: sections.stakeholderMap ? "built" : "empty",
-    };
-  }, [sections]);
+  const sections = sectionsQ.data;
+  const strategy = strategyQ.data;
 
-  // Override with drafting state
-  const [draftingSet, setDraftingSet] = useState<Set<SectionKey>>(new Set());
-  const getState = (k: SectionKey): SectionState => draftingSet.has(k) ? "drafting" : sectionStates[k];
+  const orgDescriptor = useMemo(() => {
+    const parts: string[] = [];
+    if (strategy?.sector) parts.push(strategy.sector);
+    if (strategy?.headcount) parts.push(`${strategy.headcount} employees`);
+    return parts.join(" · ") || "an HR function";
+  }, [strategy]);
 
-  const builtCount = useMemo(() => (Object.keys(SECTION_META) as SectionKey[]).filter(k => getState(k) === "built").length, [sectionStates, draftingSet]);
-  const totalCount = Object.keys(SECTION_META).length;
+  const businessTier = sections?.businessAmbitionLevel ?? null;
+  const hrTier = sections?.peopleAmbitionLevel ?? null;
 
-  // ── Modal state ────────────────────────────────────────────────────────────
-  const [visionModalOpen, setVisionModalOpen]         = useState(false);
-  const [outcomesModalOpen, setOutcomesModalOpen]     = useState(false);
-  const [waysModalOpen, setWaysModalOpen]             = useState(false);
-  const [principlesModalOpen, setPrinciplesModalOpen] = useState(false);
-  const [landscapeModalOpen, setLandscapeModalOpen]   = useState(false);
-  const [wontDoModalOpen, setWontDoModalOpen]         = useState(false);
-  const [stakeholderModalOpen, setStakeholderModalOpen] = useState(false);
-  const [batchConfirmOpen, setBatchConfirmOpen]       = useState(false);
-
-  // Review draft modal
-  const [reviewDraft, setReviewDraft] = useState<{ sectionKey: SectionKey; draft: unknown } | null>(null);
-
-  // ── Mutations ──────────────────────────────────────────────────────────────
-  const saveMut = trpc.intelligence.saveAmbitionSection.useMutation({
-    onSuccess: () => { utils.intelligence.getAmbitionSections.invalidate(); utils.intelligence.getStrategyAssessment.invalidate(); },
-    onError: (e) => toast.error(`Save failed: ${e.message}`),
-  });
-
-  const draftMut = trpc.intelligence.draftAmbitionSection.useMutation({
-    onError: (e) => toast.error(`Draft failed: ${e.message}`),
-  });
-
-  const orgDescriptor = [
-    companyResults?.companyName,
-    (assessment as any)?.sector,
-    (assessment as any)?.headcount ? `${Number((assessment as any).headcount).toLocaleString()} employees` : null,
-  ].filter(Boolean).join(" · ") || null;
-
-  // Map businessLevel (1-5) to brief's 1-4 tier
-  const businessTier = Math.max(1, Math.min(4, Math.ceil(businessLevel / 1.25))) as 1 | 2 | 3 | 4;
-  const hrTier = Math.max(1, Math.min(4, Math.ceil(peopleLevel / 1.25))) as 1 | 2 | 3 | 4;
-
-  const draftSection = useCallback(async (sectionKey: SectionKey) => {
-    if (sectionKey === "vision") { setVisionModalOpen(true); return; }
-    if (sectionKey === "aiLandscape") { setLandscapeModalOpen(true); return; }
-    setDraftingSet(prev => new Set(Array.from(prev).concat(sectionKey)));
+  const visionInputs = useMemo((): VisionInputs | null => {
     try {
-      const result = await draftMut.mutateAsync({
-        section: sectionKey as "outcomes" | "waysOfWork" | "principles" | "wontDo" | "stakeholderMap",
+      const raw = strategy?.visionInputs;
+      if (!raw) return null;
+      return raw as unknown as VisionInputs | null;
+    } catch {
+      return null;
+    }
+  }, [strategy]);
+
+  const principles: Principle[] | null = useMemo(() =>
+    sections?.principles as Principle[] | null ?? null
+  , [sections]);
+
+  const exclusions: Exclusion[] | null = useMemo(() =>
+    sections?.wontDo as Exclusion[] | null ?? null
+  , [sections]);
+
+  const outcomes: Outcome[] | null = useMemo(() =>
+    sections?.outcomes as Outcome[] | null ?? null
+  , [sections]);
+
+  const lastReviewedAt: number | null = sections?.lastReviewedAt
+    ? (sections.lastReviewedAt instanceof Date ? sections.lastReviewedAt.getTime() : sections.lastReviewedAt as unknown as number)
+    : null;
+  const lastReviewedBy: string | null = sections?.lastReviewedBy ?? null;
+
+  const draftSection = useCallback(async (
+    section: "principles" | "wontDo" | "outcomes" | "approachLine",
+  ) => {
+    setDraftingSection(section, true);
+    try {
+      const result = await draftSectionM.mutateAsync({
+        section,
         orgDescriptor,
         businessAmbitionTier: businessTier,
         hrDeliveryTier: hrTier,
-        visionStatement: sections?.vision ?? null,
+        visionStatement: sections?.vision ?? undefined,
+        existingPrinciples: section === "approachLine" ? (principles ?? undefined) : undefined,
       });
-      setDraftingSet(prev => { const n = new Set(prev); n.delete(sectionKey); return n; });
-      setReviewDraft({ sectionKey, draft: result.draft });
+      await saveSectionM.mutateAsync({ section, value: result.draft as never });
+      await sectionsQ.refetch();
+      toast.success("Draft ready");
     } catch {
-      setDraftingSet(prev => { const n = new Set(prev); n.delete(sectionKey); return n; });
+      toast.error("Draft failed — try again");
+    } finally {
+      setDraftingSection(section, false);
     }
-  }, [draftMut, orgDescriptor, businessTier, hrTier, sections?.vision]);
+  }, [draftSectionM, saveSectionM, sectionsQ, orgDescriptor, businessTier, hrTier, sections, principles]);
 
-  const acceptDraft = useCallback(async () => {
-    if (!reviewDraft) return;
-    const { sectionKey, draft } = reviewDraft;
-    try {
-      await saveMut.mutateAsync({ section: sectionKey, value: draft } as any);
-      setReviewDraft(null);
-      toast.success("Draft accepted");
-    } catch { /* handled by mutation */ }
-  }, [reviewDraft, saveMut]);
+  const savePrinciples = useCallback(async (v: Principle[]) => {
+    await saveSectionM.mutateAsync({ section: "principles", value: v as never });
+    await sectionsQ.refetch();
+  }, [saveSectionM, sectionsQ]);
 
-  const cancelDraft = useCallback((sectionKey: SectionKey) => {
-    setDraftingSet(prev => { const n = new Set(prev); n.delete(sectionKey); return n; });
-  }, []);
+  const saveExclusions = useCallback(async (v: Exclusion[]) => {
+    await saveSectionM.mutateAsync({ section: "wontDo", value: v as never });
+    await sectionsQ.refetch();
+  }, [saveSectionM, sectionsQ]);
 
-  const draftAll = useCallback(async () => {
-    setBatchConfirmOpen(false);
-    const eligible = AI_ELIGIBLE_SECTIONS.filter(k => getState(k) === "empty");
-    if (!eligible.length) { toast.info("All sections already built"); return; }
-    // Start all in parallel — no review modal for batch
-    await Promise.allSettled(eligible.map(async (sectionKey) => {
-      setDraftingSet(prev => new Set(Array.from(prev).concat(sectionKey)));
-      try {
-        const result = await draftMut.mutateAsync({
-          section: sectionKey as "outcomes" | "waysOfWork" | "principles" | "wontDo" | "stakeholderMap",
-          orgDescriptor,
-          businessAmbitionTier: businessTier,
-          hrDeliveryTier: hrTier,
-          visionStatement: sections?.vision ?? null,
-        });
-        await saveMut.mutateAsync({ section: sectionKey, value: result.draft } as any);
-        setDraftingSet(prev => { const n = new Set(prev); n.delete(sectionKey); return n; });
-      } catch {
-        setDraftingSet(prev => { const n = new Set(prev); n.delete(sectionKey); return n; });
-        toast.error(`Failed to draft ${SECTION_META[sectionKey].label}`);
-      }
-    }));
-  }, [draftMut, saveMut, orgDescriptor, businessTier, hrTier, sections?.vision, sectionStates, draftingSet]);
+  const saveOutcomes = useCallback(async (v: Outcome[]) => {
+    await saveSectionM.mutateAsync({ section: "outcomes", value: v as never });
+    await sectionsQ.refetch();
+  }, [saveSectionM, sectionsQ]);
 
-  // Save helpers
-  const saveSection = useCallback(async (section: SectionKey, value: unknown) => {
-    await saveMut.mutateAsync({ section, value } as any);
-  }, [saveMut]);
+  const markReviewed = useCallback(async () => {
+    const name = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "Unknown";
+    await saveSectionM.mutateAsync({ section: "markReviewed", value: { reviewerName: name } as never });
+    await sectionsQ.refetch();
+    toast.success("Marked as reviewed");
+  }, [saveSectionM, sectionsQ, user]);
 
-  // ── Loading ────────────────────────────────────────────────────────────────
-  const isLoading = assessmentQ.isLoading || sectionsQ.isLoading;
-  const isError   = assessmentQ.isError   || sectionsQ.isError;
+  const bLabel = businessTier ? BUSINESS_TIER_LABELS[businessTier] ?? null : null;
+  const hrLabel = hrTier ? HR_TIER_LABELS[hrTier] ?? null : null;
 
-  if (isLoading) {
+  const builtCount = useMemo(() => {
+    let count = 0;
+    if (sections?.vision) count++;
+    if (principles?.length) count++;
+    if (exclusions?.length) count++;
+    if (outcomes?.length) count++;
+    return count;
+  }, [sections, principles, exclusions, outcomes]);
+
+  if (sectionsQ.isLoading) {
     return (
-      <SectionPageLayout sectionNumber="02" sectionLabel="Ambition" title="Where we're going" accentColor="#2DD4BF" icon={<Target className="w-5 h-5" />}>
-        <div className="space-y-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border/40 bg-card p-5 space-y-3">
-              <Skeleton className="h-3 w-24 rounded" />
-              <Skeleton className="h-3 w-full rounded" />
-              <Skeleton className="h-3 w-2/3 rounded" />
-            </div>
-          ))}
-        </div>
-      </SectionPageLayout>
+      <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+        Loading ambition…
+      </div>
     );
   }
 
-  if (isError) {
-    return (
-      <SectionPageLayout sectionNumber="02" sectionLabel="Ambition" title="Where we're going" accentColor="#2DD4BF" icon={<Target className="w-5 h-5" />}>
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5 flex items-start gap-3">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-foreground mb-1">Failed to load ambition data</p>
-            <Button size="sm" variant="outline" className="h-7 text-xs mt-2" onClick={() => { assessmentQ.refetch(); sectionsQ.refetch(); }}>Retry</Button>
-          </div>
-        </div>
-      </SectionPageLayout>
-    );
-  }
+  const vision = sections?.vision ?? null;
 
-  if (!assessment?.completed) {
-    return (
-      <SectionPageLayout sectionNumber="02" sectionLabel="Ambition" title="Where we're going" accentColor="#2DD4BF" icon={<Target className="w-5 h-5" />}>
-        <div className="rounded-xl border border-dashed border-teal-500/20 bg-teal-500/4 p-8 flex flex-col items-center text-center gap-4">
-          <Target className="w-8 h-8 text-teal-400" />
-          <div>
-            <p className="text-sm font-semibold text-foreground mb-1">Generate your strategy to set your ambition</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">Complete the Build Strategy wizard to generate a vision statement, guiding principles, and ambition framing.</p>
-          </div>
-          <Button size="sm" className="h-8 text-xs" onClick={() => navigate("/strategy/diagnostic")}>
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" />Build Strategy
-          </Button>
-        </div>
-      </SectionPageLayout>
-    );
-  }
-
-  // ── Determine page state ───────────────────────────────────────────────────
-  const allBuilt = builtCount === totalCount;
-  const noneBuilt = builtCount === 0 && draftingSet.size === 0;
-  const emptySectionCount = AI_ELIGIBLE_SECTIONS.filter(k => getState(k) === "empty").length;
-
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <TooltipProvider>
-      <SectionPageLayout sectionNumber="02" sectionLabel="Ambition" title="Where we're going" accentColor="#2DD4BF" icon={<Target className="w-5 h-5" />}>
-
-        {/* ── Hero card (shown when at least one AI-eligible section is empty) ── */}
-        {emptySectionCount > 0 && (
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-teal-400" />
-                <p className="text-sm font-semibold text-foreground">
-                  {noneBuilt ? "Build your AI ambition" : "Continue building your ambition"}
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {noneBuilt
-                  ? "Draft all 6 sections at once with AI, or build each section individually below."
-                  : `${emptySectionCount} section${emptySectionCount > 1 ? "s" : ""} still to complete. Draft the remaining sections with AI or add manually.`}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="h-8 text-xs bg-teal-600 hover:bg-teal-500 text-white whitespace-nowrap"
-              onClick={() => setBatchConfirmOpen(true)}
-              disabled={draftingSet.size > 0}
-            >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />Draft everything with AI
-            </Button>
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <span>HR AI Strategy</span>
+            <ChevronRight className="w-3 h-3" />
+            <span>Ambition</span>
           </div>
-        )}
-
-        {/* ── Wizard banner ─────────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 flex items-center gap-3">
-          <Info className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-muted-foreground flex-1">Some sections of your ambition can only be changed by re-running the strategy assessment.</p>
-          <button type="button" className="text-xs text-amber-400 hover:text-amber-300 font-medium whitespace-nowrap flex items-center gap-1 transition-colors" onClick={() => navigate("/strategy/diagnostic")}>
-            Re-run assessment →
-          </button>
-        </div>
-
-        {/* ── 1. Vision Statement ───────────────────────────────────────────── */}
-        {getState("vision") === "empty" ? (
-          <EmptySection
-            sectionKey="vision"
-            onDraftWithAI={() => { setVisionModalOpen(true); }}
-            onAddManually={() => { setVisionModalOpen(true); }}
-          />
-        ) : (
-          <div className="rounded-xl border border-teal-500/20 bg-teal-500/4 p-5">
-            <BuiltSectionHeader label="Vision Statement" onEdit={() => setVisionModalOpen(true)} />
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 cursor-help">
-                    Business: <strong className="font-semibold">{bLevel?.label ?? "—"}</strong>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs">{bLevel?.waysOfWork}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 cursor-help">
-                    HR: <strong className="font-semibold">{pLevel?.label ?? "—"}</strong>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs">{pLevel?.tooltip}</TooltipContent>
-              </Tooltip>
-            </div>
-            {(assessment as any)?.userVisionInput ? (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/20 font-medium mb-3">Your words</span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground border border-white/10 font-medium mb-3">AI-drafted · Edit to make it yours</span>
-            )}
-            <p className="text-base leading-relaxed text-foreground" style={{ fontFamily: "Georgia, 'Times New Roman', serif", lineHeight: "1.6" }}>
-              <span className="text-teal-400/60 text-2xl leading-none mr-1 align-top">"</span>
-              {sections?.vision}
-              <span className="text-teal-400/60 text-2xl leading-none ml-1 align-bottom">"</span>
-            </p>
-          </div>
-        )}
-
-        {/* ── 2. Outcomes ───────────────────────────────────────────────────── */}
-        {getState("outcomes") === "empty" ? (
-          <EmptySection sectionKey="outcomes" onDraftWithAI={() => draftSection("outcomes")} onAddManually={() => setOutcomesModalOpen(true)} isDrafting={draftingSet.has("outcomes")} />
-        ) : getState("outcomes") === "drafting" ? (
-          <DraftingSection sectionKey="outcomes" onCancel={() => cancelDraft("outcomes")} />
-        ) : (
-          <div className="rounded-xl border border-border/40 bg-card p-5">
-            <BuiltSectionHeader label="By the end of this strategy period, HR will:" onEdit={() => setOutcomesModalOpen(true)} />
-            <ol className="space-y-3">
-              {(sections?.outcomes ?? []).map((c, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-teal-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-[10px] font-bold text-teal-400">{i + 1}</span>
-                  </div>
-                  <p className="text-sm text-foreground leading-relaxed">{c}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-        {/* ── 3. Ways of Work ───────────────────────────────────────────────── */}
-        {getState("waysOfWork") === "empty" ? (
-          <EmptySection sectionKey="waysOfWork" onDraftWithAI={() => draftSection("waysOfWork")} onAddManually={() => setWaysModalOpen(true)} isDrafting={draftingSet.has("waysOfWork")} />
-        ) : getState("waysOfWork") === "drafting" ? (
-          <DraftingSection sectionKey="waysOfWork" onCancel={() => cancelDraft("waysOfWork")} />
-        ) : (
-          <div className="rounded-xl border border-border/40 bg-card p-5">
-            <BuiltSectionHeader label="How AI will change ways of work" onEdit={() => setWaysModalOpen(true)} />
-            <p className="text-sm text-muted-foreground leading-relaxed">{sections?.waysOfWork}</p>
-          </div>
-        )}
-
-        {/* ── 4. Guiding Principles ─────────────────────────────────────────── */}
-        {getState("principles") === "empty" ? (
-          <EmptySection sectionKey="principles" onDraftWithAI={() => draftSection("principles")} onAddManually={() => setPrinciplesModalOpen(true)} isDrafting={draftingSet.has("principles")} />
-        ) : getState("principles") === "drafting" ? (
-          <DraftingSection sectionKey="principles" onCancel={() => cancelDraft("principles")} />
-        ) : (
-          <div className="rounded-xl border border-border/40 bg-card p-5">
-            <BuiltSectionHeader label="Guiding Principles" onEdit={() => setPrinciplesModalOpen(true)} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(sections?.principles ?? []).map((p, i) => {
-                const isLast = i === (sections?.principles ?? []).length - 1;
-                const isOdd  = (sections?.principles ?? []).length % 2 !== 0;
-                return (
-                  <div key={i} className={`rounded-lg border border-border/40 bg-muted/10 p-3 ${isLast && isOdd ? "sm:col-span-2" : ""}`}>
-                    <p className="text-sm font-semibold text-foreground mb-1">{p.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── 5. Current AI Landscape ───────────────────────────────────────── */}
-        {getState("aiLandscape") === "empty" ? (
-          <EmptySection sectionKey="aiLandscape" onAddManually={() => setLandscapeModalOpen(true)} />
-        ) : (
-          <div className="rounded-xl border border-border/40 bg-card p-5">
-            <BuiltSectionHeader label="Current AI Landscape" onEdit={() => setLandscapeModalOpen(true)} />
-            <p className="text-xs text-muted-foreground mb-3">Tools already deployed in HR — initiatives will complement rather than duplicate these.</p>
-            <div className="flex flex-wrap gap-2">
-              {(sections?.aiLandscape ?? []).map(toolId => {
-                const tool = EXISTING_AI_TOOLS.find(t => t.id === toolId);
-                const label = tool?.label ?? toolId;
-                return (
-                  <span key={toolId} className="text-xs px-2.5 py-1 rounded-full border border-border/60 bg-muted/30 text-muted-foreground">{label}</span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── 6. What We Won't Do ───────────────────────────────────────────── */}
-        {getState("wontDo") === "empty" ? (
-          <EmptySection sectionKey="wontDo" onDraftWithAI={() => draftSection("wontDo")} onAddManually={() => setWontDoModalOpen(true)} isDrafting={draftingSet.has("wontDo")} />
-        ) : getState("wontDo") === "drafting" ? (
-          <DraftingSection sectionKey="wontDo" onCancel={() => cancelDraft("wontDo")} />
-        ) : (
-          <div className="rounded-xl border border-red-500/15 bg-red-500/4 p-5">
-            <BuiltSectionHeader label="What We Won't Do" onEdit={() => setWontDoModalOpen(true)} />
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">A strategy that makes no cuts is a wishlist. The following are explicitly out of scope for this strategy period.</p>
-            <ul className="space-y-1 mb-3">
-              {(sections?.wontDo ?? []).map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-red-400 text-xs flex-shrink-0 mt-0.5">×</span>
-                  <span className="text-sm text-muted-foreground leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* ── 7. Stakeholder Map ────────────────────────────────────────────── */}
-        {getState("stakeholderMap") === "empty" ? (
-          <EmptySection sectionKey="stakeholderMap" onDraftWithAI={() => draftSection("stakeholderMap")} onAddManually={() => setStakeholderModalOpen(true)} isDrafting={draftingSet.has("stakeholderMap")} />
-        ) : getState("stakeholderMap") === "drafting" ? (
-          <DraftingSection sectionKey="stakeholderMap" onCancel={() => cancelDraft("stakeholderMap")} />
-        ) : (
-          <div className="rounded-xl border border-border/40 bg-card p-5">
-            <BuiltSectionHeader label="Stakeholder Map" onEdit={() => setStakeholderModalOpen(true)} />
-            {(() => {
-              const sm = sections?.stakeholderMap as StakeholderMap | null | undefined;
-              if (!sm) return null;
-              return (
-                <>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
-                    {[
-                      { key: "executive_sponsors" as const,  label: "Executive Sponsors",  ids: sm.executive_sponsors ?? [],  options: EXECUTIVE_SPONSORS,  color: "#60A5FA",  icon: <UserCheck className="w-3.5 h-3.5" /> },
-                      { key: "gatekeepers" as const,         label: "Gatekeepers",         ids: sm.gatekeepers ?? [],         options: GATEKEEPERS,         color: "#FBBF24",  icon: <LockIcon className="w-3.5 h-3.5" /> },
-                      { key: "affected_groups" as const,     label: "Affected Groups",     ids: sm.affected_groups ?? [],     options: AFFECTED_GROUPS,     color: "#4ADE80",  icon: <Users className="w-3.5 h-3.5" /> },
-                      { key: "potential_resistors" as const, label: "Potential Resistors", ids: sm.potential_resistors ?? [], options: POTENTIAL_RESISTORS, color: "#F87171",  icon: <AlertCircle className="w-3.5 h-3.5" /> },
-                    ].map(q => (
-                      <div key={q.key} className="rounded-lg border border-border/50 bg-muted/20 p-3">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span style={{ color: q.color }}>{q.icon}</span>
-                          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: q.color }}>{q.label}</p>
-                        </div>
-                        {q.ids.length === 0 ? (
-                          <p className="text-xs text-muted-foreground/50 italic">None identified</p>
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {q.ids.map(id => {
-                              const opt = (q.options as readonly { id: string; label: string }[]).find(o => o.id === id);
-                              const label = opt?.label ?? id;
-                              return (
-                                <span key={id} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: `${q.color}40`, background: `${q.color}15`, color: q.color }}>
-                                  {label}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {sm.notes && (
-                    <div className="mt-3 rounded-lg bg-muted/20 border border-border/40 px-3 py-2">
-                      <p className="text-xs text-muted-foreground leading-relaxed">{sm.notes}</p>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* ── Footer progress + CTA ─────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-border/50 bg-card/50 p-5">
-          <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Progress</p>
-              <p className="text-sm text-foreground">
-                {builtCount} of {totalCount} sections complete
-                {draftingSet.size > 0 && <span className="text-teal-400 ml-2 text-xs">· {draftingSet.size} drafting…</span>}
-              </p>
+              <h1 className="text-2xl font-bold text-foreground">Where we're going</h1>
             </div>
-            {allBuilt && (
-              <Button variant="outline" size="sm" className="text-xs h-8 border-border/50 hover:border-border" onClick={() => navigate("/strategy/plan")}>
-                View plan<ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </Button>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+        {bLabel && <Badge variant="secondary" className="text-xs">{bLabel}</Badge>}
+          {hrLabel && <Badge variant="secondary" className="text-xs">{hrLabel}</Badge>}
+            </div>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-muted/30 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-teal-500 transition-all duration-500"
-              style={{ width: `${(builtCount / totalCount) * 100}%` }}
-            />
+          {/* Progress bar */}
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary/60 rounded-full transition-all"
+                style={{ width: `${(builtCount / 4) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground flex-shrink-0">
+              {builtCount} of 4 sections built
+            </span>
           </div>
-          {!allBuilt && (
-            <p className="text-xs text-muted-foreground mt-2">Complete all sections to unlock the initiative roadmap.</p>
-          )}
         </div>
 
-      </SectionPageLayout>
+        {/* Sections */}
+        <VisionSection
+          vision={vision}
+          visionInputs={visionInputs}
+          onOpenModal={() => setVisionOpen(true)}
+        />
 
-      {/* ── Modals ────────────────────────────────────────────────────────────── */}
+        <PrinciplesSection
+          principles={principles}
+          isDrafting={drafting.has("principles")}
+          onEdit={() => setPrinciplesOpen(true)}
+          onDraft={() => draftSection("principles")}
+        />
+
+        <ExclusionsSection
+          exclusions={exclusions}
+          isDrafting={drafting.has("wontDo")}
+          onEdit={() => setExclusionsOpen(true)}
+          onDraft={() => draftSection("wontDo")}
+        />
+
+        <OutcomesSection
+          outcomes={outcomes}
+          principles={principles}
+          isDrafting={drafting.has("outcomes")}
+          onEdit={() => setOutcomesOpen(true)}
+          onDraft={() => draftSection("outcomes")}
+        />
+
+        {/* Review footer */}
+        <div className="border-t border-border/40 pt-6 flex items-center justify-between">
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+            {lastReviewedAt ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" />
+                Last reviewed{" "}
+                {new Date(lastReviewedAt).toLocaleDateString("en-GB", {
+                  day: "numeric", month: "short", year: "numeric",
+                })}
+                {lastReviewedBy ? ` by ${lastReviewedBy}` : ""}
+              </>
+            ) : (
+              <>
+                <Clock className="w-3.5 h-3.5 text-muted-foreground/60" />
+                Not yet reviewed
+              </>
+            )}
+          </div>
+          <Button
+            variant="outline" size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={markReviewed}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Mark as reviewed
+          </Button>
+        </div>
+      </div>
+
+      {/* Modals */}
       <VisionModal
-        isOpen={visionModalOpen}
-        onClose={() => setVisionModalOpen(false)}
-        onSaved={(visionText) => {
-          setVisionModalOpen(false);
-          assessmentQ.refetch();
-          sectionsQ.refetch();
-          (window as any).umami?.track("strategy.ambition.vision-modal.saved");
-        }}
-        initialInputs={(assessment as any)?.visionInputs as VisionInputs | null | undefined}
-        initialDraft={sections?.vision ?? null}
+        isOpen={visionOpen}
+        onClose={() => setVisionOpen(false)}
         orgDescriptor={orgDescriptor}
-        companyName={companyResults?.companyName ?? null}
-        capabilityScore={companyResults?.overallScore ?? null}
-        capabilityLabel={companyResults?.maturityLabel ?? null}
-        capabilityCount={companyResults ? 1 : null}
-      />
-
-      <OutcomesModal
-        open={outcomesModalOpen}
-        onClose={() => setOutcomesModalOpen(false)}
-        initial={sections?.outcomes ?? []}
-        onSave={async (v) => { await saveSection("outcomes", v); }}
-      />
-
-      <WaysOfWorkModal
-        open={waysModalOpen}
-        onClose={() => setWaysModalOpen(false)}
-        initial={sections?.waysOfWork ?? ""}
-        onSave={async (v) => { await saveSection("waysOfWork", v); }}
+        capabilityScore={null}
+        capabilityLabel={null}
+        initialInputs={visionInputs}
+        onSaved={async (draft) => {
+          if (draft) {
+            await patchStrategyM.mutateAsync({ field: "visionStatement", value: draft });
+          }
+          await sectionsQ.refetch();
+          await strategyQ.refetch();
+          setVisionOpen(false);
+        }}
       />
 
       <PrinciplesModal
-        open={principlesModalOpen}
-        onClose={() => setPrinciplesModalOpen(false)}
-        initial={sections?.principles ?? []}
-        onSave={async (v) => { await saveSection("principles", v); }}
+        open={principlesOpen}
+        onClose={() => setPrinciplesOpen(false)}
+        initial={principles}
+        onSave={savePrinciples}
+        isDrafting={drafting.has("principles")}
+        onDraft={() => draftSection("principles")}
       />
 
-      <AILandscapeModal
-        open={landscapeModalOpen}
-        onClose={() => setLandscapeModalOpen(false)}
-        initial={sections?.aiLandscape ?? []}
-        onSave={async (v) => { await saveSection("aiLandscape", v); }}
+      <ExclusionsModal
+        open={exclusionsOpen}
+        onClose={() => setExclusionsOpen(false)}
+        initial={exclusions}
+        onSave={saveExclusions}
+        isDrafting={drafting.has("wontDo")}
+        onDraft={() => draftSection("wontDo")}
       />
 
-      <WontDoModal
-        open={wontDoModalOpen}
-        onClose={() => setWontDoModalOpen(false)}
-        initial={sections?.wontDo ?? []}
-        onSave={async (v) => { await saveSection("wontDo", v); }}
+      <OutcomesModal
+        open={outcomesOpen}
+        onClose={() => setOutcomesOpen(false)}
+        initial={outcomes}
+        principles={principles}
+        onSave={saveOutcomes}
+        isDrafting={drafting.has("outcomes")}
+        onDraft={() => draftSection("outcomes")}
       />
-
-      <StakeholderModal
-        open={stakeholderModalOpen}
-        onClose={() => setStakeholderModalOpen(false)}
-        initial={sections?.stakeholderMap as StakeholderMap | null ?? null}
-        onSave={async (v) => { await saveSection("stakeholderMap", v); }}
-      />
-
-      <BatchConfirmModal
-        open={batchConfirmOpen}
-        onClose={() => setBatchConfirmOpen(false)}
-        onConfirm={draftAll}
-        count={AI_ELIGIBLE_SECTIONS.filter(k => getState(k) === "empty").length}
-      />
-
-      {reviewDraft && (
-        <ReviewDraftModal
-          open={true}
-          onClose={() => setReviewDraft(null)}
-          sectionKey={reviewDraft.sectionKey}
-          draft={reviewDraft.draft}
-          onAccept={acceptDraft}
-        />
-      )}
-
     </TooltipProvider>
   );
 }

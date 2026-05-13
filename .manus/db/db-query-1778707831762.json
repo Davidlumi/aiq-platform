@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE ail_org_context\n  ADD COLUMN outcomes_json TEXT COMMENT 'JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}]',\n  ADD COLUMN approach_line TEXT COMMENT 'AI-generated posture statement (editable)',\n  ADD COLUMN vision_ai_first_draft TEXT COMMENT 'Original AI draft of vision (preserved for comparison)',\n  ADD COLUMN vision_last_edited_by VARCHAR(36) COMMENT 'user_id of last editor',\n  ADD COLUMN vision_last_edited_at TIMESTAMP NULL COMMENT 'when vision was last manually edited',\n  ADD COLUMN last_reviewed_at TIMESTAMP NULL COMMENT 'when ambition page was last reviewed',\n  ADD COLUMN last_reviewed_by VARCHAR(100) COMMENT 'display name of reviewer';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE ail_org_context\n  ADD COLUMN outcomes_json TEXT COMMENT 'JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}]',\n  ADD COLUMN approach_line TEXT COMMENT 'AI-generated posture statement (editable)',\n  ADD COLUMN vision_ai_first_draft TEXT COMMENT 'Original AI draft of vision (preserved for comparison)',\n  ADD COLUMN vision_last_edited_by VARCHAR(36) COMMENT 'user_id of last editor',\n  ADD COLUMN vision_last_edited_at TIMESTAMP NULL COMMENT 'when vision was last manually edited',\n  ADD COLUMN last_reviewed_at TIMESTAMP NULL COMMENT 'when ambition page was last reviewed',\n  ADD COLUMN last_reviewed_by VARCHAR(100) COMMENT 'display name of reviewer';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1422
+}
