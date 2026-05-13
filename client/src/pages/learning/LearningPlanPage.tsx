@@ -116,6 +116,15 @@ function ModuleStatusIcon({ status, domainColour, isNext }: {
   );
 }
 
+// ─── Hex to RGB helper for rgba tints ────────────────────────────────────────
+function hexToRgb(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
 // ─── Modal module row ─────────────────────────────────────────────────────────
 function ModalModuleRow({
   item, isNext, domainColour, onStart, onReview,
@@ -137,6 +146,7 @@ function ModalModuleRow({
         "flex items-start gap-3 px-5 py-3.5 transition-colors",
         isLocked && "opacity-40",
       )}
+      style={isNext ? { backgroundColor: `rgba(${hexToRgb(domainColour)}, 0.04)` } : undefined}
     >
       {/* Status icon */}
       <div className="flex-shrink-0 mt-0.5">
@@ -179,7 +189,15 @@ function ModalModuleRow({
         >
           Review
         </button>
-      ) : isLocked ? null : (
+      ) : isLocked ? null : isNext ? (
+        <button
+          onClick={onStart}
+          className="text-[11px] font-semibold px-2.5 py-1 rounded-md flex-shrink-0 mt-0.5 transition-colors"
+          style={{ backgroundColor: `rgba(${hexToRgb(domainColour)}, 0.12)`, color: domainColour }}
+        >
+          Start
+        </button>
+      ) : (
         <button
           onClick={onStart}
           className="text-[12px] font-medium text-foreground hover:text-foreground/70 underline underline-offset-2 flex-shrink-0 mt-0.5"
@@ -248,7 +266,7 @@ function DomainModal({
         className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
         style={{ backgroundColor: "hsl(var(--card))" }}
       >
-        {/* Header */}
+        {/* Header — mirrors card: icon + title left, score + level stacked right, X rightmost */}
         <div className="flex items-center gap-3 px-5 pt-5 pb-4 flex-shrink-0">
           {/* Domain icon */}
           <div
@@ -258,26 +276,24 @@ function DomainModal({
           >
             <DomainIcon className="h-4.5 w-4.5" style={{ color: colour }} />
           </div>
-          {/* Title + score + level */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-[15px] font-semibold text-foreground leading-tight">{label}</h2>
-            {scoreDisplay && (
-              <p className="text-[12px] text-muted-foreground mt-0.5">
-                <span className="tabular-nums font-semibold text-foreground">{scoreDisplay}</span>
-                {levelLabel && (
-                  <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    · {levelLabel}
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-          {/* Close button — circular outline */}
+          {/* Title — left, fills remaining space */}
+          <h2 className="flex-1 min-w-0 text-[15px] font-semibold text-foreground leading-tight">{label}</h2>
+          {/* Score + level — stacked right, mirrors card */}
+          {scoreDisplay && (
+            <div className="flex flex-col items-end flex-shrink-0">
+              <span className="text-[16px] font-medium tabular-nums text-foreground leading-none">{scoreDisplay}</span>
+              {levelLabel && (
+                <span className="text-[9px] font-semibold uppercase text-muted-foreground mt-1" style={{ letterSpacing: "0.06em" }}>
+                  {levelLabel}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Close button — neutral outline (P2) */}
           <button
             ref={closeRef}
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-            style={{ border: `1.5px solid ${colour}`, color: colour }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 border border-border/60"
             aria-label="Close"
           >
             <X className="h-3.5 w-3.5" />
@@ -394,7 +410,7 @@ function DomainModal({
           <div className="px-5 py-3 border-t border-border/30 flex-shrink-0">
             <button
               onClick={() => { onClose(); setLocation("/learning/library"); }}
-              className="text-[12px] font-medium text-primary hover:underline underline-offset-2"
+              className="text-[12px] font-medium text-foreground underline underline-offset-2 hover:text-foreground/70"
             >
               Browse more modules in {label} →
             </button>

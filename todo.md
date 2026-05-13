@@ -3123,3 +3123,15 @@ test
 - [x] VisionModal: context strip with orgDescriptor (sector · headcount) and capability score (both with empty states)
 - [x] Wire to StrategyAmbitionPage with orgDescriptor built from companyName · sector · headcount
 - [x] TypeScript: 0 errors · Tests: 930/930 passing
+
+## Learning Plan Dashboard — Bar Fills + Modal Polish Patch
+
+- [x] P1: Bar fills confirmed correct — score is 0-100, barPct = Math.round(score), width = barPct% (no code change needed)
+- [x] P1: Modal header layout — icon + title left, score + level stacked right, X close rightmost (mirrors card)
+- [x] P1: Next-recommended module row tint — rgba(domain-rgb, 0.04) background on active-state modals
+- [x] P1: Next-recommended module Start CTA — button with rgba(domain-rgb, 0.12) bg (not link styling)
+- [x] P1: Modal footer link colour — text-foreground with underline (not domain/emerald)
+- [x] P2: X close button — neutral border-border/60 outline (not domain colour)
+- [x] Regression: AI Output Evaluation = No modules yet; AI Interaction = On target (preserved)
+- [x] Regression: no-modules and on-target modal states render correctly (preserved)
+- [x] TypeScript: 0 errors · Tests: 930/930 passing
