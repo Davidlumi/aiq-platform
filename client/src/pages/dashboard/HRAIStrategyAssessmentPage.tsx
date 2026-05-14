@@ -185,13 +185,13 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                 isComplete
                   ? "bg-green-500 border-green-500 text-black"
                   : isCurrent
-                  ? "bg-green-500/15 border-green-500 text-green-400"
+                  ? "dark:bg-green-500/15 bg-green-100/80 border-green-500 dark:text-green-400 text-green-600"
                   : "bg-muted/60 border-border text-muted-foreground"
               }`}>
                 {isComplete ? <Check className="w-4 h-4" /> : step.icon}
               </div>
               <span className={`text-[10px] font-medium text-center leading-tight ${
-                isCurrent ? "text-green-400" : isComplete ? "text-foreground/60" : "text-muted-foreground/50"
+                isCurrent ? "dark:text-green-400 text-green-600" : isComplete ? "text-foreground/60" : "text-muted-foreground/50"
               }`}>
                 {step.label}
               </span>
@@ -223,9 +223,9 @@ function ChipSelect({
   color?: "green" | "blue" | "purple";
 }) {
   const colorMap = {
-    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
-    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
-    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
+    green:  { active: "dark:bg-green-500/20 bg-green-100 border-green-500/50 dark:text-green-300 text-green-700", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
+    blue:   { active: "dark:bg-blue-500/20 bg-blue-100 border-blue-500/50 dark:text-blue-300 text-blue-700", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
+    purple: { active: "dark:bg-purple-500/20 bg-purple-100 border-purple-500/50 dark:text-purple-300 text-purple-700", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
   };
   const c = colorMap[color];
   return (
@@ -328,7 +328,7 @@ function RankedSelect({
             disabled={isDisabled}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium flex items-center gap-1.5 ${
               isSelected
-                ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                ? "dark:bg-amber-500/20 bg-amber-100 border-amber-500/50 dark:text-amber-300 text-amber-700"
                 : isDisabled
                 ? "border-border/60 text-muted-foreground/30 cursor-not-allowed"
                 : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
@@ -387,7 +387,7 @@ function PrincipleCard({
         value={description}
         onChange={e => onDescriptionChange(e.target.value)}
         rows={2}
-        className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+        className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:dark:border-green-500/40 border-green-300"
         placeholder="Describe this principle..."
       />
     </div>
@@ -458,7 +458,7 @@ function InitiativeLibraryModal({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search initiatives..."
-                className="w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
+                className="w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:dark:border-green-500/40 border-green-300"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -468,7 +468,7 @@ function InitiativeLibraryModal({
                   onClick={() => setCategoryFilter(cat)}
                   className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     categoryFilter === cat
-                      ? "bg-green-500/20 border-green-500/40 text-green-400"
+                      ? "dark:bg-green-500/20 bg-green-100 dark:border-green-500/40 border-green-300 dark:text-green-400 text-green-600"
                       : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                   }`}
                 >
@@ -489,7 +489,7 @@ function InitiativeLibraryModal({
                     key={init.id}
                     className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
                       isSelected
-                        ? "border-green-500/40 bg-green-500/8"
+                        ? "dark:border-green-500/40 border-green-300 bg-green-500/8"
                         : "border-border bg-muted/40 hover:border-border hover:bg-muted/60"
                     }`}
                     onClick={() => onToggle(init.id)}
@@ -518,7 +518,7 @@ function InitiativeLibraryModal({
                         </span>
                       )}
                       {init.regulatoryFlag && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">EU AI Act</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600">EU AI Act</span>
                       )}
                     </div>
                     <button
@@ -537,7 +537,7 @@ function InitiativeLibraryModal({
                   {search && (
                     <button
                       onClick={() => setSearch("")}
-                      className="text-xs text-green-400 hover:text-green-300 mt-2 transition-colors"
+                      className="text-xs dark:text-green-400 text-green-600 hover:dark:text-green-300 text-green-700 mt-2 transition-colors"
                     >
                       Clear search
                     </button>
@@ -564,7 +564,7 @@ function InitiativeLibraryModal({
                   <Badge variant="outline" className="text-xs">{DA_LABELS[detailInitiative.decisionAuthority] ?? detailInitiative.decisionAuthority}</Badge>
                 )}
                 {detailInitiative.regulatoryFlag && (
-                  <Badge className="bg-amber-500/15 text-amber-400 text-xs">EU AI Act</Badge>
+                  <Badge className="dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600 text-xs">EU AI Act</Badge>
                 )}
               </div>
             </DialogHeader>
@@ -576,7 +576,7 @@ function InitiativeLibraryModal({
               <Button
                 size="sm"
                 className={selectedIds.has(detailInitiative.id)
-                  ? "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
+                  ? "dark:bg-red-500/20 bg-red-100 dark:text-red-400 text-red-600 hover:bg-red-500/30 border dark:border-red-500/30 border-red-300"
                   : "bg-green-500 hover:bg-green-400 text-black font-semibold"
                 }
                 onClick={() => { onToggle(detailInitiative.id); setDetailInitiative(null); }}
@@ -640,7 +640,7 @@ function BaselineField({
             value={usingSectorDefault ? sectorDefault : (value ?? "")}
             onChange={e => onValueChange(e.target.value === "" ? undefined : Number(e.target.value))}
             disabled={usingSectorDefault}
-            className={`w-full rounded-lg border bg-muted/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/40 transition-colors ${
+            className={`w-full rounded-lg border bg-muted/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:dark:border-green-500/40 border-green-300 transition-colors ${
               unit ? "pl-7" : ""
             } ${usingSectorDefault ? "opacity-50 cursor-not-allowed border-border" : "border-border"}`}
             placeholder={usingSectorDefault ? String(sectorDefault) : "Enter value..."}
@@ -1029,7 +1029,7 @@ export default function HRAIStrategyAssessmentPage() {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-green-400 mx-auto mb-3" />
+          <Loader2 className="w-8 h-8 animate-spin dark:text-green-400 text-green-600 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Loading your strategy…</p>
         </div>
       </div>
@@ -1051,8 +1051,8 @@ export default function HRAIStrategyAssessmentPage() {
             HR AI Strategy
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-green-400" />
+            <div className="w-10 h-10 rounded-full dark:bg-green-500/15 bg-green-100/80 border dark:border-green-500/30 border-green-300 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 dark:text-green-400 text-green-600" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">
@@ -1065,7 +1065,7 @@ export default function HRAIStrategyAssessmentPage() {
               </p>
             </div>
             {isRetake && (
-              <Badge className="ml-auto bg-green-500/20 text-green-400 border-green-500/30 text-xs flex-shrink-0">
+              <Badge className="ml-auto dark:bg-green-500/20 bg-green-100 dark:text-green-400 text-green-600 dark:border-green-500/30 border-green-300 text-xs flex-shrink-0">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Strategy active
               </Badge>
@@ -1094,7 +1094,7 @@ export default function HRAIStrategyAssessmentPage() {
                   }}
                   className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
                     subSector === opt.value
-                      ? "bg-green-500/20 border-green-500/40 text-green-300 font-semibold"
+                      ? "dark:bg-green-500/20 bg-green-100 dark:border-green-500/40 border-green-300 dark:text-green-300 text-green-700 font-semibold"
                       : "bg-muted/60 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/8"
                   }`}
                 >
@@ -1103,7 +1103,7 @@ export default function HRAIStrategyAssessmentPage() {
               ))}
             </div>
             {subSector && (
-              <span className="text-xs text-green-400 ml-auto flex-shrink-0">
+              <span className="text-xs dark:text-green-400 text-green-600 ml-auto flex-shrink-0">
                 Using {subSectorLabel} benchmarks
               </span>
             )}
@@ -1116,12 +1116,12 @@ export default function HRAIStrategyAssessmentPage() {
         {/* Context pill: shows sector/sub-sector/org-type context at top of wizard */}
         {sector !== "other" && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/25 text-[11px] font-medium text-green-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border dark:border-green-500/25 border-green-300 text-[11px] font-medium dark:text-green-400 text-green-600">
               <Building2 className="w-3 h-3" />
               {contextLabel}
             </span>
             {orgTypeLabel && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-[11px] font-medium text-blue-400">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border dark:border-blue-500/25 border-blue-300 text-[11px] font-medium dark:text-blue-400 text-blue-600">
                 {orgTypeLabel}
               </span>
             )}
@@ -1133,8 +1133,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
-                  <Target className="w-4 h-4 text-green-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-green-500/15 bg-green-100/80 border dark:border-green-500/30 border-green-300 flex items-center justify-center">
+                  <Target className="w-4 h-4 dark:text-green-400 text-green-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">Business AI Aspiration</h2>
               </div>
@@ -1157,7 +1157,7 @@ export default function HRAIStrategyAssessmentPage() {
                   color="green"
                 />
                 {businessOutcomes.length === 0 && (
-                  <p className="text-xs text-amber-400/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one outcome.</p>
+                  <p className="text-xs dark:text-amber-400 text-amber-600/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one outcome.</p>
                 )}
               </div>
 
@@ -1174,7 +1174,7 @@ export default function HRAIStrategyAssessmentPage() {
                   color="green"
                 />
                 {businessProblems.length === 0 && (
-                  <p className="text-xs text-amber-400/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one problem.</p>
+                  <p className="text-xs dark:text-amber-400 text-amber-600/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one problem.</p>
                 )}
               </div>
 
@@ -1205,7 +1205,7 @@ export default function HRAIStrategyAssessmentPage() {
                       onClick={() => { setTimelineMonths(opt.value); setIsDirty(true); }}
                       className={`text-sm px-4 py-2 rounded-lg border transition-colors font-medium ${
                         timelineMonths === opt.value
-                          ? "bg-green-500/20 border-green-500/50 text-green-300"
+                          ? "dark:bg-green-500/20 bg-green-100 border-green-500/50 dark:text-green-300 text-green-700"
                           : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
@@ -1228,7 +1228,7 @@ export default function HRAIStrategyAssessmentPage() {
                   maxSelect={3}
                 />
                 {successMarkers.length < 3 && (
-                  <p className="text-xs text-amber-400/80 mt-3 flex items-center gap-1">
+                  <p className="text-xs dark:text-amber-400 text-amber-600/80 mt-3 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Select exactly 3 success markers ({3 - successMarkers.length} more needed).
                   </p>
@@ -1301,8 +1301,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
-                  <BarChart2 className="w-4 h-4 text-amber-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-amber-500/15 bg-amber-100/80 border dark:border-amber-500/30 border-amber-300 flex items-center justify-center">
+                  <BarChart2 className="w-4 h-4 dark:text-amber-400 text-amber-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">Operational Baseline</h2>
               </div>
@@ -1313,7 +1313,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             {/* Skip all */}
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 mb-6 flex items-start gap-3">
-              <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <Info className="w-4 h-4 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-foreground font-medium">All fields are optional</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -1418,8 +1418,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-teal-500/15 border border-teal-500/30 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-teal-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-teal-500/15 bg-teal-100/80 border dark:border-teal-500/30 border-teal-300 flex items-center justify-center">
+                  <Users className="w-4 h-4 dark:text-teal-400 text-teal-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">Stakeholder Map</h2>
               </div>
@@ -1518,7 +1518,7 @@ export default function HRAIStrategyAssessmentPage() {
                   onChange={e => { setStakeholderMap(prev => ({ ...prev, notes: e.target.value })); setIsDirty(true); }}
                   rows={3}
                   maxLength={400}
-                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
+                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:dark:border-teal-500/40 border-teal-300"
                   placeholder="e.g. Our CFO is sceptical — we need a quick win before the Q2 board. Trade union consultation required for any workforce-impacting tools."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{(stakeholderMap.notes ?? "").length}/400</p>
@@ -1544,14 +1544,14 @@ export default function HRAIStrategyAssessmentPage() {
                       }}
                       className={`w-full text-left p-3 rounded-xl border transition-colors ${
                         ukRegulatoryFrameworks.includes(fw.id)
-                          ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                          ? "dark:bg-amber-500/15 bg-amber-100/80 dark:border-amber-500/40 border-amber-300 dark:text-amber-300 text-amber-700"
                           : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
                       <div className="flex items-start gap-2">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
-                          fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
-                          fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
+                          fw.risk === "high"   ? "dark:bg-red-500/20 bg-red-100 dark:text-red-400 text-red-600" :
+                          fw.risk === "medium" ? "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600" :
                           "bg-foreground/10 text-muted-foreground"
                         }`}>{fw.risk}</span>
                         <div>
@@ -1585,8 +1585,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-blue-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-blue-500/15 bg-blue-100/80 border dark:border-blue-500/30 border-blue-300 flex items-center justify-center">
+                  <Users className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">HR's Role in the AI Vision</h2>
               </div>
@@ -1624,7 +1624,7 @@ export default function HRAIStrategyAssessmentPage() {
                   color="blue"
                 />
                 {hrProcessesPriority.length === 0 && (
-                  <p className="text-xs text-amber-400/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one process.</p>
+                  <p className="text-xs dark:text-amber-400 text-amber-600/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one process.</p>
                 )}
               </div>
 
@@ -1643,7 +1643,7 @@ export default function HRAIStrategyAssessmentPage() {
                   color="purple"
                 />
                 {governancePrinciples.length === 0 && (
-                  <p className="text-xs text-amber-400/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one principle.</p>
+                  <p className="text-xs dark:text-amber-400 text-amber-600/80 mt-3 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Select at least one principle.</p>
                 )}
               </div>
 
@@ -1660,11 +1660,11 @@ export default function HRAIStrategyAssessmentPage() {
                       onClick={() => { setAiPhilosophy(opt.value); setIsDirty(true); }}
                       className={`w-full text-left p-3.5 rounded-xl border transition-colors ${
                         aiPhilosophy === opt.value
-                          ? "bg-blue-500/15 border-blue-500/40 text-foreground"
+                          ? "dark:bg-blue-500/15 bg-blue-100/80 dark:border-blue-500/40 border-blue-300 text-foreground"
                           : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
-                      <p className={`text-sm font-semibold mb-0.5 ${aiPhilosophy === opt.value ? "text-blue-300" : ""}`}>{opt.label}</p>
+                      <p className={`text-sm font-semibold mb-0.5 ${aiPhilosophy === opt.value ? "dark:text-blue-300 text-blue-700" : ""}`}>{opt.label}</p>
                       <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
                     </button>
                   ))}
@@ -1684,7 +1684,7 @@ export default function HRAIStrategyAssessmentPage() {
                       onClick={() => { setMeasurementCadence(opt.value); setIsDirty(true); }}
                       className={`w-full text-left p-3 rounded-xl border transition-colors text-sm ${
                         measurementCadence === opt.value
-                          ? "bg-green-500/15 border-green-500/40 text-green-300"
+                          ? "dark:bg-green-500/15 bg-green-100/80 dark:border-green-500/40 border-green-300 dark:text-green-300 text-green-700"
                           : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
@@ -1713,7 +1713,7 @@ export default function HRAIStrategyAssessmentPage() {
                           onClick={() => { setPilotScope(opt.value); setIsDirty(true); }}
                           className={`text-left p-3 rounded-xl border transition-colors ${
                             pilotScope === opt.value
-                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              ? "dark:bg-blue-500/15 bg-blue-100/80 dark:border-blue-500/40 border-blue-300 dark:text-blue-300 text-blue-700"
                               : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
@@ -1732,7 +1732,7 @@ export default function HRAIStrategyAssessmentPage() {
                           onClick={() => { setPilotDuration(opt.value); setIsDirty(true); }}
                           className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
                             pilotDuration === opt.value
-                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              ? "dark:bg-blue-500/15 bg-blue-100/80 dark:border-blue-500/40 border-blue-300 dark:text-blue-300 text-blue-700"
                               : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
@@ -1757,14 +1757,14 @@ export default function HRAIStrategyAssessmentPage() {
                           }}
                           className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-colors ${
                             pilotMetrics.includes(m.id)
-                              ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                              ? "dark:bg-blue-500/15 bg-blue-100/80 dark:border-blue-500/40 border-blue-300 dark:text-blue-300 text-blue-700"
                               : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
                           <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
-                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
-                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
-                            "bg-purple-500/20 text-purple-400"
+                            m.tier === "efficiency"    ? "dark:bg-green-500/20 bg-green-100 dark:text-green-400 text-green-600" :
+                            m.tier === "effectiveness" ? "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-400 text-blue-600" :
+                            "dark:bg-purple-500/20 bg-purple-100 dark:text-purple-400 text-purple-600"
                           }`}>{m.tier.slice(0, 3)}</span>
                           {m.label}
                         </button>
@@ -1785,7 +1785,7 @@ export default function HRAIStrategyAssessmentPage() {
                   value={voiceCapture}
                   onChange={e => { if (e.target.value.length <= 500) { setVoiceCapture(e.target.value); setIsDirty(true); } }}
                   rows={3}
-                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:dark:border-green-500/40 border-green-300"
                   placeholder="e.g. We have a board mandate to reduce HR headcount by 20% over 3 years. Our CHRO is new and wants quick wins before the end of Q1..."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{voiceCapture.length}/500</p>
@@ -1819,8 +1819,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-purple-500/15 border border-purple-500/30 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-purple-500/15 bg-purple-100/80 border dark:border-purple-500/30 border-purple-300 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 dark:text-purple-400 text-purple-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">AI-Drafted Vision & Principles</h2>
               </div>
@@ -1876,7 +1876,7 @@ export default function HRAIStrategyAssessmentPage() {
                 </div>
                 {/* Generate button */}
                 <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-6 text-center">
-                  <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                  <Sparkles className="w-8 h-8 dark:text-purple-400 text-purple-600 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-foreground mb-1">Ready to generate your strategy</p>
                   <p className="text-xs text-muted-foreground mb-4">The AI will produce a board-ready vision statement and 5 guiding principles calibrated to your {contextLabel} context.</p>
                   <Button
@@ -1915,7 +1915,7 @@ export default function HRAIStrategyAssessmentPage() {
                     value={visionStatement}
                     onChange={e => { setVisionStatement(e.target.value); setIsDirty(true); }}
                     rows={4}
-                    className="resize-none bg-muted/60 border-border text-sm focus:border-purple-500/40"
+                    className="resize-none bg-muted/60 border-border text-sm focus:dark:border-purple-500/40 border-purple-300"
                   />
                 </div>
 
@@ -1945,7 +1945,7 @@ export default function HRAIStrategyAssessmentPage() {
                     <ul className="space-y-2">
                       {wontDo.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <span className="text-red-400 font-bold flex-shrink-0 mt-0.5">✕</span>
+                          <span className="dark:text-red-400 text-red-600 font-bold flex-shrink-0 mt-0.5">✕</span>
                           {item}
                         </li>
                       ))}
@@ -1977,8 +1977,8 @@ export default function HRAIStrategyAssessmentPage() {
           <div>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
-                  <ListPlus className="w-4 h-4 text-green-400" />
+                <div className="w-7 h-7 rounded-full dark:bg-green-500/15 bg-green-100/80 border dark:border-green-500/30 border-green-300 flex items-center justify-center">
+                  <ListPlus className="w-4 h-4 dark:text-green-400 text-green-600" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground">Select Initiatives</h2>
               </div>
@@ -2004,7 +2004,7 @@ export default function HRAIStrategyAssessmentPage() {
                           n === value
                             ? "bg-green-500 text-black"
                             : n < value
-                            ? "bg-green-500/20 text-green-400"
+                            ? "dark:bg-green-500/20 bg-green-100 dark:text-green-400 text-green-600"
                             : "bg-muted/60 text-muted-foreground hover:bg-foreground/8"
                         }`}
                       >
@@ -2028,7 +2028,7 @@ export default function HRAIStrategyAssessmentPage() {
                 <Button
                   size="sm"
                   onClick={() => setShowLibrary(true)}
-                  className="bg-green-500/15 hover:bg-green-500/25 text-green-400 border border-green-500/30 text-xs"
+                  className="dark:bg-green-500/15 bg-green-100/80 hover:bg-green-500/25 dark:text-green-400 text-green-600 border dark:border-green-500/30 border-green-300 text-xs"
                 >
                   <ListPlus className="w-3.5 h-3.5 mr-1.5" />
                   Browse Library
@@ -2041,7 +2041,7 @@ export default function HRAIStrategyAssessmentPage() {
                   <p className="text-sm">No initiatives selected yet.</p>
                   <button
                     onClick={() => setShowLibrary(true)}
-                    className="text-xs text-green-400 hover:text-green-300 mt-1 transition-colors"
+                    className="text-xs dark:text-green-400 text-green-600 hover:dark:text-green-300 text-green-700 mt-1 transition-colors"
                   >
                     Browse the initiative library →
                   </button>
@@ -2064,7 +2064,7 @@ export default function HRAIStrategyAssessmentPage() {
                           </div>
                           <button
                             onClick={() => toggleInitiative(init.id)}
-                            className="text-xs text-red-400/60 hover:text-red-400 transition-colors flex-shrink-0"
+                            className="text-xs dark:text-red-400 text-red-600/60 hover:text-red-400 transition-colors flex-shrink-0"
                           >
                             Remove
                           </button>

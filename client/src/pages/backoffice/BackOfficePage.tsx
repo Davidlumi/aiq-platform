@@ -326,7 +326,7 @@ function BetaApplicationsTab() {
                           "h-7 text-xs border",
                           s === "approved"   && "border-primary/30 text-primary hover:bg-primary/8",
                           s === "rejected"   && "border-[#DC2626]/30 text-[#CC3344] hover:bg-[#DC2626]/8",
-                          s === "waitlisted" && "border-blue-700/40 text-blue-300 hover:bg-blue-900/20",
+                          s === "waitlisted" && "dark:border-blue-700/40 border-blue-300 dark:text-blue-300 text-blue-700 hover:dark:bg-blue-900/20 bg-blue-100/60",
                           s === "pending"    && "border-[#D97706]/30 text-[#99882A] hover:bg-[#D97706]/8",
                         )}
                       >
@@ -351,7 +351,7 @@ function StatusBadge({ status }: { status: string }) {
     trial:       { label: "Trial",       className: "bg-primary/8 text-primary border-primary/25" },
     suspended:   { label: "Suspended",   className: "bg-[#D97706]/8 text-[#99882A] border-[#D97706]/25" },
     archived:    { label: "Archived",    className: "bg-muted text-muted-foreground border-border" },
-    pending:     { label: "Pending",     className: "bg-amber-900/30 text-amber-300 border-amber-700/40" },
+    pending:     { label: "Pending",     className: "dark:bg-amber-900/30 bg-amber-100/80 dark:text-amber-300 text-amber-700 dark:border-amber-700/40 border-amber-300" },
     deactivated: { label: "Deactivated", className: "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25" },
   };
   const c = config[status] ?? { label: status, className: "bg-muted text-muted-foreground border-border" };
@@ -1591,7 +1591,7 @@ function LlmReviewQueueTab() {
                     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border",
                       item.status === "approved" ? "bg-primary/8 text-primary border-primary/25" :
                       item.status === "rejected" ? "bg-[#DC2626]/8 text-[#CC3344] border-[#DC2626]/25" :
-                      "bg-blue-900/30 text-blue-300 border-blue-700/40"
+                      "dark:bg-blue-900/30 bg-blue-100/80 dark:text-blue-300 text-blue-700 dark:border-blue-700/40 border-blue-300"
                     )}>{item.status.replace("_", " ")}</span>
                   )}
                 </div>
@@ -1819,7 +1819,7 @@ function FeatureFlagsTab() {
       {/* Info banner */}
       <div className="flex items-start gap-3 p-3 rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
         <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-blue-700 dark:text-blue-300">
+        <p className="text-xs text-blue-700 dark:text-blue-300 text-blue-700">
           Feature flags are read-only from this interface. To change a flag, update the corresponding environment variable in the platform settings and redeploy.
         </p>
       </div>

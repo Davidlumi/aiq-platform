@@ -42,10 +42,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  pending:    { label: "Pending",    className: "bg-amber-900/30 text-amber-300 border-amber-700/40",   icon: Clock },
-  approved:   { label: "Approved",   className: "bg-emerald-900/30 text-emerald-300 border-emerald-700/40", icon: CheckCircle2 },
-  rejected:   { label: "Rejected",   className: "bg-red-900/30 text-red-300 border-red-700/40",         icon: XCircle },
-  waitlisted: { label: "Waitlisted", className: "bg-blue-900/30 text-blue-300 border-blue-700/40",      icon: Layers },
+  pending:    { label: "Pending",    className: "dark:bg-amber-900/30 bg-amber-100/80 dark:text-amber-300 text-amber-700 dark:border-amber-700/40 border-amber-300",   icon: Clock },
+  approved:   { label: "Approved",   className: "dark:bg-emerald-900/30 bg-emerald-100/80 dark:text-emerald-300 text-emerald-700 dark:border-emerald-700/40 border-emerald-300", icon: CheckCircle2 },
+  rejected:   { label: "Rejected",   className: "dark:bg-red-900/30 bg-red-100/80 dark:text-red-300 text-red-700 dark:border-red-700/40 border-red-300",         icon: XCircle },
+  waitlisted: { label: "Waitlisted", className: "dark:bg-blue-900/30 bg-blue-100/80 dark:text-blue-300 text-blue-700 dark:border-blue-700/40 border-blue-300",      icon: Layers },
 };
 
 type Application = {

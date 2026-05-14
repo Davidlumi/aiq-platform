@@ -81,7 +81,7 @@ function HistoryDropdown({
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <Clock className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground">In Progress</p>
                   <p className="text-xs text-muted-foreground">
@@ -89,7 +89,7 @@ function HistoryDropdown({
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-amber-400/12 text-amber-400 border-amber-400/25">Resume</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-amber-400/12 dark:text-amber-400 text-amber-600 border-amber-400/25">Resume</span>
             </button>
           )}
           {completedSessions.map((s: any, i: number) => {
@@ -154,7 +154,7 @@ function InProgressBanner({ session }: { session: any }) {
   return (
     <div className="rounded-xl border border-amber-400/30 bg-amber-400/8 p-4 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+        <Clock className="w-5 h-5 dark:text-amber-400 text-amber-600 shrink-0" />
         <div>
           <p className="text-sm font-semibold text-foreground">Assessment in Progress</p>
           <p className="text-xs text-muted-foreground">{answered} of {total} questions answered · {pct}% complete</p>
@@ -164,7 +164,7 @@ function InProgressBanner({ session }: { session: any }) {
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => navigate(`/assessment/${session.id}`)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 text-amber-400 text-xs font-semibold hover:bg-amber-400/25 transition-colors border border-amber-400/30"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 dark:text-amber-400 text-amber-600 text-xs font-semibold hover:bg-amber-400/25 transition-colors border border-amber-400/30"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           Resume
@@ -203,7 +203,7 @@ function SignalBreakdownChart({ signals, domainColour }: { signals: SignalItem[]
     <div key={s.key} className="group">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5 min-w-0">
-          {s.isRisk && <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />}
+          {s.isRisk && <AlertCircle className="w-3 h-3 dark:text-amber-400 text-amber-600 shrink-0" />}
           <span className="text-xs text-foreground/80 truncate" title={s.label}>{s.label}</span>
         </div>
         <span className="text-xs font-semibold tabular-nums ml-2 shrink-0" style={{ color: getBarColour(s) }}>
@@ -360,10 +360,10 @@ const READINESS_CONFIG: Record<string, {
   label: string; color: string; bg: string; border: string; icon: React.ElementType;
 }> = {
   safe:    { label: "AI-Ready",          color: "text-primary",          bg: "bg-primary/10",    border: "border-primary/25",    icon: CheckCircle2 },
-  at_risk: { label: "Developing",        color: "text-amber-400",        bg: "bg-amber-400/10",  border: "border-amber-400/25",  icon: AlertTriangle },
-  unsafe:  { label: "Needs Development", color: "text-red-400",          bg: "bg-red-400/10",    border: "border-red-400/25",    icon: ShieldAlert },
+  at_risk: { label: "Developing",        color: "dark:text-amber-400 text-amber-600",        bg: "bg-amber-400/10",  border: "border-amber-400/25",  icon: AlertTriangle },
+  unsafe:  { label: "Needs Development", color: "dark:text-red-400 text-red-600",          bg: "bg-red-400/10",    border: "border-red-400/25",    icon: ShieldAlert },
   unknown: { label: "Not Assessed",      color: "text-muted-foreground", bg: "bg-muted/30",      border: "border-border",        icon: HelpCircle },
-  foundation_gap: { label: "Foundation Gap", color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", icon: ShieldAlert },
+  foundation_gap: { label: "Foundation Gap", color: "dark:text-orange-400 text-orange-600", bg: "bg-orange-400/10", border: "border-orange-400/25", icon: ShieldAlert },
   unknown_insufficient_evidence: { label: "Insufficient Data", color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border", icon: HelpCircle },
 };
 
@@ -371,10 +371,10 @@ const READINESS_CONFIG: Record<string, {
 
 function scoreToLevel(score: number): { label: string; color: string } {
   if (score >= 80) return { label: "Expert",     color: "text-primary" };
-  if (score >= 65) return { label: "Proficient", color: "text-emerald-400" };
-  if (score >= 50) return { label: "Developing", color: "text-amber-400" };
-  if (score >= 35) return { label: "Beginner",   color: "text-orange-400" };
-  return              { label: "Novice",      color: "text-red-400" };
+  if (score >= 65) return { label: "Proficient", color: "dark:text-emerald-400 text-emerald-600" };
+  if (score >= 50) return { label: "Developing", color: "dark:text-amber-400 text-amber-600" };
+  if (score >= 35) return { label: "Beginner",   color: "dark:text-orange-400 text-orange-600" };
+  return              { label: "Novice",      color: "dark:text-red-400 text-red-600" };
 }
 
 // ── Domain insight text ────────────────────────────────────────────────────────
@@ -459,7 +459,7 @@ function DomainCard({
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {isBlindSpot && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 border border-amber-400/25">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/15 dark:text-amber-400 text-amber-600 border border-amber-400/25">
               Blind spot
             </span>
           )}
@@ -596,7 +596,7 @@ function DomainSheet({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               {isBlindSpot ? (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <AlertTriangle className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600 shrink-0" />
               ) : isStrength ? (
                 <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
               ) : (
@@ -605,7 +605,7 @@ function DomainSheet({
               {quadrantLabel && (
                 <span className={cn(
                   "text-xs font-semibold",
-                  isBlindSpot ? "text-amber-400" : isStrength ? "text-primary" : "text-foreground"
+                  isBlindSpot ? "dark:text-amber-400 text-amber-600" : isStrength ? "text-primary" : "text-foreground"
                 )}>{quadrantLabel}</span>
               )}
             </div>
@@ -910,14 +910,14 @@ export default function AssessmentResultsPage() {
             ].filter(i => i.score !== null);
             // CIPD Profession Map alignment
             const cipdLevel = overallScore >= 75 ? "Chartered Fellow" : overallScore >= 55 ? "Chartered Member" : "Associate";
-            const cipdColor = overallScore >= 75 ? "text-primary" : overallScore >= 55 ? "text-emerald-400" : "text-amber-400";
+            const cipdColor = overallScore >= 75 ? "text-primary" : overallScore >= 55 ? "dark:text-emerald-400 text-emerald-600" : "dark:text-amber-400 text-amber-600";
             // Confidence calibration: compare avg stated confidence vs actual score
             const confVals = Object.values(signalScores as Record<string, { sum: number; count: number }>)
               .map(sv => sv.count > 0 ? sv.sum / sv.count : 0.5);
             const avgConf = confVals.length > 0 ? confVals.reduce((a, b) => a + b, 0) / confVals.length : 0.5;
             const confDiff = avgConf - (overallScore / 100);
             const calibLabel = Math.abs(confDiff) < 0.15 ? "Well Calibrated" : confDiff > 0.15 ? "Optimistic" : "Cautious";
-            const calibColor = Math.abs(confDiff) < 0.15 ? "text-emerald-400" : "text-amber-400";
+            const calibColor = Math.abs(confDiff) < 0.15 ? "dark:text-emerald-400 text-emerald-600" : "dark:text-amber-400 text-amber-600";
             const calibDesc = Math.abs(confDiff) < 0.15
               ? "Your confidence matched your performance"
               : confDiff > 0.15
@@ -1002,7 +1002,7 @@ export default function AssessmentResultsPage() {
                 {overallDelta !== null && (
                   <span className={cn(
                     "text-sm font-semibold tabular-nums",
-                    overallDelta > 0 ? "text-primary" : overallDelta < 0 ? "text-red-400" : "text-muted-foreground"
+                    overallDelta > 0 ? "text-primary" : overallDelta < 0 ? "dark:text-red-400 text-red-600" : "text-muted-foreground"
                   )}>
                     {overallDelta > 0 ? `+${overallDelta.toFixed(1)}` : overallDelta.toFixed(1)}
                   </span>
@@ -1028,7 +1028,7 @@ export default function AssessmentResultsPage() {
                     {delta !== null && (
                       <span className={cn(
                         "text-[11px] font-semibold tabular-nums",
-                        delta > 0 ? "text-primary" : delta < 0 ? "text-red-400" : "text-muted-foreground"
+                        delta > 0 ? "text-primary" : delta < 0 ? "dark:text-red-400 text-red-600" : "text-muted-foreground"
                       )}>
                         {delta > 0 ? `+${Math.round(delta)}` : Math.round(delta)}
                       </span>
@@ -1104,10 +1104,10 @@ export default function AssessmentResultsPage() {
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-3 border-t border-border">
               {[
                 { label: "Expert", color: "text-primary", minVal: 80 },
-                { label: "Proficient", color: "text-emerald-400", minVal: 65 },
-                { label: "Developing", color: "text-amber-400", minVal: 50 },
-                { label: "Beginner", color: "text-orange-400", minVal: 35 },
-                { label: "Novice", color: "text-red-400", minVal: 0 },
+                { label: "Proficient", color: "dark:text-emerald-400 text-emerald-600", minVal: 65 },
+                { label: "Developing", color: "dark:text-amber-400 text-amber-600", minVal: 50 },
+                { label: "Beginner", color: "dark:text-orange-400 text-orange-600", minVal: 35 },
+                { label: "Novice", color: "dark:text-red-400 text-red-600", minVal: 0 },
               ].map(tier => (
                 <span key={tier.label} className={cn("text-[11px] font-medium", tier.color)}>
                   {tier.label}{tier.minVal > 0 ? ` ≥${tier.minVal}` : " below 35"}
@@ -1176,21 +1176,21 @@ export default function AssessmentResultsPage() {
               <div className="px-7 py-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Strengths</span>
+                  <span className="text-xs font-semibold dark:text-emerald-400 text-emerald-600 uppercase tracking-wider">Strengths</span>
                 </div>
                 <p className="text-sm text-foreground/80 leading-relaxed">{narrative.strengths}</p>
               </div>
               <div className="px-7 py-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                  <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Development Areas</span>
+                  <span className="text-xs font-semibold dark:text-amber-400 text-amber-600 uppercase tracking-wider">Development Areas</span>
                 </div>
                 <p className="text-sm text-foreground/80 leading-relaxed">{narrative.gaps}</p>
               </div>
               <div className="px-7 py-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-                  <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Next Priorities</span>
+                  <span className="text-xs font-semibold dark:text-sky-400 text-sky-600 uppercase tracking-wider">Next Priorities</span>
                 </div>
                 <p className="text-sm text-foreground/80 leading-relaxed">{narrative.priorities}</p>
               </div>
@@ -1317,7 +1317,7 @@ function StrategyLinkageSection({
           <div className="flex items-center justify-between gap-3 mb-5">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <BookOpen className="w-4 h-4 text-emerald-400" />
+                <BookOpen className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Recommended Next Steps</h2>

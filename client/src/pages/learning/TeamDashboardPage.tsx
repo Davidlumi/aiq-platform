@@ -166,7 +166,7 @@ function MemberCard({ member, onNudge }: { member: any; onNudge: (member: any) =
         {member.streak && (
           <>
             <div className="flex items-center gap-1">
-              <Flame className="h-3 w-3 text-orange-400" />
+              <Flame className="h-3 w-3 dark:text-orange-400 text-orange-600" />
               <span>{member.streak.currentStreak}d streak</span>
             </div>
             <div className="flex items-center gap-1">

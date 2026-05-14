@@ -59,7 +59,7 @@ export function InlineEditableBlock({
             <span className="text-[10px] text-muted-foreground animate-pulse">Saving…</span>
           )}
           {saveStatus === "saved" && (
-            <span className="text-[10px] text-green-400">Saved</span>
+            <span className="text-[10px] dark:text-green-400 text-green-600">Saved</span>
           )}
           <button
             type="button"

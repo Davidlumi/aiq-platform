@@ -49,49 +49,49 @@ const DIMENSION_META: Record<
   strategy: {
     label: "AI Strategy",
     shortLabel: "Strategy",
-    color: "text-violet-400",
+    color: "dark:text-violet-400 text-violet-600",
     bg: "bg-violet-500/10",
     icon: Target,
   },
   governance: {
     label: "Governance & Ethics",
     shortLabel: "Governance",
-    color: "text-rose-400",
+    color: "dark:text-rose-400 text-rose-600",
     bg: "bg-rose-500/10",
     icon: Shield,
   },
   data: {
     label: "Data & Infrastructure",
     shortLabel: "Data",
-    color: "text-blue-400",
+    color: "dark:text-blue-400 text-blue-600",
     bg: "bg-blue-500/10",
     icon: Layers,
   },
   technology: {
     label: "Technology & Tools",
     shortLabel: "Technology",
-    color: "text-cyan-400",
+    color: "dark:text-cyan-400 text-cyan-600",
     bg: "bg-cyan-500/10",
     icon: BarChart3,
   },
   workforce: {
     label: "Workforce Capability",
     shortLabel: "Workforce",
-    color: "text-emerald-400",
+    color: "dark:text-emerald-400 text-emerald-600",
     bg: "bg-emerald-500/10",
     icon: Users,
   },
   hr_function: {
     label: "HR Function Readiness",
     shortLabel: "HR Function",
-    color: "text-amber-400",
+    color: "dark:text-amber-400 text-amber-600",
     bg: "bg-amber-500/10",
     icon: Lightbulb,
   },
   culture: {
     label: "Culture & Change",
     shortLabel: "Culture",
-    color: "text-pink-400",
+    color: "dark:text-pink-400 text-pink-600",
     bg: "bg-pink-500/10",
     icon: Brain,
   },
@@ -102,35 +102,35 @@ const MATURITY_LEVELS = [
     key: "initiating",
     label: "Initiating",
     range: "0–2.5",
-    color: "text-rose-400",
+    color: "dark:text-rose-400 text-rose-600",
     desc: "AI is largely absent from HR strategy. Foundational data, governance, and capability work is needed before meaningful deployment.",
   },
   {
     key: "developing",
     label: "Developing",
     range: "2.6–5.0",
-    color: "text-amber-400",
+    color: "dark:text-amber-400 text-amber-600",
     desc: "Isolated AI pilots exist but lack strategic coherence. Governance frameworks and capability programmes are emerging.",
   },
   {
     key: "scaling",
     label: "Scaling",
     range: "5.1–7.0",
-    color: "text-blue-400",
+    color: "dark:text-blue-400 text-blue-600",
     desc: "AI is embedded in several core HR processes with measurable outcomes. Governance is established and capability is growing.",
   },
   {
     key: "leading",
     label: "Leading",
     range: "7.1–8.5",
-    color: "text-emerald-400",
+    color: "dark:text-emerald-400 text-emerald-600",
     desc: "AI is a strategic differentiator. HR leads AI adoption across the organisation with robust ethics, measurement, and innovation culture.",
   },
   {
     key: "pioneering",
     label: "Pioneering",
     range: "8.6–10",
-    color: "text-violet-400",
+    color: "dark:text-violet-400 text-violet-600",
     desc: "AI is deeply embedded in all HR processes. The organisation contributes to industry standards and continuously innovates.",
   },
 ];
@@ -158,7 +158,7 @@ export default function CompanyAssessmentResultsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+        <Loader2 className="w-6 h-6 dark:text-violet-400 text-violet-600 animate-spin" />
         <p className="text-muted-foreground text-sm">Generating your results…</p>
       </div>
     );
@@ -202,7 +202,7 @@ export default function CompanyAssessmentResultsPage() {
       {/* Header */}
       <div className="border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Building2 className="w-4 h-4 text-violet-400" />
+          <Building2 className="w-4 h-4 dark:text-violet-400 text-violet-600" />
           <span className="text-sm text-muted-foreground">Company HR AI Assessment</span>
           <span className="text-foreground/20 mx-1">·</span>
           <span className="text-sm text-muted-foreground">Results</span>
@@ -265,7 +265,7 @@ export default function CompanyAssessmentResultsPage() {
               )}
               {executiveSummary && (
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  <Sparkles className="w-3.5 h-3.5 text-violet-400 inline mr-1.5 -mt-0.5" />
+                  <Sparkles className="w-3.5 h-3.5 dark:text-violet-400 text-violet-600 inline mr-1.5 -mt-0.5" />
                   {executiveSummary}
                 </p>
               )}
@@ -283,12 +283,12 @@ export default function CompanyAssessmentResultsPage() {
           <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Info className="w-4 h-4 text-amber-400" />
+                <Info className="w-4 h-4 dark:text-amber-400 text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Benchmark Applied</span>
-                  <Badge className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 px-1.5 py-0">Context-aware</Badge>
+                  <span className="text-xs font-semibold dark:text-amber-400 text-amber-600 uppercase tracking-wider">Benchmark Applied</span>
+                  <Badge className="text-[9px] bg-amber-500/10 border border-amber-500/30 dark:text-amber-400 text-amber-600 px-1.5 py-0">Context-aware</Badge>
                 </div>
                 <p className="text-sm font-medium text-foreground/80 mb-2">
                   {results.benchmarkContext as string}
@@ -421,7 +421,7 @@ export default function CompanyAssessmentResultsPage() {
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-0.5 bg-muted-foreground/20 border-dashed" />
                 <span className="text-[10px] text-muted-foreground">Sector benchmark</span>
-                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Benchmarks are currently based on synthetic reference data. They will be replaced with empirical norms once sufficient real-world data is collected.">Beta reference</span>
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 dark:text-amber-400 text-amber-600 border border-amber-500/30" title="Benchmarks are currently based on synthetic reference data. They will be replaced with empirical norms once sufficient real-world data is collected.">Beta reference</span>
               </div>
             </div>
           </div>
@@ -509,9 +509,9 @@ export default function CompanyAssessmentResultsPage() {
                       variant="outline"
                       className={`text-[10px] shrink-0 ${
                         gap.priority === "critical"
-                          ? "border-rose-500/40 text-rose-400"
+                          ? "border-rose-500/40 dark:text-rose-400 text-rose-600"
                           : gap.priority === "high"
-                          ? "border-amber-500/40 text-amber-400"
+                          ? "border-amber-500/40 dark:text-amber-400 text-amber-600"
                           : "border-border/60 text-muted-foreground"
                       }`}
                     >
@@ -526,7 +526,7 @@ export default function CompanyAssessmentResultsPage() {
 
         {/* CTA */}
         <div className="bg-gradient-to-br from-violet-500/10 to-blue-500/5 border border-violet-500/20 rounded-2xl p-8 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm text-violet-400">
+          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm dark:text-violet-400 text-violet-600">
             <Brain className="w-3.5 h-3.5" />
             Next Step
           </div>
@@ -551,7 +551,7 @@ export default function CompanyAssessmentResultsPage() {
               "Board-ready output",
             ].map((item) => (
               <div key={item} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <CheckCircle2 className="w-3 h-3 dark:text-emerald-400 text-emerald-600" />
                 {item}
               </div>
             ))}

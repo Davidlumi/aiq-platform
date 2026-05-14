@@ -32,36 +32,36 @@ import {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const PHASE_COLOURS: Record<string, string> = {
-  foundation: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  build: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  scale: "bg-violet-500/20 text-violet-300 border-violet-500/30",
-  optimise: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  foundation: "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-700 dark:border-blue-500/30 border-blue-300",
+  build: "dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 dark:border-emerald-500/30 border-emerald-300",
+  scale: "dark:bg-violet-500/20 bg-violet-100 dark:text-violet-300 text-violet-700 dark:border-violet-500/30 border-violet-300",
+  optimise: "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 dark:border-amber-500/30 border-amber-300",
 };
 
 const SEVERITY_COLOURS: Record<string, string> = {
-  low: "bg-slate-500/20 text-foreground/70 border-slate-500/30",
-  medium: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-  high: "bg-red-500/20 text-red-300 border-red-500/30",
-  very_high: "bg-red-700/30 text-red-200 border-red-600/40",
+  low: "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300",
+  medium: "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 dark:border-amber-500/30 border-amber-300",
+  high: "dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 dark:border-red-500/30 border-red-300",
+  very_high: "dark:bg-red-700/30 bg-red-100/80 dark:text-red-200 text-red-700 dark:border-red-600/40 border-red-300",
 };
 
 const CONFIDENCE_COLOURS: Record<string, string> = {
-  high: "text-emerald-400",
-  medium: "text-amber-400",
+  high: "dark:text-emerald-400 text-emerald-600",
+  medium: "dark:text-amber-400 text-amber-600",
   low: "text-muted-foreground",
 };
 
 const REGULATORY_COLOURS: Record<string, string> = {
   none: "text-muted-foreground/70",
-  low: "text-emerald-400",
-  medium: "text-amber-400",
-  high: "text-red-400",
-  very_high: "text-red-300",
+  low: "dark:text-emerald-400 text-emerald-600",
+  medium: "dark:text-amber-400 text-amber-600",
+  high: "dark:text-red-400 text-red-600",
+  very_high: "dark:text-red-300 text-red-700",
 };
 
 function PhaseTag({ phase }: { phase: string }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${PHASE_COLOURS[phase] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${PHASE_COLOURS[phase] ?? "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300"}`}>
       {phase}
     </span>
   );
@@ -69,7 +69,7 @@ function PhaseTag({ phase }: { phase: string }) {
 
 function SeverityTag({ severity }: { severity: string }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${SEVERITY_COLOURS[severity] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${SEVERITY_COLOURS[severity] ?? "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300"}`}>
       {severity.replace("_", " ")}
     </span>
   );
@@ -164,11 +164,11 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sources</p>
                 {data.resolved_sources.map((s: any) => (
                   <div key={s.source_id} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
+                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 dark:text-blue-400 text-blue-600" />
                     <span>
                       {s.citation}
                       {s.url && (
-                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-400 hover:text-blue-300">
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 dark:text-blue-400 text-blue-600 hover:dark:text-blue-300 text-blue-700">
                           <ExternalLink className="inline w-3 h-3" />
                         </a>
                       )}
@@ -203,7 +203,7 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
             <SeverityTag severity={data.severity} />
 
             <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 space-y-2">
-              <p className="text-xs font-semibold text-red-400 uppercase tracking-wider">Risk Statement</p>
+              <p className="text-xs font-semibold dark:text-red-400 text-red-600 uppercase tracking-wider">Risk Statement</p>
               <p className="text-sm text-foreground/70 leading-relaxed">{data.risk_statement}</p>
             </div>
 
@@ -213,7 +213,7 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
 
             <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4 space-y-2">
-              <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Recommended Action</p>
+              <p className="text-xs font-semibold dark:text-emerald-400 text-emerald-600 uppercase tracking-wider">Recommended Action</p>
               <p className="text-sm text-foreground/70 leading-relaxed">{data.recommended_action}</p>
             </div>
 
@@ -222,11 +222,11 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sources</p>
                 {data.resolved_sources.map((s: any) => (
                   <div key={s.source_id} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
+                    <BookOpen className="w-3 h-3 mt-0.5 shrink-0 dark:text-blue-400 text-blue-600" />
                     <span>
                       {s.citation}
                       {s.url && (
-                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-400 hover:text-blue-300">
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="ml-1 dark:text-blue-400 text-blue-600 hover:dark:text-blue-300 text-blue-700">
                           <ExternalLink className="inline w-3 h-3" />
                         </a>
                       )}
@@ -301,11 +301,11 @@ export default function ContentLibraryPage() {
         {meta && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
             {[
-              { label: "Initiatives", value: meta.content_counts.initiatives, icon: Cpu, colour: "text-blue-400" },
-              { label: "Risk Rules", value: meta.content_counts.risk_rules, icon: AlertTriangle, colour: "text-red-400" },
-              { label: "Sector Benchmarks", value: meta.content_counts.sector_benchmarks, icon: BarChart2, colour: "text-violet-400" },
-              { label: "Templates", value: meta.content_counts.templates, icon: FileText, colour: "text-amber-400" },
-              { label: "Sources", value: meta.content_counts.sources, icon: BookOpen, colour: "text-emerald-400" },
+              { label: "Initiatives", value: meta.content_counts.initiatives, icon: Cpu, colour: "dark:text-blue-400 text-blue-600" },
+              { label: "Risk Rules", value: meta.content_counts.risk_rules, icon: AlertTriangle, colour: "dark:text-red-400 text-red-600" },
+              { label: "Sector Benchmarks", value: meta.content_counts.sector_benchmarks, icon: BarChart2, colour: "dark:text-violet-400 text-violet-600" },
+              { label: "Templates", value: meta.content_counts.templates, icon: FileText, colour: "dark:text-amber-400 text-amber-600" },
+              { label: "Sources", value: meta.content_counts.sources, icon: BookOpen, colour: "dark:text-emerald-400 text-emerald-600" },
             ].map(stat => (
               <Card key={stat.label} className="bg-card border-border">
                 <CardContent className="p-4 flex items-center gap-3">
@@ -414,9 +414,9 @@ export default function ContentLibraryPage() {
                   >
                     <CardContent className="p-4 flex items-start gap-4">
                       <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        r.severity === "very_high" ? "text-red-300" :
-                        r.severity === "high" ? "text-red-400" :
-                        r.severity === "medium" ? "text-amber-400" : "text-muted-foreground"
+                        r.severity === "very_high" ? "dark:text-red-300 text-red-700" :
+                        r.severity === "high" ? "dark:text-red-400 text-red-600" :
+                        r.severity === "medium" ? "dark:text-amber-400 text-amber-600" : "text-muted-foreground"
                       }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
@@ -445,7 +445,7 @@ export default function ContentLibraryPage() {
                   <Card key={b.sector_id} className="bg-card border-border">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base text-foreground flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-violet-400" />
+                        <Globe className="w-4 h-4 dark:text-violet-400 text-violet-600" />
                         {b.display_name}
                       </CardTitle>
                     </CardHeader>
@@ -484,15 +484,15 @@ export default function ContentLibraryPage() {
                   .map(s => (
                     <Card key={s.source_id} className="bg-card border-border">
                       <CardContent className="p-4 flex items-start gap-4">
-                        <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                        <BookOpen className="w-4 h-4 shrink-0 mt-0.5 dark:text-emerald-400 text-emerald-600" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground/90 leading-snug">{s.citation}</p>
                           <div className="flex items-center gap-3 mt-1">
                             <span className={`text-xs px-2 py-0.5 rounded border capitalize ${
-                              s.source_type === "primary" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
-                              s.source_type === "secondary" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
-                              s.source_type === "vendor" ? "bg-amber-500/20 text-amber-300 border-amber-500/30" :
-                              "bg-slate-500/20 text-foreground/70 border-slate-500/30"
+                              s.source_type === "primary" ? "dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 dark:border-emerald-500/30 border-emerald-300" :
+                              s.source_type === "secondary" ? "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-700 dark:border-blue-500/30 border-blue-300" :
+                              s.source_type === "vendor" ? "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 dark:border-amber-500/30 border-amber-300" :
+                              "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300"
                             }`}>
                               {s.source_type}
                             </span>
@@ -502,7 +502,7 @@ export default function ContentLibraryPage() {
                         </div>
                         {s.url && (
                           <a href={s.url} target="_blank" rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 shrink-0"
+                            className="dark:text-blue-400 text-blue-600 hover:dark:text-blue-300 text-blue-700 shrink-0"
                             onClick={e => e.stopPropagation()}>
                             <ExternalLink className="w-4 h-4" />
                           </a>

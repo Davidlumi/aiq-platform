@@ -52,38 +52,38 @@ import { toast } from "sonner";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function CadenceStatusBadge({ status }: { status: string }) {
-  if (status === "ok") return <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Up to date</Badge>;
-  if (status === "due_soon") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">Due soon</Badge>;
-  if (status === "overdue") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Overdue</Badge>;
-  if (status === "never_reviewed") return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Never reviewed</Badge>;
-  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">{status}</Badge>;
+  if (status === "ok") return <Badge className="dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 border dark:border-emerald-500/30 border-emerald-300">Up to date</Badge>;
+  if (status === "due_soon") return <Badge className="dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 border dark:border-amber-500/30 border-amber-300">Due soon</Badge>;
+  if (status === "overdue") return <Badge className="dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 border dark:border-red-500/30 border-red-300">Overdue</Badge>;
+  if (status === "never_reviewed") return <Badge className="dark:bg-slate-500/20 bg-slate-100 text-foreground/70 border dark:border-slate-500/30 border-slate-300">Never reviewed</Badge>;
+  return <Badge className="dark:bg-slate-500/20 bg-slate-100 text-foreground/70 border dark:border-slate-500/30 border-slate-300">{status}</Badge>;
 }
 
 function TriggeredStatusBadge({ status }: { status: string }) {
-  if (status === "open") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Open</Badge>;
-  if (status === "in_review") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">In review</Badge>;
-  if (status === "resolved") return <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Resolved</Badge>;
-  if (status === "deferred") return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Deferred</Badge>;
+  if (status === "open") return <Badge className="dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 border dark:border-red-500/30 border-red-300">Open</Badge>;
+  if (status === "in_review") return <Badge className="dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 border dark:border-amber-500/30 border-amber-300">In review</Badge>;
+  if (status === "resolved") return <Badge className="dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 border dark:border-emerald-500/30 border-emerald-300">Resolved</Badge>;
+  if (status === "deferred") return <Badge className="dark:bg-slate-500/20 bg-slate-100 text-foreground/70 border dark:border-slate-500/30 border-slate-300">Deferred</Badge>;
   return <Badge>{status}</Badge>;
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
-  if (priority === "critical") return <Badge className="bg-red-600/30 text-red-300 border border-red-500/40">Critical</Badge>;
-  if (priority === "high") return <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/30">High</Badge>;
-  if (priority === "medium") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">Medium</Badge>;
-  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Low</Badge>;
+  if (priority === "critical") return <Badge className="dark:bg-red-600/30 bg-red-100 dark:text-red-300 text-red-700 border dark:border-red-500/40 border-red-300">Critical</Badge>;
+  if (priority === "high") return <Badge className="dark:bg-orange-500/20 bg-orange-100 dark:text-orange-300 text-orange-700 border dark:border-orange-500/30 border-orange-300">High</Badge>;
+  if (priority === "medium") return <Badge className="dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 border dark:border-amber-500/30 border-amber-300">Medium</Badge>;
+  return <Badge className="dark:bg-slate-500/20 bg-slate-100 text-foreground/70 border dark:border-slate-500/30 border-slate-300">Low</Badge>;
 }
 
 function CategoryIcon({ category }: { category: string }) {
-  if (category === "regulatory") return <ShieldAlert className="w-4 h-4 text-red-400" />;
-  if (category === "customer") return <Users className="w-4 h-4 text-blue-400" />;
-  return <Wrench className="w-4 h-4 text-amber-400" />;
+  if (category === "regulatory") return <ShieldAlert className="w-4 h-4 dark:text-red-400 text-red-600" />;
+  if (category === "customer") return <Users className="w-4 h-4 dark:text-blue-400 text-blue-600" />;
+  return <Wrench className="w-4 h-4 dark:text-amber-400 text-amber-600" />;
 }
 
 function BumpTypeBadge({ type }: { type: string }) {
-  if (type === "major") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Major</Badge>;
-  if (type === "minor") return <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30">Minor</Badge>;
-  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Patch</Badge>;
+  if (type === "major") return <Badge className="dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 border dark:border-red-500/30 border-red-300">Major</Badge>;
+  if (type === "minor") return <Badge className="dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-700 border dark:border-blue-500/30 border-blue-300">Minor</Badge>;
+  return <Badge className="dark:bg-slate-500/20 bg-slate-100 text-foreground/70 border dark:border-slate-500/30 border-slate-300">Patch</Badge>;
 }
 
 function TriggerTypeBadge({ type }: { type: string }) {
@@ -96,24 +96,24 @@ function TriggerTypeBadge({ type }: { type: string }) {
     manual: "Manual",
   };
   const colours: Record<string, string> = {
-    quarterly_review: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    annual_review: "bg-violet-500/20 text-violet-300 border-violet-500/30",
-    regulatory_trigger: "bg-red-500/20 text-red-300 border-red-500/30",
-    customer_trigger: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    operational_trigger: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    manual: "bg-slate-500/20 text-foreground/70 border-slate-500/30",
+    quarterly_review: "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-700 dark:border-blue-500/30 border-blue-300",
+    annual_review: "dark:bg-violet-500/20 bg-violet-100 dark:text-violet-300 text-violet-700 dark:border-violet-500/30 border-violet-300",
+    regulatory_trigger: "dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 dark:border-red-500/30 border-red-300",
+    customer_trigger: "dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 dark:border-emerald-500/30 border-emerald-300",
+    operational_trigger: "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 dark:border-amber-500/30 border-amber-300",
+    manual: "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300",
   };
   return (
-    <Badge className={`border ${colours[type] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
+    <Badge className={`border ${colours[type] ?? "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300"}`}>
       {labels[type] ?? type}
     </Badge>
   );
 }
 
 function StalenessStatusBadge({ status }: { status: string }) {
-  if (status === "stale") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Stale</Badge>;
-  if (status === "aging") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">Aging</Badge>;
-  return <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Fresh</Badge>;
+  if (status === "stale") return <Badge className="dark:bg-red-500/20 bg-red-100 dark:text-red-300 text-red-700 border dark:border-red-500/30 border-red-300">Stale</Badge>;
+  if (status === "aging") return <Badge className="dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 border dark:border-amber-500/30 border-amber-300">Aging</Badge>;
+  return <Badge className="dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 border dark:border-emerald-500/30 border-emerald-300">Fresh</Badge>;
 }
 
 // ─── Cadence Tab ─────────────────────────────────────────────────────────────
@@ -129,10 +129,10 @@ function CadenceTab() {
   return (
     <div className="space-y-6">
       {(overdue > 0 || dueSoon > 0) && (
-        <div className={`flex items-start gap-3 p-4 rounded-lg border ${overdue > 0 ? "bg-red-900/20 border-red-500/30" : "bg-amber-900/20 border-amber-500/30"}`}>
-          <AlertTriangle className={`w-5 h-5 mt-0.5 shrink-0 ${overdue > 0 ? "text-red-400" : "text-amber-400"}`} />
+        <div className={`flex items-start gap-3 p-4 rounded-lg border ${overdue > 0 ? "dark:bg-red-900/20 bg-red-100/60 dark:border-red-500/30 border-red-300" : "dark:bg-amber-900/20 bg-amber-100/60 dark:border-amber-500/30 border-amber-300"}`}>
+          <AlertTriangle className={`w-5 h-5 mt-0.5 shrink-0 ${overdue > 0 ? "dark:text-red-400 text-red-600" : "dark:text-amber-400 text-amber-600"}`} />
           <div>
-            <p className={`text-sm font-medium ${overdue > 0 ? "text-red-300" : "text-amber-300"}`}>
+            <p className={`text-sm font-medium ${overdue > 0 ? "dark:text-red-300 text-red-700" : "dark:text-amber-300 text-amber-700"}`}>
               {overdue > 0 ? `${overdue} review(s) overdue` : `${dueSoon} review(s) due soon`}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -291,7 +291,7 @@ function ReviewLogTab() {
                       <ul className="space-y-1">
                         {entry.changes.map((c, i) => (
                           <li key={i} className="flex items-start gap-2 text-sm text-foreground/70">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                            <CheckCircle2 className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600 shrink-0 mt-0.5" />
                             {c}
                           </li>
                         ))}
@@ -305,9 +305,9 @@ function ReviewLogTab() {
                       <div className="space-y-1">
                         {entry.newSources.map((s, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm text-foreground/70">
-                            <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <BookOpen className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600 shrink-0" />
                             <span>{s.citation}</span>
-                            <Badge className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{s.confidence}</Badge>
+                            <Badge className="text-xs dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 border dark:border-emerald-500/30 border-emerald-300">{s.confidence}</Badge>
                           </div>
                         ))}
                       </div>
@@ -321,8 +321,8 @@ function ReviewLogTab() {
                         {entry.testFixtures.map((f, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm">
                             {f.passed
-                              ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              : <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+                              ? <CheckCircle2 className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600 shrink-0" />
+                              : <XCircle className="w-3.5 h-3.5 dark:text-red-400 text-red-600 shrink-0" />}
                             <span className="text-foreground/70">{f.fixture}</span>
                             {f.notes && <span className="text-xs text-muted-foreground/70">— {f.notes}</span>}
                           </div>
@@ -332,9 +332,9 @@ function ReviewLogTab() {
                   )}
 
                   {entry.knownIssues && (
-                    <div className="bg-amber-900/20 border border-amber-500/30 rounded p-3">
-                      <p className="text-xs font-medium text-amber-400 mb-1">Known Issues</p>
-                      <p className="text-sm text-amber-200">{entry.knownIssues}</p>
+                    <div className="dark:bg-amber-900/20 bg-amber-100/60 border dark:border-amber-500/30 border-amber-300 rounded p-3">
+                      <p className="text-xs font-medium dark:text-amber-400 text-amber-600 mb-1">Known Issues</p>
+                      <p className="text-sm dark:text-amber-200 text-amber-700">{entry.knownIssues}</p>
                     </div>
                   )}
                 </div>
@@ -580,7 +580,7 @@ function TriggeredTab() {
                     {r.resolvedAt && <span>Resolved: {new Date(r.resolvedAt).toLocaleDateString("en-GB")}</span>}
                   </div>
                   {r.resolutionNotes && (
-                    <p className="text-xs text-emerald-400 mt-1">Resolution: {r.resolutionNotes}</p>
+                    <p className="text-xs dark:text-emerald-400 text-emerald-600 mt-1">Resolution: {r.resolutionNotes}</p>
                   )}
                 </div>
                 {(r.status === "open" || r.status === "in_review") && (
@@ -589,7 +589,7 @@ function TriggeredTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-amber-500/40 text-amber-300 hover:bg-amber-900/20 text-xs"
+                        className="dark:border-amber-500/40 border-amber-300 dark:text-amber-300 text-amber-700 hover:dark:bg-amber-900/20 bg-amber-100/60 text-xs"
                         onClick={() => updateMutation.mutate({ id: r.id, status: "in_review" })}
                       >
                         Start Review
@@ -598,7 +598,7 @@ function TriggeredTab() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/20 text-xs"
+                      className="dark:border-emerald-500/40 border-emerald-300 dark:text-emerald-300 text-emerald-700 hover:dark:bg-emerald-900/20 bg-emerald-100/60 text-xs"
                       onClick={() => setResolveId(r.id)}
                     >
                       Resolve
@@ -758,9 +758,9 @@ function SourceHealthTab() {
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Stale (18+ months)", count: staleCount, colour: "text-red-400", bg: "bg-red-900/20 border-red-500/30", filter: "stale" as const },
-          { label: "Aging (12–18 months)", count: agingCount, colour: "text-amber-400", bg: "bg-amber-900/20 border-amber-500/30", filter: "aging" as const },
-          { label: "Fresh (<12 months)", count: freshCount, colour: "text-emerald-400", bg: "bg-emerald-900/20 border-emerald-500/30", filter: "fresh" as const },
+          { label: "Stale (18+ months)", count: staleCount, colour: "dark:text-red-400 text-red-600", bg: "dark:bg-red-900/20 bg-red-100/60 dark:border-red-500/30 border-red-300", filter: "stale" as const },
+          { label: "Aging (12–18 months)", count: agingCount, colour: "dark:text-amber-400 text-amber-600", bg: "dark:bg-amber-900/20 bg-amber-100/60 dark:border-amber-500/30 border-amber-300", filter: "aging" as const },
+          { label: "Fresh (<12 months)", count: freshCount, colour: "dark:text-emerald-400 text-emerald-600", bg: "dark:bg-emerald-900/20 bg-emerald-100/60 dark:border-emerald-500/30 border-emerald-300", filter: "fresh" as const },
         ].map(stat => (
           <button
             key={stat.filter}
@@ -795,19 +795,19 @@ function SourceHealthTab() {
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-xs px-2 py-0.5 rounded border capitalize ${
-                    s.sourceType === "primary" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
-                    s.sourceType === "secondary" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
-                    s.sourceType === "vendor" ? "bg-amber-500/20 text-amber-300 border-amber-500/30" :
-                    "bg-slate-500/20 text-foreground/70 border-slate-500/30"
+                    s.sourceType === "primary" ? "dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-700 dark:border-emerald-500/30 border-emerald-300" :
+                    s.sourceType === "secondary" ? "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-700 dark:border-blue-500/30 border-blue-300" :
+                    s.sourceType === "vendor" ? "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-300 text-amber-700 dark:border-amber-500/30 border-amber-300" :
+                    "dark:bg-slate-500/20 bg-slate-100 text-foreground/70 dark:border-slate-500/30 border-slate-300"
                   }`}>
                     {s.sourceType}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-xs capitalize ${
-                    s.confidence === "high" ? "text-emerald-400" :
-                    s.confidence === "medium" ? "text-amber-400" :
-                    "text-red-400"
+                    s.confidence === "high" ? "dark:text-emerald-400 text-emerald-600" :
+                    s.confidence === "medium" ? "dark:text-amber-400 text-amber-600" :
+                    "dark:text-red-400 text-red-600"
                   }`}>{s.confidence}</span>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">
@@ -821,7 +821,7 @@ function SourceHealthTab() {
                 </td>
                 <td className="px-4 py-3">
                   {s.url && (
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="dark:text-blue-400 text-blue-600 hover:dark:text-blue-300 text-blue-700">
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}
@@ -834,8 +834,8 @@ function SourceHealthTab() {
 
       <div className="bg-card/50 border border-border rounded-lg p-4">
         <p className="text-xs text-muted-foreground/70 leading-relaxed">
-          <span className="text-muted-foreground font-medium">Staleness policy:</span> Sources not reviewed in 18+ months are flagged as <span className="text-red-400">Stale</span>.
-          Sources between 12–18 months are flagged as <span className="text-amber-400">Aging</span> and should be prioritised for the next quarterly review.
+          <span className="text-muted-foreground font-medium">Staleness policy:</span> Sources not reviewed in 18+ months are flagged as <span className="dark:text-red-400 text-red-600">Stale</span>.
+          Sources between 12–18 months are flagged as <span className="dark:text-amber-400 text-amber-600">Aging</span> and should be prioritised for the next quarterly review.
           Source staleness is also surfaced in the Strategy QA Check when generating AI strategies.
         </p>
       </div>
@@ -856,7 +856,7 @@ export default function ContentReviewPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <CalendarCheck2 className="w-5 h-5 text-blue-400" />
+                <CalendarCheck2 className="w-5 h-5 dark:text-blue-400 text-blue-600" />
                 Content Review Dashboard
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -866,7 +866,7 @@ export default function ContentReviewPage() {
             {!statsLoading && stats && (
               <div className="text-right">
                 <p className="text-xs text-muted-foreground/70">Library version</p>
-                <p className="text-sm font-mono font-bold text-blue-400">v{stats.libraryVersion}</p>
+                <p className="text-sm font-mono font-bold dark:text-blue-400 text-blue-600">v{stats.libraryVersion}</p>
               </div>
             )}
           </div>
@@ -883,28 +883,28 @@ export default function ContentReviewPage() {
                 value: stats.lastReviewDate ?? "Never",
                 sub: stats.lastReviewVersion ? `v${stats.lastReviewVersion}` : "",
                 icon: CalendarCheck2,
-                colour: "text-blue-400",
+                colour: "dark:text-blue-400 text-blue-600",
               },
               {
                 label: "Review Log Entries",
                 value: String(stats.totalReviewLogEntries),
                 sub: "all time",
                 icon: ClipboardList,
-                colour: "text-violet-400",
+                colour: "dark:text-violet-400 text-violet-600",
               },
               {
                 label: "Open Triggered Reviews",
                 value: String(stats.openTriggeredReviews),
                 sub: stats.criticalTriggeredReviews > 0 ? `${stats.criticalTriggeredReviews} critical` : "none critical",
                 icon: AlertTriangle,
-                colour: stats.openTriggeredReviews > 0 ? "text-red-400" : "text-emerald-400",
+                colour: stats.openTriggeredReviews > 0 ? "dark:text-red-400 text-red-600" : "dark:text-emerald-400 text-emerald-600",
               },
               {
                 label: "Stale Sources",
                 value: String(stats.staleSourceCount),
                 sub: `of ${stats.totalSourceCount} total`,
                 icon: BookOpen,
-                colour: stats.staleSourceCount > 0 ? "text-amber-400" : "text-emerald-400",
+                colour: stats.staleSourceCount > 0 ? "dark:text-amber-400 text-amber-600" : "dark:text-emerald-400 text-emerald-600",
               },
             ].map(stat => (
               <Card key={stat.label} className="bg-card border-border">

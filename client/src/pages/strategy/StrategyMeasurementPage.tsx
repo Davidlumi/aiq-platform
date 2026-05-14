@@ -169,8 +169,8 @@ function ReviewChecksSkeleton() {
 function BlockError({ message }: { message?: string }) {
   return (
     <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5 flex items-start gap-3">
-      <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-      <p className="text-sm text-red-400">{message ?? "Failed to load this block. You can still navigate away."}</p>
+      <AlertTriangle className="w-4 h-4 dark:text-red-400 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <p className="text-sm dark:text-red-400 text-red-600">{message ?? "Failed to load this block. You can still navigate away."}</p>
     </div>
   );
 }
@@ -252,11 +252,11 @@ function CadencePill({ currentCadence, onSave, saving, savedAt, saveError }: Cad
       <div className="mt-1.5 h-4 text-[10px]">
         {saving && <span className="text-muted-foreground">Saving…</span>}
         {!saving && savedAt && !saveError && (
-          <span className="text-emerald-400">
+          <span className="dark:text-emerald-400 text-emerald-600">
             Saved {savedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
-        {!saving && saveError && <span className="text-red-400">{saveError}</span>}
+        {!saving && saveError && <span className="dark:text-red-400 text-red-600">{saveError}</span>}
       </div>
     </div>
   );
@@ -278,10 +278,10 @@ function CountdownHero({ countdown, noReviewScheduled, strategyConcluded, onOpen
 
   const urgencyColor: Record<UrgencyState, string> = {
     default: "text-foreground",
-    approaching: "text-amber-400",
-    "this-week": "text-amber-400",
-    today: "text-amber-400",
-    overdue: "text-red-400",
+    approaching: "dark:text-amber-400 text-amber-600",
+    "this-week": "dark:text-amber-400 text-amber-600",
+    today: "dark:text-amber-400 text-amber-600",
+    overdue: "dark:text-red-400 text-red-600",
   };
 
   const urgencySuffix: Record<UrgencyState, string> = {
@@ -303,7 +303,7 @@ function CountdownHero({ countdown, noReviewScheduled, strategyConcluded, onOpen
               <p className="text-base font-semibold text-muted-foreground mb-2">Next review: not scheduled</p>
               <button
                 type="button"
-                className="text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300"
+                className="text-xs dark:text-blue-400 text-blue-600 underline underline-offset-2 hover:dark:text-blue-300 text-blue-700"
                 onClick={onOpenCadence}
               >
                 Schedule first review
@@ -433,7 +433,7 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
                 )}
                 <span
                   className={`text-[10px] whitespace-nowrap mt-0.5 ${
-                    marker.completed ? "text-emerald-400 font-medium" : "text-muted-foreground"
+                    marker.completed ? "dark:text-emerald-400 text-emerald-600 font-medium" : "text-muted-foreground"
                   }`}
                 >
                   Review {marker.index} · {formatMonthYear(marker.date)}
@@ -449,7 +449,7 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
             aria-label={todayAriaLabel}
             role="img"
           >
-            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 font-semibold whitespace-nowrap">
+            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] dark:text-blue-400 text-blue-600 font-semibold whitespace-nowrap">
               {todayLabel}
             </span>
           </div>
@@ -552,14 +552,14 @@ function WhenWeReview({ cadence }: { cadence: CadenceValue }) {
         <div className="space-y-3">
           {TRIGGER_CONDITIONS.map(trigger => (
             <div key={trigger.id} className="flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <AlertTriangle className="w-4 h-4 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground leading-snug">{trigger.text}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {trigger.detail}{" "}
                   <button
                     type="button"
-                    className="text-blue-400 hover:text-blue-300 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    className="dark:text-blue-400 text-blue-600 hover:dark:text-blue-300 text-blue-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                     onClick={() => navigate(`/strategy/${trigger.target}`)}
                     aria-label={`Go to ${trigger.targetLabel} section`}
                   >
@@ -744,7 +744,7 @@ export default function StrategyMeasurementPage() {
       {/* Empty state: no strategy */}
       {!isLoading && !hasError && !hasStrategy && (
         <div className="rounded-xl border border-dashed border-teal-500/20 bg-teal-500/4 p-8 flex items-start gap-4">
-          <CalendarDays className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <CalendarDays className="w-5 h-5 dark:text-teal-400 text-teal-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">No strategy configured yet</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
@@ -753,7 +753,7 @@ export default function StrategyMeasurementPage() {
             <Button
               size="sm"
               variant="outline"
-              className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-7 text-xs"
+              className="dark:border-teal-500/30 border-teal-300 dark:text-teal-400 text-teal-600 hover:bg-teal-500/10 h-7 text-xs"
               onClick={() => navigate("/strategy/diagnostic")}
             >
               <Sparkles className="w-3 h-3 mr-1.5" aria-hidden="true" />

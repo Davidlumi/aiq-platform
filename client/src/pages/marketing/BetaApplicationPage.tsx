@@ -105,11 +105,11 @@ function SuccessScreen({ companyName }: { companyName: string }) {
           <h1 className="text-2xl font-bold text-white mb-3">
             Application received
           </h1>
-          <p className="text-slate-300 mb-2">
+          <p className="dark:text-slate-300 text-slate-700 mb-2">
             Thank you - we have received the application for{" "}
             <span className="font-semibold text-white">{companyName}</span>.
           </p>
-          <p className="text-slate-400 mb-8">
+          <p className="dark:text-slate-400 text-slate-600 mb-8">
             We respond to every application within five business days, even if the answer is no.
             If you look like a fit, we will be in touch to arrange a one-hour conversation.
           </p>
@@ -134,14 +134,14 @@ function SuccessScreen({ companyName }: { companyName: string }) {
                   </div>
                   <div>
                     <p className="text-white text-sm font-medium">{item.label}</p>
-                    <p className="text-slate-400 text-sm">{item.text}</p>
+                    <p className="dark:text-slate-400 text-slate-600 text-sm">{item.text}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
           <Link href="/">
-            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+            <Button variant="ghost" className="dark:text-slate-300 text-slate-700 hover:text-white hover:bg-white/10">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to home
             </Button>
@@ -169,18 +169,18 @@ function IneligibleScreen({ hrTeamSize }: { hrTeamSize: number }) {
           <h1 className="text-2xl font-bold text-white mb-3">
             Not a fit for this cohort
           </h1>
-          <p className="text-slate-300 mb-4">
+          <p className="dark:text-slate-300 text-slate-700 mb-4">
             The AiQ beta programme is currently open to organisations with at least{" "}
             <span className="font-semibold text-white">25 HR professionals</span>. Your team of{" "}
             <span className="font-semibold text-white">{hrTeamSize}</span> is below that threshold.
           </p>
-          <p className="text-slate-400 mb-8">
+          <p className="dark:text-slate-400 text-slate-600 mb-8">
             The unit economics do not work yet for smaller functions, and we would rather tell you
             that than waste your time. We are building a self-serve tier for smaller HR teams and
             will be in touch when it is available.
           </p>
           <Link href="/">
-            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+            <Button variant="ghost" className="dark:text-slate-300 text-slate-700 hover:text-white hover:bg-white/10">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to home
             </Button>
@@ -208,9 +208,9 @@ function DuplicateScreen({ message }: { message: string }) {
           <h1 className="text-2xl font-bold text-white mb-3">
             Already on file
           </h1>
-          <p className="text-slate-300 mb-8">{message}</p>
+          <p className="dark:text-slate-300 text-slate-700 mb-8">{message}</p>
           <Link href="/">
-            <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10">
+            <Button variant="ghost" className="dark:text-slate-300 text-slate-700 hover:text-white hover:bg-white/10">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to home
             </Button>
@@ -284,20 +284,20 @@ export default function BetaApplicationPage() {
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
             Apply to join the AiQ Beta cohort.
           </h1>
-          <p className="text-xl text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-xl dark:text-slate-300 text-slate-700 max-w-2xl leading-relaxed">
             We work with a small number of CPOs to refine AiQ with real customer signal before
             general availability.
           </p>
           <div className="flex flex-wrap gap-6 mt-8">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 text-sm dark:text-slate-300 text-slate-700">
               <Users className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
               25+ HR professionals required
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 text-sm dark:text-slate-300 text-slate-700">
               <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
               UK enterprise organisations
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 text-sm dark:text-slate-300 text-slate-700">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: green }} />
               Response within five business days
             </div>
@@ -321,7 +321,7 @@ export default function BetaApplicationPage() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <item.icon className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: green }} />
-                    <p className="text-slate-300 text-sm leading-relaxed">{item.text}</p>
+                    <p className="dark:text-slate-300 text-slate-700 text-sm leading-relaxed">{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -337,7 +337,7 @@ export default function BetaApplicationPage() {
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: green }} />
-                    <p className="text-slate-300 text-sm leading-relaxed">{text}</p>
+                    <p className="dark:text-slate-300 text-slate-700 text-sm leading-relaxed">{text}</p>
                   </div>
                 ))}
               </div>
@@ -350,7 +350,7 @@ export default function BetaApplicationPage() {
       <section className="py-16 px-6" style={{ background: navy }}>
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-white mb-3">Who we are looking for</h2>
-          <p className="text-slate-300 mb-8">
+          <p className="dark:text-slate-300 text-slate-700 mb-8">
             UK enterprise CPOs and HR Directors with functions of 25+ HR people, in organisations
             that have made specific AI commitments their HR function is responsible for delivering against.
           </p>
@@ -372,7 +372,7 @@ export default function BetaApplicationPage() {
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: green }} />
-                    <p className="text-slate-300 text-sm">{text}</p>
+                    <p className="dark:text-slate-300 text-slate-700 text-sm">{text}</p>
                   </div>
                 ))}
               </div>
@@ -382,7 +382,7 @@ export default function BetaApplicationPage() {
               style={{ background: slate, borderColor: border }}
             >
               <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-slate-400" />
+                <AlertCircle className="w-4 h-4 dark:text-slate-400 text-slate-600" />
                 You are probably not a fit if:
               </h3>
               <div className="space-y-3">
@@ -394,7 +394,7 @@ export default function BetaApplicationPage() {
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2 bg-slate-500" />
-                    <p className="text-slate-400 text-sm">{text}</p>
+                    <p className="dark:text-slate-400 text-slate-600 text-sm">{text}</p>
                   </div>
                 ))}
               </div>
@@ -438,7 +438,7 @@ export default function BetaApplicationPage() {
                   {step.num}
                 </div>
                 <h3 className="font-semibold text-white">{step.label}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{step.text}</p>
+                <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed">{step.text}</p>
               </div>
             ))}
           </div>
@@ -450,7 +450,7 @@ export default function BetaApplicationPage() {
         <div className="max-w-3xl mx-auto">
           <div className="mb-10">
             <h2 className="text-2xl font-bold text-white mb-3">Application form</h2>
-            <p className="text-slate-400">
+            <p className="dark:text-slate-400 text-slate-600">
               We respond to every application within five business days, even if the answer is no.
             </p>
           </div>
@@ -464,7 +464,7 @@ export default function BetaApplicationPage() {
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">
+                    <Label className="dark:text-slate-300 text-slate-700">
                       First name <span className="text-destructive">*</span>
                     </Label>
                     <Input
@@ -478,7 +478,7 @@ export default function BetaApplicationPage() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">
+                    <Label className="dark:text-slate-300 text-slate-700">
                       Last name <span className="text-destructive">*</span>
                     </Label>
                     <Input
@@ -493,7 +493,7 @@ export default function BetaApplicationPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     Work email <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -508,7 +508,7 @@ export default function BetaApplicationPage() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     Job title <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -522,7 +522,7 @@ export default function BetaApplicationPage() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     LinkedIn profile URL{" "}
                     <span className="text-slate-500 text-xs">(optional)</span>
                   </Label>
@@ -547,7 +547,7 @@ export default function BetaApplicationPage() {
                   Your organisation
                 </h3>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     Organisation name <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -562,7 +562,7 @@ export default function BetaApplicationPage() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">
+                    <Label className="dark:text-slate-300 text-slate-700">
                       Sector <span className="text-destructive">*</span>
                     </Label>
                     <Select onValueChange={(v) => setValue("sector", v as typeof SECTORS[number])}>
@@ -583,7 +583,7 @@ export default function BetaApplicationPage() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">
+                    <Label className="dark:text-slate-300 text-slate-700">
                       Total company size <span className="text-destructive">*</span>
                     </Label>
                     <Select onValueChange={(v) => setValue("companySize", v as typeof COMPANY_SIZES[number])}>
@@ -605,7 +605,7 @@ export default function BetaApplicationPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     Number of HR professionals in your team <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -625,7 +625,7 @@ export default function BetaApplicationPage() {
                       style={{ background: "rgba(204,187,68,0.06)", border: "1px solid rgba(204,187,68,0.25)" }}
                     >
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#D97706" }} />
-                      <p className="text-xs leading-relaxed text-slate-300">
+                      <p className="text-xs leading-relaxed dark:text-slate-300 text-slate-700">
                         The AiQ beta programme requires at least 25 HR professionals. You can still
                         submit - we will note your interest for our upcoming self-serve tier.
                       </p>
@@ -642,7 +642,7 @@ export default function BetaApplicationPage() {
                   Your context
                 </h3>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     Your business's named AI initiatives and approximate timelines{" "}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -661,7 +661,7 @@ export default function BetaApplicationPage() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     AI tools your HR team currently uses{" "}
                     <span className="text-slate-500 text-xs">(optional)</span>
                   </Label>
@@ -673,7 +673,7 @@ export default function BetaApplicationPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label className="dark:text-slate-300 text-slate-700">
                     What you are hoping AiQ would help you do{" "}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -703,7 +703,7 @@ export default function BetaApplicationPage() {
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#DC2626" }} />
                 <div>
                   <p className="font-medium text-sm text-white">Submission failed</p>
-                  <p className="text-sm mt-0.5 text-slate-300">
+                  <p className="text-sm mt-0.5 dark:text-slate-300 text-slate-700">
                     {submitMutation.error?.message ?? "An unexpected error occurred. Please try again."}
                   </p>
                 </div>

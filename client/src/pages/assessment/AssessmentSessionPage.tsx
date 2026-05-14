@@ -163,10 +163,10 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
     critique: {
       label: "AI-Generated Output",
       sublabel: "Evaluate this output",
-      borderColor: "border-violet-700/40",
-      bgColor: "bg-violet-900/20",
-      labelColor: "text-violet-300",
-      iconColor: "text-violet-400",
+      borderColor: "dark:border-violet-700/40 border-violet-300",
+      bgColor: "dark:bg-violet-900/20 bg-violet-100/60",
+      labelColor: "dark:text-violet-300 text-violet-700",
+      iconColor: "dark:text-violet-400 text-violet-600",
     },
     improvement: {
       label: "AI-Generated Output",
@@ -211,11 +211,11 @@ function AiOutputBlock({ content, mode }: { content: string; mode: "critique" | 
 
 function DataContextBlock({ content }: { content: string }) {
   return (
-    <div className="rounded-xl border-2 border-cyan-700/40 bg-cyan-900/20 p-4">
+    <div className="rounded-xl border-2 dark:border-cyan-700/40 border-cyan-300 dark:bg-cyan-900/20 bg-cyan-100/60 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 className="w-4 h-4 text-cyan-400" />
+        <BarChart3 className="w-4 h-4 dark:text-cyan-400 text-cyan-600" />
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">
+          <p className="text-xs font-bold uppercase tracking-widest dark:text-cyan-300 text-cyan-700">
             Data / AI Insight
           </p>
           <p className="text-xs text-muted-foreground">Interpret this output</p>
@@ -263,42 +263,42 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     meeting_notes: {
       label: "Meeting Notes",
       sublabel: "Review the discussion record",
-      borderColor: "border-purple-700/40",
-      bgColor: "bg-purple-900/20",
-      labelColor: "text-purple-300",
-      headerBg: "bg-purple-900/30",
+      borderColor: "dark:border-purple-700/40 border-purple-300",
+      bgColor: "dark:bg-purple-900/20 bg-purple-100/60",
+      labelColor: "dark:text-purple-300 text-purple-700",
+      headerBg: "dark:bg-purple-900/30 bg-purple-100/80",
     },
     chat_log: {
       label: "Chat Log",
       sublabel: "Review the conversation",
-      borderColor: "border-cyan-700/40",
-      bgColor: "bg-cyan-900/20",
-      labelColor: "text-cyan-300",
-      headerBg: "bg-cyan-900/30",
+      borderColor: "dark:border-cyan-700/40 border-cyan-300",
+      bgColor: "dark:bg-cyan-900/20 bg-cyan-100/60",
+      labelColor: "dark:text-cyan-300 text-cyan-700",
+      headerBg: "dark:bg-cyan-900/30 bg-cyan-100/80",
     },
     data_table: {
       label: "Data Extract",
       sublabel: "Review the data",
       borderColor: "border-rose-700/40",
-      bgColor: "bg-rose-900/20",
-      labelColor: "text-rose-300",
-      headerBg: "bg-rose-900/30",
+      bgColor: "dark:bg-rose-900/20 bg-rose-50",
+      labelColor: "dark:text-rose-300 text-rose-700",
+      headerBg: "dark:bg-rose-900/30 bg-rose-100/80",
     },
     dashboard_card: {
       label: "Analytics Dashboard",
       sublabel: "Review the AI-generated insight",
-      borderColor: "border-indigo-700/40",
-      bgColor: "bg-indigo-900/20",
-      labelColor: "text-indigo-300",
-      headerBg: "bg-indigo-900/30",
+      borderColor: "dark:border-indigo-700/40 border-indigo-300",
+      bgColor: "dark:bg-indigo-900/20 bg-indigo-100/60",
+      labelColor: "dark:text-indigo-300 text-indigo-700",
+      headerBg: "dark:bg-indigo-900/30 bg-indigo-100/80",
     },
     screening_output: {
       label: "AI Screening Output",
       sublabel: "Review the automated screening result",
-      borderColor: "border-orange-700/40",
-      bgColor: "bg-orange-900/20",
-      labelColor: "text-orange-300",
-      headerBg: "bg-orange-900/30",
+      borderColor: "dark:border-orange-700/40 border-orange-300",
+      bgColor: "dark:bg-orange-900/20 bg-orange-100/60",
+      labelColor: "dark:text-orange-300 text-orange-700",
+      headerBg: "dark:bg-orange-900/30 bg-orange-100/80",
     },
     alert: {
       label: "System Alert",
@@ -838,7 +838,7 @@ function ScenarioFeedbackWidget({ sessionId }: { sessionId: string }) {
           {[1,2,3,4,5].map(i => (
             <button key={i} type="button" onClick={() => onChange(i)}
               className={cn("h-6 w-6 text-lg leading-none rounded transition-colors",
-                i <= value ? "text-amber-400" : "text-muted-foreground/30 hover:text-amber-300")}>
+                i <= value ? "dark:text-amber-400 text-amber-600" : "text-muted-foreground/30 hover:dark:text-amber-300 text-amber-700")}>
               ★
             </button>
           ))}

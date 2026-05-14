@@ -153,7 +153,7 @@ function DomainBar({ domain }: { domain: typeof DOMAIN_DATA[0] }) {
   const pct = (domain.avg / 10) * 100;
   const targetPct = (domain.target / 10) * 100;
   const gap = domain.target - domain.avg;
-  const gapColor = gap > 2 ? "text-red-400" : gap > 1 ? "text-amber-400" : "text-emerald-400";
+  const gapColor = gap > 2 ? "dark:text-red-400 text-red-600" : gap > 1 ? "dark:text-amber-400 text-amber-600" : "dark:text-emerald-400 text-emerald-600";
 
   return (
     <div className="space-y-1.5">
@@ -245,8 +245,8 @@ export default function DemoPreviewPage() {
             {/* KPI row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <KPICard label="Function Average" value="6.4/10" sub="↑ 0.3 since last quarter" color="text-[#00FF88]" icon={TrendingUp} />
-              <KPICard label="Assessment Coverage" value="89%" sub="42 of 47 assessed" color="text-blue-400" icon={CheckCircle2} />
-              <KPICard label="Priority Gaps" value="3" sub="Domains below target" color="text-amber-400" icon={AlertTriangle} />
+              <KPICard label="Assessment Coverage" value="89%" sub="42 of 47 assessed" color="dark:text-blue-400 text-blue-600" icon={CheckCircle2} />
+              <KPICard label="Priority Gaps" value="3" sub="Domains below target" color="dark:text-amber-400 text-amber-600" icon={AlertTriangle} />
               <KPICard label="Readiness Level" value="Developing" sub="Moving toward Advanced" color="text-white" icon={Activity} />
             </div>
 
@@ -288,7 +288,7 @@ export default function DemoPreviewPage() {
                         <span className="text-xs font-semibold text-white">{g.domain}</span>
                         <div className="flex items-center gap-2">
                           <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full",
-                            g.urgency === "high" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"
+                            g.urgency === "high" ? "bg-red-500/15 dark:text-red-400 text-red-600" : "bg-amber-500/15 dark:text-amber-400 text-amber-600"
                           )}>{g.urgency === "high" ? "High priority" : "Medium"}</span>
                           <span className="text-xs text-white/40">{g.affectedCount} people</span>
                         </div>
@@ -324,13 +324,13 @@ export default function DemoPreviewPage() {
                           <td className="py-3 px-4 text-right text-white/60">{f.count}</td>
                           <td className="py-3 px-4 text-right">
                             <span className={cn("font-bold",
-                              f.avg >= 7 ? "text-[#00FF88]" : f.avg >= 6 ? "text-amber-400" : "text-red-400"
+                              f.avg >= 7 ? "text-[#00FF88]" : f.avg >= 6 ? "dark:text-amber-400 text-amber-600" : "dark:text-red-400 text-red-600"
                             )}>{f.avg.toFixed(1)}</span>
                             <span className="text-white/30">/10</span>
                           </td>
                           <td className="py-3 pl-4 text-right">
                             <span className={cn("font-medium",
-                              f.coverage >= 90 ? "text-[#00FF88]" : f.coverage >= 80 ? "text-amber-400" : "text-red-400"
+                              f.coverage >= 90 ? "text-[#00FF88]" : f.coverage >= 80 ? "dark:text-amber-400 text-amber-600" : "dark:text-red-400 text-red-600"
                             )}>{f.coverage}%</span>
                           </td>
                         </tr>
@@ -365,8 +365,8 @@ export default function DemoPreviewPage() {
                   <CardContent className="space-y-3">
                     {[
                       { label: "On track (gap ≤ 1.0)", domains: DOMAIN_DATA.filter(d => d.target - d.avg <= 1.0), color: "text-[#00FF88]", bg: "bg-[#00FF88]/10" },
-                      { label: "Developing (gap 1.0–2.0)", domains: DOMAIN_DATA.filter(d => { const g = d.target - d.avg; return g > 1.0 && g <= 2.0; }), color: "text-amber-400", bg: "bg-amber-400/10" },
-                      { label: "Priority gap (gap > 2.0)", domains: DOMAIN_DATA.filter(d => d.target - d.avg > 2.0), color: "text-red-400", bg: "bg-red-400/10" },
+                      { label: "Developing (gap 1.0–2.0)", domains: DOMAIN_DATA.filter(d => { const g = d.target - d.avg; return g > 1.0 && g <= 2.0; }), color: "dark:text-amber-400 text-amber-600", bg: "bg-amber-400/10" },
+                      { label: "Priority gap (gap > 2.0)", domains: DOMAIN_DATA.filter(d => d.target - d.avg > 2.0), color: "dark:text-red-400 text-red-600", bg: "bg-red-400/10" },
                     ].map(row => (
                       <div key={row.label} className={cn("rounded-xl p-3", row.bg)}>
                         <p className={cn("text-xs font-semibold mb-1.5", row.color)}>{row.label}</p>
@@ -393,7 +393,7 @@ export default function DemoPreviewPage() {
                       <div key={d.key} className="flex items-center justify-between text-xs">
                         <span className="text-white/60 truncate flex-1 mr-3">{d.label.split(" ").slice(0, 3).join(" ")}</span>
                         <span className={cn("font-semibold flex-shrink-0",
-                          d.trend > 0 ? "text-[#00FF88]" : d.trend < 0 ? "text-red-400" : "text-white/40"
+                          d.trend > 0 ? "text-[#00FF88]" : d.trend < 0 ? "dark:text-red-400 text-red-600" : "text-white/40"
                         )}>
                           {d.trend > 0 ? "↑" : d.trend < 0 ? "↓" : "→"} {Math.abs(d.trend).toFixed(1)}
                         </span>
@@ -420,7 +420,7 @@ export default function DemoPreviewPage() {
                     <div key={p.name} className="flex items-center gap-3">
                       <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
                         i === 0 ? "bg-[#00FF88]/20 text-[#00FF88]" :
-                        i === 1 ? "bg-blue-400/20 text-blue-400" :
+                        i === 1 ? "bg-blue-400/20 dark:text-blue-400 text-blue-600" :
                         "bg-white/10 text-white/50"
                       )}>{i + 1}</div>
                       <div className="flex-1 min-w-0">
@@ -474,14 +474,14 @@ export default function DemoPreviewPage() {
             {/* Attention needed */}
             <Card className="bg-amber-500/5 border-amber-500/20">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-amber-400 flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold dark:text-amber-400 text-amber-600 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" /> Attention Needed
                 </CardTitle>
                 <p className="text-xs text-white/40">5 team members have not yet started their assessment. 3 members scored below 5.0 in Workforce AI Readiness.</p>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs h-7">
+                  <Button size="sm" variant="outline" className="border-amber-500/30 dark:text-amber-400 text-amber-600 hover:bg-amber-500/10 text-xs h-7">
                     Send reminder to unassessed members
                   </Button>
                   <Button size="sm" variant="outline" className="border-white/20 text-white/60 hover:bg-white/5 text-xs h-7">
@@ -534,13 +534,13 @@ export default function DemoPreviewPage() {
               </Card>
               <Card className="bg-white/5 border-white/10 text-center">
                 <CardContent className="p-5">
-                  <p className="text-2xl font-bold text-blue-400">55%</p>
+                  <p className="text-2xl font-bold dark:text-blue-400 text-blue-600">55%</p>
                   <p className="text-xs text-white/40 mt-1">Avg completion rate</p>
                 </CardContent>
               </Card>
               <Card className="bg-white/5 border-white/10 text-center">
                 <CardContent className="p-5">
-                  <p className="text-2xl font-bold text-amber-400">3.2h</p>
+                  <p className="text-2xl font-bold dark:text-amber-400 text-amber-600">3.2h</p>
                   <p className="text-xs text-white/40 mt-1">Avg time per module</p>
                 </CardContent>
               </Card>

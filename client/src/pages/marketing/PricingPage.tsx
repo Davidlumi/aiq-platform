@@ -165,7 +165,7 @@ export default function PricingPage() {
         <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
           Simple, transparent pricing
         </h1>
-        <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg dark:text-slate-400 text-slate-600 max-w-2xl mx-auto leading-relaxed">
           Free during beta. No credit card. No lock-in. We want your feedback more than your money right now.
         </p>
       </section>
@@ -198,14 +198,14 @@ export default function PricingPage() {
               <div className="mb-4">
                 <span className="text-3xl font-bold text-white">{plan.price}</span>
                 {plan.price !== "Custom" && (
-                  <span className="text-sm text-slate-400 ml-2">{plan.priceNote}</span>
+                  <span className="text-sm dark:text-slate-400 text-slate-600 ml-2">{plan.priceNote}</span>
                 )}
                 {plan.price === "Custom" && (
-                  <p className="text-sm text-slate-400 mt-0.5">{plan.priceNote}</p>
+                  <p className="text-sm dark:text-slate-400 text-slate-600 mt-0.5">{plan.priceNote}</p>
                 )}
               </div>
 
-              <p className="text-sm text-slate-400 leading-relaxed mb-6">{plan.description}</p>
+              <p className="text-sm dark:text-slate-400 text-slate-600 leading-relaxed mb-6">{plan.description}</p>
 
               <ul className="space-y-2.5 flex-1 mb-6">
                 {plan.features.map((f) => (
@@ -215,7 +215,7 @@ export default function PricingPage() {
                     ) : (
                       <XCircle className="w-4 h-4 mt-0.5 shrink-0 text-slate-600" />
                     )}
-                    <span className={`text-sm ${f.included ? "text-slate-300" : "text-slate-600"}`}>{f.label}</span>
+                    <span className={`text-sm ${f.included ? "dark:text-slate-300 text-slate-700" : "text-slate-600"}`}>{f.label}</span>
                   </li>
                 ))}
               </ul>
@@ -240,7 +240,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">The business case</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed">
+            <p className="dark:text-slate-400 text-slate-600 max-w-xl mx-auto text-sm leading-relaxed">
               AI capability gaps are costing HR functions in productivity, talent retention, and strategic credibility. AiQ makes the gap visible and actionable.
             </p>
           </div>
@@ -256,7 +256,7 @@ export default function PricingPage() {
                 </div>
                 <div className="text-2xl font-bold mb-1" style={{ color: item.color }}>{item.stat}</div>
                 <div className="text-sm font-semibold text-white mb-1">{item.title}</div>
-                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+                <p className="text-xs dark:text-slate-400 text-slate-600 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -275,7 +275,7 @@ export default function PricingPage() {
               Honest about what's in beta
             </div>
             <h2 className="text-2xl font-bold mb-3">What we're still building</h2>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xl mx-auto">
+            <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed max-w-xl mx-auto">
               We believe in being transparent with beta partners. Here is exactly what is live, what is in progress, and what is planned.
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function PricingPage() {
                       {item.status === "in-progress" ? "In progress" : "Planned"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">{item.note}</p>
+                  <p className="text-xs dark:text-slate-400 text-slate-600 leading-relaxed">{item.note}</p>
                 </div>
               </div>
             ))}
@@ -351,7 +351,7 @@ export default function PricingPage() {
                   <HelpCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#6366F1" }} />
                   <div>
                     <p className="text-sm font-semibold text-white mb-1.5">{faq.q}</p>
-                    <p className="text-sm text-slate-400 leading-relaxed">{faq.a}</p>
+                    <p className="text-sm dark:text-slate-400 text-slate-600 leading-relaxed">{faq.a}</p>
                   </div>
                 </div>
               </div>
@@ -365,7 +365,7 @@ export default function PricingPage() {
         <div className="max-w-xl mx-auto px-6">
           <Brain className="w-10 h-10 mx-auto mb-4" style={{ color: greenHex }} />
           <h2 className="text-2xl font-bold mb-3">Ready to join the beta?</h2>
-          <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+          <p className="dark:text-slate-400 text-slate-600 text-sm mb-6 leading-relaxed">
             We're accepting a limited number of HR functions for the beta programme. Apply now to secure your place and shape the product.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

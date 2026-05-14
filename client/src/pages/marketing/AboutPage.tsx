@@ -29,7 +29,7 @@ export default function AboutPage() {
             We built AiQ because the problem{" "}
             <span style={{ color: green }}>wasn't being taken seriously.</span>
           </h1>
-          <p className="text-xl text-slate-300 leading-relaxed max-w-2xl">
+          <p className="text-xl dark:text-slate-300 text-slate-700 leading-relaxed max-w-2xl">
             HR functions are being asked to lead AI transformation. Most of them don't know where they stand.
             The tools that exist to help them don't meet the standard the problem requires.
           </p>
@@ -105,7 +105,7 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
             What we believe.
           </h2>
-          <p className="text-slate-300 leading-relaxed mb-12 max-w-2xl">
+          <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-12 max-w-2xl">
             These aren't values statements. They're the design principles that explain why AiQ is built the way it is.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,7 +137,7 @@ export default function AboutPage() {
             ].map(({ title, body }) => (
               <div key={title} className="rounded-xl p-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: borderD }}>
                 <h3 className="font-semibold text-white mb-3">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{body}</p>
+                <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed">{body}</p>
               </div>
             ))}
           </div>
@@ -201,7 +201,7 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
             The conversation starts with your situation.
           </h2>
-          <p className="text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto">
+          <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-10 max-w-xl mx-auto">
             Whether AiQ is right for you depends on your function size, your business AI commitments,
             and your appetite for working with a product that's still maturing. Let's find out together.
           </p>

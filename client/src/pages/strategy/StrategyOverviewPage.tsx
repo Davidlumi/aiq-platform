@@ -683,7 +683,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                   disabled={!data?.bullets?.length}
                   aria-label="Copy talking points"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? <Check className="w-3.5 h-3.5 dark:text-green-400 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span className="hidden sm:inline">{copied ? "Copied" : "Copy all"}</span>
                 </Button>
                 <Button
@@ -710,7 +710,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
             </div>
             {/* Stale banner */}
             {isStale && (
-              <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+              <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs dark:text-amber-300 text-amber-700">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="flex-1 min-w-0">Strategy has changed since these were generated.</span>
                 {/* Both actions symmetric — same weight, both underlined; user chooses without nudge */}
@@ -816,7 +816,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
               )}
             </div>
             {generateMut.isError && (
-              <div className="mt-2 flex items-center gap-2 text-xs text-red-400">
+              <div className="mt-2 flex items-center gap-2 text-xs dark:text-red-400 text-red-600">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 <span>Couldn&apos;t generate talking points.</span>
                 <button className="underline" onClick={doGenerate}>Retry</button>
@@ -1141,7 +1141,7 @@ export default function StrategyOverviewPage() {
     return (
       <div className="max-w-3xl mx-auto py-16 px-4 text-center">
         <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-6">
-          <Sparkles className="w-8 h-8 text-blue-400" />
+          <Sparkles className="w-8 h-8 dark:text-blue-400 text-blue-600" />
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-3">Build your HR AI Strategy</h1>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
@@ -1198,7 +1198,7 @@ export default function StrategyOverviewPage() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="flex items-center gap-1.5 w-fit rounded-full px-2 py-[2px] text-[11px] font-medium bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors mt-1"
+                    className="flex items-center gap-1.5 w-fit rounded-full px-2 py-[2px] text-[11px] font-medium dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-300 text-amber-700 hover:bg-amber-500/25 transition-colors mt-1"
                     onClick={handleReviewOverdueClick}
                     aria-label="Review overdue — schedule now"
                   >

@@ -34,13 +34,13 @@ const FUNCTION_OPTIONS = [
 ];
 
 const FUNCTION_COLOURS: Record<string, string> = {
-  business_partnering:  "bg-blue-500/15 text-blue-300 border-blue-500/25",
-  talent_acquisition:   "bg-violet-500/15 text-violet-300 border-violet-500/25",
-  learning_development: "bg-teal-500/15 text-teal-300 border-teal-500/25",
-  reward_analytics:     "bg-amber-500/15 text-amber-300 border-amber-500/25",
+  business_partnering:  "dark:bg-blue-500/15 bg-blue-100/80 dark:text-blue-300 text-blue-700 dark:border-blue-500/25 border-blue-300",
+  talent_acquisition:   "dark:bg-violet-500/15 bg-violet-100/80 dark:text-violet-300 text-violet-700 dark:border-violet-500/25 border-violet-300",
+  learning_development: "dark:bg-teal-500/15 bg-teal-100/80 dark:text-teal-300 text-teal-700 dark:border-teal-500/25 border-teal-300",
+  reward_analytics:     "dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-300 text-amber-700 dark:border-amber-500/25 border-amber-300",
   er_specialists:       "bg-rose-500/15 text-rose-300 border-rose-500/25",
-  operations_tech:      "bg-cyan-500/15 text-cyan-300 border-cyan-500/25",
-  hr_leadership:        "bg-green-500/15 text-green-300 border-green-500/25",
+  operations_tech:      "dark:bg-cyan-500/15 bg-cyan-100/80 dark:text-cyan-300 text-cyan-700 dark:border-cyan-500/25 border-cyan-300",
+  hr_leadership:        "dark:bg-green-500/15 bg-green-100/80 dark:text-green-300 text-green-700 dark:border-green-500/25 border-green-300",
 };
 
 const AVATAR_COLOURS = [

@@ -39,11 +39,11 @@ function formatDate(ts: number | null) {
 
 function readinessBadge(state: string, label: string) {
   const colours: Record<string, string> = {
-    ai_ready:    "bg-green-900/60 text-green-300 border-green-700",
-    strong:      "bg-emerald-900/60 text-emerald-300 border-emerald-700",
-    capable:     "bg-yellow-900/60 text-yellow-300 border-yellow-700",
-    developing:  "bg-orange-900/60 text-orange-300 border-orange-700",
-    emerging:    "bg-red-900/60 text-red-300 border-red-700",
+    ai_ready:    "dark:bg-green-900/60 bg-green-100 dark:text-green-300 text-green-700 dark:border-green-700 border-green-400",
+    strong:      "dark:bg-emerald-900/60 bg-emerald-100 dark:text-emerald-300 text-emerald-700 dark:border-emerald-700 border-emerald-400",
+    capable:     "dark:bg-yellow-900/60 bg-yellow-100 dark:text-yellow-300 text-yellow-700 dark:border-yellow-700 border-yellow-400",
+    developing:  "dark:bg-orange-900/60 bg-orange-100 dark:text-orange-300 text-orange-700 dark:border-orange-700 border-orange-400",
+    emerging:    "dark:bg-red-900/60 bg-red-100 dark:text-red-300 text-red-700 dark:border-red-700 border-red-400",
     unknown:     "bg-muted text-muted-foreground border-border",
   };
   const cls = colours[state] ?? colours.unknown;
@@ -277,14 +277,14 @@ export default function PersonProfileSheet({
               {data.latest?.failureModes && data.latest.failureModes.length > 0 && (
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                    <AlertTriangle className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600" />
                     Development Flags
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {data.latest.failureModes.map((mode: string) => (
                       <span
                         key={mode}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-900/30 text-amber-300 border border-amber-700/40"
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium dark:bg-amber-900/30 bg-amber-100/80 dark:text-amber-300 text-amber-700 border dark:border-amber-700/40 border-amber-300"
                       >
                         {mode}
                       </span>

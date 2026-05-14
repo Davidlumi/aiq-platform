@@ -33,10 +33,10 @@ const MANAGER_FUNCTIONS = [
 ];
 
 const PHASE_COLORS: Record<string, string> = {
-  foundation: "bg-violet-900/30 border-violet-700/40 text-violet-300",
-  build: "bg-blue-900/30 border-blue-700/40 text-blue-300",
-  scale: "bg-emerald-900/30 border-emerald-700/40 text-emerald-300",
-  optimise: "bg-amber-900/30 border-amber-700/40 text-amber-300",
+  foundation: "dark:bg-violet-900/30 bg-violet-100/80 dark:border-violet-700/40 border-violet-300 dark:text-violet-300 text-violet-700",
+  build: "dark:bg-blue-900/30 bg-blue-100/80 dark:border-blue-700/40 border-blue-300 dark:text-blue-300 text-blue-700",
+  scale: "dark:bg-emerald-900/30 bg-emerald-100/80 dark:border-emerald-700/40 border-emerald-300 dark:text-emerald-300 text-emerald-700",
+  optimise: "dark:bg-amber-900/30 bg-amber-100/80 dark:border-amber-700/40 border-amber-300 dark:text-amber-300 text-amber-700",
 };
 
 // ── E1: Onboarding wizard ─────────────────────────────────────────────────────
@@ -281,7 +281,7 @@ export default function ManagerHubPage() {
                           {" · "}Library v{brief.libraryVersion}
                         </CardDescription>
                       </div>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600 shrink-0" />
                     </div>
                   </CardHeader>
                   <CardContent>

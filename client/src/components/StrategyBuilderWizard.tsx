@@ -100,7 +100,7 @@ function DomainSliderRow({ domainKey, value, onChange, currentScore }: { domainK
             <span className="text-xs text-muted-foreground">Now: {(currentScore / 10).toFixed(1)}</span>
           )}
           {gap !== null && gap > 0 && (
-            <span className="text-xs font-medium text-amber-400">+{(gap / 10).toFixed(1)} gap</span>
+            <span className="text-xs font-medium dark:text-amber-400 text-amber-600">+{(gap / 10).toFixed(1)} gap</span>
           )}
           <span className="text-sm font-semibold tabular-nums" style={{ color: colour }}>Target: {level}</span>
         </div>
@@ -262,8 +262,8 @@ export default function StrategyBuilderWizard({ initialData, onSaved, onCancel }
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Based on Business {businessLevel} · People {peopleLevel}</p>
-                {domainOverrides && <p className="text-xs text-amber-400 mt-0.5">Custom adjustments applied</p>}
-                {!domainOverrides && <p className="text-xs text-green-400 mt-0.5">Auto-calculated</p>}
+                {domainOverrides && <p className="text-xs dark:text-amber-400 text-amber-600 mt-0.5">Custom adjustments applied</p>}
+                {!domainOverrides && <p className="text-xs dark:text-green-400 text-green-600 mt-0.5">Auto-calculated</p>}
               </div>
             </div>
             <div className="space-y-4">

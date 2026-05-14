@@ -599,7 +599,7 @@ export default function AssessmentResultsPage() {
             <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                  <TrendingUp className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">What you do well</h3>
               </div>
@@ -642,7 +642,7 @@ export default function AssessmentResultsPage() {
             <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center">
-                  <Target className="w-3.5 h-3.5 text-blue-400" />
+                  <Target className="w-3.5 h-3.5 dark:text-blue-400 text-blue-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">Where to grow</h3>
               </div>

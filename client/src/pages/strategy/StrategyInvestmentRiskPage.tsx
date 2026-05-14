@@ -356,7 +356,7 @@ export default function StrategyInvestmentRiskPage() {
     return (
       <SectionPageLayout sectionNumber="04" sectionLabel="Investment & Risk" title="What it costs" accentColor="#FBBF24" icon={<PoundSterling className="w-5 h-5" />}>
         <div className="rounded-xl border border-dashed border-amber-500/20 bg-amber-500/4 p-8 flex items-start gap-4">
-          <PoundSterling className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <PoundSterling className="w-5 h-5 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">No strategy configured yet</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">Complete the HR AI Strategy assessment to generate your investment envelope, risk register, and regulatory framework analysis.</p>
@@ -408,7 +408,7 @@ export default function StrategyInvestmentRiskPage() {
       <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/8 to-amber-500/3 p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-1">Total Investment Envelope</p>
+            <p className="text-[10px] font-bold dark:text-amber-400 text-amber-600 uppercase tracking-widest mb-1">Total Investment Envelope</p>
             {costEnv
               ? <p className="text-3xl font-bold text-foreground">{fmtGbk(costEnv.totalMin)}–{fmtGbk(costEnv.totalMax)}</p>
               : <Skeleton className="h-8 w-40 rounded" />
@@ -460,9 +460,9 @@ export default function StrategyInvestmentRiskPage() {
           className="w-full flex items-center gap-3 px-5 py-4 hover:bg-foreground/3 transition-colors"
           aria-expanded={!tcoCollapsed}
         >
-          <Layers className="w-4 h-4 text-amber-400" />
+          <Layers className="w-4 h-4 dark:text-amber-400 text-amber-600" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1 text-left">Total Cost of Ownership (3-year)</p>
-          {tco && <span className="text-sm font-bold text-amber-400 mr-2">{fmt(tco.total_3yr_gbp.low * 1000)}–{fmt(tco.total_3yr_gbp.high * 1000)}</span>}
+          {tco && <span className="text-sm font-bold dark:text-amber-400 text-amber-600 mr-2">{fmt(tco.total_3yr_gbp.low * 1000)}–{fmt(tco.total_3yr_gbp.high * 1000)}</span>}
           <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${tcoCollapsed ? "" : "rotate-180"}`} />
         </button>
         {!tcoCollapsed && (
@@ -493,7 +493,7 @@ export default function StrategyInvestmentRiskPage() {
                 </div>
                 <div className="border-t border-border pt-3 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total 3-Year TCO</p>
-                  <p className="text-sm font-bold text-amber-400">{fmt(tco.total_3yr_gbp.low * 1000)}–{fmt(tco.total_3yr_gbp.high * 1000)}</p>
+                  <p className="text-sm font-bold dark:text-amber-400 text-amber-600">{fmt(tco.total_3yr_gbp.low * 1000)}–{fmt(tco.total_3yr_gbp.high * 1000)}</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
                   Includes implementation, change management (12–15%), training (£200–400 per HR FTE), ongoing maintenance (18–20% per year), and internal project management (15%). Excludes internal headcount costs.
@@ -554,7 +554,7 @@ export default function StrategyInvestmentRiskPage() {
       {/* ── Block 4: Risk Register ────────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-white/2 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Shield className="w-4 h-4 text-red-400" />
+          <Shield className="w-4 h-4 dark:text-red-400 text-red-600" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1">Risk Register</p>
           {evaluateRiskMut.isPending && (
             <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -571,7 +571,7 @@ export default function StrategyInvestmentRiskPage() {
 
         {!evaluateRiskMut.isPending && riskItems.length === 0 && (
           <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-4 py-3 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+            <CheckCircle2 className="w-4 h-4 dark:text-green-400 text-green-600 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">No risk rules triggered for your current initiative selection and ambition tier.</p>
           </div>
         )}
@@ -590,7 +590,7 @@ export default function StrategyInvestmentRiskPage() {
                 >
                   <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
                   <span className="text-sm font-medium text-foreground flex-1 text-left">{risk.displayName}</span>
-                  {acked && <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />}
+                  {acked && <CheckCircle2 className="w-3.5 h-3.5 dark:text-green-400 text-green-600 flex-shrink-0" />}
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform ${riskCollapsed[risk.ruleId] ? "" : "rotate-180"}`} />
                 </button>
                 {!riskCollapsed[risk.ruleId] && (
@@ -609,13 +609,13 @@ export default function StrategyInvestmentRiskPage() {
                     )}
                     {acked && ackData?.note && (
                       <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
-                        <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">Mitigation note</p>
+                        <p className="text-[10px] font-bold dark:text-green-400 text-green-600 uppercase tracking-widest mb-1">Mitigation note</p>
                         <p className="text-xs text-foreground leading-relaxed">{ackData.note}</p>
                       </div>
                     )}
                     <div className="flex items-center gap-2 pt-1">
                       {!acked ? (
-                        <Button size="sm" variant="outline" className="text-xs h-7 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/50" onClick={() => handleAcknowledge(risk.ruleId, risk.displayName, "risk")} disabled={acknowledgeMut.isPending}>
+                        <Button size="sm" variant="outline" className="text-xs h-7 dark:border-green-500/30 border-green-300 dark:text-green-400 text-green-600 hover:bg-green-500/10 hover:border-green-500/50" onClick={() => handleAcknowledge(risk.ruleId, risk.displayName, "risk")} disabled={acknowledgeMut.isPending}>
                           <CheckCircle2 className="w-3 h-3 mr-1.5" />Acknowledge
                         </Button>
                       ) : (
@@ -637,14 +637,14 @@ export default function StrategyInvestmentRiskPage() {
             {noteItems.map(note => (
               <div key={note.ruleId} className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3">
                 <div className="flex items-start gap-2">
-                  <Info className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <Info className="w-3.5 h-3.5 dark:text-blue-400 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-foreground mb-1">{note.displayName}</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">{note.riskStatement}</p>
                     {note.regulatoryBasis.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {note.regulatoryBasis.map(rb => (
-                          <span key={rb} className="text-[10px] px-2 py-0.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300">{rb}</span>
+                          <span key={rb} className="text-[10px] px-2 py-0.5 rounded-full border border-blue-500/20 bg-blue-500/10 dark:text-blue-300 text-blue-700">{rb}</span>
                         ))}
                       </div>
                     )}
@@ -659,7 +659,7 @@ export default function StrategyInvestmentRiskPage() {
       {/* ── Block 5: UK Standing Frameworks ──────────────────────────────── */}
       <div className="rounded-xl border border-border bg-white/2 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Scale className="w-4 h-4 text-purple-400" />
+          <Scale className="w-4 h-4 dark:text-purple-400 text-purple-600" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1">UK Standing Regulatory Frameworks</p>
           <span className="text-[10px] text-muted-foreground">Always applicable</span>
         </div>
@@ -680,7 +680,7 @@ export default function StrategyInvestmentRiskPage() {
                   <FrameworkIcon icon={fw.icon} color={fw.color} />
                   <span className="text-sm font-medium text-foreground flex-1 text-left">{fw.name}</span>
                   <span className="text-[10px] text-muted-foreground flex-shrink-0 hidden sm:block">{fw.regulator}</span>
-                  {acked && <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />}
+                  {acked && <CheckCircle2 className="w-3.5 h-3.5 dark:text-green-400 text-green-600 flex-shrink-0" />}
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform ${fwCollapsed[fw.id] ? "" : "rotate-180"}`} />
                 </button>
                 {!fwCollapsed[fw.id] && (
@@ -692,13 +692,13 @@ export default function StrategyInvestmentRiskPage() {
                     </div>
                     {acked && ackData?.note && (
                       <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
-                        <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">Compliance note</p>
+                        <p className="text-[10px] font-bold dark:text-green-400 text-green-600 uppercase tracking-widest mb-1">Compliance note</p>
                         <p className="text-xs text-foreground leading-relaxed">{ackData.note}</p>
                       </div>
                     )}
                     <div className="flex items-center gap-2 pt-1">
                       {!acked ? (
-                        <Button size="sm" variant="outline" className="text-xs h-7 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/50" onClick={() => handleAcknowledge(fw.id, fw.name, "framework")} disabled={acknowledgeMut.isPending}>
+                        <Button size="sm" variant="outline" className="text-xs h-7 dark:border-green-500/30 border-green-300 dark:text-green-400 text-green-600 hover:bg-green-500/10 hover:border-green-500/50" onClick={() => handleAcknowledge(fw.id, fw.name, "framework")} disabled={acknowledgeMut.isPending}>
                           <CheckCircle2 className="w-3 h-3 mr-1.5" />Acknowledge
                         </Button>
                       ) : (
@@ -719,10 +719,10 @@ export default function StrategyInvestmentRiskPage() {
       {euAiFlagged.length > 0 && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
           <button onClick={() => setEuAiCollapsed(c => !c)} className="w-full flex items-center gap-2" aria-expanded={!euAiCollapsed}>
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex-1 text-left">EU AI Act Flagged Initiatives</p>
-            <span className="text-xs text-amber-400 font-semibold mr-2">{euAiFlagged.length} flagged</span>
-            <ChevronDown className={`w-3.5 h-3.5 text-amber-400 transition-transform ${euAiCollapsed ? "" : "rotate-180"}`} />
+            <AlertTriangle className="w-4 h-4 dark:text-amber-400 text-amber-600" />
+            <p className="text-[10px] font-bold dark:text-amber-400 text-amber-600 uppercase tracking-widest flex-1 text-left">EU AI Act Flagged Initiatives</p>
+            <span className="text-xs dark:text-amber-400 text-amber-600 font-semibold mr-2">{euAiFlagged.length} flagged</span>
+            <ChevronDown className={`w-3.5 h-3.5 dark:text-amber-400 text-amber-600 transition-transform ${euAiCollapsed ? "" : "rotate-180"}`} />
           </button>
           {!euAiCollapsed && (
             <div className="mt-3 animate-in slide-in-from-top-1 duration-200">
@@ -732,7 +732,7 @@ export default function StrategyInvestmentRiskPage() {
               <div className="space-y-2">
                 {euAiFlagged.map((init: any) => (
                   <div key={init.id} className="flex items-center gap-2 rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-2">
-                    <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                    <AlertTriangle className="w-3 h-3 dark:text-amber-400 text-amber-600 flex-shrink-0" />
                     <span className="text-xs text-foreground flex-1">{init.name}</span>
                     <span className="text-[10px] text-muted-foreground">{init.category}</span>
                   </div>
@@ -809,8 +809,8 @@ export default function StrategyInvestmentRiskPage() {
         return (
           <div className="rounded-xl border border-border bg-white/2 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="w-3 h-3 text-blue-400" />
+              <div className="w-6 h-6 rounded-md dark:bg-blue-500/15 bg-blue-100/80 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-3 h-3 dark:text-blue-400 text-blue-600" />
               </div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Solution Delivery Confidence</p>
             </div>
@@ -826,12 +826,12 @@ export default function StrategyInvestmentRiskPage() {
             </div>
             {solutionDeliveryConf <= 2 && (
               <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-                <p className="text-xs text-amber-300"><strong>Engine impact:</strong> Phase durations have been extended by 20% and change management costs increased by 5% to reflect your delivery confidence rating.</p>
+                <p className="text-xs dark:text-amber-300 text-amber-700"><strong>Engine impact:</strong> Phase durations have been extended by 20% and change management costs increased by 5% to reflect your delivery confidence rating.</p>
               </div>
             )}
             {solutionDeliveryConf >= 4 && (
               <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
-                <p className="text-xs text-green-300"><strong>Strong delivery track record:</strong> Your cost estimates reflect standard timelines. Consider allocating savings to accelerate Phase 3 and 4 initiatives.</p>
+                <p className="text-xs dark:text-green-300 text-green-700"><strong>Strong delivery track record:</strong> Your cost estimates reflect standard timelines. Consider allocating savings to accelerate Phase 3 and 4 initiatives.</p>
               </div>
             )}
           </div>

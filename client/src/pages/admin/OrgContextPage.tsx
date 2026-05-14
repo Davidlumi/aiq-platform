@@ -355,7 +355,7 @@ export default function OrgContextPage() {
                 ))}
               </div>
               {subSector && (
-                <p className="text-[11px] text-green-400 mt-1.5">
+                <p className="text-[11px] dark:text-green-400 text-green-600 mt-1.5">
                   Using {getSubSectorLabel(sector, subSector)} benchmarks for all assessments and strategy simulations.
                 </p>
               )}
@@ -379,7 +379,7 @@ export default function OrgContextPage() {
               ))}
             </div>
             {orgType && (
-              <p className="text-[11px] text-blue-400 mt-1.5">
+              <p className="text-[11px] dark:text-blue-400 text-blue-600 mt-1.5">
                 {ORG_TYPES.find(o => o.value === orgType)?.label} governance &amp; compliance norms applied.
               </p>
             )}

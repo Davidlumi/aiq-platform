@@ -61,13 +61,13 @@ export function MarketingNav() {
             ["About", "/about"],
           ] as [string, string][]).map(([label, href]) => (
             <Link key={href} href={href}>
-              <span className="text-slate-300 hover:text-white text-sm transition-colors cursor-pointer">{label}</span>
+              <span className="dark:text-slate-300 text-slate-700 hover:text-white text-sm transition-colors cursor-pointer">{label}</span>
             </Link>
           ))}
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10">Sign in</Button>
+            <Button variant="ghost" size="sm" className="dark:text-slate-300 text-slate-700 hover:text-white hover:bg-white/10">Sign in</Button>
           </Link>
           <Link href="/beta">
             <Button size="sm" className="font-semibold" style={{ background: greenHex, color: "white" }}>Apply for beta</Button>
@@ -87,7 +87,7 @@ export function MarketingFooter() {
           style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
           <div>
             <p className="text-white font-semibold text-lg mb-1">Ready to lead the conversation with evidence?</p>
-            <p className="text-slate-400 text-sm">Join the first cohort of UK CPOs building board-grade AI capability intelligence.</p>
+            <p className="dark:text-slate-400 text-slate-600 text-sm">Join the first cohort of UK CPOs building board-grade AI capability intelligence.</p>
           </div>
           <Link href="/beta">
             <Button className="font-semibold shrink-0 px-6" style={{ background: greenHex, color: "white" }}>
@@ -100,14 +100,14 @@ export function MarketingFooter() {
             <div className="flex items-center gap-3 mb-4">
               <img src="/manus-storage/aiq-logo-nav_dd4a0931.png" alt="AiQ" className="h-9 w-9 object-contain" />
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed mb-4">AI capability intelligence for HR functions delivering transformation.</p>
+            <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-4">AI capability intelligence for HR functions delivering transformation.</p>
             <p className="text-xs text-slate-500">Built for UK GDPR · ICO guidance · FCA Consumer Duty</p>
           </div>
           <div>
             <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Product</h4>
             <div className="flex flex-col gap-3">
               {([["How it works", "/how-it-works"], ["The product", "/product"], ["Methodology", "/methodology"], ["Beta programme", "/beta"]] as [string,string][]).map(([l, h]) => (
-                <Link key={h} href={h}><span className="text-slate-400 hover:text-white text-sm transition-colors cursor-pointer">{l}</span></Link>
+                <Link key={h} href={h}><span className="dark:text-slate-400 text-slate-600 hover:text-white text-sm transition-colors cursor-pointer">{l}</span></Link>
               ))}
             </div>
           </div>
@@ -115,7 +115,7 @@ export function MarketingFooter() {
             <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Company</h4>
             <div className="flex flex-col gap-3">
               {([["About", "/about"], ["Contact", "/about#contact"]] as [string,string][]).map(([l, h]) => (
-                <Link key={h} href={h}><span className="text-slate-400 hover:text-white text-sm transition-colors cursor-pointer">{l}</span></Link>
+                <Link key={h} href={h}><span className="dark:text-slate-400 text-slate-600 hover:text-white text-sm transition-colors cursor-pointer">{l}</span></Link>
               ))}
             </div>
           </div>
@@ -123,7 +123,7 @@ export function MarketingFooter() {
             <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Legal</h4>
             <div className="flex flex-col gap-3">
               {["Privacy policy", "Data processing addendum", "Accessibility statement", "Terms of service"].map((l) => (
-                <span key={l} className="text-slate-400 text-sm cursor-pointer hover:text-white transition-colors">{l}</span>
+                <span key={l} className="dark:text-slate-400 text-slate-600 text-sm cursor-pointer hover:text-white transition-colors">{l}</span>
               ))}
             </div>
           </div>
@@ -264,7 +264,7 @@ function DashboardMockup() {
             return (
               <div key={d}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400">{d}</span>
+                  <span className="text-xs dark:text-slate-400 text-slate-600">{d}</span>
                   <span className="text-xs font-semibold" style={{ color }}>{scores[i].toFixed(1)}</span>
                 </div>
                 <div className="relative h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.06)", width: barW }}>
@@ -297,10 +297,10 @@ function FloatingScoreCard() {
   return (
     <div className="absolute -bottom-4 -left-6 rounded-xl border px-4 py-3 shadow-xl hidden lg:block"
       style={{ background: slate, borderColor: "rgba(34,197,94,0.3)", minWidth: 180 }} aria-hidden="true">
-      <p className="text-xs text-slate-400 mb-1">AI Output Evaluation</p>
+      <p className="text-xs dark:text-slate-400 text-slate-600 mb-1">AI Output Evaluation</p>
       <div className="flex items-baseline gap-1.5">
         <span className="text-2xl font-black" style={{ color: greenHex }}>7.2</span>
-        <span className="text-xs text-slate-400">/ 10</span>
+        <span className="text-xs dark:text-slate-400 text-slate-600">/ 10</span>
       </div>
       <div className="flex items-center gap-1.5 mt-1">
         <TrendingUp className="w-3 h-3" style={{ color: greenHex }} />
@@ -329,10 +329,10 @@ function Hero() {
             <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6" style={{ letterSpacing: "-0.03em" }}>
               HR AiQ measures how good your HR people actually are at AI.
             </h1>
-            <p className="text-lg text-slate-300 leading-relaxed mb-4">
+            <p className="text-lg dark:text-slate-300 text-slate-700 leading-relaxed mb-4">
               <span style={{ color: greenHex, fontWeight: 700 }}>Built for HR. Nothing else like it exists.</span>
             </p>
-            <p className="text-slate-400 leading-relaxed mb-10">
+            <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-10">
               HR AiQ measures your HR people's actual AI capability across six domains. It identifies the specific gaps at individual, team, and function level. It closes them through personalised development. And it measures whether the development worked. So the next time your board asks, you have evidence - not estimates.
             </p>
             <div className="flex flex-wrap gap-4 mb-8">
@@ -366,15 +366,15 @@ function Hero() {
                 </span>
               </div>
               <div className="mb-5">
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Scenario</p>
-                <p className="text-slate-200 text-sm leading-relaxed">
+                <p className="text-xs dark:text-slate-400 text-slate-600 uppercase tracking-wider mb-2">Scenario</p>
+                <p className="dark:text-slate-200 text-slate-700 text-sm leading-relaxed">
                   An AI tool flags an employee as{" "}
                   <span className="font-semibold" style={{ color: "#DC2626" }}>"high risk"</span>{" "}
                   for involuntary turnover. The data is 6 months old, the model confidence is 61%, and your manager is asking for immediate action.
                 </p>
               </div>
               <div className="mb-5">
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">What do you do?</p>
+                <p className="text-xs dark:text-slate-400 text-slate-600 uppercase tracking-wider mb-3">What do you do?</p>
                 <div className="flex flex-col gap-2">
                   {[
                     { key: "A", label: "Act on the flag immediately - schedule a retention conversation", sel: false },
@@ -396,7 +396,7 @@ function Hero() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-slate-400">Confidence</span>
+                  <span className="text-xs dark:text-slate-400 text-slate-600">Confidence</span>
                   <span className="text-xs font-semibold" style={{ color: greenHex }}>Fairly sure</span>
                 </div>
                 <div className="h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
@@ -521,7 +521,7 @@ function MeasureDiagnoseClose() {
           {/* Loop diagram */}
           <div className="flex flex-col items-center">
             <LoopDiagram />
-            <p className="text-slate-400 text-sm text-center mt-6 max-w-sm">
+            <p className="dark:text-slate-400 text-slate-600 text-sm text-center mt-6 max-w-sm">
               AiQ is a continuous loop, not a one-off diagnostic. Each cycle produces more precise measurement.
             </p>
           </div>
@@ -529,12 +529,12 @@ function MeasureDiagnoseClose() {
             <h2 className="text-4xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
               Measure. <span style={{ color: greenHex }}>Diagnose.</span> Close.
             </h2>
-            <p className="text-slate-300 leading-relaxed mb-6">
+            <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-6">
               Every HR person in your function takes an adaptive assessment that probes their actual AI capability
               across six domains. The system diagnoses their specific gaps. They receive a personalised development
               plan that closes those gaps. They reassess. The system measures whether each intervention worked.
             </p>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">Three things make this different from anything else in the market.</p>
+            <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-8">Three things make this different from anything else in the market.</p>
             <div className="flex flex-col gap-5 mb-10">
               {differentiators.map(({ title, body }, i) => (
                 <div key={i} className="rounded-xl p-5 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: border }}>
@@ -542,7 +542,7 @@ function MeasureDiagnoseClose() {
                     <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: greenHex }} />
                     <h3 className="font-semibold text-white leading-snug">{title}</h3>
                   </div>
-                  <p className="text-slate-400 text-sm leading-relaxed pl-8">{body}</p>
+                  <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed pl-8">{body}</p>
                 </div>
               ))}
             </div>
@@ -621,14 +621,14 @@ function StrategicLayer() {
               AiQ overlays your function's capability{" "}
               <span style={{ color: greenHex }}>against your business AI roadmap.</span>
             </h2>
-            <p className="text-slate-300 leading-relaxed mb-4">This is what makes AiQ board-grade rather than diagnostic-grade.</p>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-4">This is what makes AiQ board-grade rather than diagnostic-grade.</p>
+            <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-6">
               You capture your business's AI initiatives - Project Aurora launches Q3 2027 and requires
               advanced output evaluation across customer-facing roles. Project Phoenix needs ethics-under-pressure
               capability across operations leadership. The transformation programme requires baseline capability
               uplift across the function by year-end.
             </p>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-8">
               AiQ translates these into specific HR capability targets per role family per timeline. Then it
               shows you the gap between current state and target state, the rate at which the gap is closing,
               and the projected closure date for each business commitment.
@@ -715,7 +715,7 @@ function SixDomains() {
             Six capability domains.{" "}
             <span style={{ color: greenHex }}>Every HR role. Every seniority level.</span>
           </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="dark:text-slate-400 text-slate-600 max-w-2xl mx-auto leading-relaxed">
             AiQ's framework covers the full spectrum of AI capability your HR function needs - from foundation literacy through to strategic governance.
           </p>
         </div>
@@ -744,7 +744,7 @@ function SixDomains() {
                 </span>
               </div>
               <h3 className="font-bold text-white text-base leading-snug">{d.name}</h3>
-              <p className="text-slate-300 text-sm leading-relaxed flex-1">{d.desc}</p>
+              <p className="dark:text-slate-300 text-slate-700 text-sm leading-relaxed flex-1">{d.desc}</p>
               <div className="h-0.5 w-10 rounded-full" style={{ background: d.color }} />
             </div>
           ))}
@@ -839,19 +839,19 @@ function WhyNow() {
             <span style={{ color: greenHex }}>'are we adopting it'</span>{" "}
             to 'is HR ready to govern it.'
           </h2>
-          <p className="text-slate-300 leading-relaxed mb-6">
+          <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-6">
             The first wave of HR AI adoption was about productivity tools. The second wave is about
             governance - whether HR is capable of evaluating AI-informed decisions, designing safe
             workflows, supporting workforce transitions, and standing up to regulator scrutiny when
             AI affects employment outcomes.
           </p>
-          <p className="text-slate-400 leading-relaxed mb-6">
+          <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-6">
             Most HR functions are not yet ready for the second wave. The capability gap is real, the
             timeline is short, and the consequences of getting it wrong are visible - Article 22
             challenges, ICO investigations, employment tribunal cases, board-level questions that
             nobody can answer credibly.
           </p>
-          <p className="text-slate-400 leading-relaxed mb-12">
+          <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-12">
             AiQ exists because the assessment tools, learning platforms, and consulting engagements
             available today weren't built for this specific question. They measure other things.
             AiQ measures this thing - your HR function's actual AI capability - with the rigour the question deserves.
@@ -892,10 +892,10 @@ function FinalCTA() {
         <h2 className="text-4xl font-black text-white mb-4" style={{ letterSpacing: "-0.03em" }}>
           Apply for the AiQ Beta Programme
         </h2>
-        <p className="text-slate-300 leading-relaxed mb-4">
+        <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-4">
           We're working with a small cohort of UK CPOs to refine the platform with real customer signal before general availability.
         </p>
-        <p className="text-slate-400 text-sm leading-relaxed mb-10">
+        <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-10">
           Beta partners get the platform at meaningful discount, direct access to the founders, and early influence on the product roadmap.
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
@@ -941,7 +941,7 @@ function ExplainerVideo() {
           </video>
         </div>
         {/* Caption */}
-        <p className="text-center text-slate-400 text-sm mt-4">
+        <p className="text-center dark:text-slate-400 text-slate-600 text-sm mt-4">
           60 seconds. What AiQ measures, why it matters, and how it works.
         </p>
       </div>

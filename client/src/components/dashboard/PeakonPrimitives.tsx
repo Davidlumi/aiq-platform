@@ -39,7 +39,7 @@ export function HeroScore({
   if (score === null) {
     return (
       <div className={cn("flex flex-col gap-1", className)}>
-        <span className="text-4xl font-bold text-neutral-300">-</span>
+        <span className="text-4xl font-bold dark:text-neutral-300 text-neutral-700">-</span>
         {label && <span className="text-xs text-muted-foreground">{label}</span>}
       </div>
     );
@@ -60,7 +60,7 @@ export function HeroScore({
           {displayScore}
         </span>
         {delta != null && delta !== 0 && (
-          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-primary" : "text-red-400")}>
+          <span className={cn("text-sm font-semibold flex items-center gap-0.5", delta > 0 ? "text-primary" : "dark:text-red-400 text-red-600")}>
             {delta > 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             {delta > 0 ? "+" : ""}{(delta / 10).toFixed(1)}
           </span>
@@ -68,7 +68,7 @@ export function HeroScore({
       </div>
       {label && <span className="text-xs text-muted-foreground font-medium">{label}</span>}
       {benchmarkDelta != null && (
-        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-primary" : "text-amber-400")}>
+        <span className={cn("text-xs font-medium", benchmarkDelta >= 0 ? "text-primary" : "dark:text-amber-400 text-amber-600")}>
           {benchmarkDelta >= 0 ? "+" : ""}{benchmarkDelta.toFixed(1)} vs benchmark ({formatPeakonScore(benchmark!)})
         </span>
       )}
@@ -258,7 +258,7 @@ export function PillFilter({
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
+      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 dark:text-neutral-400 text-neutral-600 pointer-events-none" />
     </div>
   );
 }
@@ -310,14 +310,14 @@ export function AIInsightCard({
 export function TrendArrow({ delta, suffix = "pts", className }: { delta: number | null; suffix?: string; className?: string }) {
   if (delta === null || delta === 0) {
     return (
-      <span className={cn("inline-flex items-center gap-0.5 text-xs text-neutral-400", className)}>
+      <span className={cn("inline-flex items-center gap-0.5 text-xs dark:text-neutral-400 text-neutral-600", className)}>
         <Minus className="w-3 h-3" /> No change
       </span>
     );
   }
   const positive = delta > 0;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "text-red-400", className)}>
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "dark:text-red-400 text-red-600", className)}>
       {positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
       {positive ? "+" : ""}{(delta / 10).toFixed(1)} {suffix}
     </span>
@@ -332,7 +332,7 @@ export function BenchmarkChip({ score, benchmark, label = "vs benchmark" }: { sc
   return (
     <span className={cn(
       "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
-      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#D97706]/8 text-amber-400 border border-[#D97706]/25"
+      positive ? "bg-primary/8 text-primary border border-primary/25" : "bg-[#D97706]/8 dark:text-amber-400 text-amber-600 border border-[#D97706]/25"
     )}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{delta.toFixed(1)} {label}
@@ -408,7 +408,7 @@ function ScoreCell({ score }: { score: number | null }) {
   if (score === null) {
     return (
       <div
-        className="w-14 h-9 rounded flex items-center justify-center text-xs text-neutral-300 border border-dashed border-border"
+        className="w-14 h-9 rounded flex items-center justify-center text-xs dark:text-neutral-300 text-neutral-700 border border-dashed border-border"
         style={{ backgroundColor: "#FAFAFA" }}
       >
         -

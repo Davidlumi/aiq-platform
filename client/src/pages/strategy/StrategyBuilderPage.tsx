@@ -154,13 +154,13 @@ function StrategyProgressBar({ selectedCount, isCommitted }: { selectedCount: nu
               activeStep > q.id
                 ? "bg-green-500 text-black"
                 : activeStep === q.id
-                ? "bg-green-500/20 text-green-400 border border-green-500/40"
+                ? "bg-green-500/20 dark:text-green-400 text-green-600 border border-green-500/40"
                 : "bg-foreground/5 text-muted-foreground border border-border"
             }`}>
               {activeStep > q.id ? "✓" : q.id}
             </div>
             <div className="hidden sm:block">
-              <p className={`text-xs font-medium leading-tight ${activeStep === q.id ? "text-green-400" : "text-foreground"}`}>{q.label}</p>
+              <p className={`text-xs font-medium leading-tight ${activeStep === q.id ? "dark:text-green-400 text-green-600" : "text-foreground"}`}>{q.label}</p>
               <p className="text-xs text-muted-foreground leading-tight">{q.description}</p>
             </div>
           </div>
@@ -256,8 +256,8 @@ function GapRow({ domain, baseline, target, gap }: { domain: string; baseline: n
         <div className="absolute top-0 left-0 h-full rounded" style={{ width: `${targetWidth}%`, background: "rgba(96,165,250,0.75)" }} />
       </div>
       <div className="w-10 text-right text-xs font-mono text-muted-foreground">{baseline.toFixed(1)}</div>
-      <div className="w-10 text-right text-xs font-mono font-semibold text-blue-400">{target.toFixed(1)}</div>
-      <div className="w-12 text-right text-xs font-mono text-green-400">
+      <div className="w-10 text-right text-xs font-mono font-semibold dark:text-blue-400 text-blue-600">{target.toFixed(1)}</div>
+      <div className="w-12 text-right text-xs font-mono dark:text-green-400 text-green-600">
         {gap > 0 ? `+${gap.toFixed(1)}` : "—"}
       </div>
     </div>
@@ -311,7 +311,7 @@ function InitiativeRow({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 cursor-help whitespace-nowrap">
+                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 dark:text-amber-400 text-amber-600 border border-amber-500/25 cursor-help whitespace-nowrap">
                       EU AI Act high-risk
                     </span>
                   </TooltipTrigger>
@@ -544,7 +544,7 @@ function AmbitionSelector({
                   onClick={() => onChange(level)}
                   className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all border ${
                     value === level
-                      ? "bg-green-500/20 border-green-500/50 text-green-400"
+                      ? "bg-green-500/20 border-green-500/50 dark:text-green-400 text-green-600"
                       : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                   }`}
                 >
@@ -724,7 +724,7 @@ export default function StrategyBuilderPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
-            <Target className="w-8 h-8 text-green-400" />
+            <Target className="w-8 h-8 dark:text-green-400 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">AI People Strategy Builder</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
@@ -778,7 +778,7 @@ export default function StrategyBuilderPage() {
           {(strategiesQ.data?.length ?? 0) > 1 && (
             <Button
               variant="outline" size="sm"
-              className={compareMode ? "border-green-500 text-green-400" : ""}
+              className={compareMode ? "border-green-500 dark:text-green-400 text-green-600" : ""}
               onClick={() => setCompareMode(!compareMode)}
             >
               <GitCompare className="w-3.5 h-3.5 mr-1.5" />
@@ -799,7 +799,7 @@ export default function StrategyBuilderPage() {
           )}
           {strategy?.status === "committed" && (
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+              <Badge className="bg-green-500/20 dark:text-green-400 text-green-600 border-green-500/30">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Committed
               </Badge>
@@ -928,7 +928,7 @@ export default function StrategyBuilderPage() {
                   onClick={() => setCategoryFilter(cat)}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     categoryFilter === cat
-                      ? "border-green-500/60 bg-green-500/10 text-green-400"
+                      ? "border-green-500/60 bg-green-500/10 dark:text-green-400 text-green-600"
                       : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                 >
@@ -1114,7 +1114,7 @@ export default function StrategyBuilderPage() {
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-foreground">Risk Register</h3>
                 {(output?.riskItems?.length ?? 0) > 0 && (
-                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                  <Badge className="bg-red-500/20 dark:text-red-400 text-red-600 border-red-500/30 text-xs">
                     {output!.riskItems.length}
                   </Badge>
                 )}
@@ -1137,7 +1137,7 @@ export default function StrategyBuilderPage() {
                       <div key={i} className={`p-4 rounded-xl border ${risk.severity === "high" ? "border-red-500/30 bg-red-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm font-medium text-foreground">{risk.initiativeName}</p>
-                          <Badge className={risk.severity === "high" ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-amber-500/20 text-amber-400 border-amber-500/30"}>
+                          <Badge className={risk.severity === "high" ? "bg-red-500/20 dark:text-red-400 text-red-600 border-red-500/30" : "bg-amber-500/20 dark:text-amber-400 text-amber-600 border-amber-500/30"}>
                             {risk.severity}
                           </Badge>
                         </div>
@@ -1175,7 +1175,7 @@ export default function StrategyBuilderPage() {
                   </Tooltip>
                 </TooltipProvider>
                 {(output?.matchedPatterns?.length ?? 0) > 0 && (
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                  <Badge className="bg-green-500/20 dark:text-green-400 text-green-600 border-green-500/30 text-xs">
                     {output!.matchedPatterns.length} matched
                   </Badge>
                 )}
@@ -1196,7 +1196,7 @@ export default function StrategyBuilderPage() {
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <p className="text-sm font-medium text-foreground">{pattern.name}</p>
                             {isMatched ? (
-                              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                              <Badge className="bg-green-500/20 dark:text-green-400 text-green-600 border-green-500/30 text-xs">
                                 <CheckCircle2 className="w-3 h-3 mr-1" />
                                 Matched
                               </Badge>
@@ -1209,7 +1209,7 @@ export default function StrategyBuilderPage() {
                             {pattern.domains.map(d => {
                               const dom = DOMAINS.find(x => x.key === d);
                               return dom ? (
-                                <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400">
+                                <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 dark:text-blue-400 text-blue-600">
                                   {dom.short}
                                 </span>
                               ) : null;
@@ -1229,7 +1229,7 @@ export default function StrategyBuilderPage() {
           {output && (output as any).strategicPaths && (
             <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-blue-400" />
+                <GitBranch className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                 <h3 className="text-sm font-semibold text-foreground">Three Strategic Paths</h3>
                 <span className="text-xs text-muted-foreground ml-auto">Your current selection aligns to the highlighted path</span>
               </div>
@@ -1243,7 +1243,7 @@ export default function StrategyBuilderPage() {
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <p className="text-sm font-semibold text-foreground">{path.name}</p>
                       {path.isCurrentPath && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 flex-shrink-0">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 dark:text-green-400 text-green-600 border border-green-500/30 flex-shrink-0">
                           Your path
                         </span>
                       )}
@@ -1259,16 +1259,16 @@ export default function StrategyBuilderPage() {
           {output && (output as any).maturityMatrix && (
             <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-purple-400" />
+                <BarChart3 className="w-4 h-4 dark:text-purple-400 text-purple-600" />
                 <h3 className="text-sm font-semibold text-foreground">Organisational Maturity Position</h3>
               </div>
               <div className="px-5 pb-5">
                 {(() => {
                   const mm = (output as any).maturityMatrix;
                   const archetypeColors: Record<string, string> = {
-                    "AI Leader": "text-green-400 border-green-500/40 bg-green-500/5",
-                    "Solid Foundation": "text-blue-400 border-blue-500/40 bg-blue-500/5",
-                    "Fast Mover": "text-amber-400 border-amber-500/40 bg-amber-500/5",
+                    "AI Leader": "dark:text-green-400 text-green-600 border-green-500/40 bg-green-500/5",
+                    "Solid Foundation": "dark:text-blue-400 text-blue-600 border-blue-500/40 bg-blue-500/5",
+                    "Fast Mover": "dark:text-amber-400 text-amber-600 border-amber-500/40 bg-amber-500/5",
                     "Emerging": "text-muted-foreground border-border bg-foreground/3",
                   };
                   const cls = archetypeColors[mm.archetype] ?? "text-foreground border-border bg-foreground/3";
@@ -1332,7 +1332,7 @@ export default function StrategyBuilderPage() {
           {output && (output as any).stopDoing && ((output as any).stopDoing as any[]).length > 0 && (
             <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
-                <XCircle className="w-4 h-4 text-red-400" />
+                <XCircle className="w-4 h-4 dark:text-red-400 text-red-600" />
                 <h3 className="text-sm font-semibold text-foreground">Stop-Doing Register</h3>
                 <span className="ml-auto text-xs text-muted-foreground">{((output as any).stopDoing as any[]).length} practices to retire</span>
               </div>
@@ -1351,8 +1351,8 @@ export default function StrategyBuilderPage() {
           {strategy?.status === "committed" && output && (output as any).ninetyDayPlan && ((output as any).ninetyDayPlan as any[]).length > 0 && (
             <div className="rounded-xl border border-green-500/30 bg-green-500/5 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-green-400" />
-                <h3 className="text-sm font-semibold text-green-400">90-Day Action Plan</h3>
+                <CalendarDays className="w-4 h-4 dark:text-green-400 text-green-600" />
+                <h3 className="text-sm font-semibold dark:text-green-400 text-green-600">90-Day Action Plan</h3>
                 <span className="ml-auto text-xs text-muted-foreground">First steps to execution</span>
               </div>
               <div className="px-5 pb-5 space-y-4">

@@ -312,7 +312,7 @@ function PillEdit({
               key={opt.value}
               onClick={() => { onChange(opt.value); setOpen(false); }}
               className={`w-full text-left px-3 py-2 text-xs transition-colors ${
-                opt.value === value ? "text-green-400 bg-green-500/10" : "text-foreground hover:bg-foreground/5"
+                opt.value === value ? "dark:text-green-400 text-green-600 bg-green-500/10" : "text-foreground hover:bg-foreground/5"
               }`}
             >
               {opt.label}
@@ -375,7 +375,7 @@ function DomainBarChart({
                 <span className="text-xs text-muted-foreground">→</span>
                 <span className="text-xs font-mono text-muted-foreground">{targetDisp}</span>
                 {gapDisp !== null && (
-                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isGap ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400"}`}>
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isGap ? "dark:bg-red-500/15 bg-red-100/80 dark:text-red-400 text-red-600" : "dark:bg-green-500/15 bg-green-100/80 dark:text-green-400 text-green-600"}`}>
                     {gapPts! > 0 ? `-${gapDisp}` : gapPts === 0 ? "✓" : `+${Math.abs(Number(gapDisp))}`}
                   </span>
                 )}
@@ -428,7 +428,7 @@ function InitiativeDetailModal({ initiative, open, onClose }: { initiative: any 
               <Badge variant="outline" className="text-xs">{DA_LABELS[initiative.decisionAuthority] ?? initiative.decisionAuthority}</Badge>
             )}
             {initiative.regulatoryFlag && (
-              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">EU AI Act</Badge>
+              <Badge className="dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600 dark:border-amber-500/30 border-amber-300 text-xs">EU AI Act</Badge>
             )}
           </div>
           {initiative.description && (
@@ -497,7 +497,7 @@ function InitiativeSelectorModal({
                   onClick={() => setCategoryFilter(cat)}
                   className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     categoryFilter === cat
-                      ? "bg-green-500/20 border-green-500/40 text-green-400"
+                      ? "dark:bg-green-500/20 bg-green-100 dark:border-green-500/40 border-green-300 dark:text-green-400 text-green-600"
                       : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                   }`}
                 >
@@ -517,7 +517,7 @@ function InitiativeSelectorModal({
                   <div
                     key={init.id}
                     className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
-                      isSelected ? "border-green-500/40 bg-green-500/8" : "border-border bg-muted/40 hover:border-border hover:bg-foreground/4"
+                      isSelected ? "dark:border-green-500/40 border-green-300 bg-green-500/8" : "border-border bg-muted/40 hover:border-border hover:bg-foreground/4"
                     }`}
                     onClick={() => onToggle(init.id)}
                     style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
@@ -539,7 +539,7 @@ function InitiativeSelectorModal({
                         <span className="text-xs px-2 py-0.5 rounded-full border border-border text-muted-foreground">{DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}</span>
                       )}
                       {init.regulatoryFlag && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">EU AI Act</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600">EU AI Act</span>
                       )}
                     </div>
                     <button onClick={(e) => { e.stopPropagation(); setDetailInitiative(init); }} className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -1158,9 +1158,9 @@ export default function AIStrategyPage() {
       ];
   type RiskLevel = "High" | "Medium" | "Low";
   const RISK_STYLE: Record<RiskLevel, { pill: string; border: string }> = {
-    High:   { pill: "bg-red-500/20 text-red-400",    border: "border-red-500/30" },
-    Medium: { pill: "bg-amber-500/20 text-amber-400", border: "border-amber-500/30" },
-    Low:    { pill: "bg-slate-500/20 text-muted-foreground", border: "border-slate-500/30" },
+    High:   { pill: "dark:bg-red-500/20 bg-red-100 dark:text-red-400 text-red-600",    border: "dark:border-red-500/30 border-red-300" },
+    Medium: { pill: "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600", border: "dark:border-amber-500/30 border-amber-300" },
+    Low:    { pill: "dark:bg-slate-500/20 bg-slate-100 text-muted-foreground", border: "dark:border-slate-500/30 border-slate-300" },
   };
 
   // TOC sections for sticky left nav (C2)
@@ -1302,7 +1302,7 @@ export default function AIStrategyPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs px-3 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                  className="h-7 text-xs px-3 dark:border-amber-500/30 border-amber-300 dark:text-amber-400 text-amber-600 hover:bg-amber-500/10"
                   onClick={() => { setStrategyLocked(false); setIsDirty(false); }}
                 >
                   <Unlock className="w-3 h-3 mr-1" />Edit strategy
@@ -1340,14 +1340,14 @@ export default function AIStrategyPage() {
 
       {/* ── Regeneration banner — shown when library version has changed ── */}
       {showRegenerationBanner && (
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-5 py-3 mb-4 flex items-center gap-3">
-          <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+        <div className="rounded-xl border dark:border-amber-500/25 border-amber-300 bg-amber-500/8 px-5 py-3 mb-4 flex items-center gap-3">
+          <Sparkles className="w-4 h-4 dark:text-amber-400 text-amber-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-xs font-semibold text-amber-300">Content library updated to v{libMeta?.version}</p>
+            <p className="text-xs font-semibold dark:text-amber-300 text-amber-700">Content library updated to v{libMeta?.version}</p>
             <p className="text-xs text-muted-foreground">Your strategy was generated with library v{strategyData?.libraryVersion}. Regenerate the vision and principles to incorporate the latest guidance.</p>
           </div>
           <a href="/strategy/diagnostic">
-            <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 h-7 text-xs flex-shrink-0">
+            <Button size="sm" variant="outline" className="dark:border-amber-500/30 border-amber-300 dark:text-amber-400 text-amber-600 hover:bg-amber-500/10 h-7 text-xs flex-shrink-0">
               <Sparkles className="w-3 h-3 mr-1.5" />Regenerate
             </Button>
           </a>
@@ -1398,11 +1398,11 @@ export default function AIStrategyPage() {
 
         {/* One-line takeaway — the sentence that travels */}
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/6 px-5 py-4 mb-6 flex items-start gap-3">
-          <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+          <Sparkles className="w-4 h-4 dark:text-blue-400 text-blue-600 flex-shrink-0 mt-0.5" />
           <p className="text-sm font-medium text-foreground leading-relaxed">
             {priorityDomainCount > 0 ? (
               <>
-                <strong className="text-blue-400">
+                <strong className="dark:text-blue-400 text-blue-600">
                   {priorityDomainCount === 1 ? "One capability needs" : priorityDomainCount === 2 ? "Two capabilities need" : "Three capabilities need"} priority investment
                 </strong>: {domainsWithGap.map(d => d.label).join(", ")}.
                 {" "}The other {6 - priorityDomainCount} will move with the system as the initiative programme builds momentum.
@@ -1439,7 +1439,7 @@ export default function AIStrategyPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <p className="text-2xl font-bold text-blue-400">{(companyResults.overallScore * 2).toFixed(1)}</p>
+                    <p className="text-2xl font-bold dark:text-blue-400 text-blue-600">{(companyResults.overallScore * 2).toFixed(1)}</p>
                     <p className="text-[10px] text-muted-foreground">/ 10</p>
                   </div>
                 </div>
@@ -1481,7 +1481,7 @@ export default function AIStrategyPage() {
                         </div>
                         <span className="text-xs font-mono w-10 text-right" style={{ color: isPriority ? "#F87171" : "#4ADE80" }}>{(dim.score * 2).toFixed(1)}/10</span>
                         {isPriority && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 flex-shrink-0">Priority</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded dark:bg-red-500/15 bg-red-100/80 dark:text-red-400 text-red-600 flex-shrink-0">Priority</span>
                         )}
                       </div>
                     );
@@ -1519,12 +1519,12 @@ export default function AIStrategyPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-blue-500/20 bg-blue-500/4 p-5 mb-6 flex items-start gap-4">
-            <Building2 className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+            <Building2 className="w-4 h-4 dark:text-blue-400 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground mb-1">No Company Assessment completed</p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">Complete the Company Assessment to ground this strategy in your organisation's actual AI maturity.</p>
               <a href="/company-assessment">
-                <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 h-7 text-xs">
+                <Button size="sm" variant="outline" className="dark:border-blue-500/30 border-blue-300 dark:text-blue-400 text-blue-600 hover:bg-blue-500/10 h-7 text-xs">
                   <Building2 className="w-3 h-3 mr-1.5" />Complete Company Assessment
                 </Button>
               </a>
@@ -1543,12 +1543,12 @@ export default function AIStrategyPage() {
             {ambitionGap?.configured && ambitionGap.functionAvgRaw != null && (
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-blue-400">{(ambitionGap.functionAvgRaw / 10).toFixed(1)}</p>
+                  <p className="text-xl font-bold dark:text-blue-400 text-blue-600">{(ambitionGap.functionAvgRaw / 10).toFixed(1)}</p>
                   <p className="text-[10px] text-muted-foreground">Now</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <div className="text-center">
-                  <p className="text-xl font-bold text-green-400">{hrTarget}</p>
+                  <p className="text-xl font-bold dark:text-green-400 text-green-600">{hrTarget}</p>
                   <p className="text-[10px] text-muted-foreground">Target</p>
                 </div>
               </div>
@@ -1582,8 +1582,8 @@ export default function AIStrategyPage() {
             {/* Vision statement + 3 specific commitments */}
             <div className="rounded-xl border border-green-500/15 bg-green-500/5 p-6">
               <div className="flex items-start gap-2 mb-3">
-                <Quote className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Vision Statement</p>
+                <Quote className="w-4 h-4 dark:text-green-400 text-green-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] font-bold dark:text-green-400 text-green-600 uppercase tracking-widest">Vision Statement</p>
                 {strategyData?.provenanceJson && (
                   <button onClick={() => { setProvenanceTarget("vision"); setProvenanceOpen(true); }} className="ml-auto text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
                     <Info className="w-3 h-3" />Provenance
@@ -1595,7 +1595,7 @@ export default function AIStrategyPage() {
               </blockquote>
               {/* 3 specific commitments — the grammar of strategy */}
               <div className="border-t border-green-500/15 pt-4">
-                <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-3">By the end of this strategy period, HR will:</p>
+                <p className="text-[10px] font-bold dark:text-green-400 text-green-600 uppercase tracking-widest mb-3">By the end of this strategy period, HR will:</p>
                 <div className="space-y-2">
                   {[
                     `Design and deploy AI in any people process without external dependency — measured by zero externally-led AI implementations in Year 2.`,
@@ -1603,8 +1603,8 @@ export default function AIStrategyPage() {
                     `Ensure every people leader can decide when AI is and isn't appropriate — measured by annual AI decision-making assessment completion rate above 90%.`,
                   ].map((commitment, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
+                      <div className="w-5 h-5 rounded-full dark:bg-green-500/20 bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-[10px] font-bold dark:text-green-400 text-green-600">{i + 1}</span>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">{commitment}</p>
                     </div>
@@ -1644,8 +1644,8 @@ export default function AIStrategyPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2 duration-200">
                     {guidingPrinciples.map((p, i) => (
                       <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg border border-border/60 bg-muted/40">
-                        <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
+                        <div className="w-5 h-5 rounded-full dark:bg-green-500/15 bg-green-100/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold dark:text-green-400 text-green-600">{i + 1}</span>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-foreground mb-0.5">{p.title}</p>
@@ -1665,11 +1665,11 @@ export default function AIStrategyPage() {
               if (!phil) return null;
               return (
                 <div className="rounded-xl border border-blue-500/15 bg-blue-500/5 px-5 py-4 flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  <div className="w-7 h-7 rounded-full dark:bg-blue-500/15 bg-blue-100/80 border dark:border-blue-500/30 border-blue-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 dark:text-blue-400 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">AI Philosophy</p>
+                    <p className="text-[10px] font-bold dark:text-blue-400 text-blue-600 uppercase tracking-widest mb-1">AI Philosophy</p>
                     <p className="text-sm font-semibold text-foreground mb-1">{phil.label}</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">{phil.description}</p>
                   </div>
@@ -1698,10 +1698,10 @@ export default function AIStrategyPage() {
             {/* What we won't do — the cuts that make this a strategy */}
             <div className="rounded-xl border border-red-500/15 bg-red-500/4 p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Ban className="w-4 h-4 text-red-400" />
-                <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">What We Won't Do</p>
+                <Ban className="w-4 h-4 dark:text-red-400 text-red-600" />
+                <p className="text-[10px] font-bold dark:text-red-400 text-red-600 uppercase tracking-widest">What We Won't Do</p>
                 {Array.isArray(strategyData?.wontDo) && (strategyData?.wontDo as string[]).length > 0 && (
-                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">AI-generated</span>
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded dark:bg-green-500/15 bg-green-100/80 dark:text-green-400 text-green-600">AI-generated</span>
                 )}
                 {strategyData?.provenanceJson && (
                   <button onClick={() => { setProvenanceTarget("wontDo"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 ml-1">
@@ -1715,7 +1715,7 @@ export default function AIStrategyPage() {
               <ul className="space-y-2">
                 {wontDoItems.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
-                    <X className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <X className="w-3.5 h-3.5 dark:text-red-400 text-red-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-muted-foreground">{item}</span>
                   </li>
                 ))}
@@ -1724,14 +1724,14 @@ export default function AIStrategyPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-green-500/20 bg-green-500/4 p-6 flex items-start gap-4">
-            <Compass className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+            <Compass className="w-4 h-4 dark:text-green-400 text-green-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground mb-1">Strategy assessment not completed</p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 Complete the Build Strategy wizard to generate a vision statement and guiding principles.
               </p>
               <a href="/strategy/diagnostic">
-                <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10 h-7 text-xs">
+                <Button size="sm" variant="outline" className="dark:border-green-500/30 border-green-300 dark:text-green-400 text-green-600 hover:bg-green-500/10 h-7 text-xs">
                   <Sparkles className="w-3 h-3 mr-1.5" />Build Strategy
                 </Button>
               </a>
@@ -1763,7 +1763,7 @@ export default function AIStrategyPage() {
         return (
           <div className="rounded-xl border border-border bg-muted/40 p-5 mt-4">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4 text-blue-400" />
+              <Users className="w-4 h-4 dark:text-blue-400 text-blue-600" />
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stakeholder Map</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1916,7 +1916,7 @@ export default function AIStrategyPage() {
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-muted-foreground">{DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}</span>
                                 )}
                                 {init.regulatoryFlag && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">EU AI Act</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600">EU AI Act</span>
                                 )}
                               </div>
                               {outcome && <p className="text-[10px] text-muted-foreground">Outcome: {outcome}</p>}
@@ -1948,11 +1948,11 @@ export default function AIStrategyPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-violet-500/20 bg-violet-500/4 p-6 flex items-start gap-4">
-            <GitMerge className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+            <GitMerge className="w-4 h-4 dark:text-violet-400 text-violet-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground mb-1">No initiatives selected</p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">Select initiatives from the library to build your phased roadmap.</p>
-              <Button size="sm" variant="outline" className="border-violet-500/30 text-violet-400 hover:bg-violet-500/10 h-7 text-xs" onClick={() => setShowSelectorModal(true)}>
+              <Button size="sm" variant="outline" className="dark:border-violet-500/30 border-violet-300 dark:text-violet-400 text-violet-600 hover:bg-violet-500/10 h-7 text-xs" onClick={() => setShowSelectorModal(true)}>
                 <Layers className="w-3 h-3 mr-1.5" />Browse Initiative Library
               </Button>
             </div>
@@ -1976,9 +1976,9 @@ export default function AIStrategyPage() {
           {/* Cost envelope */}
           <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <PoundSterling className="w-4 h-4 text-amber-400" />
-              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Cost Envelope by Phase</p>
-              {liveCostEnvelope && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">Library v{liveCostEnvelope.libraryVersion}</span>}
+              <PoundSterling className="w-4 h-4 dark:text-amber-400 text-amber-600" />
+              <p className="text-[10px] font-bold dark:text-amber-400 text-amber-600 uppercase tracking-widest">Cost Envelope by Phase</p>
+              {liveCostEnvelope && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600">Library v{liveCostEnvelope.libraryVersion}</span>}
               {strategyData?.provenanceJson && (
                 <button onClick={() => { setProvenanceTarget("costs"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
                   <Info className="w-3 h-3" />Sources
@@ -2013,7 +2013,7 @@ export default function AIStrategyPage() {
                           <p className="text-sm font-semibold" style={{ color: meta.color }}>£{low}k–£{high}k</p>
                         </div>
                         {isFoundationHigher && (
-                          <p className="text-[10px] text-blue-400/70 mt-0.5 leading-relaxed">
+                          <p className="text-[10px] dark:text-blue-400 text-blue-600/70 mt-0.5 leading-relaxed">
                             Foundation includes one-off setup costs (data governance, infrastructure readiness, tool procurement) that do not recur in later phases.
                           </p>
                         )}
@@ -2023,7 +2023,7 @@ export default function AIStrategyPage() {
                 })()}
                 <div className="border-t border-border pt-3 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total (18-month envelope)</p>
-                  <p className="text-base font-bold text-amber-400">£{totalCostLow}k–£{totalCostHigh}k</p>
+                  <p className="text-base font-bold dark:text-amber-400 text-amber-600">£{totalCostLow}k–£{totalCostHigh}k</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   {liveCostEnvelope?.caveat ?? "Indicative order-of-magnitude estimates. Excludes internal headcount, change management, and vendor licensing. Requires Finance sign-off before Phase 2 commitment."}
@@ -2037,11 +2037,11 @@ export default function AIStrategyPage() {
           {/* Delivery risks */}
           <div className="rounded-xl border border-red-500/15 bg-red-500/4 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-4 h-4 text-red-400" />
-              <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
+              <AlertCircle className="w-4 h-4 dark:text-red-400 text-red-600" />
+              <p className="text-[10px] font-bold dark:text-red-400 text-red-600 uppercase tracking-widest">
                 {liveRisks && liveRisks.length > 0 ? `${liveRisks.length} Regulatory Risk${liveRisks.length > 1 ? "s" : ""} Identified` : "Top 3 Delivery Risks"}
               </p>
-              {liveRisks && liveRisks.length > 0 && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">Rule-based</span>}
+              {liveRisks && liveRisks.length > 0 && <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded dark:bg-red-500/15 bg-red-100/80 dark:text-red-400 text-red-600">Rule-based</span>}
               {strategyData?.provenanceJson && (
                 <button onClick={() => { setProvenanceTarget("risks"); setProvenanceOpen(true); }} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
                   <Info className="w-3 h-3" />Sources
@@ -2069,8 +2069,8 @@ export default function AIStrategyPage() {
               })}
             </div>
             {hasRegFlag && (
-              <p className="text-[10px] text-amber-400/70 mt-4 leading-relaxed border-t border-red-500/10 pt-3">
-                <strong className="text-amber-400">Employment Rights Act 2025 (ERA 2025):</strong> One or more selected initiatives involve automated decision-making in employment processes. Under ERA 2025, workers have the right to request a human review of any AI-assisted employment decision. Ensure all flagged initiatives include a human-review override mechanism and are documented in your AI Register before deployment.
+              <p className="text-[10px] dark:text-amber-400 text-amber-600/70 mt-4 leading-relaxed border-t border-red-500/10 pt-3">
+                <strong className="dark:text-amber-400 text-amber-600">Employment Rights Act 2025 (ERA 2025):</strong> One or more selected initiatives involve automated decision-making in employment processes. Under ERA 2025, workers have the right to request a human review of any AI-assisted employment decision. Ensure all flagged initiatives include a human-review override mechanism and are documented in your AI Register before deployment.
               </p>
             )}
           </div>
@@ -2089,8 +2089,8 @@ export default function AIStrategyPage() {
           return (
             <div className="rounded-xl border border-amber-500/15 bg-amber-500/4 p-5 mt-5">
               <div className="flex items-center gap-2 mb-4">
-                <PoundSterling className="w-4 h-4 text-amber-400" />
-                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Total Cost of Ownership (TCO)</p>
+                <PoundSterling className="w-4 h-4 dark:text-amber-400 text-amber-600" />
+                <p className="text-[10px] font-bold dark:text-amber-400 text-amber-600 uppercase tracking-widest">Total Cost of Ownership (TCO)</p>
                 <span className="ml-auto text-[10px] text-muted-foreground">3-year horizon</span>
               </div>
               <div className="space-y-2">
@@ -2102,7 +2102,7 @@ export default function AIStrategyPage() {
                 ))}
                 <div className="border-t border-border pt-2 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total 3-Year TCO</p>
-                  <p className="text-sm font-bold text-amber-400">{fmt(tco.total_3yr_gbp.low)}–{fmt(tco.total_3yr_gbp.high)}</p>
+                  <p className="text-sm font-bold dark:text-amber-400 text-amber-600">{fmt(tco.total_3yr_gbp.low)}–{fmt(tco.total_3yr_gbp.high)}</p>
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
@@ -2171,8 +2171,8 @@ export default function AIStrategyPage() {
           return (
             <div className="mt-6 rounded-xl border border-border bg-muted/40 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div className="w-6 h-6 rounded-md dark:bg-blue-500/15 bg-blue-100/80 flex items-center justify-center">
+                  <svg className="w-3 h-3 dark:text-blue-400 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Solution Delivery Confidence</p>
               </div>
@@ -2190,7 +2190,7 @@ export default function AIStrategyPage() {
               </div>
               {confNum <= 2 && (
                 <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-                  <p className="text-xs text-amber-300">
+                  <p className="text-xs dark:text-amber-300 text-amber-700">
                     <strong>Engine impact:</strong> Phase durations have been extended by 20% and change management costs increased by 5% to reflect your delivery confidence rating.
                   </p>
                 </div>
@@ -2208,11 +2208,11 @@ export default function AIStrategyPage() {
           return (
             <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div className="w-6 h-6 rounded-md dark:bg-amber-500/15 bg-amber-100/80 flex items-center justify-center">
+                  <svg className="w-3 h-3 dark:text-amber-400 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">UK Regulatory Readiness</p>
+                  <p className="text-xs font-bold dark:text-amber-400 text-amber-600 uppercase tracking-widest">UK Regulatory Readiness</p>
                   <p className="text-[10px] text-muted-foreground">{fws.length} framework{fws.length !== 1 ? "s" : ""} identified · {highRisk.length} high-risk</p>
                 </div>
               </div>
@@ -2225,8 +2225,8 @@ export default function AIStrategyPage() {
                       aria-expanded={!regDescCollapsed[fw.id]}
                     >
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
-                        fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
-                        fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
+                        fw.risk === "high"   ? "dark:bg-red-500/20 bg-red-100 dark:text-red-400 text-red-600" :
+                        fw.risk === "medium" ? "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600" :
                         "bg-foreground/10 text-muted-foreground"
                       }`}>{fw.risk}</span>
                       <div className="flex-1 text-left">
@@ -2242,7 +2242,7 @@ export default function AIStrategyPage() {
               </div>
               {highRisk.length > 0 && (
                 <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
-                  <p className="text-xs text-red-300">
+                  <p className="text-xs dark:text-red-300 text-red-700">
                     <strong>Action required:</strong> {highRisk.length} high-risk framework{highRisk.length !== 1 ? "s" : ""} identified. Engage Legal / Compliance and conduct a Data Protection Impact Assessment (DPIA) before deploying AI tools in affected HR processes.
                   </p>
                 </div>
@@ -2270,12 +2270,12 @@ export default function AIStrategyPage() {
         )}
         {!valueEnvelopeQ.data && !valueEnvelopeQ.isLoading && selectedInitiativeIds.size === 0 && (
           <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/4 px-6 py-10 text-center">
-            <TrendingUp className="w-8 h-8 text-emerald-400/50 mx-auto mb-3" />
+            <TrendingUp className="w-8 h-8 dark:text-emerald-400 text-emerald-600/50 mx-auto mb-3" />
             <p className="text-sm font-medium text-foreground mb-1">No initiatives selected yet</p>
             <p className="text-xs text-muted-foreground max-w-xs mx-auto">Select initiatives in Section 3 (Plan) to calculate your value envelope, ROI scenarios, and reinvestment plan.</p>
             <button
               onClick={() => document.getElementById("plan")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="mt-4 text-xs text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition-colors"
+              className="mt-4 text-xs dark:text-emerald-400 text-emerald-600 hover:dark:text-emerald-300 text-emerald-700 underline underline-offset-2 transition-colors"
             >
               Go to Section 3 →
             </button>
@@ -2291,17 +2291,17 @@ export default function AIStrategyPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Gross Value (High)</div>
-                  <div className="text-xl font-bold text-emerald-400">{hasQuantified ? fmt(ve.total_quantified_value_gbp.high) : "—"}</div>
+                  <div className="text-xl font-bold dark:text-emerald-400 text-emerald-600">{hasQuantified ? fmt(ve.total_quantified_value_gbp.high) : "—"}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.total_quantified_value_gbp.low) : "—"}</div>
                 </div>
                 <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Value (High)</div>
-                  <div className={`text-xl font-bold ${ve.net_value_gbp.high >= 0 ? "text-emerald-400" : "text-red-400"}`}>{hasQuantified ? fmt(ve.net_value_gbp.high) : "—"}</div>
+                  <div className={`text-xl font-bold ${ve.net_value_gbp.high >= 0 ? "dark:text-emerald-400 text-emerald-600" : "dark:text-red-400 text-red-600"}`}>{hasQuantified ? fmt(ve.net_value_gbp.high) : "—"}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.net_value_gbp.low) : "—"}</div>
                 </div>
                 <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</div>
-                  <div className="text-xl font-bold text-amber-400">
+                  <div className="text-xl font-bold dark:text-amber-400 text-amber-600">
                     {ve.payback_period_months ? (
                       ve.payback_period_months.low > 120
                         ? `>${Math.round(ve.payback_period_months.low / 12)}yr`
@@ -2316,7 +2316,7 @@ export default function AIStrategyPage() {
                 </div>
                 <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Qualitative Value</div>
-                  <div className="text-xl font-bold text-violet-400">{ve.qualitative_summary.capability_uplift_count + ve.qualitative_summary.risk_avoidance_count + ve.qualitative_summary.strategic_count}</div>
+                  <div className="text-xl font-bold dark:text-violet-400 text-violet-600">{ve.qualitative_summary.capability_uplift_count + ve.qualitative_summary.risk_avoidance_count + ve.qualitative_summary.strategic_count}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Initiatives (non-monetised)</div>
                 </div>
               </div>
@@ -2364,7 +2364,7 @@ export default function AIStrategyPage() {
                 return (
                   <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <BarChart3 className="w-4 h-4 text-emerald-400" />
+                      <BarChart3 className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Value Summary — 3-Year Horizon</p>
                     </div>
                     {/* Summary: Gross / Cost / Net */}
@@ -2464,10 +2464,10 @@ export default function AIStrategyPage() {
                     {/* Payback callout */}
                     {ve.payback_period_months && (
                       <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 flex items-center gap-3">
-                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                        <Clock className="w-4 h-4 dark:text-amber-400 text-amber-600 shrink-0" />
                         <div>
-                          <span className="text-xs font-semibold text-amber-300">Payback Period: </span>
-                          <span className="text-xs text-amber-200/80">
+                          <span className="text-xs font-semibold dark:text-amber-300 text-amber-700">Payback Period: </span>
+                          <span className="text-xs dark:text-amber-200 text-amber-700/80">
                             {ve.payback_period_months.low > 120
                               ? `Beyond 3-year horizon (>${Math.round(ve.payback_period_months.low / 12)} yrs) — value realises in years 4–7`
                               : `${ve.payback_period_months.low}–${ve.payback_period_months.high} months to breakeven`}
@@ -2490,15 +2490,15 @@ export default function AIStrategyPage() {
                 const topPct = Math.round((top.quantified_value_gbp!.high / totalHigh) * 100);
                 if (topPct < 60) return null;
                 return (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/6 p-4 flex items-start gap-3">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="rounded-xl border dark:border-amber-500/30 border-amber-300 bg-amber-500/6 p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-semibold text-amber-300 mb-1">Value concentration risk</p>
-                      <p className="text-[11px] text-amber-300/80 leading-relaxed mb-2">
+                      <p className="text-xs font-semibold dark:text-amber-300 text-amber-700 mb-1">Value concentration risk</p>
+                      <p className="text-[11px] dark:text-amber-300 text-amber-700/80 leading-relaxed mb-2">
                         <strong>{topPct}%</strong> of this strategy's quantified value depends on a single initiative:{" "}
                         <strong>{top.display_name}</strong>. If this initiative is delayed or under-delivers, the strategy's measurable case weakens significantly.
                       </p>
-                      <p className="text-[10px] text-amber-300/60 leading-relaxed">
+                      <p className="text-[10px] dark:text-amber-300 text-amber-700/60 leading-relaxed">
                         Mitigation: review value assumptions against your operational baseline · consider additional value-generating initiatives to diversify · use phased value recognition rather than full Year-1 attribution.
                       </p>
                     </div>
@@ -2534,14 +2534,14 @@ export default function AIStrategyPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium truncate">{item.display_name}</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            item.value_type === "cost_savings" ? "bg-emerald-500/15 text-emerald-400" :
-                            item.value_type === "productivity_gain" ? "bg-blue-500/15 text-blue-400" :
-                            item.value_type === "risk_avoidance" ? "bg-red-500/15 text-red-400" :
-                            item.value_type === "capability_uplift" ? "bg-violet-500/15 text-violet-400" :
-                            "bg-slate-500/15 text-muted-foreground"
+                            item.value_type === "cost_savings" ? "dark:bg-emerald-500/15 bg-emerald-100/80 dark:text-emerald-400 text-emerald-600" :
+                            item.value_type === "productivity_gain" ? "dark:bg-blue-500/15 bg-blue-100/80 dark:text-blue-400 text-blue-600" :
+                            item.value_type === "risk_avoidance" ? "dark:bg-red-500/15 bg-red-100/80 dark:text-red-400 text-red-600" :
+                            item.value_type === "capability_uplift" ? "dark:bg-violet-500/15 bg-violet-100/80 dark:text-violet-400 text-violet-600" :
+                            "dark:bg-slate-500/15 bg-slate-100/80 text-muted-foreground"
                           }`}>{item.value_type.replace(/_/g, " ")}</span>
                           {item.uses_sector_default && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400">sector default</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 dark:text-amber-400 text-amber-600">sector default</span>
                           )}
                         </div>
                         {item.quantified_value_gbp ? (
@@ -2555,7 +2555,7 @@ export default function AIStrategyPage() {
                       <div className="text-right shrink-0">
                         {item.quantified_value_gbp ? (
                           <>
-                            <div className="text-sm font-semibold text-emerald-400">£{item.quantified_value_gbp.high.toLocaleString()}</div>
+                            <div className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">£{item.quantified_value_gbp.high.toLocaleString()}</div>
                             <div className="text-[10px] text-muted-foreground">low £{item.quantified_value_gbp.low.toLocaleString()}</div>
                           </>
                         ) : (
@@ -2592,7 +2592,7 @@ export default function AIStrategyPage() {
                     <ul className="space-y-1.5 mt-3 animate-in slide-in-from-top-2 duration-200">
                       {ve.qualitative_summary.bullet_points.map((b, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600 mt-0.5 shrink-0" />
                           {b}
                         </li>
                       ))}
@@ -2614,7 +2614,7 @@ export default function AIStrategyPage() {
                 return (
                   <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <LayoutGrid className="w-4 h-4 text-emerald-400" />
+                      <LayoutGrid className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Tier Value Analysis</p>
                     </div>
                     <div className="space-y-3">
@@ -2647,13 +2647,13 @@ export default function AIStrategyPage() {
                 return (
                   <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="w-4 h-4 text-blue-400" />
+                      <TrendingUp className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Financial Model ({fm.horizon_years}-Year DCF @ {fm.discount_rate_pct}%)</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Present Value</p>
-                        <p className={`text-xl font-bold ${fm.npv_gbp.high >= 0 ? "text-blue-400" : "text-red-400"}`}>{fmt(fm.npv_gbp.high)}</p>
+                        <p className={`text-xl font-bold ${fm.npv_gbp.high >= 0 ? "dark:text-blue-400 text-blue-600" : "dark:text-red-400 text-red-600"}`}>{fmt(fm.npv_gbp.high)}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmt(fm.npv_gbp.low)}</p>
                       </div>
                       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
@@ -2661,14 +2661,14 @@ export default function AIStrategyPage() {
                           // CFO Fix 4: IRR unreliable at this scale — show payback instead
                           <>
                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</p>
-                            <p className="text-xl font-bold text-violet-400">
+                            <p className="text-xl font-bold dark:text-violet-400 text-violet-600">
                               {ve.payback_period_months
                                 ? ve.payback_period_months.low === 0
                                   ? '<1 mo'
                                   : `${ve.payback_period_months.low}–${ve.payback_period_months.high} mo`
                                 : '—'}
                             </p>
-                            <p className="text-[10px] text-amber-400/80 mt-0.5">IRR suppressed — use NPV &amp; payback</p>
+                            <p className="text-[10px] dark:text-amber-400 text-amber-600/80 mt-0.5">IRR suppressed — use NPV &amp; payback</p>
                           </>
                         ) : (
                           <>
@@ -2678,7 +2678,7 @@ export default function AIStrategyPage() {
                                 const fmtIrr = (v: number) => !isFinite(v) || v < 0 ? 'N/A' : `${v.toFixed(1)}%`;
                                 return (
                                   <>
-                                    <p className="text-xl font-bold text-violet-400">{fmtIrr(fm.irr_pct.high)}</p>
+                                    <p className="text-xl font-bold dark:text-violet-400 text-violet-600">{fmtIrr(fm.irr_pct.high)}</p>
                                     <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmtIrr(fm.irr_pct.low)}</p>
                                   </>
                                 );
@@ -2695,20 +2695,20 @@ export default function AIStrategyPage() {
                     </p>
                     {/* CFO Fix 4: IRR suppressed banner or high-IRR warning */}
                     {(fm as any).irr_suppressed ? (
-                      <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-amber-300/90 leading-relaxed">
-                          <strong className="text-amber-300">IRR not shown — unreliable at this investment scale.</strong>{" "}
+                      <div className="mt-3 rounded-lg border dark:border-amber-500/30 border-amber-300 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] dark:text-amber-300 text-amber-700/90 leading-relaxed">
+                          <strong className="dark:text-amber-300 text-amber-700">IRR not shown — unreliable at this investment scale.</strong>{" "}
                           When annual value significantly exceeds implementation cost, IRR becomes mathematically extreme and loses meaning as a decision metric.
-                          Use <strong className="text-amber-300">NPV and payback period</strong> as the primary financial metrics for board presentation.
+                          Use <strong className="dark:text-amber-300 text-amber-700">NPV and payback period</strong> as the primary financial metrics for board presentation.
                         </p>
                       </div>
                     ) : (
                       fm.irr_pct && fm.irr_pct.high > 40 && isFinite(fm.irr_pct.high) && (
-                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
-                          <p className="text-[11px] text-amber-300/90 leading-relaxed">
-                            <strong className="text-amber-300">Indicative figure — sanity check before relying.</strong>{" "}
+                        <div className="mt-3 rounded-lg border dark:border-amber-500/30 border-amber-300 bg-amber-500/8 px-3 py-2.5 flex items-start gap-2">
+                          <AlertTriangle className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-[11px] dark:text-amber-300 text-amber-700/90 leading-relaxed">
+                            <strong className="dark:text-amber-300 text-amber-700">Indicative figure — sanity check before relying.</strong>{" "}
                             IRR of {fm.irr_pct.high.toFixed(1)}% is materially higher than typical transformation programme returns (15–40%).
                             Possible reasons: value concentration in a single initiative, optimistic improvement assumptions, or implementation costs understated.
                             Recommended: review with Finance before relying on this figure for capital decisions.
@@ -2732,7 +2732,7 @@ export default function AIStrategyPage() {
                 return (
                   <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <Activity className="w-4 h-4 text-amber-400" />
+                      <Activity className="w-4 h-4 dark:text-amber-400 text-amber-600" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Scenario Analysis</p>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
@@ -2747,19 +2747,19 @@ export default function AIStrategyPage() {
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-muted-foreground">Net</span>
-                              <span className={`font-semibold ${s.data.net_gbp >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(s.data.net_gbp)}</span>
+                              <span className={`font-semibold ${s.data.net_gbp >= 0 ? "dark:text-emerald-400 text-emerald-600" : "dark:text-red-400 text-red-600"}`}>{fmt(s.data.net_gbp)}</span>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-muted-foreground">ROI</span>
-                              <span className={`font-semibold ${s.data.roi_pct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                              <span className={`font-semibold ${s.data.roi_pct >= 0 ? "dark:text-emerald-400 text-emerald-600" : "dark:text-red-400 text-red-600"}`}>
                                 {s.data.roi_pct >= 500 ? ">500%" : `${s.data.roi_pct}%`}
                               </span>
                             </div>
                             {s.data.roi_pct >= 500 && (
-                              <p className="text-[10px] text-amber-400/80 mt-1.5 leading-snug">⚠️ ROI capped at 500% for display. Use NPV for board presentation.</p>
+                              <p className="text-[10px] dark:text-amber-400 text-amber-600/80 mt-1.5 leading-snug">⚠️ ROI capped at 500% for display. Use NPV for board presentation.</p>
                             )}
                             {s.data.roi_pct > 200 && s.data.roi_pct < 500 && (
-                              <p className="text-[10px] text-amber-400/80 mt-1.5 leading-snug">⚠️ High ROI — reflects 3-yr compounding. Validate with Finance before board presentation.</p>
+                              <p className="text-[10px] dark:text-amber-400 text-amber-600/80 mt-1.5 leading-snug">⚠️ High ROI — reflects 3-yr compounding. Validate with Finance before board presentation.</p>
                             )}
                           </div>
                         </div>
@@ -2770,10 +2770,10 @@ export default function AIStrategyPage() {
               })()}
 
               {/* Caveat */}
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[11px] text-amber-300/80">
-                <strong className="text-amber-300">Caveat:</strong> {ve.caveat}
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[11px] dark:text-amber-300 text-amber-700/80">
+                <strong className="dark:text-amber-300 text-amber-700">Caveat:</strong> {ve.caveat}
                 {ve.payback_period_months && ve.payback_period_months.low > 120 && (
-                  <p className="mt-2"><strong className="text-amber-300">Payback note:</strong> The payback period extends beyond the 3-year modelling horizon. This is expected for transformative programmes where capability and infrastructure investment precedes value realisation. The NPV and scenario analysis above reflect the 3-year window only; full value typically materialises in years 4–7 as AI-enabled processes compound.</p>
+                  <p className="mt-2"><strong className="dark:text-amber-300 text-amber-700">Payback note:</strong> The payback period extends beyond the 3-year modelling horizon. This is expected for transformative programmes where capability and infrastructure investment precedes value realisation. The NPV and scenario analysis above reflect the 3-year window only; full value typically materialises in years 4–7 as AI-enabled processes compound.</p>
                 )}
               </div>
 
@@ -2786,14 +2786,14 @@ export default function AIStrategyPage() {
                 const isPositive = rp.recommended;
                 const borderColor = isPositive ? "border-emerald-500/20" : "border-amber-500/20";
                 const bgColor = isPositive ? "bg-emerald-500/5" : "bg-amber-500/5";
-                const iconColor = isPositive ? "text-emerald-400" : "text-amber-400";
+                const iconColor = isPositive ? "dark:text-emerald-400 text-emerald-600" : "dark:text-amber-400 text-amber-600";
                 const caseLabel = rp.case === "both_positive" ? "Strong return" : rp.case === "straddles_zero" ? "Positive outlook" : "Review scope";
                 return (
                   <div className={`rounded-xl border ${borderColor} ${bgColor} px-5 py-4`}>
                     <div className="flex items-center gap-2 mb-3">
                       <TrendingUp className={`w-4 h-4 ${iconColor}`} />
                       <p className={`text-[10px] font-bold ${iconColor} uppercase tracking-widest`}>Reinvestment Plan</p>
-                      <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-amber-500/30 text-amber-400 bg-amber-500/10"}`}>
+                      <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "dark:border-emerald-500/30 border-emerald-300 dark:text-emerald-400 text-emerald-600 bg-emerald-500/10" : "dark:border-amber-500/30 border-amber-300 dark:text-amber-400 text-amber-600 bg-amber-500/10"}`}>
                         {caseLabel}
                       </span>
                     </div>
@@ -2810,7 +2810,7 @@ export default function AIStrategyPage() {
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">Phase 2 focus areas</p>
                         <div className="flex flex-wrap gap-1.5">
                           {rp.phase2_focus_areas.map((area: string) => (
-                            <span key={area} className={`text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-amber-500/30 text-amber-300 bg-amber-500/10"}`}>
+                            <span key={area} className={`text-[10px] px-2 py-0.5 rounded-full border ${isPositive ? "dark:border-emerald-500/30 border-emerald-300 dark:text-emerald-300 text-emerald-700 bg-emerald-500/10" : "dark:border-amber-500/30 border-amber-300 dark:text-amber-300 text-amber-700 bg-amber-500/10"}`}>
                               {area.replace(/_/g, " ")}
                             </span>
                           ))}
@@ -2824,11 +2824,11 @@ export default function AIStrategyPage() {
               {ve.ceo_sponsorship_required && (
                 <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-5 py-4">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
-                      <UserCheck className="w-4 h-4 text-purple-300" />
+                    <div className="mt-0.5 w-8 h-8 rounded-full dark:bg-purple-500/20 bg-purple-100 flex items-center justify-center shrink-0">
+                      <UserCheck className="w-4 h-4 dark:text-purple-300 text-purple-700" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-1">CEO Sponsorship Recommended</p>
+                      <p className="text-[10px] font-bold dark:text-purple-400 text-purple-600 uppercase tracking-widest mb-1">CEO Sponsorship Recommended</p>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         The scale of this strategy — spanning multiple capability domains and requiring significant cross-functional change — indicates that <strong className="text-foreground">CEO-level sponsorship is a critical success factor</strong>. Programmes of this scope have a materially higher success rate when the CEO is an active sponsor rather than a passive approver.
                       </p>
@@ -2877,7 +2877,7 @@ export default function AIStrategyPage() {
                         <ul className="space-y-1">
                           {item.qualitative_value.map((q, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                              <CheckCircle2 className="w-3 h-3 dark:text-emerald-400 text-emerald-600 mt-0.5 shrink-0" />
                               {q}
                             </li>
                           ))}
@@ -2885,7 +2885,7 @@ export default function AIStrategyPage() {
                       </div>
                     )}
                     {item.uses_sector_default && (
-                      <div className="rounded bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300">
+                      <div className="rounded bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs dark:text-amber-300 text-amber-700">
                         One or more baseline inputs used a sector default value. Provide your actual operational baseline in the strategy assessment for a more accurate estimate.
                       </div>
                     )}
@@ -2893,7 +2893,7 @@ export default function AIStrategyPage() {
                       <div>
                         <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Sources</div>
                         <ul className="space-y-0.5 text-xs">
-                          {item.sources.map((s, i) => <li key={i} className="text-blue-400">{s}</li>)}
+                          {item.sources.map((s, i) => <li key={i} className="dark:text-blue-400 text-blue-600">{s}</li>)}
                         </ul>
                       </div>
                     )}
@@ -2904,7 +2904,7 @@ export default function AIStrategyPage() {
                   <p>The value envelope is calculated by applying sector-benchmarked improvement percentages to your operational baseline inputs (hires per year, cost per hire, time to fill, attrition rate, L&D spend, HR cost per FTE).</p>
                   <p>Where you have not provided a baseline value, a sector default is used and flagged with an amber "sector default" badge.</p>
                   <p>Net value subtracts the indicative implementation cost range from the gross value range. Payback period is calculated as total cost ÷ annualised value.</p>
-                  <p className="text-amber-300/80 text-xs">All figures are indicative ranges for business case development. Confirm with Finance before commitment.</p>
+                  <p className="dark:text-amber-300 text-amber-700/80 text-xs">All figures are indicative ranges for business case development. Confirm with Finance before commitment.</p>
                 </div>
               )}
               <div className="flex justify-end pt-2">
@@ -2931,11 +2931,11 @@ export default function AIStrategyPage() {
           <section id="measurement" className="mb-6">
             <div className="rounded-2xl border border-border bg-muted/40 p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                <div className="w-8 h-8 rounded-lg dark:bg-teal-500/15 bg-teal-100/80 flex items-center justify-center">
+                  <svg className="w-4 h-4 dark:text-teal-400 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Section 6 — Measurement Plan</p>
+                  <p className="text-[10px] font-bold dark:text-teal-400 text-teal-600 uppercase tracking-widest">Section 6 — Measurement Plan</p>
                   <h2 className="text-lg font-bold text-foreground">How we will measure progress</h2>
                 </div>
               </div>
@@ -2972,9 +2972,9 @@ export default function AIStrategyPage() {
                       {pilotMetricOpts.map(m => (
                         <div key={m.id} className="flex items-center gap-2">
                           <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
-                            m.tier === "efficiency"    ? "bg-green-500/20 text-green-400" :
-                            m.tier === "effectiveness" ? "bg-blue-500/20 text-blue-400" :
-                            "bg-purple-500/20 text-purple-400"
+                            m.tier === "efficiency"    ? "dark:bg-green-500/20 bg-green-100 dark:text-green-400 text-green-600" :
+                            m.tier === "effectiveness" ? "dark:bg-blue-500/20 bg-blue-100 dark:text-blue-400 text-blue-600" :
+                            "dark:bg-purple-500/20 bg-purple-100 dark:text-purple-400 text-purple-600"
                           }`}>{m.tier === "efficiency" ? "Eff" : m.tier === "effectiveness" ? "Qual" : "Strat"}</span>
                           <span className="text-xs text-foreground">{m.label}</span>
                         </div>
@@ -2994,11 +2994,11 @@ export default function AIStrategyPage() {
       <section className="mb-10">
         <div className="rounded-2xl border border-border bg-gradient-to-br from-[#0E1726] to-[#111c30] p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
-              <ArrowRight className="w-4 h-4 text-green-400" />
+            <div className="w-8 h-8 rounded-lg dark:bg-green-500/15 bg-green-100/80 flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 dark:text-green-400 text-green-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest">What's Next</p>
+              <p className="text-[10px] font-bold dark:text-green-400 text-green-600 uppercase tracking-widest">What's Next</p>
               <h2 className="text-lg font-bold text-foreground">Turn this strategy into action</h2>
             </div>
           </div>
@@ -3153,7 +3153,7 @@ export default function AIStrategyPage() {
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground leading-relaxed">{drillDownQ.data.narrativeExplanation}</p>
                   {drillDownQ.data.gapStatement && (
-                    <p className="text-xs text-amber-400 mt-2 leading-relaxed">{drillDownQ.data.gapStatement}</p>
+                    <p className="text-xs dark:text-amber-400 text-amber-600 mt-2 leading-relaxed">{drillDownQ.data.gapStatement}</p>
                   )}
                 </div>
               </div>
@@ -3165,9 +3165,9 @@ export default function AIStrategyPage() {
                     {drillDownQ.data.signals.slice(0, 8).map((s: any) => (
                       <div key={s.signalKey} className="flex items-center gap-2">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
-                          s.level === "Strong" ? "bg-green-500/20 text-green-400" :
-                          s.level === "Critical" ? "bg-red-500/20 text-red-400" :
-                          "bg-amber-500/20 text-amber-400"
+                          s.level === "Strong" ? "dark:bg-green-500/20 bg-green-100 dark:text-green-400 text-green-600" :
+                          s.level === "Critical" ? "dark:bg-red-500/20 bg-red-100 dark:text-red-400 text-red-600" :
+                          "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600"
                         }`}>{s.level}</span>
                         <span className="text-xs text-foreground flex-1 truncate">{s.name}</span>
                         <span className="text-xs font-mono text-muted-foreground">{(s.score / 10).toFixed(1)}/10</span>
@@ -3288,8 +3288,8 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
           <div className="space-y-4 pt-1">
             <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-green-400" />
+                <div className="w-8 h-8 rounded-lg dark:bg-green-500/15 bg-green-100/80 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 dark:text-green-400 text-green-600" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-foreground mb-0.5">Generation Method</p>
@@ -3360,16 +3360,16 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
                     <div className="flex items-center gap-2 mb-1.5">
                       <p className="text-xs font-semibold text-foreground flex-1">{r.displayName}</p>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                        r.severity === "very_high" || r.severity === "high" ? "bg-red-500/15 text-red-400" :
-                        r.severity === "medium" ? "bg-amber-500/15 text-amber-400" :
-                        "bg-green-500/15 text-green-400"
+                        r.severity === "very_high" || r.severity === "high" ? "dark:bg-red-500/15 bg-red-100/80 dark:text-red-400 text-red-600" :
+                        r.severity === "medium" ? "dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600" :
+                        "dark:bg-green-500/15 bg-green-100/80 dark:text-green-400 text-green-600"
                       }`}>{r.severity.replace("_", " ")}</span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-2">{r.riskStatement}</p>
                     {r.regulatoryBasis.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-1.5">
                         {r.regulatoryBasis.map(b => (
-                          <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">{b}</span>
+                          <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 dark:text-blue-400 text-blue-600 border border-blue-500/20">{b}</span>
                         ))}
                       </div>
                     )}

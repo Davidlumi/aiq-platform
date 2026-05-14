@@ -20,13 +20,13 @@ import {
 } from "lucide-react";
 
 const DIMENSION_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  strategy: { label: "AI Strategy", color: "text-violet-400", icon: Target },
-  governance: { label: "Governance & Ethics", color: "text-rose-400", icon: Shield },
-  data: { label: "Data & Infrastructure", color: "text-blue-400", icon: Layers },
-  technology: { label: "Technology & Tools", color: "text-cyan-400", icon: BarChart3 },
-  workforce: { label: "Workforce Capability", color: "text-emerald-400", icon: Users },
-  hr_function: { label: "HR Function Readiness", color: "text-amber-400", icon: Lightbulb },
-  culture: { label: "Culture & Change", color: "text-pink-400", icon: BarChart3 },
+  strategy: { label: "AI Strategy", color: "dark:text-violet-400 text-violet-600", icon: Target },
+  governance: { label: "Governance & Ethics", color: "dark:text-rose-400 text-rose-600", icon: Shield },
+  data: { label: "Data & Infrastructure", color: "dark:text-blue-400 text-blue-600", icon: Layers },
+  technology: { label: "Technology & Tools", color: "dark:text-cyan-400 text-cyan-600", icon: BarChart3 },
+  workforce: { label: "Workforce Capability", color: "dark:text-emerald-400 text-emerald-600", icon: Users },
+  hr_function: { label: "HR Function Readiness", color: "dark:text-amber-400 text-amber-600", icon: Lightbulb },
+  culture: { label: "Culture & Change", color: "dark:text-pink-400 text-pink-600", icon: BarChart3 },
 };
 
 const CONFIDENCE_OPTIONS = [
@@ -36,8 +36,8 @@ const CONFIDENCE_OPTIONS = [
     sub: "Not sure at all",
     multiplier: "score 0.25×",
     ringColor: "ring-rose-500",
-    bgSelected: "bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/40",
-    textSelected: "text-rose-300",
+    bgSelected: "dark:bg-rose-500/20 bg-rose-100 border-rose-500 ring-2 ring-rose-500/40",
+    textSelected: "dark:text-rose-300 text-rose-700",
   },
   {
     value: "fairly_sure",
@@ -45,8 +45,8 @@ const CONFIDENCE_OPTIONS = [
     sub: "I think this is right",
     multiplier: "score 0.65×",
     ringColor: "ring-amber-500",
-    bgSelected: "bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/40",
-    textSelected: "text-amber-300",
+    bgSelected: "dark:bg-amber-500/20 bg-amber-100 border-amber-500 ring-2 ring-amber-500/40",
+    textSelected: "dark:text-amber-300 text-amber-700",
   },
   {
     value: "certain",
@@ -54,8 +54,8 @@ const CONFIDENCE_OPTIONS = [
     sub: "Confident in my answer",
     multiplier: "score 1.0×",
     ringColor: "ring-emerald-500",
-    bgSelected: "bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/40",
-    textSelected: "text-emerald-300",
+    bgSelected: "dark:bg-emerald-500/20 bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/40",
+    textSelected: "dark:text-emerald-300 text-emerald-700",
   },
 ];
 
@@ -116,7 +116,7 @@ export default function CompanyAssessmentSessionPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+        <Loader2 className="w-6 h-6 dark:text-violet-400 text-violet-600 animate-spin" />
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function CompanyAssessmentSessionPage() {
     // Shouldn't normally reach here — completeAssessment handles redirect
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+        <CheckCircle2 className="w-10 h-10 dark:text-emerald-400 text-emerald-600" />
         <p className="text-foreground/60">Assessment complete. Generating results…</p>
         <Button
           onClick={async () => {
@@ -143,7 +143,7 @@ export default function CompanyAssessmentSessionPage() {
   const { question, progress } = nextQ;
   const dimMeta = DIMENSION_META[question.dimension] || {
     label: question.dimensionLabel,
-    color: "text-violet-400",
+    color: "dark:text-violet-400 text-violet-600",
     icon: BarChart3,
   };
   const DimIcon = dimMeta.icon;
@@ -157,7 +157,7 @@ export default function CompanyAssessmentSessionPage() {
       {/* Progress header bar */}
       <div className="rounded-xl border border-foreground/10 bg-foreground/5 px-5 py-3 mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Building2 className="w-4 h-4 text-violet-400 shrink-0" />
+          <Building2 className="w-4 h-4 dark:text-violet-400 text-violet-600 shrink-0" />
           <span className="text-sm font-medium text-foreground/70 truncate">Company HR AI Assessment</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -171,7 +171,7 @@ export default function CompanyAssessmentSessionPage() {
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="text-xs font-semibold text-violet-400 w-8 text-right">{progressPct}%</span>
+          <span className="text-xs font-semibold dark:text-violet-400 text-violet-600 w-8 text-right">{progressPct}%</span>
         </div>
       </div>
 
@@ -221,7 +221,7 @@ export default function CompanyAssessmentSessionPage() {
               onClick={() => setSelectedIdx(i)}
               className={`w-full text-left px-5 py-4 rounded-xl border transition-all ${
                 selectedIdx === i
-                  ? "bg-violet-500/15 border-violet-500 text-white ring-2 ring-violet-500/30"
+                  ? "dark:bg-violet-500/15 bg-violet-100/80 border-violet-500 text-white ring-2 ring-violet-500/30"
                   : "bg-foreground/5 border-foreground/10 text-foreground/70 hover:border-foreground/20 hover:bg-foreground/8"
               }`}
             >
@@ -252,7 +252,7 @@ export default function CompanyAssessmentSessionPage() {
               How confident are you in this answer?
             </span>
             {confidence === null && (
-              <span className="text-xs text-amber-400/80 italic">Select your confidence level</span>
+              <span className="text-xs dark:text-amber-400 text-amber-600/80 italic">Select your confidence level</span>
             )}
           </div>
           <div className="grid grid-cols-3 gap-3">

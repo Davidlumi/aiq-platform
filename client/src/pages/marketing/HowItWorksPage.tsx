@@ -89,7 +89,7 @@ export default function HowItWorksPage() {
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
             Assess. Diagnose. Close. <span style={{ color: green }}>Reassess.</span>
           </h1>
-          <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg dark:text-slate-300 text-slate-700 leading-relaxed max-w-2xl mx-auto">
             AiQ is a continuous loop. Each cycle produces measurable capability change. Each cycle gets sharper than the last.
           </p>
         </div>
@@ -152,15 +152,15 @@ export default function HowItWorksPage() {
           <h2 className="text-3xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
             The loop runs against your <span style={{ color: green }}>business AI roadmap.</span>
           </h2>
-          <p className="text-slate-300 leading-relaxed mb-6">
+          <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-6">
             The four steps above describe what happens for each HR person. The strategic layer is what happens at function level.
           </p>
-          <p className="text-slate-400 leading-relaxed mb-6">
+          <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-6">
             You capture your business's AI initiatives - the specific projects, timelines, and capability requirements.
             AiQ translates these into HR capability targets per role family per timeline. Every assessment, diagnosis,
             and development plan runs against those targets. Every reassessment updates the function-level view.
           </p>
-          <p className="text-slate-400 leading-relaxed mb-10">
+          <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-10">
             The result is a live view of where your function is against where it needs to be, updated every time
             someone in your function completes an assessment or a development module.
           </p>
@@ -173,7 +173,7 @@ export default function HowItWorksPage() {
               <div key={title} className="rounded-xl p-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: borderD }}>
                 <Icon className="w-6 h-6 mb-4" style={{ color: green }} />
                 <h3 className="font-semibold text-white mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{body}</p>
+                <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed">{body}</p>
               </div>
             ))}
           </div>

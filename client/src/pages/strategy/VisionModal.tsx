@@ -117,7 +117,7 @@ function isThresholdMet(inputs: VisionInputs): boolean {
 function SectionLabel({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <Icon className="w-3.5 h-3.5 text-teal-400" aria-hidden="true" />
+      <Icon className="w-3.5 h-3.5 dark:text-teal-400 text-teal-600" aria-hidden="true" />
       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</span>
     </div>
   );
@@ -171,7 +171,7 @@ function TierSlider({
             key={label}
             className={cn(
               "text-[10px] transition-colors",
-              i + 1 === value ? "font-bold text-teal-400" : "text-muted-foreground"
+              i + 1 === value ? "font-bold dark:text-teal-400 text-teal-600" : "text-muted-foreground"
             )}
             style={{ width: "25%", textAlign: i === 0 ? "left" : i === 3 ? "right" : "center" }}
           >
@@ -204,9 +204,9 @@ function ChipButton({
       className={cn(
         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
         selected && !locked
-          ? "bg-teal-500/20 border-teal-500/50 text-teal-300"
+          ? "dark:bg-teal-500/20 bg-teal-100 border-teal-500/50 dark:text-teal-300 text-teal-700"
           : locked
-          ? "bg-purple-500/20 border-purple-500/50 text-purple-300 cursor-default"
+          ? "dark:bg-purple-500/20 bg-purple-100 border-purple-500/50 dark:text-purple-300 text-purple-700 cursor-default"
           : "bg-foreground/5 border-foreground/10 text-muted-foreground hover:border-foreground/20 hover:text-foreground"
       )}
       aria-pressed={selected}
@@ -441,7 +441,7 @@ export function VisionModal({
         {/* ── Header ───────────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/8 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg dark:bg-teal-500/15 bg-teal-100/80 dark:text-teal-400 text-teal-600">
               <Target className="w-4 h-4" />
             </span>
             <div>
@@ -497,7 +497,7 @@ export function VisionModal({
                 {capabilityCount && capabilityCount > 0 ? (
                   <>
                     <p className="text-xs text-foreground/80">
-                      <span className="font-semibold text-teal-400">{capabilityScore?.toFixed(1) ?? "—"}</span>
+                      <span className="font-semibold dark:text-teal-400 text-teal-600">{capabilityScore?.toFixed(1) ?? "—"}</span>
                       <span className="text-muted-foreground">/10</span>
                       {capabilityLabel && <span className="ml-1.5 text-foreground/60">{capabilityLabel}</span>}
                     </p>
@@ -535,7 +535,7 @@ export function VisionModal({
             <div className="mb-5">
               <p className="text-xs text-muted-foreground mb-2.5">
                 What's the primary outcome you're chasing?{" "}
-                <span className="text-teal-400 text-[10px]">Required</span>
+                <span className="dark:text-teal-400 text-teal-600 text-[10px]">Required</span>
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {OUTCOME_OPTIONS.map(({ value, label, icon: Icon }) => {
@@ -550,7 +550,7 @@ export function VisionModal({
                       className={cn(
                         "flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                         selected
-                          ? "bg-teal-500/15 border-teal-500/50 text-teal-300"
+                          ? "dark:bg-teal-500/15 bg-teal-100/80 border-teal-500/50 dark:text-teal-300 text-teal-700"
                           : "bg-foreground/4 border-foreground/10 text-muted-foreground hover:border-foreground/20 hover:text-foreground"
                       )}
                     >
@@ -588,7 +588,7 @@ export function VisionModal({
             <div>
               <p className="text-xs text-muted-foreground mb-2.5">
                 Augmentation philosophy{" "}
-                <span className="text-teal-400 text-[10px]">Required</span>
+                <span className="dark:text-teal-400 text-teal-600 text-[10px]">Required</span>
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {PHILOSOPHY_OPTIONS.map(({ value, label, desc, icon: Icon }) => {
@@ -603,13 +603,13 @@ export function VisionModal({
                       className={cn(
                         "flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                         selected
-                          ? "bg-teal-500/15 border-teal-500/50"
+                          ? "dark:bg-teal-500/15 bg-teal-100/80 border-teal-500/50"
                           : "bg-foreground/4 border-foreground/10 hover:border-foreground/20"
                       )}
                     >
                       <div className="flex items-center gap-1.5">
-                        <Icon className={cn("w-3.5 h-3.5", selected ? "text-teal-400" : "text-muted-foreground")} aria-hidden="true" />
-                        <span className={cn("text-xs font-semibold", selected ? "text-teal-300" : "text-foreground")}>{label}</span>
+                        <Icon className={cn("w-3.5 h-3.5", selected ? "dark:text-teal-400 text-teal-600" : "text-muted-foreground")} aria-hidden="true" />
+                        <span className={cn("text-xs font-semibold", selected ? "dark:text-teal-300 text-teal-700" : "text-foreground")}>{label}</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground leading-snug">{desc}</p>
                     </button>
@@ -629,7 +629,7 @@ export function VisionModal({
             <div className="mb-5">
               <p className="text-xs text-muted-foreground mb-2.5">
                 Pain areas AI should address{" "}
-                <span className="text-teal-400 text-[10px]">Select at least 1</span>
+                <span className="dark:text-teal-400 text-teal-600 text-[10px]">Select at least 1</span>
               </p>
               <div className="flex flex-wrap gap-2">
                 {PAIN_AREA_OPTIONS.map((opt) => (
@@ -676,7 +676,7 @@ export function VisionModal({
             <div>
               <p className="text-xs text-muted-foreground mb-2.5">
                 Where to reinvest freed capacity{" "}
-                <span className="text-teal-400 text-[10px]">Select at least 1</span>
+                <span className="dark:text-teal-400 text-teal-600 text-[10px]">Select at least 1</span>
               </p>
               <div className="flex flex-wrap gap-2">
                 {REINVESTMENT_OPTIONS.map((opt) => (
@@ -739,7 +739,7 @@ export function VisionModal({
                     className={cn(
                       "px-4 py-1.5 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                       inputs.timeHorizonYears === yr
-                        ? "bg-teal-500/20 text-teal-300"
+                        ? "dark:bg-teal-500/20 bg-teal-100 dark:text-teal-300 text-teal-700"
                         : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                     )}
                   >
@@ -792,7 +792,7 @@ export function VisionModal({
                     Drafted from your answers and context · editable
                   </span>
                   {isStale && (
-                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full dark:bg-amber-500/15 bg-amber-100/80 dark:text-amber-400 text-amber-600 border border-amber-500/20">
                       <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
                       Inputs changed · regenerate to refresh
                     </span>
@@ -805,7 +805,7 @@ export function VisionModal({
                   className={cn(
                     "inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                     thresholdMet && !isGenerating
-                      ? "text-teal-400 hover:bg-teal-500/10"
+                      ? "dark:text-teal-400 text-teal-600 hover:bg-teal-500/10"
                       : "text-muted-foreground/40 cursor-not-allowed"
                   )}
                   aria-label="Regenerate draft"
@@ -829,7 +829,7 @@ export function VisionModal({
                     <div className="h-3 bg-foreground/8 rounded w-4/6" />
                   </div>
                 ) : draftError ? (
-                  <div className="flex items-center gap-2 text-xs text-red-400">
+                  <div className="flex items-center gap-2 text-xs dark:text-red-400 text-red-600">
                     <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" aria-label="Error" />
                     <span>{draftError}</span>
                     <button

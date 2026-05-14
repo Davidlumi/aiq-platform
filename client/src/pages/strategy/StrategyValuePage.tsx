@@ -67,8 +67,8 @@ function BlockSkeleton({ lines = 3 }: { lines?: number }) {
 function BlockError({ message }: { message: string }) {
   return (
     <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5 flex items-start gap-3">
-      <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-      <p className="text-sm text-red-400">{message}</p>
+      <AlertTriangle className="w-4 h-4 dark:text-red-400 text-red-600 mt-0.5 shrink-0" />
+      <p className="text-sm dark:text-red-400 text-red-600">{message}</p>
     </div>
   );
 }
@@ -177,7 +177,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
           <DialogTitle className="text-base font-semibold text-foreground">{item.display_name}</DialogTitle>
           <div className="flex items-center gap-2 flex-wrap mt-1">
             <ValueTypeBadge type={item.value_type} />
-            {qv && <span className="text-xs text-emerald-400 font-medium">{fmtRange(qv.low, qv.high)}</span>}
+            {qv && <span className="text-xs dark:text-emerald-400 text-emerald-600 font-medium">{fmtRange(qv.low, qv.high)}</span>}
             <span className="text-[10px] text-muted-foreground">Confidence: <ConfidenceBadge confidence={item.confidence} /></span>
           </div>
         </DialogHeader>
@@ -220,8 +220,8 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
                     </tr>
                     <tr className="border-b border-foreground/5 bg-white/2">
                       <td className="px-3 py-2 font-semibold text-foreground">3-year value (annual × 3)</td>
-                      <td className="px-3 py-2 text-right font-semibold text-emerald-400">{fmt(qv.low * 3)}</td>
-                      <td className="px-3 py-2 text-right font-semibold text-emerald-400">{fmt(qv.high * 3)}</td>
+                      <td className="px-3 py-2 text-right font-semibold dark:text-emerald-400 text-emerald-600">{fmt(qv.low * 3)}</td>
+                      <td className="px-3 py-2 text-right font-semibold dark:text-emerald-400 text-emerald-600">{fmt(qv.high * 3)}</td>
                     </tr>
                     {item.payback_months && (
                       <tr>
@@ -241,14 +241,14 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
             <ul className="space-y-1.5">
               {item.sources.length > 0 ? item.sources.map((s, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                  <CheckCircle2 className="w-3 h-3 dark:text-emerald-400 text-emerald-600 mt-0.5 shrink-0" />
                   Improvement benchmarks sourced from: <span className="text-foreground/80 font-medium">{s}</span>
                 </li>
               )) : (
                 <li className="text-xs text-muted-foreground italic">No named sources available for this initiative.</li>
               )}
               {item.uses_sector_default && (
-                <li className="flex items-start gap-2 text-xs text-amber-400">
+                <li className="flex items-start gap-2 text-xs dark:text-amber-400 text-amber-600">
                   <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
                   Sector default values used — confirm operational baseline with Finance for accuracy.
                 </li>
@@ -273,8 +273,8 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
                     {sensitivityRows.map((row, i) => (
                       <tr key={i} className={i < sensitivityRows.length - 1 ? "border-b border-foreground/5" : ""}>
                         <td className="px-3 py-2 text-foreground/80">{row.assumption}</td>
-                        <td className="px-3 py-2 text-right text-red-400">{row.minus}</td>
-                        <td className="px-3 py-2 text-right text-emerald-400">{row.plus}</td>
+                        <td className="px-3 py-2 text-right dark:text-red-400 text-red-600">{row.minus}</td>
+                        <td className="px-3 py-2 text-right dark:text-emerald-400 text-emerald-600">{row.plus}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -290,7 +290,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
               <ul className="space-y-1">
                 {item.sources.map((s, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <BookOpen className="w-3 h-3 text-blue-400 mt-0.5 shrink-0" />
+                    <BookOpen className="w-3 h-3 dark:text-blue-400 text-blue-600 mt-0.5 shrink-0" />
                     {s}
                   </li>
                 ))}
@@ -307,7 +307,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
               <ul className="space-y-1">
                 {item.qualitative_value.map((q, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <Sparkles className="w-3 h-3 text-violet-400 mt-0.5 shrink-0" />
+                    <Sparkles className="w-3 h-3 dark:text-violet-400 text-violet-600 mt-0.5 shrink-0" />
                     {q}
                   </li>
                 ))}
@@ -596,14 +596,14 @@ export default function StrategyValuePage() {
               >
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Gross value</div>
-                  <div className="text-lg font-bold text-emerald-400">{fmtRange(ve.total_quantified_value_gbp.low, ve.total_quantified_value_gbp.high)}</div>
+                  <div className="text-lg font-bold dark:text-emerald-400 text-emerald-600">{fmtRange(ve.total_quantified_value_gbp.low, ve.total_quantified_value_gbp.high)}</div>
                 </div>
                 <div className="text-xl font-light text-muted-foreground px-1">−</div>
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">TCO</div>
-                  <div className="text-lg font-bold text-red-400">{fmtRange(ve.tco.total_3yr_gbp.low, ve.tco.total_3yr_gbp.high)}</div>
+                  <div className="text-lg font-bold dark:text-red-400 text-red-600">{fmtRange(ve.tco.total_3yr_gbp.low, ve.tco.total_3yr_gbp.high)}</div>
                   <button
-                    className="text-[10px] text-blue-400 hover:underline flex items-center gap-0.5 mx-auto mt-0.5"
+                    className="text-[10px] dark:text-blue-400 text-blue-600 hover:underline flex items-center gap-0.5 mx-auto mt-0.5"
                     onClick={() => navigate("/strategy/investment-risk")}
                   >
                     from Investment &amp; Risk <ExternalLink className="w-2.5 h-2.5" />
@@ -612,28 +612,28 @@ export default function StrategyValuePage() {
                 <div className="text-xl font-light text-muted-foreground px-1">=</div>
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Net value</div>
-                  <div className="text-lg font-bold text-blue-400">{fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}</div>
+                  <div className="text-lg font-bold dark:text-blue-400 text-blue-600">{fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}</div>
                 </div>
               </div>
 
               {/* 3 primary value cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/8 p-4 relative">
+                <div className="rounded-lg border dark:border-emerald-500/30 border-emerald-300 bg-emerald-500/8 p-4 relative">
                   <div className="absolute top-2 right-2">
-                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Primary metric</span>
+                    <span className="text-[9px] font-bold dark:text-emerald-400 text-emerald-600 dark:bg-emerald-500/15 bg-emerald-100/80 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Primary metric</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Net value</div>
-                  <div className="text-2xl font-bold text-emerald-400">{fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}</div>
+                  <div className="text-2xl font-bold dark:text-emerald-400 text-emerald-600">{fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}</div>
                   <div className="text-[11px] text-muted-foreground mt-1">over 3 years</div>
                 </div>
-                <div className="rounded-lg border border-blue-500/25 bg-blue-500/6 p-4">
+                <div className="rounded-lg border dark:border-blue-500/25 border-blue-300 bg-blue-500/6 p-4">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Payback period</div>
-                  <div className="text-2xl font-bold text-blue-400">{fmtMonths(ve.payback_period_months)}</div>
-                  <div className="text-[11px] text-blue-300/70 mt-1">Unusually fast — verify with Finance</div>
+                  <div className="text-2xl font-bold dark:text-blue-400 text-blue-600">{fmtMonths(ve.payback_period_months)}</div>
+                  <div className="text-[11px] dark:text-blue-300 text-blue-700/70 mt-1">Unusually fast — verify with Finance</div>
                 </div>
-                <div className="rounded-lg border border-violet-500/25 bg-violet-500/6 p-4">
+                <div className="rounded-lg border dark:border-violet-500/25 border-violet-300 bg-violet-500/6 p-4">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Qualitative outcomes</div>
-                  <div className="text-2xl font-bold text-violet-400">{qualOnlyCount}</div>
+                  <div className="text-2xl font-bold dark:text-violet-400 text-violet-600">{qualOnlyCount}</div>
                   <div className="text-[11px] text-muted-foreground mt-1">non-monetised, see breakdown below</div>
                 </div>
               </div>
@@ -645,9 +645,9 @@ export default function StrategyValuePage() {
 
           {/* ── Block 2: Permanent caveat banner ─────────────────────────────── */}
           {ve && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-4 flex items-start gap-3 mb-4">
-              <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-200/80 leading-relaxed">{ve.caveat}</p>
+            <div className="rounded-xl border dark:border-amber-500/25 border-amber-300 bg-amber-500/6 p-4 flex items-start gap-3 mb-4">
+              <Info className="w-4 h-4 dark:text-amber-400 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-xs dark:text-amber-200 text-amber-700/80 leading-relaxed">{ve.caveat}</p>
             </div>
           )}
 
@@ -709,7 +709,7 @@ export default function StrategyValuePage() {
                           <td className="px-4 py-3"><ValueTypeBadge type={item.value_type} /></td>
                           <td className="px-4 py-3 text-right">
                             {item.quantified_value_gbp ? (
-                              <span className="text-emerald-400 font-medium">{fmtRange(item.quantified_value_gbp.low, item.quantified_value_gbp.high)}</span>
+                              <span className="dark:text-emerald-400 text-emerald-600 font-medium">{fmtRange(item.quantified_value_gbp.low, item.quantified_value_gbp.high)}</span>
                             ) : (
                               <span className="text-muted-foreground italic">Qualitative</span>
                             )}
@@ -737,7 +737,7 @@ export default function StrategyValuePage() {
                       <div className="text-[11px] text-muted-foreground">Time savings, cost reduction, headcount avoidance</div>
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-emerald-400 shrink-0">{fmtRange(ve.tiered_value.efficiency.low, ve.tiered_value.efficiency.high)}</div>
+                  <div className="text-sm font-semibold dark:text-emerald-400 text-emerald-600 shrink-0">{fmtRange(ve.tiered_value.efficiency.low, ve.tiered_value.efficiency.high)}</div>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/6 border border-blue-500/15">
                   <div className="flex items-center gap-3">
@@ -747,7 +747,7 @@ export default function StrategyValuePage() {
                       <div className="text-[11px] text-muted-foreground">Quality of hire, attrition reduction, engagement</div>
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-blue-400 shrink-0">{fmtRange(ve.tiered_value.effectiveness.low, ve.tiered_value.effectiveness.high)}</div>
+                  <div className="text-sm font-semibold dark:text-blue-400 text-blue-600 shrink-0">{fmtRange(ve.tiered_value.effectiveness.low, ve.tiered_value.effectiveness.high)}</div>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-violet-500/6 border border-violet-500/15">
                   <div className="flex items-center gap-3">
@@ -757,7 +757,7 @@ export default function StrategyValuePage() {
                       <div className="text-[11px] text-muted-foreground">Risk avoidance, capability uplift, compliance</div>
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-violet-400 shrink-0">{fmtRange(ve.tiered_value.strategic.low, ve.tiered_value.strategic.high)}</div>
+                  <div className="text-sm font-semibold dark:text-violet-400 text-violet-600 shrink-0">{fmtRange(ve.tiered_value.strategic.low, ve.tiered_value.strategic.high)}</div>
                 </div>
               </div>
               {/* Reconciliation line */}
@@ -773,7 +773,7 @@ export default function StrategyValuePage() {
                   </div>
                   <div className="border-t border-border pt-1.5 flex justify-between text-xs">
                     <span className="text-muted-foreground">Difference</span>
-                    <span className="font-medium text-amber-400">{fmtRange(Math.abs(ve.net_value_gbp.low - tierSum.low), Math.abs(ve.net_value_gbp.high - tierSum.high))}</span>
+                    <span className="font-medium dark:text-amber-400 text-amber-600">{fmtRange(Math.abs(ve.net_value_gbp.low - tierSum.low), Math.abs(ve.net_value_gbp.high - tierSum.high))}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground leading-relaxed pt-1">
                     The three-tier view is a narrative frame for board presentation. The difference reflects overlapping value across initiatives and qualitative outcomes monetised in the per-initiative breakdown but not categorised in the three-tier frame.
@@ -823,7 +823,7 @@ export default function StrategyValuePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="rounded-lg border border-blue-500/20 bg-blue-500/6 p-4">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">NPV at {discountRate.toFixed(1)}%</div>
-                  <div className="text-xl font-bold text-blue-400" aria-live="polite">
+                  <div className="text-xl font-bold dark:text-blue-400 text-blue-600" aria-live="polite">
                     {fmtRange(ve.financial_model.npv_gbp.low, ve.financial_model.npv_gbp.high)}
                   </div>
                   {ve15 && discountRate !== 15 && (
@@ -843,11 +843,11 @@ export default function StrategyValuePage() {
               </p>
               {/* IRR suppression warning */}
               {ve.financial_model.irr_suppressed && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/8 p-3 flex items-start gap-2" role="alert">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                <div className="rounded-lg border dark:border-amber-500/30 border-amber-300 bg-amber-500/8 p-3 flex items-start gap-2" role="alert">
+                  <AlertTriangle className="w-4 h-4 dark:text-amber-400 text-amber-600 mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-xs font-semibold text-amber-400 mb-0.5">IRR not shown</div>
-                    <p className="text-[11px] text-amber-200/70 leading-relaxed">
+                    <div className="text-xs font-semibold dark:text-amber-400 text-amber-600 mb-0.5">IRR not shown</div>
+                    <p className="text-[11px] dark:text-amber-200 text-amber-700/70 leading-relaxed">
                       IRR is unreliable at this investment scale. When annual value significantly exceeds implementation cost, IRR becomes mathematically extreme and loses meaning as a decision metric. Use NPV and payback period as the primary financial metrics for board presentation.
                     </p>
                   </div>
@@ -915,7 +915,7 @@ export default function StrategyValuePage() {
                   <ul className="space-y-2">
                     {ve.qualitative_summary.bullet_points.map((b: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-violet-400 mt-0.5 shrink-0" />
+                        <CheckCircle2 className="w-3.5 h-3.5 dark:text-violet-400 text-violet-600 mt-0.5 shrink-0" />
                         <div>
                           <div className="text-sm text-foreground/90">{b}</div>
                           <div className="text-[10px] text-muted-foreground mt-0.5">
@@ -934,18 +934,18 @@ export default function StrategyValuePage() {
           {ve?.reinvestment_plan && (
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">Forward-looking guidance</span>
+                <span className="text-[9px] font-bold dark:text-emerald-400 text-emerald-600 dark:bg-emerald-500/15 bg-emerald-100/80 px-2 py-0.5 rounded-full uppercase tracking-wide">Forward-looking guidance</span>
               </div>
               {/* Explicit don't-commit framing */}
               <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/8 p-3 mb-3">
-                <p className="text-xs text-emerald-200/80 leading-relaxed italic">
+                <p className="text-xs dark:text-emerald-200 text-emerald-700/80 leading-relaxed italic">
                   "This is forward-looking guidance for when value is being realised. Don't commit reinvestment capital until your strategy has shown evidence of delivery against forecast — typically 12 months into execution with quantified value tracked."
                 </p>
               </div>
               <h2 className="text-sm font-semibold text-foreground mb-1">{ve.reinvestment_plan.headline}</h2>
               <p className="text-xs text-muted-foreground leading-relaxed mb-3">{ve.reinvestment_plan.narrative}</p>
               {ve.reinvestment_plan.suggested_reinvestment_gbp && (
-                <div className="text-sm font-medium text-emerald-400 mb-3">
+                <div className="text-sm font-medium dark:text-emerald-400 text-emerald-600 mb-3">
                   Future reinvestment guide: {fmt(ve.reinvestment_plan.suggested_reinvestment_gbp)}
                 </div>
               )}
@@ -954,7 +954,7 @@ export default function StrategyValuePage() {
                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Phase 2 focus areas</div>
                   <div className="flex flex-wrap gap-1.5">
                     {ve.reinvestment_plan.phase2_focus_areas.map((a: string, i: number) => (
-                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/15">{a}</span>
+                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 dark:text-emerald-300 text-emerald-700 border border-emerald-500/15">{a}</span>
                     ))}
                   </div>
                 </div>
@@ -964,17 +964,17 @@ export default function StrategyValuePage() {
 
           {/* ── Block 11: CEO sponsorship recommendation (conditional) ─────────── */}
           {ve?.ceo_sponsorship_required && ve.ceo_sponsorship && (
-            <div className="rounded-xl border border-violet-500/25 bg-violet-500/6 p-5 mb-4">
+            <div className="rounded-xl border dark:border-violet-500/25 border-violet-300 bg-violet-500/6 p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-[9px] font-bold text-violet-400 bg-violet-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">Sponsorship</span>
+                <span className="text-[9px] font-bold dark:text-violet-400 text-violet-600 dark:bg-violet-500/15 bg-violet-100/80 px-2 py-0.5 rounded-full uppercase tracking-wide">Sponsorship</span>
               </div>
               <div className="flex items-start gap-3">
-                <Users className="w-5 h-5 text-violet-400 mt-0.5 shrink-0" />
+                <Users className="w-5 h-5 dark:text-violet-400 text-violet-600 mt-0.5 shrink-0" />
                 <div>
                   <h2 className="text-sm font-semibold text-foreground mb-1">CEO sponsorship recommended</h2>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">{ve.ceo_sponsorship.rationale}</p>
                   <div className="rounded-lg border border-violet-500/15 bg-violet-500/8 p-3">
-                    <div className="text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-1">Recommended action</div>
+                    <div className="text-[10px] font-bold dark:text-violet-400 text-violet-600 uppercase tracking-widest mb-1">Recommended action</div>
                     <p className="text-xs text-muted-foreground leading-relaxed">{ve.ceo_sponsorship.suggested_framing}</p>
                   </div>
                 </div>

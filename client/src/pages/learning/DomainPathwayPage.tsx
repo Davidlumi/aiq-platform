@@ -266,7 +266,7 @@ export default function DomainPathwayPage() {
                           </Badge>
                         )}
                         {level.complete && (
-                          <Badge className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                          <Badge className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 dark:text-emerald-400 text-emerald-600 border-emerald-500/30">
                             Complete
                           </Badge>
                         )}

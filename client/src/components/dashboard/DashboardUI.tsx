@@ -207,7 +207,7 @@ export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null
   if (value === null || value === 0) return <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>;
   const positive = value > 0;
   return (
-    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "text-red-400")}>
+    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "dark:text-red-400 text-red-600")}>
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{value} {suffix}
     </span>
@@ -312,7 +312,7 @@ export function HeatmapCell({
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
         {headcount != null && <p>{headcount} assessed</p>}
-        {gap != null && gap > 0 && <p className="text-red-400">{gap} pts below target</p>}
+        {gap != null && gap > 0 && <p className="dark:text-red-400 text-red-600">{gap} pts below target</p>}
         {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
         <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
       </TooltipContent>
@@ -455,7 +455,7 @@ export function EmptyState({ title, description, action }: { title: string; desc
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-        <Info className="w-7 h-7 text-neutral-400" />
+        <Info className="w-7 h-7 dark:text-neutral-400 text-neutral-600" />
       </div>
       <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
       <p className="text-xs text-muted-foreground max-w-sm">{description}</p>
@@ -467,5 +467,5 @@ export function EmptyState({ title, description, action }: { title: string; desc
 // --- Drill-down Chevron ------------------------------------------------------
 
 export function DrillChevron() {
-  return <ChevronRight className="w-4 h-4 text-neutral-400 shrink-0" />;
+  return <ChevronRight className="w-4 h-4 dark:text-neutral-400 text-neutral-600 shrink-0" />;
 }

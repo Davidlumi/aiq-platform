@@ -69,7 +69,7 @@ function HeatmapScoreCell({ score, headcount }: { score: number | null; headcoun
     return (
       <td className="border border-border text-center p-0">
         <div className="h-11 flex items-center justify-center bg-secondary/30">
-          <span className="text-xs text-neutral-300 font-medium">-</span>
+          <span className="text-xs dark:text-neutral-300 text-neutral-700 font-medium">-</span>
         </div>
       </td>
     );
@@ -112,7 +112,7 @@ function OverallScoreCell({ score, headcount }: { score: number | null; headcoun
     return (
       <td className="border border-border text-center p-0">
         <div className="h-11 flex items-center justify-center bg-secondary/30">
-          <span className="text-xs text-neutral-300 font-medium">-</span>
+          <span className="text-xs dark:text-neutral-300 text-neutral-700 font-medium">-</span>
         </div>
       </td>
     );
@@ -307,7 +307,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                         <span className="text-xs font-semibold text-neutral-600 leading-tight whitespace-nowrap">
                           {shortDomainLabel(dk)}
                         </span>
-                        <span className="text-xs text-neutral-400 font-normal">Overall score</span>
+                        <span className="text-xs dark:text-neutral-400 text-neutral-600 font-normal">Overall score</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">{domainLabels[dk]}</TooltipContent>
@@ -356,12 +356,12 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                     className={cn(
                       "group transition-colors",
                       idx % 2 === 0 ? "bg-card" : "bg-secondary/50",
-                      "hover:bg-blue-900/15",
+                      "dark:dark:hover:bg-blue-900/15 hover:bg-blue-50 hover:bg-blue-50",
                     )}
                   >
                     <td className={cn(
                       "sticky left-0 z-10 py-0 px-4 border-b border-r border-border",
-                      idx % 2 === 0 ? "bg-card group-hover:bg-blue-900/15" : "bg-secondary/50 group-hover:bg-blue-900/15",
+                      idx % 2 === 0 ? "bg-card group-dark:dark:hover:bg-blue-900/15 hover:bg-blue-50 hover:bg-blue-50" : "bg-secondary/50 group-dark:dark:hover:bg-blue-900/15 hover:bg-blue-50 hover:bg-blue-50",
                     )}>
                       <div className="flex items-center gap-2 py-2.5">
                         <button
@@ -371,7 +371,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                         >
                           {isExpanded
                             ? <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
-                            : <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                            : <ChevronRight className="w-3.5 h-3.5 dark:text-neutral-400 text-neutral-600" />
                           }
                         </button>
                         <div className="min-w-0">

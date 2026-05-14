@@ -32,7 +32,7 @@ export default function ProductPage() {
             Three views. One platform.{" "}
             <span style={{ color: green }}>All answering the same question.</span>
           </h1>
-          <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg dark:text-slate-300 text-slate-700 leading-relaxed max-w-2xl mx-auto">
             AiQ is a single platform with three distinct views - for the individual, for the manager, and for you.
             Each view is designed for a different question. All three are live, connected, and updating continuously.
           </p>
@@ -83,13 +83,13 @@ export default function ProductPage() {
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold" style={{ color: navy }}>Overall AI Readiness</span>
-                  <span className="text-2xl font-black" style={{ color: navy }}>7.2 <span className="text-sm font-normal text-slate-400">/ 10</span></span>
+                  <span className="text-2xl font-black" style={{ color: navy }}>7.2 <span className="text-sm font-normal dark:text-slate-400 text-slate-600">/ 10</span></span>
                 </div>
                 <div className="h-2 rounded-full" style={{ background: "#E2E8F0" }}>
                   <div className="h-full rounded-full" style={{ width: "72%", background: green }} />
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-slate-400">Foundation</span>
+                  <span className="text-xs dark:text-slate-400 text-slate-600">Foundation</span>
                   <span className="text-xs font-medium" style={{ color: green }}>72nd percentile for Senior HRBP</span>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function ProductPage() {
                   <div key={name} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }}>
                     <div>
                       <p className="text-white text-sm font-semibold">{name}</p>
-                      <p className="text-slate-400 text-xs">{role}</p>
+                      <p className="dark:text-slate-400 text-slate-600 text-xs">{role}</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-white font-bold">{score}</span>
@@ -149,7 +149,7 @@ export default function ProductPage() {
               </div>
               <div className="mt-5 rounded-lg p-4 border" style={{ borderColor: borderD, background: "rgba(255,255,255,0.02)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: green }}>1:1 prompt - Tom Bradley</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Foundation gap in AI Output Evaluation. Discuss the hallucination recognition module before Project Aurora kickoff.</p>
+                <p className="text-xs dark:text-slate-400 text-slate-600 leading-relaxed">Foundation gap in AI Output Evaluation. Discuss the hallucination recognition module before Project Aurora kickoff.</p>
               </div>
             </div>
             <div className="order-1 lg:order-2">
@@ -162,11 +162,11 @@ export default function ProductPage() {
                   <h2 className="font-bold text-xl text-white">What every line manager sees</h2>
                 </div>
               </div>
-              <p className="text-slate-300 leading-relaxed mb-6">
+              <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-6">
                 Every line manager sees their team's capability state - who's where, who's progressing,
                 who's stalled, and what's worth discussing in next week's 1:1s.
               </p>
-              <p className="text-slate-400 leading-relaxed mb-8">
+              <p className="dark:text-slate-400 text-slate-600 leading-relaxed mb-8">
                 Not a heatmap. A briefing. Specific conversation prompts surface the development context
                 that matters - the gap that's relevant to the project they're about to kick off, the
                 module that's sitting incomplete, the reassessment that's showing the gap isn't closing.
@@ -181,7 +181,7 @@ export default function ProductPage() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#047857" }} />
-                    <p className="text-slate-400 text-sm leading-relaxed">{item}</p>
+                    <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed">{item}</p>
                   </div>
                 ))}
               </div>
@@ -240,8 +240,8 @@ export default function ProductPage() {
                   <div className="h-full rounded-full" style={{ width: "67%", background: "#D97706" }} />
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-slate-400">67% of target</span>
-                  <span className="text-xs text-slate-400">Target: Q3 2027</span>
+                  <span className="text-xs dark:text-slate-400 text-slate-600">67% of target</span>
+                  <span className="text-xs dark:text-slate-400 text-slate-600">Target: Q3 2027</span>
                 </div>
               </div>
               <div className="flex flex-col gap-2 mb-5">
@@ -280,7 +280,7 @@ export default function ProductPage() {
             <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
               Board-ready artefacts when you need them.
             </h2>
-            <p className="text-slate-300 leading-relaxed">
+            <p className="dark:text-slate-300 text-slate-700 leading-relaxed">
               Every dashboard zone produces shareable export artefacts designed for board and executive committee use.
               Not screenshots of your dashboard - designed documents that translate function-level intelligence into
               briefing material your audience can read in five minutes and forward without explanation.
@@ -296,7 +296,7 @@ export default function ProductPage() {
               <div key={title} className="rounded-xl p-6 border" style={{ background: "rgba(255,255,255,0.04)", borderColor: borderD }}>
                 <Shield className="w-5 h-5 mb-3" style={{ color: green }} />
                 <h3 className="font-semibold text-white mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{body}</p>
+                <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed">{body}</p>
               </div>
             ))}
           </div>
@@ -338,10 +338,10 @@ export default function ProductPage() {
       <section style={{ background: navy }} className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>See it for yourself.</h2>
-          <p className="text-slate-300 leading-relaxed mb-4">
+          <p className="dark:text-slate-300 text-slate-700 leading-relaxed mb-4">
             Beta partners get full platform access plus direct access to the team building it.
           </p>
-          <p className="text-slate-400 text-sm leading-relaxed mb-10">
+          <p className="dark:text-slate-400 text-slate-600 text-sm leading-relaxed mb-10">
             The conversation starts with understanding your specific situation - whether AiQ is right for you depends
             on your function size, your business AI commitments, and your appetite for working with a product that's still maturing.
           </p>

@@ -687,7 +687,7 @@ export function ReviewQueue() {
                 <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
                 <div className="flex justify-center mt-1">
                   {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={cn("h-3 w-3", i <= Math.round(value as number) ? "text-amber-400 fill-amber-400" : "text-muted")} />
+                    <Star key={i} className={cn("h-3 w-3", i <= Math.round(value as number) ? "dark:text-amber-400 text-amber-600 fill-amber-400" : "text-muted")} />
                   ))}
                 </div>
               </div>

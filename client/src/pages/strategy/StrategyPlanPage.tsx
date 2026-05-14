@@ -38,10 +38,10 @@ const PHASE_CONFIG: Record<string, {
   label: string; short: string; color: string; bg: string;
   months: string; description: string;
 }> = {
-  Q1: { label: "Phase 1 — Foundation", short: "Foundation", color: "#60A5FA", bg: "bg-blue-500/10 text-blue-300 border-blue-500/20",   months: "Months 1–3",   description: "Governance, literacy, and quick wins that de-risk everything that follows." },
-  Q2: { label: "Phase 2 — Build",      short: "Build",       color: "#A78BFA", bg: "bg-violet-500/10 text-violet-300 border-violet-500/20", months: "Months 4–6",   description: "Core tooling and process automation across priority HR workflows." },
-  Q3: { label: "Phase 3 — Scale",      short: "Scale",       color: "#4ADE80", bg: "bg-green-500/10 text-green-300 border-green-500/20",   months: "Months 7–12",  description: "Expand proven use cases, integrate analytics, and embed AI in BAU." },
-  Q4: { label: "Phase 4 — Optimise",   short: "Optimise",    color: "#FBBF24", bg: "bg-amber-500/10 text-amber-300 border-amber-500/20",   months: "Months 13–18", description: "Continuous improvement, advanced analytics, and operating model maturation." },
+  Q1: { label: "Phase 1 — Foundation", short: "Foundation", color: "#60A5FA", bg: "bg-blue-500/10 dark:text-blue-300 text-blue-700 border-blue-500/20",   months: "Months 1–3",   description: "Governance, literacy, and quick wins that de-risk everything that follows." },
+  Q2: { label: "Phase 2 — Build",      short: "Build",       color: "#A78BFA", bg: "bg-violet-500/10 dark:text-violet-300 text-violet-700 border-violet-500/20", months: "Months 4–6",   description: "Core tooling and process automation across priority HR workflows." },
+  Q3: { label: "Phase 3 — Scale",      short: "Scale",       color: "#4ADE80", bg: "bg-green-500/10 dark:text-green-300 text-green-700 border-green-500/20",   months: "Months 7–12",  description: "Expand proven use cases, integrate analytics, and embed AI in BAU." },
+  Q4: { label: "Phase 4 — Optimise",   short: "Optimise",    color: "#FBBF24", bg: "bg-amber-500/10 dark:text-amber-300 text-amber-700 border-amber-500/20",   months: "Months 13–18", description: "Continuous improvement, advanced analytics, and operating model maturation." },
 };
 
 const PHASE_COST: Record<string, { low: number; high: number }> = {
@@ -91,10 +91,10 @@ const STATUS_CONFIG: Record<string, {
   label: string; icon: React.ReactNode; bg: string; dot: string;
 }> = {
   not_started: { label: "Not started", icon: <Circle className="w-3 h-3" />,        bg: "bg-muted text-muted-foreground border-border",         dot: "bg-zinc-500" },
-  in_progress:  { label: "In flight",   icon: <Loader2 className="w-3 h-3 animate-spin" />, bg: "bg-blue-500/10 text-blue-300 border-blue-500/20",   dot: "bg-blue-400" },
-  paused:       { label: "Blocked",     icon: <PauseCircle className="w-3 h-3" />,   bg: "bg-amber-500/10 text-amber-300 border-amber-500/20", dot: "bg-amber-400" },
-  completed:    { label: "Completed",   icon: <CheckCircle2 className="w-3 h-3" />,  bg: "bg-green-500/10 text-green-300 border-green-500/20", dot: "bg-green-400" },
-  cancelled:    { label: "Cancelled",   icon: <XCircle className="w-3 h-3" />,       bg: "bg-red-500/10 text-red-400 border-red-500/20",       dot: "bg-red-400" },
+  in_progress:  { label: "In flight",   icon: <Loader2 className="w-3 h-3 animate-spin" />, bg: "bg-blue-500/10 dark:text-blue-300 text-blue-700 border-blue-500/20",   dot: "bg-blue-400" },
+  paused:       { label: "Blocked",     icon: <PauseCircle className="w-3 h-3" />,   bg: "bg-amber-500/10 dark:text-amber-300 text-amber-700 border-amber-500/20", dot: "bg-amber-400" },
+  completed:    { label: "Completed",   icon: <CheckCircle2 className="w-3 h-3" />,  bg: "bg-green-500/10 dark:text-green-300 text-green-700 border-green-500/20", dot: "bg-green-400" },
+  cancelled:    { label: "Cancelled",   icon: <XCircle className="w-3 h-3" />,       bg: "bg-red-500/10 dark:text-red-400 text-red-600 border-red-500/20",       dot: "bg-red-400" },
 };
 
 const FOUNDATION_CATEGORIES = new Set(["Change & Capability", "Governance & Ethics", "HR Operations", "Ethics & Governance"]);
@@ -156,7 +156,7 @@ function CostImpactPreview({ phase, currentCount }: { phase: string; currentCoun
   const high = cfg.high * (currentCount + 1);
   return (
     <div className="mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
-      <div className="flex items-center gap-1.5 text-amber-400 font-medium mb-1">
+      <div className="flex items-center gap-1.5 dark:text-amber-400 text-amber-600 font-medium mb-1">
         <BarChart2 className="w-3.5 h-3.5" />
         Cost impact preview
       </div>
@@ -201,7 +201,7 @@ function InitiativeDetailModal({ initiative, open, onClose }: {
               </Badge>
             )}
             {initiative.regulatoryFlag && (
-              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-400 border-red-500/20">
+              <Badge variant="outline" className="text-xs bg-red-500/10 dark:text-red-400 text-red-600 border-red-500/20">
                 {initiative.regulatoryFlag}
               </Badge>
             )}
@@ -216,7 +216,7 @@ function InitiativeDetailModal({ initiative, open, onClose }: {
             </div>
           )}
           {initiative.statusReason && (
-            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-amber-300">
+            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs dark:text-amber-300 text-amber-700">
               <span className="font-medium">Block reason: </span>{initiative.statusReason}
             </div>
           )}
@@ -253,7 +253,7 @@ function RemoveConfirmModal({ initiative, open, onClose, onConfirm, phaseCount }
             Remove <span className="font-medium text-foreground">{initiative.name}</span> from your strategy? This cannot be undone from this page — you can re-add it via the initiative selector.
           </p>
           <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
-            <div className="flex items-center gap-1.5 text-amber-400 font-medium mb-1">
+            <div className="flex items-center gap-1.5 dark:text-amber-400 text-amber-600 font-medium mb-1">
               <BarChart2 className="w-3.5 h-3.5" />
               Cost impact preview
             </div>
@@ -755,7 +755,7 @@ export default function StrategyPlanPage() {
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
             </div>
           ) : isError ? (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm dark:text-red-400 text-red-600">
               Failed to load plan data. Please refresh.
             </div>
           ) : (
@@ -801,9 +801,9 @@ export default function StrategyPlanPage() {
               {/* Blocked-initiative banner */}
               {blockedInits.length > 0 && (
                 <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 dark:text-amber-400 text-amber-600 shrink-0 mt-0.5" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-amber-300">
+                    <p className="text-sm font-medium dark:text-amber-300 text-amber-700">
                       {blockedInits.length} initiative{blockedInits.length > 1 ? "s" : ""} blocked
                     </p>
                     {blockedInits.slice(0, 2).map(init => (
@@ -817,7 +817,7 @@ export default function StrategyPlanPage() {
                     )}
                   </div>
                   <button
-                    className="ml-auto shrink-0 text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                    className="ml-auto shrink-0 text-xs dark:text-amber-400 text-amber-600 hover:dark:text-amber-300 text-amber-700 transition-colors"
                     onClick={() => { setStatusFilter("paused"); (window as any).umami?.track("strategy.plan.blocked-banner.clicked"); }}
                   >
                     View all →
@@ -851,7 +851,7 @@ export default function StrategyPlanPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="w-2 h-2 rounded-full mt-1" style={{ backgroundColor: cfg.color }} />
                     {blocked > 0 && (
-                      <span className="text-[10px] text-amber-400 font-medium flex items-center gap-0.5">
+                      <span className="text-[10px] dark:text-amber-400 text-amber-600 font-medium flex items-center gap-0.5">
                         <AlertTriangle className="w-2.5 h-2.5" />
                         {blocked} blocked
                       </span>
@@ -908,7 +908,7 @@ export default function StrategyPlanPage() {
             <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Initiatives
               {(phaseFilter || functionFilter || statusFilter) && (
-                <span className="ml-2 text-violet-400 normal-case font-normal">
+                <span className="ml-2 dark:text-violet-400 text-violet-600 normal-case font-normal">
                   (filtered — <button onClick={() => { setPhaseFilter(null); setFunctionFilter(null); setStatusFilter(null); }} className="underline hover:no-underline">clear</button>)
                 </span>
               )}
@@ -946,7 +946,7 @@ export default function StrategyPlanPage() {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
             </div>
           ) : isError ? (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm dark:text-red-400 text-red-600">
               Failed to load initiatives. Please refresh.
             </div>
           ) : filteredList.length === 0 ? (
@@ -1003,7 +1003,7 @@ export default function StrategyPlanPage() {
                           readonly={viewMode === "executive"}
                         />
                         {init.regulatoryFlag && (
-                          <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-400 border-red-500/20">
+                          <Badge variant="outline" className="text-[10px] bg-red-500/10 dark:text-red-400 text-red-600 border-red-500/20">
                             {init.regulatoryFlag}
                           </Badge>
                         )}

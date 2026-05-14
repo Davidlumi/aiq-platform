@@ -131,42 +131,42 @@ const DIMENSIONS = [
     key: "strategy_governance",
     label: "Strategy & Governance",
     icon: Target,
-    color: "text-violet-400",
+    color: "dark:text-violet-400 text-violet-600",
     desc: "How clearly is AI embedded in your people strategy, and how robust is your governance framework?",
   },
   {
     key: "data_infrastructure",
     label: "Data & Infrastructure",
     icon: Layers,
-    color: "text-blue-400",
+    color: "dark:text-blue-400 text-blue-600",
     desc: "What is the quality and accessibility of your HR data, and how AI-ready is your technology stack?",
   },
   {
     key: "talent_capability",
     label: "Talent & Capability",
     icon: Users,
-    color: "text-emerald-400",
+    color: "dark:text-emerald-400 text-emerald-600",
     desc: "How AI-capable is your HR team, and how effectively are you building workforce AI literacy?",
   },
   {
     key: "process_adoption",
     label: "Process & Adoption",
     icon: BarChart3,
-    color: "text-amber-400",
+    color: "dark:text-amber-400 text-amber-600",
     desc: "To what extent are AI tools embedded in your core HR processes and adopted by the business?",
   },
   {
     key: "ethics_trust",
     label: "Ethics & Trust",
     icon: Shield,
-    color: "text-rose-400",
+    color: "dark:text-rose-400 text-rose-600",
     desc: "How well does your organisation manage AI bias, fairness, transparency, and employee trust?",
   },
   {
     key: "value_impact",
     label: "Value & Impact",
     icon: Lightbulb,
-    color: "text-cyan-400",
+    color: "dark:text-cyan-400 text-cyan-600",
     desc: "How effectively do you measure and communicate the business value of your HR AI investments?",
   },
 ];
@@ -270,7 +270,7 @@ export default function CompanyOnboardingPage() {
     <div className="bg-background text-foreground">
       {/* Header */}
       <div className="border-b border-border px-6 py-4 flex items-center gap-3">
-        <Building2 className="w-5 h-5 text-violet-400" />
+        <Building2 className="w-5 h-5 dark:text-violet-400 text-violet-600" />
         <span className="text-sm font-medium text-foreground/70">Company HR AI Assessment</span>
         <span className="text-foreground/30 mx-1">·</span>
         <span className="text-sm text-muted-foreground">{user?.firstName} {user?.lastName}</span>
@@ -286,7 +286,7 @@ export default function CompanyOnboardingPage() {
                   i < step
                     ? "bg-violet-500 text-white"
                     : i === step
-                    ? "bg-violet-500/20 border-2 border-violet-500 text-violet-400"
+                    ? "dark:bg-violet-500/20 bg-violet-100 border-2 border-violet-500 dark:text-violet-400 text-violet-600"
                     : "bg-foreground/5 border border-border/60 text-foreground/30"
                 }`}
               >
@@ -294,7 +294,7 @@ export default function CompanyOnboardingPage() {
               </div>
               <span
                 className={`text-xs font-medium ${
-                  i === step ? "text-violet-400" : i < step ? "text-muted-foreground" : "text-foreground/30"
+                  i === step ? "dark:text-violet-400 text-violet-600" : i < step ? "text-muted-foreground" : "text-foreground/30"
                 }`}
               >
                 {s.label}
@@ -317,7 +317,7 @@ export default function CompanyOnboardingPage() {
         {step === 0 && (
           <div className="space-y-8">
             <div className="text-center space-y-3">
-              <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm text-violet-400 mb-2">
+              <div className="inline-flex items-center gap-2 bg-violet-500/10 border dark:border-violet-500/30 border-violet-300 rounded-full px-4 py-1.5 text-sm dark:text-violet-400 text-violet-600 mb-2">
                 <Sparkles className="w-3.5 h-3.5" />
                 Organisational AI Readiness
               </div>
@@ -360,7 +360,7 @@ export default function CompanyOnboardingPage() {
                   className="flex items-start gap-4 bg-foreground/5 border border-border rounded-xl p-4"
                 >
                   <div className="w-9 h-9 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
-                    <item.icon className="w-4.5 h-4.5 text-violet-400" />
+                    <item.icon className="w-4.5 h-4.5 dark:text-violet-400 text-violet-600" />
                   </div>
                   <div>
                     <div className="font-semibold text-sm text-white">{item.title}</div>
@@ -394,7 +394,7 @@ export default function CompanyOnboardingPage() {
             {/* Organisation name */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Organisation Name <span className="text-rose-400">*</span>
+                Organisation Name <span className="dark:text-rose-400 text-rose-600">*</span>
               </label>
               <input
                 type="text"
@@ -405,13 +405,13 @@ export default function CompanyOnboardingPage() {
                   errors.name ? "border-rose-500" : "border-border"
                 }`}
               />
-              {errors.name && <p className="text-rose-400 text-xs mt-1">{errors.name}</p>}
+              {errors.name && <p className="dark:text-rose-400 text-rose-600 text-xs mt-1">{errors.name}</p>}
             </div>
 
             {/* Sector */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Sector <span className="text-rose-400">*</span>
+                Sector <span className="dark:text-rose-400 text-rose-600">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {SECTOR_OPTIONS.map((s) => (
@@ -420,7 +420,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => handleSectorSelect(s.value)}
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.sector === s.value
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -428,7 +428,7 @@ export default function CompanyOnboardingPage() {
                   </button>
                 ))}
               </div>
-              {errors.sector && <p className="text-rose-400 text-xs mt-1">{errors.sector}</p>}
+              {errors.sector && <p className="dark:text-rose-400 text-rose-600 text-xs mt-1">{errors.sector}</p>}
             </div>
 
             {/* Sub-sector — cascading, only shown when a sector with sub-sectors is selected */}
@@ -447,7 +447,7 @@ export default function CompanyOnboardingPage() {
                       }
                       className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                         form.subSector === ss.value
-                          ? "bg-violet-500/15 border-violet-400 text-violet-300"
+                          ? "dark:bg-violet-500/15 bg-violet-100/80 border-violet-400 dark:text-violet-300 text-violet-700"
                           : "bg-foreground/3 border-border text-muted-foreground hover:border-border"
                       }`}
                     >
@@ -456,7 +456,7 @@ export default function CompanyOnboardingPage() {
                   ))}
                 </div>
                 {form.subSector && (
-                  <p className="text-xs text-violet-400/70 mt-1.5 flex items-center gap-1">
+                  <p className="text-xs dark:text-violet-400 text-violet-600/70 mt-1.5 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     Benchmarks will use {subSectorOptions.find((s) => s.value === form.subSector)?.label} norms
                   </p>
@@ -477,7 +477,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("orgType", form.orgType === ot.value ? "" : ot.value)}
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.orgType === ot.value
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -491,7 +491,7 @@ export default function CompanyOnboardingPage() {
             {/* Headcount */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Total Headcount <span className="text-rose-400">*</span>
+                Total Headcount <span className="dark:text-rose-400 text-rose-600">*</span>
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {HEADCOUNT_BANDS.map((b) => (
@@ -500,7 +500,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("headcountBand", b)}
                     className={`px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.headcountBand === b
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -509,14 +509,14 @@ export default function CompanyOnboardingPage() {
                 ))}
               </div>
               {errors.headcountBand && (
-                <p className="text-rose-400 text-xs mt-1">{errors.headcountBand}</p>
+                <p className="dark:text-rose-400 text-rose-600 text-xs mt-1">{errors.headcountBand}</p>
               )}
             </div>
 
             {/* HR team size */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                HR Team Size <span className="text-rose-400">*</span>
+                HR Team Size <span className="dark:text-rose-400 text-rose-600">*</span>
               </label>
               <div className="grid grid-cols-1 gap-2">
                 {HR_TEAM_SIZES.map((s) => (
@@ -525,7 +525,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("hrTeamSize", s)}
                     className={`text-left px-4 py-2.5 rounded-lg text-sm border transition-all ${
                       form.hrTeamSize === s
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -534,7 +534,7 @@ export default function CompanyOnboardingPage() {
                 ))}
               </div>
               {errors.hrTeamSize && (
-                <p className="text-rose-400 text-xs mt-1">{errors.hrTeamSize}</p>
+                <p className="dark:text-rose-400 text-rose-600 text-xs mt-1">{errors.hrTeamSize}</p>
               )}
             </div>
 
@@ -550,7 +550,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("hrisPlatform", p)}
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.hrisPlatform === p
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -573,7 +573,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => toggleTool(t)}
                     className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
                       form.existingAiTools.includes(t)
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -595,7 +595,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("assessmentMotivation", m)}
                     className={`text-left px-4 py-2.5 rounded-lg text-sm border transition-all ${
                       form.assessmentMotivation === m
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -617,7 +617,7 @@ export default function CompanyOnboardingPage() {
                     onClick={() => updateField("resultsAudience", a)}
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.resultsAudience === a
-                        ? "bg-violet-500/20 border-violet-500 text-violet-300"
+                        ? "dark:bg-violet-500/20 bg-violet-100 border-violet-500 dark:text-violet-300 text-violet-700"
                         : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
@@ -660,7 +660,7 @@ export default function CompanyOnboardingPage() {
 
             {/* Methodology note */}
             <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-300">
+              <div className="flex items-center gap-2 text-sm font-semibold dark:text-violet-300 text-violet-700">
                 <Brain className="w-4 h-4" />
                 Adaptive Methodology
               </div>
@@ -677,7 +677,7 @@ export default function CompanyOnboardingPage() {
                     <Badge
                       key={ref}
                       variant="outline"
-                      className="text-[10px] border-violet-500/30 text-violet-400/70"
+                      className="text-[10px] dark:border-violet-500/30 border-violet-300 dark:text-violet-400 text-violet-600/70"
                     >
                       {ref}
                     </Badge>
@@ -699,7 +699,7 @@ export default function CompanyOnboardingPage() {
                   "Team cascade: connect individual HR team scores to org-level gaps",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600 shrink-0 mt-0.5" />
                     {item}
                   </div>
                 ))}
@@ -723,13 +723,13 @@ export default function CompanyOnboardingPage() {
                     </Badge>
                   )}
                   {form.subSector && (
-                    <Badge variant="outline" className="border-violet-500/30 text-violet-400/80">
+                    <Badge variant="outline" className="dark:border-violet-500/30 border-violet-300 dark:text-violet-400 text-violet-600/80">
                       <ChevronDown className="w-3 h-3 mr-1" />
                       {subSectorOptions.find((s) => s.value === form.subSector)?.label ?? form.subSector}
                     </Badge>
                   )}
                   {form.orgType && (
-                    <Badge variant="outline" className="border-blue-500/30 text-blue-400/80">
+                    <Badge variant="outline" className="dark:border-blue-500/30 border-blue-300 dark:text-blue-400 text-blue-600/80">
                       {ORG_TYPES.find((o) => o.value === form.orgType)?.label ?? form.orgType}
                     </Badge>
                   )}

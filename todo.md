@@ -3377,3 +3377,16 @@ test
 - [x] Fix AppShell/DashboardLayout custom CSS classes (aiq-header-glass, aiq-sidebar-glass, etc.)
 - [x] Fix index.css custom component classes with hardcoded dark backgrounds
 - [x] TypeScript: 0 errors | Tests: 930/930
+
+## Light Mode Color Fixes (Comprehensive Audit)
+- [x] Fixed dark-mode-only badge colors in BetaApplicationsPage (pending/approved/rejected/waitlisted)
+- [x] Fixed dark-mode-only badge colors in ContentReviewPage (status/priority/type badges)
+- [x] Fixed dark-mode-only readiness badge backgrounds in PersonProfileSheet (ai_ready/strong/capable/developing/emerging)
+- [x] Fixed dark-mode-only bg-*-900 backgrounds in ContentRequestsPage (priority/status badges)
+- [x] Fixed dark-mode-only bg-*-900 backgrounds in ImplementationTrackerPage (status/milestone badges)
+- [x] Fixed dark-mode-only bg-*-900 backgrounds in AssessmentSessionPage (artefact type cards)
+- [x] Fixed dark-mode-only text-*-400 colors across 30+ files (all converted to dark:text-*-400 text-*-600)
+- [x] Fixed dark-mode-only text-*-200 colors in ContentLibraryPage, ContentReviewPage, AIStrategyPage, MarketingPage, StrategyValuePage
+- [x] Fixed dark-mode-only text-rose-300 in AssessmentSessionPage and CompanyAssessmentSessionPage
+- [x] Cleaned up .new backup files
+- [x] All 930 tests passing after fixes
