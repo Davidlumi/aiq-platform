@@ -124,8 +124,7 @@ function VisionQuote({ text, onReadMore }: { text: string; onReadMore: () => voi
   }
   return (
     <blockquote
-      className="border-l-[3px] pl-7 mb-4 max-w-3xl"
-      style={{ borderColor: "var(--color-text-info, hsl(var(--primary)))" }}
+      className="mb-4 max-w-3xl"
     >
       <p
         style={{
@@ -377,8 +376,7 @@ function ListCard({ accentColor, eyebrow, eyebrowColor, title, tierTag, items, e
           ))}
           {(outcomeExtra ?? 0) > 0 && (
             <li
-              className="text-[12px] pl-[14px] underline underline-offset-2 hover:no-underline cursor-pointer"
-              style={{ color: accentColor }}
+              className="text-[12px] text-muted-foreground pl-[14px] cursor-pointer"
               onClick={e => { e.stopPropagation(); onNavigate(footerLink); }}
             >
               + {outcomeExtra} more outcome{(outcomeExtra ?? 0) !== 1 ? "s" : ""}
@@ -1115,9 +1113,9 @@ export default function StrategyOverviewPage() {
 
   // ── Card 3: Cost (value-style) ───────────────────────────────────────────
   const costAccent   = "#F59E0B";
-  const costHeadline = totalCostLow > 0 ? fmtMidpoint(totalCostLow, totalCostHigh) : "";
+  const costHeadline = totalCostLow > 0 ? fmtMidpoint(totalCostLow, totalCostHigh).replace(/k/g, "K") : "";
   const costSubLine  = totalCostLow > 0
-    ? `between ${fmt(totalCostLow)} and ${fmt(totalCostHigh)} · over 3 years${frameworkCount > 0 ? ` · affected by ${frameworkCount} compliance rule${frameworkCount !== 1 ? "s" : ""}` : ""}`
+    ? `between ${fmt(totalCostLow).replace(/k/g, "K")} and ${fmt(totalCostHigh).replace(/k/g, "K")} · over 3 years${frameworkCount > 0 ? ` · affected by ${frameworkCount} compliance rule${frameworkCount !== 1 ? "s" : ""}` : ""}`
     : "";
   const costIsEmpty  = totalCostLow === 0;
   // Change 6: eyebrow for cost card
@@ -1437,7 +1435,7 @@ export default function StrategyOverviewPage() {
             {isLoading || (valueEnvWithIdsQ.isLoading && selectedInitiativeIds.size > 0) ? <CardSkeleton /> : (
               <ValueCard
                 accentColor={valueAccent}
-                eyebrow={!valueIsEmpty ? "£" + (netMid != null ? fmtMidpoint(netLow!, netHigh!).replace("~", "").trim() : "") + " VALUE · 3 YRS" : ""}
+                eyebrow={!valueIsEmpty ? (netMid != null ? fmtMidpoint(netLow!, netHigh!).replace("~", "").trim() : "") + " VALUE · 3 YRS" : ""}
                 eyebrowColor="#6ee7b7"
                 title="What this is worth"
                 headline={valueHeadline}

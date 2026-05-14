@@ -3285,3 +3285,10 @@ test
 - [x] Change 9: CEO panel restructured as label-content rows with hairline separators
 - [x] Change 10: Add PRINCIPLES row between Ambition and Capability gap in CEO panel
 - [x] Change 11: Append trust outcome text to Financial impact row in CEO panel
+
+## Home Dashboard Final Polish Patch (14 May 2026)
+
+- [x] Fix 1: Remove inner teal vertical bar from vision card quote (card border replaces it)
+- [x] Fix 2: Fix doubled £ in value card eyebrow (££21.5M → £21.5M)
+- [x] Fix 3: Uppercase K in costs card big number (£660k → £660K) and meta line (£320k → £320K)
+- [x] Fix 4: Match "+ 1 more outcome" affordance styling to "+ 6 more" (muted gray, no underline, same size/weight)
