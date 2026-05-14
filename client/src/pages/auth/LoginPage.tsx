@@ -30,7 +30,7 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
       xmlns="http://www.w3.org/2000/svg"
       aria-label="AiQ logo"
     >
-      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <circle cx="100" cy="100" r="90" fill="var(--muted)" />
       <text
         x="100"
         y="122"

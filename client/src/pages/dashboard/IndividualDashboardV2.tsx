@@ -42,9 +42,9 @@ function getLevelChipStyle(level: number): { bg: string; text: string } {
   const styles: Record<number, { bg: string; text: string }> = {
     1: { bg: "#374151", text: "#D1D5DB" },
     2: { bg: "#475569", text: "#E2E8F0" },
-    3: { bg: "#557DAE", text: "#FFFFFF" },
-    4: { bg: "#2E4C7A", text: "#FFFFFF" },
-    5: { bg: "#1F3A5F", text: "#FFFFFF" },
+    3: { bg: "#557DAE", text: "var(--score-ai-ready-text)" },
+    4: { bg: "var(--score-strong-bg)", text: "var(--score-ai-ready-text)" },
+    5: { bg: "var(--score-ai-ready-bg)", text: "var(--score-ai-ready-text)" },
   };
   return styles[level] ?? styles[2];
 }
@@ -86,7 +86,7 @@ function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
       <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
         <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: "100%", height: "100%" }}>
           {/* Track — dark navy */}
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={strokeWidth} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
           {/* Fill — level colour */}
           <circle
             cx={cx} cy={cy} r={r}
@@ -267,7 +267,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             {plan.moduleCount} module{plan.moduleCount !== 1 ? "s" : ""} · {plan.completionPercentage}% complete
             {plan.totalEstimatedMinutes > 0 && ` · ~${Math.round(plan.totalEstimatedMinutes)} minutes remaining`}
           </p>
-          <div style={{ position: "relative", height: 6, background: "oklch(22% 0.030 240)", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ position: "relative", height: 6, background: "var(--muted)", borderRadius: 3, overflow: "hidden" }}>
             <div style={{ height: "100%", width: `${plan.completionPercentage}%`, background: "oklch(72.3% 0.220 142)", borderRadius: 3 }} />
           </div>
         </div>
@@ -296,10 +296,10 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 style={{
                   background: isWeakest
                     ? "oklch(18% 0.040 68 / 0.4)"
-                    : "oklch(17% 0.028 240)",
+                    : "var(--card)",
                   border: isWeakest
                     ? "0.5px solid oklch(30% 0.090 68)"
-                    : "0.5px solid oklch(22% 0.030 240)",
+                    : "0.5px solid var(--border)",
                 }}
               >
                 <LevelChip level={domainLevel} size="sm" />
@@ -390,7 +390,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg" style={{ background: "oklch(18% 0.040 68 / 0.4)", border: "1px solid oklch(30% 0.090 68)" }}>
+                <div className="p-3 rounded-lg" style={{ background: "oklch(60% 0.040 68 / 0.1)", border: "1px solid oklch(60% 0.090 68 / 0.3)" }}>
                   <div className="flex items-start gap-2">
                     <Target className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#FCD34D" }} />
                     <p className="text-xs" style={{ color: "#FCD34D" }}>{data.gapStatement}</p>
@@ -436,7 +436,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                           <span className="text-xs font-medium text-foreground">{m.title}</span>
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "completed" ? "text-primary" : "text-muted-foreground"}`}
-                          style={{ background: m.status === "completed" ? "oklch(18% 0.040 142)" : "oklch(18% 0.010 240)" }}>
+                          style={{ background: m.status === "completed" ? "oklch(60% 0.040 142 / 0.15)" : "var(--muted)" }}>
                           {m.status}
                         </span>
                       </div>

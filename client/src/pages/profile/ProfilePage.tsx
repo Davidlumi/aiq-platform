@@ -112,7 +112,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-[#1E293B] flex items-center justify-center text-white font-bold text-xl">
+            <div className="h-16 w-16 rounded-full bg-card flex items-center justify-center text-white font-bold text-xl">
               {initials}
             </div>
             <div>

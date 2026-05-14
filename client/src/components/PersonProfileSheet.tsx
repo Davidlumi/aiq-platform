@@ -76,7 +76,7 @@ function DomainBar({ domainKey, score }: { domainKey: string; score: number | nu
           <span className="text-muted-foreground text-xs">—</span>
         )}
       </div>
-      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${pct}%`, backgroundColor: colour }}

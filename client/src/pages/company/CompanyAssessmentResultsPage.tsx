@@ -157,16 +157,16 @@ export default function CompanyAssessmentResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        <p className="text-white/50 text-sm">Generating your results…</p>
+        <p className="text-muted-foreground text-sm">Generating your results…</p>
       </div>
     );
   }
 
   if (!results) {
     return (
-      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center text-white/40">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Results not found
       </div>
     );
@@ -198,14 +198,14 @@ export default function CompanyAssessmentResultsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
+      <div className="border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Building2 className="w-4 h-4 text-violet-400" />
-          <span className="text-sm text-white/60">Company HR AI Assessment</span>
-          <span className="text-white/20 mx-1">·</span>
-          <span className="text-sm text-white/40">Results</span>
+          <span className="text-sm text-muted-foreground">Company HR AI Assessment</span>
+          <span className="text-foreground/20 mx-1">·</span>
+          <span className="text-sm text-muted-foreground">Results</span>
         </div>
         <Button
           onClick={() => navigate(`/strategy`)}
@@ -218,7 +218,7 @@ export default function CompanyAssessmentResultsPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
         {/* Hero card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
+        <div className="bg-foreground/5 border border-border rounded-2xl p-8">
           <div className="flex items-start gap-6">
             {/* Score ring */}
             <div className="relative w-24 h-24 shrink-0">
@@ -237,34 +237,34 @@ export default function CompanyAssessmentResultsPage() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-bold text-white">{overallScore.toFixed(1)}</span>
-                <span className="text-[10px] text-white/40">/10</span>
+                <span className="text-[10px] text-muted-foreground">/10</span>
               </div>
             </div>
 
             {/* Summary */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <Badge className={`${maturity.color} bg-white/5 border border-white/10 text-xs`}>
+                <Badge className={`${maturity.color} bg-foreground/5 border border-border text-xs`}>
                   {maturity.label}
                 </Badge>
-                <span className="text-white/30 text-xs">·</span>
-                <span className="text-xs text-white/40">HR AI Maturity</span>
+                <span className="text-foreground/30 text-xs">·</span>
+                <span className="text-xs text-muted-foreground">HR AI Maturity</span>
               </div>
               <h1 className="text-2xl font-bold mb-2">Your Organisation's HR AI Readiness</h1>
               {results.company && (
                 <div className="flex items-center gap-2 mb-3">
-                  <Building2 className="w-3.5 h-3.5 text-white/40" />
-                  <span className="text-sm text-white/50">{(results.company as { name: string }).name}</span>
+                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{(results.company as { name: string }).name}</span>
                   {(results.company as { sector: string }).sector && (
                     <>
-                      <span className="text-white/20">·</span>
-                      <span className="text-sm text-white/40">{(results.company as { sector: string }).sector}</span>
+                      <span className="text-foreground/20">·</span>
+                      <span className="text-sm text-muted-foreground">{(results.company as { sector: string }).sector}</span>
                     </>
                   )}
                 </div>
               )}
               {executiveSummary && (
-                <p className="text-sm text-white/60 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   <Sparkles className="w-3.5 h-3.5 text-violet-400 inline mr-1.5 -mt-0.5" />
                   {executiveSummary}
                 </p>
@@ -273,8 +273,8 @@ export default function CompanyAssessmentResultsPage() {
           </div>
 
           {/* Maturity level description */}
-          <div className="mt-6 pt-5 border-t border-white/10">
-            <p className="text-sm text-white/50 leading-relaxed">{maturity.desc}</p>
+          <div className="mt-6 pt-5 border-t border-border">
+            <p className="text-sm text-muted-foreground leading-relaxed">{maturity.desc}</p>
           </div>
         </div>
 
@@ -290,17 +290,17 @@ export default function CompanyAssessmentResultsPage() {
                   <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Benchmark Applied</span>
                   <Badge className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 px-1.5 py-0">Context-aware</Badge>
                 </div>
-                <p className="text-sm font-medium text-white/80 mb-2">
+                <p className="text-sm font-medium text-foreground/80 mb-2">
                   {results.benchmarkContext as string}
                 </p>
-                <div className="flex flex-wrap gap-3 text-xs text-white/40">
+                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                   {/* Sector */}
                   {results.companySector && (() => {
                     const sectorDef = getSectorDef(results.companySector as string);
                     return sectorDef ? (
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
-                        Sector: <span className="text-white/60">{sectorDef.label}</span>
+                        Sector: <span className="text-muted-foreground">{sectorDef.label}</span>
                       </span>
                     ) : null;
                   })()}
@@ -308,7 +308,7 @@ export default function CompanyAssessmentResultsPage() {
                   {results.companySubSector && results.companySector && (
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
-                      Sub-sector: <span className="text-white/60">{getSubSectorLabel(results.companySector as string, results.companySubSector as string)}</span>
+                      Sub-sector: <span className="text-muted-foreground">{getSubSectorLabel(results.companySector as string, results.companySubSector as string)}</span>
                     </span>
                   )}
                   {/* Org size */}
@@ -317,8 +317,8 @@ export default function CompanyAssessmentResultsPage() {
                     return sizeBand ? (
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                        Size: <span className="text-white/60">{sizeBand.label}</span>
-                        <span className="text-white/30">({sizeBand.benchmarkDelta >= 0 ? "+" : ""}{sizeBand.benchmarkDelta.toFixed(1)} pts)</span>
+                        Size: <span className="text-muted-foreground">{sizeBand.label}</span>
+                        <span className="text-foreground/30">({sizeBand.benchmarkDelta >= 0 ? "+" : ""}{sizeBand.benchmarkDelta.toFixed(1)} pts)</span>
                       </span>
                     ) : null;
                   })()}
@@ -328,8 +328,8 @@ export default function CompanyAssessmentResultsPage() {
                     return orgType ? (
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
-                        Type: <span className="text-white/60">{orgType.label}</span>
-                        <span className="text-white/30">({orgType.benchmarkDelta >= 0 ? "+" : ""}{orgType.benchmarkDelta.toFixed(1)} pts)</span>
+                        Type: <span className="text-muted-foreground">{orgType.label}</span>
+                        <span className="text-foreground/30">({orgType.benchmarkDelta >= 0 ? "+" : ""}{orgType.benchmarkDelta.toFixed(1)} pts)</span>
                       </span>
                     ) : null;
                   })()}
@@ -337,15 +337,15 @@ export default function CompanyAssessmentResultsPage() {
                   {results.sectorAverage && (
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
-                      Norm: <span className="text-white/60">{(results.sectorAverage as number).toFixed(1)}/5.0</span>
-                      <span className="text-white/30">(= {(((results.sectorAverage as number) - 1) / 4 * 10).toFixed(1)}/10 display)</span>
+                      Norm: <span className="text-muted-foreground">{(results.sectorAverage as number).toFixed(1)}/5.0</span>
+                      <span className="text-foreground/30">(= {(((results.sectorAverage as number) - 1) / 4 * 10).toFixed(1)}/10 display)</span>
                     </span>
                   )}
                 </div>
                 {/* Source footnote */}
                 <div className="mt-3 pt-3 border-t border-amber-500/10 flex items-start gap-1.5">
-                  <BookOpen className="w-3 h-3 text-white/20 mt-0.5 shrink-0" />
-                  <p className="text-[10px] text-white/30 leading-relaxed">
+                  <BookOpen className="w-3 h-3 text-foreground/20 mt-0.5 shrink-0" />
+                  <p className="text-[10px] text-foreground/30 leading-relaxed">
                     Benchmarks are calibrated from McKinsey State of AI (2024), Deloitte AI Maturity Index (2023), CIPD People Profession AI Framework (2024), and BCG AI Maturity Model (2023).
                     Sector norms reflect published AI adoption rates and maturity scores for organisations of comparable size and type.
                     These are reference benchmarks; individual variation within sectors is significant.
@@ -357,8 +357,8 @@ export default function CompanyAssessmentResultsPage() {
         )}
 
         {/* Maturity scale */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">
+        <div className="bg-foreground/5 border border-border rounded-2xl p-6">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
             Maturity Scale
           </div>
           <div className="flex gap-1">
@@ -368,11 +368,11 @@ export default function CompanyAssessmentResultsPage() {
                 className={`flex-1 rounded-lg px-3 py-2 text-center transition-all ${
                   level.key === maturity.key
                     ? "bg-violet-500/20 border border-violet-500/50"
-                    : "bg-white/5 border border-white/10 opacity-50"
+                    : "bg-foreground/5 border border-border opacity-50"
                 }`}
               >
                 <div className={`text-xs font-semibold ${level.color}`}>{level.label}</div>
-                <div className="text-[10px] text-white/30 mt-0.5">{level.range}</div>
+                <div className="text-[10px] text-foreground/30 mt-0.5">{level.range}</div>
               </div>
             ))}
           </div>
@@ -381,8 +381,8 @@ export default function CompanyAssessmentResultsPage() {
         {/* Radar + dimension scores */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Radar */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">
+          <div className="bg-foreground/5 border border-border rounded-2xl p-6">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
               Capability Radar
             </div>
             <ResponsiveContainer width="100%" height={280}>
@@ -407,7 +407,7 @@ export default function CompanyAssessmentResultsPage() {
                   strokeWidth={2}
                 />
                 <Tooltip
-                  contentStyle={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--foreground)" }}
                   labelStyle={{ color: "rgba(255,255,255,0.7)" }}
                   formatter={(value: number) => [`${value.toFixed(1)}/10`]}
                 />
@@ -416,19 +416,19 @@ export default function CompanyAssessmentResultsPage() {
             <div className="flex items-center gap-4 justify-center mt-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-0.5 bg-violet-500" />
-                <span className="text-[10px] text-white/40">Your score</span>
+                <span className="text-[10px] text-muted-foreground">Your score</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-0.5 bg-white/20 border-dashed" />
-                <span className="text-[10px] text-white/40">Sector benchmark</span>
+                <span className="text-[10px] text-muted-foreground">Sector benchmark</span>
                 <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Benchmarks are currently based on synthetic reference data. They will be replaced with empirical norms once sufficient real-world data is collected.">Beta reference</span>
               </div>
             </div>
           </div>
 
           {/* Dimension scores */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">
+          <div className="bg-foreground/5 border border-border rounded-2xl p-6">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
               Dimension Breakdown
             </div>
             <div className="space-y-3">
@@ -447,10 +447,10 @@ export default function CompanyAssessmentResultsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-white/70">{meta.label}</span>
+                          <span className="text-xs font-medium text-foreground/70">{meta.label}</span>
                           <span className={`text-xs font-bold ${meta.color}`}>{score.toFixed(1)}/10</span>
                         </div>
-                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ${meta.color.replace("text-", "bg-")}`}
                             style={{ width: `${score * 10}%` }}
@@ -458,9 +458,9 @@ export default function CompanyAssessmentResultsPage() {
                         </div>
                       </div>
                       {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-white/30 shrink-0" />
+                        <ChevronUp className="w-3.5 h-3.5 text-foreground/30 shrink-0" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-white/30 shrink-0" />
+                        <ChevronDown className="w-3.5 h-3.5 text-foreground/30 shrink-0" />
                       )}
                     </button>
                   </div>
@@ -472,17 +472,17 @@ export default function CompanyAssessmentResultsPage() {
 
         {/* Top gaps */}
         {topGaps.length > 0 && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div className="bg-foreground/5 border border-border rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <div className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Priority Capability Gaps
                 </div>
-                <div className="text-sm text-white/50 mt-0.5">
+                <div className="text-sm text-muted-foreground mt-0.5">
                   Dimensions with the greatest distance from sector-leading practice
                 </div>
               </div>
-              <TrendingUp className="w-4 h-4 text-white/20" />
+              <TrendingUp className="w-4 h-4 text-foreground/20" />
             </div>
             <div className="space-y-3">
               {topGaps.slice(0, 4).map((gap, i) => {
@@ -491,9 +491,9 @@ export default function CompanyAssessmentResultsPage() {
                 return (
                   <div
                     key={gap.dimension}
-                    className="flex items-center gap-4 bg-white/5 rounded-xl p-4"
+                    className="flex items-center gap-4 bg-foreground/5 rounded-xl p-4"
                   >
-                    <div className="text-lg font-bold text-white/20 w-6 shrink-0">
+                    <div className="text-lg font-bold text-foreground/20 w-6 shrink-0">
                       {i + 1}
                     </div>
                     <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}>
@@ -501,7 +501,7 @@ export default function CompanyAssessmentResultsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-white">{meta.label}</div>
-                      <div className="text-xs text-white/40 mt-0.5">
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         Current: {toDisplay(gap.score).toFixed(1)}/10 · Gap to leading: {(gap.gap * 2.5).toFixed(1)} pts
                       </div>
                     </div>
@@ -512,7 +512,7 @@ export default function CompanyAssessmentResultsPage() {
                           ? "border-rose-500/40 text-rose-400"
                           : gap.priority === "high"
                           ? "border-amber-500/40 text-amber-400"
-                          : "border-white/20 text-white/40"
+                          : "border-border/60 text-muted-foreground"
                       }`}
                     >
                       {gap.priority}
@@ -531,7 +531,7 @@ export default function CompanyAssessmentResultsPage() {
             Next Step
           </div>
           <h2 className="text-xl font-bold">Build Your AI People Strategy</h2>
-          <p className="text-white/50 text-sm max-w-md mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
             Your assessment results have been used to pre-populate the AI Strategy Builder with
             recommended initiatives targeting your highest-priority capability gaps.
           </p>
@@ -550,7 +550,7 @@ export default function CompanyAssessmentResultsPage() {
               "Sector-calibrated initiatives",
               "Board-ready output",
             ].map((item) => (
-              <div key={item} className="flex items-center gap-1.5 text-xs text-white/40">
+              <div key={item} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                 {item}
               </div>

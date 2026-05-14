@@ -3358,10 +3358,22 @@ test
 - [x] TypeScript: 0 errors | Tests: 930/930
 
 ## Light Mode (User-Switchable Theme)
-- [ ] Add .light CSS token block in index.css: background, card, sidebar, border, muted, primary, accent, foreground tokens
-- [ ] Update body/scrollbar/nav-item/badge/aiq-* CSS classes to use CSS variables instead of hardcoded oklch dark values
-- [ ] Update ThemeProvider in App.tsx: switchable=true, defaultTheme="dark"
-- [ ] Add Sun/Moon toggle button to AppShell header (right side, before Bell)
-- [ ] Add Sun/Moon toggle button to DashboardLayout sidebar footer (before user avatar)
-- [ ] Persist theme preference to localStorage
+- [x] Add .light CSS token block in index.css: background, card, sidebar, border, muted, primary, accent, foreground tokens
+- [x] Update body/scrollbar/nav-item/badge/aiq-* CSS classes to use CSS variables instead of hardcoded oklch dark values
+- [x] Update ThemeProvider in App.tsx: switchable=true, defaultTheme="dark"
+- [x] Add Sun/Moon toggle button to AppShell header (right side, before Bell)
+- [x] Add Sun/Moon toggle button to DashboardLayout sidebar footer (before user avatar)
+- [x] Persist theme preference to localStorage
+- [x] TypeScript: 0 errors | Tests: 930/930
+
+## Light Mode Deep-Dive QA Fix
+- [ ] Audit all pages in light mode and fix hardcoded dark oklch/hex colors
+- [ ] Fix strategy pages (Overview, Ambition, Roadmap, Diagnostic, Plan) - hardcoded dark values
+- [ ] Fix dashboard pages (CPO/Leader, Manager, Individual, Admin, Auditor) - hardcoded dark values
+- [ ] Fix people/team pages (MemberReport, TeamProgress, ConversationPrompts) - hardcoded dark values
+- [ ] Fix assessment pages (AssessmentPage, SessionPage, ResultsPage) - hardcoded dark values
+- [ ] Fix learning/content pages (LearningPlan, ContentLibrary, KnowledgeBase) - hardcoded dark values
+- [ ] Fix admin pages (OrgContext, Users, BetaApplications, etc.) - hardcoded dark values
+- [ ] Fix AppShell/DashboardLayout custom CSS classes (aiq-header-glass, aiq-sidebar-glass, etc.)
+- [ ] Fix index.css custom component classes with hardcoded dark backgrounds
 - [ ] TypeScript: 0 errors | Tests: 930/930

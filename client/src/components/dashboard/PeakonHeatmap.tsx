@@ -80,7 +80,7 @@ function HeatmapScoreCell({ score, headcount }: { score: number | null; headcoun
   const readiness = score >= 75 ? "Expert" : score >= 60 ? "Strong Developing" : score >= 50 ? "Developing" : score >= 40 ? "Weak Developing" : score >= 30 ? "Not Yet Ready" : "Foundation Gap";
 
   return (
-    <td className="border border-white/20 text-center p-0">
+    <td className="border border-foreground/20 text-center p-0">
       <Tooltip>
         <TooltipTrigger asChild>
           <div
@@ -276,9 +276,9 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
         {activeCount > 0 && (
           <>
             {departmentOptions.filter(o => selectedDepts.has(o.value)).map(opt => (
-              <Badge key={opt.value} variant="secondary" size="sm" className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-white/10 transition-colors">
+              <Badge key={opt.value} variant="secondary" size="sm" className="gap-1 pl-2 pr-1 cursor-pointer hover:bg-foreground/10 transition-colors">
                 {opt.label}
-                <button type="button" className="rounded-full hover:bg-white/15 p-0.5 transition-colors" onClick={() => toggleDept(opt.value)}>
+                <button type="button" className="rounded-full hover:bg-foreground/15 p-0.5 transition-colors" onClick={() => toggleDept(opt.value)}>
                   <X className="w-2.5 h-2.5" />
                 </button>
               </Badge>
@@ -366,7 +366,7 @@ export function PeakonHeatmap({ heatmap, domainLabels, departmentOptions, overal
                       <div className="flex items-center gap-2 py-2.5">
                         <button
                           type="button"
-                          className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
+                          className="w-5 h-5 rounded flex items-center justify-center hover:bg-foreground/10 transition-colors shrink-0"
                           onClick={() => toggleExpand(row.roleFamily)}
                         >
                           {isExpanded

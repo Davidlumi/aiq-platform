@@ -389,7 +389,7 @@ export default function StrategyInvestmentRiskPage() {
       actions={
         <Button
           variant="outline" size="sm"
-          className="text-xs h-7 border-white/15 hover:border-white/30 text-muted-foreground"
+          className="text-xs h-7 border-border hover:border-border/80 text-muted-foreground"
           onClick={() => {
             setLiveRisks(null);
             evaluateRiskMut.mutate(
@@ -430,7 +430,7 @@ export default function StrategyInvestmentRiskPage() {
               const cfg   = PHASE_LABELS[phase.phase] ?? { label: phase.label, months: "" };
               const color = PHASE_COLORS[phase.phase] ?? "#94A3B8";
               return (
-                <div key={phase.phase} className="rounded-xl border border-white/8 bg-white/3 p-3">
+                <div key={phase.phase} className="rounded-xl border border-border bg-foreground/3 p-3">
                   <div className="flex items-center gap-1.5 mb-2">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
                     <p className="text-[10px] font-semibold text-muted-foreground truncate">{cfg.label}</p>
@@ -454,10 +454,10 @@ export default function StrategyInvestmentRiskPage() {
       </div>
 
       {/* ── Block 2: TCO Breakdown ────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
+      <div className="rounded-xl border border-border bg-white/2 overflow-hidden">
         <button
           onClick={() => setTcoCollapsed(c => !c)}
-          className="w-full flex items-center gap-3 px-5 py-4 hover:bg-white/3 transition-colors"
+          className="w-full flex items-center gap-3 px-5 py-4 hover:bg-foreground/3 transition-colors"
           aria-expanded={!tcoCollapsed}
         >
           <Layers className="w-4 h-4 text-amber-400" />
@@ -484,14 +484,14 @@ export default function StrategyInvestmentRiskPage() {
                           <p className="text-xs text-muted-foreground">{row.label}</p>
                           <p className="text-xs font-semibold" style={{ color: row.color }}>{fmt(row.low * 1000)}–{fmt(row.high * 1000)}</p>
                         </div>
-                        <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-foreground/8 overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: row.color }} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="border-t border-white/8 pt-3 flex items-center justify-between">
+                <div className="border-t border-border pt-3 flex items-center justify-between">
                   <p className="text-xs font-bold text-foreground">Total 3-Year TCO</p>
                   <p className="text-sm font-bold text-amber-400">{fmt(tco.total_3yr_gbp.low * 1000)}–{fmt(tco.total_3yr_gbp.high * 1000)}</p>
                 </div>
@@ -510,7 +510,7 @@ export default function StrategyInvestmentRiskPage() {
 
       {/* ── Block 3: Phase cost waterfall ────────────────────────────────── */}
       {costEnv && costEnv.byPhase.length > 0 && (
-        <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+        <div className="rounded-xl border border-border bg-white/2 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart2 className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Phase Cost Breakdown</p>
@@ -531,7 +531,7 @@ export default function StrategyInvestmentRiskPage() {
                     </div>
                     <p className="text-xs font-semibold" style={{ color }}>{fmtGbk(phase.minGbk)}–{fmtGbk(phase.maxGbk)}</p>
                   </div>
-                  <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+                  <div className="h-2 rounded-full bg-foreground/8 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barPct}%`, backgroundColor: color }} />
                   </div>
                   {phase.initiatives.length > 0 && (
@@ -552,7 +552,7 @@ export default function StrategyInvestmentRiskPage() {
       )}
 
       {/* ── Block 4: Risk Register ────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+      <div className="rounded-xl border border-border bg-white/2 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Shield className="w-4 h-4 text-red-400" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1">Risk Register</p>
@@ -582,10 +582,10 @@ export default function StrategyInvestmentRiskPage() {
             const acked = isAcknowledged(risk.ruleId);
             const ackData = acksMap.get(risk.ruleId);
             return (
-              <div key={risk.ruleId} className={`rounded-lg border overflow-hidden transition-colors ${acked ? "border-green-500/20 bg-green-500/3" : "border-white/8 bg-white/2"}`}>
+              <div key={risk.ruleId} className={`rounded-lg border overflow-hidden transition-colors ${acked ? "border-green-500/20 bg-green-500/3" : "border-border bg-white/2"}`}>
                 <button
                   onClick={() => setRiskCollapsed(s => ({ ...s, [risk.ruleId]: !s[risk.ruleId] }))}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/3 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-foreground/3 transition-colors"
                   aria-expanded={!riskCollapsed[risk.ruleId]}
                 >
                   <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
@@ -596,14 +596,14 @@ export default function StrategyInvestmentRiskPage() {
                 {!riskCollapsed[risk.ruleId] && (
                   <div className="px-4 pb-4 animate-in slide-in-from-top-1 duration-200 space-y-3">
                     <p className="text-xs text-muted-foreground leading-relaxed">{risk.riskStatement}</p>
-                    <div className="rounded-lg border border-white/8 bg-white/2 px-3 py-2">
+                    <div className="rounded-lg border border-border bg-white/2 px-3 py-2">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Recommended action</p>
                       <p className="text-xs text-foreground leading-relaxed">{risk.recommendedAction}</p>
                     </div>
                     {risk.regulatoryBasis.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {risk.regulatoryBasis.map(rb => (
-                          <span key={rb} className="text-[10px] px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-muted-foreground">{rb}</span>
+                          <span key={rb} className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-foreground/5 text-muted-foreground">{rb}</span>
                         ))}
                       </div>
                     )}
@@ -657,7 +657,7 @@ export default function StrategyInvestmentRiskPage() {
       </div>
 
       {/* ── Block 5: UK Standing Frameworks ──────────────────────────────── */}
-      <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+      <div className="rounded-xl border border-border bg-white/2 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Scale className="w-4 h-4 text-purple-400" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1">UK Standing Regulatory Frameworks</p>
@@ -671,10 +671,10 @@ export default function StrategyInvestmentRiskPage() {
             const acked   = isAcknowledged(fw.id);
             const ackData = acksMap.get(fw.id);
             return (
-              <div key={fw.id} className={`rounded-lg border overflow-hidden transition-colors ${acked ? "border-green-500/20 bg-green-500/3" : "border-white/8 bg-white/2"}`}>
+              <div key={fw.id} className={`rounded-lg border overflow-hidden transition-colors ${acked ? "border-green-500/20 bg-green-500/3" : "border-border bg-white/2"}`}>
                 <button
                   onClick={() => setFwCollapsed(s => ({ ...s, [fw.id]: !s[fw.id] }))}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/3 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-foreground/3 transition-colors"
                   aria-expanded={!fwCollapsed[fw.id]}
                 >
                   <FrameworkIcon icon={fw.icon} color={fw.color} />
@@ -686,7 +686,7 @@ export default function StrategyInvestmentRiskPage() {
                 {!fwCollapsed[fw.id] && (
                   <div className="px-4 pb-4 animate-in slide-in-from-top-1 duration-200 space-y-3">
                     <p className="text-xs text-muted-foreground leading-relaxed">{fw.relevance}</p>
-                    <div className="rounded-lg border border-white/8 bg-white/2 px-3 py-2">
+                    <div className="rounded-lg border border-border bg-white/2 px-3 py-2">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Required action</p>
                       <p className="text-xs text-foreground leading-relaxed">{fw.action}</p>
                     </div>
@@ -744,7 +744,7 @@ export default function StrategyInvestmentRiskPage() {
       )}
 
       {/* ── Block 7: Cross-functional dependencies ────────────────────────── */}
-      <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+      <div className="rounded-xl border border-border bg-white/2 p-5">
         <button onClick={() => setCrossFuncCollapsed(c => !c)} className="w-full flex items-center gap-2" aria-expanded={!crossFuncCollapsed}>
           <Link2 className="w-4 h-4 text-muted-foreground" />
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1 text-left">Cross-Functional Dependencies</p>
@@ -761,7 +761,7 @@ export default function StrategyInvestmentRiskPage() {
             {crossFuncGroups.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {crossFuncGroups.map(dep => (
-                  <div key={dep.key} className="rounded-lg border border-white/8 bg-white/2 p-4">
+                  <div key={dep.key} className="rounded-lg border border-border bg-white/2 p-4">
                     <p className="text-xs font-bold mb-2" style={{ color: dep.color }}>{dep.label}</p>
                     <ul className="space-y-1.5">
                       {dep.items.map((item, i) => (
@@ -783,7 +783,7 @@ export default function StrategyInvestmentRiskPage() {
                   { label: "Legal / Compliance", color: "#F87171", items: ["EU AI Act risk classification for flagged initiatives", "Employment law review for AI-assisted decisions", "Data protection impact assessments (DPIA)"] },
                   { label: "Finance", color: "#FBBF24", items: ["Phase budget sign-off before each phase launch", "ROI measurement framework agreement", "Vendor contract review and approval"] },
                 ].map(dep => (
-                  <div key={dep.label} className="rounded-lg border border-white/8 bg-white/2 p-4">
+                  <div key={dep.label} className="rounded-lg border border-border bg-white/2 p-4">
                     <p className="text-xs font-bold mb-2" style={{ color: dep.color }}>{dep.label}</p>
                     <ul className="space-y-1.5">
                       {dep.items.map((item, i) => (
@@ -807,7 +807,7 @@ export default function StrategyInvestmentRiskPage() {
         const pct   = ((solutionDeliveryConf - 1) / 4) * 100;
         const color = solutionDeliveryConf >= 4 ? "#22C55E" : solutionDeliveryConf === 3 ? "#F59E0B" : "#EF4444";
         return (
-          <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+          <div className="rounded-xl border border-border bg-white/2 p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-3 h-3 text-blue-400" />
@@ -819,7 +819,7 @@ export default function StrategyInvestmentRiskPage() {
                 <span className="text-sm font-semibold text-foreground">{opt.label}</span>
                 <span className="text-xs font-mono text-muted-foreground">{solutionDeliveryConf}/5</span>
               </div>
-              <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+              <div className="h-2 rounded-full bg-foreground/8 overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
               </div>
               <p className="text-xs text-muted-foreground mt-2">{opt.description}</p>
@@ -839,12 +839,12 @@ export default function StrategyInvestmentRiskPage() {
       })()}
 
       {/* ── Footer nav ───────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/8 bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-2xl border border-border bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Next step</p>
           <p className="text-sm text-foreground">Review the value and ROI case for this investment.</p>
         </div>
-        <Button variant="outline" size="sm" className="text-xs h-8 border-white/15 hover:border-white/30" onClick={() => navigate("/strategy/value")}>
+        <Button variant="outline" size="sm" className="text-xs h-8 border-border hover:border-border/80" onClick={() => navigate("/strategy/value")}>
           View value case <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       </div>

@@ -169,8 +169,8 @@ function DomainDot({ colour }: { colour: string }) {
 function SectionHeading({ label, sub }: { label: string; sub?: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/40">{label}</h2>
-      {sub && <p className="text-xs text-white/50 mt-0.5">{sub}</p>}
+      <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{label}</h2>
+      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -179,7 +179,7 @@ function SectionHeading({ label, sub }: { label: string; sub?: string }) {
 
 function HeroSkeleton() {
   return (
-    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="h-10 border-b border-white/6">
         <ShimmerBlock className="h-full w-full rounded-none" />
       </div>
@@ -198,7 +198,7 @@ function HeroSkeleton() {
 /** Skeleton for a cross-cutting bullet card (2 bullets = 2 shimmer rows each) */
 function CrossCuttingCardSkeleton() {
   return (
-    <div className="bg-[#111827] border border-white/8 rounded-xl p-5">
+    <div className="bg-card border border-border rounded-xl p-5">
       {/* Icon + title row */}
       <div className="flex items-center gap-2 mb-4">
         <ShimmerBlock className="w-6 h-6 rounded-full" />
@@ -233,7 +233,7 @@ function DomainGridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-[#111827] border border-white/8 rounded-xl p-5 flex flex-col gap-3">
+        <div key={i} className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
           {/* Icon + title | score */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ function DomainGridSkeleton() {
 /** Skeleton for the dev plan rows */
 function DevPlanSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden divide-y divide-white/6">
+    <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 px-5 py-4">
           <ShimmerBlock className="w-2 h-2 rounded-full shrink-0" />
@@ -277,11 +277,11 @@ function DevPlanSkeleton({ rows = 3 }: { rows?: number }) {
 
 function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-4 text-sm text-white/60">
-      <AlertCircle className="w-4 h-4 text-white/40 shrink-0" />
+    <div className="flex items-center gap-3 bg-foreground/4 border border-border rounded-xl p-4 text-sm text-muted-foreground">
+      <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
       <span>{message}</span>
       {onRetry && (
-        <button onClick={onRetry} className="ml-auto flex items-center gap-1 text-xs text-white/50 hover:text-white/80 transition-colors" type="button">
+        <button onClick={onRetry} className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground/80 transition-colors" type="button">
           <RefreshCw className="w-3 h-3" /> Retry
         </button>
       )}
@@ -430,14 +430,14 @@ export default function AssessmentResultsPage() {
   if (!historyQuery.isLoading && completedSessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-        <div className="w-16 h-16 rounded-full bg-white/6 flex items-center justify-center">
-          <BookOpen className="w-7 h-7 text-white/40" />
+        <div className="w-16 h-16 rounded-full bg-foreground/6 flex items-center justify-center">
+          <BookOpen className="w-7 h-7 text-muted-foreground" />
         </div>
         <div>
           <h1 className="text-xl font-semibold text-white mb-2">No completed assessment yet</h1>
-          <p className="text-sm text-white/50 max-w-sm">Complete an AI capability assessment to see your profile, domain scores, and development plan here.</p>
+          <p className="text-sm text-muted-foreground max-w-sm">Complete an AI capability assessment to see your profile, domain scores, and development plan here.</p>
         </div>
-        <Button onClick={() => navigate("/assessment")} className="bg-[#3B4EFF] hover:bg-[#2d3fd4] text-white">
+        <Button onClick={() => navigate("/assessment")} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           Take the assessment
         </Button>
       </div>
@@ -452,13 +452,13 @@ export default function AssessmentResultsPage() {
         {/* Assessment date selector */}
         <div className="relative">
           <button
-            className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded"
+            className="flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 rounded"
             onClick={() => setHistoryOpen(v => !v)}
             aria-haspopup="listbox"
             aria-expanded={historyOpen}
             type="button"
           >
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-white/30 mr-1">Assessment</span>
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-foreground/30 mr-1">Assessment</span>
             {activeSessionId && (() => {
               const s = completedSessions.find((s: any) => s.id === activeSessionId);
               const completedAt = s?.completedAt ? new Date(s.completedAt) : null;
@@ -475,19 +475,19 @@ export default function AssessmentResultsPage() {
                 : `${daysAgo} days ago`;
               return (
                 <>
-                  <span className="font-medium text-white/80">{d}</span>
+                  <span className="font-medium text-foreground/80">{d}</span>
                   {recency && (
-                    <span className="text-[10px] text-white/30 ml-1">· {recency}</span>
+                    <span className="text-[10px] text-foreground/30 ml-1">· {recency}</span>
                   )}
                 </>
               );
             })()}
-            {completedSessions.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-white/40" />}
+            {completedSessions.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
           </button>
           {historyOpen && completedSessions.length > 1 && (
             <div
               role="listbox"
-              className="absolute top-full left-0 mt-1 z-50 min-w-[200px] bg-[#1a2332] border border-white/10 rounded-xl shadow-xl overflow-hidden"
+              className="absolute top-full left-0 mt-1 z-50 min-w-[200px] bg-[#1a2332] border border-border rounded-xl shadow-xl overflow-hidden"
             >
               {completedSessions.map((s: any) => {
                 const d = s.completedAt
@@ -500,13 +500,13 @@ export default function AssessmentResultsPage() {
                     role="option"
                     aria-selected={s.id === activeSessionId}
                     className={cn(
-                      "w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-white/6 transition-colors",
-                      s.id === activeSessionId ? "text-white bg-white/4" : "text-white/60"
+                      "w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-foreground/6 transition-colors",
+                      s.id === activeSessionId ? "text-white bg-foreground/4" : "text-muted-foreground"
                     )}
                     onClick={() => { navigate(`/assessment/results/${s.id}`); setHistoryOpen(false); }}
                   >
                     <span>{d}</span>
-                    {sc !== undefined && <span className="text-xs text-white/40 tabular-nums">{(sc/10).toFixed(1)}</span>}
+                    {sc !== undefined && <span className="text-xs text-muted-foreground tabular-nums">{(sc/10).toFixed(1)}</span>}
                   </button>
                 );
               })}
@@ -516,7 +516,7 @@ export default function AssessmentResultsPage() {
 
         {/* In-progress indicator — compact, no full-width banner */}
         {inProgressSession && (
-          <div className="flex items-center gap-2 text-xs text-white/50">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>
               New assessment
               {(inProgressSession as any).answeredCount !== undefined
@@ -525,7 +525,7 @@ export default function AssessmentResultsPage() {
             </span>
             <Button
               size="sm" variant="outline"
-              className="h-6 px-2.5 text-xs border-white/15 text-white/70 hover:text-white hover:border-white/30 bg-transparent"
+              className="h-6 px-2.5 text-xs border-border text-foreground/70 hover:text-white hover:border-border/80 bg-transparent"
               onClick={() => navigate(`/assessment/session/${(inProgressSession as any).id}`)}
             >
               Resume
@@ -538,15 +538,15 @@ export default function AssessmentResultsPage() {
       {isLoading ? <HeroSkeleton /> : resultsQuery.error ? (
         <ErrorBlock message="Could not load your assessment results." onRetry={() => resultsQuery.refetch()} />
       ) : (
-        <section aria-labelledby="hero-heading" className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden">
+        <section aria-labelledby="hero-heading" className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Header strip */}
           <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-white/6">
             <div className="flex items-center gap-3">
-              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30" id="hero-heading">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-foreground/30" id="hero-heading">
                 Your AI Capability Profile
               </p>
               {profileQuery.isLoading && (
-                <span className="flex items-center gap-1.5 text-[10px] text-white/35">
+                <span className="flex items-center gap-1.5 text-[10px] text-foreground/35">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Generating insights…
                 </span>
@@ -554,7 +554,7 @@ export default function AssessmentResultsPage() {
             </div>
             <Button
               size="sm" variant="outline"
-              className="h-7 px-3 text-xs border-white/15 text-white/60 hover:text-white hover:border-white/30 bg-transparent"
+              className="h-7 px-3 text-xs border-border text-muted-foreground hover:text-white hover:border-border/80 bg-transparent"
               onClick={() => navigate("/assessment")}
             >
               <RotateCcw className="w-3 h-3 mr-1" /> Reassess
@@ -567,7 +567,7 @@ export default function AssessmentResultsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold text-white leading-snug mb-2">{headline}</h1>
-              <p className="text-sm text-white/60 leading-relaxed">{sub}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{sub}</p>
             </div>
           </div>
         </section>
@@ -582,7 +582,7 @@ export default function AssessmentResultsPage() {
         {/* Domain colour legend for inline dots (fix brief item 8: inline pattern requires legend) */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4">
           {DOMAIN_KEYS.map(dk => (
-            <span key={dk} className="flex items-center gap-1.5 text-[10px] text-white/35">
+            <span key={dk} className="flex items-center gap-1.5 text-[10px] text-foreground/35">
               <DomainDot colour={DOMAIN_COLOURS[dk]} />
               {DOMAIN_LABELS[dk]}
             </span>
@@ -596,7 +596,7 @@ export default function AssessmentResultsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* What you do well */}
-            <div className="bg-[#111827] border border-white/8 rounded-xl p-5">
+            <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -619,7 +619,7 @@ export default function AssessmentResultsPage() {
                     <li key={i} className="text-sm leading-relaxed">
                       {/* Inline dots: rendered immediately after each domain name mention (fix brief item 8) */}
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
-                      <span className="text-white/55">
+                      <span className="text-foreground/55">
                         {bullet.evidence}
                         {bullet.domains && bullet.domains.length > 0 && (
                           <span className="inline-flex items-center gap-0.5 ml-1.5 align-middle">
@@ -634,12 +634,12 @@ export default function AssessmentResultsPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-white/40 italic">Your strengths are concentrated in specific domains — see below.</p>
+                <p className="text-xs text-muted-foreground italic">Your strengths are concentrated in specific domains — see below.</p>
               )}
             </div>
 
             {/* Where to grow */}
-            <div className="bg-[#111827] border border-white/8 rounded-xl p-5">
+            <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center">
                   <Target className="w-3.5 h-3.5 text-blue-400" />
@@ -662,7 +662,7 @@ export default function AssessmentResultsPage() {
                     <li key={i} className="text-sm leading-relaxed">
                       {/* Inline dots: rendered at end of evidence sentence (fix brief item 8) */}
                       <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
-                      <span className="text-white/55">
+                      <span className="text-foreground/55">
                         {bullet.evidence}
                         {bullet.domains && bullet.domains.length > 0 && (
                           <span className="inline-flex items-center gap-0.5 ml-1.5 align-middle">
@@ -677,7 +677,7 @@ export default function AssessmentResultsPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-white/40 italic">Your development areas are concentrated in specific domains — see below.</p>
+                <p className="text-xs text-muted-foreground italic">Your development areas are concentrated in specific domains — see below.</p>
               )}
             </div>
           </div>
@@ -696,7 +696,7 @@ export default function AssessmentResultsPage() {
               return (
                 <article
                   key={domain.key}
-                  className="bg-[#111827] border border-white/8 rounded-xl p-5 flex flex-col gap-3"
+                  className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3"
                   aria-label={`${domain.name}: ${(domain.score / 10).toFixed(1)} out of 10, ${level.label}`}
                 >
                   {/* Top row: icon+title | score+level vertical stack (v2) */}
@@ -716,7 +716,7 @@ export default function AssessmentResultsPage() {
                       <span className="text-sm font-bold text-white tabular-nums leading-none">
                         {(domain.score / 10).toFixed(1)}
                       </span>
-                      <span className="text-[9px] font-semibold tracking-widest uppercase text-white/35 leading-none">
+                      <span className="text-[9px] font-semibold tracking-widest uppercase text-foreground/35 leading-none">
                         {level.label}
                       </span>
                     </div>
@@ -729,12 +729,12 @@ export default function AssessmentResultsPage() {
                   {profileQuery.isLoading ? (
                     <DomainNarrativeSkeleton />
                   ) : narrative ? (
-                    <p className="text-xs text-white/60 leading-relaxed">{narrative}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{narrative}</p>
                   ) : null}
 
                   {/* Full breakdown link */}
                   <button
-                    className="self-start flex items-center gap-1 text-xs text-white/35 hover:text-white/70 transition-colors mt-auto"
+                    className="self-start flex items-center gap-1 text-xs text-foreground/35 hover:text-foreground/70 transition-colors mt-auto"
                     onClick={() => {
                       // event: assessment.domain.card.full-breakdown-clicked { domain }
                       toast.info(`Full breakdown for ${domain.name} — coming in the next release.`);
@@ -753,12 +753,12 @@ export default function AssessmentResultsPage() {
       {/* ── 5. DEVELOPMENT PLAN ──────────────────────────────────────────── */}
       <section aria-labelledby="dev-plan-heading">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/40">
+          <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             Your development plan · {devPriorities.length} {devPriorities.length === 1 ? "priority" : "priorities"}
           </h2>
           <Link
             href="/learning"
-            className="text-xs text-white/40 hover:text-white/70 transition-colors flex items-center gap-1"
+            className="text-xs text-muted-foreground hover:text-foreground/70 transition-colors flex items-center gap-1"
           >
             View full learning plan <ChevronRight className="w-3 h-3" />
           </Link>
@@ -766,11 +766,11 @@ export default function AssessmentResultsPage() {
 
         {isLoading || planQuery.isLoading ? <DevPlanSkeleton rows={3} /> : (
           devPriorities.length === 0 ? (
-            <div className="bg-[#111827] border border-white/8 rounded-xl p-5 text-sm text-white/50">
+            <div className="bg-card border border-border rounded-xl p-5 text-sm text-muted-foreground">
               All your domain scores are at or above target. Consider revisiting in 6 months.
             </div>
           ) : (
-            <div className="bg-[#111827] border border-white/8 rounded-xl overflow-hidden divide-y divide-white/6">
+            <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
               {devPriorities.map(domain => {
                 const level = getLevelInfo(domain.score);
                 const target = level.nextThreshold;
@@ -788,21 +788,21 @@ export default function AssessmentResultsPage() {
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <DomainDot colour={domain.colour} />
                       <span className="text-sm font-medium text-white truncate">{domain.name}</span>
-                      <span className="text-xs text-white/40 tabular-nums shrink-0">
+                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                         {(domain.score / 10).toFixed(1)} → {(target / 10).toFixed(1)}
                       </span>
                     </div>
                     {/* Module info */}
-                    <div className="text-xs text-white/50 flex-1 min-w-0">
+                    <div className="text-xs text-muted-foreground flex-1 min-w-0">
                       {timeStr && <span className="mr-2">{timeStr}</span>}
                       {firstModule ? (
                         <>
-                          <span className="text-white/60">{firstModule.title}</span>
-                          {secondModule && <span className="text-white/40">, {secondModule.title}</span>}
-                          {extraCount > 0 && <span className="text-white/30"> +{extraCount} more</span>}
+                          <span className="text-muted-foreground">{firstModule.title}</span>
+                          {secondModule && <span className="text-muted-foreground">, {secondModule.title}</span>}
+                          {extraCount > 0 && <span className="text-foreground/30"> +{extraCount} more</span>}
                         </>
                       ) : (
-                        <span className="text-white/30 italic">No modules assigned yet</span>
+                        <span className="text-foreground/30 italic">No modules assigned yet</span>
                       )}
                     </div>
                     {/* Empty-state CTA (fix brief item 9): shown when no modules available */}
@@ -819,7 +819,7 @@ export default function AssessmentResultsPage() {
                     {firstModule && (
                       <Button
                         size="sm"
-                        className="h-7 px-3 text-xs bg-[#3B4EFF] hover:bg-[#2d3fd4] text-white shrink-0"
+                        className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
                         onClick={() => {
                           // event: assessment.development-plan.start-clicked { domain }
                           navigate(`/learning/module/${firstModule.id}`);

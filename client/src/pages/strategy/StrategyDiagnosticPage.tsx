@@ -219,7 +219,7 @@ function DomainEvidenceModal({ row, open, onClose }: { row: DomainRow | null; op
             </div>
             <div className="rounded-lg p-3 text-center bg-slate-50 border border-slate-200">
               <p className="text-xs text-muted-foreground mb-1">Sector p50</p>
-              <p className="text-2xl font-bold text-slate-600">{row.sectorBenchmark ?? "—"}</p>
+              <p className="text-2xl font-bold text-muted-foreground">{row.sectorBenchmark ?? "—"}</p>
             </div>
           </div>
           {gap !== null && (

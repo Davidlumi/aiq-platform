@@ -138,7 +138,7 @@ function TierSlider({
     <div className="space-y-2">
       {/* Track */}
       <div className="relative flex items-center h-6">
-        <div className="absolute inset-x-0 h-1 rounded-full bg-white/10" />
+        <div className="absolute inset-x-0 h-1 rounded-full bg-foreground/10" />
         <div
           className="absolute h-1 rounded-full bg-teal-500 transition-all duration-150"
           style={{ width: `${((value - 1) / 3) * 100}%` }}
@@ -158,7 +158,7 @@ function TierSlider({
               "absolute w-3.5 h-3.5 rounded-full border-2 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
               stop === value
                 ? "bg-teal-400 border-teal-400 scale-125"
-                : "bg-[#0f1623] border-white/30 hover:border-teal-400/60"
+                : "bg-[#0f1623] border-foreground/30 hover:border-teal-400/60"
             )}
             style={{ left: `calc(${((stop - 1) / 3) * 100}% - 7px)` }}
           />
@@ -207,7 +207,7 @@ function ChipButton({
           ? "bg-teal-500/20 border-teal-500/50 text-teal-300"
           : locked
           ? "bg-purple-500/20 border-purple-500/50 text-purple-300 cursor-default"
-          : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+          : "bg-foreground/5 border-foreground/10 text-muted-foreground hover:border-foreground/20 hover:text-foreground"
       )}
       aria-pressed={selected}
       disabled={locked}
@@ -436,10 +436,10 @@ export function VisionModal({
       />
 
       {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-[600px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#0f1623] shadow-2xl flex flex-col">
+      <div className="relative z-10 w-full max-w-[600px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-foreground/10 bg-[#0f1623] shadow-2xl flex flex-col">
 
         {/* ── Header ───────────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/8 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/8 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400">
               <Target className="w-4 h-4" />
@@ -452,7 +452,7 @@ export function VisionModal({
           <button
             type="button"
             onClick={handleCancel}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/8 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-4 h-4" />
@@ -460,7 +460,7 @@ export function VisionModal({
         </div>
 
         {/* ── Context strip ─────────────────────────────────────────────────────── */}
-        <div className="px-6 py-3 border-b border-white/8 bg-white/3 flex-shrink-0">
+        <div className="px-6 py-3 border-b border-foreground/8 bg-foreground/3 flex-shrink-0">
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             {/* Org profile */}
             <div className="flex items-start gap-2 min-w-0">
@@ -551,7 +551,7 @@ export function VisionModal({
                         "flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                         selected
                           ? "bg-teal-500/15 border-teal-500/50 text-teal-300"
-                          : "bg-white/4 border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          : "bg-foreground/4 border-foreground/10 text-muted-foreground hover:border-foreground/20 hover:text-foreground"
                       )}
                     >
                       <Icon className="w-4 h-4" aria-hidden="true" />
@@ -604,7 +604,7 @@ export function VisionModal({
                         "flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                         selected
                           ? "bg-teal-500/15 border-teal-500/50"
-                          : "bg-white/4 border-white/10 hover:border-white/20"
+                          : "bg-foreground/4 border-foreground/10 hover:border-foreground/20"
                       )}
                     >
                       <div className="flex items-center gap-1.5">
@@ -619,7 +619,7 @@ export function VisionModal({
             </div>
           </section>
 
-          <hr className="border-white/8" />
+          <hr className="border-foreground/8" />
 
           {/* ── Section 2: Where AI plays ────────────────────────────────────── */}
           <section>
@@ -663,7 +663,7 @@ export function VisionModal({
                       onChange={(e) => setPainOtherInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addOtherPain(); } if (e.key === "Escape") { setPainOtherOpen(false); setPainOtherInput(""); } }}
                       placeholder="Type and press Enter…"
-                      className="flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-teal-500/50"
+                      className="flex-1 rounded-md border border-foreground/10 bg-foreground/5 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-teal-500/50"
                     />
                     <Button size="sm" className="h-6 text-xs px-2" onClick={addOtherPain}>Add</Button>
                     <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => { setPainOtherOpen(false); setPainOtherInput(""); }}>Cancel</Button>
@@ -709,7 +709,7 @@ export function VisionModal({
                       onChange={(e) => setReinvestOtherInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addOtherReinvest(); } if (e.key === "Escape") { setReinvestOtherOpen(false); setReinvestOtherInput(""); } }}
                       placeholder="Type and press Enter…"
-                      className="flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-teal-500/50"
+                      className="flex-1 rounded-md border border-foreground/10 bg-foreground/5 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-teal-500/50"
                     />
                     <Button size="sm" className="h-6 text-xs px-2" onClick={addOtherReinvest}>Add</Button>
                     <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => { setReinvestOtherOpen(false); setReinvestOtherInput(""); }}>Cancel</Button>
@@ -719,7 +719,7 @@ export function VisionModal({
             </div>
           </section>
 
-          <hr className="border-white/8" />
+          <hr className="border-foreground/8" />
 
           {/* ── Section 3: Time and boundaries ──────────────────────────────── */}
           <section>
@@ -728,7 +728,7 @@ export function VisionModal({
             {/* Time horizon pill toggle */}
             <div className="mb-5">
               <p className="text-xs text-muted-foreground mb-2.5">Time horizon</p>
-              <div className="inline-flex rounded-lg border border-white/10 overflow-hidden">
+              <div className="inline-flex rounded-lg border border-foreground/10 overflow-hidden">
                 {([1, 3, 5] as const).map((yr) => (
                   <button
                     key={yr}
@@ -740,7 +740,7 @@ export function VisionModal({
                       "px-4 py-1.5 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                       inputs.timeHorizonYears === yr
                         ? "bg-teal-500/20 text-teal-300"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                     )}
                   >
                     {yr} {yr === 1 ? "year" : "years"}
@@ -780,13 +780,13 @@ export function VisionModal({
             </div>
           </section>
 
-          <hr className="border-white/8" />
+          <hr className="border-foreground/8" />
 
           {/* ── Draft block ──────────────────────────────────────────────────── */}
           <section>
-            <div className="rounded-xl border border-white/10 bg-white/3 overflow-hidden">
+            <div className="rounded-xl border border-foreground/10 bg-foreground/3 overflow-hidden">
               {/* Draft header */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-foreground/8">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground">
                     Drafted from your answers and context · editable
@@ -824,9 +824,9 @@ export function VisionModal({
                 {isGenerating ? (
                   /* Skeleton */
                   <div className="space-y-2 animate-pulse">
-                    <div className="h-3 bg-white/8 rounded w-full" />
-                    <div className="h-3 bg-white/8 rounded w-5/6" />
-                    <div className="h-3 bg-white/8 rounded w-4/6" />
+                    <div className="h-3 bg-foreground/8 rounded w-full" />
+                    <div className="h-3 bg-foreground/8 rounded w-5/6" />
+                    <div className="h-3 bg-foreground/8 rounded w-4/6" />
                   </div>
                 ) : draftError ? (
                   <div className="flex items-center gap-2 text-xs text-red-400">
@@ -862,7 +862,7 @@ export function VisionModal({
         </div>
 
         {/* ── Footer ───────────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/8 flex-shrink-0 bg-[#0f1623]">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-foreground/8 flex-shrink-0 bg-[#0f1623]">
           <p className="text-[11px] text-muted-foreground hidden sm:block">
             Updates anytime via the pencil on the card.
           </p>

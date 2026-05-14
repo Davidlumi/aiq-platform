@@ -286,6 +286,20 @@
   --sidebar-ring:            oklch(72.3% 0.220 142);
 }
 
+/* Score level badge colors — shared defaults (dark) */
+:root {
+  --score-ai-ready-bg:       #14532d;
+  --score-ai-ready-text:     #86efac;
+  --score-strong-bg:         #166534;
+  --score-strong-text:       #bbf7d0;
+  --score-capable-bg:        #713f12;
+  --score-capable-text:      #fde68a;
+  --score-developing-bg:     #7c2d12;
+  --score-developing-text:   #fdba74;
+  --score-gap-bg:            #450a0a;
+  --score-gap-text:          #fca5a5;
+}
+
 /* Dark mode — indigo navy theme */
 .dark {
   --background:              oklch(16.5% 0.048 264);
@@ -356,6 +370,17 @@
   --sidebar-accent-foreground: oklch(30.0% 0.160 142);
   --sidebar-border:          oklch(87.0% 0.010 240);
   --sidebar-ring:            oklch(58.0% 0.200 142);
+  /* Score level badge colors — light mode overrides */
+  --score-ai-ready-bg:       #dcfce7;
+  --score-ai-ready-text:     #15803d;
+  --score-strong-bg:         #d1fae5;
+  --score-strong-text:       #065f46;
+  --score-capable-bg:        #fef9c3;
+  --score-capable-text:      #854d0e;
+  --score-developing-bg:     #ffedd5;
+  --score-developing-text:   #9a3412;
+  --score-gap-bg:            #fee2e2;
+  --score-gap-text:          #991b1b;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

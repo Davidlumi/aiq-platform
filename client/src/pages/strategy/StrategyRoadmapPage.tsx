@@ -328,7 +328,7 @@ function InitiativeModal({
     <Dialog open onOpenChange={onClose}>
       <DialogContent
         className="max-w-xl max-h-[90vh] overflow-y-auto"
-        style={{ background: "#1a1d27", border: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
       >
         {/* Header */}
         <DialogHeader className="pb-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
@@ -582,10 +582,10 @@ function InitiativeModal({
                   </Button>
                   {showMovePhase && (
                     <div className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden z-50"
-                      style={{ background: "#1a1d27", border: "1px solid rgba(255,255,255,0.1)", minWidth: "140px" }}>
+                      style={{ background: "var(--card)", border: "1px solid var(--border)", minWidth: "140px" }}>
                       {PHASES.filter(p => p.key !== init?.phase).map(p => (
                         <button key={p.key} onClick={() => handleMovePhase(p.key)}
-                          className="w-full text-left px-3 py-2 hover:bg-white/5 transition-colors"
+                          className="w-full text-left px-3 py-2 hover:bg-foreground/5 transition-colors"
                           style={{ fontSize: "12px", color: "#cfd2d8" }}>
                           {p.label}
                         </button>
@@ -718,7 +718,7 @@ export default function StrategyRoadmapPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#0f1117", color: "#E9ECF2" }}>
+    <div className="min-h-screen" style={{ background: "var(--background)", color: "var(--foreground)" }}>
       <div className="max-w-3xl mx-auto px-6 py-8">
 
         {/* Breadcrumb */}

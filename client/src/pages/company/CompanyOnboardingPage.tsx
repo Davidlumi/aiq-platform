@@ -267,13 +267,13 @@ export default function CompanyOnboardingPage() {
   const selectedSectorLabel = SECTOR_OPTIONS.find((s) => s.value === form.sector)?.label ?? "";
 
   return (
-    <div className="bg-[#0d1117] text-white">
+    <div className="bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-white/10 px-6 py-4 flex items-center gap-3">
+      <div className="border-b border-border px-6 py-4 flex items-center gap-3">
         <Building2 className="w-5 h-5 text-violet-400" />
-        <span className="text-sm font-medium text-white/70">Company HR AI Assessment</span>
-        <span className="text-white/30 mx-1">·</span>
-        <span className="text-sm text-white/50">{user?.firstName} {user?.lastName}</span>
+        <span className="text-sm font-medium text-foreground/70">Company HR AI Assessment</span>
+        <span className="text-foreground/30 mx-1">·</span>
+        <span className="text-sm text-muted-foreground">{user?.firstName} {user?.lastName}</span>
       </div>
 
       {/* Progress steps */}
@@ -287,14 +287,14 @@ export default function CompanyOnboardingPage() {
                     ? "bg-violet-500 text-white"
                     : i === step
                     ? "bg-violet-500/20 border-2 border-violet-500 text-violet-400"
-                    : "bg-white/5 border border-white/20 text-white/30"
+                    : "bg-foreground/5 border border-border/60 text-foreground/30"
                 }`}
               >
                 {i < step ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
               </div>
               <span
                 className={`text-xs font-medium ${
-                  i === step ? "text-violet-400" : i < step ? "text-white/60" : "text-white/30"
+                  i === step ? "text-violet-400" : i < step ? "text-muted-foreground" : "text-foreground/30"
                 }`}
               >
                 {s.label}
@@ -303,7 +303,7 @@ export default function CompanyOnboardingPage() {
             {i < STEPS.length - 1 && (
               <div
                 className={`w-16 h-px mx-2 mb-5 transition-all ${
-                  i < step ? "bg-violet-500" : "bg-white/10"
+                  i < step ? "bg-violet-500" : "bg-foreground/10"
                 }`}
               />
             )}
@@ -324,7 +324,7 @@ export default function CompanyOnboardingPage() {
               <h1 className="text-3xl font-bold tracking-tight">
                 Company HR AI Strategy Assessment
               </h1>
-              <p className="text-white/60 text-base leading-relaxed max-w-lg mx-auto">
+              <p className="text-muted-foreground text-base leading-relaxed max-w-lg mx-auto">
                 A rigorous, evidence-based assessment of your organisation's readiness to design,
                 deploy, and govern AI across your people practices — grounded in frameworks from
                 Deloitte, PwC, CIPD, and MIT Sloan.
@@ -357,21 +357,21 @@ export default function CompanyOnboardingPage() {
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-xl p-4"
+                  className="flex items-start gap-4 bg-foreground/5 border border-border rounded-xl p-4"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
                     <item.icon className="w-4.5 h-4.5 text-violet-400" />
                   </div>
                   <div>
                     <div className="font-semibold text-sm text-white">{item.title}</div>
-                    <div className="text-xs text-white/50 mt-0.5">{item.desc}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Time estimate */}
-            <div className="flex items-center justify-center gap-6 text-sm text-white/40">
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
               <span>⏱ 15–20 minutes</span>
               <span>·</span>
               <span>40–52 adaptive questions</span>
@@ -386,14 +386,14 @@ export default function CompanyOnboardingPage() {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold">Tell us about your organisation</h2>
-              <p className="text-white/50 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 This context calibrates the assessment and benchmarks your results against sector peers.
               </p>
             </div>
 
             {/* Organisation name */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Organisation Name <span className="text-rose-400">*</span>
               </label>
               <input
@@ -401,8 +401,8 @@ export default function CompanyOnboardingPage() {
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 placeholder="e.g. Acme Financial Services"
-                className={`w-full bg-white/5 border rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all ${
-                  errors.name ? "border-rose-500" : "border-white/10"
+                className={`w-full bg-foreground/5 border rounded-lg px-4 py-3 text-sm text-white placeholder:text-foreground/30 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all ${
+                  errors.name ? "border-rose-500" : "border-border"
                 }`}
               />
               {errors.name && <p className="text-rose-400 text-xs mt-1">{errors.name}</p>}
@@ -410,7 +410,7 @@ export default function CompanyOnboardingPage() {
 
             {/* Sector */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Sector <span className="text-rose-400">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -421,7 +421,7 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.sector === s.value
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {s.label}
@@ -434,9 +434,9 @@ export default function CompanyOnboardingPage() {
             {/* Sub-sector — cascading, only shown when a sector with sub-sectors is selected */}
             {form.sector && subSectorOptions.length > 0 && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Sub-sector
-                  <span className="text-white/30 font-normal normal-case ml-1">(optional — improves benchmark accuracy)</span>
+                  <span className="text-foreground/30 font-normal normal-case ml-1">(optional — improves benchmark accuracy)</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {subSectorOptions.map((ss) => (
@@ -448,7 +448,7 @@ export default function CompanyOnboardingPage() {
                       className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                         form.subSector === ss.value
                           ? "bg-violet-500/15 border-violet-400 text-violet-300"
-                          : "bg-white/3 border-white/8 text-white/50 hover:border-white/15"
+                          : "bg-foreground/3 border-border text-muted-foreground hover:border-border"
                       }`}
                     >
                       {ss.label}
@@ -466,9 +466,9 @@ export default function CompanyOnboardingPage() {
 
             {/* Organisation Type */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Organisation Type
-                <span className="ml-2 text-white/30 font-normal normal-case tracking-normal text-[11px]">Calibrates governance &amp; compliance benchmarks</span>
+                <span className="ml-2 text-foreground/30 font-normal normal-case tracking-normal text-[11px]">Calibrates governance &amp; compliance benchmarks</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {ORG_TYPES.map((ot) => (
@@ -478,11 +478,11 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.orgType === ot.value
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     <span className="block font-medium">{ot.label}</span>
-                    <span className="block text-[11px] text-white/40 mt-0.5">{ot.desc}</span>
+                    <span className="block text-[11px] text-muted-foreground mt-0.5">{ot.desc}</span>
                   </button>
                 ))}
               </div>
@@ -490,7 +490,7 @@ export default function CompanyOnboardingPage() {
 
             {/* Headcount */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Total Headcount <span className="text-rose-400">*</span>
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -501,7 +501,7 @@ export default function CompanyOnboardingPage() {
                     className={`px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.headcountBand === b
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {b}
@@ -515,7 +515,7 @@ export default function CompanyOnboardingPage() {
 
             {/* HR team size */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 HR Team Size <span className="text-rose-400">*</span>
               </label>
               <div className="grid grid-cols-1 gap-2">
@@ -526,7 +526,7 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-4 py-2.5 rounded-lg text-sm border transition-all ${
                       form.hrTeamSize === s
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {s}
@@ -540,7 +540,7 @@ export default function CompanyOnboardingPage() {
 
             {/* HRIS Platform */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Primary HRIS Platform
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -551,7 +551,7 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.hrisPlatform === p
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {p}
@@ -562,9 +562,9 @@ export default function CompanyOnboardingPage() {
 
             {/* Existing AI tools */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 AI Tools Currently in Use{" "}
-                <span className="text-white/30 font-normal normal-case">(select all that apply)</span>
+                <span className="text-foreground/30 font-normal normal-case">(select all that apply)</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {AI_TOOLS.map((t) => (
@@ -574,7 +574,7 @@ export default function CompanyOnboardingPage() {
                     className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
                       form.existingAiTools.includes(t)
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {t}
@@ -585,7 +585,7 @@ export default function CompanyOnboardingPage() {
 
             {/* Assessment motivation */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Primary Motivation for this Assessment
               </label>
               <div className="grid grid-cols-1 gap-2">
@@ -596,7 +596,7 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-4 py-2.5 rounded-lg text-sm border transition-all ${
                       form.assessmentMotivation === m
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {m}
@@ -607,7 +607,7 @@ export default function CompanyOnboardingPage() {
 
             {/* Results audience */}
             <div>
-              <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Who will see these results?
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -618,7 +618,7 @@ export default function CompanyOnboardingPage() {
                     className={`text-left px-3 py-2.5 rounded-lg text-sm border transition-all ${
                       form.resultsAudience === a
                         ? "bg-violet-500/20 border-violet-500 text-violet-300"
-                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                        : "bg-foreground/5 border-border text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     {a}
@@ -634,7 +634,7 @@ export default function CompanyOnboardingPage() {
           <div className="space-y-8">
             <div>
               <h2 className="text-xl font-bold">What the assessment covers</h2>
-              <p className="text-white/50 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 The assessment evaluates your organisation across 6 dimensions of HR AI readiness,
                 using an adaptive question engine that adjusts to your responses.
               </p>
@@ -645,14 +645,14 @@ export default function CompanyOnboardingPage() {
               {DIMENSIONS.map((d) => (
                 <div
                   key={d.key}
-                  className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-xl p-4"
+                  className="flex items-start gap-4 bg-foreground/5 border border-border rounded-xl p-4"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
                     <d.icon className={`w-4.5 h-4.5 ${d.color}`} />
                   </div>
                   <div>
                     <div className="font-semibold text-sm text-white">{d.label}</div>
-                    <div className="text-xs text-white/50 mt-0.5 leading-relaxed">{d.desc}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{d.desc}</div>
                   </div>
                 </div>
               ))}
@@ -664,7 +664,7 @@ export default function CompanyOnboardingPage() {
                 <Brain className="w-4 h-4" />
                 Adaptive Methodology
               </div>
-              <p className="text-xs text-white/60 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Questions are drawn from a bank of 60+ items calibrated against the Deloitte AI
                 Maturity Index, PwC AI Readiness Framework, and CIPD People Profession AI
                 Competency Model. The adaptive engine selects questions based on your previous
@@ -688,7 +688,7 @@ export default function CompanyOnboardingPage() {
 
             {/* What happens next */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 After the assessment
               </div>
               <div className="space-y-2">
@@ -698,7 +698,7 @@ export default function CompanyOnboardingPage() {
                   "Pre-populated AI Strategy Builder with recommended initiatives",
                   "Team cascade: connect individual HR team scores to org-level gaps",
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-2.5 text-sm text-white/60">
+                  <div key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     {item}
                   </div>
@@ -708,17 +708,17 @@ export default function CompanyOnboardingPage() {
 
             {/* Organisation summary */}
             {form.name && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+              <div className="bg-foreground/5 border border-border rounded-xl p-4">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   Assessment for
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="border-white/20 text-white/70">
+                  <Badge variant="outline" className="border-border/60 text-foreground/70">
                     <Building2 className="w-3 h-3 mr-1" />
                     {form.name}
                   </Badge>
                   {selectedSectorLabel && (
-                    <Badge variant="outline" className="border-white/20 text-white/70">
+                    <Badge variant="outline" className="border-border/60 text-foreground/70">
                       {selectedSectorLabel}
                     </Badge>
                   )}
@@ -734,7 +734,7 @@ export default function CompanyOnboardingPage() {
                     </Badge>
                   )}
                   {form.headcountBand && (
-                    <Badge variant="outline" className="border-white/20 text-white/70">
+                    <Badge variant="outline" className="border-border/60 text-foreground/70">
                       <Users className="w-3 h-3 mr-1" />
                       {form.headcountBand}
                     </Badge>
@@ -746,12 +746,12 @@ export default function CompanyOnboardingPage() {
         )}
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-10 pt-6 border-t border-white/10">
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
           <Button
             variant="ghost"
             onClick={handleBack}
             disabled={step === 0}
-            className="text-white/50 hover:text-white"
+            className="text-muted-foreground hover:text-white"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Back

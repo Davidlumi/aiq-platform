@@ -186,7 +186,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                   ? "bg-green-500 border-green-500 text-black"
                   : isCurrent
                   ? "bg-green-500/15 border-green-500 text-green-400"
-                  : "bg-white/4 border-white/15 text-muted-foreground"
+                  : "bg-foreground/4 border-border text-muted-foreground"
               }`}>
                 {isComplete ? <Check className="w-4 h-4" /> : step.icon}
               </div>
@@ -198,7 +198,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
             </div>
             {i < steps.length - 1 && (
               <div className={`flex-1 h-0.5 mt-[18px] transition-colors ${
-                stepNum < current ? "bg-green-500" : "bg-white/8"
+                stepNum < current ? "bg-green-500" : "bg-foreground/8"
               }`} />
             )}
           </React.Fragment>
@@ -223,9 +223,9 @@ function ChipSelect({
   color?: "green" | "blue" | "purple";
 }) {
   const colorMap = {
-    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
-    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
-    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-white/25 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
   };
   const c = colorMap[color];
   return (
@@ -277,12 +277,12 @@ function CardSelect<T extends number | string>({
             key={String(opt.value)}
             onClick={() => onSelect(opt.value)}
             className={`w-full text-left rounded-xl border p-4 transition-all ${
-              isSelected ? c.active : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
+              isSelected ? c.active : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
             }`}
           >
             <div className="flex items-start gap-3">
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                isSelected ? `${c.dot} border-transparent` : "border-white/20"
+                isSelected ? `${c.dot} border-transparent` : "border-border/60"
               }`}>
                 {isSelected && <Check className="w-3 h-3 text-black" />}
               </div>
@@ -331,7 +331,7 @@ function RankedSelect({
                 ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
                 : isDisabled
                 ? "border-white/6 text-muted-foreground/30 cursor-not-allowed"
-                : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
             }`}
           >
             {isSelected && (
@@ -387,7 +387,7 @@ function PrincipleCard({
         value={description}
         onChange={e => onDescriptionChange(e.target.value)}
         rows={2}
-        className="resize-none bg-white/4 border-white/10 text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+        className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
         placeholder="Describe this principle..."
       />
     </div>
@@ -435,7 +435,7 @@ function InitiativeLibraryModal({
     <>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl h-[88vh] flex flex-col p-0">
-          <DialogHeader className="px-6 pt-5 pb-3 border-b border-white/8 flex-shrink-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-base font-semibold">Initiative Library</DialogTitle>
@@ -458,7 +458,7 @@ function InitiativeLibraryModal({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search initiatives..."
-                className="w-full bg-white/4 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
+                className="w-full bg-foreground/4 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -469,7 +469,7 @@ function InitiativeLibraryModal({
                   className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     categoryFilter === cat
                       ? "bg-green-500/20 border-green-500/40 text-green-400"
-                      : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                   }`}
                 >
                   {CATEGORY_ICONS[cat]}
@@ -490,13 +490,13 @@ function InitiativeLibraryModal({
                     className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
                       isSelected
                         ? "border-green-500/40 bg-green-500/8"
-                        : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
+                        : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
                     }`}
                     onClick={() => onToggle(init.id)}
                     style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
                   >
                     <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${
-                      isSelected ? "bg-green-500 border-green-500" : "border-white/20"
+                      isSelected ? "bg-green-500 border-green-500" : "border-border/60"
                     }`}>
                       {isSelected && <Check className="w-3 h-3 text-black" />}
                     </div>
@@ -513,7 +513,7 @@ function InitiativeLibraryModal({
                         </span>
                       )}
                       {init.decisionAuthority && (
-                        <span className="text-xs px-2 py-0.5 rounded-full border border-white/10 text-muted-foreground">
+                        <span className="text-xs px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                           {DA_LABELS[init.decisionAuthority] ?? init.decisionAuthority}
                         </span>
                       )}
@@ -614,7 +614,7 @@ function BaselineField({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-white/2 p-4">
+    <div className="rounded-xl border border-border bg-white/2 p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground mb-0.5">{label}</p>
@@ -625,7 +625,7 @@ function BaselineField({
             type="checkbox"
             checked={usingSectorDefault}
             onChange={onToggleDefault}
-            className="rounded border-white/20 bg-white/4 text-green-500 focus:ring-green-500/40"
+            className="rounded border-border/60 bg-foreground/4 text-green-500 focus:ring-green-500/40"
           />
           Use sector average ({unit ? `${unit}` : ""}{sectorDefault.toLocaleString()})
         </label>
@@ -640,9 +640,9 @@ function BaselineField({
             value={usingSectorDefault ? sectorDefault : (value ?? "")}
             onChange={e => onValueChange(e.target.value === "" ? undefined : Number(e.target.value))}
             disabled={usingSectorDefault}
-            className={`w-full rounded-lg border bg-white/4 px-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/40 transition-colors ${
+            className={`w-full rounded-lg border bg-foreground/4 px-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/40 transition-colors ${
               unit ? "pl-7" : ""
-            } ${usingSectorDefault ? "opacity-50 cursor-not-allowed border-white/8" : "border-white/10"}`}
+            } ${usingSectorDefault ? "opacity-50 cursor-not-allowed border-border" : "border-border"}`}
             placeholder={usingSectorDefault ? String(sectorDefault) : "Enter value..."}
             min={0}
           />
@@ -1041,7 +1041,7 @@ export default function HRAIStrategyAssessmentPage() {
   return (
     <div ref={scrollRef} className="min-h-screen bg-background">
       {/* ── Page header ─────────────────────────────────────────────────────── */}
-      <div className="border-b border-white/8 bg-white/2">
+      <div className="border-b border-border bg-white/2">
         <div className="max-w-3xl mx-auto px-6 py-5">
           <button
             onClick={() => navigate("/ai-strategy")}
@@ -1082,7 +1082,7 @@ export default function HRAIStrategyAssessmentPage() {
               Benchmarks for:
             </span>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-foreground bg-white/6 border border-white/10 rounded-full px-2.5 py-1">
+              <span className="text-xs font-medium text-foreground bg-foreground/6 border border-border rounded-full px-2.5 py-1">
                 {sectorLabel}
               </span>
               {subSectorOptions.map(opt => (
@@ -1095,7 +1095,7 @@ export default function HRAIStrategyAssessmentPage() {
                   className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
                     subSector === opt.value
                       ? "bg-green-500/20 border-green-500/40 text-green-300 font-semibold"
-                      : "bg-white/4 border-white/10 text-muted-foreground hover:text-foreground hover:bg-white/8"
+                      : "bg-foreground/4 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/8"
                   }`}
                 >
                   {opt.label}
@@ -1145,7 +1145,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-6">
               {/* Business outcomes */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What AI outcomes matter most to your organisation?
                 </p>
@@ -1162,7 +1162,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Business problems */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What business problems should AI solve in the next 1–3 years?
                 </p>
@@ -1179,7 +1179,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Risk appetite */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation's risk appetite for AI?
                 </p>
@@ -1193,7 +1193,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Timeline */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation's timeline for AI adoption?
                 </p>
@@ -1206,7 +1206,7 @@ export default function HRAIStrategyAssessmentPage() {
                       className={`text-sm px-4 py-2 rounded-lg border transition-colors font-medium ${
                         timelineMonths === opt.value
                           ? "bg-green-500/20 border-green-500/50 text-green-300"
-                          : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
                       {opt.label}
@@ -1216,7 +1216,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Success markers — ranked top 3 */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What does AI success look like? <span className="text-muted-foreground font-normal">(Rank your top 3)</span>
                 </p>
@@ -1236,7 +1236,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* A1 — Existing AI tools */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which AI or digital HR tools do you already have in place? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1258,7 +1258,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             {/* D3 — Solution Delivery Confidence */}
-            <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+            <div className="rounded-xl border border-border bg-foreground/3 p-5">
               <p className="text-sm font-semibold text-foreground mb-1">
                 How confident is your organisation in delivering AI change programmes? <span className="text-muted-foreground font-normal">(Optional)</span>
               </p>
@@ -1274,7 +1274,7 @@ export default function HRAIStrategyAssessmentPage() {
                     className={`rounded-lg border p-3 text-left transition-all ${
                       solutionDeliveryConfidence === opt.value
                         ? "border-cyan-500 bg-cyan-500/10 text-foreground"
-                        : "border-white/10 bg-white/3 text-muted-foreground hover:border-white/20"
+                        : "border-border bg-foreground/3 text-muted-foreground hover:border-border/60"
                     }`}
                   >
                     <div className="text-xs font-bold mb-1">{opt.value}. {opt.label}</div>
@@ -1430,7 +1430,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-5">
               {/* Executive sponsors */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Executive sponsors</p>
                 <p className="text-xs text-muted-foreground mb-4">Who at C-suite or board level is backing this initiative?</p>
                 <ChipSelect
@@ -1450,7 +1450,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Gatekeepers */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Gatekeepers</p>
                 <p className="text-xs text-muted-foreground mb-4">Which functions must approve or be consulted before deployment?</p>
                 <ChipSelect
@@ -1470,7 +1470,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Affected groups */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Affected groups</p>
                 <p className="text-xs text-muted-foreground mb-4">Who will be directly impacted by the AI tools and processes you're introducing?</p>
                 <ChipSelect
@@ -1490,7 +1490,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Potential resistors */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Potential resistors <span className="text-muted-foreground font-normal">(Optional)</span></p>
                 <p className="text-xs text-muted-foreground mb-4">Who might push back, and why? Being honest here improves your change plan.</p>
                 <ChipSelect
@@ -1510,7 +1510,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Notes */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Additional context <span className="text-muted-foreground font-normal">(Optional)</span></p>
                 <p className="text-xs text-muted-foreground mb-3">Any political dynamics, named individuals, or timing constraints worth noting?</p>
                 <Textarea
@@ -1518,14 +1518,14 @@ export default function HRAIStrategyAssessmentPage() {
                   onChange={e => { setStakeholderMap(prev => ({ ...prev, notes: e.target.value })); setIsDirty(true); }}
                   rows={3}
                   maxLength={400}
-                  className="resize-none bg-white/4 border-white/10 text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
+                  className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
                   placeholder="e.g. Our CFO is sceptical — we need a quick win before the Q2 board. Trade union consultation required for any workforce-impacting tools."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{(stakeholderMap.notes ?? "").length}/400</p>
               </div>
 
               {/* E1 — UK Regulatory Frameworks */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which UK regulatory frameworks apply to your AI initiatives? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1545,14 +1545,14 @@ export default function HRAIStrategyAssessmentPage() {
                       className={`w-full text-left p-3 rounded-xl border transition-colors ${
                         ukRegulatoryFrameworks.includes(fw.id)
                           ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
-                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
                       <div className="flex items-start gap-2">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 mt-0.5 ${
                           fw.risk === "high"   ? "bg-red-500/20 text-red-400" :
                           fw.risk === "medium" ? "bg-amber-500/20 text-amber-400" :
-                          "bg-white/10 text-muted-foreground"
+                          "bg-foreground/10 text-muted-foreground"
                         }`}>{fw.risk}</span>
                         <div>
                           <p className="text-sm font-medium leading-tight">{fw.label}</p>
@@ -1597,7 +1597,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-6">
               {/* HR leadership position */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is HR's leadership position on AI?
                 </p>
@@ -1611,7 +1611,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* HR processes priority */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which HR processes should AI transform first? <span className="text-muted-foreground font-normal">(Select up to 5)</span>
                 </p>
@@ -1629,7 +1629,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Governance principles */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What governance principles matter most?
                 </p>
@@ -1648,7 +1648,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* A3 — AI philosophy */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation’s AI philosophy?
                 </p>
@@ -1661,7 +1661,7 @@ export default function HRAIStrategyAssessmentPage() {
                       className={`w-full text-left p-3.5 rounded-xl border transition-colors ${
                         aiPhilosophy === opt.value
                           ? "bg-blue-500/15 border-blue-500/40 text-foreground"
-                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
                       <p className={`text-sm font-semibold mb-0.5 ${aiPhilosophy === opt.value ? "text-blue-300" : ""}`}>{opt.label}</p>
@@ -1672,7 +1672,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* D1 — Measurement cadence */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   How often will you review and measure progress? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1685,7 +1685,7 @@ export default function HRAIStrategyAssessmentPage() {
                       className={`w-full text-left p-3 rounded-xl border transition-colors text-sm ${
                         measurementCadence === opt.value
                           ? "bg-green-500/15 border-green-500/40 text-green-300"
-                          : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                          : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                       }`}
                     >
                       {measurementCadence === opt.value && <Check className="w-3 h-3 inline mr-1.5" />}
@@ -1696,7 +1696,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* D2 — Pilot Design */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   How do you want to pilot your first initiative? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1714,7 +1714,7 @@ export default function HRAIStrategyAssessmentPage() {
                           className={`text-left p-3 rounded-xl border transition-colors ${
                             pilotScope === opt.value
                               ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                              : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
                           <p className="text-xs font-semibold leading-tight">{opt.label}</p>
@@ -1733,7 +1733,7 @@ export default function HRAIStrategyAssessmentPage() {
                           className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
                             pilotDuration === opt.value
                               ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                              : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
                           {opt.label}
@@ -1758,7 +1758,7 @@ export default function HRAIStrategyAssessmentPage() {
                           className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-colors ${
                             pilotMetrics.includes(m.id)
                               ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                              : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                              : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                           }`}
                         >
                           <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0 ${
@@ -1774,7 +1774,7 @@ export default function HRAIStrategyAssessmentPage() {
                 </div>
               </div>
               {/* Voice capture */}
-              <div className="rounded-xl border border-white/8 bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-white/2 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Anything else we should know about your context? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1785,7 +1785,7 @@ export default function HRAIStrategyAssessmentPage() {
                   value={voiceCapture}
                   onChange={e => { if (e.target.value.length <= 500) { setVoiceCapture(e.target.value); setIsDirty(true); } }}
                   rows={3}
-                  className="resize-none bg-white/4 border-white/10 text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+                  className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
                   placeholder="e.g. We have a board mandate to reduce HR headcount by 20% over 3 years. Our CHRO is new and wants quick wins before the end of Q1..."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{voiceCapture.length}/500</p>
@@ -1915,7 +1915,7 @@ export default function HRAIStrategyAssessmentPage() {
                     value={visionStatement}
                     onChange={e => { setVisionStatement(e.target.value); setIsDirty(true); }}
                     rows={4}
-                    className="resize-none bg-white/4 border-white/10 text-sm focus:border-purple-500/40"
+                    className="resize-none bg-foreground/4 border-border text-sm focus:border-purple-500/40"
                   />
                 </div>
 
@@ -1993,7 +1993,7 @@ export default function HRAIStrategyAssessmentPage() {
                 { label: "Business AI Ambition", levels: BUSINESS_LEVELS, value: businessLevel, onChange: (v: number) => { setBusinessLevel(v); setIsDirty(true); } },
                 { label: "People AI Ambition", levels: PEOPLE_LEVELS, value: peopleLevel, onChange: (v: number) => { setPeopleLevel(v); setIsDirty(true); } },
               ].map(({ label, levels, value, onChange }) => (
-                <div key={label} className="rounded-xl border border-white/8 bg-white/2 p-4">
+                <div key={label} className="rounded-xl border border-border bg-white/2 p-4">
                   <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{label}</p>
                   <div className="flex gap-1.5 mb-2">
                     {[1,2,3,4,5].map(n => (
@@ -2005,7 +2005,7 @@ export default function HRAIStrategyAssessmentPage() {
                             ? "bg-green-500 text-black"
                             : n < value
                             ? "bg-green-500/20 text-green-400"
-                            : "bg-white/4 text-muted-foreground hover:bg-white/8"
+                            : "bg-foreground/4 text-muted-foreground hover:bg-foreground/8"
                         }`}
                       >
                         {n}
@@ -2019,7 +2019,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             {/* Selected initiatives */}
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{selectedIds.size} initiative{selectedIds.size !== 1 ? "s" : ""} selected</p>
@@ -2055,7 +2055,7 @@ export default function HRAIStrategyAssessmentPage() {
                       return (
                         <div
                           key={init.id}
-                          className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/2 px-4 py-3"
+                          className="flex items-center gap-3 rounded-lg border border-border bg-white/2 px-4 py-3"
                           style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
                         >
                           <div className="flex-1 min-w-0">
@@ -2089,7 +2089,7 @@ export default function HRAIStrategyAssessmentPage() {
                   { label: "Timeline", value: timelineMonths ? `${timelineMonths} months` : "—" },
                   { label: "Initiatives", value: `${selectedIds.size} selected` },
                 ].map(({ label, value }) => (
-                  <div key={label} className="rounded-lg bg-white/4 px-3 py-2">
+                  <div key={label} className="rounded-lg bg-foreground/4 px-3 py-2">
                     <p className="text-muted-foreground">{label}</p>
                     <p className="text-foreground font-semibold mt-0.5">{value}</p>
                   </div>

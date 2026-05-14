@@ -172,7 +172,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0F1117] border-white/10">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold text-foreground">{item.display_name}</DialogTitle>
           <div className="flex items-center gap-2 flex-wrap mt-1">
@@ -204,21 +204,21 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
           {qv && (
             <div>
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Bottom-up calculation</h3>
-              <div className="rounded-lg border border-white/8 bg-white/2 overflow-hidden">
+              <div className="rounded-lg border border-border bg-white/2 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-white/8">
+                    <tr className="border-b border-border">
                       <th className="text-left px-3 py-2 text-muted-foreground font-medium">Step</th>
                       <th className="text-right px-3 py-2 text-muted-foreground font-medium">Low</th>
                       <th className="text-right px-3 py-2 text-muted-foreground font-medium">High</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-white/5">
+                    <tr className="border-b border-foreground/5">
                       <td className="px-3 py-2 text-foreground/80">Improvement formula</td>
                       <td className="px-3 py-2 text-right text-muted-foreground" colSpan={2}>{item.monetisation_breakdown}</td>
                     </tr>
-                    <tr className="border-b border-white/5 bg-white/2">
+                    <tr className="border-b border-foreground/5 bg-white/2">
                       <td className="px-3 py-2 font-semibold text-foreground">3-year value (annual × 3)</td>
                       <td className="px-3 py-2 text-right font-semibold text-emerald-400">{fmt(qv.low * 3)}</td>
                       <td className="px-3 py-2 text-right font-semibold text-emerald-400">{fmt(qv.high * 3)}</td>
@@ -260,10 +260,10 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
           {qv && sensitivityRows.length > 0 && (
             <div>
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Sensitivity (±20% on key assumptions)</h3>
-              <div className="rounded-lg border border-white/8 bg-white/2 overflow-hidden">
+              <div className="rounded-lg border border-border bg-white/2 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-white/8">
+                    <tr className="border-b border-border">
                       <th className="text-left px-3 py-2 text-muted-foreground font-medium">Assumption</th>
                       <th className="text-right px-3 py-2 text-muted-foreground font-medium">−20% impact</th>
                       <th className="text-right px-3 py-2 text-muted-foreground font-medium">+20% impact</th>
@@ -271,7 +271,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
                   </thead>
                   <tbody>
                     {sensitivityRows.map((row, i) => (
-                      <tr key={i} className={i < sensitivityRows.length - 1 ? "border-b border-white/5" : ""}>
+                      <tr key={i} className={i < sensitivityRows.length - 1 ? "border-b border-foreground/5" : ""}>
                         <td className="px-3 py-2 text-foreground/80">{row.assumption}</td>
                         <td className="px-3 py-2 text-right text-red-400">{row.minus}</td>
                         <td className="px-3 py-2 text-right text-emerald-400">{row.plus}</td>
@@ -410,7 +410,7 @@ function InitiativeBarChart({ items, onSelect }: { items: InitiativeItem[]; onSe
           </div>
         );
       })}
-      <div className="flex flex-wrap gap-3 pt-2 mt-1 border-t border-white/8">
+      <div className="flex flex-wrap gap-3 pt-2 mt-1 border-t border-border">
         {Object.entries(VALUE_TYPE_CONFIG).map(([k, v]) => (
           <div key={k} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <div className="w-2 h-2 rounded-full" style={{ background: v.color }} />
@@ -444,7 +444,7 @@ function ScenarioCard({ label, color, bg, border, assumptions, cost, value, net,
           ))}
         </ul>
       </div>
-      <div className="space-y-1.5 border-t border-white/8 pt-2">
+      <div className="space-y-1.5 border-t border-border pt-2">
         <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">Cost</span>
           <span className="font-medium text-foreground">{fmt(cost)}</span>
@@ -453,7 +453,7 @@ function ScenarioCard({ label, color, bg, border, assumptions, cost, value, net,
           <span className="text-muted-foreground">Value</span>
           <span className="font-medium text-foreground">{fmt(value)}</span>
         </div>
-        <div className="flex justify-between text-xs border-t border-white/8 pt-1.5">
+        <div className="flex justify-between text-xs border-t border-border pt-1.5">
           <span className="text-muted-foreground">Net</span>
           <span className="font-semibold" style={{ color }}>{fmt(net)}</span>
         </div>
@@ -570,10 +570,10 @@ export default function StrategyValuePage() {
 
       {/* ── No strategy ──────────────────────────────────────────────────────── */}
       {noStrategy && (
-        <div className="rounded-xl border border-white/8 bg-white/2 p-8 text-center">
+        <div className="rounded-xl border border-border bg-white/2 p-8 text-center">
           <TrendingUp className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground mb-4">Generate your strategy to see its value.</p>
-          <Button size="sm" variant="outline" className="text-xs border-white/15" onClick={() => navigate("/strategy/diagnostic")}>
+          <Button size="sm" variant="outline" className="text-xs border-border" onClick={() => navigate("/strategy/diagnostic")}>
             Build your strategy <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
         </div>
@@ -588,10 +588,10 @@ export default function StrategyValuePage() {
           ) : valueEnvQ.isError ? (
             <BlockError message="Value model unavailable. Refresh to retry." />
           ) : ve ? (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               {/* Arithmetic strip */}
               <div
-                className="flex flex-wrap items-center justify-center gap-3 mb-5 py-3 px-4 rounded-lg bg-white/3 border border-white/6"
+                className="flex flex-wrap items-center justify-center gap-3 mb-5 py-3 px-4 rounded-lg bg-foreground/3 border border-white/6"
                 aria-label={`Gross value ${fmtRange(ve.total_quantified_value_gbp.low, ve.total_quantified_value_gbp.high)}, minus TCO ${fmtRange(ve.tco.total_3yr_gbp.low, ve.tco.total_3yr_gbp.high)}, equals net value ${fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}`}
               >
                 <div className="text-center">
@@ -655,7 +655,7 @@ export default function StrategyValuePage() {
           {valueEnvQ.isLoading ? (
             <BlockSkeleton lines={5} />
           ) : ve ? (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <BlockHeading label="Value summary · 3-year horizon" sub="Bar height shows high estimate. Hover or tap a bar for the low estimate." />
               <ValueSummaryChart
                 gross={ve.total_quantified_value_gbp}
@@ -667,7 +667,7 @@ export default function StrategyValuePage() {
 
           {/* ── Block 4: Value by initiative horizontal bar chart ────────────── */}
           {ve && sortedByInit.length > 0 && (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <BlockHeading label="Value by initiative · high estimate" sub="Hover any bar for the low estimate. Click to open detail." />
               <InitiativeBarChart items={sortedByInit} onSelect={setSelectedInitiative} />
             </div>
@@ -675,7 +675,7 @@ export default function StrategyValuePage() {
 
           {/* ── Block 5: Per-initiative table ────────────────────────────────── */}
           {ve && sortedByInit.length > 0 && (
-            <div className="rounded-xl border border-white/8 bg-white/2 mb-4 overflow-hidden">
+            <div className="rounded-xl border border-border bg-white/2 mb-4 overflow-hidden">
               <button
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/2 transition-colors"
                 onClick={() => setPerInitCollapsed(c => !c)}
@@ -691,7 +691,7 @@ export default function StrategyValuePage() {
                 <div className="animate-in slide-in-from-top-2 duration-200 overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-t border-b border-white/8 bg-white/3">
+                      <tr className="border-t border-b border-border bg-foreground/3">
                         <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Initiative</th>
                         <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Value type</th>
                         <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Value range</th>
@@ -702,7 +702,7 @@ export default function StrategyValuePage() {
                       {sortedByInit.map((item, i) => (
                         <tr
                           key={item.initiative_id}
-                          className={`border-b border-white/5 hover:bg-white/3 cursor-pointer transition-colors ${i === sortedByInit.length - 1 ? "border-b-0" : ""}`}
+                          className={`border-b border-foreground/5 hover:bg-foreground/3 cursor-pointer transition-colors ${i === sortedByInit.length - 1 ? "border-b-0" : ""}`}
                           onClick={() => setSelectedInitiative(item)}
                         >
                           <td className="px-4 py-3 font-medium text-foreground/90">{item.display_name}</td>
@@ -726,7 +726,7 @@ export default function StrategyValuePage() {
 
           {/* ── Block 6: Three-tier analysis ─────────────────────────────────── */}
           {ve?.tiered_value && (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <BlockHeading label="Three-tier value analysis · strategic narrative for board" />
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/6 border border-emerald-500/15">
@@ -762,7 +762,7 @@ export default function StrategyValuePage() {
               </div>
               {/* Reconciliation line */}
               {tierSum && (
-                <div className="rounded-lg border border-white/8 bg-white/3 p-3 space-y-1.5">
+                <div className="rounded-lg border border-border bg-foreground/3 p-3 space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Three-tier sum</span>
                     <span className="font-medium text-foreground">{fmtRange(tierSum.low, tierSum.high)}</span>
@@ -771,7 +771,7 @@ export default function StrategyValuePage() {
                     <span className="text-muted-foreground">Net value (above)</span>
                     <span className="font-medium text-foreground">{fmtRange(ve.net_value_gbp.low, ve.net_value_gbp.high)}</span>
                   </div>
-                  <div className="border-t border-white/8 pt-1.5 flex justify-between text-xs">
+                  <div className="border-t border-border pt-1.5 flex justify-between text-xs">
                     <span className="text-muted-foreground">Difference</span>
                     <span className="font-medium text-amber-400">{fmtRange(Math.abs(ve.net_value_gbp.low - tierSum.low), Math.abs(ve.net_value_gbp.high - tierSum.high))}</span>
                   </div>
@@ -785,10 +785,10 @@ export default function StrategyValuePage() {
 
           {/* ── Block 7: Interactive DCF financial model ──────────────────────── */}
           {ve?.financial_model && (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <BlockHeading label="Financial model · 3-year DCF" />
               {/* Discount rate input */}
-              <div className="flex flex-wrap items-end gap-4 mb-4 p-3 rounded-lg bg-white/3 border border-white/8">
+              <div className="flex flex-wrap items-end gap-4 mb-4 p-3 rounded-lg bg-foreground/3 border border-border">
                 <div className="flex-1 min-w-[160px]">
                   <label htmlFor="discount-rate" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
                     Discount rate
@@ -802,7 +802,7 @@ export default function StrategyValuePage() {
                       step={0.5}
                       value={rateInput}
                       onChange={e => handleRateChange(e.target.value)}
-                      className="w-20 bg-white/5 border border-white/15 rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-blue-400"
+                      className="w-20 bg-foreground/5 border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-blue-400"
                     />
                     <span className="text-sm text-muted-foreground">%</span>
                     {discountRate !== 8.0 && (
@@ -832,7 +832,7 @@ export default function StrategyValuePage() {
                     </p>
                   )}
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/3 p-4">
+                <div className="rounded-lg border border-border bg-foreground/3 p-4">
                   <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Payback period</div>
                   <div className="text-xl font-bold text-foreground">{fmtMonths(ve.payback_period_months)}</div>
                   <div className="text-[11px] text-muted-foreground mt-1">IRR suppressed — use NPV &amp; payback</div>
@@ -858,7 +858,7 @@ export default function StrategyValuePage() {
 
           {/* ── Block 8: Three-scenario analysis ─────────────────────────────── */}
           {ve?.scenario_analysis && (
-            <div className="rounded-xl border border-white/8 bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
               <BlockHeading label="Three-scenario analysis · range of plausible outcomes" />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <ScenarioCard
@@ -898,7 +898,7 @@ export default function StrategyValuePage() {
 
           {/* ── Block 9: Qualitative highlights ──────────────────────────────── */}
           {ve?.qualitative_summary?.bullet_points?.length > 0 && (
-            <div className="rounded-xl border border-white/8 bg-white/2 mb-4 overflow-hidden">
+            <div className="rounded-xl border border-border bg-white/2 mb-4 overflow-hidden">
               <button
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/2 transition-colors"
                 onClick={() => setQualCollapsed(c => !c)}
@@ -983,7 +983,7 @@ export default function StrategyValuePage() {
           )}
 
           {/* ── Next step footer ──────────────────────────────────────────────── */}
-          <div className="rounded-2xl border border-white/8 bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="rounded-2xl border border-border bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Next step</p>
               <p className="text-sm text-foreground">Set up your measurement plan and review cadence.</p>
@@ -991,7 +991,7 @@ export default function StrategyValuePage() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs h-8 border-white/15 hover:border-white/30"
+              className="text-xs h-8 border-border hover:border-border/80"
               onClick={() => navigate("/strategy/measurement")}
             >
               View measurement plan <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

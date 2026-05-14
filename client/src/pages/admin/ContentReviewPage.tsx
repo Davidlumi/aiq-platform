@@ -121,7 +121,7 @@ function StalenessStatusBadge({ status }: { status: string }) {
 function CadenceTab() {
   const { data: cadence, isLoading } = trpc.contentReview.getCadenceStatus.useQuery();
 
-  if (isLoading) return <div className="py-12 text-center text-slate-400">Loading cadence status…</div>;
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading cadence status…</div>;
 
   const overdue = (cadence ?? []).filter(c => c.status === "overdue").length;
   const dueSoon = (cadence ?? []).filter(c => c.status === "due_soon").length;
@@ -135,17 +135,17 @@ function CadenceTab() {
             <p className={`text-sm font-medium ${overdue > 0 ? "text-red-300" : "text-amber-300"}`}>
               {overdue > 0 ? `${overdue} review(s) overdue` : `${dueSoon} review(s) due soon`}
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Schedule a review cycle to bring the content library up to date.
             </p>
           </div>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-800">
+      <div className="overflow-hidden rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-800/60 text-slate-400 text-xs uppercase tracking-wider">
+            <tr className="bg-muted/60 text-muted-foreground text-xs uppercase tracking-wider">
               <th className="px-4 py-3 text-left">Content Type</th>
               <th className="px-4 py-3 text-left">Cadence</th>
               <th className="px-4 py-3 text-left">Last Reviewed</th>
@@ -156,19 +156,19 @@ function CadenceTab() {
           </thead>
           <tbody className="divide-y divide-slate-800">
             {(cadence ?? []).map(row => (
-              <tr key={row.contentType} className="hover:bg-slate-800/30 transition-colors">
+              <tr key={row.contentType} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">
                   <p className="text-slate-200 font-medium">{row.contentType}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{row.description}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-300">{row.cadence}</td>
-                <td className="px-4 py-3 text-slate-400">
-                  {row.lastReviewedDate ?? <span className="text-slate-600">—</span>}
+                <td className="px-4 py-3 text-muted-foreground">
+                  {row.lastReviewedDate ?? <span className="text-muted-foreground">—</span>}
                 </td>
-                <td className="px-4 py-3 text-slate-400">
-                  {row.nextDueDate ?? <span className="text-slate-600">—</span>}
+                <td className="px-4 py-3 text-muted-foreground">
+                  {row.nextDueDate ?? <span className="text-muted-foreground">—</span>}
                 </td>
-                <td className="px-4 py-3 text-slate-400">{row.owner}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.owner}</td>
                 <td className="px-4 py-3">
                   <CadenceStatusBadge status={row.status} />
                 </td>
@@ -178,9 +178,9 @@ function CadenceTab() {
         </table>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+      <div className="bg-card/50 border border-border rounded-lg p-4">
         <p className="text-xs text-slate-500 leading-relaxed">
-          <span className="text-slate-400 font-medium">Review policy:</span> Initiatives, Risk Rules, and Sources are reviewed quarterly (every 90 days).
+          <span className="text-muted-foreground font-medium">Review policy:</span> Initiatives, Risk Rules, and Sources are reviewed quarterly (every 90 days).
           Sector Benchmarks and the Full Library Audit are reviewed annually (every 365 days).
           Test Fixtures are validated on every library version bump.
           Sources not reviewed in 18+ months are flagged as stale in the Source Health tab.
@@ -230,12 +230,12 @@ function ReviewLogTab() {
     });
   };
 
-  if (isLoading) return <div className="py-12 text-center text-slate-400">Loading review log…</div>;
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading review log…</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted-foreground">
           {(log ?? []).length} entr{(log ?? []).length === 1 ? "y" : "ies"} — append-only audit trail of all library version bumps
         </p>
         <Button
@@ -254,7 +254,7 @@ function ReviewLogTab() {
 
       <div className="space-y-3">
         {(log ?? []).map(entry => (
-          <Card key={entry.id} className="bg-slate-900 border-slate-800">
+          <Card key={entry.id} className="bg-card border-border">
             <CardContent className="p-0">
               <button
                 className="w-full text-left p-4 flex items-start gap-4"
@@ -262,7 +262,7 @@ function ReviewLogTab() {
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-slate-100 font-semibold font-mono">v{entry.version}</span>
+                    <span className="text-foreground font-semibold font-mono">v{entry.version}</span>
                     <BumpTypeBadge type={entry.bumpType} />
                     <TriggerTypeBadge type={entry.triggerType} />
                     <span className="text-xs text-slate-500">
@@ -270,11 +270,11 @@ function ReviewLogTab() {
                     </span>
                   </div>
                   {entry.triggerDetail && (
-                    <p className="text-sm text-slate-400 mt-1">{entry.triggerDetail}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{entry.triggerDetail}</p>
                   )}
                   <p className="text-xs text-slate-500 mt-1">
-                    Author: <span className="text-slate-400">{entry.author}</span>
-                    {entry.reviewer && <> · Reviewer: <span className="text-slate-400">{entry.reviewer}</span></>}
+                    Author: <span className="text-muted-foreground">{entry.author}</span>
+                    {entry.reviewer && <> · Reviewer: <span className="text-muted-foreground">{entry.reviewer}</span></>}
                     {entry.changes.length > 0 && <> · {entry.changes.length} change{entry.changes.length !== 1 ? "s" : ""}</>}
                   </p>
                 </div>
@@ -284,10 +284,10 @@ function ReviewLogTab() {
               </button>
 
               {expanded === entry.id && (
-                <div className="border-t border-slate-800 p-4 space-y-4">
+                <div className="border-t border-border p-4 space-y-4">
                   {entry.changes.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Changes</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Changes</p>
                       <ul className="space-y-1">
                         {entry.changes.map((c, i) => (
                           <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
@@ -301,7 +301,7 @@ function ReviewLogTab() {
 
                   {entry.newSources.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">New Sources</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">New Sources</p>
                       <div className="space-y-1">
                         {entry.newSources.map((s, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
@@ -316,7 +316,7 @@ function ReviewLogTab() {
 
                   {entry.testFixtures.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Test Fixtures</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Test Fixtures</p>
                       <div className="space-y-1">
                         {entry.testFixtures.map((f, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm">
@@ -346,28 +346,28 @@ function ReviewLogTab() {
 
       {/* Add Review Entry Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-slate-100 max-w-lg">
+        <DialogContent className="bg-card border-border text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-white">Log Library Review</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Version *</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Version *</label>
                 <Input
                   value={form.version}
                   onChange={e => setForm(f => ({ ...f, version: e.target.value }))}
                   placeholder="e.g. 1.4.0"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
+                  className="bg-muted border-border text-foreground"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Bump Type</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Bump Type</label>
                 <Select value={form.bumpType} onValueChange={v => setForm(f => ({ ...f, bumpType: v as typeof form.bumpType }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger className="bg-muted border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-muted border-border">
                     <SelectItem value="patch">Patch</SelectItem>
                     <SelectItem value="minor">Minor</SelectItem>
                     <SelectItem value="major">Major</SelectItem>
@@ -377,12 +377,12 @@ function ReviewLogTab() {
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Trigger Type</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Trigger Type</label>
               <Select value={form.triggerType} onValueChange={v => setForm(f => ({ ...f, triggerType: v as typeof form.triggerType }))}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-muted border-border">
                   <SelectItem value="quarterly_review">Quarterly Review</SelectItem>
                   <SelectItem value="annual_review">Annual Review</SelectItem>
                   <SelectItem value="regulatory_trigger">Regulatory Trigger</SelectItem>
@@ -394,59 +394,59 @@ function ReviewLogTab() {
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Trigger Detail</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Trigger Detail</label>
               <Input
                 value={form.triggerDetail}
                 onChange={e => setForm(f => ({ ...f, triggerDetail: e.target.value }))}
                 placeholder="e.g. Q3 2026 quarterly review"
-                className="bg-slate-800 border-slate-700 text-slate-100"
+                className="bg-muted border-border text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Author *</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Author *</label>
                 <Input
                   value={form.author}
                   onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
-                  className="bg-slate-800 border-slate-700 text-slate-100"
+                  className="bg-muted border-border text-foreground"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Reviewer</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Reviewer</label>
                 <Input
                   value={form.reviewer}
                   onChange={e => setForm(f => ({ ...f, reviewer: e.target.value }))}
                   placeholder="Optional"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
+                  className="bg-muted border-border text-foreground"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Changes (one per line)</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Changes (one per line)</label>
               <Textarea
                 value={form.changesText}
                 onChange={e => setForm(f => ({ ...f, changesText: e.target.value }))}
                 placeholder="Added 3 new initiatives&#10;Updated cost ranges…"
                 rows={4}
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Known Issues</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Known Issues</label>
               <Textarea
                 value={form.knownIssues}
                 onChange={e => setForm(f => ({ ...f, knownIssues: e.target.value }))}
                 placeholder="Any known issues with this version…"
                 rows={2}
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-slate-700 text-slate-300">
+            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-slate-300">
               Cancel
             </Button>
             <Button
@@ -505,7 +505,7 @@ function TriggeredTab() {
     priority: "medium" as "low" | "medium" | "high" | "critical",
   });
 
-  if (isLoading) return <div className="py-12 text-center text-slate-400">Loading triggered reviews…</div>;
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading triggered reviews…</div>;
 
   const TRIGGER_TYPE_EXAMPLES: Record<string, string[]> = {
     regulatory: ["ICO guidance update", "EU AI Act amendment", "Employment law change", "DPA enforcement action"],
@@ -518,10 +518,10 @@ function TriggeredTab() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={v => setStatusFilter(v as typeof statusFilter)}>
-            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100 w-36">
+            <SelectTrigger className="bg-muted border-border text-foreground w-36">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectContent className="bg-muted border-border">
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="open">Open</SelectItem>
               <SelectItem value="in_review">In review</SelectItem>
@@ -530,10 +530,10 @@ function TriggeredTab() {
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={v => setCategoryFilter(v as typeof categoryFilter)}>
-            <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100 w-40">
+            <SelectTrigger className="bg-muted border-border text-foreground w-40">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">
+            <SelectContent className="bg-muted border-border">
               <SelectItem value="all">All categories</SelectItem>
               <SelectItem value="regulatory">Regulatory</SelectItem>
               <SelectItem value="customer">Customer</SelectItem>
@@ -557,7 +557,7 @@ function TriggeredTab() {
 
       <div className="space-y-3">
         {(reviews ?? []).map(r => (
-          <Card key={r.id} className="bg-slate-900 border-slate-800">
+          <Card key={r.id} className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <CategoryIcon category={r.triggerCategory} />
@@ -568,10 +568,10 @@ function TriggeredTab() {
                     <PriorityBadge priority={r.priority} />
                     <span className="text-xs text-slate-500 capitalize">{r.triggerCategory}</span>
                   </div>
-                  <p className="text-sm text-slate-400 mt-1">{r.triggerDetail}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{r.triggerDetail}</p>
                   {r.affectedContent && (
                     <p className="text-xs text-slate-500 mt-1">
-                      <span className="text-slate-400">Affected:</span> {r.affectedContent}
+                      <span className="text-muted-foreground">Affected:</span> {r.affectedContent}
                     </p>
                   )}
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
@@ -613,19 +613,19 @@ function TriggeredTab() {
 
       {/* Add Triggered Review Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-slate-100 max-w-lg">
+        <DialogContent className="bg-card border-border text-foreground max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-white">Log Triggered Review</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Category *</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Category *</label>
                 <Select value={addForm.triggerCategory} onValueChange={v => setAddForm(f => ({ ...f, triggerCategory: v as typeof f.triggerCategory }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger className="bg-muted border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-muted border-border">
                     <SelectItem value="regulatory">Regulatory</SelectItem>
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="operational">Operational</SelectItem>
@@ -633,12 +633,12 @@ function TriggeredTab() {
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Priority</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
                 <Select value={addForm.priority} onValueChange={v => setAddForm(f => ({ ...f, priority: v as typeof f.priority }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger className="bg-muted border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-muted border-border">
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
@@ -649,51 +649,51 @@ function TriggeredTab() {
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Trigger Type *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Trigger Type *</label>
               <Input
                 value={addForm.triggerType}
                 onChange={e => setAddForm(f => ({ ...f, triggerType: e.target.value }))}
                 placeholder={TRIGGER_TYPE_EXAMPLES[addForm.triggerCategory]?.[0] ?? ""}
-                className="bg-slate-800 border-slate-700 text-slate-100"
+                className="bg-muted border-border text-foreground"
               />
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Examples: {TRIGGER_TYPE_EXAMPLES[addForm.triggerCategory]?.join(", ")}
               </p>
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Detail *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Detail *</label>
               <Textarea
                 value={addForm.triggerDetail}
                 onChange={e => setAddForm(f => ({ ...f, triggerDetail: e.target.value }))}
                 placeholder="Describe the triggering event and why a review is needed…"
                 rows={3}
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Affected Content</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Affected Content</label>
               <Input
                 value={addForm.affectedContent}
                 onChange={e => setAddForm(f => ({ ...f, affectedContent: e.target.value }))}
                 placeholder="e.g. init_ai_recruitment, risk_bias_detection"
-                className="bg-slate-800 border-slate-700 text-slate-100"
+                className="bg-muted border-border text-foreground"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Planned Review Date</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Planned Review Date</label>
               <Input
                 type="date"
                 value={addForm.plannedReviewDate}
                 onChange={e => setAddForm(f => ({ ...f, plannedReviewDate: e.target.value }))}
-                className="bg-slate-800 border-slate-700 text-slate-100"
+                className="bg-muted border-border text-foreground"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-slate-700 text-slate-300">
+            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-slate-300">
               Cancel
             </Button>
             <Button
@@ -709,22 +709,22 @@ function TriggeredTab() {
 
       {/* Resolve Dialog */}
       <Dialog open={!!resolveId} onOpenChange={() => { setResolveId(null); setResolveNotes(""); }}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-slate-100 max-w-md">
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Resolve Triggered Review</DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <label className="text-xs text-slate-400 mb-1 block">Resolution Notes</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Resolution Notes</label>
             <Textarea
               value={resolveNotes}
               onChange={e => setResolveNotes(e.target.value)}
               placeholder="Describe how this was resolved…"
               rows={3}
-              className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-600"
+              className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setResolveId(null); setResolveNotes(""); }} className="border-slate-700 text-slate-300">
+            <Button variant="outline" onClick={() => { setResolveId(null); setResolveNotes(""); }} className="border-border text-slate-300">
               Cancel
             </Button>
             <Button
@@ -747,7 +747,7 @@ function SourceHealthTab() {
   const [filter, setFilter] = useState<"all" | "stale" | "aging" | "fresh">("all");
   const { data: sources, isLoading } = trpc.contentReview.getSourceHealthReport.useQuery();
 
-  if (isLoading) return <div className="py-12 text-center text-slate-400">Loading source health…</div>;
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading source health…</div>;
 
   const filtered = (sources ?? []).filter(s => filter === "all" || s.stalenessStatus === filter);
   const staleCount = (sources ?? []).filter(s => s.stalenessStatus === "stale").length;
@@ -768,15 +768,15 @@ function SourceHealthTab() {
             className={`text-left p-4 rounded-lg border transition-all ${stat.bg} ${filter === stat.filter ? "ring-1 ring-white/20" : ""}`}
           >
             <p className={`text-2xl font-bold ${stat.colour}`}>{stat.count}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
           </button>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-800">
+      <div className="overflow-hidden rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-800/60 text-slate-400 text-xs uppercase tracking-wider">
+            <tr className="bg-muted/60 text-muted-foreground text-xs uppercase tracking-wider">
               <th className="px-4 py-3 text-left">Source</th>
               <th className="px-4 py-3 text-left">Type</th>
               <th className="px-4 py-3 text-left">Confidence</th>
@@ -788,10 +788,10 @@ function SourceHealthTab() {
           </thead>
           <tbody className="divide-y divide-slate-800">
             {filtered.map(s => (
-              <tr key={s.sourceId} className="hover:bg-slate-800/30 transition-colors">
+              <tr key={s.sourceId} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">
                   <p className="text-slate-200 leading-snug text-xs">{s.citation}</p>
-                  <p className="text-xs text-slate-600 font-mono mt-0.5">{s.sourceId}</p>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">{s.sourceId}</p>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-xs px-2 py-0.5 rounded border capitalize ${
@@ -810,10 +810,10 @@ function SourceHealthTab() {
                     "text-red-400"
                   }`}>{s.confidence}</span>
                 </td>
-                <td className="px-4 py-3 text-slate-400 text-xs">
-                  {s.lastReviewedDate ?? <span className="text-slate-600">—</span>}
+                <td className="px-4 py-3 text-muted-foreground text-xs">
+                  {s.lastReviewedDate ?? <span className="text-muted-foreground">—</span>}
                 </td>
-                <td className="px-4 py-3 text-slate-400 text-xs">
+                <td className="px-4 py-3 text-muted-foreground text-xs">
                   {s.monthsAgo !== null ? `${s.monthsAgo}mo` : "—"}
                 </td>
                 <td className="px-4 py-3">
@@ -832,9 +832,9 @@ function SourceHealthTab() {
         </table>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+      <div className="bg-card/50 border border-border rounded-lg p-4">
         <p className="text-xs text-slate-500 leading-relaxed">
-          <span className="text-slate-400 font-medium">Staleness policy:</span> Sources not reviewed in 18+ months are flagged as <span className="text-red-400">Stale</span>.
+          <span className="text-muted-foreground font-medium">Staleness policy:</span> Sources not reviewed in 18+ months are flagged as <span className="text-red-400">Stale</span>.
           Sources between 12–18 months are flagged as <span className="text-amber-400">Aging</span> and should be prioritised for the next quarterly review.
           Source staleness is also surfaced in the Strategy QA Check when generating AI strategies.
         </p>
@@ -849,9 +849,9 @@ export default function ContentReviewPage() {
   const { data: stats, isLoading: statsLoading } = trpc.contentReview.getSummaryStats.useQuery();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -859,7 +859,7 @@ export default function ContentReviewPage() {
                 <CalendarCheck2 className="w-5 h-5 text-blue-400" />
                 Content Review Dashboard
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Governance and audit trail for the AiQ content library — per CONTENT_REVIEW.md policy
               </p>
             </div>
@@ -907,13 +907,13 @@ export default function ContentReviewPage() {
                 colour: stats.staleSourceCount > 0 ? "text-amber-400" : "text-emerald-400",
               },
             ].map(stat => (
-              <Card key={stat.label} className="bg-slate-900 border-slate-800">
+              <Card key={stat.label} className="bg-card border-border">
                 <CardContent className="p-4 flex items-center gap-3">
                   <stat.icon className={`w-5 h-5 shrink-0 ${stat.colour}`} />
                   <div>
                     <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs text-slate-400">{stat.label}</p>
-                    {stat.sub && <p className="text-xs text-slate-600">{stat.sub}</p>}
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    {stat.sub && <p className="text-xs text-muted-foreground">{stat.sub}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -922,7 +922,7 @@ export default function ContentReviewPage() {
         )}
 
         <Tabs defaultValue="cadence">
-          <TabsList className="bg-slate-800 border border-slate-700 mb-6">
+          <TabsList className="bg-muted border border-border mb-6">
             <TabsTrigger value="cadence" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <CalendarCheck2 className="w-4 h-4 mr-2" />Cadence
             </TabsTrigger>

@@ -192,7 +192,7 @@ export default function AuditLogPage() {
               className={cn(
                 "p-2.5 rounded-lg border text-center transition-all",
                 categoryFilter === key
-                  ? "border-primary bg-[#EEF0FF]"
+                  ? "border-primary bg-accent"
                   : "border-border hover:border-primary/30 bg-card"
               )}
             >

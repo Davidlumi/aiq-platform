@@ -121,7 +121,7 @@ function getUrgencyState(days: number): UrgencyState {
 
 function CountdownSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6 space-y-4">
+    <div className="rounded-2xl border border-border bg-white/2 p-6 space-y-4">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <Skeleton className="h-14 w-32 rounded-lg" />
@@ -136,13 +136,13 @@ function CountdownSkeleton() {
 
 function TimelineSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+    <div className="rounded-2xl border border-border bg-white/2 p-6">
       <Skeleton className="h-5 w-40 mb-6 rounded" />
       <div className="relative h-12 flex items-center">
-        <div className="absolute inset-x-0 top-1/2 h-0.5 bg-white/8 rounded" />
+        <div className="absolute inset-x-0 top-1/2 h-0.5 bg-foreground/8 rounded" />
         {[0, 25, 50, 75, 100].map(pct => (
           <div key={pct} className="absolute -translate-x-1/2" style={{ left: `${pct}%` }}>
-            <div className="w-3 h-3 rounded-full border border-white/20 bg-background" />
+            <div className="w-3 h-3 rounded-full border border-border/60 bg-background" />
           </div>
         ))}
       </div>
@@ -152,7 +152,7 @@ function TimelineSkeleton() {
 
 function ReviewChecksSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+    <div className="rounded-2xl border border-border bg-white/2 p-6">
       <Skeleton className="h-5 w-48 mb-4 rounded" />
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
@@ -215,7 +215,7 @@ function CadencePill({ currentCadence, onSave, saving, savedAt, saveError }: Cad
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Review cadence: ${CADENCE_SHORT_LABEL[currentCadence]}. Click to change.`}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 text-xs font-semibold text-foreground hover:border-white/30 hover:bg-white/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-foreground/5 text-xs font-semibold text-foreground hover:border-border/80 hover:bg-foreground/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         onClick={() => { const next = !open; setOpen(next); if (next) (window as any).umami?.track("strategy.measurement.cadence.opened"); }}
         onKeyDown={handleKeyDown}
         disabled={saving}
@@ -229,15 +229,15 @@ function CadencePill({ currentCadence, onSave, saving, savedAt, saveError }: Cad
         <ul
           role="listbox"
           aria-label="Review cadence options"
-          className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-white/15 bg-popover shadow-xl overflow-hidden"
+          className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-border bg-popover shadow-xl overflow-hidden"
         >
           {MEASUREMENT_CADENCE_OPTIONS.map(opt => (
             <li
               key={opt.value}
               role="option"
               aria-selected={opt.value === currentCadence}
-              className={`px-4 py-3 text-xs cursor-pointer transition-colors hover:bg-white/8 ${
-                opt.value === currentCadence ? "text-foreground font-semibold bg-white/5" : "text-muted-foreground"
+              className={`px-4 py-3 text-xs cursor-pointer transition-colors hover:bg-foreground/8 ${
+                opt.value === currentCadence ? "text-foreground font-semibold bg-foreground/5" : "text-muted-foreground"
               }`}
               onClick={() => handleSelect(opt.value as CadenceValue)}
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") handleSelect(opt.value as CadenceValue); }}
@@ -293,7 +293,7 @@ function CountdownHero({ countdown, noReviewScheduled, strategyConcluded, onOpen
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+    <div className="rounded-2xl border border-border bg-white/2 p-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {strategyConcluded ? (
@@ -377,16 +377,16 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
     : `Today, ${Math.round(todayPct)}% of the way through the strategy`;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+    <div className="rounded-2xl border border-border bg-white/2 p-6">
       <h2 className="text-sm font-bold text-foreground mb-6">Review schedule</h2>
       <div className="overflow-x-auto pb-2">
         <div className="relative min-w-[480px]" style={{ height: "80px" }}>
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10 rounded -translate-y-1/2" />
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-foreground/10 rounded -translate-y-1/2" />
 
           {/* Start marker */}
           <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center">
             <div
-              className="w-2.5 h-2.5 rounded-full border-2 border-white/30 bg-background"
+              className="w-2.5 h-2.5 rounded-full border-2 border-border/80 bg-background"
               aria-label={`Strategy start, ${formatFullDate(startDate)}`}
             />
             <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-1">
@@ -397,7 +397,7 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
           {/* End marker */}
           <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex flex-col items-center">
             <div
-              className="w-2.5 h-2.5 rounded-full border-2 border-white/30 bg-background"
+              className="w-2.5 h-2.5 rounded-full border-2 border-border/80 bg-background"
               aria-label={`Strategy end, ${formatFullDate(endDate)}`}
             />
             <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-1">
@@ -426,7 +426,7 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
                   </div>
                 ) : (
                   <div
-                    className="w-3.5 h-3.5 rounded-full border-[1.5px] border-white/30 bg-background"
+                    className="w-3.5 h-3.5 rounded-full border-[1.5px] border-border/80 bg-background"
                     aria-label={ariaLabel}
                     role="img"
                   />
@@ -471,9 +471,9 @@ const REVIEW_CHECKS = [
 function WhatEachReviewChecks() {
   const [, navigate] = useLocation();
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+    <div className="rounded-2xl border border-border bg-white/2 p-6">
       <h2 className="text-sm font-bold text-foreground mb-4">What each review checks</h2>
-      <div className="divide-y divide-white/6">
+      <div className="divide-y divide-border">
         {REVIEW_CHECKS.map(check => {
           const Icon = check.icon;
           return (
@@ -537,7 +537,7 @@ const TRIGGER_CONDITIONS = [
 function WhenWeReview({ cadence }: { cadence: CadenceValue }) {
   const [, navigate] = useLocation();
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6 space-y-5">
+    <div className="rounded-2xl border border-border bg-white/2 p-6 space-y-5">
       <h2 className="text-sm font-bold text-foreground">When we review</h2>
 
       <div>
@@ -607,7 +607,7 @@ function MethodologyBlock() {
     (window as any).umami?.track("strategy.measurement.methodology.toggled", { expanded: next });
   }
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2">
+    <div className="rounded-2xl border border-border bg-white/2">
       <button
         type="button"
         className="w-full flex items-center justify-between p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl"
@@ -622,7 +622,7 @@ function MethodologyBlock() {
         }
       </button>
       {expanded && (
-        <div id="methodology-content" className="px-6 pb-6 space-y-5 border-t border-white/8 pt-5">
+        <div id="methodology-content" className="px-6 pb-6 space-y-5 border-t border-border pt-5">
           {METHODOLOGY_SECTIONS.map(section => (
             <div key={section.title}>
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">{section.title}</h3>
@@ -733,7 +733,7 @@ export default function StrategyMeasurementPage() {
         <Button
           variant="outline"
           size="sm"
-          className="text-xs h-7 border-white/15 hover:border-white/30 text-muted-foreground"
+          className="text-xs h-7 border-border hover:border-border/80 text-muted-foreground"
           onClick={() => navigate("/strategy/diagnostic")}
         >
           <Sparkles className="w-3 h-3 mr-1.5" aria-hidden="true" />
@@ -795,7 +795,7 @@ export default function StrategyMeasurementPage() {
           now={now}
         />
       ) : hasStrategy ? (
-        <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
+        <div className="rounded-2xl border border-border bg-white/2 p-6">
           <h2 className="text-sm font-bold text-foreground mb-3">Review schedule</h2>
           <p className="text-sm text-muted-foreground">
             Timeline will appear once your strategy start and target dates are set.

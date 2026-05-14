@@ -179,7 +179,7 @@ export default function MethodologyPage() {
           <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mb-4">
             Built for HR functions delivering AI transformation. Designed to survive General Counsel scrutiny.
           </p>
-          <p className="text-slate-400 leading-relaxed max-w-2xl">
+          <p className="text-muted-foreground leading-relaxed max-w-2xl">
             This page provides a transparent explanation of the assessment methodology used by AiQ -
             what we measure, how we measure it, the quality assurance processes that protect the
             integrity of results, and the known limitations of the current system.
@@ -579,9 +579,9 @@ export default function MethodologyPage() {
         {/* -- Footer note ------------------------------------------------------- */}
         <div className="border-t pt-8 pb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
           <div className="rounded-lg px-5 py-4 flex items-start gap-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <Info className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
             <div className="space-y-1">
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 This methodology disclosure is current as of April 2026. It will be updated as
                 the validation programme progresses and empirical evidence is collected.
               </p>
@@ -611,7 +611,7 @@ export default function MethodologyPage() {
               </Button>
             </Link>
             <a href="mailto:hello@hraiq.co.uk">
-              <Button size="lg" variant="outline" className="text-white border-white/20 hover:bg-white/10 px-8">
+              <Button size="lg" variant="outline" className="text-white border-foreground/20 hover:bg-foreground/10 px-8">
                 Request methodology document
               </Button>
             </a>

@@ -34,7 +34,7 @@ function AiQLogoMark({ size = 36, variant = "default" }: { size?: number; varian
   const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="#1E293B" />
+      <circle cx="100" cy="100" r="90" fill="var(--muted)" />
       <text x="100" y="122" fontFamily="system-ui, -apple-system, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
         A<tspan fill={accent}>i</tspan>Q
       </text>

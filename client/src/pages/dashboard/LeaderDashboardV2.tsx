@@ -139,11 +139,11 @@ function DomainBar({ label, score, count, colour }: { label: string; score: numb
 function heatmapCellStyle(score: number | null): { bg: string; text: string } {
   if (score == null) return { bg: "var(--muted)", text: "var(--muted-foreground)" };
   const s = score / 10; // 0–10
-  if (s >= 7.5) return { bg: "#14532d", text: "#86efac" };
-  if (s >= 6.0) return { bg: "#166534", text: "#bbf7d0" };
-  if (s >= 5.0) return { bg: "#713f12", text: "#fde68a" };
-  if (s >= 3.5) return { bg: "#7c2d12", text: "#fdba74" };
-  return { bg: "#450a0a", text: "#fca5a5" };
+  if (s >= 7.5) return { bg: "var(--score-ai-ready-bg)", text: "var(--score-ai-ready-text)" };
+  if (s >= 6.0) return { bg: "var(--score-strong-bg)", text: "var(--score-strong-text)" };
+  if (s >= 5.0) return { bg: "var(--score-capable-bg)", text: "var(--score-capable-text)" };
+  if (s >= 3.5) return { bg: "var(--score-developing-bg)", text: "var(--score-developing-text)" };
+  return { bg: "var(--score-gap-bg)", text: "var(--score-gap-text)" };
 }
 
 function FunctionHeatmap({
@@ -188,11 +188,11 @@ function FunctionHeatmap({
     });
   };
   const legendItems = [
-    { label: "AI Ready",   range: "≥7.5",    bg: "#14532d", text: "#86efac" },
-    { label: "Strong",     range: "6.0–7.4",  bg: "#166534", text: "#bbf7d0" },
-    { label: "Capable",    range: "5.0–5.9",  bg: "#713f12", text: "#fde68a" },
-    { label: "Developing", range: "3.5–4.9",  bg: "#7c2d12", text: "#fdba74" },
-    { label: "Gap",        range: "<3.5",     bg: "#450a0a", text: "#fca5a5" },
+    { label: "AI Ready",   range: "≥7.5",    bg: "var(--score-ai-ready-bg)", text: "var(--score-ai-ready-text)" },
+    { label: "Strong",     range: "6.0–7.4",  bg: "var(--score-strong-bg)", text: "var(--score-strong-text)" },
+    { label: "Capable",    range: "5.0–5.9",  bg: "var(--score-capable-bg)", text: "var(--score-capable-text)" },
+    { label: "Developing", range: "3.5–4.9",  bg: "var(--score-developing-bg)", text: "var(--score-developing-text)" },
+    { label: "Gap",        range: "<3.5",     bg: "var(--score-gap-bg)", text: "var(--score-gap-text)" },
   ];
   return (
     <div>

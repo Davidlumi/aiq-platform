@@ -181,7 +181,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-white/20 text-foreground hover:bg-white/8"
+          className="h-7 px-3 text-xs gap-1.5 flex-shrink-0 border-border/60 text-foreground hover:bg-foreground/8"
           onClick={onBuildCapability}
           aria-label={nowNum == null ? "Take the assessment" : "See learning plan"}
         >
@@ -296,7 +296,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
 // ─── Card Skeleton ────────────────────────────────────────────────────────────
 function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-white/8 bg-background p-5 space-y-3 min-h-[180px]">
+    <div className="rounded-xl border border-border bg-background p-5 space-y-3 min-h-[180px]">
       <Skeleton className="h-4 w-1/2 rounded" />
       <Skeleton className="h-3 w-full rounded" />
       <Skeleton className="h-3 w-4/5 rounded" />
@@ -331,7 +331,7 @@ function ListCard({ accentColor, eyebrow, eyebrowColor, title, tierTag, items, e
   const showOutcomes = outcomeRows && outcomeRows.length > 0;
   return (
     <div
-      className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
+      className="rounded-xl border border-border bg-background flex flex-col cursor-pointer hover:border-border/60 transition-all duration-150"
       style={{ borderTop: `2px solid ${accentColor}`, padding: "1.25rem" }}
       onClick={onCardClick}
       tabIndex={0}
@@ -447,7 +447,7 @@ interface ValueCardProps {
 function ValueCard({ accentColor, eyebrow, eyebrowColor, title, headline, subLine, footerLink, footerLabel, emptyMessage, emptyCta, emptyCtaHref, isEmpty, onNavigate, onCardClick }: ValueCardProps) {
   return (
     <div
-      className="rounded-xl border border-white/10 bg-background flex flex-col cursor-pointer hover:border-white/20 transition-all duration-150"
+      className="rounded-xl border border-border bg-background flex flex-col cursor-pointer hover:border-border/60 transition-all duration-150"
       style={{ borderTop: `2px solid ${accentColor}`, padding: "1.25rem" }}
       onClick={onCardClick}
       tabIndex={0}
@@ -617,7 +617,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
   if (!tpQ.isLoading && !data?.bullets?.length) {
     return (
       <div
-        className="rounded-xl mb-8 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-white/3 transition-colors"
+        className="rounded-xl mb-8 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-foreground/3 transition-colors"
         style={{ border: "0.5px solid hsl(var(--border))" }}
         onClick={doGenerate}
         tabIndex={0}
@@ -646,7 +646,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
         {/* Collapsed teaser */}
         {collapsed ? (
           <button
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/3 transition-colors rounded-xl"
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-foreground/3 transition-colors rounded-xl"
             onClick={toggleCollapse}
             aria-expanded={false}
             aria-controls="talking-points-body"
@@ -784,7 +784,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                           ref={editRef}
                           value={editValue}
                           onChange={e => setEditValue(e.target.value)}
-                          className="text-sm min-h-[60px] bg-white/5 border-white/15 resize-none"
+                          className="text-sm min-h-[60px] bg-foreground/5 border-border resize-none"
                           onKeyDown={e => {
                             if (e.key === "Escape") cancelEdit();
                             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(row.idx!); }
@@ -800,7 +800,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                         <p style={{ fontSize: 12, color: "#cfd2d8", lineHeight: 1.55 }}>{row.content}</p>
                         {row.idx !== null && (
                           <button
-                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-white/8 text-muted-foreground hover:text-foreground transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-foreground/8 text-muted-foreground hover:text-foreground transition-opacity"
                             onClick={() => startEdit(row.idx!)}
                             aria-label={`Edit ${row.label} talking point`}
                           >
@@ -1217,7 +1217,7 @@ export default function StrategyOverviewPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
+              className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
               onClick={handleEditStrategy}
             >
               <Pencil className="w-3 h-3 mr-1.5" />
@@ -1226,7 +1226,7 @@ export default function StrategyOverviewPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-3 text-xs border-white/15 text-foreground hover:bg-white/8"
+              className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
               onClick={handleExportBoardPack}
             >
               <Download className="w-3 h-3 mr-1.5" />
@@ -1306,7 +1306,7 @@ export default function StrategyOverviewPage() {
                   </span>
                   <button
                     onClick={() => setVisionModalOpen(true)}
-                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/8 transition-colors"
+                    className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/8 transition-colors"
                     aria-label="Edit vision statement"
                   >
                     <Pencil className="h-3 w-3" />

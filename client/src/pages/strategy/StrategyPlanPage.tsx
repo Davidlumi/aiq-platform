@@ -693,7 +693,7 @@ export default function StrategyPlanPage() {
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => navigate("/strategy")}
-              className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm shrink-0"
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-foreground transition-colors text-sm shrink-0"
               aria-label="Back to Strategy overview"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -737,7 +737,7 @@ export default function StrategyPlanPage() {
             <Button
               size="sm"
               variant="outline"
-              className="text-xs bg-transparent border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500"
+              className="text-xs bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-border"
               onClick={() => navigate("/strategy")}
             >
               Edit selection
@@ -764,12 +764,12 @@ export default function StrategyPlanPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
                   <p className="text-xs text-zinc-500 mb-1">Plan shape</p>
-                  <p className="text-2xl font-bold text-white">{enriched.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{enriched.length}</p>
                   <p className="text-xs text-zinc-400 mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
                 </div>
                 <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
                   <p className="text-xs text-zinc-500 mb-1">Total envelope</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-2xl font-bold text-foreground">
                     £{totalLow >= 1000 ? `${(totalLow / 1000).toFixed(1)}M` : `${totalLow}k`}–£{totalHigh >= 1000 ? `${(totalHigh / 1000).toFixed(1)}M` : `${totalHigh}k`}
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">indicative 18-month investment range</p>
@@ -843,7 +843,7 @@ export default function StrategyPlanPage() {
                   onClick={() => setPhaseFilter(phaseFilter === key ? null : key)}
                   className={`text-left p-4 rounded-xl border transition-all ${
                     phaseFilter === key
-                      ? "border-white/20 bg-zinc-800"
+                      ? "border-border/60 bg-zinc-800"
                       : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
                   }`}
                   aria-pressed={phaseFilter === key}
@@ -857,9 +857,9 @@ export default function StrategyPlanPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-white mb-0.5">{cfg.short}</p>
+                  <p className="text-xs font-semibold text-foreground mb-0.5">{cfg.short}</p>
                   <p className="text-xs text-zinc-500 mb-2">{cfg.months}</p>
-                  <p className="text-lg font-bold text-white">{count}</p>
+                  <p className="text-lg font-bold text-foreground">{count}</p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">
                     {count > 0 ? `£${costLow}k–£${costHigh}k` : "No initiatives"}
                   </p>
@@ -887,7 +887,7 @@ export default function StrategyPlanPage() {
                     }`}
                     aria-pressed={functionFilter === fn}
                   >
-                    <span className="text-xs text-zinc-400 w-40 text-left truncate group-hover:text-white transition-colors">{fn}</span>
+                    <span className="text-xs text-muted-foreground w-40 text-left truncate group-hover:text-foreground transition-colors">{fn}</span>
                     <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"

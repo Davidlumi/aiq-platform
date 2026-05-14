@@ -25,7 +25,7 @@ function LevelRing({ score, size = 140 }: { score: number; size?: number }) {
   return (
     <div style={{ position: "relative", width: size, height: size }}>
       <svg viewBox={`0 0 ${size} ${size}`} className="aiq-chart-mount" style={{ width: size, height: size }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(22% 0.030 240)" strokeWidth={sw} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={sw} />
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={chipStyle.bg} strokeWidth={sw}
           strokeDasharray={`${arc} ${circ}`} strokeDashoffset={0}
           transform={`rotate(-90 ${cx} ${cy})`} />
@@ -40,9 +40,9 @@ function LevelRing({ score, size = 140 }: { score: number; size?: number }) {
 function DomainBar({ label, score, colour }: { label: string; score: number | null; colour: string }) {
   if (score === null) {
     return (
-      <div className="flex items-center gap-3 py-2" style={{ borderBottom: "0.5px solid oklch(22% 0.030 240)" }}>
+      <div className="flex items-center gap-3 py-2" style={{ borderBottom: "0.5px solid var(--border)" }}>
         <span className="text-sm text-muted-foreground" style={{ width: 200, flexShrink: 0 }}>{label}</span>
-        <div className="flex-1 h-5 rounded" style={{ background: "oklch(22% 0.030 240)" }} />
+        <div className="flex-1 h-5 rounded" style={{ background: "var(--muted)" }} />
         <span className="text-xs tabular-nums text-muted-foreground" style={{ width: 36, textAlign: "right" }}>-</span>
       </div>
     );
@@ -51,9 +51,9 @@ function DomainBar({ label, score, colour }: { label: string; score: number | nu
   const chipStyle = getLevelChipStyle(level);
   const barWidth = (score / 100) * 100;
   return (
-    <div className="flex items-center gap-3 py-2" style={{ borderBottom: "0.5px solid oklch(22% 0.030 240)" }}>
+    <div className="flex items-center gap-3 py-2" style={{ borderBottom: "0.5px solid var(--border)" }}>
       <span className="text-sm font-medium text-foreground" style={{ width: 200, flexShrink: 0 }}>{label}</span>
-      <div className="flex-1 relative h-5 rounded overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
+      <div className="flex-1 relative h-5 rounded overflow-hidden" style={{ background: "var(--muted)" }}>
         <div className="h-full rounded transition-all duration-700" style={{ width: `${barWidth}%`, background: chipStyle.bg }} />
       </div>
       <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>{level}</span>
@@ -130,7 +130,7 @@ export default function MemberReportPage() {
     return (
       <div className="max-w-4xl mx-auto">
         <Link href="/people"><Button variant="ghost" size="sm" className="gap-1.5 mb-4"><ArrowLeft className="w-3.5 h-3.5" />Back</Button></Link>
-        <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: "oklch(18% 0.040 27)", border: "0.5px solid oklch(30% 0.090 27)" }}>
+        <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: "oklch(60% 0.040 27 / 0.1)", border: "0.5px solid oklch(50% 0.090 27 / 0.3)" }}>
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#F87171" }} />
           <p className="text-sm" style={{ color: "#FCA5A5" }}>
             {isForbidden ? "You can only view reports for your direct reports." : (error?.message ?? "Member not found.")}
@@ -164,22 +164,22 @@ export default function MemberReportPage() {
       {/* Profile header */}
       <div className="bg-card rounded-xl border border-border shadow-md p-6">
         <div className="flex items-start gap-6">
-          <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-medium flex-shrink-0" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>
+          <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-medium flex-shrink-0 bg-muted text-muted-foreground">
             {user.firstName?.[0]}{user.lastName?.[0]}
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold mb-0.5 text-foreground">{user.firstName} {user.lastName}</h1>
             <p className="text-sm mb-2 text-muted-foreground">{user.jobFunction ?? user.roleFamily ?? "HR Professional"}</p>
             <div className="flex items-center gap-2 flex-wrap">
-              {user.seniorityLevel && <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>{user.seniorityLevel}</span>}
-              {user.roleFamily && <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>{user.roleFamily}</span>}
-              {user.sector && <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>{user.sector}</span>}
+              {user.seniorityLevel && <span className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{user.seniorityLevel}</span>}
+              {user.roleFamily && <span className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{user.roleFamily}</span>}
+              {user.sector && <span className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{user.sector}</span>}
             </div>
           </div>
           {latest && <LevelRing score={latest.overallScore} size={120} />}
         </div>
         {latest && chipStyle && (
-          <div className="mt-4 pt-4" style={{ borderTop: "0.5px solid oklch(22% 0.030 240)" }}>
+          <div className="mt-4 pt-4" style={{ borderTop: "0.5px solid var(--border)" }}>
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-sm font-medium" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>{level}</span>
               <div>
@@ -196,7 +196,7 @@ export default function MemberReportPage() {
           </div>
         )}
         {!latest && (
-          <div className="mt-4 pt-4" style={{ borderTop: "0.5px solid oklch(22% 0.030 240)" }}>
+          <div className="mt-4 pt-4" style={{ borderTop: "0.5px solid var(--border)" }}>
             <p className="text-sm text-muted-foreground">No assessment data available yet.</p>
           </div>
         )}
@@ -234,7 +234,7 @@ export default function MemberReportPage() {
 
       {/* Governance flags */}
       {latest?.governanceFlag && (
-        <div className="rounded-xl p-4" style={{ background: "oklch(18% 0.040 27)", border: "0.5px solid oklch(30% 0.090 27)" }}>
+        <div className="rounded-xl p-4" style={{ background: "oklch(60% 0.040 27 / 0.1)", border: "0.5px solid oklch(50% 0.090 27 / 0.3)" }}>
           <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#F87171" }}>Governance flag</p>
           <p className="text-sm" style={{ color: "#FCA5A5" }}>This assessment has been flagged for governance review.</p>
           {latest.failureModes?.length > 0 && (

@@ -21,7 +21,7 @@ import { CheckCircle2, Circle, Clock, PauseCircle, XCircle, ChevronRight, Milest
 import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  not_started: { label: "Not Started", color: "bg-slate-800/60 text-slate-300 border-slate-600/50", icon: <Circle className="w-3.5 h-3.5" /> },
+  not_started: { label: "Not Started", color: "bg-muted/60 text-slate-300 border-slate-600/50", icon: <Circle className="w-3.5 h-3.5" /> },
   in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300 border-blue-700/50", icon: <Clock className="w-3.5 h-3.5" /> },
   paused: { label: "Paused", color: "bg-amber-900/40 text-amber-300 border-amber-700/50", icon: <PauseCircle className="w-3.5 h-3.5" /> },
   completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300 border-emerald-700/50", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
@@ -29,7 +29,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 const MILESTONE_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-slate-800/60 text-slate-300" },
+  pending: { label: "Pending", color: "bg-muted/60 text-slate-300" },
   in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300" },
   completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300" },
   overdue: { label: "Overdue", color: "bg-red-900/40 text-red-300" },
@@ -210,7 +210,7 @@ export default function ImplementationTrackerPage() {
       {/* Dashboard summary cards */}
       {dashboard && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border border-white/10 bg-card">
+          <Card className="border border-foreground/10 bg-card">
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-foreground">{dashboard.completionPct}%</div>
               <div className="text-xs text-muted-foreground mt-0.5">Initiatives complete</div>

@@ -155,7 +155,7 @@ function StrategyProgressBar({ selectedCount, isCommitted }: { selectedCount: nu
                 ? "bg-green-500 text-black"
                 : activeStep === q.id
                 ? "bg-green-500/20 text-green-400 border border-green-500/40"
-                : "bg-white/5 text-muted-foreground border border-white/10"
+                : "bg-foreground/5 text-muted-foreground border border-border"
             }`}>
               {activeStep > q.id ? "✓" : q.id}
             </div>
@@ -165,7 +165,7 @@ function StrategyProgressBar({ selectedCount, isCommitted }: { selectedCount: nu
             </div>
           </div>
           {i < STRATEGY_QUESTIONS.length - 1 && (
-            <div className={`flex-1 h-px mx-1 ${activeStep > q.id + 1 ? "bg-green-500/40" : "bg-white/8"}`} />
+            <div className={`flex-1 h-px mx-1 ${activeStep > q.id + 1 ? "bg-green-500/40" : "bg-foreground/8"}`} />
           )}
         </React.Fragment>
       ))}
@@ -249,7 +249,7 @@ function GapRow({ domain, baseline, target, gap }: { domain: string; baseline: n
   const baseWidth = Math.max(0, Math.min(100, (baseline / 5) * 100));
   const targetWidth = Math.max(0, Math.min(100, (target / 5) * 100));
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-foreground/5 last:border-0">
       <div className="w-36 text-xs text-muted-foreground truncate">{domain}</div>
       <div className="flex-1 relative h-4 rounded overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
         <div className="absolute top-0 left-0 h-full rounded" style={{ width: `${baseWidth}%`, background: "rgba(96,165,250,0.35)" }} />
@@ -288,7 +288,7 @@ function InitiativeRow({
       className={`rounded-xl border transition-all duration-150 ${
         selected
           ? "border-green-500/40 bg-green-500/5"
-          : "border-white/8 bg-white/2 hover:border-white/15 hover:bg-white/4"
+          : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
       }`}
     >
       <div className="flex items-start gap-3 p-3.5">
@@ -296,7 +296,7 @@ function InitiativeRow({
         <button
           onClick={onToggle}
           className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
-            selected ? "bg-green-500 border-green-500" : "border-white/20 hover:border-white/40"
+            selected ? "bg-green-500 border-green-500" : "border-border/60 hover:border-white/40"
           }`}
         >
           {selected && <CheckCircle2 className="w-3 h-3 text-black" />}
@@ -330,12 +330,12 @@ function InitiativeRow({
               {initiative.aiType}
             </span>
             {/* Decision authority */}
-            <span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/8">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground border border-border">
               {DA_LABELS[initiative.decisionAuthority] ?? initiative.decisionAuthority}
             </span>
             {/* Owning segments */}
             {segments.slice(0, 2).map((seg: string) => (
-              <span key={seg} className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/8">
+              <span key={seg} className="text-xs px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground border border-border">
                 {seg}
               </span>
             ))}
@@ -352,7 +352,7 @@ function InitiativeRow({
               value={String(strategyInitiative.criticality)}
               onValueChange={v => onUpdateCriticality?.(parseInt(v))}
             >
-              <SelectTrigger className="h-6 text-xs w-24 border-white/10">
+              <SelectTrigger className="h-6 text-xs w-24 border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -365,7 +365,7 @@ function InitiativeRow({
               value={strategyInitiative.targetQuarter}
               onValueChange={v => onUpdateQuarter?.(v)}
             >
-              <SelectTrigger className="h-6 text-xs w-20 border-white/10">
+              <SelectTrigger className="h-6 text-xs w-20 border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -426,7 +426,7 @@ function CustomInitiativeModal({
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Initiative name *</label>
             <input
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30"
+              className="w-full bg-foreground/5 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border/80"
               placeholder="e.g. AI-Powered Succession Planning"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -435,7 +435,7 @@ function CustomInitiativeModal({
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Description</label>
             <textarea
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/30 resize-none"
+              className="w-full bg-foreground/5 border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-border/80 resize-none"
               rows={3}
               placeholder="What does this initiative do and what outcome does it drive?"
               value={description}
@@ -533,7 +533,7 @@ function AmbitionSelector({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-white/3 p-4">
+    <div className="rounded-xl border border-border bg-foreground/3 p-4">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{label}</p>
       <div className="grid grid-cols-4 gap-1.5">
         {[1, 2, 3, 4].map(level => (
@@ -545,7 +545,7 @@ function AmbitionSelector({
                   className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all border ${
                     value === level
                       ? "bg-green-500/20 border-green-500/50 text-green-400"
-                      : "border-white/8 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
                   }`}
                 >
                   {levels[level].label}
@@ -859,7 +859,7 @@ export default function StrategyBuilderPage() {
                   URL.revokeObjectURL(url);
                   toast.success("Board pack exported");
                 }}
-                className="text-xs px-2.5 py-1 rounded-lg border border-white/15 text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center gap-1.5"
+                className="text-xs px-2.5 py-1 rounded-lg border border-border text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center gap-1.5"
               >
                 <Download className="w-3 h-3" />
                 Export board pack
@@ -872,7 +872,7 @@ export default function StrategyBuilderPage() {
       {/* ── Context: Industry + Two-axis ambition ── */}
       <div className="space-y-3">
         {/* Industry */}
-        <div className="rounded-xl border border-white/8 bg-white/3 p-4">
+        <div className="rounded-xl border border-border bg-foreground/3 p-4">
           <div className="flex items-center gap-3">
             <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider w-20">Industry</p>
@@ -929,7 +929,7 @@ export default function StrategyBuilderPage() {
                   className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                     categoryFilter === cat
                       ? "border-green-500/60 bg-green-500/10 text-green-400"
-                      : "border-white/10 text-muted-foreground hover:border-white/20"
+                      : "border-border text-muted-foreground hover:border-border/60"
                   }`}
                 >
                   {cat}
@@ -972,7 +972,7 @@ export default function StrategyBuilderPage() {
           {/* Add custom initiative — below library, full width */}
           <button
             onClick={() => setShowCustomModal(true)}
-            className="w-full py-2.5 rounded-xl border border-dashed border-white/15 text-xs text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:border-green-500/40 hover:text-green-400 transition-colors flex items-center justify-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             Add an initiative not on the list
@@ -983,7 +983,7 @@ export default function StrategyBuilderPage() {
         <div className="lg:col-span-3 space-y-6">
 
           {/* ── 1. Capability Radar ── */}
-          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+          <div className="rounded-xl border border-border bg-foreground/3 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground">Capability Radar</h3>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -1018,7 +1018,7 @@ export default function StrategyBuilderPage() {
           </div>
 
           {/* ── 2. Domain Gap Analysis ── */}
-          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+          <div className="rounded-xl border border-border bg-foreground/3 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-foreground">Domain Gap Analysis</h3>
               <div className="flex gap-4 text-xs text-muted-foreground">
@@ -1039,7 +1039,7 @@ export default function StrategyBuilderPage() {
           </div>
 
           {/* ── 3. HR Segment Demand ── */}
-          <div className="rounded-xl border border-white/8 bg-white/3 p-5">
+          <div className="rounded-xl border border-border bg-foreground/3 p-5">
             <h3 className="text-sm font-semibold text-foreground mb-3">HR Segment Demand</h3>
             {outputQ.isLoading ? (
               <Skeleton className="h-32" />
@@ -1106,7 +1106,7 @@ export default function StrategyBuilderPage() {
           )}
 
           {/* ── 5. Risk Register ── */}
-          <div className="rounded-xl border border-white/8 bg-white/3">
+          <div className="rounded-xl border border-border bg-foreground/3">
             <button
               className="w-full flex items-center justify-between p-5 text-left"
               onClick={() => setRiskExpanded(!riskExpanded)}
@@ -1157,7 +1157,7 @@ export default function StrategyBuilderPage() {
           </div>
 
           {/* ── 6. Strategic Patterns ── */}
-          <div className="rounded-xl border border-white/8 bg-white/3">
+          <div className="rounded-xl border border-border bg-foreground/3">
             <button
               className="w-full flex items-center justify-between p-5 text-left"
               onClick={() => setPatternsExpanded(!patternsExpanded)}
@@ -1192,7 +1192,7 @@ export default function StrategyBuilderPage() {
                       const isMatched = output?.matchedPatterns.some(p => p.id === pattern.id);
                       const missingCount = pattern.minInitiatives.filter(id => !selectedInitiativeIds.has(id)).length;
                       return (
-                        <div key={pattern.id} className={`p-4 rounded-xl border transition-all ${isMatched ? "border-green-500/40 bg-green-500/5" : "border-white/8 bg-white/2"}`}>
+                        <div key={pattern.id} className={`p-4 rounded-xl border transition-all ${isMatched ? "border-green-500/40 bg-green-500/5" : "border-border bg-white/2"}`}>
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <p className="text-sm font-medium text-foreground">{pattern.name}</p>
                             {isMatched ? (
@@ -1227,7 +1227,7 @@ export default function StrategyBuilderPage() {
 
           {/* ── 6. Three Strategic Paths ── */}
           {output && (output as any).strategicPaths && (
-            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+            <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
                 <GitBranch className="w-4 h-4 text-blue-400" />
                 <h3 className="text-sm font-semibold text-foreground">Three Strategic Paths</h3>
@@ -1238,7 +1238,7 @@ export default function StrategyBuilderPage() {
                   <div key={path.id} className={`p-4 rounded-xl border transition-all ${
                     path.isCurrentPath
                       ? "border-green-500/40 bg-green-500/5"
-                      : "border-white/8 bg-white/2"
+                      : "border-border bg-white/2"
                   }`}>
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <p className="text-sm font-semibold text-foreground">{path.name}</p>
@@ -1257,7 +1257,7 @@ export default function StrategyBuilderPage() {
 
           {/* ── 7. 2x2 Maturity Matrix ── */}
           {output && (output as any).maturityMatrix && (
-            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+            <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-purple-400" />
                 <h3 className="text-sm font-semibold text-foreground">Organisational Maturity Position</h3>
@@ -1269,9 +1269,9 @@ export default function StrategyBuilderPage() {
                     "AI Leader": "text-green-400 border-green-500/40 bg-green-500/5",
                     "Solid Foundation": "text-blue-400 border-blue-500/40 bg-blue-500/5",
                     "Fast Mover": "text-amber-400 border-amber-500/40 bg-amber-500/5",
-                    "Emerging": "text-muted-foreground border-white/15 bg-white/3",
+                    "Emerging": "text-muted-foreground border-border bg-foreground/3",
                   };
-                  const cls = archetypeColors[mm.archetype] ?? "text-foreground border-white/15 bg-white/3";
+                  const cls = archetypeColors[mm.archetype] ?? "text-foreground border-border bg-foreground/3";
                   return (
                     <div className="space-y-4">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold ${cls}`}>
@@ -1284,7 +1284,7 @@ export default function StrategyBuilderPage() {
                           {[
                             { label: "Solid Foundation", sub: "High CF · Low AI", color: "bg-blue-500/8 border-blue-500/15" },
                             { label: "AI Leader", sub: "High CF · High AI", color: "bg-green-500/8 border-green-500/15" },
-                            { label: "Emerging", sub: "Low CF · Low AI", color: "bg-white/3 border-white/8" },
+                            { label: "Emerging", sub: "Low CF · Low AI", color: "bg-foreground/3 border-border" },
                             { label: "Fast Mover", sub: "Low CF · High AI", color: "bg-amber-500/8 border-amber-500/15" },
                           ].map(cell => {
                             const isActive = cell.label === mm.archetype;
@@ -1307,7 +1307,7 @@ export default function StrategyBuilderPage() {
                             <span className="text-muted-foreground">Capability Foundations</span>
                             <span className="text-foreground font-mono">{mm.capabilityFoundations}%</span>
                           </div>
-                          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-foreground/8 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${mm.capabilityFoundations}%` }} />
                           </div>
                         </div>
@@ -1316,7 +1316,7 @@ export default function StrategyBuilderPage() {
                             <span className="text-muted-foreground">Adoption Intensity</span>
                             <span className="text-foreground font-mono">{mm.adoptionIntensity}%</span>
                           </div>
-                          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-foreground/8 rounded-full overflow-hidden">
                             <div className="h-full bg-green-400 rounded-full transition-all" style={{ width: `${mm.adoptionIntensity}%` }} />
                           </div>
                         </div>
@@ -1330,7 +1330,7 @@ export default function StrategyBuilderPage() {
 
           {/* ── 8. Stop-doing register ── */}
           {output && (output as any).stopDoing && ((output as any).stopDoing as any[]).length > 0 && (
-            <div className="rounded-xl border border-white/8 bg-white/3 overflow-hidden">
+            <div className="rounded-xl border border-border bg-foreground/3 overflow-hidden">
               <div className="px-5 py-4 flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-red-400" />
                 <h3 className="text-sm font-semibold text-foreground">Stop-Doing Register</h3>
@@ -1361,7 +1361,7 @@ export default function StrategyBuilderPage() {
                     <p className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">{wave.label}</p>
                     <div className="space-y-1.5">
                       {wave.actions.map((action: any, idx: number) => (
-                        <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-white/3 border border-white/8">
+                        <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-foreground/3 border border-border">
                           <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-foreground leading-relaxed">{action.action}</p>
@@ -1388,7 +1388,7 @@ export default function StrategyBuilderPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
-            <div className="rounded-xl border border-white/8 bg-white/3 p-4 text-sm">
+            <div className="rounded-xl border border-border bg-foreground/3 p-4 text-sm">
               <p className="font-medium text-foreground mb-1">{strategy?.name}</p>
               <p className="text-xs text-muted-foreground">
                 {selectedInitiativeIds.size} initiatives · {output?.riskCount ?? 0} risk items · {industry?.name}

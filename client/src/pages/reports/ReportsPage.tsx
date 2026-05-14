@@ -503,7 +503,7 @@ export default function ReportsPage() {
                 className="w-full bg-primary hover:bg-primary/90 text-white gap-2"
               >
                 {requestMutation.isPending ? (
-                  <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Generating...</>
+                  <><div className="w-3.5 h-3.5 border-2 border-foreground/30 border-t-white rounded-full animate-spin" />Generating...</>
                 ) : (
                   <><BarChart3 className="w-3.5 h-3.5" />Generate Report</>
                 )}

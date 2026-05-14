@@ -29,7 +29,7 @@ const DOMAIN_LABELS: Record<string, string> = {
 };
 
 const MATURITY_BANDS = [
-  { min: 0, max: 1.5, label: "Foundational", color: "text-slate-600" },
+  { min: 0, max: 1.5, label: "Foundational", color: "text-muted-foreground" },
   { min: 1.5, max: 2.5, label: "Developing", color: "text-blue-600" },
   { min: 2.5, max: 3.5, label: "Established", color: "text-violet-600" },
   { min: 3.5, max: 4.5, label: "Advanced", color: "text-emerald-600" },
@@ -161,9 +161,9 @@ export default function MaturityProgressionPage() {
     ? <TrendingUp className="w-4 h-4 text-emerald-400" />
     : trend === "declining"
     ? <TrendingDown className="w-4 h-4 text-red-400" />
-    : <Minus className="w-4 h-4 text-slate-400" />;
+    : <Minus className="w-4 h-4 text-muted-foreground" />;
 
-  const trendColor = trend === "improving" ? "text-emerald-400" : trend === "declining" ? "text-red-400" : "text-slate-400";
+  const trendColor = trend === "improving" ? "text-emerald-400" : trend === "declining" ? "text-red-400" : "text-muted-foreground";
 
   const latestSnapshot = snapshots[snapshots.length - 1];
   const previousSnapshot = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : null;
@@ -189,7 +189,7 @@ export default function MaturityProgressionPage() {
       {/* D2: Trend summary */}
       {snapshots.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
-          <Card className="border border-white/10 bg-card">
+          <Card className="border border-foreground/10 bg-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
                 {trendIcon}
@@ -198,7 +198,7 @@ export default function MaturityProgressionPage() {
               <div className="text-xs text-muted-foreground">Overall trend</div>
             </CardContent>
           </Card>
-          <Card className="border border-white/10 bg-card">
+          <Card className="border border-foreground/10 bg-card">
             <CardContent className="p-4">
               <div className={`text-2xl font-bold ${delta >= 0 ? "text-emerald-300" : "text-red-300"}`}>
                 {delta >= 0 ? "+" : ""}{delta.toFixed(2)}
@@ -206,7 +206,7 @@ export default function MaturityProgressionPage() {
               <div className="text-xs text-muted-foreground">Score delta (first → latest)</div>
             </CardContent>
           </Card>
-          <Card className="border border-white/10 bg-card">
+          <Card className="border border-foreground/10 bg-card">
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-foreground">{snapshots.length}</div>
               <div className="text-xs text-muted-foreground">Assessment snapshots</div>
@@ -270,7 +270,7 @@ export default function MaturityProgressionPage() {
                             <span className="text-xs font-medium">{DOMAIN_LABELS[domain] ?? domain}</span>
                             <div className="flex items-center gap-2">
                               {diff != null && (
-                                <span className={`text-xs ${diff > 0 ? "text-emerald-400" : diff < 0 ? "text-red-400" : "text-slate-400"}`}>
+                                <span className={`text-xs ${diff > 0 ? "text-emerald-400" : diff < 0 ? "text-red-400" : "text-muted-foreground"}`}>
                                   {diff > 0 ? "+" : ""}{diff.toFixed(1)}
                                 </span>
                               )}

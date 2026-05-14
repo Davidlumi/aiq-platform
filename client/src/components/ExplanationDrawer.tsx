@@ -71,7 +71,7 @@ export function ExplanationDrawer({
           <div className="flex items-start gap-3">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-              style={{ background: "oklch(18% 0.040 250)" }}
+              style={{ background: "var(--card)" }}
             >
               <Info className="w-4 h-4" style={{ color: "var(--primary)" }} />
             </div>
@@ -146,7 +146,7 @@ export function ScoreBreakdown({
   return (
     <div className="space-y-4">
       {/* Overall score */}
-      <div className="p-4 rounded-xl" style={{ background: "oklch(17% 0.028 240)", border: "1px solid oklch(22% 0.030 240)" }}>
+      <div className="p-4 rounded-xl" style={{ background: "var(--card)", border: "1px solid oklch(22% 0.030 240)" }}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-muted-foreground">
             Overall AI Readiness Score
@@ -158,7 +158,7 @@ export function ScoreBreakdown({
             {formatPeakonScore(overallScore)}
           </span>
         </div>
-        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
+        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${overallScore}%`, background: peakonColor.bg }}
@@ -211,7 +211,7 @@ export function ScoreBreakdown({
                   {formatPeakonScore(factor.score)}
                 </span>
               </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${factor.score}%`, background: factor.color }}
@@ -280,7 +280,7 @@ export function PolicyDecisionExplanation({
         </h4>
         <div className="space-y-2">
           {conditions.map((cond, idx) => (
-            <div key={idx} className="flex items-center gap-2.5 py-2 px-3 rounded-lg" style={{ background: "oklch(17% 0.028 240)" }}>
+            <div key={idx} className="flex items-center gap-2.5 py-2 px-3 rounded-lg" style={{ background: "var(--card)" }}>
               {cond.met ? (
                 <CheckCircle className="w-4 h-4 shrink-0" style={{ color: "var(--primary)" }} />
               ) : (
@@ -332,7 +332,7 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
       <div className="rounded-xl overflow-hidden border" style={{ borderColor: "oklch(22% 0.030 240)" }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "oklch(17% 0.028 240)", borderBottom: "1px solid oklch(22% 0.030 240)" }}>
+            <tr style={{ background: "var(--card)", borderBottom: "1px solid oklch(22% 0.030 240)" }}>
               <th className="text-left px-3 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Data</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>You</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Manager</th>

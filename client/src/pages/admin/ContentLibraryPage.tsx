@@ -48,7 +48,7 @@ const SEVERITY_COLOURS: Record<string, string> = {
 const CONFIDENCE_COLOURS: Record<string, string> = {
   high: "text-emerald-400",
   medium: "text-amber-400",
-  low: "text-slate-400",
+  low: "text-muted-foreground",
 };
 
 const REGULATORY_COLOURS: Record<string, string> = {
@@ -82,13 +82,13 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 text-slate-100 max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl bg-card border-border text-foreground max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-lg">
             {isLoading ? "Loading…" : data?.display_name}
           </DialogTitle>
         </DialogHeader>
-        {isLoading && <div className="py-8 text-center text-slate-400">Loading…</div>}
+        {isLoading && <div className="py-8 text-center text-muted-foreground">Loading…</div>}
         {data && (
           <div className="space-y-5">
             {/* Phase + Confidence */}
@@ -104,8 +104,8 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
             <p className="text-sm text-slate-300 leading-relaxed">{data.short_description}</p>
 
             {/* Regulatory exposure */}
-            <div className="rounded-lg border border-slate-700 p-4 space-y-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Regulatory Exposure</p>
+            <div className="rounded-lg border border-border p-4 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Regulatory Exposure</p>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-slate-500 text-xs">EU AI Act</p>
@@ -130,13 +130,13 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
 
             {/* Cost */}
             {data.cost?.base_range_gbp && (
-              <div className="rounded-lg border border-slate-700 p-4 space-y-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cost Range (Base)</p>
+              <div className="rounded-lg border border-border p-4 space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cost Range (Base)</p>
                 <p className="text-sm text-white font-medium">
                   £{data.cost.base_range_gbp[0].toLocaleString()} – £{data.cost.base_range_gbp[1].toLocaleString()}
                 </p>
                 {data.cost.caveat && (
-                  <p className="text-xs text-slate-400 italic">{data.cost.caveat}</p>
+                  <p className="text-xs text-muted-foreground italic">{data.cost.caveat}</p>
                 )}
               </div>
             )}
@@ -144,12 +144,12 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
             {/* Risks */}
             {data.typical_risks?.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Typical Risks</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Typical Risks</p>
                 {data.typical_risks.map((r: any, i: number) => (
-                  <div key={i} className="rounded-lg border border-slate-700 p-3 space-y-1">
+                  <div key={i} className="rounded-lg border border-border p-3 space-y-1">
                     <div className="flex items-center gap-2">
                       <SeverityTag severity={r.severity} />
-                      <span className="text-xs text-slate-400">{r.risk_id}</span>
+                      <span className="text-xs text-muted-foreground">{r.risk_id}</span>
                     </div>
                     <p className="text-sm text-slate-300">{r.statement}</p>
                     <p className="text-xs text-slate-500">Mitigation: {r.mitigation}</p>
@@ -161,9 +161,9 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
             {/* Sources */}
             {data.resolved_sources?.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sources</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sources</p>
                 {data.resolved_sources.map((s: any) => (
-                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-slate-400">
+                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-muted-foreground">
                     <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
                     <span>
                       {s.citation}
@@ -191,13 +191,13 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 text-slate-100 max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl bg-card border-border text-foreground max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-lg">
             {isLoading ? "Loading…" : data?.display_name}
           </DialogTitle>
         </DialogHeader>
-        {isLoading && <div className="py-8 text-center text-slate-400">Loading…</div>}
+        {isLoading && <div className="py-8 text-center text-muted-foreground">Loading…</div>}
         {data && (
           <div className="space-y-5">
             <SeverityTag severity={data.severity} />
@@ -207,9 +207,9 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
               <p className="text-sm text-slate-300 leading-relaxed">{data.risk_statement}</p>
             </div>
 
-            <div className="rounded-lg border border-slate-700 p-4 space-y-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trigger Condition</p>
-              <p className="text-sm text-slate-400 leading-relaxed font-mono text-xs">{data.trigger_condition}</p>
+            <div className="rounded-lg border border-border p-4 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trigger Condition</p>
+              <p className="text-sm text-muted-foreground leading-relaxed font-mono text-xs">{data.trigger_condition}</p>
             </div>
 
             <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4 space-y-2">
@@ -219,9 +219,9 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
 
             {data.resolved_sources?.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sources</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sources</p>
                 {data.resolved_sources.map((s: any) => (
-                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-slate-400">
+                  <div key={s.source_id} className="flex items-start gap-2 text-xs text-muted-foreground">
                     <BookOpen className="w-3 h-3 mt-0.5 shrink-0 text-blue-400" />
                     <span>
                       {s.citation}
@@ -270,26 +270,26 @@ export default function ContentLibraryPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-white">Content Library</h1>
             {meta && (
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 v{meta.version} · built {new Date(meta.built_at).toLocaleDateString()} · {meta.git_sha}
               </p>
             )}
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search library…"
-                className="pl-9 bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 w-64"
+                className="pl-9 bg-muted border-border text-foreground placeholder:text-slate-500 w-64"
               />
             </div>
           </div>
@@ -307,12 +307,12 @@ export default function ContentLibraryPage() {
               { label: "Templates", value: meta.content_counts.templates, icon: FileText, colour: "text-amber-400" },
               { label: "Sources", value: meta.content_counts.sources, icon: BookOpen, colour: "text-emerald-400" },
             ].map(stat => (
-              <Card key={stat.label} className="bg-slate-900 border-slate-800">
+              <Card key={stat.label} className="bg-card border-border">
                 <CardContent className="p-4 flex items-center gap-3">
                   <stat.icon className={`w-5 h-5 ${stat.colour}`} />
                   <div>
                     <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs text-slate-400">{stat.label}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -321,7 +321,7 @@ export default function ContentLibraryPage() {
         )}
 
         <Tabs defaultValue="initiatives">
-          <TabsList className="bg-slate-800 border border-slate-700 mb-6">
+          <TabsList className="bg-muted border border-border mb-6">
             <TabsTrigger value="initiatives" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Cpu className="w-4 h-4 mr-2" />Initiatives
             </TabsTrigger>
@@ -347,7 +347,7 @@ export default function ContentLibraryPage() {
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize ${
                     phaseFilter === p
                       ? "bg-blue-600 border-blue-500 text-white"
-                      : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600"
+                      : "bg-muted border-border text-muted-foreground hover:border-slate-600"
                   }`}
                 >
                   {p}
@@ -357,13 +357,13 @@ export default function ContentLibraryPage() {
             </div>
 
             {loadingInit ? (
-              <div className="py-12 text-center text-slate-400">Loading initiatives…</div>
+              <div className="py-12 text-center text-muted-foreground">Loading initiatives…</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredInitiatives.map(i => (
                   <Card
                     key={i.initiative_id}
-                    className="bg-slate-900 border-slate-800 hover:border-slate-600 cursor-pointer transition-all group"
+                    className="bg-card border-border hover:border-slate-600 cursor-pointer transition-all group"
                     onClick={() => setSelectedInitiative(i.initiative_id)}
                   >
                     <CardContent className="p-4 space-y-3">
@@ -377,7 +377,7 @@ export default function ContentLibraryPage() {
                         <PhaseTag phase={i.typical_phase} />
                         <span className="text-xs text-slate-500 capitalize">{i.category.replace(/_/g, " ")}</span>
                       </div>
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {i.short_description}
                       </p>
                       {/* Regulatory flags */}
@@ -403,20 +403,20 @@ export default function ContentLibraryPage() {
           {/* ── Risk Rules ── */}
           <TabsContent value="risk-rules">
             {loadingRisk ? (
-              <div className="py-12 text-center text-slate-400">Loading risk rules…</div>
+              <div className="py-12 text-center text-muted-foreground">Loading risk rules…</div>
             ) : (
               <div className="space-y-3">
                 {filteredRiskRules.map(r => (
                   <Card
                     key={r.rule_id}
-                    className="bg-slate-900 border-slate-800 hover:border-slate-600 cursor-pointer transition-all group"
+                    className="bg-card border-border hover:border-slate-600 cursor-pointer transition-all group"
                     onClick={() => setSelectedRiskRule(r.rule_id)}
                   >
                     <CardContent className="p-4 flex items-start gap-4">
                       <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
                         r.severity === "very_high" ? "text-red-300" :
                         r.severity === "high" ? "text-red-400" :
-                        r.severity === "medium" ? "text-amber-400" : "text-slate-400"
+                        r.severity === "medium" ? "text-amber-400" : "text-muted-foreground"
                       }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
@@ -425,7 +425,7 @@ export default function ContentLibraryPage() {
                           </p>
                           <SeverityTag severity={r.severity} />
                         </div>
-                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{r.risk_statement}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{r.risk_statement}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-1 group-hover:text-red-400 transition-colors" />
                     </CardContent>
@@ -438,11 +438,11 @@ export default function ContentLibraryPage() {
           {/* ── Sector Benchmarks ── */}
           <TabsContent value="benchmarks">
             {loadingBench ? (
-              <div className="py-12 text-center text-slate-400">Loading benchmarks…</div>
+              <div className="py-12 text-center text-muted-foreground">Loading benchmarks…</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(benchmarks ?? []).map(b => (
-                  <Card key={b.sector_id} className="bg-slate-900 border-slate-800">
+                  <Card key={b.sector_id} className="bg-card border-border">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base text-white flex items-center gap-2">
                         <Globe className="w-4 h-4 text-violet-400" />
@@ -456,16 +456,16 @@ export default function ContentLibraryPage() {
                           { label: "Median", value: b.overall_individual_benchmark.p50 },
                           { label: "P75", value: b.overall_individual_benchmark.p75 },
                         ].map(stat => (
-                          <div key={stat.label} className="rounded-lg bg-slate-800 p-2">
+                          <div key={stat.label} className="rounded-lg bg-muted p-2">
                             <p className="text-lg font-bold text-white">{stat.value.toFixed(1)}</p>
-                            <p className="text-xs text-slate-400">{stat.label}</p>
+                            <p className="text-xs text-muted-foreground">{stat.label}</p>
                           </div>
                         ))}
                       </div>
                       {b.notes && (
                         <p className="text-xs text-slate-500 italic leading-relaxed">{b.notes}</p>
                       )}
-                      <p className="text-xs text-slate-600">Reviewed {b.last_reviewed}</p>
+                      <p className="text-xs text-muted-foreground">Reviewed {b.last_reviewed}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -476,13 +476,13 @@ export default function ContentLibraryPage() {
           {/* ── Sources ── */}
           <TabsContent value="sources">
             {loadingSrc ? (
-              <div className="py-12 text-center text-slate-400">Loading sources…</div>
+              <div className="py-12 text-center text-muted-foreground">Loading sources…</div>
             ) : (
               <div className="space-y-2">
                 {(sources ?? [])
                   .filter(s => !search || s.citation.toLowerCase().includes(search.toLowerCase()))
                   .map(s => (
-                    <Card key={s.source_id} className="bg-slate-900 border-slate-800">
+                    <Card key={s.source_id} className="bg-card border-border">
                       <CardContent className="p-4 flex items-start gap-4">
                         <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
                         <div className="flex-1 min-w-0">
@@ -497,7 +497,7 @@ export default function ContentLibraryPage() {
                               {s.source_type}
                             </span>
                             <span className="text-xs text-slate-500">{s.publication_date?.slice(0, 4)}</span>
-                            <span className="text-xs text-slate-600 font-mono">{s.source_id}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{s.source_id}</span>
                           </div>
                         </div>
                         {s.url && (

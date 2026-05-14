@@ -13,9 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getLevelFromScore, getLevelChipStyle } from "@/lib/level-utils";
 
 const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  high:   { label: "High priority",   bg: "oklch(18% 0.040 27)",  text: "#F87171" },
-  medium: { label: "Medium priority", bg: "oklch(18% 0.040 68)",  text: "#FCD34D" },
-  low:    { label: "Low priority",    bg: "oklch(18% 0.040 142)", text: "#4ADE80" },
+  high:   { label: "High priority",   bg: "oklch(18% 0.040 27 / 0.15)",  text: "#DC2626" },
+  medium: { label: "Medium priority", bg: "oklch(18% 0.040 68 / 0.15)",  text: "#D97706" },
+  low:    { label: "Low priority",    bg: "oklch(18% 0.040 142 / 0.15)", text: "#047857" },
 };
 
 function PromptCard({ prompt }: {
@@ -48,7 +48,7 @@ function PromptCard({ prompt }: {
     <div className="bg-card rounded-xl border border-border shadow-md p-5">
       {/* Header */}
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 bg-muted text-muted-foreground">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -69,13 +69,13 @@ function PromptCard({ prompt }: {
       </div>
 
       {/* Suggested action */}
-      <div className="mb-3 p-3 rounded-lg border border-border" style={{ background: "oklch(17% 0.028 240)" }}>
+      <div className="mb-3 p-3 rounded-lg border border-border" style={{ background: "var(--card)" }}>
         <p className="text-xs font-medium uppercase tracking-widest mb-1 text-muted-foreground">Suggested action</p>
         <p className="text-sm text-foreground">{prompt.suggestedAction}</p>
       </div>
 
       {/* Opening script */}
-      <div className="p-3 rounded-lg" style={{ background: "oklch(18% 0.040 250)", border: "0.5px solid oklch(30% 0.080 250)" }}>
+      <div className="p-3 rounded-lg" style={{ background: "var(--card)", border: "0.5px solid var(--border)" }}>
         <p className="text-xs font-medium uppercase tracking-widest mb-1.5" style={{ color: "#60A5FA" }}>Suggested opening</p>
         <p className="text-sm italic leading-relaxed" style={{ color: "#93C5FD" }}>{script}</p>
       </div>
@@ -113,7 +113,7 @@ export default function ConversationPromptsPage() {
       {/* Empty state */}
       {!isLoading && (!data?.prompts || data.prompts.length === 0) && (
         <div className="bg-card rounded-xl border border-border shadow-md p-10 flex flex-col items-center gap-3 text-center">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "oklch(22% 0.030 240)" }}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--muted)" }}>
             <MessageSquare className="w-6 h-6 text-muted-foreground" />
           </div>
           <p className="text-sm font-medium text-foreground">No prompts available yet</p>
@@ -131,7 +131,7 @@ export default function ConversationPromptsPage() {
       {/* Prompt cards */}
       {!isLoading && data?.prompts && data.prompts.length > 0 && (
         <>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "oklch(18% 0.040 250)", border: "0.5px solid oklch(30% 0.080 250)" }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--card)", border: "0.5px solid var(--border)" }}>
             <MessageSquare className="w-3.5 h-3.5" style={{ color: "#60A5FA" }} />
             <p className="text-xs" style={{ color: "#93C5FD" }}>
               {data.prompts.length} conversation prompt{data.prompts.length !== 1 ? "s" : ""} · sorted by priority

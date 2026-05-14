@@ -458,7 +458,7 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[u.status] ?? "bg-slate-800/60 text-slate-300 border-slate-600/50"}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[u.status] ?? "bg-muted/60 text-slate-300 border-slate-600/50"}`}>
                           {u.status}
                         </span>
                       </td>

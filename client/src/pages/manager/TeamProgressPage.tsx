@@ -33,7 +33,7 @@ function KpiTile({ label, value, sub, icon }: { label: string; value: string | n
 function ProgressBar({ pct }: { pct: number }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "oklch(22% 0.030 240)" }}>
+      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
         <div className="h-full rounded-full transition-all duration-700"
           style={{
             width: `${pct}%`,
@@ -108,7 +108,7 @@ export default function TeamProgressPage() {
           {/* Member rows */}
           {members.length === 0 ? (
             <div className="bg-card rounded-xl border border-border shadow-md p-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "oklch(22% 0.030 240)" }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--muted)" }}>
                 <Users className="w-6 h-6 text-muted-foreground" />
               </div>
               <p className="text-sm font-medium text-foreground">No team members yet</p>
@@ -120,7 +120,7 @@ export default function TeamProgressPage() {
           ) : (
             <div className="bg-card rounded-xl border border-border shadow-md">
               {/* Table header */}
-              <div className="grid gap-4 px-5 py-3" style={{ gridTemplateColumns: "1fr 100px 180px 80px 40px", borderBottom: "0.5px solid oklch(22% 0.030 240)" }}>
+              <div className="grid gap-4 px-5 py-3" style={{ gridTemplateColumns: "1fr 100px 180px 80px 40px", borderBottom: "0.5px solid var(--border)" }}>
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Member</p>
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Level</p>
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Plan progress</p>
@@ -138,7 +138,7 @@ export default function TeamProgressPage() {
                     style={{ gridTemplateColumns: "1fr 100px 180px 80px 40px", borderBottom: i < members.length - 1 ? "0.5px solid oklch(22% 0.030 240)" : undefined }}>
                     {/* Name + status */}
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0" style={{ background: "oklch(22% 0.030 240)", color: "#9CA3AF" }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 bg-muted text-muted-foreground">
                         {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
                       </div>
                       <div className="min-w-0">

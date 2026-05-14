@@ -312,9 +312,9 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
       label: "Document Excerpt",
       sublabel: "Review the extract",
       borderColor: "border-slate-600/40",
-      bgColor: "bg-slate-800/30",
+      bgColor: "bg-muted/30",
       labelColor: "text-slate-300",
-      headerBg: "bg-slate-800/50",
+      headerBg: "bg-muted/50",
     },
     none: {
       label: "Context",
@@ -583,11 +583,11 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
 
       {/* AI Fact card */}
       <div
-        className="rounded-2xl border border-white/10 overflow-hidden"
+        className="rounded-2xl border border-border overflow-hidden"
         style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(59,78,255,0.08) 100%)" }}
       >
         {/* Top bar — generation progress */}
-        <div className="px-5 pt-4 pb-3 border-b border-white/8 space-y-2.5">
+        <div className="px-5 pt-4 pb-3 border-b border-border space-y-2.5">
           <div className="flex items-center gap-2">
             <div className="relative flex items-center justify-center shrink-0">
               <span className="absolute w-8 h-8 rounded-full animate-ping" style={{ background: "rgba(16,185,129,0.15)", animationDuration: "1.8s" }} />
@@ -774,7 +774,7 @@ function CompletionScreen({
                 <span className="text-xs text-muted-foreground w-40 truncate">
                   {DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                 </span>
-                <div className="flex-1 h-2 bg-slate-800/60 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-muted/60 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${score}%`, backgroundColor: colors.bg }}

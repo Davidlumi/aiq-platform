@@ -126,7 +126,7 @@ export default function CompanyAssessmentSessionPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-        <p className="text-white/60">Assessment complete. Generating results…</p>
+        <p className="text-foreground/60">Assessment complete. Generating results…</p>
         <Button
           onClick={async () => {
             await completeAssessment.mutateAsync({ assessmentId });
@@ -155,17 +155,17 @@ export default function CompanyAssessmentSessionPage() {
   return (
     <div className="text-white space-y-0">
       {/* Progress header bar */}
-      <div className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 mb-6 flex items-center justify-between gap-4">
+      <div className="rounded-xl border border-foreground/10 bg-foreground/5 px-5 py-3 mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Building2 className="w-4 h-4 text-violet-400 shrink-0" />
-          <span className="text-sm font-medium text-white/70 truncate">Company HR AI Assessment</span>
+          <span className="text-sm font-medium text-foreground/70 truncate">Company HR AI Assessment</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-sm font-semibold text-white">
             Question {(progress?.answered ?? 0) + 1}
-            <span className="text-white/40 font-normal"> of {progress?.total ?? 14}</span>
+            <span className="text-foreground/40 font-normal"> of {progress?.total ?? 14}</span>
           </span>
-          <div className="w-36 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-36 h-2 bg-foreground/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-violet-500 rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
@@ -190,7 +190,7 @@ export default function CompanyAssessmentSessionPage() {
                     ? "bg-emerald-500"
                     : isActive
                     ? "bg-violet-500"
-                    : "bg-white/10"
+                    : "bg-foreground/10"
                 }`}
               />
             );
@@ -199,10 +199,10 @@ export default function CompanyAssessmentSessionPage() {
       )}
 
       {/* Main question card */}
-      <div className="rounded-2xl border border-white/10 bg-white/3 p-6 md:p-8 space-y-6">
+      <div className="rounded-2xl border border-foreground/10 bg-foreground/3 p-6 md:p-8 space-y-6">
         {/* Dimension badge */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-foreground/5 flex items-center justify-center">
             <DimIcon className={`w-3.5 h-3.5 ${dimMeta.color}`} />
           </div>
           <span className={`text-xs font-semibold uppercase tracking-wider ${dimMeta.color}`}>
@@ -211,7 +211,7 @@ export default function CompanyAssessmentSessionPage() {
         </div>
 
         {/* Question */}
-        <h2 className="text-xl font-semibold leading-relaxed text-white">{question.stem}</h2>
+        <h2 className="text-xl font-semibold leading-relaxed text-foreground">{question.stem}</h2>
 
         {/* Options */}
         <div className="space-y-3">
@@ -222,7 +222,7 @@ export default function CompanyAssessmentSessionPage() {
               className={`w-full text-left px-5 py-4 rounded-xl border transition-all ${
                 selectedIdx === i
                   ? "bg-violet-500/15 border-violet-500 text-white ring-2 ring-violet-500/30"
-                  : "bg-white/5 border-white/10 text-white/70 hover:border-white/20 hover:bg-white/8"
+                  : "bg-foreground/5 border-foreground/10 text-foreground/70 hover:border-foreground/20 hover:bg-foreground/8"
               }`}
             >
               <div className="flex items-start gap-3">
@@ -230,7 +230,7 @@ export default function CompanyAssessmentSessionPage() {
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                     selectedIdx === i
                       ? "border-violet-500 bg-violet-500"
-                      : "border-white/20"
+                      : "border-foreground/20"
                   }`}
                 >
                   {selectedIdx === i && (
@@ -246,9 +246,9 @@ export default function CompanyAssessmentSessionPage() {
 
       {/* Confidence selector — shown after an answer is selected */}
       {selectedIdx !== null && (
-        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200 mt-4">
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/3 p-6 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200 mt-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-white/70 uppercase tracking-wider text-xs">
+            <span className="text-sm font-semibold text-foreground/70 uppercase tracking-wider text-xs">
               How confident are you in this answer?
             </span>
             {confidence === null && (
@@ -265,14 +265,14 @@ export default function CompanyAssessmentSessionPage() {
                   className={`px-3 py-4 rounded-xl border text-center transition-all duration-150 ${
                     isSelected
                       ? c.bgSelected
-                      : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+                      : "bg-foreground/5 border-foreground/10 hover:bg-foreground/10 hover:border-foreground/20"
                   }`}
                 >
-                  <div className={`font-semibold text-sm mb-0.5 ${isSelected ? c.textSelected : "text-white/70"}`}>
+                  <div className={`font-semibold text-sm mb-0.5 ${isSelected ? c.textSelected : "text-foreground/70"}`}>
                     {c.label}
                   </div>
-                  <div className="text-xs text-white/40">{c.sub}</div>
-                  <div className={`text-[11px] mt-1.5 font-mono ${isSelected ? c.textSelected : "text-white/25"}`}>
+                  <div className="text-xs text-foreground/40">{c.sub}</div>
+                  <div className={`text-[11px] mt-1.5 font-mono ${isSelected ? c.textSelected : "text-foreground/25"}`}>
                     {c.multiplier}
                   </div>
                 </button>
@@ -284,17 +284,17 @@ export default function CompanyAssessmentSessionPage() {
 
       {/* Optional evidence */}
       {selectedIdx !== null && (
-        <div className="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300 mt-4">
-          <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/3 p-6 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300 mt-4">
+          <div className="text-xs font-semibold text-foreground/50 uppercase tracking-wider">
             Add evidence{" "}
-            <span className="text-white/30 font-normal normal-case">(optional — enriches your results narrative)</span>
+            <span className="text-foreground/30 font-normal normal-case">(optional — enriches your results narrative)</span>
           </div>
           <textarea
             value={evidence}
             onChange={(e) => setEvidence(e.target.value)}
             placeholder="What evidence, data, or examples support this answer?"
             rows={3}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none"
+            className="w-full bg-foreground/5 border border-foreground/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-foreground/25 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none"
           />
         </div>
       )}
