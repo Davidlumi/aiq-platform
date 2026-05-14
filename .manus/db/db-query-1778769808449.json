@@ -1,0 +1,64 @@
+{
+  "query": "SELECT title, phase, cost_low, cost_high FROM hwgt_initiatives WHERE is_dismissed = 0 LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute SELECT title, phase, cost_low, cost_high FROM hwgt_initiatives WHERE is_dismissed = 0 LIMIT 10;",
+  "rows": [
+    {
+      "title": "Rethink hiring (before AI)",
+      "phase": "build",
+      "cost_low": "40",
+      "cost_high": "90"
+    },
+    {
+      "title": "AI shortlisting (with human review)",
+      "phase": "optimise",
+      "cost_low": "100",
+      "cost_high": "180"
+    },
+    {
+      "title": "Bias monitoring system",
+      "phase": "build",
+      "cost_low": "50",
+      "cost_high": "100"
+    },
+    {
+      "title": "HR team AI training (foundation)",
+      "phase": "foundation",
+      "cost_low": "30",
+      "cost_high": "60"
+    },
+    {
+      "title": "AI for interview scheduling",
+      "phase": "scale",
+      "cost_low": "60",
+      "cost_high": "120"
+    },
+    {
+      "title": "Workforce communications plan",
+      "phase": "foundation",
+      "cost_low": "20",
+      "cost_high": "40"
+    },
+    {
+      "title": "Employee trust survey",
+      "phase": "scale",
+      "cost_low": "15",
+      "cost_high": "30"
+    },
+    {
+      "title": "HR specialist AI training (advanced)",
+      "phase": "build",
+      "cost_low": "50",
+      "cost_high": "90"
+    },
+    {
+      "title": "AI decision rules",
+      "phase": "foundation",
+      "cost_low": "40",
+      "cost_high": "80"
+    }
+  ],
+  "messages": [],
+  "stdout": "title\tphase\tcost_low\tcost_high\nRethink hiring (before AI)\tbuild\t40\t90\nAI shortlisting (with human review)\toptimise\t100\t180\nBias monitoring system\tbuild\t50\t100\nHR team AI training (foundation)\tfoundation\t30\t60\nAI for interview scheduling\tscale\t60\t120\nWorkforce communications plan\tfoundation\t20\t40\nEmployee trust survey\tscale\t15\t30\nHR specialist AI training (advanced)\tbuild\t50\t90\nAI decision rules\tfoundation\t40\t80\n",
+  "stderr": "",
+  "execution_time_ms": 318
+}

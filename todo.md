@@ -3343,3 +3343,16 @@ test
 - [x] Fix StrategyDiagnosticPage: 3 occurrences of /strategy/plan → /strategy/roadmap
 - [x] Fix StrategyAmbitionPage footer: /strategy/journey → /strategy/roadmap
 - [x] TypeScript: 0 errors | Tests: 930/930
+
+## How We Get There Polish Patch (14 May 2026)
+- [x] Fix 1: Cost format — fmtCost now always appends K unit; values stored as £K integers (40=£40K); footer total £405K–£790K
+- [x] Fix 2a: Context strip — left-bordered callout (teal bg rgba(93,202,165,0.04), 2px left border, square left/rounded right), not full-border card
+- [x] Fix 2b: Context strip — leads with "N suggested · M added by you." count summary
+- [x] Fix 2c: Context strip — only org-context items (sector, headcount, HR team size, core HR system, regulatory exposure); no strategy-side inputs (ambition, principles)
+- [x] Fix 2d: Context strip — "Based on your strategy and your org: ..." framing; State A/B/C handled; "Edit context →" / "Add more →" links
+- [x] Fix 3: Footer summary — whitespace-nowrap on summary line prevents hedge phrase wrapping to second line
+- [x] Fix 4: Footer buttons — flex items-center on footer container centres buttons vertically against summary block
+- [x] Fix 5: Phase dots — bumped from w-1.5 h-1.5 (6px) to 7px × 7px for scan-distance visibility
+- [x] Fix 6: Add-your-own affordance — card-shaped (same dimensions/padding as initiative cards), 0.5px dashed border, hover teal tint, short label, no chevron
+- [x] Fix 7: Header button differentiation — Edit org context stays neutral outlined; Regenerate plan has teal-tinted bg + teal border + teal text
+- [x] TypeScript: 0 errors | Tests: 930/930

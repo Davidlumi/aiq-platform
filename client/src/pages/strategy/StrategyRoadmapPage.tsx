@@ -60,8 +60,9 @@ const FUNCTION_OPTIONS = [
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtCost(low: number | null, high: number | null): string {
-  if (!low || !high) return "—";
-  const fmt = (n: number) => n >= 1000 ? `£${Math.round(n / 1000)}K` : `£${n}`;
+  if (low == null || high == null || (low === 0 && high === 0)) return "—";
+  // Values are stored in £K units (e.g. 40 = £40K, 180 = £180K)
+  const fmt = (n: number) => `£${n}K`;
   return `${fmt(low)}–${fmt(high)}`;
 }
 
@@ -131,25 +132,34 @@ function AddAffordance({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2 rounded-lg transition-all duration-150 group"
+      className="w-full text-left rounded-lg transition-all duration-150"
       style={{
-        border: "1px dashed rgba(255,255,255,0.12)",
-        padding: "0.55rem 0.9rem",
+        border: "0.5px dashed rgba(255,255,255,0.15)",
+        padding: "0.65rem 0.9rem",
         background: "transparent",
-        fontSize: "11px",
-        color: "#6c7385",
+        borderRadius: "8px",
       }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = "rgba(93,202,165,0.4)";
-        (e.currentTarget as HTMLElement).style.color = "#5DCAA5";
+        (e.currentTarget as HTMLElement).style.background = "rgba(93,202,165,0.03)";
+        const icon = (e.currentTarget as HTMLElement).querySelector(".add-icon") as HTMLElement | null;
+        const label = (e.currentTarget as HTMLElement).querySelector(".add-label") as HTMLElement | null;
+        if (icon) icon.style.color = "#5DCAA5";
+        if (label) label.style.color = "#5DCAA5";
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
-        (e.currentTarget as HTMLElement).style.color = "#6c7385";
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+        (e.currentTarget as HTMLElement).style.background = "transparent";
+        const icon = (e.currentTarget as HTMLElement).querySelector(".add-icon") as HTMLElement | null;
+        const label = (e.currentTarget as HTMLElement).querySelector(".add-label") as HTMLElement | null;
+        if (icon) icon.style.color = "#7a8294";
+        if (label) label.style.color = "#7a8294";
       }}
     >
-      <Plus size={12} />
-      <span>Add your own</span>
+      <div className="flex items-center gap-2">
+        <Plus size={12} className="add-icon shrink-0" style={{ color: "#7a8294" }} />
+        <span className="add-label" style={{ fontSize: "11px", color: "#7a8294" }}>Add your own</span>
+      </div>
     </button>
   );
 }
@@ -655,25 +665,23 @@ export default function StrategyRoadmapPage() {
     return results;
   }, [outcomes, activeInitiatives]);
 
-  // Context strip
+  // Context strip — only org-context items (not strategy-side inputs like ambition/principles)
   const contextStrip = useMemo(() => {
-    const ctx = ambitionData;
-    const present: string[] = [];
-    const missing: string[] = [];
-    if (orgCtx?.sector) present.push(`${String(orgCtx.sector).replace(/_/g, " ")} sector`); else missing.push("sector");
-    if (orgCtx?.headcount) present.push(`${Number(orgCtx.headcount).toLocaleString()}-person organisation`); else missing.push("org size");
-    if (ctx?.businessAmbitionLevel) present.push(`${["", "Foundational", "Measured", "Bold", "Transformative"][Math.min(ctx.businessAmbitionLevel, 4)]} ambition`); else missing.push("ambition tier");
-    const principleCount = (ctx?.principles ?? []).length;
-    if (principleCount > 0) present.push(`${principleCount} guiding principle${principleCount !== 1 ? "s" : ""}`); else missing.push("guiding principles");
+    const orgItems: string[] = [];
+    if (orgCtx?.sector) orgItems.push(`${String(orgCtx.sector).replace(/_/g, " ")} sector`);
+    if (orgCtx?.headcount) orgItems.push(`${Number(orgCtx.headcount).toLocaleString()}-person organisation`);
+    if ((orgCtx as any)?.hrTeamSize) orgItems.push(`${(orgCtx as any).hrTeamSize}-person HR team`);
+    if ((orgCtx as any)?.coreHrSystem) orgItems.push(`${(orgCtx as any).coreHrSystem} HRIS`);
+    if ((orgCtx as any)?.regulatoryExposure) orgItems.push((orgCtx as any).regulatoryExposure);
 
-    if (missing.length === 0) {
-      return { type: "full" as const, text: `Generated using your ${present.join(", ")}.` };
-    } else if (present.length === 0) {
-      return { type: "empty" as const, text: `Add context to get better suggestions: ${missing.join(", ")}.` };
+    if (orgItems.length >= 2) {
+      return { type: "full" as const, orgItems };
+    } else if (orgItems.length > 0) {
+      return { type: "partial" as const, orgItems };
     } else {
-      return { type: "partial" as const, present, missing };
+      return { type: "empty" as const, orgItems: [] };
     }
-  }, [ambitionData]);
+  }, [orgCtx]);
 
   // Phase cost totals
   const phaseCosts = useMemo(() => {
@@ -732,19 +740,50 @@ export default function StrategyRoadmapPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2 pt-1">
-            <Button variant="outline" size="sm"
+            {/* Edit org context — neutral secondary */}
+            <button
               onClick={() => { setShowOrgContextBanner(true); }}
-              style={{ fontSize: "11px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)", background: "transparent" }}>
+              className="h-8 px-3 rounded-md flex items-center gap-1.5 transition-all"
+              style={{
+                fontSize: "11px",
+                color: "#E9ECF2",
+                border: "0.5px solid rgba(255,255,255,0.2)",
+                background: "transparent",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(93,202,165,0.5)";
+                (e.currentTarget as HTMLElement).style.color = "#5DCAA5";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.2)";
+                (e.currentTarget as HTMLElement).style.color = "#E9ECF2";
+              }}
+            >
               Edit org context
-            </Button>
-            <Button variant="outline" size="sm"
+            </button>
+            {/* Regenerate plan — teal-tinted, more prominent */}
+            <button
               onClick={handleRegenerate}
               disabled={regeneratePlan.isPending}
-              className="flex items-center gap-1"
-              style={{ fontSize: "11px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)", background: "transparent" }}>
+              className="h-8 px-3 rounded-md flex items-center gap-1.5 transition-all"
+              style={{
+                fontSize: "11px",
+                color: "#5DCAA5",
+                border: "0.5px solid rgba(93,202,165,0.35)",
+                background: "rgba(93,202,165,0.06)",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(93,202,165,0.1)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(93,202,165,0.6)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(93,202,165,0.06)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(93,202,165,0.35)";
+              }}
+            >
               <RefreshCw size={11} className={regeneratePlan.isPending ? "animate-spin" : ""} />
               Regenerate plan
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -767,22 +806,68 @@ export default function StrategyRoadmapPage() {
           </div>
         )}
 
-        {/* Context strip */}
-        <div className="rounded-lg px-4 py-3 mb-5"
-          style={{ background: "rgba(255,255,255,0.025)", border: "0.5px solid rgba(255,255,255,0.06)" }}>
-          {contextStrip.type === "full" && (
-            <p style={{ fontSize: "11px", color: "#9ca3b0" }}>{contextStrip.text}</p>
-          )}
-          {contextStrip.type === "empty" && (
-            <p style={{ fontSize: "11px", color: "#9ca3b0" }}>{contextStrip.text}</p>
-          )}
-          {contextStrip.type === "partial" && (
-            <p style={{ fontSize: "11px", color: "#9ca3b0" }}>
-              Generated using your {contextStrip.present.join(", ")}.{" "}
-              <span style={{ color: "#fbbf24" }}>Missing: {contextStrip.missing.join(", ")}.</span>{" "}
-              Add them for better suggestions.
-            </p>
-          )}
+        {/* Context strip — left-bordered callout pattern */}
+        <div
+          className="mb-5"
+          style={{
+            background: "rgba(93,202,165,0.04)",
+            borderLeft: "2px solid rgba(93,202,165,0.5)",
+            borderRight: "none",
+            borderTop: "none",
+            borderBottom: "none",
+            borderRadius: "0 6px 6px 0",
+            padding: "0.55rem 0.85rem",
+          }}
+        >
+          <p style={{ fontSize: "11px", color: "#9ca3b0", lineHeight: 1.55 }}>
+            <span style={{ color: "#cfd2d8", fontWeight: 500 }}>
+              {planTotal.count} suggested · {activeInitiatives.filter(i => (i as any).status === "user_added").length} added by you.
+            </span>
+            {" "}
+            {contextStrip.type === "full" && (
+              <>
+                Based on your strategy and your org:{" "}
+                <span style={{ color: "#cfd2d8", fontWeight: 500 }}>{contextStrip.orgItems.join(", ")}</span>.
+                {" "}
+                <button
+                  onClick={() => setShowOrgContextBanner(true)}
+                  style={{ color: "#5DCAA5", fontWeight: 500, textDecoration: "none" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+                >
+                  Edit context →
+                </button>
+              </>
+            )}
+            {contextStrip.type === "partial" && (
+              <>
+                Based on partial context — your strategy plus what we know about your org.
+                {" "}
+                <button
+                  onClick={() => setShowOrgContextBanner(true)}
+                  style={{ color: "#5DCAA5", fontWeight: 500, textDecoration: "none" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+                >
+                  Add more →
+                </button>
+              </>
+            )}
+            {contextStrip.type === "empty" && (
+              <>
+                Based on partial context — your strategy plus what we know about your org.
+                {" "}
+                <button
+                  onClick={() => setShowOrgContextBanner(true)}
+                  style={{ color: "#5DCAA5", fontWeight: 500, textDecoration: "none" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+                >
+                  Add more →
+                </button>
+              </>
+            )}
+          </p>
         </div>
 
         {/* Diagnostic banners */}
@@ -817,7 +902,7 @@ export default function StrategyRoadmapPage() {
                     <span style={{ fontSize: "9px", color: "#6c7385", fontWeight: 600, letterSpacing: "0.06em" }}>
                       {phase.number}
                     </span>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: phase.color }} />
+                    <span className="rounded-full shrink-0" style={{ width: "7px", height: "7px", background: phase.color, display: "inline-block" }} />
                     <span style={{ fontSize: "13px", fontWeight: 500, color: "#E9ECF2" }}>{phase.label}</span>
                     <span style={{ fontSize: "11px", color: "#6c7385" }}>
                       {costs.count} initiative{costs.count !== 1 ? "s" : ""}{costStr}
@@ -843,13 +928,14 @@ export default function StrategyRoadmapPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 pt-6 flex items-center justify-between"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <div>
+        <div className="mt-10 pt-6 flex items-center gap-6"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)", alignItems: "center" }}>
+          {/* Summary — flex-1 so it takes available width, preventing wrap */}
+          <div className="flex-1 min-w-0">
             <p style={{ fontSize: "9px", color: "#6c7385", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
               Plan total
             </p>
-            <p style={{ fontSize: "13px", color: "#9ca3b0" }}>
+            <p className="whitespace-nowrap" style={{ fontSize: "13px", color: "#9ca3b0" }}>
               <span style={{ color: "#5DCAA5", fontWeight: 600 }}>{planTotal.count}</span>
               {" "}initiative{planTotal.count !== 1 ? "s" : ""} across{" "}
               <span style={{ color: "#5DCAA5", fontWeight: 600 }}>4</span> phases ·{" "}
@@ -858,7 +944,8 @@ export default function StrategyRoadmapPage() {
               <span style={{ fontStyle: "italic", color: "#6c7385" }}>(feeds the cost card)</span>
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Buttons — centred vertically against summary block */}
+          <div className="flex items-center gap-2 shrink-0">
             {!reviewed && (
               <Button variant="outline" size="sm" onClick={handleMarkReviewed}
                 className="flex items-center gap-1"
