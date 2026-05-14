@@ -68,7 +68,7 @@ const FUNCTION_COLOURS: Record<string, string> = {
   "Workforce Planning":        "#F472B6",
   "Pay & Reward":              "#FBBF24",
   "HR Operations":             "#FB923C",
-  "Ethics & Governance":       "#94A3B8",
+  "Ethics & Governance":       "var(--muted-foreground)",
 };
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -90,7 +90,7 @@ const CATEGORY_MAP: Record<string, string> = {
 const STATUS_CONFIG: Record<string, {
   label: string; icon: React.ReactNode; bg: string; dot: string;
 }> = {
-  not_started: { label: "Not started", icon: <Circle className="w-3 h-3" />,        bg: "bg-zinc-800 text-zinc-400 border-zinc-700",         dot: "bg-zinc-500" },
+  not_started: { label: "Not started", icon: <Circle className="w-3 h-3" />,        bg: "bg-muted text-muted-foreground border-border",         dot: "bg-zinc-500" },
   in_progress:  { label: "In flight",   icon: <Loader2 className="w-3 h-3 animate-spin" />, bg: "bg-blue-500/10 text-blue-300 border-blue-500/20",   dot: "bg-blue-400" },
   paused:       { label: "Blocked",     icon: <PauseCircle className="w-3 h-3" />,   bg: "bg-amber-500/10 text-amber-300 border-amber-500/20", dot: "bg-amber-400" },
   completed:    { label: "Completed",   icon: <CheckCircle2 className="w-3 h-3" />,  bg: "bg-green-500/10 text-green-300 border-green-500/20", dot: "bg-green-400" },
@@ -160,9 +160,9 @@ function CostImpactPreview({ phase, currentCount }: { phase: string; currentCoun
         <BarChart2 className="w-3.5 h-3.5" />
         Cost impact preview
       </div>
-      <p className="text-zinc-400">
-        Adding this initiative to <span className="text-white font-medium">{PHASE_CONFIG[phase]?.short ?? phase}</span> raises the phase envelope to{" "}
-        <span className="text-white font-medium">£{low}k–£{high}k</span>.
+      <p className="text-muted-foreground">
+        Adding this initiative to <span className="text-foreground font-medium">{PHASE_CONFIG[phase]?.short ?? phase}</span> raises the phase envelope to{" "}
+        <span className="text-foreground font-medium">£{low}k–£{high}k</span>.
       </p>
     </div>
   );
@@ -181,9 +181,9 @@ function InitiativeDetailModal({ initiative, open, onClose }: {
   const fnColor  = FUNCTION_COLOURS[fn] ?? "#9CA3AF";
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-zinc-900 border-zinc-800">
+      <DialogContent className="max-w-lg bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold pr-6 text-white">{initiative.name}</DialogTitle>
+          <DialogTitle className="text-base font-semibold pr-6 text-foreground">{initiative.name}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-1">
           <div className="flex flex-wrap gap-2">
@@ -196,7 +196,7 @@ function InitiativeDetailModal({ initiative, open, onClose }: {
               {fn}
             </Badge>
             {initiative.aiType && (
-              <Badge variant="outline" className="text-xs bg-zinc-800 text-zinc-300 border-zinc-700 capitalize">
+              <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border capitalize">
                 {initiative.aiType}
               </Badge>
             )}
@@ -207,12 +207,12 @@ function InitiativeDetailModal({ initiative, open, onClose }: {
             )}
           </div>
           {initiative.description && (
-            <p className="text-sm text-zinc-300 leading-relaxed">{initiative.description}</p>
+            <p className="text-sm text-foreground/70 leading-relaxed">{initiative.description}</p>
           )}
           {initiative.decisionAuthority && (
-            <div className="flex items-start gap-2 text-xs text-zinc-400">
-              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-zinc-500" />
-              <span>Decision authority: <span className="text-zinc-300">{initiative.decisionAuthority.replace(/_/g, " ")}</span></span>
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/70" />
+              <span>Decision authority: <span className="text-foreground/70">{initiative.decisionAuthority.replace(/_/g, " ")}</span></span>
             </div>
           )}
           {initiative.statusReason && (
@@ -244,22 +244,22 @@ function RemoveConfirmModal({ initiative, open, onClose, onConfirm, phaseCount }
   const newHigh = cfg.high * Math.max(0, phaseCount - 1);
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-zinc-900 border-zinc-800">
+      <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-white">Remove initiative?</DialogTitle>
+          <DialogTitle className="text-base font-semibold text-foreground">Remove initiative?</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 pt-1">
-          <p className="text-sm text-zinc-300">
-            Remove <span className="font-medium text-white">{initiative.name}</span> from your strategy? This cannot be undone from this page — you can re-add it via the initiative selector.
+          <p className="text-sm text-foreground/70">
+            Remove <span className="font-medium text-foreground">{initiative.name}</span> from your strategy? This cannot be undone from this page — you can re-add it via the initiative selector.
           </p>
           <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
             <div className="flex items-center gap-1.5 text-amber-400 font-medium mb-1">
               <BarChart2 className="w-3.5 h-3.5" />
               Cost impact preview
             </div>
-            <p className="text-zinc-400">
-              Removing this initiative reduces the <span className="text-white font-medium">{PHASE_CONFIG[phase]?.short ?? phase}</span> envelope to{" "}
-              <span className="text-white font-medium">£{newLow}k–£{newHigh}k</span>.
+            <p className="text-muted-foreground">
+              Removing this initiative reduces the <span className="text-foreground font-medium">{PHASE_CONFIG[phase]?.short ?? phase}</span> envelope to{" "}
+              <span className="text-foreground font-medium">£{newLow}k–£{newHigh}k</span>.
             </p>
           </div>
         </div>
@@ -307,9 +307,9 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col bg-zinc-900 border-zinc-800">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-white">Add initiative to strategy</DialogTitle>
+          <DialogTitle className="text-base font-semibold text-foreground">Add initiative to strategy</DialogTitle>
         </DialogHeader>
         <div className="flex gap-3 flex-1 min-h-0">
           {/* Left: list */}
@@ -319,7 +319,7 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
               placeholder="Search initiatives…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-violet-500 mb-3"
+              className="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary mb-3"
             />
             <div className="overflow-y-auto flex-1 space-y-1 pr-1">
               {allInitQ.isLoading ? (
@@ -327,7 +327,7 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
                   <Skeleton key={i} className="h-12 w-full rounded-lg" />
                 ))
               ) : filtered.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-8">No matching initiatives</p>
+                <p className="text-sm text-muted-foreground/70 text-center py-8">No matching initiatives</p>
               ) : (
                 filtered.map((init: any) => {
                   const phase = resolvePhase(init);
@@ -338,8 +338,8 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
                       onClick={() => setPreviewId(init.id === previewId ? null : init.id)}
                       className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-colors ${
                         previewId === init.id
-                          ? "bg-violet-500/10 border-violet-500/30 text-white"
-                          : "bg-zinc-800/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                          ? "bg-primary/10 border-primary/30 text-foreground"
+                          : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       <div className="font-medium text-xs truncate">{init.name}</div>
@@ -347,7 +347,7 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
                         {phaseCfg && (
                           <span className="text-[10px]" style={{ color: phaseCfg.color }}>{phaseCfg.short}</span>
                         )}
-                        <span className="text-[10px] text-zinc-500">{CATEGORY_MAP[init.category] ?? init.category}</span>
+                        <span className="text-[10px] text-muted-foreground/70">{CATEGORY_MAP[init.category] ?? init.category}</span>
                       </div>
                     </button>
                   );
@@ -356,12 +356,12 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
             </div>
           </div>
           {/* Right: preview */}
-          <div className="w-56 shrink-0 border-l border-zinc-800 pl-3">
+          <div className="w-56 shrink-0 border-l border-border pl-3">
             {previewInit ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-white">{previewInit.name}</p>
+                <p className="text-xs font-semibold text-foreground">{previewInit.name}</p>
                 {previewInit.description && (
-                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-4">{previewInit.description}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">{previewInit.description}</p>
                 )}
                 <CostImpactPreview
                   phase={resolvePhase(previewInit)}
@@ -377,7 +377,7 @@ function InitiativeSelectorModal({ open, onClose, onAdd, currentIds, strategyDat
                 </Button>
               </div>
             ) : (
-              <p className="text-xs text-zinc-500 text-center pt-8">Select an initiative to preview its cost impact</p>
+              <p className="text-xs text-muted-foreground/70 text-center pt-8">Select an initiative to preview its cost impact</p>
             )}
           </div>
         </div>
@@ -407,12 +407,12 @@ function PhaseChip({ value, onChange, readonly }: {
           <ChevronDown className="w-2.5 h-2.5 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-44 p-1 bg-zinc-900 border-zinc-800" align="start">
+      <PopoverContent className="w-44 p-1 bg-card border-border" align="start">
         {Object.entries(PHASE_CONFIG).map(([k, v]) => (
           <button
             key={k}
             onClick={() => onChange(k)}
-            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-zinc-800 transition-colors ${k === value ? "text-white font-medium" : "text-zinc-400"}`}
+            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-muted transition-colors ${k === value ? "text-foreground font-medium" : "text-muted-foreground"}`}
           >
             {v.short}
           </button>
@@ -446,12 +446,12 @@ function FunctionChip({ value, onChange, readonly }: {
           <ChevronDown className="w-2.5 h-2.5 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-1 bg-zinc-900 border-zinc-800" align="start">
+      <PopoverContent className="w-52 p-1 bg-card border-border" align="start">
         {HR_FUNCTIONS.map(fn => (
           <button
             key={fn}
             onClick={() => onChange(fn)}
-            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-zinc-800 transition-colors ${fn === value ? "text-white font-medium" : "text-zinc-400"}`}
+            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-muted transition-colors ${fn === value ? "text-foreground font-medium" : "text-muted-foreground"}`}
           >
             {fn}
           </button>
@@ -484,12 +484,12 @@ function StatusChip({ value, onChange, readonly }: {
           <ChevronDown className="w-2.5 h-2.5 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-44 p-1 bg-zinc-900 border-zinc-800" align="start">
+      <PopoverContent className="w-44 p-1 bg-card border-border" align="start">
         {Object.entries(STATUS_CONFIG).map(([k, v]) => (
           <button
             key={k}
             onClick={() => onChange(k)}
-            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-zinc-800 transition-colors flex items-center gap-2 ${k === value ? "text-white font-medium" : "text-zinc-400"}`}
+            className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-muted transition-colors flex items-center gap-2 ${k === value ? "text-foreground font-medium" : "text-muted-foreground"}`}
           >
             {v.icon}
             {v.label}
@@ -685,34 +685,34 @@ export default function StrategyPlanPage() {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* ── Page Header ── */}
-      <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-20">
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => navigate("/strategy")}
-              className="flex items-center gap-1.5 text-zinc-400 hover:text-foreground transition-colors text-sm shrink-0"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm shrink-0"
               aria-label="Back to Strategy overview"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Strategy</span>
             </button>
             <span className="text-zinc-600 hidden sm:inline">/</span>
-            <h1 className="text-sm font-semibold text-white truncate">03 — The Plan</h1>
+            <h1 className="text-sm font-semibold text-foreground truncate">03 — The Plan</h1>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {/* View toggle */}
-            <div className="flex items-center bg-zinc-800 rounded-lg p-0.5 gap-0.5">
+            <div className="flex items-center bg-muted rounded-lg p-0.5 gap-0.5">
               <button
                 onClick={() => setViewMode("executive")}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   viewMode === "executive"
-                    ? "bg-zinc-700 text-white"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground/90"
                 }`}
                 aria-pressed={viewMode === "executive"}
               >
@@ -723,8 +723,8 @@ export default function StrategyPlanPage() {
                 onClick={() => setViewMode("operational")}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   viewMode === "operational"
-                    ? "bg-zinc-700 text-white"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground/90"
                 }`}
                 aria-pressed={viewMode === "operational"}
               >
@@ -762,17 +762,17 @@ export default function StrategyPlanPage() {
             <div className="space-y-4">
               {/* Plan shape + envelope */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-                  <p className="text-xs text-zinc-500 mb-1">Plan shape</p>
+                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-card border border-border">
+                  <p className="text-xs text-muted-foreground/70 mb-1">Plan shape</p>
                   <p className="text-2xl font-bold text-foreground">{enriched.length}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
                 </div>
-                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-                  <p className="text-xs text-zinc-500 mb-1">Total envelope</p>
+                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-card border border-border">
+                  <p className="text-xs text-muted-foreground/70 mb-1">Total envelope</p>
                   <p className="text-2xl font-bold text-foreground">
                     £{totalLow >= 1000 ? `${(totalLow / 1000).toFixed(1)}M` : `${totalLow}k`}–£{totalHigh >= 1000 ? `${(totalHigh / 1000).toFixed(1)}M` : `${totalHigh}k`}
                   </p>
-                  <p className="text-xs text-zinc-400 mt-0.5">indicative 18-month investment range</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">indicative 18-month investment range</p>
                 </div>
               </div>
 
@@ -807,13 +807,13 @@ export default function StrategyPlanPage() {
                       {blockedInits.length} initiative{blockedInits.length > 1 ? "s" : ""} blocked
                     </p>
                     {blockedInits.slice(0, 2).map(init => (
-                      <p key={init.id} className="text-xs text-zinc-400 mt-0.5">
-                        <span className="text-zinc-300 font-medium">{init.name}</span>
+                      <p key={init.id} className="text-xs text-muted-foreground mt-0.5">
+                        <span className="text-foreground/70 font-medium">{init.name}</span>
                         {init.statusReason ? ` — ${init.statusReason}` : ""}
                       </p>
                     ))}
                     {blockedInits.length > 2 && (
-                      <p className="text-xs text-zinc-500 mt-0.5">+{blockedInits.length - 2} more</p>
+                      <p className="text-xs text-muted-foreground/70 mt-0.5">+{blockedInits.length - 2} more</p>
                     )}
                   </div>
                   <button
@@ -830,7 +830,7 @@ export default function StrategyPlanPage() {
 
         {/* ── Phase Strip ── */}
         <section aria-label="Phases">
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Phase breakdown</h2>
+          <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-3">Phase breakdown</h2>
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
@@ -843,8 +843,8 @@ export default function StrategyPlanPage() {
                   onClick={() => setPhaseFilter(phaseFilter === key ? null : key)}
                   className={`text-left p-4 rounded-xl border transition-all ${
                     phaseFilter === key
-                      ? "border-border/60 bg-zinc-800"
-                      : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-card hover:border-border"
                   }`}
                   aria-pressed={phaseFilter === key}
                 >
@@ -858,9 +858,9 @@ export default function StrategyPlanPage() {
                     )}
                   </div>
                   <p className="text-xs font-semibold text-foreground mb-0.5">{cfg.short}</p>
-                  <p className="text-xs text-zinc-500 mb-2">{cfg.months}</p>
+                  <p className="text-xs text-muted-foreground/70 mb-2">{cfg.months}</p>
                   <p className="text-lg font-bold text-foreground">{count}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">
                     {count > 0 ? `£${costLow}k–£${costHigh}k` : "No initiatives"}
                   </p>
                 </button>
@@ -871,11 +871,11 @@ export default function StrategyPlanPage() {
 
         {/* ── Function Distribution Chart ── */}
         <section aria-label="Function distribution">
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">By HR function</h2>
+          <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-3">By HR function</h2>
           {isLoading ? (
             <Skeleton className="h-40 rounded-xl" />
           ) : (
-            <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2.5">
+            <div className="p-4 rounded-xl bg-card border border-border space-y-2.5">
               {functionData.map(({ fn, count, pct }) => {
                 const color = FUNCTION_COLOURS[fn] ?? "#9CA3AF";
                 return (
@@ -888,13 +888,13 @@ export default function StrategyPlanPage() {
                     aria-pressed={functionFilter === fn}
                   >
                     <span className="text-xs text-muted-foreground w-40 text-left truncate group-hover:text-foreground transition-colors">{fn}</span>
-                    <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${pct}%`, backgroundColor: color }}
                       />
                     </div>
-                    <span className="text-xs text-zinc-400 w-4 text-right">{count}</span>
+                    <span className="text-xs text-muted-foreground w-4 text-right">{count}</span>
                   </button>
                 );
               })}
@@ -905,7 +905,7 @@ export default function StrategyPlanPage() {
         {/* ── Initiative List (Operational / Executive) ── */}
         <section aria-label="Initiative list">
           <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Initiatives
               {(phaseFilter || functionFilter || statusFilter) && (
                 <span className="ml-2 text-violet-400 normal-case font-normal">
@@ -916,10 +916,10 @@ export default function StrategyPlanPage() {
             <div className="flex items-center gap-2">
               {/* Sort */}
               <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
-                <SelectTrigger className="h-7 text-xs w-32 bg-zinc-900 border-zinc-700 text-zinc-300">
+                <SelectTrigger className="h-7 text-xs w-32 bg-card border-border text-foreground/70">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="status">Sort: Status</SelectItem>
                   <SelectItem value="phase">Sort: Phase</SelectItem>
                   <SelectItem value="function">Sort: Function</SelectItem>
@@ -931,7 +931,7 @@ export default function StrategyPlanPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs bg-transparent border-zinc-700 text-zinc-300 hover:text-white"
+                  className="h-7 text-xs bg-transparent border-border text-muted-foreground hover:text-foreground"
                   onClick={() => { setSelectorOpen(true); (window as any).umami?.track("strategy.plan.add-initiative.opened"); }}
                 >
                   <Plus className="w-3 h-3 mr-1" />
@@ -950,8 +950,8 @@ export default function StrategyPlanPage() {
               Failed to load initiatives. Please refresh.
             </div>
           ) : filteredList.length === 0 ? (
-            <div className="p-8 rounded-xl bg-zinc-900 border border-zinc-800 border-dashed text-center">
-              <p className="text-sm text-zinc-500">
+            <div className="p-8 rounded-xl bg-card border border-border border-dashed text-center">
+              <p className="text-sm text-muted-foreground/70">
                 {enriched.length === 0
                   ? "No initiatives selected yet. Use the initiative selector to build your plan."
                   : "No initiatives match the current filters."}
@@ -968,7 +968,7 @@ export default function StrategyPlanPage() {
               {filteredList.map(init => (
                 <div
                   key={init.id}
-                  className="group p-3 sm:p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors"
+                  className="group p-3 sm:p-4 rounded-xl bg-card border border-border hover:border-border transition-colors"
                 >
                   <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
                     {/* Status dot */}
@@ -977,13 +977,13 @@ export default function StrategyPlanPage() {
                     {/* Name + description */}
                     <div className="flex-1 min-w-0">
                       <button
-                        className="text-sm font-medium text-white hover:text-violet-300 transition-colors text-left"
+                        className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
                         onClick={() => setDetailInit(init)}
                       >
                         {init.name}
                       </button>
                       {init.description && (
-                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{init.description}</p>
+                        <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">{init.description}</p>
                       )}
                       {/* Chips row */}
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -1015,14 +1015,14 @@ export default function StrategyPlanPage() {
                       <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setDetailInit(init)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                           aria-label="View details"
                         >
                           <Info className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setRemoveInit(init)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-colors"
+                          className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-red-400 hover:bg-muted transition-colors"
                           aria-label="Remove from strategy"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1037,11 +1037,11 @@ export default function StrategyPlanPage() {
         </section>
 
         {/* ── Footer cross-links ── */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
-          <Button variant="ghost" size="sm" className="text-xs text-zinc-500 hover:text-zinc-300" onClick={() => navigate("/strategy/investment-risk")}>
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground/70 hover:text-foreground/70" onClick={() => navigate("/strategy/investment-risk")}>
             View Investment &amp; Risk →
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs text-zinc-500 hover:text-zinc-300" onClick={() => navigate("/strategy/value")}>
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground/70 hover:text-foreground/70" onClick={() => navigate("/strategy/value")}>
             View Value →
           </Button>
         </div>

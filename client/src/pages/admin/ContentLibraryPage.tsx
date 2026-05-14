@@ -39,7 +39,7 @@ const PHASE_COLOURS: Record<string, string> = {
 };
 
 const SEVERITY_COLOURS: Record<string, string> = {
-  low: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+  low: "bg-slate-500/20 text-foreground/70 border-slate-500/30",
   medium: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   high: "bg-red-500/20 text-red-300 border-red-500/30",
   very_high: "bg-red-700/30 text-red-200 border-red-600/40",
@@ -52,7 +52,7 @@ const CONFIDENCE_COLOURS: Record<string, string> = {
 };
 
 const REGULATORY_COLOURS: Record<string, string> = {
-  none: "text-slate-500",
+  none: "text-muted-foreground/70",
   low: "text-emerald-400",
   medium: "text-amber-400",
   high: "text-red-400",
@@ -61,7 +61,7 @@ const REGULATORY_COLOURS: Record<string, string> = {
 
 function PhaseTag({ phase }: { phase: string }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${PHASE_COLOURS[phase] ?? "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${PHASE_COLOURS[phase] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
       {phase}
     </span>
   );
@@ -69,7 +69,7 @@ function PhaseTag({ phase }: { phase: string }) {
 
 function SeverityTag({ severity }: { severity: string }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${SEVERITY_COLOURS[severity] ?? "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border capitalize ${SEVERITY_COLOURS[severity] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
       {severity.replace("_", " ")}
     </span>
   );
@@ -84,7 +84,7 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-card border-border text-foreground max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white text-lg">
+          <DialogTitle className="text-foreground text-lg">
             {isLoading ? "Loading…" : data?.display_name}
           </DialogTitle>
         </DialogHeader>
@@ -97,30 +97,30 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
               <span className={`text-xs font-medium ${CONFIDENCE_COLOURS[data.confidence]}`}>
                 ● {data.confidence} confidence
               </span>
-              <span className="text-xs text-slate-500">Reviewed {data.last_reviewed} · {data.reviewer}</span>
+              <span className="text-xs text-muted-foreground/70">Reviewed {data.last_reviewed} · {data.reviewer}</span>
             </div>
 
             {/* Description */}
-            <p className="text-sm text-slate-300 leading-relaxed">{data.short_description}</p>
+            <p className="text-sm text-foreground/70 leading-relaxed">{data.short_description}</p>
 
             {/* Regulatory exposure */}
             <div className="rounded-lg border border-border p-4 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Regulatory Exposure</p>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <p className="text-slate-500 text-xs">EU AI Act</p>
+                  <p className="text-muted-foreground/70 text-xs">EU AI Act</p>
                   <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.eu_ai_act]}`}>
                     {data.regulatory_exposure.eu_ai_act}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs">GDPR</p>
+                  <p className="text-muted-foreground/70 text-xs">GDPR</p>
                   <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.gdpr]}`}>
                     {data.regulatory_exposure.gdpr}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs">Employment Law</p>
+                  <p className="text-muted-foreground/70 text-xs">Employment Law</p>
                   <p className={`font-medium capitalize ${REGULATORY_COLOURS[data.regulatory_exposure.employment_law]}`}>
                     {data.regulatory_exposure.employment_law}
                   </p>
@@ -132,7 +132,7 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
             {data.cost?.base_range_gbp && (
               <div className="rounded-lg border border-border p-4 space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cost Range (Base)</p>
-                <p className="text-sm text-white font-medium">
+                <p className="text-sm text-foreground font-medium">
                   £{data.cost.base_range_gbp[0].toLocaleString()} – £{data.cost.base_range_gbp[1].toLocaleString()}
                 </p>
                 {data.cost.caveat && (
@@ -151,8 +151,8 @@ function InitiativeModal({ id, onClose }: { id: string; onClose: () => void }) {
                       <SeverityTag severity={r.severity} />
                       <span className="text-xs text-muted-foreground">{r.risk_id}</span>
                     </div>
-                    <p className="text-sm text-slate-300">{r.statement}</p>
-                    <p className="text-xs text-slate-500">Mitigation: {r.mitigation}</p>
+                    <p className="text-sm text-foreground/70">{r.statement}</p>
+                    <p className="text-xs text-muted-foreground/70">Mitigation: {r.mitigation}</p>
                   </div>
                 ))}
               </div>
@@ -193,7 +193,7 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-card border-border text-foreground max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white text-lg">
+          <DialogTitle className="text-foreground text-lg">
             {isLoading ? "Loading…" : data?.display_name}
           </DialogTitle>
         </DialogHeader>
@@ -204,7 +204,7 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
 
             <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-4 space-y-2">
               <p className="text-xs font-semibold text-red-400 uppercase tracking-wider">Risk Statement</p>
-              <p className="text-sm text-slate-300 leading-relaxed">{data.risk_statement}</p>
+              <p className="text-sm text-foreground/70 leading-relaxed">{data.risk_statement}</p>
             </div>
 
             <div className="rounded-lg border border-border p-4 space-y-2">
@@ -214,7 +214,7 @@ function RiskRuleModal({ id, onClose }: { id: string; onClose: () => void }) {
 
             <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4 space-y-2">
               <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Recommended Action</p>
-              <p className="text-sm text-slate-300 leading-relaxed">{data.recommended_action}</p>
+              <p className="text-sm text-foreground/70 leading-relaxed">{data.recommended_action}</p>
             </div>
 
             {data.resolved_sources?.length > 0 && (
@@ -275,7 +275,7 @@ export default function ContentLibraryPage() {
       <div className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-white">Content Library</h1>
+            <h1 className="text-xl font-bold text-foreground">Content Library</h1>
             {meta && (
               <p className="text-xs text-muted-foreground mt-0.5">
                 v{meta.version} · built {new Date(meta.built_at).toLocaleDateString()} · {meta.git_sha}
@@ -289,7 +289,7 @@ export default function ContentLibraryPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search library…"
-                className="pl-9 bg-muted border-border text-foreground placeholder:text-slate-500 w-64"
+                className="pl-9 bg-muted border-border text-foreground placeholder:text-muted-foreground/70 w-64"
               />
             </div>
           </div>
@@ -311,7 +311,7 @@ export default function ContentLibraryPage() {
                 <CardContent className="p-4 flex items-center gap-3">
                   <stat.icon className={`w-5 h-5 ${stat.colour}`} />
                   <div>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 </CardContent>
@@ -322,16 +322,16 @@ export default function ContentLibraryPage() {
 
         <Tabs defaultValue="initiatives">
           <TabsList className="bg-muted border border-border mb-6">
-            <TabsTrigger value="initiatives" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="initiatives" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Cpu className="w-4 h-4 mr-2" />Initiatives
             </TabsTrigger>
-            <TabsTrigger value="risk-rules" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <TabsTrigger value="risk-rules" className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground">
               <AlertTriangle className="w-4 h-4 mr-2" />Risk Rules
             </TabsTrigger>
-            <TabsTrigger value="benchmarks" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+            <TabsTrigger value="benchmarks" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BarChart2 className="w-4 h-4 mr-2" />Sector Benchmarks
             </TabsTrigger>
-            <TabsTrigger value="sources" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <TabsTrigger value="sources" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BookOpen className="w-4 h-4 mr-2" />Sources
             </TabsTrigger>
           </TabsList>
@@ -346,14 +346,14 @@ export default function ContentLibraryPage() {
                   onClick={() => setPhaseFilter(p)}
                   className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize ${
                     phaseFilter === p
-                      ? "bg-blue-600 border-blue-500 text-white"
-                      : "bg-muted border-border text-muted-foreground hover:border-slate-600"
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "bg-muted border-border text-muted-foreground hover:border-border/80"
                   }`}
                 >
                   {p}
                 </button>
               ))}
-              <span className="text-xs text-slate-500 ml-2">{filteredInitiatives.length} shown</span>
+              <span className="text-xs text-muted-foreground/70 ml-2">{filteredInitiatives.length} shown</span>
             </div>
 
             {loadingInit ? (
@@ -363,19 +363,19 @@ export default function ContentLibraryPage() {
                 {filteredInitiatives.map(i => (
                   <Card
                     key={i.initiative_id}
-                    className="bg-card border-border hover:border-slate-600 cursor-pointer transition-all group"
+                    className="bg-card border-border hover:border-border/80 cursor-pointer transition-all group"
                     onClick={() => setSelectedInitiative(i.initiative_id)}
                   >
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-white leading-tight group-hover:text-blue-300 transition-colors">
+                        <p className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
                           {i.display_name}
                         </p>
-                        <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-0.5 group-hover:text-blue-400 transition-colors" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/70 shrink-0 mt-0.5 group-hover:text-blue-400 transition-colors" />
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <PhaseTag phase={i.typical_phase} />
-                        <span className="text-xs text-slate-500 capitalize">{i.category.replace(/_/g, " ")}</span>
+                        <span className="text-xs text-muted-foreground/70 capitalize">{i.category.replace(/_/g, " ")}</span>
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {i.short_description}
@@ -388,7 +388,7 @@ export default function ContentLibraryPage() {
                           </span>
                         )}
                         {i.cost_range && (
-                          <span className="text-slate-500">
+                          <span className="text-muted-foreground/70">
                             £{(i.cost_range[0] / 1000).toFixed(0)}k–£{(i.cost_range[1] / 1000).toFixed(0)}k
                           </span>
                         )}
@@ -409,7 +409,7 @@ export default function ContentLibraryPage() {
                 {filteredRiskRules.map(r => (
                   <Card
                     key={r.rule_id}
-                    className="bg-card border-border hover:border-slate-600 cursor-pointer transition-all group"
+                    className="bg-card border-border hover:border-border/80 cursor-pointer transition-all group"
                     onClick={() => setSelectedRiskRule(r.rule_id)}
                   >
                     <CardContent className="p-4 flex items-start gap-4">
@@ -420,14 +420,14 @@ export default function ContentLibraryPage() {
                       }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
-                          <p className="text-sm font-semibold text-white group-hover:text-red-300 transition-colors">
+                          <p className="text-sm font-semibold text-foreground group-hover:text-red-500 transition-colors">
                             {r.display_name}
                           </p>
                           <SeverityTag severity={r.severity} />
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{r.risk_statement}</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-1 group-hover:text-red-400 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/70 shrink-0 mt-1 group-hover:text-red-400 transition-colors" />
                     </CardContent>
                   </Card>
                 ))}
@@ -444,7 +444,7 @@ export default function ContentLibraryPage() {
                 {(benchmarks ?? []).map(b => (
                   <Card key={b.sector_id} className="bg-card border-border">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base text-white flex items-center gap-2">
+                      <CardTitle className="text-base text-foreground flex items-center gap-2">
                         <Globe className="w-4 h-4 text-violet-400" />
                         {b.display_name}
                       </CardTitle>
@@ -457,13 +457,13 @@ export default function ContentLibraryPage() {
                           { label: "P75", value: b.overall_individual_benchmark.p75 },
                         ].map(stat => (
                           <div key={stat.label} className="rounded-lg bg-muted p-2">
-                            <p className="text-lg font-bold text-white">{stat.value.toFixed(1)}</p>
+                            <p className="text-lg font-bold text-foreground">{stat.value.toFixed(1)}</p>
                             <p className="text-xs text-muted-foreground">{stat.label}</p>
                           </div>
                         ))}
                       </div>
                       {b.notes && (
-                        <p className="text-xs text-slate-500 italic leading-relaxed">{b.notes}</p>
+                        <p className="text-xs text-muted-foreground/70 italic leading-relaxed">{b.notes}</p>
                       )}
                       <p className="text-xs text-muted-foreground">Reviewed {b.last_reviewed}</p>
                     </CardContent>
@@ -486,17 +486,17 @@ export default function ContentLibraryPage() {
                       <CardContent className="p-4 flex items-start gap-4">
                         <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-200 leading-snug">{s.citation}</p>
+                          <p className="text-sm text-foreground/90 leading-snug">{s.citation}</p>
                           <div className="flex items-center gap-3 mt-1">
                             <span className={`text-xs px-2 py-0.5 rounded border capitalize ${
                               s.source_type === "primary" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
                               s.source_type === "secondary" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
                               s.source_type === "vendor" ? "bg-amber-500/20 text-amber-300 border-amber-500/30" :
-                              "bg-slate-500/20 text-slate-300 border-slate-500/30"
+                              "bg-slate-500/20 text-foreground/70 border-slate-500/30"
                             }`}>
                               {s.source_type}
                             </span>
-                            <span className="text-xs text-slate-500">{s.publication_date?.slice(0, 4)}</span>
+                            <span className="text-xs text-muted-foreground/70">{s.publication_date?.slice(0, 4)}</span>
                             <span className="text-xs text-muted-foreground font-mono">{s.source_id}</span>
                           </div>
                         </div>

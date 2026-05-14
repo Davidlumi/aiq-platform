@@ -45,7 +45,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
           onClick={() => setExpanded(prev => !prev)}
         >
           {/* Icon */}
-          <div className="w-10 h-10 rounded-lg bg-[#EEF0FF] flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Layers className="w-5 h-5 text-primary" />
           </div>
 
@@ -134,7 +134,7 @@ function BlueprintCard({ blueprint }: { blueprint: any }) {
                   {blueprint.status === "draft" && (
                     <Button
                       size="sm"
-                      className="w-full text-xs gap-1 bg-[#047857] hover:bg-[#047857]/90 text-white"
+                      className="w-full text-xs gap-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                       onClick={() => toast.info("Blueprint published (demo)")}
                     >
                       <CheckCircle2 className="w-3 h-3" />
@@ -182,7 +182,7 @@ export default function AssessmentBlueprintsPage() {
           </p>
         </div>
         <Button
-          className="bg-primary hover:bg-primary/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           onClick={() => toast.info("Blueprint creator coming in next release")}
         >
           <Plus className="w-4 h-4" />

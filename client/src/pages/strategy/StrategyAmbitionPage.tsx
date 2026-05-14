@@ -208,14 +208,14 @@ function VisionSection({
       {/* Change 6: Assertive vision caption per brief */}
       <div className="mt-3 flex items-start gap-1.5">
         <Sparkles className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "#5DCAA5" }} />
-        <p style={{ fontSize: 11, color: "#6c7385", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 11, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
           AI-drafted starting point ·{" "}
-          <span style={{ color: "#9ca3b0", fontWeight: 500 }}>This becomes your CEO talking points.</span>
+          <span style={{ color: "var(--muted-foreground)", fontWeight: 500 }}>This becomes your CEO talking points.</span>
           {" "}
           <button
             onClick={onOpenModal}
             style={{
-              color: "#7ec9ab",
+              color: "var(--primary)",
               textDecoration: "underline",
               textDecorationColor: "rgba(126,201,171,0.3)",
               background: "none", border: "none", cursor: "pointer",
@@ -231,8 +231,8 @@ function VisionSection({
           <span
             style={{
               fontSize: 10, padding: "2px 8px", borderRadius: 999,
-              border: "0.5px solid rgba(255,255,255,0.12)",
-              color: "#9ca3b0", background: "transparent",
+              border: "0.5px solid var(--border)",
+              color: "var(--muted-foreground)", background: "transparent",
             }}
           >
             Business: {BUSINESS_TIER_LABELS[visionInputs.businessAmbitionTier] ?? visionInputs.businessAmbitionTier}
@@ -242,8 +242,8 @@ function VisionSection({
           <span
             style={{
               fontSize: 10, padding: "2px 8px", borderRadius: 999,
-              border: "0.5px solid rgba(255,255,255,0.12)",
-              color: "#9ca3b0", background: "transparent",
+              border: "0.5px solid var(--border)",
+              color: "var(--muted-foreground)", background: "transparent",
             }}
           >
             HR: {HR_TIER_LABELS[visionInputs.hrDeliveryTier] ?? visionInputs.hrDeliveryTier}
@@ -279,7 +279,7 @@ function PrinciplesSection({
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="Guiding Principles" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
       {/* Fix 4: Section caption */}
-      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>
         The decision rules we’ll hold to as we deploy AI across HR.
       </p>
       {/* Fix 5: 2-col grid, numbered badges, capability tags */}
@@ -322,7 +322,7 @@ function PrinciplesSection({
                         fontSize: 9, letterSpacing: "0.04em",
                         padding: "2px 7px", borderRadius: 999,
                         border: "0.5px solid rgba(93,202,165,0.25)",
-                        color: "#7ec9ab", background: "transparent",
+                        color: "var(--primary)", background: "transparent",
                       }}
                     >
                       {tag}
@@ -363,7 +363,7 @@ function ExclusionsSection({
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="What We Won't Do" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
       {/* Fix 4: Section caption */}
-      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>
         A strategy that makes no cuts is a wishlist. These are the choices we’ve explicitly ruled out for this period.
       </p>
       <ul className="space-y-2">
@@ -412,7 +412,7 @@ function FromToBar({
         <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Today</span>
         <div
           className="flex-1 relative"
-          style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)" }}
+          style={{ height: 5, borderRadius: 3, background: "var(--muted)" }}
         >
           {isTbd ? (
             <div
@@ -426,14 +426,14 @@ function FromToBar({
               style={{
                 position: "absolute", left: 0, top: 0, bottom: 0,
                 width: `${todayPct}%`, borderRadius: 3,
-                background: "#5b6376",
+                background: "var(--muted)",
               }}
             />
           )}
         </div>
         <span
           className="w-14 text-right text-[11px] flex-shrink-0"
-          style={isTbd ? { color: "#7a8294", fontStyle: "italic" } : { color: "#9ca3b0" }}
+          style={isTbd ? { color: "var(--muted-foreground)", fontStyle: "italic" } : { color: "var(--muted-foreground)" }}
         >
           {isTbd ? "Not measured" : `${todayVal} ${unit}`}
         </span>
@@ -443,7 +443,7 @@ function FromToBar({
         <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Target</span>
         <div
           className="flex-1 relative"
-          style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)" }}
+          style={{ height: 5, borderRadius: 3, background: "var(--muted)" }}
         >
           <div
             style={{
@@ -485,9 +485,9 @@ function OutcomesSection({
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <SectionHeader label="Outcomes" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
       {/* Fix 4: Section caption */}
-      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#7a8294" }}>
+      <p className="text-[11px] leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>
         What these choices commit us to.{" "}
-        <span style={{ color: "#9ca3b0", fontWeight: 500 }}>Each outcome tests one of our principles</span>
+        <span style={{ color: "var(--muted-foreground)", fontWeight: 500 }}>Each outcome tests one of our principles</span>
         {" "}— together they make the strategy measurable, not aspirational.
       </p>
       <div className="space-y-5">
@@ -516,7 +516,7 @@ function OutcomesSection({
                   <p className="text-xs text-muted-foreground mt-0.5">{o.derived_summary}</p>
                   <FromToBar outcome={o} />
                   {/* Meta line: date + baseline study date for TBD outcomes */}
-                  <div className="mt-2 text-[10px]" style={{ color: "#9ca3b0" }}>
+                  <div className="mt-2 text-[10px]" style={{ color: "var(--muted-foreground)" }}>
                     By {o.target_date}
                     {o.baseline_status === "not_measured" && o.baseline_study_date && (
                       <span> · Baseline study scheduled {o.baseline_study_date}</span>
@@ -526,8 +526,8 @@ function OutcomesSection({
                   {linkedPrinciple && (
                     <div className="mt-1.5 flex items-center gap-1 text-[10px]">
                       <span style={{ color: "#5DCAA5" }}>↪</span>
-                      <span style={{ color: "#9ca3b0" }}>Tests principle {linkedPrinciple.number}:</span>
-                      <span style={{ color: "#7ec9ab" }}>{linkedPrinciple.title}</span>
+                      <span style={{ color: "var(--muted-foreground)" }}>Tests principle {linkedPrinciple.number}:</span>
+                      <span style={{ color: "var(--primary)" }}>{linkedPrinciple.title}</span>
                     </div>
                   )}
                 </div>
@@ -1198,14 +1198,14 @@ export default function StrategyAmbitionPage() {
                 HR: {hrLabel}
               </span>
             )}
-            <span style={{ color: "#6c7385", fontSize: 11 }}>·</span>
-            <span style={{ color: "#9ca3b0", fontSize: 11 }}>🕒 By end of FY27 · over 18 months</span>
+            <span style={{ color: "var(--muted-foreground)", fontSize: 11 }}>·</span>
+            <span style={{ color: "var(--muted-foreground)", fontSize: 11 }}>🕒 By end of FY27 · over 18 months</span>
           </div>
           {/* Our approach line */}
           <div className="mt-2" style={{ marginBottom: "0.5rem" }}>
             <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 500 }}>Our approach:</span>
             {" "}
-            <span style={{ color: "#7a8294", fontSize: 11, lineHeight: 1.5 }}>
+            <span style={{ color: "var(--muted-foreground)", fontSize: 11, lineHeight: 1.5 }}>
               {sections?.approachLine ||
                 "AI everywhere across HR, growing what HR can do strategically — not just making existing work faster."}
             </span>
@@ -1285,7 +1285,7 @@ export default function StrategyAmbitionPage() {
                   (e.currentTarget as HTMLButtonElement).style.color = "";
                 }}
               >
-                <span style={{ color: "#6c7385" }}>Next:</span>
+                <span style={{ color: "var(--muted-foreground)" }}>Next:</span>
                 <span className="text-foreground">How we get there</span>
                 <ArrowRight className="w-3 h-3" />
               </button>

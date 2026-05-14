@@ -64,7 +64,7 @@ function SessionBadge({ state }: { state: string }) {
   const map: Record<string, string> = {
     completed:   "bg-primary/12 text-primary border-primary/25",
     in_progress: "bg-[#D97706]/12 text-[#99882A] border-[#D97706]/25",
-    abandoned:   "bg-muted/60 text-muted-foreground border-slate-600/50",
+    abandoned:   "bg-muted/60 text-muted-foreground border-border/80/50",
   };
   const labels: Record<string, string> = { completed: "Completed", in_progress: "In Progress", abandoned: "Abandoned" };
   return (
@@ -215,7 +215,7 @@ function StartScreen({
                             <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                               <div className="h-full rounded-full" style={{ width: `${prior}%`, backgroundColor: scoreToColor(prior / 10).bg }} />
                             </div>
-                            <span className="text-[10px] font-bold px-1 py-0.5 rounded text-white"
+                            <span className="text-[10px] font-bold px-1 py-0.5 rounded text-white dark:text-white light:text-foreground"
                               style={{ backgroundColor: scoreToColor(prior / 10).bg }}>
                               {formatPeakonScore(prior / 10)}
                             </span>

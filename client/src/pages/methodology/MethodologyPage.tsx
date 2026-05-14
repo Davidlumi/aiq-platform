@@ -176,7 +176,7 @@ export default function MethodologyPage() {
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6" style={{ letterSpacing: "-0.02em" }}>
             How AiQ measures AI capability.
           </h1>
-          <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mb-4">
+          <p className="text-xl text-foreground/70 leading-relaxed max-w-2xl mb-4">
             Built for HR functions delivering AI transformation. Designed to survive General Counsel scrutiny.
           </p>
           <p className="text-muted-foreground leading-relaxed max-w-2xl">
@@ -585,7 +585,7 @@ export default function MethodologyPage() {
                 This methodology disclosure is current as of April 2026. It will be updated as
                 the validation programme progresses and empirical evidence is collected.
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground/70">
                 Assessment model version: adaptive-v2 · Scoring engine: V9.2
               </p>
             </div>
@@ -599,7 +599,7 @@ export default function MethodologyPage() {
           <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
             The methodology document goes deeper.
           </h2>
-          <p className="text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto">
+          <p className="text-foreground/70 leading-relaxed mb-10 max-w-xl mx-auto">
             The full methodology document covers item bank design, signal taxonomy, scoring architecture,
             audit log design, and the data processing implications. It is the document your General Counsel
             will want to read.

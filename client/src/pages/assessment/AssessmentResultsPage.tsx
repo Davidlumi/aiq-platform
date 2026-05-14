@@ -116,7 +116,7 @@ function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) 
       aria-label={`Overall AI capability score: ${displayScore} out of 10. Level: ${level.label}`}
       role="img" className="shrink-0"
     >
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={sw} />
       <circle
         cx={cx} cy={cy} r={r} fill="none"
         stroke={colour} strokeOpacity={opacity} strokeWidth={sw} strokeLinecap="round"
@@ -143,7 +143,7 @@ function DomainBar({ score, domainColour }: { score: number; domainColour: strin
       aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}
       aria-valuetext={`${(score / 10).toFixed(1)} out of 10 — ${level.label}`}
       className="w-full h-1.5 rounded-full overflow-hidden"
-      style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+      style={{ backgroundColor: "var(--border)" }}
     >
       <div
         className="h-full rounded-full transition-all duration-700"
@@ -180,7 +180,7 @@ function SectionHeading({ label, sub }: { label: string; sub?: string }) {
 function HeroSkeleton() {
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="h-10 border-b border-white/6">
+      <div className="h-10 border-b border-border/60">
         <ShimmerBlock className="h-full w-full rounded-none" />
       </div>
       <div className="flex gap-6 p-6">
@@ -434,7 +434,7 @@ export default function AssessmentResultsPage() {
           <BookOpen className="w-7 h-7 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-white mb-2">No completed assessment yet</h1>
+          <h1 className="text-xl font-semibold text-foreground mb-2">No completed assessment yet</h1>
           <p className="text-sm text-muted-foreground max-w-sm">Complete an AI capability assessment to see your profile, domain scores, and development plan here.</p>
         </div>
         <Button onClick={() => navigate("/assessment")} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -501,7 +501,7 @@ export default function AssessmentResultsPage() {
                     aria-selected={s.id === activeSessionId}
                     className={cn(
                       "w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-foreground/6 transition-colors",
-                      s.id === activeSessionId ? "text-white bg-foreground/4" : "text-muted-foreground"
+                      s.id === activeSessionId ? "text-foreground bg-foreground/8" : "text-muted-foreground"
                     )}
                     onClick={() => { navigate(`/assessment/results/${s.id}`); setHistoryOpen(false); }}
                   >
@@ -525,7 +525,7 @@ export default function AssessmentResultsPage() {
             </span>
             <Button
               size="sm" variant="outline"
-              className="h-6 px-2.5 text-xs border-border text-foreground/70 hover:text-white hover:border-border/80 bg-transparent"
+              className="h-6 px-2.5 text-xs border-border text-foreground/70 hover:text-foreground hover:border-border/80 bg-transparent"
               onClick={() => navigate(`/assessment/session/${(inProgressSession as any).id}`)}
             >
               Resume
@@ -540,7 +540,7 @@ export default function AssessmentResultsPage() {
       ) : (
         <section aria-labelledby="hero-heading" className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Header strip */}
-          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-white/6">
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-border/60">
             <div className="flex items-center gap-3">
               <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-foreground/30" id="hero-heading">
                 Your AI Capability Profile
@@ -554,7 +554,7 @@ export default function AssessmentResultsPage() {
             </div>
             <Button
               size="sm" variant="outline"
-              className="h-7 px-3 text-xs border-border text-muted-foreground hover:text-white hover:border-border/80 bg-transparent"
+              className="h-7 px-3 text-xs border-border text-muted-foreground hover:text-foreground hover:border-border/80 bg-transparent"
               onClick={() => navigate("/assessment")}
             >
               <RotateCcw className="w-3 h-3 mr-1" /> Reassess
@@ -566,7 +566,7 @@ export default function AssessmentResultsPage() {
               <ScoreDoughnut score={overallScore} size={120} />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold text-white leading-snug mb-2">{headline}</h1>
+              <h1 className="text-base font-semibold text-foreground leading-snug mb-2">{headline}</h1>
               <p className="text-sm text-muted-foreground leading-relaxed">{sub}</p>
             </div>
           </div>
@@ -601,7 +601,7 @@ export default function AssessmentResultsPage() {
                 <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-white">What you do well</h3>
+                <h3 className="text-sm font-semibold text-foreground">What you do well</h3>
               </div>
               {profileQuery.isLoading ? (
                 <div className="space-y-4">
@@ -618,7 +618,7 @@ export default function AssessmentResultsPage() {
                   {((profileQuery.data as any).profile.crossCuttingStrengths as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
                       {/* Inline dots: rendered immediately after each domain name mention (fix brief item 8) */}
-                      <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
+                      <strong className="text-foreground font-semibold">{bullet.claim}</strong>{" "}
                       <span className="text-foreground/55">
                         {bullet.evidence}
                         {bullet.domains && bullet.domains.length > 0 && (
@@ -644,7 +644,7 @@ export default function AssessmentResultsPage() {
                 <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center">
                   <Target className="w-3.5 h-3.5 text-blue-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-white">Where to grow</h3>
+                <h3 className="text-sm font-semibold text-foreground">Where to grow</h3>
               </div>
               {profileQuery.isLoading ? (
                 <div className="space-y-4">
@@ -661,7 +661,7 @@ export default function AssessmentResultsPage() {
                   {((profileQuery.data as any).profile.crossCuttingGrowth as Array<{ claim: string; evidence: string; domains?: string[] }>).map((bullet, i) => (
                     <li key={i} className="text-sm leading-relaxed">
                       {/* Inline dots: rendered at end of evidence sentence (fix brief item 8) */}
-                      <strong className="text-white font-semibold">{bullet.claim}</strong>{" "}
+                      <strong className="text-foreground font-semibold">{bullet.claim}</strong>{" "}
                       <span className="text-foreground/55">
                         {bullet.evidence}
                         {bullet.domains && bullet.domains.length > 0 && (
@@ -709,11 +709,11 @@ export default function AssessmentResultsPage() {
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color: domain.colour }} />
                       </div>
-                      <h3 className="text-sm font-semibold text-white truncate">{domain.name}</h3>
+                      <h3 className="text-sm font-semibold text-foreground truncate">{domain.name}</h3>
                     </div>
                     {/* Score + level: vertical stack, right-aligned (v2 spec) */}
                     <div className="flex flex-col items-end shrink-0 gap-0.5">
-                      <span className="text-sm font-bold text-white tabular-nums leading-none">
+                      <span className="text-sm font-bold text-foreground tabular-nums leading-none">
                         {(domain.score / 10).toFixed(1)}
                       </span>
                       <span className="text-[9px] font-semibold tracking-widest uppercase text-foreground/35 leading-none">
@@ -787,7 +787,7 @@ export default function AssessmentResultsPage() {
                     {/* Coloured dot prefix + domain name + score → target (v2) */}
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <DomainDot colour={domain.colour} />
-                      <span className="text-sm font-medium text-white truncate">{domain.name}</span>
+                      <span className="text-sm font-medium text-foreground truncate">{domain.name}</span>
                       <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                         {(domain.score / 10).toFixed(1)} → {(target / 10).toFixed(1)}
                       </span>

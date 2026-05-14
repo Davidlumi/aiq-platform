@@ -92,7 +92,7 @@ const VALUE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: stri
 };
 
 function ValueTypeBadge({ type }: { type: string }) {
-  const cfg = VALUE_TYPE_CONFIG[type] ?? { label: type.replace(/_/g, " "), color: "#94A3B8", bg: "#94A3B820" };
+  const cfg = VALUE_TYPE_CONFIG[type] ?? { label: type.replace(/_/g, " "), color: "var(--muted-foreground)", bg: "#94A3B820" };
   return (
     <span
       className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
@@ -111,7 +111,7 @@ const CONFIDENCE_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 function ConfidenceBadge({ confidence }: { confidence: string }) {
-  const cfg = CONFIDENCE_CONFIG[confidence?.toLowerCase()] ?? { label: confidence, color: "#94A3B8" };
+  const cfg = CONFIDENCE_CONFIG[confidence?.toLowerCase()] ?? { label: confidence, color: "var(--muted-foreground)" };
   return (
     <span className="text-[10px] font-medium" style={{ color: cfg.color }}>
       {cfg.label}
@@ -376,7 +376,7 @@ function InitiativeBarChart({ items, onSelect }: { items: InitiativeItem[]; onSe
     <div className="space-y-2">
       {items.map(item => {
         const qv = item.quantified_value_gbp;
-        const cfg = VALUE_TYPE_CONFIG[item.value_type] ?? { color: "#94A3B8", bg: "#94A3B820" };
+        const cfg = VALUE_TYPE_CONFIG[item.value_type] ?? { color: "var(--muted-foreground)", bg: "#94A3B820" };
         const widthPct = qv && maxVal > 0 ? (qv.high / maxVal) * 100 : 0;
         const isHov = hovered === item.initiative_id;
         return (

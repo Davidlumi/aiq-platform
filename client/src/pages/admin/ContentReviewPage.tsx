@@ -55,15 +55,15 @@ function CadenceStatusBadge({ status }: { status: string }) {
   if (status === "ok") return <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Up to date</Badge>;
   if (status === "due_soon") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">Due soon</Badge>;
   if (status === "overdue") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Overdue</Badge>;
-  if (status === "never_reviewed") return <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/30">Never reviewed</Badge>;
-  return <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/30">{status}</Badge>;
+  if (status === "never_reviewed") return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Never reviewed</Badge>;
+  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">{status}</Badge>;
 }
 
 function TriggeredStatusBadge({ status }: { status: string }) {
   if (status === "open") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Open</Badge>;
   if (status === "in_review") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">In review</Badge>;
   if (status === "resolved") return <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Resolved</Badge>;
-  if (status === "deferred") return <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/30">Deferred</Badge>;
+  if (status === "deferred") return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Deferred</Badge>;
   return <Badge>{status}</Badge>;
 }
 
@@ -71,7 +71,7 @@ function PriorityBadge({ priority }: { priority: string }) {
   if (priority === "critical") return <Badge className="bg-red-600/30 text-red-300 border border-red-500/40">Critical</Badge>;
   if (priority === "high") return <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/30">High</Badge>;
   if (priority === "medium") return <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">Medium</Badge>;
-  return <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/30">Low</Badge>;
+  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Low</Badge>;
 }
 
 function CategoryIcon({ category }: { category: string }) {
@@ -83,7 +83,7 @@ function CategoryIcon({ category }: { category: string }) {
 function BumpTypeBadge({ type }: { type: string }) {
   if (type === "major") return <Badge className="bg-red-500/20 text-red-300 border border-red-500/30">Major</Badge>;
   if (type === "minor") return <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30">Minor</Badge>;
-  return <Badge className="bg-slate-500/20 text-slate-300 border border-slate-500/30">Patch</Badge>;
+  return <Badge className="bg-slate-500/20 text-foreground/70 border border-slate-500/30">Patch</Badge>;
 }
 
 function TriggerTypeBadge({ type }: { type: string }) {
@@ -101,10 +101,10 @@ function TriggerTypeBadge({ type }: { type: string }) {
     regulatory_trigger: "bg-red-500/20 text-red-300 border-red-500/30",
     customer_trigger: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     operational_trigger: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    manual: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+    manual: "bg-slate-500/20 text-foreground/70 border-slate-500/30",
   };
   return (
-    <Badge className={`border ${colours[type] ?? "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}>
+    <Badge className={`border ${colours[type] ?? "bg-slate-500/20 text-foreground/70 border-slate-500/30"}`}>
       {labels[type] ?? type}
     </Badge>
   );
@@ -158,10 +158,10 @@ function CadenceTab() {
             {(cadence ?? []).map(row => (
               <tr key={row.contentType} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">
-                  <p className="text-slate-200 font-medium">{row.contentType}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{row.description}</p>
+                  <p className="text-foreground/90 font-medium">{row.contentType}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-0.5">{row.description}</p>
                 </td>
-                <td className="px-4 py-3 text-slate-300">{row.cadence}</td>
+                <td className="px-4 py-3 text-foreground/70">{row.cadence}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {row.lastReviewedDate ?? <span className="text-muted-foreground">—</span>}
                 </td>
@@ -179,7 +179,7 @@ function CadenceTab() {
       </div>
 
       <div className="bg-card/50 border border-border rounded-lg p-4">
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-muted-foreground/70 leading-relaxed">
           <span className="text-muted-foreground font-medium">Review policy:</span> Initiatives, Risk Rules, and Sources are reviewed quarterly (every 90 days).
           Sector Benchmarks and the Full Library Audit are reviewed annually (every 365 days).
           Test Fixtures are validated on every library version bump.
@@ -249,7 +249,7 @@ function ReviewLogTab() {
       </div>
 
       {(log ?? []).length === 0 && (
-        <div className="py-12 text-center text-slate-500">No review log entries yet.</div>
+        <div className="py-12 text-center text-muted-foreground/70">No review log entries yet.</div>
       )}
 
       <div className="space-y-3">
@@ -265,22 +265,22 @@ function ReviewLogTab() {
                     <span className="text-foreground font-semibold font-mono">v{entry.version}</span>
                     <BumpTypeBadge type={entry.bumpType} />
                     <TriggerTypeBadge type={entry.triggerType} />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground/70">
                       {new Date(entry.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
                   {entry.triggerDetail && (
                     <p className="text-sm text-muted-foreground mt-1">{entry.triggerDetail}</p>
                   )}
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-muted-foreground/70 mt-1">
                     Author: <span className="text-muted-foreground">{entry.author}</span>
                     {entry.reviewer && <> · Reviewer: <span className="text-muted-foreground">{entry.reviewer}</span></>}
                     {entry.changes.length > 0 && <> · {entry.changes.length} change{entry.changes.length !== 1 ? "s" : ""}</>}
                   </p>
                 </div>
                 {expanded === entry.id
-                  ? <ChevronDown className="w-4 h-4 text-slate-500 shrink-0 mt-1" />
-                  : <ChevronRight className="w-4 h-4 text-slate-500 shrink-0 mt-1" />}
+                  ? <ChevronDown className="w-4 h-4 text-muted-foreground/70 shrink-0 mt-1" />
+                  : <ChevronRight className="w-4 h-4 text-muted-foreground/70 shrink-0 mt-1" />}
               </button>
 
               {expanded === entry.id && (
@@ -290,7 +290,7 @@ function ReviewLogTab() {
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Changes</p>
                       <ul className="space-y-1">
                         {entry.changes.map((c, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                          <li key={i} className="flex items-start gap-2 text-sm text-foreground/70">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                             {c}
                           </li>
@@ -304,7 +304,7 @@ function ReviewLogTab() {
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">New Sources</p>
                       <div className="space-y-1">
                         {entry.newSources.map((s, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                          <div key={i} className="flex items-center gap-2 text-sm text-foreground/70">
                             <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span>{s.citation}</span>
                             <Badge className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{s.confidence}</Badge>
@@ -323,8 +323,8 @@ function ReviewLogTab() {
                             {f.passed
                               ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               : <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
-                            <span className="text-slate-300">{f.fixture}</span>
-                            {f.notes && <span className="text-xs text-slate-500">— {f.notes}</span>}
+                            <span className="text-foreground/70">{f.fixture}</span>
+                            {f.notes && <span className="text-xs text-muted-foreground/70">— {f.notes}</span>}
                           </div>
                         ))}
                       </div>
@@ -348,7 +348,7 @@ function ReviewLogTab() {
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="bg-card border-border text-foreground max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white">Log Library Review</DialogTitle>
+            <DialogTitle className="text-foreground">Log Library Review</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
@@ -446,7 +446,7 @@ function ReviewLogTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-slate-300">
+            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-foreground/70">
               Cancel
             </Button>
             <Button
@@ -552,7 +552,7 @@ function TriggeredTab() {
       </div>
 
       {(reviews ?? []).length === 0 && (
-        <div className="py-12 text-center text-slate-500">No triggered reviews match the current filter.</div>
+        <div className="py-12 text-center text-muted-foreground/70">No triggered reviews match the current filter.</div>
       )}
 
       <div className="space-y-3">
@@ -563,18 +563,18 @@ function TriggeredTab() {
                 <CategoryIcon category={r.triggerCategory} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-slate-200 font-medium">{r.triggerType}</span>
+                    <span className="text-foreground/90 font-medium">{r.triggerType}</span>
                     <TriggeredStatusBadge status={r.status} />
                     <PriorityBadge priority={r.priority} />
-                    <span className="text-xs text-slate-500 capitalize">{r.triggerCategory}</span>
+                    <span className="text-xs text-muted-foreground/70 capitalize">{r.triggerCategory}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{r.triggerDetail}</p>
                   {r.affectedContent && (
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-muted-foreground/70 mt-1">
                       <span className="text-muted-foreground">Affected:</span> {r.affectedContent}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground/70">
                     <span>Logged {new Date(r.createdAt).toLocaleDateString("en-GB")}</span>
                     {r.plannedReviewDate && <span>Planned: {r.plannedReviewDate}</span>}
                     {r.resolvedAt && <span>Resolved: {new Date(r.resolvedAt).toLocaleDateString("en-GB")}</span>}
@@ -615,7 +615,7 @@ function TriggeredTab() {
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="bg-card border-border text-foreground max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white">Log Triggered Review</DialogTitle>
+            <DialogTitle className="text-foreground">Log Triggered Review</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
@@ -693,7 +693,7 @@ function TriggeredTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-slate-300">
+            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="border-border text-foreground/70">
               Cancel
             </Button>
             <Button
@@ -711,7 +711,7 @@ function TriggeredTab() {
       <Dialog open={!!resolveId} onOpenChange={() => { setResolveId(null); setResolveNotes(""); }}>
         <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Resolve Triggered Review</DialogTitle>
+            <DialogTitle className="text-foreground">Resolve Triggered Review</DialogTitle>
           </DialogHeader>
           <div className="py-2">
             <label className="text-xs text-muted-foreground mb-1 block">Resolution Notes</label>
@@ -724,7 +724,7 @@ function TriggeredTab() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setResolveId(null); setResolveNotes(""); }} className="border-border text-slate-300">
+            <Button variant="outline" onClick={() => { setResolveId(null); setResolveNotes(""); }} className="border-border text-foreground/70">
               Cancel
             </Button>
             <Button
@@ -790,7 +790,7 @@ function SourceHealthTab() {
             {filtered.map(s => (
               <tr key={s.sourceId} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">
-                  <p className="text-slate-200 leading-snug text-xs">{s.citation}</p>
+                  <p className="text-foreground/90 leading-snug text-xs">{s.citation}</p>
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">{s.sourceId}</p>
                 </td>
                 <td className="px-4 py-3">
@@ -798,7 +798,7 @@ function SourceHealthTab() {
                     s.sourceType === "primary" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
                     s.sourceType === "secondary" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
                     s.sourceType === "vendor" ? "bg-amber-500/20 text-amber-300 border-amber-500/30" :
-                    "bg-slate-500/20 text-slate-300 border-slate-500/30"
+                    "bg-slate-500/20 text-foreground/70 border-slate-500/30"
                   }`}>
                     {s.sourceType}
                   </span>
@@ -833,7 +833,7 @@ function SourceHealthTab() {
       </div>
 
       <div className="bg-card/50 border border-border rounded-lg p-4">
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-muted-foreground/70 leading-relaxed">
           <span className="text-muted-foreground font-medium">Staleness policy:</span> Sources not reviewed in 18+ months are flagged as <span className="text-red-400">Stale</span>.
           Sources between 12–18 months are flagged as <span className="text-amber-400">Aging</span> and should be prioritised for the next quarterly review.
           Source staleness is also surfaced in the Strategy QA Check when generating AI strategies.
@@ -855,7 +855,7 @@ export default function ContentReviewPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <CalendarCheck2 className="w-5 h-5 text-blue-400" />
                 Content Review Dashboard
               </h1>
@@ -865,7 +865,7 @@ export default function ContentReviewPage() {
             </div>
             {!statsLoading && stats && (
               <div className="text-right">
-                <p className="text-xs text-slate-500">Library version</p>
+                <p className="text-xs text-muted-foreground/70">Library version</p>
                 <p className="text-sm font-mono font-bold text-blue-400">v{stats.libraryVersion}</p>
               </div>
             )}
@@ -911,7 +911,7 @@ export default function ContentReviewPage() {
                 <CardContent className="p-4 flex items-center gap-3">
                   <stat.icon className={`w-5 h-5 shrink-0 ${stat.colour}`} />
                   <div>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                     {stat.sub && <p className="text-xs text-muted-foreground">{stat.sub}</p>}
                   </div>

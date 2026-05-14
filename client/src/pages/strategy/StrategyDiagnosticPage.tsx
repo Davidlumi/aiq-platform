@@ -529,7 +529,7 @@ export default function StrategyDiagnosticPage() {
                       max={100}
                       size={140}
                       strokeWidth={14}
-                      colour="#94a3b8"
+                      colour="var(--muted-foreground)"
                       label="Sector avg"
                       sublabel="p50 benchmark"
                     />

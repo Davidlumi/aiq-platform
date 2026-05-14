@@ -381,6 +381,19 @@
   --score-developing-text:   #9a3412;
   --score-gap-bg:            #fee2e2;
   --score-gap-text:          #991b1b;
+  /* Priority colors — light mode */
+  --priority-high-bg:        oklch(95% 0.040 27 / 0.20);
+  --priority-high-text:      oklch(45% 0.200 27);
+  --priority-medium-bg:      oklch(95% 0.040 68 / 0.20);
+  --priority-medium-text:    oklch(45% 0.160 68);
+  --priority-low-bg:         oklch(93% 0.040 142 / 0.20);
+  --priority-low-text:       oklch(38% 0.160 142);
+  /* Card shadow — lighter for light mode */
+  --card-shadow:             0 1px 3px oklch(0% 0 0 / 0.08), 0 1px 2px oklch(0% 0 0 / 0.05);
+  /* Scrollbar colors */
+  --scrollbar-thumb:         oklch(82% 0.010 240);
+  --scrollbar-thumb-hover:   oklch(72% 0.015 240);
+  --scrollbar-track:         oklch(96% 0.004 240);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

@@ -599,7 +599,7 @@ export default function LearnerDashboard() {
                   )}
                   {daysToRevalidation !== null && daysToRevalidation <= 14 && (
                     <Link href="/assessment">
-                      <Button size="sm" className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs gap-1.5">
+                      <Button size="sm" className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs gap-1.5">
                         <AlertTriangle className="w-3 h-3" />Start Revalidation Now
                       </Button>
                     </Link>

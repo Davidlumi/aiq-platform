@@ -311,9 +311,9 @@ function ArtefactBlock({ content, artefactType }: { content: string; artefactTyp
     document_excerpt: {
       label: "Document Excerpt",
       sublabel: "Review the extract",
-      borderColor: "border-slate-600/40",
+      borderColor: "border-border/80/40",
       bgColor: "bg-muted/30",
-      labelColor: "text-slate-300",
+      labelColor: "text-foreground/70",
       headerBg: "bg-muted/50",
     },
     none: {
@@ -609,7 +609,7 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
           </div>
           {/* Time-based generation progress bar */}
           <div className="space-y-1">
-            <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+            <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all"
                 style={{
@@ -1779,7 +1779,7 @@ export default function AssessmentSessionPage() {
                     className={cn(
                       "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5",
                       selectedValue === option.value
-                        ? "border-primary bg-[#047857]/80 text-white"
+                        ? "border-primary bg-primary/80 text-primary-foreground"
                         : "border-border text-muted-foreground"
                     )}
                   >

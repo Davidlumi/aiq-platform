@@ -186,7 +186,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                   ? "bg-green-500 border-green-500 text-black"
                   : isCurrent
                   ? "bg-green-500/15 border-green-500 text-green-400"
-                  : "bg-foreground/4 border-border text-muted-foreground"
+                  : "bg-muted/60 border-border text-muted-foreground"
               }`}>
                 {isComplete ? <Check className="w-4 h-4" /> : step.icon}
               </div>
@@ -223,9 +223,9 @@ function ChipSelect({
   color?: "green" | "blue" | "purple";
 }) {
   const colorMap = {
-    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
-    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
-    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-border/70 text-foreground/75 hover:border-white/45 hover:text-foreground" },
+    green:  { active: "bg-green-500/20 border-green-500/50 text-green-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
+    blue:   { active: "bg-blue-500/20 border-blue-500/50 text-blue-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
+    purple: { active: "bg-purple-500/20 border-purple-500/50 text-purple-300", inactive: "border-border/70 text-foreground/75 hover:border-border hover:text-foreground" },
   };
   const c = colorMap[color];
   return (
@@ -239,7 +239,7 @@ function ChipSelect({
             onClick={() => !isDisabled && onToggle(opt.id)}
             disabled={isDisabled}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${
-              isSelected ? c.active : isDisabled ? "border-white/6 text-muted-foreground/30 cursor-not-allowed" : c.inactive
+              isSelected ? c.active : isDisabled ? "border-border/60 text-muted-foreground/30 cursor-not-allowed" : c.inactive
             }`}
           >
             {isSelected && <Check className="w-3 h-3 inline mr-1" />}
@@ -277,7 +277,7 @@ function CardSelect<T extends number | string>({
             key={String(opt.value)}
             onClick={() => onSelect(opt.value)}
             className={`w-full text-left rounded-xl border p-4 transition-all ${
-              isSelected ? c.active : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
+              isSelected ? c.active : "border-border bg-muted/40 hover:border-border hover:bg-muted/60"
             }`}
           >
             <div className="flex items-start gap-3">
@@ -330,7 +330,7 @@ function RankedSelect({
               isSelected
                 ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
                 : isDisabled
-                ? "border-white/6 text-muted-foreground/30 cursor-not-allowed"
+                ? "border-border/60 text-muted-foreground/30 cursor-not-allowed"
                 : "border-border text-muted-foreground hover:border-border/60 hover:text-foreground"
             }`}
           >
@@ -365,7 +365,7 @@ function PrincipleCard({
   const color = colors[index % colors.length];
   return (
     <div
-      className="rounded-xl border p-5 bg-white/2"
+      className="rounded-xl border p-5 bg-muted/40"
       style={{ borderColor: `${color}25`, borderLeftColor: color, borderLeftWidth: "3px" }}
     >
       <div className="flex items-center gap-2 mb-3">
@@ -387,7 +387,7 @@ function PrincipleCard({
         value={description}
         onChange={e => onDescriptionChange(e.target.value)}
         rows={2}
-        className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+        className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
         placeholder="Describe this principle..."
       />
     </div>
@@ -458,7 +458,7 @@ function InitiativeLibraryModal({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search initiatives..."
-                className="w-full bg-foreground/4 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
+                className="w-full bg-muted/60 border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-green-500/40"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -490,7 +490,7 @@ function InitiativeLibraryModal({
                     className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
                       isSelected
                         ? "border-green-500/40 bg-green-500/8"
-                        : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
+                        : "border-border bg-muted/40 hover:border-border hover:bg-muted/60"
                     }`}
                     onClick={() => onToggle(init.id)}
                     style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
@@ -614,7 +614,7 @@ function BaselineField({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white/2 p-4">
+    <div className="rounded-xl border border-border bg-muted/40 p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground mb-0.5">{label}</p>
@@ -625,7 +625,7 @@ function BaselineField({
             type="checkbox"
             checked={usingSectorDefault}
             onChange={onToggleDefault}
-            className="rounded border-border/60 bg-foreground/4 text-green-500 focus:ring-green-500/40"
+            className="rounded border-border/60 bg-muted/60 text-green-500 focus:ring-green-500/40"
           />
           Use sector average ({unit ? `${unit}` : ""}{sectorDefault.toLocaleString()})
         </label>
@@ -640,7 +640,7 @@ function BaselineField({
             value={usingSectorDefault ? sectorDefault : (value ?? "")}
             onChange={e => onValueChange(e.target.value === "" ? undefined : Number(e.target.value))}
             disabled={usingSectorDefault}
-            className={`w-full rounded-lg border bg-foreground/4 px-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/40 transition-colors ${
+            className={`w-full rounded-lg border bg-muted/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/40 transition-colors ${
               unit ? "pl-7" : ""
             } ${usingSectorDefault ? "opacity-50 cursor-not-allowed border-border" : "border-border"}`}
             placeholder={usingSectorDefault ? String(sectorDefault) : "Enter value..."}
@@ -1041,7 +1041,7 @@ export default function HRAIStrategyAssessmentPage() {
   return (
     <div ref={scrollRef} className="min-h-screen bg-background">
       {/* ── Page header ─────────────────────────────────────────────────────── */}
-      <div className="border-b border-border bg-white/2">
+      <div className="border-b border-border bg-muted/40">
         <div className="max-w-3xl mx-auto px-6 py-5">
           <button
             onClick={() => navigate("/ai-strategy")}
@@ -1076,7 +1076,7 @@ export default function HRAIStrategyAssessmentPage() {
 
       {/* ── Sub-sector context banner ────────────────────────────────────────────── */}
       {(sector !== "other" && subSectorOptions.length > 0) && (
-        <div className="border-b border-white/6 bg-white/1">
+        <div className="border-b border-border/60 bg-muted/20">
           <div className="max-w-3xl mx-auto px-6 py-3 flex items-center gap-3 flex-wrap">
             <span className="text-xs text-muted-foreground flex-shrink-0">
               Benchmarks for:
@@ -1095,7 +1095,7 @@ export default function HRAIStrategyAssessmentPage() {
                   className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
                     subSector === opt.value
                       ? "bg-green-500/20 border-green-500/40 text-green-300 font-semibold"
-                      : "bg-foreground/4 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/8"
+                      : "bg-muted/60 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/8"
                   }`}
                 >
                   {opt.label}
@@ -1145,7 +1145,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-6">
               {/* Business outcomes */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What AI outcomes matter most to your organisation?
                 </p>
@@ -1162,7 +1162,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Business problems */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What business problems should AI solve in the next 1–3 years?
                 </p>
@@ -1179,7 +1179,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Risk appetite */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation's risk appetite for AI?
                 </p>
@@ -1193,7 +1193,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Timeline */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation's timeline for AI adoption?
                 </p>
@@ -1216,7 +1216,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Success markers — ranked top 3 */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What does AI success look like? <span className="text-muted-foreground font-normal">(Rank your top 3)</span>
                 </p>
@@ -1236,7 +1236,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* A1 — Existing AI tools */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which AI or digital HR tools do you already have in place? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1283,7 +1283,7 @@ export default function HRAIStrategyAssessmentPage() {
                 ))}
               </div>
             </div>
-            <div className="flex justify-end mt-8 pt-4 border-t border-white/6">
+            <div className="flex justify-end mt-8 pt-4 border-t border-border/60">
               <Button
                 disabled={!step1Valid}
                 onClick={() => goToStep(2)}
@@ -1397,7 +1397,7 @@ export default function HRAIStrategyAssessmentPage() {
               />
             </div>
 
-            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+            <div className="flex justify-between mt-8 pt-4 border-t border-border/60">
               <Button variant="outline" onClick={() => goToStep(1)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
@@ -1430,7 +1430,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-5">
               {/* Executive sponsors */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Executive sponsors</p>
                 <p className="text-xs text-muted-foreground mb-4">Who at C-suite or board level is backing this initiative?</p>
                 <ChipSelect
@@ -1450,7 +1450,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Gatekeepers */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Gatekeepers</p>
                 <p className="text-xs text-muted-foreground mb-4">Which functions must approve or be consulted before deployment?</p>
                 <ChipSelect
@@ -1470,7 +1470,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Affected groups */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Affected groups</p>
                 <p className="text-xs text-muted-foreground mb-4">Who will be directly impacted by the AI tools and processes you're introducing?</p>
                 <ChipSelect
@@ -1490,7 +1490,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Potential resistors */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Potential resistors <span className="text-muted-foreground font-normal">(Optional)</span></p>
                 <p className="text-xs text-muted-foreground mb-4">Who might push back, and why? Being honest here improves your change plan.</p>
                 <ChipSelect
@@ -1510,7 +1510,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Notes */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">Additional context <span className="text-muted-foreground font-normal">(Optional)</span></p>
                 <p className="text-xs text-muted-foreground mb-3">Any political dynamics, named individuals, or timing constraints worth noting?</p>
                 <Textarea
@@ -1518,14 +1518,14 @@ export default function HRAIStrategyAssessmentPage() {
                   onChange={e => { setStakeholderMap(prev => ({ ...prev, notes: e.target.value })); setIsDirty(true); }}
                   rows={3}
                   maxLength={400}
-                  className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
+                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-teal-500/40"
                   placeholder="e.g. Our CFO is sceptical — we need a quick win before the Q2 board. Trade union consultation required for any workforce-impacting tools."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{(stakeholderMap.notes ?? "").length}/400</p>
               </div>
 
               {/* E1 — UK Regulatory Frameworks */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which UK regulatory frameworks apply to your AI initiatives? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1564,7 +1564,7 @@ export default function HRAIStrategyAssessmentPage() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+            <div className="flex justify-between mt-8 pt-4 border-t border-border/60">
               <Button variant="outline" onClick={() => goToStep(2)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
@@ -1597,7 +1597,7 @@ export default function HRAIStrategyAssessmentPage() {
 
             <div className="space-y-6">
               {/* HR leadership position */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is HR's leadership position on AI?
                 </p>
@@ -1611,7 +1611,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* HR processes priority */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Which HR processes should AI transform first? <span className="text-muted-foreground font-normal">(Select up to 5)</span>
                 </p>
@@ -1629,7 +1629,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* Governance principles */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What governance principles matter most?
                 </p>
@@ -1648,7 +1648,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* A3 — AI philosophy */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   What is your organisation’s AI philosophy?
                 </p>
@@ -1672,7 +1672,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* D1 — Measurement cadence */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   How often will you review and measure progress? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1696,7 +1696,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
 
               {/* D2 — Pilot Design */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   How do you want to pilot your first initiative? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1774,7 +1774,7 @@ export default function HRAIStrategyAssessmentPage() {
                 </div>
               </div>
               {/* Voice capture */}
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-sm font-semibold text-foreground mb-1">
                   Anything else we should know about your context? <span className="text-muted-foreground font-normal">(Optional)</span>
                 </p>
@@ -1785,14 +1785,14 @@ export default function HRAIStrategyAssessmentPage() {
                   value={voiceCapture}
                   onChange={e => { if (e.target.value.length <= 500) { setVoiceCapture(e.target.value); setIsDirty(true); } }}
                   rows={3}
-                  className="resize-none bg-foreground/4 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
+                  className="resize-none bg-muted/60 border-border text-sm placeholder:text-muted-foreground/50 focus:border-green-500/40"
                   placeholder="e.g. We have a board mandate to reduce HR headcount by 20% over 3 years. Our CHRO is new and wants quick wins before the end of Q1..."
                 />
                 <p className="text-xs text-muted-foreground mt-1.5 text-right">{voiceCapture.length}/500</p>
               </div>
             </div>
 
-            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+            <div className="flex justify-between mt-8 pt-4 border-t border-border/60">
               <Button variant="outline" onClick={() => goToStep(3)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
@@ -1915,7 +1915,7 @@ export default function HRAIStrategyAssessmentPage() {
                     value={visionStatement}
                     onChange={e => { setVisionStatement(e.target.value); setIsDirty(true); }}
                     rows={4}
-                    className="resize-none bg-foreground/4 border-border text-sm focus:border-purple-500/40"
+                    className="resize-none bg-muted/60 border-border text-sm focus:border-purple-500/40"
                   />
                 </div>
 
@@ -1955,7 +1955,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
             )}
 
-            <div className="flex justify-between mt-8 pt-4 border-t border-white/6">
+            <div className="flex justify-between mt-8 pt-4 border-t border-border/60">
               <Button variant="outline" onClick={() => goToStep(4)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back
@@ -1993,7 +1993,7 @@ export default function HRAIStrategyAssessmentPage() {
                 { label: "Business AI Ambition", levels: BUSINESS_LEVELS, value: businessLevel, onChange: (v: number) => { setBusinessLevel(v); setIsDirty(true); } },
                 { label: "People AI Ambition", levels: PEOPLE_LEVELS, value: peopleLevel, onChange: (v: number) => { setPeopleLevel(v); setIsDirty(true); } },
               ].map(({ label, levels, value, onChange }) => (
-                <div key={label} className="rounded-xl border border-border bg-white/2 p-4">
+                <div key={label} className="rounded-xl border border-border bg-muted/40 p-4">
                   <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{label}</p>
                   <div className="flex gap-1.5 mb-2">
                     {[1,2,3,4,5].map(n => (
@@ -2005,7 +2005,7 @@ export default function HRAIStrategyAssessmentPage() {
                             ? "bg-green-500 text-black"
                             : n < value
                             ? "bg-green-500/20 text-green-400"
-                            : "bg-foreground/4 text-muted-foreground hover:bg-foreground/8"
+                            : "bg-muted/60 text-muted-foreground hover:bg-foreground/8"
                         }`}
                       >
                         {n}
@@ -2019,7 +2019,7 @@ export default function HRAIStrategyAssessmentPage() {
             </div>
 
             {/* Selected initiatives */}
-            <div className="rounded-xl border border-border bg-white/2 p-5 mb-4">
+            <div className="rounded-xl border border-border bg-muted/40 p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{selectedIds.size} initiative{selectedIds.size !== 1 ? "s" : ""} selected</p>
@@ -2055,7 +2055,7 @@ export default function HRAIStrategyAssessmentPage() {
                       return (
                         <div
                           key={init.id}
-                          className="flex items-center gap-3 rounded-lg border border-border bg-white/2 px-4 py-3"
+                          className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
                           style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
                         >
                           <div className="flex-1 min-w-0">
@@ -2089,7 +2089,7 @@ export default function HRAIStrategyAssessmentPage() {
                   { label: "Timeline", value: timelineMonths ? `${timelineMonths} months` : "—" },
                   { label: "Initiatives", value: `${selectedIds.size} selected` },
                 ].map(({ label, value }) => (
-                  <div key={label} className="rounded-lg bg-foreground/4 px-3 py-2">
+                  <div key={label} className="rounded-lg bg-muted/60 px-3 py-2">
                     <p className="text-muted-foreground">{label}</p>
                     <p className="text-foreground font-semibold mt-0.5">{value}</p>
                   </div>
@@ -2105,7 +2105,7 @@ export default function HRAIStrategyAssessmentPage() {
               </div>
             </div>
 
-            <div className="flex justify-between pt-4 border-t border-white/6">
+            <div className="flex justify-between pt-4 border-t border-border/60">
               <Button variant="outline" onClick={() => goToStep(5)}>
                 <ChevronLeft className="w-4 h-4 mr-1.5" />
                 Back

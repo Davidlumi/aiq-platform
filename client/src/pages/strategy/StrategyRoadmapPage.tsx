@@ -71,7 +71,7 @@ function boldKeywords(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) =>
     p.startsWith("**") && p.endsWith("**")
-      ? <strong key={i} className="font-semibold" style={{ color: "#E9ECF2" }}>{p.slice(2, -2)}</strong>
+      ? <strong key={i} className="font-semibold" style={{ color: "var(--foreground)" }}>{p.slice(2, -2)}</strong>
       : p
   );
 }
@@ -99,10 +99,10 @@ function InitiativeCard({ initiative, onClick }: { initiative: Initiative; onCli
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium truncate" style={{ color: "#E9ECF2", fontSize: "12px" }}>
+          <p className="text-xs font-medium truncate" style={{ color: "var(--foreground)", fontSize: "12px" }}>
             {initiative.title}
           </p>
-          <p className="truncate mt-0.5" style={{ color: "#9ca3b0", fontSize: "11px" }}>
+          <p className="truncate mt-0.5" style={{ color: "var(--muted-foreground)", fontSize: "11px" }}>
             {initiative.description}
           </p>
         </div>
@@ -110,7 +110,7 @@ function InitiativeCard({ initiative, onClick }: { initiative: Initiative; onCli
           {initiative.status === "yours" && (
             <span
               className="uppercase tracking-wider"
-              style={{ fontSize: "9px", letterSpacing: "0.04em", color: "#7ec9ab" }}
+              style={{ fontSize: "9px", letterSpacing: "0.04em", color: "var(--primary)" }}
             >
               Yours
             </span>
@@ -118,7 +118,7 @@ function InitiativeCard({ initiative, onClick }: { initiative: Initiative; onCli
           <ChevronRight
             size={14}
             className="transition-colors"
-            style={{ color: "#6c7385" }}
+            style={{ color: "var(--muted-foreground)" }}
           />
         </div>
       </div>
@@ -148,17 +148,17 @@ function AddAffordance({ onClick }: { onClick: () => void }) {
         if (label) label.style.color = "#5DCAA5";
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
         (e.currentTarget as HTMLElement).style.background = "transparent";
         const icon = (e.currentTarget as HTMLElement).querySelector(".add-icon") as HTMLElement | null;
         const label = (e.currentTarget as HTMLElement).querySelector(".add-label") as HTMLElement | null;
-        if (icon) icon.style.color = "#7a8294";
-        if (label) label.style.color = "#7a8294";
+        if (icon) icon.style.color = "var(--muted-foreground)";
+        if (label) label.style.color = "var(--muted-foreground)";
       }}
     >
       <div className="flex items-center gap-2">
-        <Plus size={12} className="add-icon shrink-0" style={{ color: "#7a8294" }} />
-        <span className="add-label" style={{ fontSize: "11px", color: "#7a8294" }}>Add your own</span>
+        <Plus size={12} className="add-icon shrink-0" style={{ color: "var(--muted-foreground)" }} />
+        <span className="add-label" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Add your own</span>
       </div>
     </button>
   );
@@ -186,7 +186,7 @@ function DiagnosticBanner({
         <span className="font-semibold mr-1" style={{ fontSize: "11px", color: "#fbbf24" }}>
           Outcome {outcomeNumber}:
         </span>
-        <span style={{ fontSize: "11px", color: "#cfd2d8" }}>
+        <span style={{ fontSize: "11px", color: "var(--foreground)" }}>
           {type === "uncovered"
             ? `"${outcomeTitle}" has no initiatives addressing it.`
             : `"${outcomeTitle}" has only 1 initiative. Consider adding a second.`}
@@ -220,7 +220,7 @@ function ConnectsPill({ c }: { c: ConnectsTo }) {
         border: "1px solid rgba(93,202,165,0.3)",
         background: "rgba(93,202,165,0.06)",
         fontSize: "10px",
-        color: "#7ec9ab",
+        color: "var(--primary)",
       }}
     >
       <span className="opacity-80 truncate max-w-[160px]">{c.label}</span>
@@ -331,13 +331,13 @@ function InitiativeModal({
         style={{ background: "var(--card)", border: "1px solid var(--border)" }}
       >
         {/* Header */}
-        <DialogHeader className="pb-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <DialogHeader className="pb-3 border-b" style={{ borderColor: "var(--muted)" }}>
           <div className="flex items-center gap-2 mb-2">
             <span
               className="w-2 h-2 rounded-full shrink-0"
               style={{ background: phaseInfo.color }}
             />
-            <span style={{ fontSize: "10px", color: "#9ca3b0" }}>
+            <span style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
               {phaseInfo.label} · {phaseInfo.months}
             </span>
             {statusLabel && (
@@ -345,8 +345,8 @@ function InitiativeModal({
                 className="ml-auto rounded-full px-2 py-0.5"
                 style={{
                   fontSize: "9px",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "#9ca3b0",
+                  background: "var(--muted)",
+                  color: "var(--muted-foreground)",
                   letterSpacing: "0.03em",
                 }}
               >
@@ -354,7 +354,7 @@ function InitiativeModal({
               </span>
             )}
           </div>
-          <DialogTitle style={{ fontSize: "16px", fontWeight: 500, color: "#E9ECF2" }}>
+          <DialogTitle style={{ fontSize: "16px", fontWeight: 500, color: "var(--foreground)" }}>
             {mode === "edit" && isAdd ? "Add initiative" : mode === "edit" ? "Edit initiative" : init?.title}
           </DialogTitle>
         </DialogHeader>
@@ -369,7 +369,7 @@ function InitiativeModal({
                   <p className="mb-2" style={{ fontSize: "10px", color: "#5DCAA5", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                     Why we're suggesting this
                   </p>
-                  <p style={{ fontSize: "12px", color: "#cfd2d8", lineHeight: 1.6 }}>
+                  <p style={{ fontSize: "12px", color: "var(--foreground)", lineHeight: 1.6 }}>
                     {boldKeywords(init.whySuggesting)}
                   </p>
                 </section>
@@ -383,7 +383,7 @@ function InitiativeModal({
                   </p>
                   <ul className="space-y-1.5">
                     {init.whatInvolvesJson.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2" style={{ fontSize: "12px", color: "#cfd2d8", lineHeight: 1.55 }}>
+                      <li key={i} className="flex items-start gap-2" style={{ fontSize: "12px", color: "var(--foreground)", lineHeight: 1.55 }}>
                         <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ background: "#5DCAA5" }} />
                         {item}
                       </li>
@@ -414,7 +414,7 @@ function InitiativeModal({
                     {fmtCost(init.costLow, init.costHigh)}
                   </p>
                   {init.costNote && (
-                    <p className="mt-1" style={{ fontSize: "11px", color: "#6c7385" }}>{init.costNote}</p>
+                    <p className="mt-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>{init.costNote}</p>
                   )}
                 </section>
               )}
@@ -431,7 +431,7 @@ function InitiativeModal({
                   <p className="mb-1.5" style={{ fontSize: "10px", color: "#fbbf24", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                     Worth knowing
                   </p>
-                  <p style={{ fontSize: "12px", color: "#cfd2d8", lineHeight: 1.6 }}>
+                  <p style={{ fontSize: "12px", color: "var(--foreground)", lineHeight: 1.6 }}>
                     {boldKeywords(init.worthKnowing)}
                   </p>
                 </section>
@@ -441,28 +441,28 @@ function InitiativeModal({
             /* Edit / Add form */
             <div className="space-y-4">
               <div>
-                <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Title *</label>
+                <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Title *</label>
                 <Input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   placeholder="Plain English, action-oriented"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "13px" }}
+                  style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "13px" }}
                 />
               </div>
               <div>
-                <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Description *</label>
+                <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Description *</label>
                 <Input
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="One line — what does this actually do?"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "13px" }}
+                  style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "13px" }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Phase *</label>
+                  <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Phase *</label>
                   <Select value={phase} onValueChange={v => setPhase(v as Phase)}>
-                    <SelectTrigger style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "12px" }}>
+                    <SelectTrigger style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "12px" }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -471,9 +471,9 @@ function InitiativeModal({
                   </Select>
                 </div>
                 <div>
-                  <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Function</label>
+                  <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Function</label>
                   <Select value={functionArea || "none"} onValueChange={v => setFunctionArea(v === "none" ? "" : v)}>
-                    <SelectTrigger style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "12px" }}>
+                    <SelectTrigger style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "12px" }}>
                       <SelectValue placeholder="Select…" />
                     </SelectTrigger>
                     <SelectContent>
@@ -485,27 +485,27 @@ function InitiativeModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Cost low (£)</label>
+                  <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Cost low (£)</label>
                   <Input type="number" value={costLow} onChange={e => setCostLow(e.target.value)} placeholder="e.g. 40000"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "13px" }} />
+                    style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "13px" }} />
                 </div>
                 <div>
-                  <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Cost high (£)</label>
+                  <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Cost high (£)</label>
                   <Input type="number" value={costHigh} onChange={e => setCostHigh(e.target.value)} placeholder="e.g. 80000"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "13px" }} />
+                    style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "13px" }} />
                 </div>
               </div>
               <div>
-                <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>What it involves</label>
+                <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>What it involves</label>
                 <div className="space-y-1.5">
                   {whatInvolves.map((item, i) => (
                     <div key={i} className="flex gap-2">
                       <Input value={item} onChange={e => {
                         const next = [...whatInvolves]; next[i] = e.target.value; setWhatInvolves(next);
                       }} placeholder={`Activity ${i + 1}`}
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "12px" }} />
+                        style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "12px" }} />
                       <button onClick={() => setWhatInvolves(prev => prev.filter((_, j) => j !== i))} className="opacity-50 hover:opacity-100">
-                        <X size={12} style={{ color: "#9ca3b0" }} />
+                        <X size={12} style={{ color: "var(--muted-foreground)" }} />
                       </button>
                     </div>
                   ))}
@@ -515,14 +515,14 @@ function InitiativeModal({
                 </div>
               </div>
               <div>
-                <label className="block mb-1" style={{ fontSize: "11px", color: "#9ca3b0" }}>Worth knowing</label>
+                <label className="block mb-1" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Worth knowing</label>
                 <Textarea value={worthKnowing} onChange={e => setWorthKnowing(e.target.value)} rows={3} placeholder="Risks, compliance notes, dependencies…"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#E9ECF2", fontSize: "12px", resize: "none" }} />
+                  style={{ background: "var(--muted)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground)", fontSize: "12px", resize: "none" }} />
               </div>
               {/* Connects to */}
               {(outcomes.length > 0 || principles.length > 0) && (
                 <div>
-                  <label className="block mb-2" style={{ fontSize: "11px", color: "#9ca3b0" }}>Connects to</label>
+                  <label className="block mb-2" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>Connects to</label>
                   <div className="space-y-1">
                     {outcomes.map(o => {
                       const checked = connectsTo.some(c => c.type === "outcome" && c.index === o.number);
@@ -530,7 +530,7 @@ function InitiativeModal({
                         <label key={`o${o.number}`} className="flex items-center gap-2 cursor-pointer">
                           <input type="checkbox" checked={checked} onChange={() => toggleConnects("outcome", o.number, o.title)}
                             className="rounded" style={{ accentColor: "#5DCAA5" }} />
-                          <span style={{ fontSize: "11px", color: "#cfd2d8" }}>Outcome {o.number}: {o.title}</span>
+                          <span style={{ fontSize: "11px", color: "var(--foreground)" }}>Outcome {o.number}: {o.title}</span>
                         </label>
                       );
                     })}
@@ -540,7 +540,7 @@ function InitiativeModal({
                         <label key={`p${p.number}`} className="flex items-center gap-2 cursor-pointer">
                           <input type="checkbox" checked={checked} onChange={() => toggleConnects("principle", p.number, p.title)}
                             className="rounded" style={{ accentColor: "#5DCAA5" }} />
-                          <span style={{ fontSize: "11px", color: "#cfd2d8" }}>Principle {p.number}: {p.title}</span>
+                          <span style={{ fontSize: "11px", color: "var(--foreground)" }}>Principle {p.number}: {p.title}</span>
                         </label>
                       );
                     })}
@@ -553,9 +553,9 @@ function InitiativeModal({
 
         {/* Dismiss confirmation */}
         {showDismissConfirm && (
-          <div className="border-t pt-4 space-y-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-            <p style={{ fontSize: "13px", color: "#E9ECF2", fontWeight: 500 }}>Dismiss this initiative?</p>
-            <p style={{ fontSize: "12px", color: "#9ca3b0" }}>It will be removed from your plan.</p>
+          <div className="border-t pt-4 space-y-3" style={{ borderColor: "var(--muted)" }}>
+            <p style={{ fontSize: "13px", color: "var(--foreground)", fontWeight: 500 }}>Dismiss this initiative?</p>
+            <p style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>It will be removed from your plan.</p>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowDismissConfirm(false)} className="flex-1">Cancel</Button>
               <Button size="sm" onClick={handleDismiss} disabled={dismissInitiative.isPending}
@@ -568,7 +568,7 @@ function InitiativeModal({
 
         {/* Action bar */}
         {!showDismissConfirm && (
-          <div className="border-t pt-4 flex items-center gap-2" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <div className="border-t pt-4 flex items-center gap-2" style={{ borderColor: "var(--muted)" }}>
             {mode === "view" ? (
               <>
                 <Button size="sm" onClick={() => setMode("edit")} style={{ background: "#5DCAA5", color: "#0f1117", fontWeight: 600, fontSize: "12px" }}>
@@ -577,7 +577,7 @@ function InitiativeModal({
                 {/* Move phase */}
                 <div className="relative">
                   <Button variant="outline" size="sm" onClick={() => setShowMovePhase(v => !v)}
-                    className="flex items-center gap-1" style={{ fontSize: "12px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)" }}>
+                    className="flex items-center gap-1" style={{ fontSize: "12px", color: "var(--foreground)", borderColor: "var(--border)" }}>
                     Move phase <ChevronDown size={12} />
                   </Button>
                   {showMovePhase && (
@@ -586,7 +586,7 @@ function InitiativeModal({
                       {PHASES.filter(p => p.key !== init?.phase).map(p => (
                         <button key={p.key} onClick={() => handleMovePhase(p.key)}
                           className="w-full text-left px-3 py-2 hover:bg-foreground/5 transition-colors"
-                          style={{ fontSize: "12px", color: "#cfd2d8" }}>
+                          style={{ fontSize: "12px", color: "var(--foreground)" }}>
                           {p.label}
                         </button>
                       ))}
@@ -594,12 +594,12 @@ function InitiativeModal({
                   )}
                 </div>
                 <Button variant="outline" size="sm" onClick={handleRegenerate} disabled={regenerate.isPending}
-                  className="flex items-center gap-1" style={{ fontSize: "12px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)" }}>
+                  className="flex items-center gap-1" style={{ fontSize: "12px", color: "var(--foreground)", borderColor: "var(--border)" }}>
                   <RefreshCw size={11} className={regenerate.isPending ? "animate-spin" : ""} />
                   Regenerate
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowDismissConfirm(true)}
-                  className="ml-auto hover:text-red-400 transition-colors" style={{ fontSize: "12px", color: "#6c7385" }}>
+                  className="ml-auto hover:text-red-400 transition-colors" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
                   Dismiss
                 </Button>
               </>
@@ -610,7 +610,7 @@ function InitiativeModal({
                   {saveInitiative.isPending ? "Saving…" : "Save"}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => { if (isAdd) onClose(); else setMode("view"); }}
-                  style={{ fontSize: "12px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)" }}>
+                  style={{ fontSize: "12px", color: "var(--foreground)", borderColor: "var(--border)" }}>
                   Cancel
                 </Button>
               </>
@@ -722,19 +722,19 @@ export default function StrategyRoadmapPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 mb-6" style={{ fontSize: "11px", color: "#6c7385" }}>
+        <div className="flex items-center gap-1.5 mb-6" style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>
           <Link href="/strategy" className="hover:text-teal-400 transition-colors">HR AI Strategy</Link>
           <ChevronRight size={12} />
-          <span style={{ color: "#9ca3b0" }}>How we get there</span>
+          <span style={{ color: "var(--muted-foreground)" }}>How we get there</span>
         </div>
 
         {/* Page header */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <p className="mb-1" style={{ fontSize: "10px", color: "#6c7385", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <p className="mb-1" style={{ fontSize: "10px", color: "var(--muted-foreground)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               Section 03
             </p>
-            <h1 className="flex items-center gap-2" style={{ fontSize: "22px", fontWeight: 600, color: "#E9ECF2" }}>
+            <h1 className="flex items-center gap-2" style={{ fontSize: "22px", fontWeight: 600, color: "var(--foreground)" }}>
               <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: "#5DCAA5" }} />
               How we get there
             </h1>
@@ -746,7 +746,7 @@ export default function StrategyRoadmapPage() {
               className="h-8 px-3 rounded-md flex items-center gap-1.5 transition-all"
               style={{
                 fontSize: "11px",
-                color: "#E9ECF2",
+                color: "var(--foreground)",
                 border: "0.5px solid rgba(255,255,255,0.2)",
                 background: "transparent",
               }}
@@ -756,7 +756,7 @@ export default function StrategyRoadmapPage() {
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.2)";
-                (e.currentTarget as HTMLElement).style.color = "#E9ECF2";
+                (e.currentTarget as HTMLElement).style.color = "var(--foreground)";
               }}
             >
               Edit org context
@@ -791,7 +791,7 @@ export default function StrategyRoadmapPage() {
         {showOrgContextBanner && (
           <div className="flex items-center justify-between gap-3 rounded-lg mb-4 px-4 py-3"
             style={{ background: "rgba(93,202,165,0.06)", border: "1px solid rgba(93,202,165,0.2)" }}>
-            <p style={{ fontSize: "12px", color: "#cfd2d8" }}>
+            <p style={{ fontSize: "12px", color: "var(--foreground)" }}>
               Org context updated. Regenerate suggestions?
             </p>
             <div className="flex items-center gap-2">
@@ -800,7 +800,7 @@ export default function StrategyRoadmapPage() {
                 Regenerate now
               </Button>
               <button onClick={() => setShowOrgContextBanner(false)} className="opacity-60 hover:opacity-100">
-                <X size={13} style={{ color: "#9ca3b0" }} />
+                <X size={13} style={{ color: "var(--muted-foreground)" }} />
               </button>
             </div>
           </div>
@@ -819,15 +819,15 @@ export default function StrategyRoadmapPage() {
             padding: "0.55rem 0.85rem",
           }}
         >
-          <p style={{ fontSize: "11px", color: "#9ca3b0", lineHeight: 1.55 }}>
-            <span style={{ color: "#cfd2d8", fontWeight: 500 }}>
+          <p style={{ fontSize: "11px", color: "var(--muted-foreground)", lineHeight: 1.55 }}>
+            <span style={{ color: "var(--foreground)", fontWeight: 500 }}>
               {planTotal.count} suggested · {activeInitiatives.filter(i => (i as any).status === "user_added").length} added by you.
             </span>
             {" "}
             {contextStrip.type === "full" && (
               <>
                 Based on your strategy and your org:{" "}
-                <span style={{ color: "#cfd2d8", fontWeight: 500 }}>{contextStrip.orgItems.join(", ")}</span>.
+                <span style={{ color: "var(--foreground)", fontWeight: 500 }}>{contextStrip.orgItems.join(", ")}</span>.
                 {" "}
                 <button
                   onClick={() => setShowOrgContextBanner(true)}
@@ -899,16 +899,16 @@ export default function StrategyRoadmapPage() {
                 <div className="flex items-center justify-between pb-2 mb-3"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                   <div className="flex items-center gap-2">
-                    <span style={{ fontSize: "9px", color: "#6c7385", fontWeight: 600, letterSpacing: "0.06em" }}>
+                    <span style={{ fontSize: "9px", color: "var(--muted-foreground)", fontWeight: 600, letterSpacing: "0.06em" }}>
                       {phase.number}
                     </span>
                     <span className="rounded-full shrink-0" style={{ width: "7px", height: "7px", background: phase.color, display: "inline-block" }} />
-                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#E9ECF2" }}>{phase.label}</span>
-                    <span style={{ fontSize: "11px", color: "#6c7385" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>{phase.label}</span>
+                    <span style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>
                       {costs.count} initiative{costs.count !== 1 ? "s" : ""}{costStr}
                     </span>
                   </div>
-                  <span style={{ fontSize: "11px", color: "#6c7385" }}>{phase.months}</span>
+                  <span style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>{phase.months}</span>
                 </div>
 
                 {/* Cards */}
@@ -932,16 +932,16 @@ export default function StrategyRoadmapPage() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)", alignItems: "center" }}>
           {/* Summary — flex-1 so it takes available width, preventing wrap */}
           <div className="flex-1 min-w-0">
-            <p style={{ fontSize: "9px", color: "#6c7385", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
+            <p style={{ fontSize: "9px", color: "var(--muted-foreground)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
               Plan total
             </p>
-            <p className="whitespace-nowrap" style={{ fontSize: "13px", color: "#9ca3b0" }}>
+            <p className="whitespace-nowrap" style={{ fontSize: "13px", color: "var(--muted-foreground)" }}>
               <span style={{ color: "#5DCAA5", fontWeight: 600 }}>{planTotal.count}</span>
               {" "}initiative{planTotal.count !== 1 ? "s" : ""} across{" "}
               <span style={{ color: "#5DCAA5", fontWeight: 600 }}>4</span> phases ·{" "}
               <span style={{ color: "#5DCAA5", fontWeight: 600 }}>{fmtCost(planTotal.low, planTotal.high)}</span>
               {" "}indicative{" "}
-              <span style={{ fontStyle: "italic", color: "#6c7385" }}>(feeds the cost card)</span>
+              <span style={{ fontStyle: "italic", color: "var(--muted-foreground)" }}>(feeds the cost card)</span>
             </p>
           </div>
           {/* Buttons — centred vertically against summary block */}
@@ -949,7 +949,7 @@ export default function StrategyRoadmapPage() {
             {!reviewed && (
               <Button variant="outline" size="sm" onClick={handleMarkReviewed}
                 className="flex items-center gap-1"
-                style={{ fontSize: "11px", color: "#cfd2d8", borderColor: "rgba(255,255,255,0.12)", background: "transparent" }}>
+                style={{ fontSize: "11px", color: "var(--foreground)", borderColor: "var(--border)", background: "transparent" }}>
                 <Check size={11} />
                 Mark as reviewed
               </Button>

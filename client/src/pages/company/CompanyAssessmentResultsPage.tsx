@@ -223,7 +223,7 @@ export default function CompanyAssessmentResultsPage() {
             {/* Score ring */}
             <div className="relative w-24 h-24 shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border)" strokeWidth="10" />
                 <circle
                   cx="50"
                   cy="50"
@@ -387,7 +387,7 @@ export default function CompanyAssessmentResultsPage() {
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-                <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                <PolarGrid stroke="var(--border)" />
                 <PolarAngleAxis
                   dataKey="dimension"
                   tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
@@ -395,8 +395,8 @@ export default function CompanyAssessmentResultsPage() {
                 <Radar
                   name="Benchmark"
                   dataKey="benchmark"
-                  stroke="rgba(255,255,255,0.15)"
-                  fill="rgba(255,255,255,0.04)"
+                  stroke="var(--border)"
+                  fill="var(--muted)"
                   strokeDasharray="4 2"
                 />
                 <Radar
@@ -419,7 +419,7 @@ export default function CompanyAssessmentResultsPage() {
                 <span className="text-[10px] text-muted-foreground">Your score</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-0.5 bg-white/20 border-dashed" />
+                <div className="w-3 h-0.5 bg-muted-foreground/20 border-dashed" />
                 <span className="text-[10px] text-muted-foreground">Sector benchmark</span>
                 <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Benchmarks are currently based on synthetic reference data. They will be replaced with empirical norms once sufficient real-world data is collected.">Beta reference</span>
               </div>

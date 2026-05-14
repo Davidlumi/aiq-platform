@@ -27,7 +27,7 @@ const REQUEST_TYPES = [
 ];
 
 const PRIORITY_CONFIG = {
-  low: { label: "Low", color: "bg-muted/60 text-slate-300" },
+  low: { label: "Low", color: "bg-muted/60 text-foreground/70" },
   medium: { label: "Medium", color: "bg-blue-900/40 text-blue-300" },
   high: { label: "High", color: "bg-red-900/40 text-red-300" },
 };
@@ -37,7 +37,7 @@ const STATUS_CONFIG = {
   under_review: { label: "Under Review", color: "bg-blue-900/40 text-blue-300" },
   accepted: { label: "Accepted", color: "bg-emerald-900/40 text-emerald-300" },
   declined: { label: "Declined", color: "bg-red-900/40 text-red-300" },
-  done: { label: "Done", color: "bg-muted/60 text-slate-300" },
+  done: { label: "Done", color: "bg-muted/60 text-foreground/70" },
 };
 
 const QA_STATUS_CONFIG = {

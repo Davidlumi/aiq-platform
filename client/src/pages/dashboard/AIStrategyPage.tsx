@@ -517,7 +517,7 @@ function InitiativeSelectorModal({
                   <div
                     key={init.id}
                     className={`relative rounded-xl border p-4 transition-all cursor-pointer ${
-                      isSelected ? "border-green-500/40 bg-green-500/8" : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
+                      isSelected ? "border-green-500/40 bg-green-500/8" : "border-border bg-muted/40 hover:border-border hover:bg-foreground/4"
                     }`}
                     onClick={() => onToggle(init.id)}
                     style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
@@ -866,13 +866,13 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Hero skeleton ──────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-24 rounded mb-3" />
           <Skeleton className="h-7 w-4/5 rounded mb-1" />
           <Skeleton className="h-7 w-3/5 rounded mb-6" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {["w-16", "w-14", "w-12", "w-8"].map((w, i) => (
-              <div key={i} className="rounded-xl border border-border bg-foreground/3 p-4 flex flex-col items-center gap-2">
+              <div key={i} className="rounded-xl border border-border bg-muted/30 p-4 flex flex-col items-center gap-2">
                 <Skeleton className={`h-8 ${w} rounded`} />
                 <Skeleton className="h-3 w-20 rounded" />
                 <Skeleton className="h-3 w-16 rounded" />
@@ -882,7 +882,7 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Section 1 — Diagnostic skeleton ───────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-32 rounded mb-2" />
           <Skeleton className="h-6 w-40 rounded mb-5" />
           {/* Takeaway banner */}
@@ -915,7 +915,7 @@ export default function AIStrategyPage() {
             </div>
           </div>
           {/* HR capability bars */}
-          <div className="rounded-2xl border border-border bg-foreground/3 p-6">
+          <div className="rounded-2xl border border-border bg-muted/30 p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="space-y-1.5">
                 <Skeleton className="h-3 w-28 rounded" />
@@ -948,11 +948,11 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Section 2 — Ambition skeleton ─────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-32 rounded mb-2" />
           <Skeleton className="h-6 w-44 rounded mb-5" />
           {/* Vision */}
-          <div className="rounded-xl border border-border bg-foreground/3 p-5 mb-4">
+          <div className="rounded-xl border border-border bg-muted/30 p-5 mb-4">
             <Skeleton className="h-3 w-28 rounded mb-3" />
             <Skeleton className="h-3 w-full rounded mb-1.5" />
             <Skeleton className="h-3 w-5/6 rounded mb-1.5" />
@@ -984,7 +984,7 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Section 3 — Plan skeleton ──────────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-32 rounded mb-2" />
           <Skeleton className="h-6 w-40 rounded mb-5" />
           {/* Toggle */}
@@ -995,7 +995,7 @@ export default function AIStrategyPage() {
           {/* Phase columns */}
           <div className="grid sm:grid-cols-3 gap-4">
             {["Foundation", "Build", "Scale"].map((phase) => (
-              <div key={phase} className="rounded-xl border border-border bg-foreground/3 p-4 space-y-3">
+              <div key={phase} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-4 w-20 rounded" />
                   <Skeleton className="h-3 w-16 rounded" />
@@ -1014,11 +1014,11 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Section 4 — Investment & Risk skeleton ─────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-40 rounded mb-2" />
           <Skeleton className="h-6 w-64 rounded mb-5" />
           {/* Cost envelope */}
-          <div className="rounded-xl border border-border bg-foreground/3 p-5 mb-4">
+          <div className="rounded-xl border border-border bg-muted/30 p-5 mb-4">
             <div className="flex items-center justify-between mb-4">
               <Skeleton className="h-4 w-36 rounded" />
               <Skeleton className="h-3 w-24 rounded" />
@@ -1067,13 +1067,13 @@ export default function AIStrategyPage() {
         </div>
 
         {/* ── Section 5 — Value skeleton ─────────────────────────────────── */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6 mb-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6 mb-6">
           <Skeleton className="h-3 w-32 rounded mb-2" />
           <Skeleton className="h-6 w-52 rounded mb-5" />
           {/* KPI row */}
           <div className="grid grid-cols-3 gap-4 mb-5">
             {[0, 1, 2].map(i => (
-              <div key={i} className="rounded-xl border border-border bg-foreground/3 p-4 text-center space-y-2">
+              <div key={i} className="rounded-xl border border-border bg-muted/30 p-4 text-center space-y-2">
                 <Skeleton className="h-7 w-20 rounded mx-auto" />
                 <Skeleton className="h-3 w-24 rounded mx-auto" />
               </div>
@@ -1374,7 +1374,7 @@ export default function AIStrategyPage() {
             { label: "Gap to Close",        value: hrGap != null && Number(hrGap) > 0 ? hrGap : "—", sub: "points to close",  color: "#FBBF24" },
             { label: "Initiatives",         value: String(selectedInitiativeIds.size || "—"), sub: "over 18 months", color: "#94A3B8" },
           ].map(kpi => (
-            <div key={kpi.label} className="rounded-xl border border-border bg-foreground/3 p-4 text-center">
+            <div key={kpi.label} className="rounded-xl border border-border bg-muted/30 p-4 text-center">
               <p className="text-3xl font-bold mb-0.5" style={{ color: kpi.color }}>{kpi.value}</p>
               <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>
               <p className="text-xs font-medium text-foreground mt-1">{kpi.label}</p>
@@ -1415,14 +1415,14 @@ export default function AIStrategyPage() {
 
         {/* Company maturity panel */}
         {companyResults ? (
-          <div className="rounded-2xl border border-border bg-foreground/3 overflow-hidden mb-6">
+          <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
               {/* Score */}
               <div className="p-6 flex flex-col items-center justify-center text-center">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Organisation AI Maturity</p>
                 <div className="relative flex items-center justify-center mb-2">
                   <svg width="96" height="96" viewBox="0 0 96 96" className="-rotate-90">
-                    <circle cx="48" cy="48" r="38" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                    <circle cx="48" cy="48" r="38" fill="none" stroke="var(--border)" strokeWidth="8" />
                     <circle
                       cx="48" cy="48" r="38" fill="none"
                       stroke="#60A5FA" strokeWidth="8" strokeLinecap="round"
@@ -1476,7 +1476,7 @@ export default function AIStrategyPage() {
                         <div className="flex-1 h-1.5 rounded-full bg-foreground/8 relative">
                           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: barColor, opacity: 0.75 }} />
                           {dim.sectorBenchmark != null && (
-                            <div className="absolute top-[-2px] w-0.5 h-[calc(100%+4px)] bg-foreground/30 rounded-full" style={{ left: `${(dim.sectorBenchmark / 5) * 100}%` }} />
+                            <div className="absolute top-[-2px] w-0.5 h-[calc(100%+4px)] bg-muted/300 rounded-full" style={{ left: `${(dim.sectorBenchmark / 5) * 100}%` }} />
                           )}
                         </div>
                         <span className="text-xs font-mono w-10 text-right" style={{ color: isPriority ? "#F87171" : "#4ADE80" }}>{(dim.score * 2).toFixed(1)}/10</span>
@@ -1512,7 +1512,7 @@ export default function AIStrategyPage() {
                 <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-red-400/70 inline-block" />Priority gap (bottom 3)</span>
                   <span className="flex items-center gap-1"><span className="w-2 h-1 rounded-full bg-green-400/70 inline-block" />On track</span>
-                  <span className="flex items-center gap-1"><span className="w-0.5 h-3 bg-foreground/30 inline-block" />Sector avg</span>
+                  <span className="flex items-center gap-1"><span className="w-0.5 h-3 bg-muted/300 inline-block" />Sector avg</span>
                 </div>
               </div>
             </div>
@@ -1533,7 +1533,7 @@ export default function AIStrategyPage() {
         )}
 
         {/* HR capability gap — the single chart, clickable for drill-down */}
-        <div className="rounded-2xl border border-border bg-foreground/3 p-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">HR Team Capability</p>
@@ -1615,7 +1615,7 @@ export default function AIStrategyPage() {
 
             {/* Ways of work — condensed, fixed sentence template */}
             {sector && (
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">How AI Will Change Ways of Work</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   In {contextLabel}, {companyResults?.companyName ?? "the organisation"}'s business is set on a{" "}
@@ -1628,7 +1628,7 @@ export default function AIStrategyPage() {
 
             {/* Guiding principles — C1: collapsed by default */}
             {guidingPrinciples && guidingPrinciples.length > 0 && (
-              <div className="rounded-xl border border-border bg-white/2 p-5">
+              <div className="rounded-xl border border-border bg-muted/40 p-5">
                 <button
                   onClick={() => setGuidingPrinciplesCollapsed(c => !c)}
                   className="w-full flex items-center justify-between"
@@ -1643,7 +1643,7 @@ export default function AIStrategyPage() {
                 {!guidingPrinciplesCollapsed && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2 duration-200">
                     {guidingPrinciples.map((p, i) => (
-                      <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg border border-white/6 bg-white/2">
+                      <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg border border-border/60 bg-muted/40">
                         <div className="w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-[10px] font-bold text-green-400">{i + 1}</span>
                         </div>
@@ -1679,7 +1679,7 @@ export default function AIStrategyPage() {
 
             {/* A1 — Current AI Landscape */}
             {Array.isArray(structuredInputs?.existing_ai_tools) && (structuredInputs!.existing_ai_tools as string[]).length > 0 && !(structuredInputs!.existing_ai_tools as string[]).includes("none") && (
-              <div className="rounded-xl border border-border bg-white/2 px-5 py-4">
+              <div className="rounded-xl border border-border bg-muted/40 px-5 py-4">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Current AI Landscape</p>
                 <p className="text-xs text-muted-foreground mb-3">Tools already deployed in HR — initiatives will complement rather than duplicate these.</p>
                 <div className="flex flex-wrap gap-2">
@@ -1761,14 +1761,14 @@ export default function AIStrategyPage() {
           { key: "potential_resistors", label: "Potential Resistors", ids: sm.potential_resistors ?? [], options: POTENTIAL_RESISTORS, color: "#F87171",  icon: <AlertCircle className="w-3.5 h-3.5" /> },
         ] as const;
         return (
-          <div className="rounded-xl border border-border bg-white/2 p-5 mt-4">
+          <div className="rounded-xl border border-border bg-muted/40 p-5 mt-4">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-4 h-4 text-blue-400" />
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stakeholder Map</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {quadrants.map(q => (
-                <div key={q.key} className="rounded-lg border border-border bg-white/2 p-3">
+                <div key={q.key} className="rounded-lg border border-border bg-muted/40 p-3">
                   <div className="flex items-center gap-1.5 mb-2">
                     <span style={{ color: q.color }}>{q.icon}</span>
                     <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: q.color }}>{q.label}</p>
@@ -1791,7 +1791,7 @@ export default function AIStrategyPage() {
               ))}
             </div>
             {sm.notes && (
-              <div className="mt-3 rounded-lg bg-foreground/3 border border-white/6 px-3 py-2">
+              <div className="mt-3 rounded-lg bg-muted/30 border border-border/60 px-3 py-2">
                 <p className="text-xs text-muted-foreground leading-relaxed">{sm.notes}</p>
               </div>
             )}
@@ -1813,7 +1813,7 @@ export default function AIStrategyPage() {
         />
 
         {selectedInits.length > 0 ? (
-          <div className="rounded-xl border border-border bg-white/2 overflow-hidden">
+          <div className="rounded-xl border border-border bg-muted/40 overflow-hidden">
             {/* View toggle */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-border">
               <p className="text-xs text-muted-foreground">{selectedInits.length} {selectedInits.length === 1 ? "initiative" : "initiatives"} across {initiativesByPhase.length} {initiativesByPhase.length === 1 ? "phase" : "phases"}</p>
@@ -1903,7 +1903,7 @@ export default function AIStrategyPage() {
                           return (
                             <div
                               key={init.id}
-                              className="rounded-lg border border-border bg-white/2 p-3 cursor-pointer hover:border-border transition-colors"
+                              className="rounded-lg border border-border bg-muted/40 p-3 cursor-pointer hover:border-border transition-colors"
                               style={{ borderLeftColor: catColor, borderLeftWidth: "3px" }}
                               onClick={() => setDetailInitiative(init)}
                             >
@@ -2113,7 +2113,7 @@ export default function AIStrategyPage() {
         })()}
 
         {/* Dependencies — C1: collapsed by default */}
-        <div className="rounded-xl border border-border bg-white/2 p-5 mt-5">
+        <div className="rounded-xl border border-border bg-muted/40 p-5 mt-5">
           <button
             onClick={() => setCrossFuncCollapsed(c => !c)}
             className="w-full flex items-center gap-2"
@@ -2145,7 +2145,7 @@ export default function AIStrategyPage() {
                 items: ["Phase budget sign-off before each phase launch", "ROI measurement framework agreement", "Vendor contract review and approval"],
               },
             ].map(dep => (
-              <div key={dep.function} className="rounded-lg border border-border bg-white/2 p-4">
+              <div key={dep.function} className="rounded-lg border border-border bg-muted/40 p-4">
                 <p className="text-xs font-bold mb-2" style={{ color: dep.color }}>{dep.function}</p>
                 <ul className="space-y-1.5">
                   {dep.items.map((item, i) => (
@@ -2169,7 +2169,7 @@ export default function AIStrategyPage() {
           const pct = ((confNum - 1) / 4) * 100;
           const color = confNum >= 4 ? "#22C55E" : confNum === 3 ? "#F59E0B" : "#EF4444";
           return (
-            <div className="mt-6 rounded-xl border border-border bg-white/2 p-5">
+            <div className="mt-6 rounded-xl border border-border bg-muted/40 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center">
                   <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -2218,7 +2218,7 @@ export default function AIStrategyPage() {
               </div>
               <div className="space-y-2">
                 {fws.map(fw => (
-                  <div key={fw.id} className="rounded-lg border border-border bg-white/2 p-3">
+                  <div key={fw.id} className="rounded-lg border border-border bg-muted/40 p-3">
                     <button
                       onClick={() => setRegDescCollapsed(s => ({ ...s, [fw.id]: !s[fw.id] }))}
                       className="w-full flex items-start gap-2"
@@ -2289,17 +2289,17 @@ export default function AIStrategyPage() {
             <div className="space-y-5">
               {/* KPI row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="rounded-xl border border-border bg-foreground/3 px-4 py-3">
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Gross Value (High)</div>
                   <div className="text-xl font-bold text-emerald-400">{hasQuantified ? fmt(ve.total_quantified_value_gbp.high) : "—"}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.total_quantified_value_gbp.low) : "—"}</div>
                 </div>
-                <div className="rounded-xl border border-border bg-foreground/3 px-4 py-3">
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Value (High)</div>
                   <div className={`text-xl font-bold ${ve.net_value_gbp.high >= 0 ? "text-emerald-400" : "text-red-400"}`}>{hasQuantified ? fmt(ve.net_value_gbp.high) : "—"}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Low: {hasQuantified ? fmt(ve.net_value_gbp.low) : "—"}</div>
                 </div>
-                <div className="rounded-xl border border-border bg-foreground/3 px-4 py-3">
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payback Period</div>
                   <div className="text-xl font-bold text-amber-400">
                     {ve.payback_period_months ? (
@@ -2314,7 +2314,7 @@ export default function AIStrategyPage() {
                       : "Months to breakeven"}
                   </div>
                 </div>
-                <div className="rounded-xl border border-border bg-foreground/3 px-4 py-3">
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Qualitative Value</div>
                   <div className="text-xl font-bold text-violet-400">{ve.qualitative_summary.capability_uplift_count + ve.qualitative_summary.risk_avoidance_count + ve.qualitative_summary.strategic_count}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">Initiatives (non-monetised)</div>
@@ -2362,7 +2362,7 @@ export default function AIStrategyPage() {
                   { name: "Net Value",    high: netHigh,   low: netLow,    fill: netHigh >= 0 ? "#60A5FA" : "#F87171" },
                 ];
                 return (
-                  <div className="rounded-xl border border-border bg-white/2 p-5">
+                  <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <BarChart3 className="w-4 h-4 text-emerald-400" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Value Summary — 3-Year Horizon</p>
@@ -2372,7 +2372,7 @@ export default function AIStrategyPage() {
                       <p className="text-[10px] text-muted-foreground mb-3">High estimate shown. Hover for low estimate.</p>
                       <ResponsiveContainer width="100%" height={160}>
                         <BarChart data={summaryData} barCategoryGap="35%" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-                          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+                          <CartesianGrid vertical={false} stroke="var(--border)" />
                           <XAxis
                             dataKey="name"
                             tick={{ fill: "#94A3B8", fontSize: 11 }}
@@ -2383,9 +2383,9 @@ export default function AIStrategyPage() {
                             tick={{ fill: "#94A3B8", fontSize: 10 }}
                             axisLine={false} tickLine={false} width={52}
                           />
-                          <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" />
+                          <ReferenceLine y={0} stroke="var(--border)" />
                           <Tooltip
-                            cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                            cursor={{ fill: "var(--muted)" }}
                             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12, color: "var(--foreground)" }}
                             formatter={(value: number, _name: string, props: { payload?: { name: string; low: number } }) => [
                               <span key="v">
@@ -2414,7 +2414,7 @@ export default function AIStrategyPage() {
                             barCategoryGap="20%"
                             margin={{ top: 0, right: 60, left: 8, bottom: 0 }}
                           >
-                            <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.06)" />
+                            <CartesianGrid horizontal={false} stroke="var(--border)" />
                             <XAxis
                               type="number"
                               tickFormatter={fmtK}
@@ -2429,7 +2429,7 @@ export default function AIStrategyPage() {
                               axisLine={false} tickLine={false}
                             />
                             <Tooltip
-                              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                              cursor={{ fill: "var(--muted)" }}
                               contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12, color: "var(--foreground)" }}
                               formatter={(value: number, _name: string, props: { payload?: { fullName: string; low: number; type: string } }) => [
                                 <span key="v">
@@ -2506,7 +2506,7 @@ export default function AIStrategyPage() {
                 );
               })()}
               {/* Per-initiative breakdown — C1: collapsed by default */}
-              <div className="rounded-xl border border-border bg-white/2 overflow-hidden">
+              <div className="rounded-xl border border-border bg-muted/40 overflow-hidden">
                 <button
                   onClick={() => setPerInitCollapsed(c => !c)}
                   className="w-full px-5 py-3 border-b border-border flex items-center justify-between"
@@ -2529,7 +2529,7 @@ export default function AIStrategyPage() {
                 {!perInitCollapsed && (
                 <div className="divide-y divide-white/5 animate-in slide-in-from-top-2 duration-200">
                   {ve.by_initiative.map(item => (
-                    <div key={item.initiative_id} className="px-5 py-3 flex items-start gap-3 hover:bg-white/2 transition-colors">
+                    <div key={item.initiative_id} className="px-5 py-3 flex items-start gap-3 hover:bg-muted/40 transition-colors">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium truncate">{item.display_name}</span>
@@ -2576,7 +2576,7 @@ export default function AIStrategyPage() {
 
               {/* Qualitative bullets — C1: collapsed by default */}
               {ve.qualitative_summary.bullet_points.length > 0 && (
-                <div className="rounded-xl border border-border bg-white/2 px-5 py-4">
+                <div className="rounded-xl border border-border bg-muted/40 px-5 py-4">
                   <button
                     onClick={() => setQualBulletsCollapsed(c => !c)}
                     className="w-full flex items-center justify-between"
@@ -2612,7 +2612,7 @@ export default function AIStrategyPage() {
                 ];
                 const totalHigh = tv.efficiency.high + tv.effectiveness.high + tv.strategic.high;
                 return (
-                  <div className="rounded-xl border border-border bg-white/2 p-5">
+                  <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <LayoutGrid className="w-4 h-4 text-emerald-400" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Tier Value Analysis</p>
@@ -2645,18 +2645,18 @@ export default function AIStrategyPage() {
                 const fm = ve.financial_model;
                 const fmt = (n: number) => n < 0 ? `-£${Math.abs(Math.round(n / 1000))}k` : `£${Math.round(n / 1000)}k`;
                 return (
-                  <div className="rounded-xl border border-border bg-white/2 p-5">
+                  <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <TrendingUp className="w-4 h-4 text-blue-400" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Financial Model ({fm.horizon_years}-Year DCF @ {fm.discount_rate_pct}%)</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-border bg-white/2 px-4 py-3">
+                      <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Net Present Value</p>
                         <p className={`text-xl font-bold ${fm.npv_gbp.high >= 0 ? "text-blue-400" : "text-red-400"}`}>{fmt(fm.npv_gbp.high)}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Low: {fmt(fm.npv_gbp.low)}</p>
                       </div>
-                      <div className="rounded-lg border border-border bg-white/2 px-4 py-3">
+                      <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
                         {(fm as any).irr_suppressed ? (
                           // CFO Fix 4: IRR unreliable at this scale — show payback instead
                           <>
@@ -2730,14 +2730,14 @@ export default function AIStrategyPage() {
                   { key: "optimistic",  label: "Optimistic",  desc: "120% of high estimate, 90% of low cost", data: sa.optimistic,  color: "#4ADE80" },
                 ] as const;
                 return (
-                  <div className="rounded-xl border border-border bg-white/2 p-5">
+                  <div className="rounded-xl border border-border bg-muted/40 p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Activity className="w-4 h-4 text-amber-400" />
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Three-Scenario Analysis</p>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {scenarios.map(s => (
-                        <div key={s.key} className="rounded-lg border border-border bg-white/2 p-3">
+                        <div key={s.key} className="rounded-lg border border-border bg-muted/40 p-3">
                           <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: s.color }}>{s.label}</p>
                           <p className="text-[10px] text-muted-foreground mb-3 leading-relaxed">{s.desc}</p>
                           <div className="space-y-1.5">
@@ -2929,7 +2929,7 @@ export default function AIStrategyPage() {
         const pilotMetricOpts = (pilotDesign?.success_metrics ?? []).map(id => PILOT_SUCCESS_METRICS.find(m => m.id === id)).filter(Boolean) as typeof PILOT_SUCCESS_METRICS;
         return (
           <section id="measurement" className="mb-6">
-            <div className="rounded-2xl border border-border bg-white/2 p-6">
+            <div className="rounded-2xl border border-border bg-muted/40 p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-lg bg-teal-500/15 flex items-center justify-center">
                   <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -2941,7 +2941,7 @@ export default function AIStrategyPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {cadenceOpt && (
-                  <div className="rounded-xl border border-border bg-white/2 p-4">
+                  <div className="rounded-xl border border-border bg-muted/40 p-4">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Review Cadence</p>
                     <p className="text-sm font-semibold text-foreground">{cadenceOpt.label}</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -2950,14 +2950,14 @@ export default function AIStrategyPage() {
                   </div>
                 )}
                 {pilotScopeOpt && (
-                  <div className="rounded-xl border border-border bg-white/2 p-4">
+                  <div className="rounded-xl border border-border bg-muted/40 p-4">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Scope</p>
                     <p className="text-sm font-semibold text-foreground">{pilotScopeOpt.label}</p>
                     <p className="text-xs text-muted-foreground mt-1">{pilotScopeOpt.description}</p>
                   </div>
                 )}
                 {pilotDurOpt && (
-                  <div className="rounded-xl border border-border bg-white/2 p-4">
+                  <div className="rounded-xl border border-border bg-muted/40 p-4">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Duration</p>
                     <p className="text-sm font-semibold text-foreground">{pilotDurOpt.label}</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -2966,7 +2966,7 @@ export default function AIStrategyPage() {
                   </div>
                 )}
                 {pilotMetricOpts.length > 0 && (
-                  <div className="rounded-xl border border-border bg-white/2 p-4">
+                  <div className="rounded-xl border border-border bg-muted/40 p-4">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Pilot Success Metrics</p>
                     <div className="space-y-1.5">
                       {pilotMetricOpts.map(m => (
@@ -3032,7 +3032,7 @@ export default function AIStrategyPage() {
                 external: false,
               },
             ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-border bg-foreground/3 p-5 flex flex-col gap-3">
+              <div key={i} className="rounded-xl border border-border bg-muted/30 p-5 flex flex-col gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}18`, color: item.color }}>
                   {item.icon}
                 </div>
@@ -3069,7 +3069,7 @@ export default function AIStrategyPage() {
       <section id="methodology">
         <Collapsible open={methodologyOpen} onOpenChange={setMethodologyOpen}>
           <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-border bg-white/2 hover:bg-foreground/4 transition-colors">
+            <button className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-border bg-muted/40 hover:bg-foreground/4 transition-colors">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Appendix — Methodology</span>
@@ -3079,7 +3079,7 @@ export default function AIStrategyPage() {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="rounded-b-xl border border-t-0 border-border bg-white/2 px-5 py-5 space-y-5">
+            <div className="rounded-b-xl border border-t-0 border-border bg-muted/40 px-5 py-5 space-y-5">
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Individual Capability Scoring</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -3105,7 +3105,7 @@ export default function AIStrategyPage() {
                     { source: "Gartner HR Technology Survey", year: "2024", use: "Technology adoption benchmarks by org size" },
                     { source: "PwC AI Readiness Survey", year: "2024", use: "Data infrastructure benchmarks by sector" },
                   ].map(ref => (
-                    <div key={ref.source} className="flex items-start gap-2 p-2.5 rounded-lg border border-white/6 bg-white/2">
+                    <div key={ref.source} className="flex items-start gap-2 p-2.5 rounded-lg border border-border/60 bg-muted/40">
                       <FileText className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs font-medium text-foreground">{ref.source} ({ref.year})</p>
@@ -3177,7 +3177,7 @@ export default function AIStrategyPage() {
                 </div>
               )}
               {/* Weighting note */}
-              <div className="rounded-lg border border-border bg-white/2 p-3">
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">How this score is calculated</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Domain scores are computed by the AiQ Assessment Engine v10.7 using a sum-and-clip formula across signals mapped to this domain. Scores are deterministic — no LLM is involved. Confidence band: <strong className="text-foreground capitalize">{drillDownQ.data.confidenceBand}</strong>.
@@ -3227,7 +3227,7 @@ function LibraryVersionFooter() {
     <div className="fixed bottom-4 right-4 z-30">
       <a
         href="/admin/content-library"
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/90 border border-border/60 backdrop-blur text-xs text-muted-foreground hover:text-slate-200 hover:border-slate-500 transition-all shadow-lg"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/90 border border-border/60 backdrop-blur text-xs text-muted-foreground hover:text-foreground/90 hover:border-slate-500 transition-all shadow-lg"
         title={`Content Library v${meta.version} — built ${new Date(meta.built_at).toLocaleDateString()} · ${meta.git_sha}`}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -3286,7 +3286,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
           <p className="text-sm text-muted-foreground py-4">Provenance data not available. Save your strategy to generate provenance records.</p>
         ) : target === "vision" || target === "wontDo" ? (
           <div className="space-y-4 pt-1">
-            <div className="rounded-lg border border-border bg-white/2 p-4 space-y-3">
+            <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-4 h-4 text-green-400" />
@@ -3296,7 +3296,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
                   <p className="text-xs text-muted-foreground">{METHOD_LABELS[provenance[target]?.method ?? ""] ?? provenance[target]?.method ?? "—"}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/6">
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/60">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Library Version</p>
                   <p className="text-xs font-mono text-foreground">{provenance[target]?.libraryVersion ?? "—"}</p>
@@ -3307,7 +3307,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
                 </div>
               </div>
             </div>
-            <div className="rounded-lg border border-border bg-white/2 p-4">
+            <div className="rounded-lg border border-border bg-muted/40 p-4">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Quality Gate</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 The {target === "vision" ? "vision statement" : "\"What We Won't Do\" list"} was generated by the AiQ Strategy Engine using a multi-pass LLM process with a quality gate that checks for forbidden phrases, required numeric commitments, and sector-specific vocabulary. Outputs failing the gate are regenerated up to 3 times before falling back to a curated template.
@@ -3324,7 +3324,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
                 {Object.entries(provenance.costs).map(([initId, costData]) => {
                   const init = selectedInits.find((i: any) => i.id === initId || i.initiative_id === initId);
                   return (
-                    <div key={initId} className="rounded-lg border border-border bg-white/2 p-3">
+                    <div key={initId} className="rounded-lg border border-border bg-muted/40 p-3">
                       <p className="text-xs font-semibold text-foreground mb-1">{init?.name ?? init?.display_name ?? initId}</p>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
@@ -3356,7 +3356,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
             {liveRisks && liveRisks.length > 0 ? (
               <div className="space-y-3">
                 {liveRisks.map(r => (
-                  <div key={r.ruleId} className="rounded-lg border border-border bg-white/2 p-3">
+                  <div key={r.ruleId} className="rounded-lg border border-border bg-muted/40 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <p className="text-xs font-semibold text-foreground flex-1">{r.displayName}</p>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
@@ -3382,7 +3382,7 @@ function ProvenanceModal({ open, onClose, target, provenanceJson, selectedInits,
             ) : provenance.risks && Object.keys(provenance.risks).length > 0 ? (
               <div className="space-y-2">
                 {Object.entries(provenance.risks).map(([ruleId, riskData]) => (
-                  <div key={ruleId} className="rounded-lg border border-border bg-white/2 p-3">
+                  <div key={ruleId} className="rounded-lg border border-border bg-muted/40 p-3">
                     <p className="text-xs font-semibold text-foreground mb-0.5">{ruleId}</p>
                     <p className="text-[10px] text-muted-foreground">Library v{riskData.libraryVersion}</p>
                   </div>

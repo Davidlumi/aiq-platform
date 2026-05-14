@@ -160,7 +160,7 @@ export default function ContentCMSPage() {
           </p>
         </div>
         <Button
-          className="bg-primary hover:bg-primary/90 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
           onClick={() => toast.info("Content authoring editor coming in next release")}
         >
           <FolderOpen className="w-4 h-4" />

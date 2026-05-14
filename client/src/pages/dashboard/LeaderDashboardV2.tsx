@@ -81,7 +81,7 @@ function ReadinessDonut({ distribution }: { distribution: Array<{ level: number;
       const iy2 = cy + r * Math.sin(startAngle);
       const large = angle > Math.PI ? 1 : 0;
       const path = `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${r} ${r} 0 ${large} 0 ${ix2} ${iy2} Z`;
-      return { ...d, path, colour: LEVEL_DONUT_COLOURS[d.level]?.fill ?? "#6b7280" };
+      return { ...d, path, colour: LEVEL_DONUT_COLOURS[d.level]?.fill ?? "var(--muted-foreground)" };
     });
 
   return (
@@ -92,7 +92,7 @@ function ReadinessDonut({ distribution }: { distribution: Array<{ level: number;
           <path key={s.level} d={s.path} fill={s.colour} opacity={0.9} />
         ))}
         <text x={cx} y={cy - 8} textAnchor="middle" fill="currentColor" fontSize="24" fontWeight="700">{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill="#94a3b8" fontSize="11">assessed</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="var(--muted-foreground)" fontSize="11">assessed</text>
       </svg>
       {/* Legend — horizontal row of pills below the donut */}
       <div className="grid grid-cols-5 gap-2 w-full">
@@ -585,7 +585,7 @@ export default function LeaderDashboardV2() {
             <div className="h-52 mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={domainChartData} margin={{ top: 12, right: 16, left: -20, bottom: 0 }} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} ticks={[0,2,4,6,8,10]} />
                   <Tooltip

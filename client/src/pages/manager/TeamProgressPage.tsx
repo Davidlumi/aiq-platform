@@ -135,7 +135,7 @@ export default function TeamProgressPage() {
                 const isStalled = !member.plan || ((member.streak?.currentStreak ?? 0) === 0 && (member.plan?.progressPct ?? 0) < 100);
                 return (
                   <div key={member.userId} className="grid gap-4 px-5 py-3 items-center hover:bg-secondary/50 transition-colors"
-                    style={{ gridTemplateColumns: "1fr 100px 180px 80px 40px", borderBottom: i < members.length - 1 ? "0.5px solid oklch(22% 0.030 240)" : undefined }}>
+                    style={{ gridTemplateColumns: "1fr 100px 180px 80px 40px", borderBottom: i < members.length - 1 ? "0.5px solid var(--border)" : undefined }}>
                     {/* Name + status */}
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 bg-muted text-muted-foreground">

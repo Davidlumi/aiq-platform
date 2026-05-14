@@ -878,7 +878,7 @@ export function VisionModal({
             </Button>
             <Button
               size="sm"
-              className="h-8 text-xs px-4 bg-teal-600 hover:bg-teal-500 text-white"
+              className="h-8 text-xs px-4 bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleSave}
               disabled={isSaving || !draftText.trim()}
             >

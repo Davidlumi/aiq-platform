@@ -317,7 +317,7 @@ export default function StrategyInvestmentRiskPage() {
       .filter(([, items]) => items.length > 0)
       .map(([key, items]) => ({
         key,
-        ...(DEP_FUNCTION_MAP[key] ?? { label: key, color: "#94A3B8" }),
+        ...(DEP_FUNCTION_MAP[key] ?? { label: key, color: "var(--muted-foreground)" }),
         items: items.slice(0, 4),
         totalCount: items.length,
       }));
@@ -428,7 +428,7 @@ export default function StrategyInvestmentRiskPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {costEnv.byPhase.map(phase => {
               const cfg   = PHASE_LABELS[phase.phase] ?? { label: phase.label, months: "" };
-              const color = PHASE_COLORS[phase.phase] ?? "#94A3B8";
+              const color = PHASE_COLORS[phase.phase] ?? "var(--muted-foreground)";
               return (
                 <div key={phase.phase} className="rounded-xl border border-border bg-foreground/3 p-3">
                   <div className="flex items-center gap-1.5 mb-2">
@@ -517,7 +517,7 @@ export default function StrategyInvestmentRiskPage() {
           </div>
           <div className="space-y-4">
             {costEnv.byPhase.map(phase => {
-              const color  = PHASE_COLORS[phase.phase] ?? "#94A3B8";
+              const color  = PHASE_COLORS[phase.phase] ?? "var(--muted-foreground)";
               const cfg    = PHASE_LABELS[phase.phase] ?? { label: phase.label, months: "" };
               const maxVal = Math.max(...costEnv.byPhase.map(p => p.maxGbk));
               const barPct = maxVal > 0 ? Math.round((phase.maxGbk / maxVal) * 100) : 0;

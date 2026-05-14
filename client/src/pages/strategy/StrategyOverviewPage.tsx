@@ -232,7 +232,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
               <div className="flex-1 min-w-[100px] flex flex-col gap-1">
                 <div
                   className="relative h-[5px] rounded-sm w-full"
-                  style={{ background: "rgba(255,255,255,0.06)" }}
+                  style={{ background: "var(--muted)" }}
                   role="progressbar"
                   aria-valuenow={nowNum}
                   aria-valuemin={0}
@@ -244,7 +244,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
                     style={{
                       position: "absolute", left: 0, top: 0, height: "100%",
                       width: `${Math.min(nowNum / 10 * 100, 100)}%`,
-                      background: "#9ca3af",
+                      background: "var(--muted-foreground)",
                       borderRadius: "3px 0 0 3px",
                     }}
                   />
@@ -369,7 +369,7 @@ function ListCard({ accentColor, eyebrow, eyebrowColor, title, tierTag, items, e
                 style={{ background: accentColor }}
                 aria-hidden="true"
               />
-              <span style={{ color: "#9ca3b0" }}>{row.label}:</span>
+              <span style={{ color: "var(--muted-foreground)" }}>{row.label}:</span>
               {" "}
               <span style={{ color: "#5DCAA5", fontWeight: 500 }}>{row.from} → {row.to}{row.unit ? row.unit : ""}</span>
             </li>
@@ -771,7 +771,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                     <span
                       style={{
                         fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase",
-                        fontWeight: 500, color: "#7ec9ab", flexShrink: 0,
+                        fontWeight: 500, color: "var(--primary)", flexShrink: 0,
                         width: 90, paddingTop: 2, lineHeight: 1.4,
                       }}
                     >
@@ -797,7 +797,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
                       </div>
                     ) : (
                       <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                        <p style={{ fontSize: 12, color: "#cfd2d8", lineHeight: 1.55 }}>{row.content}</p>
+                        <p style={{ fontSize: 12, color: "var(--foreground)", lineHeight: 1.55 }}>{row.content}</p>
                         {row.idx !== null && (
                           <button
                             className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded hover:bg-foreground/8 text-muted-foreground hover:text-foreground transition-opacity"
@@ -1169,26 +1169,26 @@ export default function StrategyOverviewPage() {
                 style={{ width: 7, height: 7, borderRadius: "50%", background: "#5DCAA5", flexShrink: 0, display: "inline-block" }}
                 aria-hidden="true"
               />
-              <h2 style={{ fontSize: 20, fontWeight: 500, color: "#fff", lineHeight: 1.2 }}>HR AI Strategy</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 500, color: "var(--foreground)", lineHeight: 1.2 }}>HR AI Strategy</h2>
             </div>
             {/* Subtitle: accent terms in #cfd2d8, separators in #4a5160 */}
             {isLoading ? (
               <Skeleton className="h-3.5 w-72 rounded mt-1" />
             ) : (
-              <p className="text-[12px] leading-snug mt-0.5" style={{ color: "#9ca3b0" }}>
+              <p className="text-[12px] leading-snug mt-0.5" style={{ color: "var(--muted-foreground)" }}>
                 {[sectorLabel, bLevel && `${bLevel.label} ambition`, pLevel && `HR as ${pLevel.label.replace(/s$/i, "").toLowerCase()}`]
                   .filter(Boolean)
                   .map((part, i, arr) => (
                     <React.Fragment key={i}>
-                      <span style={{ color: "#cfd2d8" }}>{part}</span>
-                      {i < arr.length - 1 && <span style={{ color: "#4a5160" }}> · </span>}
+                      <span style={{ color: "var(--foreground)" }}>{part}</span>
+                      {i < arr.length - 1 && <span style={{ color: "var(--muted-foreground)" }}> · </span>}
                     </React.Fragment>
                   ))}
               </p>
             )}
             {/* Meta line: Updated [date] by [user] */}
             {savedAt && (
-              <p className="text-[11px] mt-0.5" style={{ color: "#7a8294" }}>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
                 Updated {new Date(savedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                 {savedByName ? ` by ${savedByName}` : ""}
               </p>
@@ -1259,7 +1259,7 @@ export default function StrategyOverviewPage() {
                   if (m.index > last) parts.push(line.slice(last, m.index));
                   const match = m[0];
                   if (match.startsWith("(")) {
-                    parts.push(<em key={m.index} style={{ fontStyle: "italic", fontSize: 12, color: "#7a8294" }}>{match}</em>);
+                    parts.push(<em key={m.index} style={{ fontStyle: "italic", fontSize: 12, color: "var(--muted-foreground)" }}>{match}</em>);
                   } else {
                     parts.push(<span key={m.index} style={{ color: "#5DCAA5", fontWeight: 500 }}>{match}</span>);
                   }
@@ -1276,7 +1276,7 @@ export default function StrategyOverviewPage() {
                       padding: "0.65rem 0.9rem",
                       fontSize: 14,
                       fontWeight: 400,
-                      color: "#E9ECF2",
+                      color: "var(--foreground)",
                       lineHeight: 1.5,
                     }}
                   >
@@ -1299,7 +1299,7 @@ export default function StrategyOverviewPage() {
                   <span
                     style={{
                       fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em",
-                      color: "#6c7385", fontWeight: 600,
+                      color: "var(--muted-foreground)", fontWeight: 600,
                     }}
                   >
                     Vision Statement
@@ -1313,11 +1313,11 @@ export default function StrategyOverviewPage() {
                   </button>
                 </div>
                 {/* Caption */}
-                <p className="text-[11px] mb-2" style={{ color: "#7a8294" }}>
+                <p className="text-[11px] mb-2" style={{ color: "var(--muted-foreground)" }}>
                   AI-drafted ·{" "}
                   <button
                     className="underline underline-offset-2 hover:no-underline"
-                    style={{ color: "#9ca3b0" }}
+                    style={{ color: "var(--muted-foreground)" }}
                     onClick={() => navigate("/strategy/ambition")}
                   >
                     Edit to make it yours
@@ -1362,7 +1362,7 @@ export default function StrategyOverviewPage() {
               <ListCard
                 accentColor={ambitionAccent}
                 eyebrow={ambitionEyebrow}
-                eyebrowColor="#7ec9ab"
+                eyebrowColor="var(--primary)"
                 title="Where we're going"
                 tierTag={ambitionTierTag}
                 items={ambitionItems}

@@ -3367,13 +3367,13 @@ test
 - [x] TypeScript: 0 errors | Tests: 930/930
 
 ## Light Mode Deep-Dive QA Fix
-- [ ] Audit all pages in light mode and fix hardcoded dark oklch/hex colors
-- [ ] Fix strategy pages (Overview, Ambition, Roadmap, Diagnostic, Plan) - hardcoded dark values
-- [ ] Fix dashboard pages (CPO/Leader, Manager, Individual, Admin, Auditor) - hardcoded dark values
-- [ ] Fix people/team pages (MemberReport, TeamProgress, ConversationPrompts) - hardcoded dark values
-- [ ] Fix assessment pages (AssessmentPage, SessionPage, ResultsPage) - hardcoded dark values
-- [ ] Fix learning/content pages (LearningPlan, ContentLibrary, KnowledgeBase) - hardcoded dark values
-- [ ] Fix admin pages (OrgContext, Users, BetaApplications, etc.) - hardcoded dark values
-- [ ] Fix AppShell/DashboardLayout custom CSS classes (aiq-header-glass, aiq-sidebar-glass, etc.)
-- [ ] Fix index.css custom component classes with hardcoded dark backgrounds
-- [ ] TypeScript: 0 errors | Tests: 930/930
+- [x] Audit all pages in light mode and fix hardcoded dark oklch/hex colors
+- [x] Fix strategy pages (Overview, Ambition, Roadmap, Diagnostic, Plan) - hardcoded dark values
+- [x] Fix dashboard pages (CPO/Leader, Manager, Individual, Admin, Auditor) - hardcoded dark values
+- [x] Fix people/team pages (MemberReport, TeamProgress, ConversationPrompts) - hardcoded dark values
+- [x] Fix assessment pages (AssessmentPage, SessionPage, ResultsPage) - hardcoded dark values
+- [x] Fix learning/content pages (LearningPlan, ContentLibrary, KnowledgeBase) - hardcoded dark values
+- [x] Fix admin pages (OrgContext, Users, BetaApplications, etc.) - hardcoded dark values
+- [x] Fix AppShell/DashboardLayout custom CSS classes (aiq-header-glass, aiq-sidebar-glass, etc.)
+- [x] Fix index.css custom component classes with hardcoded dark backgrounds
+- [x] TypeScript: 0 errors | Tests: 930/930

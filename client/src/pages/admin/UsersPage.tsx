@@ -413,7 +413,7 @@ export default function UsersPage() {
             <TableSkeleton columns={6} rows={8} />
           ) : !users_list.length ? (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <Users className="h-12 w-12 text-foreground/70 mx-auto mb-3" />
               <p className="aiq-body text-muted-foreground">No users found</p>
             </div>
           ) : (
@@ -458,7 +458,7 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[u.status] ?? "bg-muted/60 text-slate-300 border-slate-600/50"}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[u.status] ?? "bg-muted/60 text-foreground/70 border-border/80/50"}`}>
                           {u.status}
                         </span>
                       </td>

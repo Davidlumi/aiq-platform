@@ -21,7 +21,7 @@ import { CheckCircle2, Circle, Clock, PauseCircle, XCircle, ChevronRight, Milest
 import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  not_started: { label: "Not Started", color: "bg-muted/60 text-slate-300 border-slate-600/50", icon: <Circle className="w-3.5 h-3.5" /> },
+  not_started: { label: "Not Started", color: "bg-muted/60 text-foreground/70 border-border/80/50", icon: <Circle className="w-3.5 h-3.5" /> },
   in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300 border-blue-700/50", icon: <Clock className="w-3.5 h-3.5" /> },
   paused: { label: "Paused", color: "bg-amber-900/40 text-amber-300 border-amber-700/50", icon: <PauseCircle className="w-3.5 h-3.5" /> },
   completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300 border-emerald-700/50", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
@@ -29,7 +29,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 const MILESTONE_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-muted/60 text-slate-300" },
+  pending: { label: "Pending", color: "bg-muted/60 text-foreground/70" },
   in_progress: { label: "In Progress", color: "bg-blue-900/40 text-blue-300" },
   completed: { label: "Completed", color: "bg-emerald-900/40 text-emerald-300" },
   overdue: { label: "Overdue", color: "bg-red-900/40 text-red-300" },
