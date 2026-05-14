@@ -1,0 +1,16 @@
+{
+  "query": "\nSELECT tenant_id, \n  CASE WHEN guiding_principles_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS principles,\n  CASE WHEN wont_do_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS wont_do,\n  CASE WHEN outcomes_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS outcomes\nFROM ail_org_context\nWHERE tenant_id = 'tenant-acme-ltd';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nSELECT tenant_id, \n  CASE WHEN guiding_principles_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS principles,\n  CASE WHEN wont_do_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS wont_do,\n  CASE WHEN outcomes_json IS NULL THEN 'NULL' ELSE 'HAS DATA' END AS outcomes\nFROM ail_org_context\nWHERE tenant_id = 'tenant-acme-ltd';\n",
+  "rows": [
+    {
+      "tenant_id": "tenant-acme-ltd",
+      "principles": "NULL",
+      "wont_do": "NULL",
+      "outcomes": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "tenant_id\tprinciples\twont_do\toutcomes\ntenant-acme-ltd\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 269
+}

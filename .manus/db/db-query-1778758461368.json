@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE ail_org_context\nSET\n  guiding_principles_json = NULL,\n  wont_do_json = NULL,\n  outcomes_json = NULL\nWHERE tenant_id = 'tenant-acme-ltd';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nUPDATE ail_org_context\nSET\n  guiding_principles_json = NULL,\n  wont_do_json = NULL,\n  outcomes_json = NULL\nWHERE tenant_id = 'tenant-acme-ltd';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 268
+}

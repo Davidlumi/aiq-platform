@@ -3303,3 +3303,12 @@ test
 - [x] Change 6: Replace vision caption with assertive version (bold "This becomes your CEO talking points." + edit link)
 - [x] Change 7: Change HR ambition pill from "HR: AI-Led" to "HR: Innovator"
 - [x] Update AI drafting prompts for principles (constraint-shaped), exclusions (specific deferrals), outcomes (measurable baselines + targets + dates)
+
+## Ambition Page Content Migration Patch (14 May 2026)
+
+- [x] Verify DEFAULT_PRINCIPLES matches spec (5 principles, exact titles/descriptions/tags)
+- [x] Verify DEFAULT_EXCLUSIONS matches spec (5 exclusions, exact text)
+- [x] Verify DEFAULT_OUTCOMES matches spec (4 outcomes, exact baselines/targets/dates/tests_principle)
+- [x] Clear stored guidingPrinciplesJson, exclusionsJson, outcomesJson for tenant-acme-ltd via SQL
+- [x] Verify outcome bar rendering: outcomes 1/2/4 solid gray today bar, outcome 3 dashed TBD
+- [x] Verify principle cross-reference line renders on each outcome
