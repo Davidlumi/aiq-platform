@@ -246,7 +246,7 @@ function DomainEvidenceModal({ row, open, onClose }: { row: DomainRow | null; op
             <p className="text-sm text-foreground leading-relaxed">{row.recommendation}</p>
           </div>
           <div className="flex justify-between items-center pt-1">
-            <Link href="/strategy/plan">
+            <Link href="/strategy/roadmap">
               <Button variant="outline" size="sm" className="gap-1.5" onClick={onClose}>
                 <ExternalLink className="w-3.5 h-3.5" />
                 View initiatives for this domain
@@ -415,7 +415,7 @@ export default function StrategyDiagnosticPage() {
               <div className="flex gap-2 mt-2">
                 <Button variant="outline" size="sm"
                   className={`gap-1 text-xs ${hasDecline ? "border-rose-300 hover:bg-rose-100" : "border-amber-300 hover:bg-amber-100"}`}
-                  onClick={() => navigate("/strategy/plan")}>
+                  onClick={() => navigate("/strategy/roadmap")}>
                   Review plan
                 </Button>
               </div>
@@ -662,7 +662,7 @@ export default function StrategyDiagnosticPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
               { href: "/strategy/ambition", label: "02 Ambition", desc: "Set targets based on this baseline", icon: Target },
-              { href: "/strategy/plan",     label: "03 Plan",     desc: "Initiatives to close the gaps",    icon: CheckCircle2 },
+              { href: "/strategy/roadmap",     label: "03 Plan",     desc: "Initiatives to close the gaps",    icon: CheckCircle2 },
               { href: "/strategy/measurement", label: "06 Measurement", desc: "Track progress against these scores", icon: BarChart2 },
             ].map(({ href, label, desc, icon: Icon }) => (
               <button

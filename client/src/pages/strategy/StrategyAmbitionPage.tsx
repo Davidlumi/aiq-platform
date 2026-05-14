@@ -1272,7 +1272,7 @@ export default function StrategyAmbitionPage() {
                 <CheckCircle2 className="w-3.5 h-3.5" /> Mark as reviewed
               </Button>
             )}
-            <Link href="/strategy/journey">
+            <Link href="/strategy/roadmap">
               <button
                 className="h-8 px-3 text-xs flex items-center gap-1.5 rounded-md transition-colors"
                 style={{ background: "transparent", border: "0.5px solid rgba(255,255,255,0.2)" }}

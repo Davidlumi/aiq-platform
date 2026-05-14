@@ -3336,3 +3336,10 @@ test
 - [x] Wire /strategy/roadmap route in App.tsx
 - [x] Seed 9 default initiatives across 4 phases on first getInitiatives call
 - [x] Phase enum: use "optimise" (not "sustain") to match DB schema
+
+## Routing Bug Fix (Session 2)
+- [x] Diagnose why /strategy/roadmap was showing old StrategyPlanPage — root cause: Overview page + Diagnostic page had stale footerLink="/strategy/plan" references; Ambition page footer linked to /strategy/journey
+- [x] Fix StrategyOverviewPage: 5 occurrences of /strategy/plan → /strategy/roadmap
+- [x] Fix StrategyDiagnosticPage: 3 occurrences of /strategy/plan → /strategy/roadmap
+- [x] Fix StrategyAmbitionPage footer: /strategy/journey → /strategy/roadmap
+- [x] TypeScript: 0 errors | Tests: 930/930

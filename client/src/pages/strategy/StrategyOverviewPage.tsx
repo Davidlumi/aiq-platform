@@ -1393,15 +1393,15 @@ export default function StrategyOverviewPage() {
                 tierTag={planTierTag}
                 items={planItems}
                 extraCount={planExtra}
-                footerLink="/strategy/plan"
+                footerLink="/strategy/roadmap"
                 footerLabel="See the full plan"
                 emptyMessage="No initiatives defined yet — build your plan."
                 emptyCta="Go to plan flow →"
-                emptyCtaHref="/strategy/plan"
+                emptyCtaHref="/strategy/roadmap"
                 onNavigate={navigate}
                 onCardClick={() => {
                   (window as any).umami?.track("strategy.card.clicked", { card: "plan" });
-                  navigate("/strategy/plan");
+                  navigate("/strategy/roadmap");
                 }}
               />
             )}
@@ -1420,7 +1420,7 @@ export default function StrategyOverviewPage() {
                 footerLabel="See the costs"
                 emptyMessage="Cost not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
-                emptyCtaHref="/strategy/plan"
+                emptyCtaHref="/strategy/roadmap"
                 isEmpty={costIsEmpty}
                 onNavigate={navigate}
                 onCardClick={() => {
@@ -1444,7 +1444,7 @@ export default function StrategyOverviewPage() {
                 footerLabel="See what this is worth"
                 emptyMessage="Value not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
-                emptyCtaHref="/strategy/plan"
+                emptyCtaHref="/strategy/roadmap"
                 isEmpty={valueIsEmpty}
                 onNavigate={navigate}
                 onCardClick={() => {
