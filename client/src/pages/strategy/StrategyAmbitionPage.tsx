@@ -4,7 +4,7 @@
  * Each section: empty (dashed) → drafting (spinner) → built (content + pencil)
  * Edit modals for all 4 sections. Review-date footer.
  */
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Pencil, Sparkles, Plus, Trash2, ChevronRight,
@@ -65,7 +65,7 @@ const BUSINESS_TIER_LABELS: Record<number, string> = {
   1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative",
 };
 const HR_TIER_LABELS: Record<number, string> = {
-  1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led",
+  1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "Innovator",
 };
 // Default AI-drafted content (brief Fix 1 §§7–9)
 const DEFAULT_PRINCIPLES: Principle[] = [
@@ -205,15 +205,28 @@ function VisionSection({
       >
         “{vision}”
       </blockquote>
-      {/* AI-drafted caption + tier badges */}
-      <div className="mt-3 flex items-center gap-2 flex-wrap">
-        <span
-          className="text-[10px] flex items-center gap-1"
-          style={{ color: "#7a8294" }}
-        >
-          <Sparkles className="w-3 h-3" style={{ color: "#5DCAA5" }} />
-          AI-drafted · edit to refine
-        </span>
+      {/* Change 6: Assertive vision caption per brief */}
+      <div className="mt-3 flex items-start gap-1.5">
+        <Sparkles className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "#5DCAA5" }} />
+        <p style={{ fontSize: 11, color: "#6c7385", lineHeight: 1.5 }}>
+          AI-drafted starting point ·{" "}
+          <span style={{ color: "#9ca3b0", fontWeight: 500 }}>This becomes your CEO talking points.</span>
+          {" "}
+          <button
+            onClick={onOpenModal}
+            style={{
+              color: "#7ec9ab",
+              textDecoration: "underline",
+              textDecorationColor: "rgba(126,201,171,0.3)",
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 11, padding: 0,
+            }}
+          >
+            Edit it like it&apos;s going to your CEO — because it is.
+          </button>
+        </p>
+      </div>
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
         {visionInputs?.businessAmbitionTier != null && (
           <span
             style={{
@@ -1025,17 +1038,50 @@ export default function StrategyAmbitionPage() {
     }
   }, [strategy]);
 
-  const principles: Principle[] | null = useMemo(() =>
-    sections?.principles as Principle[] | null ?? null
+  // Use live data if available; fall back to defaults so the page is never blank.
+  // Also auto-seed defaults to DB on first load (when sections loaded but data is null).
+  const principles: Principle[] = useMemo(() =>
+    (sections?.principles as Principle[] | null | undefined)?.length
+      ? (sections!.principles as Principle[])
+      : DEFAULT_PRINCIPLES
   , [sections]);
 
-  const exclusions: Exclusion[] | null = useMemo(() =>
-    sections?.wontDo as Exclusion[] | null ?? null
+  const exclusions: Exclusion[] = useMemo(() =>
+    (sections?.wontDo as Exclusion[] | null | undefined)?.length
+      ? (sections!.wontDo as Exclusion[])
+      : DEFAULT_EXCLUSIONS
   , [sections]);
 
-  const outcomes: Outcome[] | null = useMemo(() =>
-    sections?.outcomes as Outcome[] | null ?? null
+  const outcomes: Outcome[] = useMemo(() =>
+    (sections?.outcomes as Outcome[] | null | undefined)?.length
+      ? (sections!.outcomes as Outcome[])
+      : DEFAULT_OUTCOMES
   , [sections]);
+
+  // Auto-seed defaults to DB on first load when sections exist but content is null.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!sections) return; // still loading
+    const needsSeed = !(sections?.principles as Principle[] | null | undefined)?.length
+      || !(sections?.wontDo as Exclusion[] | null | undefined)?.length
+      || !(sections?.outcomes as Outcome[] | null | undefined)?.length;
+    if (!needsSeed) { seededRef.current = true; return; }
+    seededRef.current = true;
+    // Seed each missing section silently
+    const seed = async () => {
+      try {
+        if (!(sections?.principles as Principle[] | null | undefined)?.length)
+          await saveSectionM.mutateAsync({ section: "principles", value: DEFAULT_PRINCIPLES as never });
+        if (!(sections?.wontDo as Exclusion[] | null | undefined)?.length)
+          await saveSectionM.mutateAsync({ section: "wontDo", value: DEFAULT_EXCLUSIONS as never });
+        if (!(sections?.outcomes as Outcome[] | null | undefined)?.length)
+          await saveSectionM.mutateAsync({ section: "outcomes", value: DEFAULT_OUTCOMES as never });
+        await sectionsQ.refetch();
+      } catch { /* silent */ }
+    };
+    void seed();
+  }, [sections, saveSectionM, sectionsQ]);
 
   const lastReviewedAt: number | null = sections?.lastReviewedAt
     ? (sections.lastReviewedAt instanceof Date ? sections.lastReviewedAt.getTime() : sections.lastReviewedAt as unknown as number)

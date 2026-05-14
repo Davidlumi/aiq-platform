@@ -3292,3 +3292,14 @@ test
 - [x] Fix 2: Fix doubled £ in value card eyebrow (££21.5M → £21.5M)
 - [x] Fix 3: Uppercase K in costs card big number (£660k → £660K) and meta line (£320k → £320K)
 - [x] Fix 4: Match "+ 1 more outcome" affordance styling to "+ 6 more" (muted gray, no underline, same size/weight)
+
+## Ambition Page Content Fix Patch (14 May 2026)
+
+- [x] Change 1: Replace default principles with 5 constraint-shaped cards (exact titles, descriptions, capability tags from brief)
+- [x] Change 2: Add capability domain tags to each principle card (Output evaluation, AI interaction, Ethics & trust, Workflow design, Workforce readiness, Change leadership)
+- [x] Change 3: Replace exclusions with 5 specific strategic exclusions from brief
+- [x] Change 4: Replace outcomes with 4 structured outcomes (baselines, targets, dates, bar widths) — only outcome 3 has TBD baseline
+- [x] Change 5: Add principle cross-reference line to each outcome (↪ Tests principle N: title)
+- [x] Change 6: Replace vision caption with assertive version (bold "This becomes your CEO talking points." + edit link)
+- [x] Change 7: Change HR ambition pill from "HR: AI-Led" to "HR: Innovator"
+- [x] Update AI drafting prompts for principles (constraint-shaped), exclusions (specific deferrals), outcomes (measurable baselines + targets + dates)

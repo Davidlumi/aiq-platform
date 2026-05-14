@@ -813,7 +813,7 @@ Return JSON with this exact structure:
         customer_experience: "customer experience", employee_experience: "employee experience",
       };
       const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
-      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led" };
+      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "Innovator" };
       const PHILOSOPHY_VERBS: Record<string, string> = {
         amplify: "use AI to amplify what our people do",
         automate: "automate routine processes end-to-end",
@@ -1018,7 +1018,7 @@ Return JSON with this exact structure:
       }
 
       const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
-      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "AI-Led" };
+      const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "Innovator" };
       const bLabel = input.businessAmbitionTier ? BUSINESS_TIER_LABELS[input.businessAmbitionTier] ?? "" : "";
       const hrLabel = input.hrDeliveryTier ? HR_TIER_LABELS[input.hrDeliveryTier] ?? "" : "";
       const orgCtx = input.orgDescriptor ?? "an HR function";
@@ -1029,33 +1029,69 @@ Return JSON with this exact structure:
 
       const PROMPTS: Record<string, { system: string; user: string }> = {
         principles: {
-          system: `You are an HR strategy consultant. Write 4-5 guiding principles for responsible AI adoption in HR. Each has:
-- number (1-based integer)
-- title (3-5 words)
-- description (one sentence, max 20 words)
-- capability_tags (array of 1-3 relevant HR capability domains from: ["AI Foundations", "AI Interaction", "AI Output Evaluation", "AI Workflow Design", "AI Ethics & Trust", "Workforce AI Readiness", "AI Change Leadership"])
+          system: `You are an HR strategy consultant writing guiding principles for an HR AI strategy. Principles must be CONSTRAINT-SHAPED — each title rules something IN or OUT and describes specific behaviour. They are NOT category labels or values.
+
+Good examples:
+- "Human-in-the-loop on consequential decisions" (rules in human oversight on hiring, promotion, termination)
+- "Reshape work, then add AI" (rules out bolting AI onto existing processes)
+- "Build skills first, deploy second" (rules in sequencing: literacy before deployment)
+
+Bad examples (do NOT produce these):
+- "People-Centric AI Innovation" (category label, not a constraint)
+- "Responsible AI" (too vague, not a behavioural rule)
+
+Write exactly 5 principles. Each has:
+- number (1-based integer, 1-5)
+- title (3-8 words, constraint-shaped — rules something in or out)
+- description (1-2 sentences specifying the exact behaviour this principle mandates or prohibits)
+- capability_tags (array of 1-3 tags from EXACTLY this list: ["Output evaluation", "AI interaction", "Ethics & trust", "Workflow design", "Workforce readiness", "Change leadership"])
 - ai_drafted: true
-Return a JSON array of objects with these exact fields only.`,
+
+Return a JSON array of exactly 5 objects with these exact fields only. No markdown fences.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         wontDo: {
-          system: `You are an HR strategy consultant. Write 4-6 things the HR function explicitly will NOT do with AI in this strategy period. Each is one short sentence (max 15 words). Return a JSON array of objects with fields: text (string), ai_drafted: true.`,
+          system: `You are an HR strategy consultant writing strategic exclusions for an HR AI strategy. Exclusions are REAL strategic choices a peer CPO could plausibly debate — specific things being deferred or ruled out for this period.
+
+Good examples:
+- "We will not let any vendor's AI make shortlist cuts without HR review." (specific, some CPOs would disagree)
+- "We will not use generative AI for performance reviews this fiscal year." (specific time-bound deferral)
+- "We will not deploy AI in payroll, benefits, or compensation in this period." (specific domain exclusion)
+
+Bad examples (do NOT produce these):
+- "We will not use AI for biased hiring decisions." (anti-strawman — nobody plans to)
+- "We will not ignore employee concerns." (not a real strategic choice)
+- "We will not deploy AI without proper governance." (too vague)
+
+Write exactly 5 exclusions. Each is one sentence (max 20 words) naming a specific thing being deferred or ruled out. Return a JSON array of objects with fields: text (string), ai_drafted: true. No markdown fences.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         outcomes: {
-          system: `You are an HR strategy consultant. Write 3-5 measurable outcomes for an AI in HR strategy. Each outcome has:
-- number (1-based integer)
-- title (short outcome name, 3-6 words)
-- unit (e.g. "% reduction", "days", "£ per hire", "score")
-- baseline_value: null (TBD)
-- baseline_status: "not_measured"
-- baseline_study_date: null
+          system: `You are an HR strategy consultant writing measurable outcomes for an HR AI strategy. Outcomes are COMMITMENTS with a specific baseline (or scheduled baseline study), a specific target, and a specific date.
+
+Good examples:
+- "Reduce admin time per hire — 6h today → 3h by Q4 2026" (specific baseline, specific target, specific date)
+- "HR team at AI Practitioner level — 22% today → 85% by Q4 2026" (measurable progression)
+- "Employee trust in HR's AI use — 48% today → 80% by Q3 2027" (survey-based, measurable)
+
+Bad examples (do NOT produce these):
+- "Increase HR Team Productivity" (no baseline, no target, no date)
+- "Improve AI adoption" (not measurable)
+
+Write exactly 4 outcomes. At least 3 must have a measured baseline (baseline_status: "measured", baseline_value set to a real number). At most 1 may have baseline_status: "not_measured" (with a scheduled baseline study date). Each outcome has:
+- number (1-based integer, 1-4)
+- title (specific change being committed to, 4-8 words)
+- unit (e.g. "h", "%", "days", "score", "£")
+- baseline_value (number if measured, null if not_measured)
+- baseline_status ("measured" or "not_measured")
+- baseline_study_date ("Q4 2025" format if not_measured, null if measured)
 - target_value (realistic number)
 - target_date ("Q4 2026" format)
-- derived_summary (one sentence: "Reduce X from TBD to Y by Z")
-- tests_principle: null
+- derived_summary (one sentence summarising the change, e.g. "50% reduction" or "~4× growth")
+- tests_principle (null — will be set by user)
 - ai_drafted: true
-Return a JSON array of objects with these exact fields only.`,
+
+Return a JSON array of exactly 4 objects with these exact fields only. No markdown fences.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         approachLine: {
