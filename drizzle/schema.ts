@@ -2220,3 +2220,34 @@ export const riskAcknowledgements = mysqlTable("risk_acknowledgements", {
   activeIdx: index("idx_risk_ack_active").on(t.tenantId, t.itemId),
 }));
 export type RiskAcknowledgement = typeof riskAcknowledgements.$inferSelect;
+
+// ─── HWGT (How We Get There) Initiatives ─────────────────────────────────────
+// Section 03 roadmap initiatives — independent of the old strategy initiative library.
+export const hwgtInitiatives = mysqlTable("hwgt_initiatives", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  hrFunction: varchar("hr_function", { length: 100 }),
+  phase: mysqlEnum("phase", ["foundation", "build", "scale", "optimise"]).notNull().default("foundation"),
+  costLow: int("cost_low"),
+  costHigh: int("cost_high"),
+  costNote: text("cost_note"),
+  whySuggesting: text("why_suggesting"),
+  whatInvolvesJson: json("what_involves_json").$type<string[]>(),
+  worthKnowing: text("worth_knowing"),
+  connectsToJson: json("connects_to_json").$type<Array<{ type: "outcome" | "principle"; index: number; label: string }>>(),
+  status: mysqlEnum("status", ["suggested", "edited", "user_added", "dismissed"]).notNull().default("suggested"),
+  isDismissed: tinyint("is_dismissed").notNull().default(0),
+  dismissedAt: bigint("dismissed_at", { mode: "number" }),
+  diagDismissedJson: json("diag_dismissed_json").$type<string[]>(),
+  sortOrder: int("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_hwgt_initiatives_tenant").on(t.tenantId),
+  phaseIdx: index("idx_hwgt_initiatives_phase").on(t.phase),
+}));
+
+export type HwgtInitiative = typeof hwgtInitiatives.$inferSelect;
+export type HwgtInitiativeInsert = typeof hwgtInitiatives.$inferInsert;

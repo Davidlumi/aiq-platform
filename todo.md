@@ -3312,3 +3312,27 @@ test
 - [x] Clear stored guidingPrinciplesJson, exclusionsJson, outcomesJson for tenant-acme-ltd via SQL
 - [x] Verify outcome bar rendering: outcomes 1/2/4 solid gray today bar, outcome 3 dashed TBD
 - [x] Verify principle cross-reference line renders on each outcome
+
+## How We Get There Build (Section 03) — 14 May 2026
+
+- [x] DB: Create hwgt_initiatives table with all required fields (id, tenantId, phase, title, description, hrFunction, costLow, costHigh, costNote, whySuggesting, whatInvolvesJson, worthKnowing, connectsToJson, isDismissed, dismissedAt, diagDismissedJson, status, sortOrder, createdAt, updatedAt)
+- [x] Backend: getInitiatives procedure (returns all non-dismissed initiatives for tenant, seeded with 9 defaults on first call)
+- [x] Backend: saveInitiative procedure (create/update with all fields)
+- [x] Backend: dismissInitiative procedure (sets isDismissed=1, dismissedAt)
+- [x] Backend: moveInitiativePhase procedure (updates phase field)
+- [x] Backend: regenerateInitiative procedure (AI re-draft of single initiative)
+- [x] Backend: regeneratePlan procedure (AI re-draft of all suggested initiatives)
+- [x] Backend: markReviewed procedure (updates lastReviewedAt on ailOrgContext)
+- [x] Frontend: StrategyRoadmapPage with page header (Section 03, breadcrumb, eyebrow, title, subtitle)
+- [x] Frontend: Context strip (sector, org size, ambition tier, principles count, missing fields warning)
+- [x] Frontend: Diagnostic banners (uncovered outcome, over-concentrated phase)
+- [x] Frontend: 4 phase sections (Foundation, Build, Scale, Optimise) with phase header, initiative cards, Add affordance
+- [x] Frontend: Lean initiative cards (title, function tag, cost range, status badge, click to open modal)
+- [x] Frontend: InitiativeModal read mode (5 sections: description, what involves, connects to, why suggesting, worth knowing + action bar)
+- [x] Frontend: InitiativeModal edit mode (in-place form with all fields, save/cancel)
+- [x] Frontend: InitiativeModal add mode (empty form, save creates new initiative)
+- [x] Frontend: Dismiss confirmation (inline confirmation before dismissing)
+- [x] Frontend: Footer with "Mark as reviewed" and "Back to Ambition" navigation
+- [x] Wire /strategy/roadmap route in App.tsx
+- [x] Seed 9 default initiatives across 4 phases on first getInitiatives call
+- [x] Phase enum: use "optimise" (not "sustain") to match DB schema
