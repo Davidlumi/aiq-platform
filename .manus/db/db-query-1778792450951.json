@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE `ail_org_context`\n  ADD COLUMN IF NOT EXISTS `background_inputs_json` text,\n  ADD COLUMN IF NOT EXISTS `capability_assessment_json` text,\n  ADD COLUMN IF NOT EXISTS `facilitator_notes_json` text,\n  ADD COLUMN IF NOT EXISTS `prework_completed_at` timestamp NULL,\n  ADD COLUMN IF NOT EXISTS `session_completed_at` timestamp NULL,\n  ADD COLUMN IF NOT EXISTS `draft_generation_state` enum('none','generating','initial_draft','curated') NOT NULL DEFAULT 'none';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4N5hTKUqkKVKapg.d5b2b277a65e --database 6QhAyfvWVgMWYWiBVkrTMQ --execute \nALTER TABLE `ail_org_context`\n  ADD COLUMN IF NOT EXISTS `background_inputs_json` text,\n  ADD COLUMN IF NOT EXISTS `capability_assessment_json` text,\n  ADD COLUMN IF NOT EXISTS `facilitator_notes_json` text,\n  ADD COLUMN IF NOT EXISTS `prework_completed_at` timestamp NULL,\n  ADD COLUMN IF NOT EXISTS `session_completed_at` timestamp NULL,\n  ADD COLUMN IF NOT EXISTS `draft_generation_state` enum('none','generating','initial_draft','curated') NOT NULL DEFAULT 'none';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1199
+}

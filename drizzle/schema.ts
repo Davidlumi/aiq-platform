@@ -921,6 +921,13 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   provenanceJson: text("provenance_json"),                                       // JSON: provenance map for cost/risk/vision sources
   libraryVersion: varchar("library_version", { length: 20 }),                   // content library version used when strategy was generated
   leadershipTalkingPointsJson: text("leadership_talking_points_json"),           // JSON: { bullets: string[], generatedAt: number, userEdited: boolean, strategyHash: string }
+  // Background Input Section (Beta) — 8-section pre-work + session wizard
+  backgroundInputsJson: text("background_inputs_json"),                        // JSON: { sectionA, sectionB, sectionC, sectionD, sectionE, sectionF, sectionH } — all captured fields
+  capabilityAssessmentJson: text("capability_assessment_json"),                // JSON: CPO self-rating { ai_interaction: {score, rationale_notes}, ... , overall_score, maturity_label }
+  facilitatorNotesJson: text("facilitator_notes_json"),                        // JSON: { [section_id]: { content, created_at, tagged_private: true } } — platform_super_admin only
+  preworkCompletedAt: timestamp("prework_completed_at"),                       // When CPO clicked "Complete pre-work"
+  sessionCompletedAt: timestamp("session_completed_at"),                       // When facilitator clicked "Complete session"
+  draftGenerationState: mysqlEnum("draft_generation_state", ["none", "generating", "initial_draft", "curated"]).default("none"), // Tracks builder draft lifecycle
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

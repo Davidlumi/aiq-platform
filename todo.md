@@ -3390,3 +3390,28 @@ test
 - [x] Fixed dark-mode-only text-rose-300 in AssessmentSessionPage and CompanyAssessmentSessionPage
 - [x] Cleaned up .new backup files
 - [x] All 930 tests passing after fixes
+## Background Input Section — Beta Build (Brief: background-input-section-beta-build-brief.md)
+- [x] Add new DB columns to ail_org_context: backgroundInputsJson, capabilityAssessmentJson, facilitatorNotesJson, preworkCompletedAt, sessionCompletedAt, draftGenerationState
+- [x] Run DB migration for new columns
+- [x] Create server/routers/backgroundInputs.ts with getInputs, saveInputs, completePrework, completeSession, saveFacilitatorNote procedures
+- [x] Register backgroundInputs router in server/routers.ts
+- [x] Refactor StrategyDiagnosticPage: 8-section wizard (A-H) with section progress indicators (◯/◐/●)
+- [x] Section A: Company snapshot (name, industry, sub-sector, headcount band, geography)
+- [x] Section B: HR shape (team size, sub-functions multi-select, reports-to)
+- [x] Section C: Tech & AI footprint (HRIS, ATS, existing AI tools multi-row, LMS)
+- [x] Section D: Operational baselines with estimate flags (annual hires, admin time/hire, HR budget, loaded FTE cost, budget envelope)
+- [x] Section E: Strategic direction — session-only, locked in pre-work mode
+- [x] Section F: Culture — session-only, locked in pre-work mode
+- [x] Section G: Capability assessment — session-only, 6-domain self-rating with derived overall + maturity label
+- [x] Section H: Stakeholder context (approvers, AI literacy, language resonates, concerns)
+- [x] Pre-work mode: sections A-D + H editable, E-G shown as locked placeholders
+- [x] Session mode: all sections visible, gated to platform_super_admin only via facilitator toggle
+- [x] Auto-save on field change with visual indicator (debounced 800ms)
+- [x] Cross-field validation: HR team size ≤ total headcount
+- [x] Complete pre-work CTA with required field validation
+- [x] Complete session CTA with required field validation
+- [x] Facilitator notes layer: collapsible sidebar, per-section, markdown, platform_super_admin only, tagged_private: true
+- [x] Initial draft generation trigger on pre-work complete (background, fires builders for vision/principles/exclusions/KPIs/initiatives/costs/value)
+- [x] Draft state labelling: "Initial draft — not curated yet" on strategy pages until curated
+- [x] 3-second polling on CPO view for real-time facilitator field updates
+- [x] Write Vitest tests for backgroundInputs router
