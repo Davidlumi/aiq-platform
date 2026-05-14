@@ -13,12 +13,13 @@ import { DOMAIN_COLOURS as _BRAND_DOMAIN_COLOURS } from "@shared/brand";
 
 // --- Rating Badge ------------------------------------------------------------
 
+// RATING_STYLES uses CSS variables so they respond to light/dark mode
 const RATING_STYLES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  ai_ready:              { bg: "rgba(34,197,94,0.10)",  text: "#68D391", border: "rgba(34,197,94,0.25)",   dot: "#68D391" },
-  developing:            { bg: "rgba(144,205,244,0.10)",text: "#90CDF4", border: "rgba(144,205,244,0.25)", dot: "#90CDF4" },
-  not_yet_ready:         { bg: "rgba(245,158,11,0.10)", text: "#F59E0B", border: "rgba(245,158,11,0.25)",  dot: "#F59E0B" },
-  foundation_gap:        { bg: "rgba(249,115,22,0.10)", text: "#F97316", border: "rgba(249,115,22,0.25)",  dot: "#F97316" },
-  insufficient_evidence: { bg: "rgba(107,114,128,0.10)",text: "#9CA3AF", border: "rgba(107,114,128,0.25)", dot: "#9CA3AF" },
+  ai_ready:              { bg: "var(--score-ai-ready-bg)",   text: "var(--score-ai-ready-text)",   border: "var(--score-ai-ready-text)",   dot: "var(--score-ai-ready-text)" },
+  developing:            { bg: "var(--score-developing-bg)", text: "var(--score-developing-text)", border: "var(--score-developing-text)", dot: "var(--score-developing-text)" },
+  not_yet_ready:         { bg: "var(--score-capable-bg)",    text: "var(--score-capable-text)",    border: "var(--score-capable-text)",    dot: "var(--score-capable-text)" },
+  foundation_gap:        { bg: "var(--score-gap-bg)",        text: "var(--score-gap-text)",        border: "var(--score-gap-text)",        dot: "var(--score-gap-text)" },
+  insufficient_evidence: { bg: "var(--muted)",               text: "var(--muted-foreground)",      border: "var(--border)",               dot: "var(--muted-foreground)" },
 };
 
 const RATING_DISPLAY: Record<string, string> = {
@@ -357,9 +358,9 @@ export function CapabilityBar({
       {target != null && (
         <div
           className="absolute top-0 bottom-0 w-0.5"
-          style={{ left: `${Math.min(target, 100)}%`, backgroundColor: "#1E293B" }}
+          style={{ left: `${Math.min(target, 100)}%`, backgroundColor: "var(--foreground)" }}
         >
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#1E293B" }} />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "var(--foreground)" }} />
         </div>
       )}
     </div>
@@ -386,7 +387,7 @@ export function PeakonProgressBar({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div className="relative flex-1" style={{ height }}>
-        <div className="absolute inset-0 rounded-full bg-neutral-200" />
+        <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "var(--muted)" }} />
         <div
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
           style={{ width: `${pct}%`, backgroundColor: bg }}
@@ -405,10 +406,10 @@ export function PeakonProgressBar({
 
 export function PriorityBadge({ priority }: { priority: "critical" | "high" | "medium" | "low" }) {
   const styles = {
-    critical: { bg: "rgba(239,68,68,0.10)", text: "#FCA5A5", border: "rgba(239,68,68,0.25)" },
-    high: { bg: "rgba(249,115,22,0.10)", text: "#F97316", border: "rgba(249,115,22,0.25)" },
-    medium: { bg: "rgba(245,158,11,0.10)", text: "#F59E0B", border: "rgba(245,158,11,0.25)" },
-    low: { bg: "rgba(34,197,94,0.10)", text: "#68D391", border: "rgba(34,197,94,0.25)" },
+    critical: { bg: "var(--score-gap-bg)",        text: "var(--score-gap-text)",        border: "var(--score-gap-text)" },
+    high:     { bg: "var(--score-developing-bg)", text: "var(--score-developing-text)", border: "var(--score-developing-text)" },
+    medium:   { bg: "var(--score-capable-bg)",    text: "var(--score-capable-text)",    border: "var(--score-capable-text)" },
+    low:      { bg: "var(--score-ai-ready-bg)",   text: "var(--score-ai-ready-text)",   border: "var(--score-ai-ready-text)" },
   };
   const s = styles[priority];
   return (

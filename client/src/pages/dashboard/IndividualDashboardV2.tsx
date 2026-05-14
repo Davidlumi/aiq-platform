@@ -40,10 +40,10 @@ function getLevelLabel(level: number): string {
 
 function getLevelChipStyle(level: number): { bg: string; text: string } {
   const styles: Record<number, { bg: string; text: string }> = {
-    1: { bg: "#374151", text: "#D1D5DB" },
-    2: { bg: "#475569", text: "#E2E8F0" },
-    3: { bg: "#557DAE", text: "var(--score-ai-ready-text)" },
-    4: { bg: "var(--score-strong-bg)", text: "var(--score-ai-ready-text)" },
+    1: { bg: "var(--score-gap-bg)", text: "var(--score-gap-text)" },
+    2: { bg: "var(--score-developing-bg)", text: "var(--score-developing-text)" },
+    3: { bg: "var(--score-capable-bg)", text: "var(--score-capable-text)" },
+    4: { bg: "var(--score-strong-bg)", text: "var(--score-strong-text)" },
     5: { bg: "var(--score-ai-ready-bg)", text: "var(--score-ai-ready-text)" },
   };
   return styles[level] ?? styles[2];
@@ -98,24 +98,24 @@ function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
             transform={`rotate(-90 ${cx} ${cy})`}
             strokeLinecap="round"
           />
-          {/* Score text — white */}
+          {/* Score text — theme-aware */}
           <text
             x={cx} y={cy - size * 0.04}
             textAnchor="middle"
-            style={{ fontSize: size * 0.2, fontWeight: 500, fill: "#F9FAFB", fontFamily: "Sora, system-ui, sans-serif" }}
+            style={{ fontSize: size * 0.2, fontWeight: 500, fill: "var(--foreground)", fontFamily: "Sora, system-ui, sans-serif" }}
           >
             {preciseScore}
           </text>
           <text
             x={cx} y={cy + size * 0.12}
             textAnchor="middle"
-            style={{ fontSize: size * 0.065, fill: "#9CA3AF", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}
+            style={{ fontSize: size * 0.065, fill: "var(--muted-foreground)", fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "0.06em" }}
           >
             YOUR LEVEL
           </text>
         </svg>
       </div>
-      <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 8 }}>{pctToNextLevel}% of the way to Level {Math.min(5, level + 1)}</p>
+      <p style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 8 }}>{pctToNextLevel}% of the way to Level {Math.min(5, level + 1)}</p>
       <span
         className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium mt-2"
         style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}
