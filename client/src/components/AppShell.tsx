@@ -43,8 +43,11 @@ import {
   FlaskConical,
   Sparkles,
   MessageSquare,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type NavItem = {
   label: string;
@@ -211,6 +214,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { viewAs, setViewAs, effectiveRoles } = useViewAs();
   const userRoles = ((user as any)?.roles as string[]) ?? [];
   const [viewAsOpen, setViewAsOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   // Use effectiveRoles for nav filtering (demo role override)
   const visibleItems = NAV_ITEMS.filter(
@@ -482,6 +486,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Right actions */}
           <div className="flex items-center gap-1">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             <button
               className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Notifications"

@@ -3356,3 +3356,12 @@ test
 - [x] Fix 6: Add-your-own affordance — card-shaped (same dimensions/padding as initiative cards), 0.5px dashed border, hover teal tint, short label, no chevron
 - [x] Fix 7: Header button differentiation — Edit org context stays neutral outlined; Regenerate plan has teal-tinted bg + teal border + teal text
 - [x] TypeScript: 0 errors | Tests: 930/930
+
+## Light Mode (User-Switchable Theme)
+- [ ] Add .light CSS token block in index.css: background, card, sidebar, border, muted, primary, accent, foreground tokens
+- [ ] Update body/scrollbar/nav-item/badge/aiq-* CSS classes to use CSS variables instead of hardcoded oklch dark values
+- [ ] Update ThemeProvider in App.tsx: switchable=true, defaultTheme="dark"
+- [ ] Add Sun/Moon toggle button to AppShell header (right side, before Bell)
+- [ ] Add Sun/Moon toggle button to DashboardLayout sidebar footer (before user avatar)
+- [ ] Persist theme preference to localStorage
+- [ ] TypeScript: 0 errors | Tests: 930/930

@@ -42,11 +42,14 @@ import {
   MessageSquarePlus,
   CalendarCheck2,
   Map,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type NavItem = { icon: React.ElementType; label: string; path: string };
 type NavSection = { section: string; items: NavItem[] };
@@ -187,6 +190,7 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { theme, toggleTheme } = useTheme();
 
   const roles: string[] = (user as any)?.roles ?? [];
   const navSections = getNavSections(roles);
@@ -285,6 +289,18 @@ function DashboardLayoutContent({
 
           {/* Footer */}
           <SidebarFooter className="p-3">
+            {/* Theme toggle row */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-2 w-full px-1 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors group-data-[collapsible=icon]:justify-center"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+              <span className="group-data-[collapsible=icon]:hidden text-xs">
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </span>
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
