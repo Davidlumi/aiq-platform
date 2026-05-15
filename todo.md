@@ -3422,4 +3422,30 @@ test
 - [x] Remove "Session only" badge from section headers E, F, G
 - [x] Update saveInputs router: remove session-only gate blocking hr_leader from writing E/F/G
 - [x] Update completePrework validation: add ambition tier (Section E) and at least one capability domain rated (Section G) as required
-- [ ] Write data input architecture document (background-input-architecture.md)
+- [x] Write data input architecture document (background-input-architecture.md)
+
+## Background Input Patch — Business & Workforce Context + Draft Generation
+
+- [ ] DB: add sectionIJson column to ail_org_context
+- [ ] DB: add builderSectionStatesJson column to ail_org_context (Option C per-section state)
+- [ ] Schema: update SectionASchema — add sectorSpecificRegulation multi-select
+- [ ] Schema: update SectionCSchema — add engagementSurveyTool optional enum
+- [ ] Schema: update SectionDSchema — add adminTimePerHire + isEstimate, topHrTimePlaces
+- [ ] Schema: add SectionISchema — 8 fields (businessDirection, topBusinessPriorities, workforceWorkType, workforceEmploymentMix, geographicDistribution, pivotalJobFamilies, peopleChallenges, employeeExperienceState)
+- [ ] Router: update BackgroundInputsSchema to include sectionI
+- [ ] Router: update FacilitatorNoteSchema to include "I" as valid sectionId
+- [ ] Router: raise completePrework threshold to full required-field set per brief §7
+- [ ] Router: wire draft generation trigger on completePrework (none→generating→initial_draft)
+- [ ] Router: wire second draft pass on completeSession (regenerate initial_draft sections only)
+- [ ] Router: pass facilitator notes as INTERNAL ONLY context to builder LLM prompts
+- [ ] UI: add Section I between A and B in SECTIONS array with all 8 fields
+- [ ] UI: add sectorSpecificRegulation multi-select to Section A
+- [ ] UI: add engagementSurveyTool to Section C
+- [ ] UI: add adminTimePerHire + isEstimate + topHrTimePlaces to Section D
+- [ ] UI: update SectionId type to include "I"
+- [ ] UI: update calcProgress to include Section I required fields
+- [ ] UI: add generation spinner UI on completePrework with "Generating your strategy..." copy
+- [ ] UI: add "View your strategy" CTA when generation completes
+- [ ] UI: add Section G facilitator calibration prompts as placeholder text
+- [ ] UI: update completePrework validation error messages with deep-links
+- [ ] Builders: update all 9 builder LLM prompts to include new sectionI fields per brief §8 mapping

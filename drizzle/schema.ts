@@ -928,6 +928,8 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   preworkCompletedAt: timestamp("prework_completed_at"),                       // When CPO clicked "Complete pre-work"
   sessionCompletedAt: timestamp("session_completed_at"),                       // When facilitator clicked "Complete session"
   draftGenerationState: mysqlEnum("draft_generation_state", ["none", "generating", "initial_draft", "curated"]).default("none"), // Tracks builder draft lifecycle
+  sectionIJson: text("section_i_json"),                                          // JSON: Section I — Business & Workforce Context
+  builderSectionStatesJson: text("builder_section_states_json"),                  // JSON: { [builderKey]: "initial_draft" | "curated" | "edited" } — Option C per-section state
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

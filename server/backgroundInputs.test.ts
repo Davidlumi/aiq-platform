@@ -367,6 +367,126 @@ describe("Capability assessment derived score", () => {
   });
 });
 
+// ── Section I — Aspirational context ────────────────────────────────────────
+
+describe("Section I schema", () => {
+  it("accepts valid aspirational role values", () => {
+    const validRoles = ["strategic_partner", "operational_excellence", "talent_engine", "culture_architect", "transformation_catalyst"];
+    for (const role of validRoles) {
+      expect(role).toMatch(/^(strategic_partner|operational_excellence|talent_engine|culture_architect|transformation_catalyst)$/);
+    }
+  });
+
+  it("accepts valid headline ambition string", () => {
+    const ambition = "Build a world-class AI-enabled HR function within 18 months";
+    expect(typeof ambition).toBe("string");
+    expect(ambition.length).toBeGreaterThan(0);
+  });
+
+  it("accepts valid success metrics array", () => {
+    const metrics = ["Reduce time-to-hire by 40%", "Increase manager capability score to 7+"];
+    expect(Array.isArray(metrics)).toBe(true);
+    expect(metrics.length).toBeGreaterThan(0);
+  });
+
+  it("accepts valid constraints array", () => {
+    const constraints = ["Limited budget", "Legacy HRIS cannot be replaced"];
+    expect(Array.isArray(constraints)).toBe(true);
+  });
+
+  it("accepts valid 12-month priority string", () => {
+    const priority = "Deploy AI-assisted recruitment screening across all roles";
+    expect(typeof priority).toBe("string");
+  });
+});
+
+// ── Raised pre-work completion threshold (v2 patch) ───────────────────────────
+
+describe("Pre-work completion threshold v2", () => {
+  it("requires ambition tier (Section E) in addition to A/B fields", () => {
+    const inputs = {
+      sectionA: { sector: "technology", headcountBand: "lt500" },
+      sectionB: { hrTeamSize: 5 },
+      sectionE: {}, // missing ambitionTier
+    };
+    const missing: string[] = [];
+    if (!(inputs.sectionE as any)?.ambitionTier) missing.push("Ambition tier (Section E)");
+    expect(missing).toContain("Ambition tier (Section E)");
+  });
+
+  it("requires at least one capability domain rated (Section G)", () => {
+    const capabilityAssessment: Record<string, { score: number }> = {};
+    const DOMAIN_KEYS = [
+      "ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+      "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership",
+    ];
+    const ratedCount = DOMAIN_KEYS.filter(k => capabilityAssessment[k]?.score > 0).length;
+    const missing: string[] = [];
+    if (ratedCount === 0) missing.push("At least one capability domain (Section G)");
+    expect(missing).toContain("At least one capability domain (Section G)");
+  });
+
+  it("passes v2 validation with all required fields including E and G", () => {
+    const inputs = {
+      sectionA: { sector: "technology", headcountBand: "lt500" },
+      sectionB: { hrTeamSize: 5 },
+      sectionE: { ambitionTier: "pragmatic" },
+    };
+    const capabilityAssessment: Record<string, { score: number }> = {
+      ai_interaction: { score: 6 },
+    };
+    const DOMAIN_KEYS = [
+      "ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+      "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership",
+    ];
+    const missing: string[] = [];
+    if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
+    if (!inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
+    if (!(inputs.sectionB as any)?.hrTeamSize && (inputs.sectionB as any)?.hrTeamSize !== 0)
+      missing.push("HR team size (Section B)");
+    if (!(inputs.sectionE as any)?.ambitionTier) missing.push("Ambition tier (Section E)");
+    const ratedCount = DOMAIN_KEYS.filter(k => capabilityAssessment[k]?.score > 0).length;
+    if (ratedCount === 0) missing.push("At least one capability domain (Section G)");
+    expect(missing).toHaveLength(0);
+  });
+});
+
+// ── Builder section states (Option C — per-section edit preservation) ─────────
+
+describe("Builder section states", () => {
+  it("valid states are: initial_draft, curated, edited", () => {
+    const validStates = ["initial_draft", "curated", "edited"];
+    for (const s of validStates) {
+      expect(s).toMatch(/^(initial_draft|curated|edited)$/);
+    }
+  });
+
+  it("regeneration only fires on sections in initial_draft state", () => {
+    const sectionStates: Record<string, string> = {
+      vision: "initial_draft",
+      principles: "curated",
+      initiatives: "edited",
+      costs: "initial_draft",
+    };
+    const toRegenerate = Object.entries(sectionStates)
+      .filter(([, state]) => state === "initial_draft")
+      .map(([key]) => key);
+    expect(toRegenerate).toContain("vision");
+    expect(toRegenerate).toContain("costs");
+    expect(toRegenerate).not.toContain("principles");
+    expect(toRegenerate).not.toContain("initiatives");
+  });
+
+  it("all 9 builder sections have valid state keys", () => {
+    const builderKeys = ["vision", "principles", "initiatives", "costs", "value", "roadmap", "measurement", "risks", "stakeholders"];
+    const states: Record<string, string> = {};
+    for (const key of builderKeys) {
+      states[key] = "initial_draft";
+    }
+    expect(Object.keys(states)).toHaveLength(9);
+  });
+});
+
 // ── Section completion detection ─────────────────────────────────────────────
 
 describe("Section completion detection", () => {

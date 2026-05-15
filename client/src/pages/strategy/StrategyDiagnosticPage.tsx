@@ -1,9 +1,20 @@
 /**
- * StrategyDiagnosticPage — Background Input Section (Beta)
+ * StrategyDiagnosticPage — Background Input Section (Beta, Patch v2)
  *
- * 8-section wizard (A–H) capturing org context for the strategy builders.
- * CPO completes all 8 sections at their own pace (20–40 min).
+ * 9-section wizard (A–I) capturing org context for the strategy builders.
+ * CPO completes all 9 sections at their own pace (20–40 min).
  * Facilitator (platform_super_admin) adds private notes layer during the 1:1 session.
+ *
+ * Sections:
+ *   A — Company snapshot (sector, headcount, geography, org type, regulatory context)
+ *   B — HR shape (team size, sub-functions, reporting line, influence, budget ownership)
+ *   C — Tech & AI footprint (HRIS, ATS, LMS, engagement survey, payroll, AI tools, data quality)
+ *   D — Operational baselines (hires, admin time, HR budget, FTE cost, AI envelope, attrition, TTF)
+ *   E — Strategic direction (ambition tier, HR posture, time horizon, risk appetite, success narrative)
+ *   F — Culture (culture descriptors, non-negotiables, change readiness, decision style)
+ *   G — Capability assessment (6-domain self-rating 0–10 with calibration prompts)
+ *   H — Stakeholder context (approvers, AI literacy, language, concerns, board interest)
+ *   I — Business & Workforce context (business direction, priorities, work type, job families)
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -30,13 +41,13 @@ import {
 import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
-  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle,
+  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe,
 } from "lucide-react";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H";
+type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I";
 type ProgressState = "not_started" | "in_progress" | "complete";
 
 interface AiTool {
@@ -50,10 +61,6 @@ interface DomainRating {
   rationaleNotes?: string;
 }
 
-// Capability assessment uses two separate state variables:
-// capDomains: domain ratings keyed by domain key
-// capDerived: computed overall score and maturity label
-
 interface Approver {
   name: string;
   role: string;
@@ -62,20 +69,34 @@ interface Approver {
 
 // ── Section progress helper ────────────────────────────────────────────────────
 
-function calcProgress(inputs: Record<string, unknown>, sectionId: SectionId): ProgressState {
+function calcProgress(
+  inputs: Record<string, unknown>,
+  capDomains: Record<string, DomainRating>,
+  sectionI: Record<string, unknown>,
+  sectionId: SectionId,
+): ProgressState {
+  if (sectionId === "G") {
+    const rated = Object.values(capDomains).filter(d => d.score > 0).length;
+    if (rated === 0) return "not_started";
+    if (rated < 6) return "in_progress";
+    return "complete";
+  }
+  if (sectionId === "I") {
+    if (!sectionI.businessDirection && !(sectionI.topBusinessPriorities as string[] ?? []).length) return "not_started";
+    if (sectionI.businessDirection && (sectionI.peopleChallenges as string[] ?? []).length > 0) return "complete";
+    return "in_progress";
+  }
   const s = (inputs as any)[`section${sectionId}`];
   if (!s) return "not_started";
   const vals = Object.values(s).filter(v => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
   if (vals.length === 0) return "not_started";
-  // Required field checks per section
-  const required: Record<SectionId, string[]> = {
+  const required: Record<string, string[]> = {
     A: ["sector", "headcountBand"],
     B: ["hrTeamSize"],
     C: ["hrisSystem"],
-    D: ["annualHiresLow", "annualHiresHigh"],
-    E: ["ambitionTier", "hrPosture", "timeHorizonMonths", "riskAppetite", "successNarrative"],
+    D: ["annualHiresLow"],
+    E: ["ambitionTier", "hrPosture", "riskAppetite", "successNarrative"],
     F: ["cultureDescriptors"],
-    G: ["ai_interaction", "ai_output_evaluation", "ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"],
     H: ["keyApprovers", "aiLiteracyLevel"],
   };
   const req = required[sectionId] ?? [];
@@ -98,14 +119,15 @@ function ProgressDot({ state }: { state: ProgressState }) {
 // ── Section definitions ───────────────────────────────────────────────────────
 
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
-  { id: "A", label: "Company snapshot",      icon: Building2  },
-  { id: "B", label: "HR shape",              icon: Users      },
-  { id: "C", label: "Tech & AI footprint",   icon: Cpu        },
-  { id: "D", label: "Operational baselines", icon: BarChart2  },
-  { id: "E", label: "Strategic direction",   icon: Target     },
-  { id: "F", label: "Culture",               icon: Lightbulb  },
-  { id: "G", label: "Capability assessment", icon: Star       },
-  { id: "H", label: "Stakeholder context",   icon: UserCheck  },
+  { id: "A", label: "Company snapshot",          icon: Building2  },
+  { id: "B", label: "HR shape",                  icon: Users      },
+  { id: "C", label: "Tech & AI footprint",       icon: Cpu        },
+  { id: "D", label: "Operational baselines",     icon: BarChart2  },
+  { id: "E", label: "Strategic direction",       icon: Target     },
+  { id: "F", label: "Culture",                   icon: Lightbulb  },
+  { id: "G", label: "Capability assessment",     icon: Star       },
+  { id: "H", label: "Stakeholder context",       icon: UserCheck  },
+  { id: "I", label: "Business & workforce",      icon: Globe      },
 ];
 
 const HR_SUB_FUNCTIONS = ["TA", "L&D", "Reward", "WFP", "HRBP", "HR Ops", "DEI", "Comms"];
@@ -115,6 +137,8 @@ const LANGUAGE_OPTIONS = ["Numbers", "Vision/story", "Risk-mitigation", "Competi
 const HRIS_OPTIONS = ["Workday", "SAP SuccessFactors", "Oracle HCM", "MS Dynamics", "Cornerstone", "Sage People", "Other", "None"];
 const ATS_OPTIONS = ["Greenhouse", "Lever", "iCIMS", "Workday Recruiting", "SmartRecruiters", "Taleo", "Other", "None"];
 const LMS_OPTIONS = ["Cornerstone", "Docebo", "LinkedIn Learning", "Degreed", "Workday Learning", "Other", "None"];
+const ENGAGEMENT_SURVEY_OPTIONS = ["Glint", "Peakon", "Culture Amp", "Qualtrics", "Medallia", "Lattice", "Other", "None"];
+const PAYROLL_OPTIONS = ["ADP", "Ceridian Dayforce", "Workday Payroll", "SAP Payroll", "SD Worx", "Zellis", "Other", "None"];
 
 const HEADCOUNT_BANDS = [
   { value: "lt500",     label: "< 500" },
@@ -129,13 +153,72 @@ const BUDGET_ENVELOPE_OPTIONS = [
   { value: "1m_plus",   label: "£1M+" },
 ];
 
+const REGULATORY_OPTIONS = [
+  "GDPR / UK GDPR",
+  "FCA / PRA (Financial Services)",
+  "NHS / CQC (Healthcare)",
+  "Ofsted / DfE (Education)",
+  "ICO guidance on AI",
+  "EU AI Act (if EU operations)",
+  "ISO 27001 / SOC 2",
+  "DORA (Digital Operational Resilience)",
+];
+
 const CAPABILITY_DOMAINS = [
-  { key: "ai_interaction",         label: "AI Interaction",         desc: "Ability to craft effective prompts and iterate with AI tools" },
-  { key: "ai_output_evaluation",   label: "AI Output Evaluation",   desc: "Critical assessment of AI-generated content for quality and bias" },
-  { key: "ai_workflow_design",     label: "AI Workflow Design",     desc: "Designing HR processes that integrate AI at the right touchpoints" },
-  { key: "workforce_ai_readiness", label: "Workforce AI Readiness", desc: "Preparing employees for AI-augmented roles and ways of working" },
-  { key: "ai_ethics_trust",        label: "AI Ethics & Trust",      desc: "Governance, fairness, and responsible AI deployment in HR" },
-  { key: "ai_change_leadership",   label: "AI Change Leadership",   desc: "Leading the cultural and operational shift to AI-enabled HR" },
+  {
+    key: "ai_interaction",
+    label: "AI Interaction",
+    desc: "Ability to craft effective prompts and iterate with AI tools",
+    calibrationPrompt: "Think about the last time you or your team used an AI tool. How often do you refine prompts to get better outputs? Do you have a shared approach to prompting, or is it ad hoc?",
+    anchorLow: "0–2: Rarely or never used AI tools; no prompting practice",
+    anchorMid: "4–6: Some team members use AI tools regularly; prompting is informal",
+    anchorHigh: "8–10: Team has a systematic prompting practice; outputs are consistently high quality",
+  },
+  {
+    key: "ai_output_evaluation",
+    label: "AI Output Evaluation",
+    desc: "Critical assessment of AI-generated content for quality and bias",
+    calibrationPrompt: "When your team receives AI-generated content (a job description, a policy draft, a data summary), what's the review process? Do people know what to look for in terms of errors, bias, or hallucinations?",
+    anchorLow: "0–2: AI outputs accepted at face value; no review process",
+    anchorMid: "4–6: Some review happens informally; team is aware of risks but inconsistent",
+    anchorHigh: "8–10: Structured review process; team can identify and correct bias and errors reliably",
+  },
+  {
+    key: "ai_workflow_design",
+    label: "AI Workflow Design",
+    desc: "Designing HR processes that integrate AI at the right touchpoints",
+    calibrationPrompt: "Has your team redesigned any HR process to include AI as a step — not just as a tool someone uses on the side? For example, AI-assisted screening built into the hiring workflow, or AI-generated first drafts in L&D content creation?",
+    anchorLow: "0–2: AI is used ad hoc by individuals; no process redesign",
+    anchorMid: "4–6: One or two processes have been redesigned; mostly pilot stage",
+    anchorHigh: "8–10: Multiple HR processes systematically redesigned with AI embedded at key touchpoints",
+  },
+  {
+    key: "workforce_ai_readiness",
+    label: "Workforce AI Readiness",
+    desc: "Preparing employees for AI-augmented roles and ways of working",
+    calibrationPrompt: "What has HR done to prepare the broader workforce for AI? Is there a programme, a communication strategy, or a learning pathway? Or is it left to individual managers and teams to figure out?",
+    anchorLow: "0–2: No formal workforce AI readiness programme; reactive approach",
+    anchorMid: "4–6: Some communications and optional learning; patchy uptake",
+    anchorHigh: "8–10: Structured programme with clear pathways; measurable uplift in AI confidence across workforce",
+  },
+  {
+    key: "ai_ethics_trust",
+    label: "AI Ethics & Trust",
+    desc: "Governance, fairness, and responsible AI deployment in HR",
+    calibrationPrompt: "If a manager asked you today whether it's safe to use AI in a hiring decision, what would you say? Do you have a policy, a governance framework, or a clear position on where AI can and can't be used in HR?",
+    anchorLow: "0–2: No policy or governance; decisions made case by case",
+    anchorMid: "4–6: Some guidelines exist; not consistently applied; no formal review process",
+    anchorHigh: "8–10: Clear policy and governance framework; regular audits; team confident in ethical AI deployment",
+  },
+  {
+    key: "ai_change_leadership",
+    label: "AI Change Leadership",
+    desc: "Leading the cultural and operational shift to AI-enabled HR",
+    calibrationPrompt: "How would you describe your own confidence in leading the AI transformation of HR? Do you feel equipped to make the case to the CEO, manage resistance in the team, and sustain momentum over 12–24 months?",
+    anchorLow: "0–2: Limited confidence; reactive to AI developments; no clear change narrative",
+    anchorMid: "4–6: Growing confidence; some stakeholder buy-in; change narrative in development",
+    anchorHigh: "8–10: Strong change leadership; clear narrative; CEO and board aligned; team energised",
+  },
 ];
 
 function getMaturityLabel(score: number): string {
@@ -147,10 +230,7 @@ function getMaturityLabel(score: number): string {
 
 // ── Auto-save hook ─────────────────────────────────────────────────────────────
 
-function useAutoSave(
-  saveFn: (data: unknown) => void,
-  delay = 800,
-) {
+function useAutoSave(saveFn: (data: unknown) => void, delay = 800) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
 
@@ -180,12 +260,14 @@ export default function StrategyDiagnosticPage() {
   const [inputs, setInputs] = useState<Record<string, unknown>>({});
   const [capDomains, setCapDomains] = useState<Record<string, DomainRating>>({});
   const [capDerived, setCapDerived] = useState<{ overallScore?: number; maturityLabel?: string }>({});
+  const [sectionI, setSectionI] = useState<Record<string, unknown>>({});
   const [serverFacilitatorNotes, setServerFacilitatorNotes] = useState<Record<string, { content: string; updatedAt?: string }>>({});
   const [completeError, setCompleteError] = useState<string | null>(null);
+  const [expandedCalibration, setExpandedCalibration] = useState<string | null>(null);
 
   // tRPC queries
   const inputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
-    refetchInterval: isSuperAdmin ? false : 3000, // CPO polls for facilitator updates
+    refetchInterval: isSuperAdmin ? false : 3000,
   });
 
   const utils = trpc.useUtils();
@@ -225,6 +307,7 @@ export default function StrategyDiagnosticPage() {
       if ((capData as any).overallScore !== undefined) {
         setCapDerived({ overallScore: (capData as any).overallScore, maturityLabel: (capData as any).maturityLabel });
       }
+      setSectionI((inputsQ.data.sectionI as Record<string, unknown>) ?? {});
       if (inputsQ.data.facilitatorNotes) {
         setServerFacilitatorNotes(inputsQ.data.facilitatorNotes as Record<string, { content: string }>);
         const noteTexts: Record<string, string> = {};
@@ -239,8 +322,16 @@ export default function StrategyDiagnosticPage() {
   // Auto-save
   const { schedule: scheduleInputSave, saveState } = useAutoSave(
     useCallback((data: unknown) => {
-      const d = data as { sections: Record<string, unknown>; capabilityAssessment?: Record<string, unknown> };
-      saveInputsMut.mutate({ sections: d.sections as any, capabilityAssessment: d.capabilityAssessment as any });
+      const d = data as {
+        sections: Record<string, unknown>;
+        capabilityAssessment?: Record<string, unknown>;
+        sectionI?: Record<string, unknown>;
+      };
+      saveInputsMut.mutate({
+        sections: d.sections as any,
+        capabilityAssessment: d.capabilityAssessment as any,
+        sectionI: d.sectionI as any,
+      });
     }, [saveInputsMut]),
   );
 
@@ -248,24 +339,34 @@ export default function StrategyDiagnosticPage() {
     setInputs(prev => {
       const key = `section${sectionId}`;
       const updated = { ...prev, [key]: { ...(prev[key] as Record<string, unknown> ?? {}), [field]: value } };
-      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived } });
+      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI });
       return updated;
     });
-  }, [scheduleInputSave, capDomains, capDerived]);
+  }, [scheduleInputSave, capDomains, capDerived, sectionI]);
+
+  const updateSectionI = useCallback((field: string, value: unknown) => {
+    setSectionI(prev => {
+      const updated = { ...prev, [field]: value };
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated });
+      return updated;
+    });
+  }, [scheduleInputSave, inputs, capDomains, capDerived]);
 
   const updateCapability = useCallback((domainKey: string, field: "score" | "rationaleNotes", value: unknown) => {
     setCapDomains(prev => {
-      const updated: Record<string, DomainRating> = { ...prev, [domainKey]: { ...(prev[domainKey] ?? { score: 5 }), [field]: value } as DomainRating };
-      // Compute derived overall
+      const updated: Record<string, DomainRating> = {
+        ...prev,
+        [domainKey]: { ...(prev[domainKey] ?? { score: 0 }), [field]: value } as DomainRating,
+      };
       const scores = CAPABILITY_DOMAINS.map(d => updated[d.key]?.score ?? 0);
       const validScores = scores.filter(s => s > 0);
       const overall = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
       const derived = { overallScore: Math.round(overall * 10) / 10, maturityLabel: getMaturityLabel(overall) };
       setCapDerived(derived);
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived } });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI });
       return updated;
     });
-  }, [scheduleInputSave, inputs]);
+  }, [scheduleInputSave, inputs, sectionI]);
 
   const saveFacilitatorNote = useCallback((sectionId: string) => {
     const content = facilitatorNoteText[sectionId] ?? "";
@@ -278,12 +379,13 @@ export default function StrategyDiagnosticPage() {
 
   const sectionData = (id: SectionId) => (inputs as any)[`section${id}`] ?? {};
   const getField = (id: SectionId, field: string) => sectionData(id)[field];
+  const getFieldI = (field: string) => sectionI[field];
 
   const activeSectionDef = SECTIONS.find(s => s.id === activeSection)!;
 
   // Section progress
   const progressMap = Object.fromEntries(
-    SECTIONS.map(s => [s.id, calcProgress(inputs, s.id)])
+    SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id)])
   ) as Record<SectionId, ProgressState>;
 
   // Headcount band → approximate number for validation
@@ -291,13 +393,9 @@ export default function StrategyDiagnosticPage() {
     lt500: 499, "500_5k": 5000, "5k_25k": 25000, "25k_plus": 100000,
   };
   const maxHrTeamSize = headcountApprox[getField("A", "headcountBand") ?? "25k_plus"] ?? 100000;
-
   const hrTeamSize = parseInt(getField("B", "hrTeamSize") ?? "0", 10);
-  const hrSizeWarning = hrTeamSize > maxHrTeamSize
-    ? "HR team size cannot exceed total headcount."
-    : null;
+  const hrSizeWarning = hrTeamSize > maxHrTeamSize ? "HR team size cannot exceed total headcount." : null;
 
-  // Section sub-sectors
   const selectedSector = getField("A", "sector") ?? "";
   const subSectors = selectedSector ? getSubSectors(selectedSector) : [];
 
@@ -307,7 +405,7 @@ export default function StrategyDiagnosticPage() {
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
         <div className="grid grid-cols-4 gap-3 mt-6">
-          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
         </div>
         <Skeleton className="h-96 rounded-xl" />
       </div>
@@ -355,7 +453,6 @@ export default function StrategyDiagnosticPage() {
               {showFacilitatorNotes ? "Hide notes" : "Show notes"}
             </Button>
           )}
-          {/* Save indicator */}
           <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground h-5">
             {saveState === "saving" && <><Loader2 className="w-3 h-3 animate-spin" />Saving…</>}
             {saveState === "saved" && <><Check className="w-3 h-3 text-emerald-600" />Saved</>}
@@ -399,9 +496,7 @@ export default function StrategyDiagnosticPage() {
                   value={getField("A", "sector") ?? ""}
                   onValueChange={v => { updateSection("A", "sector", v); updateSection("A", "subSector", ""); }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
                   <SelectContent>
                     {SECTOR_TAXONOMY.map(s => (
                       <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -412,14 +507,12 @@ export default function StrategyDiagnosticPage() {
 
               {subSectors.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Sub-sector <span className="text-destructive">*</span></Label>
+                  <Label>Sub-sector</Label>
                   <Select
                     value={getField("A", "subSector") ?? ""}
                     onValueChange={v => updateSection("A", "subSector", v)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select sub-sector" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select sub-sector" /></SelectTrigger>
                     <SelectContent>
                       {subSectors.map(s => (
                         <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
@@ -436,9 +529,7 @@ export default function StrategyDiagnosticPage() {
                   value={getField("A", "headcountBand") ?? ""}
                   onValueChange={v => updateSection("A", "headcountBand", v)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select headcount range" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select headcount range" /></SelectTrigger>
                   <SelectContent>
                     {HEADCOUNT_BANDS.map(b => (
                       <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
@@ -453,14 +544,54 @@ export default function StrategyDiagnosticPage() {
                   value={getField("A", "primaryGeography") ?? "uk"}
                   onValueChange={v => updateSection("A", "primaryGeography", v)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="uk">United Kingdom</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">UK-only for beta. Multi-region support coming post-beta.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Organisation type</Label>
+                <Select
+                  value={getField("A", "orgType") ?? ""}
+                  onValueChange={v => updateSection("A", "orgType", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select org type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="plc">Listed / PLC</SelectItem>
+                    <SelectItem value="private">Private company</SelectItem>
+                    <SelectItem value="pe_backed">PE-backed</SelectItem>
+                    <SelectItem value="ngo_charity">NGO / Charity</SelectItem>
+                    <SelectItem value="public_sector">Public sector</SelectItem>
+                    <SelectItem value="partnership">Partnership / LLP</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Regulatory context</Label>
+                <p className="text-xs text-muted-foreground">Select all that apply — shapes governance requirements in your strategy</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {REGULATORY_OPTIONS.map(reg => {
+                    const selected: string[] = getField("A", "sectorSpecificRegulations") ?? [];
+                    const checked = selected.includes(reg);
+                    return (
+                      <label key={reg} className="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={v => {
+                            const next = v ? [...selected, reg] : selected.filter(x => x !== reg);
+                            updateSection("A", "sectorSpecificRegulations", next);
+                          }}
+                        />
+                        <span className="text-sm">{reg}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -471,9 +602,7 @@ export default function StrategyDiagnosticPage() {
               <div className="space-y-2">
                 <Label>HR team size <span className="text-destructive">*</span></Label>
                 <Input
-                  type="number"
-                  min={0}
-                  max={9999}
+                  type="number" min={0} max={9999}
                   placeholder="e.g. 45"
                   value={getField("B", "hrTeamSize") ?? ""}
                   onChange={e => updateSection("B", "hrTeamSize", parseInt(e.target.value, 10) || 0)}
@@ -486,7 +615,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>HR sub-functions present <span className="text-destructive">*</span></Label>
+                <Label>HR sub-functions present</Label>
                 <p className="text-xs text-muted-foreground">Select all that apply</p>
                 <div className="grid grid-cols-2 gap-2">
                   {HR_SUB_FUNCTIONS.map(fn => {
@@ -509,18 +638,31 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>HR reports to <span className="text-destructive">*</span></Label>
+                <Label>HR reports to</Label>
                 <Select
                   value={getField("B", "reportsTo") ?? ""}
                   onValueChange={v => updateSection("B", "reportsTo", v)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select reporting line" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select reporting line" /></SelectTrigger>
                   <SelectContent>
                     {["CEO", "CHRO", "COO", "CFO", "Other"].map(r => (
                       <SelectItem key={r} value={r.toLowerCase()}>{r}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>HR budget ownership</Label>
+                <Select
+                  value={getField("B", "hrBudgetOwnership") ?? ""}
+                  onValueChange={v => updateSection("B", "hrBudgetOwnership", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select budget ownership" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">Full — HR owns and controls the budget</SelectItem>
+                    <SelectItem value="partial">Partial — HR shares budget authority</SelectItem>
+                    <SelectItem value="none">None — budget held centrally or by Finance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -567,6 +709,58 @@ export default function StrategyDiagnosticPage() {
                     {LMS_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Engagement survey tool</Label>
+                <Select
+                  value={getField("C", "engagementSurveyTool") ?? ""}
+                  onValueChange={v => updateSection("C", "engagementSurveyTool", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select engagement survey tool" /></SelectTrigger>
+                  <SelectContent>
+                    {ENGAGEMENT_SURVEY_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Payroll system</Label>
+                <Select
+                  value={getField("C", "payrollSystem") ?? ""}
+                  onValueChange={v => updateSection("C", "payrollSystem", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select payroll system" /></SelectTrigger>
+                  <SelectContent>
+                    {PAYROLL_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>HR data quality</Label>
+                <Select
+                  value={getField("C", "dataQualityRating") ?? ""}
+                  onValueChange={v => updateSection("C", "dataQualityRating", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How would you rate your HR data quality?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="poor">Poor — significant gaps, inconsistencies, or errors</SelectItem>
+                    <SelectItem value="fair">Fair — usable but requires significant cleaning</SelectItem>
+                    <SelectItem value="good">Good — mostly clean; minor gaps</SelectItem>
+                    <SelectItem value="excellent">Excellent — well-governed, reliable, analytics-ready</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={getField("C", "hasDataWarehouse") ?? false}
+                    onCheckedChange={v => updateSection("C", "hasDataWarehouse", v)}
+                  />
+                  <span className="text-sm font-medium">We have a data warehouse or people analytics platform</span>
+                </label>
               </div>
 
               <Separator />
@@ -699,7 +893,7 @@ export default function StrategyDiagnosticPage() {
 
               {/* Admin time per hire */}
               <div className="space-y-2">
-                <Label>Admin time per hire (hours) <span className="text-destructive">*</span></Label>
+                <Label>Admin time per hire (hours)</Label>
                 <Input
                   type="number" min={0} step={0.5}
                   placeholder="e.g. 12"
@@ -715,9 +909,30 @@ export default function StrategyDiagnosticPage() {
                 </label>
               </div>
 
+              {/* Top 3 HR time sinks */}
+              <div className="space-y-3">
+                <Label>Top 3 most time-consuming HR activities</Label>
+                <p className="text-xs text-muted-foreground">Where does your team spend the most time today?</p>
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                    <Input
+                      placeholder={`Activity ${i + 1}`}
+                      value={((getField("D", "topHrTimePlaces") ?? []) as string[])[i] ?? ""}
+                      onChange={e => {
+                        const pts = [...((getField("D", "topHrTimePlaces") ?? ["", "", ""]) as string[])];
+                        pts[i] = e.target.value;
+                        updateSection("D", "topHrTimePlaces", pts);
+                      }}
+                      maxLength={100}
+                    />
+                  </div>
+                ))}
+              </div>
+
               {/* Total HR budget */}
               <div className="space-y-2">
-                <Label>Total HR budget (£) <span className="text-destructive">*</span></Label>
+                <Label>Total HR budget (£)</Label>
                 <Input
                   type="number" min={0}
                   placeholder="e.g. 4500000"
@@ -736,7 +951,7 @@ export default function StrategyDiagnosticPage() {
               {/* Loaded cost per HR FTE */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label>Loaded cost per HR FTE (£) <span className="text-destructive">*</span></Label>
+                  <Label>Loaded cost per HR FTE (£)</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -770,7 +985,7 @@ export default function StrategyDiagnosticPage() {
 
               {/* Budget envelope for HR AI */}
               <div className="space-y-2">
-                <Label>Budget envelope for HR AI <span className="text-destructive">*</span></Label>
+                <Label>Budget envelope for HR AI</Label>
                 <Select
                   value={getField("D", "aiInvestmentEnvelope") ?? ""}
                   onValueChange={v => updateSection("D", "aiInvestmentEnvelope", v)}
@@ -782,6 +997,42 @@ export default function StrategyDiagnosticPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Voluntary attrition */}
+              <div className="space-y-2">
+                <Label>Voluntary attrition rate (%)</Label>
+                <Input
+                  type="number" min={0} max={100} step={0.5}
+                  placeholder="e.g. 14"
+                  value={getField("D", "voluntaryAttritionPct") ?? ""}
+                  onChange={e => updateSection("D", "voluntaryAttritionPct", parseFloat(e.target.value) || 0)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={getField("D", "attritionIsEstimate") ?? false}
+                    onCheckedChange={v => updateSection("D", "attritionIsEstimate", v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Time to fill */}
+              <div className="space-y-2">
+                <Label>Average time to fill (days)</Label>
+                <Input
+                  type="number" min={0}
+                  placeholder="e.g. 42"
+                  value={getField("D", "timeToFillDays") ?? ""}
+                  onChange={e => updateSection("D", "timeToFillDays", parseFloat(e.target.value) || 0)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={getField("D", "timeToFillIsEstimate") ?? false}
+                    onCheckedChange={v => updateSection("D", "timeToFillIsEstimate", v)}
+                  />
+                  This is an estimate
+                </label>
               </div>
             </div>
           )}
@@ -828,7 +1079,7 @@ export default function StrategyDiagnosticPage() {
               <div className="space-y-2">
                 <Label>Time horizon <span className="text-destructive">*</span></Label>
                 <Select
-                  value={getField("E", "timeHorizonMonths") ?? ""}
+                  value={String(getField("E", "timeHorizonMonths") ?? "")}
                   onValueChange={v => updateSection("E", "timeHorizonMonths", parseInt(v, 10))}
                 >
                   <SelectTrigger><SelectValue placeholder="Select horizon" /></SelectTrigger>
@@ -875,7 +1126,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-3">
-                <Label>Top 3 pain points <span className="text-destructive">*</span></Label>
+                <Label>Top 3 pain points</Label>
                 <p className="text-xs text-muted-foreground">What's slowing HR down most right now?</p>
                 {[0, 1, 2].map(i => (
                   <div key={i} className="flex items-center gap-2">
@@ -887,6 +1138,26 @@ export default function StrategyDiagnosticPage() {
                         const pts = [...((getField("E", "topPainPoints") ?? ["", "", ""]) as string[])];
                         pts[i] = e.target.value;
                         updateSection("E", "topPainPoints", pts);
+                      }}
+                      maxLength={200}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <Label>Strategic priorities</Label>
+                <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional)</p>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                    <Input
+                      placeholder={`Priority ${i + 1}`}
+                      value={((getField("E", "strategicPriorities") ?? []) as string[])[i] ?? ""}
+                      onChange={e => {
+                        const pts = [...((getField("E", "strategicPriorities") ?? ["", "", "", "", ""]) as string[])];
+                        pts[i] = e.target.value;
+                        updateSection("E", "strategicPriorities", pts.filter(Boolean));
                       }}
                       maxLength={200}
                     />
@@ -921,7 +1192,7 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3">
                 <Label>Non-negotiables</Label>
-                <p className="text-xs text-muted-foreground">Things the CPO would never compromise on (up to 3)</p>
+                <p className="text-xs text-muted-foreground">Things you would never compromise on (up to 3)</p>
                 {[0, 1, 2].map(i => (
                   <div key={i} className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
@@ -938,6 +1209,70 @@ export default function StrategyDiagnosticPage() {
                   </div>
                 ))}
               </div>
+
+              <div className="space-y-2">
+                <Label>Change readiness</Label>
+                <Select
+                  value={getField("F", "changeReadiness") ?? ""}
+                  onValueChange={v => updateSection("F", "changeReadiness", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How ready is the organisation for change?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="resistant">Resistant — significant change fatigue or scepticism</SelectItem>
+                    <SelectItem value="cautious">Cautious — open to change but needs careful management</SelectItem>
+                    <SelectItem value="ready">Ready — generally open and capable of change</SelectItem>
+                    <SelectItem value="energised">Energised — actively seeking transformation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Decision-making style</Label>
+                <Select
+                  value={getField("F", "decisionMakingStyle") ?? ""}
+                  onValueChange={v => updateSection("F", "decisionMakingStyle", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How does this organisation make decisions?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top_down">Top-down — decisions made centrally and cascaded</SelectItem>
+                    <SelectItem value="consensus">Consensus — broad buy-in required before moving</SelectItem>
+                    <SelectItem value="data_driven">Data-driven — evidence required before decisions</SelectItem>
+                    <SelectItem value="experimental">Experimental — test and learn, move fast</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>CEO style</Label>
+                <Select
+                  value={getField("F", "ceoStyle") ?? ""}
+                  onValueChange={v => updateSection("F", "ceoStyle", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How would you describe the CEO's style?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="visionary">Visionary — big picture, long-term thinker</SelectItem>
+                    <SelectItem value="operator">Operator — execution-focused, metrics-driven</SelectItem>
+                    <SelectItem value="relationship">Relationship-builder — people-first, consensus-seeker</SelectItem>
+                    <SelectItem value="challenger">Challenger — pushes hard, high expectations</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>CFO style</Label>
+                <Select
+                  value={getField("F", "cfoStyle") ?? ""}
+                  onValueChange={v => updateSection("F", "cfoStyle", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How would you describe the CFO's style?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="strategic">Strategic — sees investment as growth enabler</SelectItem>
+                    <SelectItem value="conservative">Conservative — cautious, ROI-first</SelectItem>
+                    <SelectItem value="analytical">Analytical — data-heavy, wants detailed business cases</SelectItem>
+                    <SelectItem value="pragmatic">Pragmatic — flexible if the numbers stack up</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
@@ -945,11 +1280,13 @@ export default function StrategyDiagnosticPage() {
           {activeSection === "G" && (
             <div className="space-y-5">
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-xs text-blue-700 dark:text-blue-300">
-                This is a facilitated CPO self-rating — not the platform's adaptive assessment. Score each domain 0–10 together, then capture rationale notes.
+                <p className="font-medium mb-1">How to use these ratings</p>
+                <p>This is a self-assessment of your HR function's AI capability — not the platform's adaptive assessment. Score each domain 0–10 using the calibration questions as a guide. Capture your rationale so the strategy draft reflects your honest starting point.</p>
               </div>
 
               {CAPABILITY_DOMAINS.map(domain => {
                 const rating = capDomains[domain.key] ?? { score: 0 };
+                const isExpanded = expandedCalibration === domain.key;
                 return (
                   <Card key={domain.key} className="border">
                     <CardHeader className="pb-2 pt-4 px-4">
@@ -973,10 +1310,33 @@ export default function StrategyDiagnosticPage() {
                         />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>0 — None</span>
-                          <span className="text-center">{getMaturityLabel(rating.score ?? 0)}</span>
+                          <span className="text-center font-medium">{getMaturityLabel(rating.score ?? 0)}</span>
                           <span>10 — Advanced</span>
                         </div>
                       </div>
+
+                      {/* Calibration prompt toggle */}
+                      <button
+                        className="w-full text-left text-xs text-primary hover:underline flex items-center gap-1"
+                        onClick={() => setExpandedCalibration(isExpanded ? null : domain.key)}
+                      >
+                        <Info className="w-3 h-3" />
+                        {isExpanded ? "Hide calibration guide" : "Show calibration guide"}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="rounded-lg bg-muted/40 border p-3 space-y-2 text-xs">
+                          <p className="font-medium text-foreground">Calibration question</p>
+                          <p className="text-muted-foreground italic">"{domain.calibrationPrompt}"</p>
+                          <Separator className="my-1" />
+                          <div className="space-y-1">
+                            <p className="text-muted-foreground">{domain.anchorLow}</p>
+                            <p className="text-muted-foreground">{domain.anchorMid}</p>
+                            <p className="text-muted-foreground">{domain.anchorHigh}</p>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-1">
                         <Label className="text-xs">Rationale notes</Label>
                         <Textarea
@@ -1019,11 +1379,9 @@ export default function StrategyDiagnosticPage() {
           {activeSection === "H" && (
             <div className="space-y-5">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Who needs to approve <span className="text-destructive">*</span></Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">Select all that apply</p>
-                  </div>
+                <div>
+                  <Label>Who needs to approve <span className="text-destructive">*</span></Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Select all that apply</p>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {APPROVER_ROLES.map(role => {
@@ -1055,6 +1413,7 @@ export default function StrategyDiagnosticPage() {
                   <SelectContent>
                     <SelectItem value="high">High — actively use AI, understand capabilities</SelectItem>
                     <SelectItem value="moderate">Moderate — aware but limited hands-on experience</SelectItem>
+                    <SelectItem value="mixed">Mixed — varies significantly across stakeholders</SelectItem>
                     <SelectItem value="low">Low — limited awareness, may be sceptical</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1062,7 +1421,7 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-2">
                 <Label>What language resonates with them</Label>
-                <p className="text-xs text-muted-foreground">Select all that apply (session: add more based on discussion)</p>
+                <p className="text-xs text-muted-foreground">Select all that apply</p>
                 <div className="grid grid-cols-2 gap-2">
                   {LANGUAGE_OPTIONS.map(lang => {
                     const selected: string[] = getField("H", "languageResonates") ?? [];
@@ -1084,12 +1443,173 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
+                <Label>Board AI interest</Label>
+                <Select
+                  value={getField("H", "boardAiInterest") ?? ""}
+                  onValueChange={v => updateSection("H", "boardAiInterest", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="How interested is the board in AI?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None — not on the board agenda</SelectItem>
+                    <SelectItem value="low">Low — occasional mention, no formal interest</SelectItem>
+                    <SelectItem value="moderate">Moderate — on the agenda, some questions asked</SelectItem>
+                    <SelectItem value="high">High — board actively asking for AI strategy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Specific concerns they've raised</Label>
                 <Textarea
                   placeholder="Any concerns raised in prior conversations…"
                   rows={3}
                   value={getField("H", "stakeholderConcerns") ?? ""}
                   onChange={e => updateSection("H", "stakeholderConcerns", e.target.value)}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ── Section I ─────────────────────────────────────────────────── */}
+          {activeSection === "I" && (
+            <div className="space-y-5">
+              <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 text-xs text-violet-700 dark:text-violet-300">
+                This section grounds your HR AI strategy in the broader business context. The more specific you are, the more relevant your strategy drafts will be.
+              </div>
+
+              <div className="space-y-2">
+                <Label>Where is the business heading in the next 2–3 years? <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Key strategic moves, growth plans, transformation programmes, M&A activity</p>
+                <Textarea
+                  placeholder="e.g. We're expanding into three new markets, integrating a recent acquisition, and moving from a product to a platform model…"
+                  rows={5}
+                  value={(getFieldI("businessDirection") as string) ?? ""}
+                  onChange={e => updateSectionI("businessDirection", e.target.value)}
+                  maxLength={1000}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {((getFieldI("businessDirection") as string) ?? "").length}/1000
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Top business priorities (up to 5)</Label>
+                <p className="text-xs text-muted-foreground">What is the business most focused on achieving this year?</p>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                    <Input
+                      placeholder={`Business priority ${i + 1}`}
+                      value={((getFieldI("topBusinessPriorities") as string[] ?? []))[i] ?? ""}
+                      onChange={e => {
+                        const pts = [...((getFieldI("topBusinessPriorities") as string[] ?? ["", "", "", "", ""]))];
+                        pts[i] = e.target.value;
+                        updateSectionI("topBusinessPriorities", pts.filter(Boolean));
+                      }}
+                      maxLength={200}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Primary work type</Label>
+                <Select
+                  value={(getFieldI("workforceWorkType") as string) ?? ""}
+                  onValueChange={v => updateSectionI("workforceWorkType", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select work type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fully_remote">Fully remote</SelectItem>
+                    <SelectItem value="hybrid">Hybrid (mix of remote and on-site)</SelectItem>
+                    <SelectItem value="mostly_onsite">Mostly on-site</SelectItem>
+                    <SelectItem value="fully_onsite">Fully on-site / deskless</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Employment mix</Label>
+                <Select
+                  value={(getFieldI("workforceEmploymentMix") as string) ?? ""}
+                  onValueChange={v => updateSectionI("workforceEmploymentMix", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select employment mix" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mostly_permanent">Mostly permanent employees</SelectItem>
+                    <SelectItem value="significant_contingent">Significant contingent / contractor workforce</SelectItem>
+                    <SelectItem value="majority_contingent">Majority contingent / gig workers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Geographic distribution</Label>
+                <Select
+                  value={(getFieldI("geographicDistribution") as string) ?? ""}
+                  onValueChange={v => updateSectionI("geographicDistribution", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select geographic distribution" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single_site">Single site</SelectItem>
+                    <SelectItem value="multi_site_single_country">Multiple sites, single country</SelectItem>
+                    <SelectItem value="multi_country">Multi-country</SelectItem>
+                    <SelectItem value="global">Global (5+ countries)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Pivotal job families (up to 5)</Label>
+                <p className="text-xs text-muted-foreground">Which job families are most critical to business success — and most at risk from AI disruption?</p>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                    <Input
+                      placeholder={`e.g. Software engineers, Customer service agents…`}
+                      value={((getFieldI("pivotalJobFamilies") as string[] ?? []))[i] ?? ""}
+                      onChange={e => {
+                        const pts = [...((getFieldI("pivotalJobFamilies") as string[] ?? ["", "", "", "", ""]))];
+                        pts[i] = e.target.value;
+                        updateSectionI("pivotalJobFamilies", pts.filter(Boolean));
+                      }}
+                      maxLength={100}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <Label>Top 3 people / talent challenges <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">What are the hardest people problems you're trying to solve?</p>
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
+                    <Input
+                      placeholder={`Challenge ${i + 1}`}
+                      value={((getFieldI("peopleChallenges") as string[] ?? []))[i] ?? ""}
+                      onChange={e => {
+                        const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))];
+                        pts[i] = e.target.value;
+                        updateSectionI("peopleChallenges", pts.filter(Boolean));
+                      }}
+                      maxLength={200}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Current employee experience</Label>
+                <p className="text-xs text-muted-foreground">How would you honestly describe the employee experience today?</p>
+                <Textarea
+                  placeholder="e.g. Engaged but frustrated by manual processes; strong culture but poor tooling…"
+                  rows={4}
+                  value={(getFieldI("employeeExperienceState") as string) ?? ""}
+                  onChange={e => updateSectionI("employeeExperienceState", e.target.value)}
                   maxLength={500}
                   className="resize-none"
                 />
@@ -1156,7 +1676,7 @@ export default function StrategyDiagnosticPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={activeSection === "H"}
+              disabled={activeSection === "I"}
               onClick={() => {
                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);
@@ -1232,7 +1752,9 @@ export default function StrategyDiagnosticPage() {
             </Button>
             {serverFacilitatorNotes[activeSection] && (
               <p className="text-xs text-muted-foreground">
-                Last saved: {serverFacilitatorNotes[activeSection].updatedAt ? new Date(serverFacilitatorNotes[activeSection].updatedAt!).toLocaleTimeString() : "recently"}
+                Last saved: {serverFacilitatorNotes[activeSection].updatedAt
+                  ? new Date(serverFacilitatorNotes[activeSection].updatedAt!).toLocaleTimeString()
+                  : "recently"}
               </p>
             )}
 
