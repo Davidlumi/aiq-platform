@@ -41,13 +41,13 @@ import {
 import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
-  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders,
+  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders, Settings,
 } from "lucide-react";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J";
+type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K";
 type ProgressState = "not_started" | "in_progress" | "complete";
 
 interface AiTool {
@@ -75,6 +75,7 @@ function calcProgress(
   sectionI: Record<string, unknown>,
   sectionId: SectionId,
   sectionJ?: Record<string, unknown>,
+  sectionK?: Record<string, unknown>,
 ): ProgressState {
   if (sectionId === "G") {
     const rated = Object.values(capDomains).filter(d => d.score > 0).length;
@@ -85,6 +86,12 @@ function calcProgress(
   if (sectionId === "I") {
     if (!sectionI.businessDirection && !(sectionI.topBusinessPriorities as string[] ?? []).length) return "not_started";
     if (sectionI.businessDirection && (sectionI.peopleChallenges as string[] ?? []).length > 0) return "complete";
+    return "in_progress";
+  }
+  if (sectionId === "K") {
+    const k = sectionK ?? {};
+    if (!k.onboardingModel && !k.performanceReviewCadence) return "not_started";
+    if (k.onboardingModel && k.performanceReviewCadence && k.hrHelpdeskModel) return "complete";
     return "in_progress";
   }
   if (sectionId === "J") {
@@ -136,6 +143,7 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
   { id: "H", label: "Stakeholder context",       icon: UserCheck  },
   { id: "I", label: "Business & workforce",      icon: Globe      },
   { id: "J", label: "Constraints & preferences",  icon: Sliders    },
+  { id: "K", label: "Ways of working",             icon: Settings   },
 ];
 
 const HR_SUB_FUNCTIONS = ["TA", "L&D", "Reward", "WFP", "HRBP", "HR Ops", "DEI", "Comms"];
@@ -270,6 +278,7 @@ export default function StrategyDiagnosticPage() {
   const [capDerived, setCapDerived] = useState<{ overallScore?: number; maturityLabel?: string }>({});
   const [sectionI, setSectionI] = useState<Record<string, unknown>>({});
   const [sectionJ, setSectionJ] = useState<Record<string, unknown>>({});
+  const [sectionK, setSectionK] = useState<Record<string, unknown>>({});
   const [serverFacilitatorNotes, setServerFacilitatorNotes] = useState<Record<string, { content: string; updatedAt?: string }>>({});
   const [completeError, setCompleteError] = useState<string | null>(null);
   const [expandedCalibration, setExpandedCalibration] = useState<string | null>(null);
@@ -318,6 +327,7 @@ export default function StrategyDiagnosticPage() {
       }
       setSectionI((inputsQ.data.sectionI as Record<string, unknown>) ?? {});
       setSectionJ((inputsQ.data.sectionJ as Record<string, unknown>) ?? {});
+      setSectionK((inputsQ.data.sectionK as Record<string, unknown>) ?? {});
       if (inputsQ.data.facilitatorNotes) {
         setServerFacilitatorNotes(inputsQ.data.facilitatorNotes as Record<string, { content: string }>);
         const noteTexts: Record<string, string> = {};
@@ -337,12 +347,14 @@ export default function StrategyDiagnosticPage() {
         capabilityAssessment?: Record<string, unknown>;
         sectionI?: Record<string, unknown>;
         sectionJ?: Record<string, unknown>;
+        sectionK?: Record<string, unknown>;
       };
       saveInputsMut.mutate({
         sections: d.sections as any,
         capabilityAssessment: d.capabilityAssessment as any,
         sectionI: d.sectionI as any,
         sectionJ: d.sectionJ as any,
+        sectionK: d.sectionK as any,
       });
     }, [saveInputsMut]),
   );
@@ -351,26 +363,34 @@ export default function StrategyDiagnosticPage() {
     setInputs(prev => {
       const key = `section${sectionId}`;
       const updated = { ...prev, [key]: { ...(prev[key] as Record<string, unknown> ?? {}), [field]: value } };
-      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ });
+      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ]);
+  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ, sectionK]);
 
   const updateSectionI = useCallback((field: string, value: unknown) => {
     setSectionI(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated, sectionJ });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionJ]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionJ, sectionK]);
 
   const updateSectionJ = useCallback((field: string, value: unknown) => {
     setSectionJ(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ: updated });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ: updated, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI, sectionK]);
+
+  const updateSectionK = useCallback((field: string, value: unknown) => {
+    setSectionK(prev => {
+      const updated = { ...prev, [field]: value };
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK: updated });
+      return updated;
+    });
+  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI, sectionJ]);
 
   const updateCapability = useCallback((domainKey: string, field: "score" | "rationaleNotes", value: unknown) => {
     setCapDomains(prev => {
@@ -383,7 +403,7 @@ export default function StrategyDiagnosticPage() {
       const overall = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
       const derived = { overallScore: Math.round(overall * 10) / 10, maturityLabel: getMaturityLabel(overall) };
       setCapDerived(derived);
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI, sectionJ });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI, sectionJ, sectionK });
       return updated;
     });
   }, [scheduleInputSave, inputs, sectionI, sectionJ]);
@@ -401,12 +421,13 @@ export default function StrategyDiagnosticPage() {
   const getField = (id: SectionId, field: string) => sectionData(id)[field];
   const getFieldI = (field: string) => sectionI[field];
   const getFieldJ = (field: string) => sectionJ[field];
+  const getFieldK = (field: string) => sectionK[field];
 
   const activeSectionDef = SECTIONS.find(s => s.id === activeSection)!;
 
   // Section progress
   const progressMap = Object.fromEntries(
-    SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id, sectionJ)])
+    SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id, sectionJ, sectionK)])
   ) as Record<SectionId, ProgressState>;
 
   // Headcount band → approximate number for validation
@@ -1669,6 +1690,93 @@ export default function StrategyDiagnosticPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>Manager capability for data-led insights</Label>
+                <p className="text-xs text-muted-foreground">How well do your people managers use data and analytics to lead their teams?</p>
+                <Select
+                  value={(getFieldI("managerCapabilityForInsights") as string) ?? ""}
+                  onValueChange={v => updateSectionI("managerCapabilityForInsights", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select capability level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Strong">Strong — most managers use data confidently</SelectItem>
+                    <SelectItem value="Mixed">Mixed — variable across the management population</SelectItem>
+                    <SelectItem value="Variable">Variable — a few strong, most uncertain</SelectItem>
+                    <SelectItem value="Weak">Weak — most managers not yet data-led</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Workforce composition</Label>
+                <p className="text-xs text-muted-foreground">What best describes the mix of your workforce?</p>
+                <Select
+                  value={(getFieldI("workforceComposition") as string) ?? ""}
+                  onValueChange={v => updateSectionI("workforceComposition", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select composition" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="office_knowledge">Primarily office / knowledge workers</SelectItem>
+                    <SelectItem value="frontline_heavy">Frontline / operational heavy</SelectItem>
+                    <SelectItem value="mixed">Mixed — significant office and frontline</SelectItem>
+                    <SelectItem value="field_based">Predominantly field-based</SelectItem>
+                    <SelectItem value="manufacturing">Manufacturing / production</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Business direction type</Label>
+                <p className="text-xs text-muted-foreground">Which best describes where the business is heading?</p>
+                <Select
+                  value={(getFieldI("businessDirectionType") as string) ?? ""}
+                  onValueChange={v => updateSectionI("businessDirectionType", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select direction" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="growing">Growing — headcount and revenue expanding</SelectItem>
+                    <SelectItem value="transforming">Transforming — significant operating model change</SelectItem>
+                    <SelectItem value="optimising">Optimising — efficiency and cost focus</SelectItem>
+                    <SelectItem value="restructuring">Restructuring — headcount reduction or reorganisation</SelectItem>
+                    <SelectItem value="stable">Stable — steady state, incremental improvement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Skills framework maturity</Label>
+                <p className="text-xs text-muted-foreground">How developed is your organisation’s skills taxonomy and framework?</p>
+                <Select
+                  value={(getFieldI("skillsFrameworkStatus") as string) ?? ""}
+                  onValueChange={v => updateSectionI("skillsFrameworkStatus", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select maturity level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mature">Mature — comprehensive, actively maintained</SelectItem>
+                    <SelectItem value="partial">Partial — exists for some functions</SelectItem>
+                    <SelectItem value="nascent">Nascent — early stage, limited coverage</SelectItem>
+                    <SelectItem value="none">None — no skills framework in place</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Skills inventory completeness</Label>
+                <p className="text-xs text-muted-foreground">How complete is your current employee skills data?</p>
+                <Select
+                  value={(getFieldI("skillsInventoryCompleteness") as string) ?? ""}
+                  onValueChange={v => updateSectionI("skillsInventoryCompleteness", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select completeness" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="comprehensive">Comprehensive — most employees profiled</SelectItem>
+                    <SelectItem value="partial">Partial — some employees or functions covered</SelectItem>
+                    <SelectItem value="minimal">Minimal — very limited data</SelectItem>
+                    <SelectItem value="none">None — no skills data captured</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
@@ -1788,6 +1896,164 @@ export default function StrategyDiagnosticPage() {
             </div>
           )}
 
+          {/* ── Section K ─────────────────────────────────────────────────── */}
+          {activeSection === "K" && (
+            <div className="space-y-5">
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs text-amber-700 dark:text-amber-300">
+                These operational patterns shape which AI initiatives will land well and which will face friction. They inform how the strategy is sequenced and framed.
+              </div>
+
+              <div className="space-y-2">
+                <Label>Onboarding model <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">How are new hires currently onboarded?</p>
+                <Select
+                  value={(getFieldK("onboardingModel") as string) ?? ""}
+                  onValueChange={v => updateSectionK("onboardingModel", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select onboarding model" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="structured_programme">Structured programme — formal, multi-week curriculum</SelectItem>
+                    <SelectItem value="buddy_led">Buddy-led — peer-guided with light structure</SelectItem>
+                    <SelectItem value="self_directed">Self-directed — resources available, minimal guidance</SelectItem>
+                    <SelectItem value="minimal">Minimal — ad hoc, manager-dependent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Internal mobility approach</Label>
+                <p className="text-xs text-muted-foreground">How do employees typically move internally?</p>
+                <Select
+                  value={(getFieldK("internalMobilityApproach") as string) ?? ""}
+                  onValueChange={v => updateSectionK("internalMobilityApproach", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select mobility approach" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open_marketplace">Open marketplace — employees apply freely</SelectItem>
+                    <SelectItem value="manager_nominated">Manager-nominated — moves require manager approval</SelectItem>
+                    <SelectItem value="limited">Limited — few formal pathways exist</SelectItem>
+                    <SelectItem value="none">None — internal moves are rare or informal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Performance review cadence <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">How frequently are formal performance reviews conducted?</p>
+                <Select
+                  value={(getFieldK("performanceReviewCadence") as string) ?? ""}
+                  onValueChange={v => updateSectionK("performanceReviewCadence", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select cadence" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="continuous">Continuous — ongoing check-ins, no formal cycle</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="biannual">Bi-annual</SelectItem>
+                    <SelectItem value="annual">Annual</SelectItem>
+                    <SelectItem value="light_touch">Light touch — minimal or inconsistent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>HR helpdesk model <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">How do employees currently get HR support?</p>
+                <Select
+                  value={(getFieldK("hrHelpdeskModel") as string) ?? ""}
+                  onValueChange={v => updateSectionK("hrHelpdeskModel", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select helpdesk model" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="shared_service_centre">Shared service centre — centralised team</SelectItem>
+                    <SelectItem value="hrbp_direct">HRBP direct — employees go to their HRBP</SelectItem>
+                    <SelectItem value="ticketing_system">Ticketing system — formal case management</SelectItem>
+                    <SelectItem value="informal">Informal — ad hoc, no structured process</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Hiring process structure</Label>
+                <p className="text-xs text-muted-foreground">How standardised is your hiring process across the organisation?</p>
+                <Select
+                  value={(getFieldK("hiringProcessStructure") as string) ?? ""}
+                  onValueChange={v => updateSectionK("hiringProcessStructure", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select structure level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="highly_structured">Highly structured — consistent process, scoring, SLAs</SelectItem>
+                    <SelectItem value="semi_structured">Semi-structured — framework exists but varies</SelectItem>
+                    <SelectItem value="informal">Informal — manager-led, inconsistent</SelectItem>
+                    <SelectItem value="varies_by_team">Varies by team — no central standard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Hiring volume profile</Label>
+                <p className="text-xs text-muted-foreground">Which hiring segments are most significant? (select all that apply)</p>
+                {[
+                  { value: "executive", label: "Executive / senior leadership" },
+                  { value: "professional", label: "Professional / specialist" },
+                  { value: "graduate_apprentice", label: "Graduate / apprentice" },
+                  { value: "frontline_operative", label: "Frontline / operative" },
+                  { value: "contingent_seasonal", label: "Contingent / seasonal" },
+                ].map(opt => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="rounded border-border"
+                      checked={((getFieldK("hiringVolumeProfile") as string[] ?? []).includes(opt.value))}
+                      onChange={e => {
+                        const current = (getFieldK("hiringVolumeProfile") as string[] ?? []);
+                        const updated = e.target.checked
+                          ? [...current, opt.value]
+                          : current.filter((v: string) => v !== opt.value);
+                        updateSectionK("hiringVolumeProfile", updated);
+                      }}
+                    />
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label>L&amp;D delivery model</Label>
+                <p className="text-xs text-muted-foreground">How is learning and development primarily delivered?</p>
+                <Select
+                  value={(getFieldK("lAndDDeliveryModel") as string) ?? ""}
+                  onValueChange={v => updateSectionK("lAndDDeliveryModel", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select delivery model" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="blended">Blended — mix of digital and in-person</SelectItem>
+                    <SelectItem value="mostly_digital">Mostly digital — online-first</SelectItem>
+                    <SelectItem value="mostly_classroom">Mostly classroom — in-person led</SelectItem>
+                    <SelectItem value="on_the_job">On the job — informal, experiential</SelectItem>
+                    <SelectItem value="minimal">Minimal — limited L&D investment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Reward cycle model</Label>
+                <p className="text-xs text-muted-foreground">How is compensation review structured?</p>
+                <Select
+                  value={(getFieldK("rewardCycleModel") as string) ?? ""}
+                  onValueChange={v => updateSectionK("rewardCycleModel", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select reward cycle" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="annual_cycle">Annual cycle — single review window</SelectItem>
+                    <SelectItem value="biannual_cycle">Bi-annual cycle — two review windows</SelectItem>
+                    <SelectItem value="continuous">Continuous — ongoing compensation adjustments</SelectItem>
+                    <SelectItem value="project_based">Project-based — tied to milestones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* ── Navigation + CTAs ─────────────────────────────────────────── */}
           <div className="pt-4 border-t flex items-center justify-between gap-3">
             <Button
@@ -1847,7 +2113,7 @@ export default function StrategyDiagnosticPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={activeSection === "J"}
+              disabled={activeSection === "K"}
               onClick={() => {
                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);

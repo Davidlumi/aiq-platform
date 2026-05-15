@@ -3452,32 +3452,57 @@ test
 
 ## Complete Background Input Patch — §complete-patch-brief
 
-- [ ] DB: add sectionJJson column to ail_org_context
-- [ ] Schema: update ailOrgContext Drizzle schema with sectionJJson
-- [ ] Build shared/initiativeLibrary.ts — 12 initiatives with full metadata
-- [ ] Build shared/valueFormulas.ts — formula functions for all 12 initiatives
-- [ ] Build shared/initiativeConfig.ts — parameterised multipliers and thresholds
-- [ ] Build server/services/fitImpactEngine.ts — fit scoring + value calculation engine
-- [ ] Router: add SectionJSchema (10 fields, conditional on Section B sub-functions)
-- [ ] Router: update SectionASchema — add totalHeadcount, ukSitesCount, ownershipStructure
-- [ ] Router: update SectionCSchema — add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess
-- [ ] Router: update SectionDSchema — add 12 new fields + totalHrBudget precision upgrade
-- [ ] Router: update BackgroundInputsSchema to include sectionJ
-- [ ] Router: update FacilitatorNoteSchema to include "J" as valid sectionId
-- [ ] Router: raise completePrework threshold to full required-field set per §9
-- [ ] Router: wire draft generation trigger on completePrework (wave 1→2→3)
-- [ ] Router: wire second draft pass on completeSession with edit preservation
-- [ ] UI: add Section J between D and E in SECTIONS array (display order A→I→B→C→D→J→E→F→G→H)
-- [ ] UI: Section J conditional field logic per §4
-- [ ] UI: add totalHeadcount + auto-derived band to Section A
-- [ ] UI: add ukSitesCount, ownershipStructure to Section A
-- [ ] UI: add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess to Section C
-- [ ] UI: add engagementSurveyTool with "None" handling to Section C
-- [ ] UI: Section D collapsible groupings (Financial / Operational / Volume)
-- [ ] UI: add all 12 new Section D fields with isEstimate flags
-- [ ] UI: Section G facilitator calibration prompts placeholder text per §10
-- [ ] UI: generation spinner UI on completePrework with wave progress
-- [ ] UI: home dashboard banner "Your strategy draft is ready" when generation completes
-- [ ] Initiatives builder: call fitImpactEngine and render per-initiative card output per §6.6
-- [ ] Write tests for fitImpactEngine, initiativeLibrary, valueFormulas
-- [ ] Write tests for updated backgroundInputs router (Section J, new threshold)
+- [x] DB: add sectionJJson column to ail_org_context
+- [x] Schema: update ailOrgContext Drizzle schema with sectionJJson
+- [x] Build shared/initiativeLibrary.ts — 12 initiatives with full metadata
+- [x] Build shared/valueFormulas.ts — formula functions for all 12 initiatives
+- [x] Build shared/initiativeConfig.ts — parameterised multipliers and thresholds
+- [x] Build server/services/fitImpactEngine.ts — fit scoring + value calculation engine
+- [x] Router: add SectionJSchema (10 fields, conditional on Section B sub-functions)
+- [x] Router: update SectionASchema — add totalHeadcount, ukSitesCount, ownershipStructure
+- [x] Router: update SectionCSchema — add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess
+- [x] Router: update SectionDSchema — add 12 new fields + totalHrBudget precision upgrade
+- [x] Router: update BackgroundInputsSchema to include sectionJ
+- [x] Router: update FacilitatorNoteSchema to include "J" as valid sectionId
+- [x] Router: raise completePrework threshold to full required-field set per §9
+- [x] Router: wire draft generation trigger on completePrework (wave 1→2→3)
+- [x] Router: wire second draft pass on completeSession with edit preservation
+- [x] UI: add Section J between D and E in SECTIONS array (display order A→I→B→C→D→J→E→F→G→H)
+- [x] UI: Section J conditional field logic per §4
+- [x] UI: add totalHeadcount + auto-derived band to Section A
+- [x] UI: add ukSitesCount, ownershipStructure to Section A
+- [x] UI: add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess to Section C
+- [x] UI: add engagementSurveyTool with "None" handling to Section C
+- [x] UI: Section D collapsible groupings (Financial / Operational / Volume)
+- [x] UI: add all 12 new Section D fields with isEstimate flags
+- [x] UI: Section G facilitator calibration prompts placeholder text per §10
+- [x] UI: generation spinner UI on completePrework with wave progress
+- [x] UI: home dashboard banner "Your strategy draft is ready" when generation completes
+- [x] Initiatives builder: call fitImpactEngine and render per-initiative card output per §6.6
+- [x] Write tests for fitImpactEngine, initiativeLibrary, valueFormulas
+- [x] Write tests for updated backgroundInputs router (Section J, new threshold)
+
+## v3 Initiative Database + Section K Implementation
+
+- [x] Router: add SectionKSchema (8 fields: onboardingModel, internalMobilityApproach, performanceReviewCadence, hrHelpdeskModel, hiringProcessStructure, hiringVolumeProfile, lAndDDeliveryModel, rewardCycleModel)
+- [x] Router: add sectionK to BackgroundInputsSchema and FacilitatorNoteSchema
+- [x] Router: add workforceComposition and businessDirectionType to SectionISchema
+- [x] Router: add skillsFrameworkStatus, skillsInventoryCompleteness, managerCapabilityForInsights to SectionISchema
+- [x] Router: add annualRevenue, costPerExternalHire, annualContractorSpend, monthlyHrQueryVolume, annualLDSpend, annualApplicationVolume, avgTimeToFill to SectionDSchema
+- [x] Router: add ukSitesCount to SectionASchema
+- [x] Router: add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess to SectionCSchema
+- [x] Router: update engine input mapping to pass sectionK, workforceComposition, businessDirectionType to engine
+- [x] DB: add sectionKJson column to ail_org_context
+- [x] Rebuild shared/initiativeLibrary.ts with all 49 initiatives using v3 IDs and fit gates
+- [x] Rebuild shared/valueFormulas.ts with all 49 initiative value formulas
+- [x] Update shared/initiativeConfig.ts with all defaults and multipliers from v3 database
+- [x] Rebuild server/services/fitImpactEngine.ts with v3 engine logic (sectionK evaluators, workforceComposition, businessDirectionType, co-deployment detection)
+- [x] Update ValueFormulaInputs types to include sectionK, workforceComposition, businessDirectionType
+- [x] UI: add Section K to StrategyDiagnosticPage wizard (after J, before Submit)
+- [x] UI: add workforceComposition and businessDirectionType fields to Section I
+- [x] UI: add skillsFrameworkStatus, managerCapabilityForInsights to Section I
+- [x] UI: add new Section D fields (annualRevenue, annualApplicationVolume, monthlyHrQueryVolume, annualLDSpend, costPerExternalHire, avgTimeToFill)
+- [x] UI: add ukSitesCount to Section A
+- [x] UI: add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess to Section C
+- [x] Write/update tests for all 49 initiatives and new engine logic
+- [x] Save checkpoint

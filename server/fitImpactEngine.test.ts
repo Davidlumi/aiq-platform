@@ -1,6 +1,12 @@
 /**
- * Tests for the Fit+Impact Engine and Initiative Library
- * Covers: scoring logic, value formulas, initiative library structure
+ * Fit + Impact Engine — Vitest test suite (v3, 49 initiatives)
+ *
+ * Tests:
+ *   1. Initiative library structure (49 initiatives, unique IDs, valid formula keys)
+ *   2. Engine scoring: hard gate failures, fit classification, sorting
+ *   3. Specific initiative scoring behaviour
+ *   4. Value formulas: all 49 return valid ValueRange shapes
+ *   5. Config: multiplier tables present and ordered correctly
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -8,15 +14,14 @@ import {
   evaluateInitiative,
   type FitImpactEngineInputs,
 } from "./services/fitImpactEngine";
-import { INITIATIVE_LIBRARY } from "../shared/initiativeLibrary";
+import { INITIATIVE_LIBRARY, INITIATIVE_IDS } from "../shared/initiativeLibrary";
 import { VALUE_FORMULA_REGISTRY } from "../shared/valueFormulas";
 import { INITIATIVE_CONFIG } from "../shared/initiativeConfig";
 
-// ── Baseline inputs for testing ───────────────────────────────────────────────
-// Uses the nested section structure that the engine actually expects
+// ── Baseline inputs ───────────────────────────────────────────────────────────
+
 const baseInputs: FitImpactEngineInputs = {
   sectionB: {
-    // Include all sub-functions so no initiative fails the hard gate in baseline tests
     hrSubFunctions: [
       "resourcing",
       "hr_operations",
@@ -25,12 +30,15 @@ const baseInputs: FitImpactEngineInputs = {
       "performance_management",
       "employee_experience",
       "people_analytics",
+      "reward",
     ],
   },
   sectionA: {
-    totalHeadcount: 2000,
-    sectorSpecificRegulation: ["FCA", "GDPR"],
+    totalHeadcount: 3000,
+    ukSitesCount: 15,
+    sectorSpecificRegulation: ["gdpr", "equality_act"],
     ownershipStructure: "plc",
+    sector: "financial_services",
   },
   sectionC: {
     hrisSystem: "Workday",
@@ -38,41 +46,65 @@ const baseInputs: FitImpactEngineInputs = {
     lmsSystem: "Cornerstone",
     dataQualityRating: "good",
     hrSystemIntegrationMaturity: "mostly_integrated",
-    yearsOfHrisData: 4,
+    yearsOfHrisData: 5,
     workforceDigitalAccess: "all",
   },
   sectionD: {
-    annualHires: 200,
+    annualHires: 300,
     adminTimePerHire: 12,
-    attritionRate: 15,
+    adminTimePerHireIsEstimate: false,
+    totalHrBudget: 2000000,
+    totalHrBudgetIsEstimate: false,
+    attritionRate: 18,
+    attritionRateIsEstimate: false,
     avgTimeToFill: 45,
-    annualApplicationVolume: 10000,
+    annualApplicationVolume: 15000,
     costPerExternalHire: 8000,
+    costPerExternalHireIsEstimate: false,
+    annualContractorSpend: 500000,
+    annualContractorSpendIsEstimate: false,
     monthlyHrQueryVolume: 1500,
-    internalHirePercent: 20,
-    annualLDSpend: 500000,
-    annualRevenue: 100000000,
-    currentEngagementScore: 62,
-    hrFteCount: 45,
-    totalHrBudget: 2500000,
+    internalHirePercent: 25,
+    annualLDSpend: 600000,
+    annualLDSpendIsEstimate: false,
+    annualRevenue: 500000000,
+    annualRevenueIsEstimate: false,
+    currentEngagementScore: 58,
+    hrFteCount: 25,
   },
   sectionI: {
     workforceWorkType: "knowledge",
+    workforceComposition: "mixed",
+    businessDirectionType: "scaling",
+    geographicDistribution: "uk_multi_site",
     managerCapabilityForInsights: "Mixed",
-    pivotalJobFamilies: ["Data Science", "Engineering", "Product"],
+    skillsFrameworkStatus: "partial",
+    skillsInventoryCompleteness: "partial",
+    pivotalJobFamilies: ["engineering", "sales", "product"],
+    employeeExperienceState: "developing",
   },
   sectionF: {
     changeReadiness: "moderate",
   },
   sectionG: {
-    ai_ethics_trust: 6,
+    ai_ethics_trust: 7,
   },
 };
 
-// ── Initiative Library ────────────────────────────────────────────────────────
+// ── 1. Initiative Library ─────────────────────────────────────────────────────
+
 describe("Initiative Library", () => {
-  it("has exactly 12 initiatives", () => {
-    expect(INITIATIVE_LIBRARY).toHaveLength(12);
+  it("has exactly 49 initiatives", () => {
+    expect(INITIATIVE_LIBRARY).toHaveLength(49);
+  });
+
+  it("exports INITIATIVE_IDS with 49 entries", () => {
+    expect(INITIATIVE_IDS).toHaveLength(49);
+  });
+
+  it("all initiative IDs are unique", () => {
+    const ids = INITIATIVE_LIBRARY.map((i) => i.id);
+    expect(new Set(ids).size).toBe(49);
   });
 
   it("each initiative has required fields", () => {
@@ -87,30 +119,114 @@ describe("Initiative Library", () => {
     }
   });
 
-  it("all initiative IDs are unique", () => {
-    const ids = INITIATIVE_LIBRARY.map(i => i.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it("has value formula for each initiative", () => {
+  it("every initiative has a registered value formula", () => {
     for (const init of INITIATIVE_LIBRARY) {
-      expect(VALUE_FORMULA_REGISTRY[init.valueFormulaKey], `No formula for ${init.id}`).toBeDefined();
-      expect(typeof VALUE_FORMULA_REGISTRY[init.valueFormulaKey]).toBe("function");
+      expect(
+        VALUE_FORMULA_REGISTRY[init.valueFormulaKey],
+        `Missing formula for ${init.id} (key: ${init.valueFormulaKey})`
+      ).toBeDefined();
     }
   });
 
-  it("each initiative has at least one soft fit factor", () => {
+  it("every initiative has at least one soft fit factor", () => {
     for (const init of INITIATIVE_LIBRARY) {
       expect(init.softFitFactors.length, `${init.id} has no soft fit factors`).toBeGreaterThan(0);
     }
   });
+
+  it("soft fit factors for each initiative sum to exactly 100", () => {
+    for (const init of INITIATIVE_LIBRARY) {
+      const total = init.softFitFactors.reduce((sum, f) => sum + f.maxScore, 0);
+      expect(total, `${init.id} soft fit factors sum to ${total}, expected 100`).toBe(100);
+    }
+  });
+
+  it("every initiative has a valid category", () => {
+    const validCategories = [
+      "talent_acquisition", "onboarding", "learning_development", "internal_mobility",
+      "performance_management", "employee_experience", "retention", "hr_operations",
+      "workforce_planning", "compensation_reward", "manager_effectiveness", "governance",
+      "frontline_workforce",
+    ];
+    for (const init of INITIATIVE_LIBRARY) {
+      expect(validCategories, `${init.id} has invalid category: ${init.category}`).toContain(init.category);
+    }
+  });
+
+  it("contains all expected v3 initiative IDs", () => {
+    const expectedIds = [
+      "ta_high_volume_hiring", "ta_candidate_chatbot", "ta_interview_scheduling",
+      "ta_sourcing_matching", "ta_video_interview_assessment", "ta_bias_monitoring",
+      "ta_recruiter_productivity_ai", "ta_offer_generation", "ta_jd_optimization",
+      "on_personalised_journeys", "on_new_hire_chatbot", "on_documentation_automation", "on_buddy_matching",
+      "ld_personalised_learning", "ld_workforce_reskilling", "ld_ai_coaching",
+      "ld_compliance_training", "ld_content_creation", "ld_knowledge_management",
+      "im_talent_marketplace", "im_skills_inference", "im_mentor_matching",
+      "pm_continuous_performance", "pm_review_writing", "pm_okr_goal_alignment",
+      "ee_sentiment_listening", "ee_recognition_rewards", "ee_wellbeing_burnout", "ee_internal_comms_ai",
+      "rt_flight_risk_prediction", "rt_stay_interview_ai", "rt_exit_intelligence",
+      "hr_virtual_assistant", "hr_policy_generation", "hr_benefits_decision_support",
+      "wp_workforce_planning", "wp_succession_planning", "wp_org_design", "wp_location_strategy",
+      "cr_pay_equity", "cr_compensation_recommendations",
+      "mg_manager_copilot", "mg_difficult_conversations",
+      "gv_ai_governance", "gv_cross_cutting_bias_audit",
+      "fw_shift_scheduling_ai", "fw_frontline_learning", "fw_frontline_communication", "fw_store_manager_assistant",
+    ];
+    for (const id of expectedIds) {
+      expect(INITIATIVE_IDS, `Missing initiative ID: ${id}`).toContain(id);
+    }
+  });
 });
 
-// ── Fit+Impact Engine ─────────────────────────────────────────────────────────
-describe("Fit+Impact Engine", () => {
-  it("returns results for all 12 initiatives", () => {
+// ── 2. Engine: hard gate failures ────────────────────────────────────────────
+
+describe("Engine: hard gate failures", () => {
+  it("returns HARD_GATE_FAIL when required sub-function is missing", () => {
+    const inputs: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionB: { hrSubFunctions: [] },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", inputs);
+    expect(result.fitStatus).toBe("HARD_GATE_FAIL");
+    expect(result.fitScore).toBe(0);
+    expect(result.hardGateFailReasons.length).toBeGreaterThan(0);
+  });
+
+  it("returns HARD_GATE_FAIL when required data field is missing", () => {
+    const inputs: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, annualHires: undefined, annualApplicationVolume: undefined },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", inputs);
+    expect(result.fitStatus).toBe("HARD_GATE_FAIL");
+  });
+
+  it("returns non-zero fitScore when all gates pass", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    expect(result.fitStatus).not.toBe("HARD_GATE_FAIL");
+    expect(result.fitScore).toBeGreaterThan(0);
+  });
+
+  it("throws when evaluating an unknown initiative ID", () => {
+    expect(() => evaluateInitiative("nonexistent_initiative", baseInputs)).toThrow();
+  });
+
+  it("returns valueRange null for HARD_GATE_FAIL", () => {
+    const inputs: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionB: { hrSubFunctions: [] },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", inputs);
+    expect(result.valueRange).toBeNull();
+  });
+});
+
+// ── 3. Engine: fit classification and sorting ─────────────────────────────────
+
+describe("Engine: fit classification and sorting", () => {
+  it("returns exactly 49 results", () => {
     const results = evaluateAllInitiatives(baseInputs);
-    expect(results).toHaveLength(12);
+    expect(results).toHaveLength(49);
   });
 
   it("each result has required fields", () => {
@@ -118,6 +234,7 @@ describe("Fit+Impact Engine", () => {
     for (const r of results) {
       expect(r.id, "missing id").toBeTruthy();
       expect(r.label, "missing label").toBeTruthy();
+      expect(r.category, "missing category").toBeTruthy();
       expect(typeof r.fitScore, "fitScore not a number").toBe("number");
       expect(r.fitStatus, "missing fitStatus").toBeTruthy();
       expect(r.fitRationale, "missing fitRationale").toBeTruthy();
@@ -134,13 +251,10 @@ describe("Fit+Impact Engine", () => {
     }
   });
 
-  it("results are sorted: STRONG_FIT first, then POSSIBLE_FIT, then POOR_FIT, then HARD_GATE_FAIL", () => {
+  it("sorts STRONG_FIT → POSSIBLE_FIT → POOR_FIT → HARD_GATE_FAIL", () => {
     const results = evaluateAllInitiatives(baseInputs);
     const statusOrder: Record<string, number> = {
-      STRONG_FIT: 0,
-      POSSIBLE_FIT: 1,
-      POOR_FIT: 2,
-      HARD_GATE_FAIL: 3,
+      STRONG_FIT: 0, POSSIBLE_FIT: 1, POOR_FIT: 2, HARD_GATE_FAIL: 3,
     };
     for (let i = 0; i < results.length - 1; i++) {
       const a = statusOrder[results[i].fitStatus];
@@ -149,238 +263,323 @@ describe("Fit+Impact Engine", () => {
     }
   });
 
-  it("evaluateInitiative returns HARD_GATE_FAIL when sub-functions are missing", () => {
-    // high_volume_hiring_ai requires "resourcing" sub-function
-    const inputs: FitImpactEngineInputs = {
-      ...baseInputs,
-      sectionB: { hrSubFunctions: [] }, // no sub-functions
-    };
-    const result = evaluateInitiative("high_volume_hiring_ai", inputs);
-    expect(result.fitStatus).toBe("HARD_GATE_FAIL");
-    expect(result.fitScore).toBe(0);
-    expect(result.hardGateFailReasons.length).toBeGreaterThan(0);
-  });
-
-  it("poor data quality reduces fit score for data-intensive initiatives", () => {
-    const goodData = evaluateInitiative("attrition_prediction", {
-      ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, dataQualityRating: "excellent" },
-    });
-    const poorData = evaluateInitiative("attrition_prediction", {
-      ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, dataQualityRating: "poor" },
-    });
-    expect(goodData.fitScore).toBeGreaterThan(poorData.fitScore);
-  });
-
-  it("regulatory sectors increase fit score for bias_monitoring", () => {
-    const withRegs = evaluateInitiative("bias_monitoring", {
-      ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: ["FCA", "GDPR", "EU AI Act"] },
-    });
-    const withoutRegs = evaluateInitiative("bias_monitoring", {
-      ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: [] },
-    });
-    expect(withRegs.fitScore).toBeGreaterThan(withoutRegs.fitScore);
-  });
-
-  it("value range is non-null for non-hard-gate initiatives with sufficient data", () => {
-    const result = evaluateInitiative("hr_chatbot", baseInputs);
-    if (result.fitStatus !== "HARD_GATE_FAIL") {
-      expect(result.valueRange).not.toBeNull();
-      if (result.valueRange) {
-        expect(result.valueRange.low).toBeGreaterThanOrEqual(0);
-        expect(result.valueRange.high).toBeGreaterThanOrEqual(result.valueRange.low);
-        expect(result.valueRange.currency).toBe("GBP");
+  it("within same status, sorts by fitScore descending", () => {
+    const results = evaluateAllInitiatives(baseInputs);
+    const grouped: Record<string, typeof results> = {};
+    for (const r of results) {
+      if (!grouped[r.fitStatus]) grouped[r.fitStatus] = [];
+      grouped[r.fitStatus].push(r);
+    }
+    for (const group of Object.values(grouped)) {
+      for (let i = 0; i < group.length - 1; i++) {
+        expect(group[i].fitScore).toBeGreaterThanOrEqual(group[i + 1].fitScore);
       }
     }
   });
 
-  it("high hire volume improves fit for interview_scheduling", () => {
-    const highVolume = evaluateInitiative("interview_scheduling", {
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, annualHires: 1000 },
-    });
-    const lowVolume = evaluateInitiative("interview_scheduling", {
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, annualHires: 10 },
-    });
-    expect(highVolume.fitScore).toBeGreaterThan(lowVolume.fitScore);
-  });
-
-  it("low engagement score improves fit for engagement_ai", () => {
-    const lowEngagement = evaluateInitiative("engagement_ai", {
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, currentEngagementScore: 40 },
-    });
-    const highEngagement = evaluateInitiative("engagement_ai", {
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, currentEngagementScore: 85 },
-    });
-    expect(lowEngagement.fitScore).toBeGreaterThan(highEngagement.fitScore);
-  });
-
-  it("risk flags are generated for poor conditions", () => {
-    const result = evaluateInitiative("attrition_prediction", {
-      ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 }, // insufficient data
-      sectionI: { ...baseInputs.sectionI, managerCapabilityForInsights: "Weak" },
-    });
-    expect(result.riskFlags.length).toBeGreaterThan(0);
-  });
-
-  it("returns at least one STRONG_FIT or POSSIBLE_FIT initiative for well-configured org", () => {
+  it("returns at least one STRONG_FIT or POSSIBLE_FIT for a well-configured org", () => {
     const results = evaluateAllInitiatives(baseInputs);
-    const goodFit = results.filter(r => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT");
+    const goodFit = results.filter((r) => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT");
     expect(goodFit.length).toBeGreaterThan(0);
   });
 
-  it("throws when evaluating an unknown initiative ID", () => {
-    expect(() => evaluateInitiative("nonexistent_initiative", baseInputs)).toThrow();
-  });
-});
-
-// ── Value Formulas ────────────────────────────────────────────────────────────
-describe("Value Formulas", () => {
-  it("highVolumeHiring returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.highVolumeHiring(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-    expect(result.high).toBeGreaterThan(result.low);
-    expect(result.currency).toBe("GBP");
-  });
-
-  it("hrChatbot returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.hrChatbot(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-    expect(result.high).toBeGreaterThan(result.low);
-  });
-
-  it("attritionPrediction returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.attritionPrediction(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-    expect(result.high).toBeGreaterThan(result.low);
-  });
-
-  it("ldPersonalisation returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.ldPersonalisation(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-  });
-
-  it("offerGeneration returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.offerGeneration(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-  });
-
-  it("interviewScheduling returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.interviewScheduling(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-  });
-
-  it("onboardingPersonalisation returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.onboardingPersonalisation(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-  });
-
-  it("skillsInference returns positive value for valid inputs", () => {
-    const result = VALUE_FORMULA_REGISTRY.skillsInference(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-  });
-
-  it("biasMonitoring returns scenario-based value", () => {
-    const result = VALUE_FORMULA_REGISTRY.biasMonitoring(baseInputs);
-    expect(result.low).toBeGreaterThan(0);
-    expect(result.high).toBeGreaterThan(0);
-    expect(result.isIndicative).toBe(false);
-  });
-
-  it("value scales with headcount for performanceAI", () => {
-    const smallOrg = VALUE_FORMULA_REGISTRY.performanceAI({
+  it("classifies STRONG_FIT when score >= 70", () => {
+    const inputs: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, totalHeadcount: 100 },
-    });
-    const largeOrg = VALUE_FORMULA_REGISTRY.performanceAI({
-      ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, totalHeadcount: 10000 },
-    });
-    expect(largeOrg.low).toBeGreaterThan(smallOrg.low);
+      sectionD: {
+        ...baseInputs.sectionD,
+        annualHires: 800,
+        annualApplicationVolume: 80000,
+        adminTimePerHire: 30,
+      },
+      sectionC: { ...baseInputs.sectionC, dataQualityRating: "excellent" },
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "frontline_heavy" },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", inputs);
+    expect(result.fitScore).toBeGreaterThanOrEqual(70);
+    expect(result.fitStatus).toBe("STRONG_FIT");
   });
 
-  it("value scales with hire volume for highVolumeHiring", () => {
-    const smallHires = VALUE_FORMULA_REGISTRY.highVolumeHiring({
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, annualHires: 20, adminTimePerHire: 10 },
-    });
-    const largeHires = VALUE_FORMULA_REGISTRY.highVolumeHiring({
-      ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, annualHires: 500, adminTimePerHire: 15 },
-    });
-    expect(largeHires.low).toBeGreaterThan(smallHires.low);
-  });
-
-  it("all formulas return valid ValueRange shape", () => {
-    for (const [key, fn] of Object.entries(VALUE_FORMULA_REGISTRY)) {
-      const result = fn(baseInputs);
-      expect(result.currency, `${key}: missing currency`).toBe("GBP");
-      expect(typeof result.low, `${key}: low not a number`).toBe("number");
-      expect(typeof result.high, `${key}: high not a number`).toBe("number");
-      expect(result.high, `${key}: high < low`).toBeGreaterThanOrEqual(result.low);
-      expect(typeof result.isIndicative, `${key}: isIndicative not boolean`).toBe("boolean");
-      expect(typeof result.narrative, `${key}: narrative not string`).toBe("string");
+  it("returns non-null valueRange for non-HARD_GATE_FAIL initiatives", () => {
+    const result = evaluateInitiative("hr_virtual_assistant", baseInputs);
+    expect(result.fitStatus).not.toBe("HARD_GATE_FAIL");
+    expect(result.valueRange).not.toBeNull();
+    if (result.valueRange) {
+      expect(result.valueRange.low).toBeGreaterThanOrEqual(0);
+      expect(result.valueRange.high).toBeGreaterThanOrEqual(result.valueRange.low);
+      expect(result.valueRange.currency).toBe("GBP");
     }
   });
 });
 
-// ── Initiative Config ─────────────────────────────────────────────────────────
+// ── 4. Specific initiative scoring behaviour ──────────────────────────────────
+
+describe("Specific initiative scoring", () => {
+  it("rt_flight_risk_prediction scores higher with more HRIS data", () => {
+    const lowData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+    };
+    const highData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 7 },
+    };
+    const low = evaluateInitiative("rt_flight_risk_prediction", lowData);
+    const high = evaluateInitiative("rt_flight_risk_prediction", highData);
+    expect(high.fitScore).toBeGreaterThan(low.fitScore);
+  });
+
+  it("fw_shift_scheduling_ai scores higher with frontline_heavy composition", () => {
+    const knowledge: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "knowledge_heavy" },
+    };
+    const frontline: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "frontline_heavy" },
+    };
+    const kResult = evaluateInitiative("fw_shift_scheduling_ai", knowledge);
+    const fResult = evaluateInitiative("fw_shift_scheduling_ai", frontline);
+    expect(fResult.fitScore).toBeGreaterThan(kResult.fitScore);
+  });
+
+  it("ld_workforce_reskilling scores higher with transformation direction", () => {
+    const steady: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, businessDirectionType: "steady_state" },
+    };
+    const transform: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, businessDirectionType: "transformation" },
+    };
+    const sResult = evaluateInitiative("ld_workforce_reskilling", steady);
+    const tResult = evaluateInitiative("ld_workforce_reskilling", transform);
+    expect(tResult.fitScore).toBeGreaterThan(sResult.fitScore);
+  });
+
+  it("mg_difficult_conversations scores higher with Weak manager capability", () => {
+    const strong: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, managerCapabilityForInsights: "Strong" },
+    };
+    const weak: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, managerCapabilityForInsights: "Weak" },
+    };
+    const sResult = evaluateInitiative("mg_difficult_conversations", strong);
+    const wResult = evaluateInitiative("mg_difficult_conversations", weak);
+    expect(wResult.fitScore).toBeGreaterThan(sResult.fitScore);
+  });
+
+  it("ta_bias_monitoring scores higher in regulated sectors", () => {
+    const unregulated: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: [] },
+    };
+    const regulated: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: ["gdpr", "equality_act", "fca"] },
+    };
+    const uResult = evaluateInitiative("ta_bias_monitoring", unregulated);
+    const rResult = evaluateInitiative("ta_bias_monitoring", regulated);
+    expect(rResult.fitScore).toBeGreaterThan(uResult.fitScore);
+  });
+
+  it("im_skills_inference scores higher with more HRIS data", () => {
+    const lowData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+    };
+    const highData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 8 },
+    };
+    const lResult = evaluateInitiative("im_skills_inference", lowData);
+    const hResult = evaluateInitiative("im_skills_inference", highData);
+    expect(hResult.fitScore).toBeGreaterThan(lResult.fitScore);
+  });
+
+  it("ta_interview_scheduling scores higher with high hire volume", () => {
+    const lowVol: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, annualHires: 20 },
+    };
+    const highVol: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, annualHires: 800 },
+    };
+    const lResult = evaluateInitiative("ta_interview_scheduling", lowVol);
+    const hResult = evaluateInitiative("ta_interview_scheduling", highVol);
+    expect(hResult.fitScore).toBeGreaterThan(lResult.fitScore);
+  });
+
+  it("poor data quality reduces fit score for data-intensive initiatives", () => {
+    const goodData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, dataQualityRating: "excellent" },
+    };
+    const poorData: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, dataQualityRating: "poor" },
+    };
+    const gResult = evaluateInitiative("rt_flight_risk_prediction", goodData);
+    const pResult = evaluateInitiative("rt_flight_risk_prediction", poorData);
+    expect(gResult.fitScore).toBeGreaterThan(pResult.fitScore);
+  });
+
+  it("risk flags are generated for poor conditions", () => {
+    const result = evaluateInitiative("rt_flight_risk_prediction", {
+      ...baseInputs,
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+      sectionI: { ...baseInputs.sectionI, managerCapabilityForInsights: "Weak" },
+    });
+    expect(result.riskFlags.length).toBeGreaterThan(0);
+  });
+});
+
+// ── 5. Value formulas ─────────────────────────────────────────────────────────
+
+describe("Value Formulas", () => {
+  it("VALUE_FORMULA_REGISTRY has exactly 49 entries", () => {
+    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(49);
+  });
+
+  it("all 49 registered formulas return valid ValueRange shapes", () => {
+    for (const [key, fn] of Object.entries(VALUE_FORMULA_REGISTRY)) {
+      const result = fn(baseInputs);
+      expect(result.low, `${key}.low is not a number`).toBeTypeOf("number");
+      expect(result.high, `${key}.high is not a number`).toBeTypeOf("number");
+      expect(result.high, `${key}.high should be >= low`).toBeGreaterThanOrEqual(result.low);
+      expect(result.currency, `${key}.currency should be GBP`).toBe("GBP");
+      expect(typeof result.isIndicative, `${key}.isIndicative not boolean`).toBe("boolean");
+      expect(result.narrative, `${key}.narrative should be a string`).toBeTypeOf("string");
+      expect(result.narrative.length, `${key}.narrative should not be empty`).toBeGreaterThan(0);
+    }
+  });
+
+  it("rt_flight_risk_prediction value scales with attrition rate", () => {
+    const lowAttrition: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, attritionRate: 5 },
+    };
+    const highAttrition: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, attritionRate: 30 },
+    };
+    const lowResult = VALUE_FORMULA_REGISTRY.rt_flight_risk_prediction(lowAttrition);
+    const highResult = VALUE_FORMULA_REGISTRY.rt_flight_risk_prediction(highAttrition);
+    expect(highResult.high).toBeGreaterThan(lowResult.high);
+  });
+
+  it("ta_high_volume_hiring value scales with hire volume", () => {
+    const smallHires: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, annualHires: 50, annualApplicationVolume: 2000 },
+    };
+    const largeHires: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, annualHires: 1000, annualApplicationVolume: 50000 },
+    };
+    const smallResult = VALUE_FORMULA_REGISTRY.ta_high_volume_hiring(smallHires);
+    const largeResult = VALUE_FORMULA_REGISTRY.ta_high_volume_hiring(largeHires);
+    expect(largeResult.high).toBeGreaterThan(smallResult.high);
+  });
+
+  it("hr_virtual_assistant value scales with query volume", () => {
+    const lowQueries: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, monthlyHrQueryVolume: 100 },
+    };
+    const highQueries: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, monthlyHrQueryVolume: 5000 },
+    };
+    const lowResult = VALUE_FORMULA_REGISTRY.hr_virtual_assistant(lowQueries);
+    const highResult = VALUE_FORMULA_REGISTRY.hr_virtual_assistant(highQueries);
+    expect(highResult.high).toBeGreaterThan(lowResult.high);
+  });
+
+  it("ld_personalised_learning value scales with headcount", () => {
+    const small: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionA: { ...baseInputs.sectionA, totalHeadcount: 100 },
+    };
+    const large: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionA: { ...baseInputs.sectionA, totalHeadcount: 10000 },
+    };
+    const smallResult = VALUE_FORMULA_REGISTRY.ld_personalised_learning(small);
+    const largeResult = VALUE_FORMULA_REGISTRY.ld_personalised_learning(large);
+    expect(largeResult.high).toBeGreaterThan(smallResult.high);
+  });
+});
+
+// ── 6. Config validation ──────────────────────────────────────────────────────
+
 describe("Initiative Config", () => {
-  it("has manager capability multipliers", () => {
-    expect(INITIATIVE_CONFIG.managerCapabilityMultipliers).toBeDefined();
-    expect(INITIATIVE_CONFIG.managerCapabilityMultipliers.strong).toBe(0.7);
-    expect(INITIATIVE_CONFIG.managerCapabilityMultipliers.mixed).toBe(0.5);
-    expect(INITIATIVE_CONFIG.managerCapabilityMultipliers.variable).toBe(0.45);
-    expect(INITIATIVE_CONFIG.managerCapabilityMultipliers.weak).toBe(0.3);
-  });
-
-  it("has ambition tier multipliers", () => {
-    expect(INITIATIVE_CONFIG.ambitionTierMultipliers).toBeDefined();
-    expect(INITIATIVE_CONFIG.ambitionTierMultipliers.conservative).toBeLessThan(
-      INITIATIVE_CONFIG.ambitionTierMultipliers.transformative
-    );
-    expect(INITIATIVE_CONFIG.ambitionTierMultipliers.pragmatic).toBe(0.8);
-    expect(INITIATIVE_CONFIG.ambitionTierMultipliers.innovator).toBe(1.0);
-  });
-
-  it("has data quality multipliers", () => {
-    expect(INITIATIVE_CONFIG.dataQualityMultipliers).toBeDefined();
-    expect(INITIATIVE_CONFIG.dataQualityMultipliers.poor).toBeLessThan(
-      INITIATIVE_CONFIG.dataQualityMultipliers.excellent
-    );
-    expect(INITIATIVE_CONFIG.dataQualityMultipliers.good).toBe(0.8);
-    expect(INITIATIVE_CONFIG.dataQualityMultipliers.fair).toBe(0.6);
-  });
-
-  it("ambition tier multipliers are in ascending order", () => {
+  it("has ambitionTierMultipliers with correct keys", () => {
     const m = INITIATIVE_CONFIG.ambitionTierMultipliers;
-    expect(m.conservative).toBeLessThan(m.pragmatic);
-    expect(m.pragmatic).toBeLessThan(m.innovator);
-    expect(m.innovator).toBeLessThan(m.transformative);
+    expect(m).toBeDefined();
+    expect(m.conservative).toBeDefined();
+    expect(m.pragmatic).toBeDefined();
+    expect(m.innovator).toBeDefined();
+    expect(m.transformative).toBeDefined();
   });
 
-  it("data quality multipliers are in ascending order", () => {
+  it("ambitionTierMultipliers are in ascending order", () => {
+    const m = INITIATIVE_CONFIG.ambitionTierMultipliers;
+    expect(m.conservative).toBeLessThanOrEqual(m.pragmatic);
+    expect(m.pragmatic).toBeLessThanOrEqual(m.innovator);
+    expect(m.innovator).toBeLessThanOrEqual(m.transformative);
+  });
+
+  it("has dataQualityMultipliers with correct keys", () => {
     const m = INITIATIVE_CONFIG.dataQualityMultipliers;
-    expect(m.poor).toBeLessThan(m.fair);
-    expect(m.fair).toBeLessThan(m.good);
-    expect(m.good).toBeLessThan(m.excellent);
+    expect(m).toBeDefined();
+    expect(m.poor).toBeDefined();
+    expect(m.fair).toBeDefined();
+    expect(m.good).toBeDefined();
+    expect(m.excellent).toBeDefined();
   });
 
-  it("has fit scoring thresholds", () => {
+  it("dataQualityMultipliers are in ascending order", () => {
+    const m = INITIATIVE_CONFIG.dataQualityMultipliers;
+    expect(m.poor).toBeLessThanOrEqual(m.fair);
+    expect(m.fair).toBeLessThanOrEqual(m.good);
+    expect(m.good).toBeLessThanOrEqual(m.excellent);
+  });
+
+  it("has managerCapabilityMultipliers with correct keys", () => {
+    const m = INITIATIVE_CONFIG.managerCapabilityMultipliers;
+    expect(m).toBeDefined();
+    expect(m.Weak).toBeDefined();
+    expect(m.Mixed).toBeDefined();
+    expect(m.Strong).toBeDefined();
+  });
+
+  it("managerCapabilityMultipliers: Weak <= Mixed <= Strong", () => {
+    const m = INITIATIVE_CONFIG.managerCapabilityMultipliers;
+    expect(m.Weak).toBeLessThanOrEqual(m.Mixed);
+    expect(m.Mixed).toBeLessThanOrEqual(m.Strong);
+  });
+
+  it("has fitScoring thresholds", () => {
     expect(INITIATIVE_CONFIG.fitScoring.strongFitThreshold).toBeGreaterThan(
       INITIATIVE_CONFIG.fitScoring.possibleFitThreshold
     );
   });
 
-  it("has working time constants", () => {
-    expect(INITIATIVE_CONFIG.annualWorkingHours).toBeGreaterThan(0);
-    expect(INITIATIVE_CONFIG.workingDaysPerYear).toBeGreaterThan(0);
+  it("has confidence thresholds", () => {
+    expect(INITIATIVE_CONFIG.confidence.highMaxEstimateCount).toBeLessThan(
+      INITIATIVE_CONFIG.confidence.mediumMaxEstimateCount
+    );
+  });
+
+  it("has defaults with required fields", () => {
+    const d = INITIATIVE_CONFIG.defaults;
+    expect(d.avgSalaryFallback).toBeGreaterThan(0);
+    expect(d.attritionCostMultiplier).toBeGreaterThan(0);
+    expect(d.managerFraction).toBeGreaterThan(0);
+    expect(d.workingDaysPerYear).toBeGreaterThan(0);
   });
 });

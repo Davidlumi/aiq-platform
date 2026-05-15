@@ -1,7 +1,7 @@
 /**
  * Fit + Impact Engine
  *
- * Evaluates each of the 12 initiatives against a CPO's background inputs and returns
+ * Evaluates each of the 49 initiatives against a CPO's background inputs and returns
  * a structured per-initiative output card. Called during draft generation on completePrework
  * and completeSession (second pass).
  *
@@ -45,6 +45,16 @@ export type FitImpactEngineInputs = ValueFormulaInputs & {
   sectionB?: { hrSubFunctions?: string[] };
   sectionG?: { [domain: string]: number };
   sectionF?: { changeReadiness?: string };
+  sectionK?: {
+    onboardingModel?: string;
+    internalMobilityApproach?: string;
+    performanceReviewCadence?: string;
+    hrHelpdeskModel?: string;
+    hiringProcessStructure?: string;
+    hiringVolumeProfile?: string[];
+    lAndDDeliveryModel?: string;
+    rewardCycleModel?: string;
+  };
 };
 
 // ─── Soft factor evaluators ───────────────────────────────────────────────────
@@ -230,6 +240,91 @@ function scoreEthicsCapability(inputs: FitImpactEngineInputs, maxScore: number):
   return Math.round(maxScore * (score / 10));
 }
 
+function scoreFrontlineComposition(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const comp = inputs.sectionI.workforceComposition;
+  const map: Record<string, number> = {
+    frontline_heavy: 1.0,
+    mixed: 0.6,
+    knowledge_heavy: 0.1,
+  };
+  return Math.round(maxScore * (map[comp ?? "mixed"] ?? 0.6));
+}
+
+function scoreGeographicSpread(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const geo = inputs.sectionI.geographicDistribution;
+  const map: Record<string, number> = {
+    global: 1.0,
+    multi_country: 0.8,
+    uk_multi_site: 0.6,
+    uk_single_site: 0.2,
+  };
+  return Math.round(maxScore * (map[geo ?? "uk_multi_site"] ?? 0.6));
+}
+
+function scoreSkillsFramework(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const status = inputs.sectionI.skillsFrameworkStatus;
+  const map: Record<string, number> = {
+    mature: 1.0,
+    partial: 0.6,
+    early: 0.3,
+    none: 0.0,
+  };
+  return Math.round(maxScore * (map[status ?? "none"] ?? 0.0));
+}
+
+function scoreGrowthDirection(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const dir = inputs.sectionI.businessDirectionType;
+  const map: Record<string, number> = {
+    scaling: 1.0,
+    steady_state: 0.6,
+    transformation: 0.7,
+    restructuring: 0.3,
+    contraction: 0.1,
+  };
+  return Math.round(maxScore * (map[dir ?? "steady_state"] ?? 0.6));
+}
+
+function scoreTransformationDirection(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const dir = inputs.sectionI.businessDirectionType;
+  const map: Record<string, number> = {
+    transformation: 1.0,
+    restructuring: 0.9,
+    scaling: 0.6,
+    steady_state: 0.4,
+    contraction: 0.8,
+  };
+  return Math.round(maxScore * (map[dir ?? "steady_state"] ?? 0.4));
+}
+
+function scoreWeakManagerCapability(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const level = inputs.sectionI.managerCapabilityForInsights;
+  // Inverse: weak managers = high need for this tool
+  const map: Record<string, number> = {
+    Weak: 1.0,
+    Variable: 0.8,
+    Mixed: 0.5,
+    Strong: 0.1,
+  };
+  return Math.round(maxScore * (map[level ?? "Mixed"] ?? 0.5));
+}
+
+function scoreHireCost(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const cost = inputs.sectionD.costPerExternalHire ?? 0;
+  if (cost >= 15000) return maxScore;
+  if (cost >= 8000) return Math.round(maxScore * 0.7);
+  if (cost >= 4000) return Math.round(maxScore * 0.4);
+  return Math.round(maxScore * 0.1);
+}
+
+function scoreSitesCount(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const sites = inputs.sectionA.ukSitesCount ?? 0;
+  if (sites >= 100) return maxScore;
+  if (sites >= 30) return Math.round(maxScore * 0.7);
+  if (sites >= 10) return Math.round(maxScore * 0.4);
+  if (sites >= 3) return Math.round(maxScore * 0.2);
+  return 0;
+}
+
 function scorePivotalJobs(inputs: FitImpactEngineInputs, maxScore: number): number {
   const jobs = inputs.sectionI.pivotalJobFamilies ?? [];
   if (jobs.length >= 3) return maxScore;
@@ -263,6 +358,14 @@ const EVALUATORS: Record<string, (inputs: FitImpactEngineInputs, maxScore: numbe
   scoreChangeReadiness,
   scoreEthicsCapability,
   scorePivotalJobs,
+  scoreFrontlineComposition,
+  scoreGeographicSpread,
+  scoreSkillsFramework,
+  scoreGrowthDirection,
+  scoreTransformationDirection,
+  scoreWeakManagerCapability,
+  scoreHireCost,
+  scoreSitesCount,
 };
 
 // ─── Risk flag evaluators ─────────────────────────────────────────────────────
@@ -336,6 +439,15 @@ function evaluateRiskFlags(initiative: InitiativeDefinition, inputs: FitImpactEn
         break;
       case "poor_calendar_integration":
         if (c.hrSystemIntegrationMaturity === "siloed" || c.hrSystemIntegrationMaturity === "none") flags.push("HR systems are siloed — calendar integration will require custom development.");
+        break;
+      case "brand_voice_consistency":
+        flags.push("AI-generated content must be reviewed for brand voice and tone before deployment.");
+        break;
+      case "ai_bias_in_assessment":
+        if ((inputs.sectionG?.ai_ethics_trust ?? 5) < 5) flags.push("AI ethics capability is limited — video assessment scoring must be validated for bias before go-live.");
+        break;
+      case "tool_adoption_risk":
+        if (inputs.sectionF?.changeReadiness === "low" || inputs.sectionF?.changeReadiness === "resistant") flags.push("Low change readiness — adoption programme required to realise productivity gains.");
         break;
     }
   }
@@ -500,7 +612,7 @@ export function evaluateInitiative(
 }
 
 /**
- * Evaluate all 12 initiatives and return sorted results.
+ * Evaluate all 49 initiatives and return sorted results.
  * Sort order: STRONG_FIT → POSSIBLE_FIT → POOR_FIT → HARD_GATE_FAIL, then by fitScore desc.
  */
 export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): InitiativeOutputCard[] {

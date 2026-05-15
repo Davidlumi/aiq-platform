@@ -930,6 +930,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   draftGenerationState: mysqlEnum("draft_generation_state", ["none", "generating", "initial_draft", "curated"]).default("none"), // Tracks builder draft lifecycle
   sectionIJson: text("section_i_json"),                                          // JSON: Section I — Business & Workforce Context
   sectionJJson: text("section_j_json"),                                          // JSON: Section J — Current ways of working (conditional on Section B sub-functions)
+  sectionKJson: text("section_k_json"),                                            // JSON: Section K — Current ways of working (operational model fields)
   builderSectionStatesJson: text("builder_section_states_json"),                  // JSON: { [builderKey]: "initial_draft" | "curated" | "edited" } — Option C per-section state
   fitImpactResultsJson: text("fit_impact_results_json"),                           // JSON: Fit+Impact engine output — ranked initiative recommendations
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -30,10 +30,13 @@ const SectionASchema = z.object({
   sector: z.string().optional(),
   subSector: z.string().optional(),
   headcountBand: z.enum(["lt500", "500_5k", "5k_25k", "25k_plus"]).optional(),
+  totalHeadcount: z.number().int().min(0).optional(),
+  ukSitesCount: z.number().int().min(0).optional(),
   primaryGeography: z.string().optional(),
   orgType: z.string().optional(),
+  ownershipStructure: z.enum(["private_equity", "listed_plc", "private_company", "public_sector", "ngo_charity", "family_owned"]).optional(),
   primaryRegulator: z.string().optional(),
-  sectorSpecificRegulations: z.array(z.string().max(100)).optional(), // NEW: multi-select regulatory context
+  sectorSpecificRegulations: z.array(z.string().max(100)).optional(),
 });
 
 const SectionBSchema = z.object({
@@ -49,7 +52,7 @@ const SectionCSchema = z.object({
   hrisSystem: z.string().max(100).optional(),
   atsSystem: z.string().max(100).optional(),
   lmsSystem: z.string().max(100).optional(),
-  engagementSurveyTool: z.string().max(100).optional(), // NEW: engagement survey tool
+  engagementSurveyTool: z.string().max(100).optional(),
   payrollSystem: z.string().max(100).optional(),
   existingAiTools: z.array(z.object({
     hrFunction: z.string().max(50),
@@ -58,15 +61,18 @@ const SectionCSchema = z.object({
   })).optional(),
   dataQualityRating: z.enum(["poor", "fair", "good", "excellent"]).optional(),
   hasDataWarehouse: z.boolean().optional(),
+  hrSystemIntegrationMaturity: z.enum(["siloed", "partial", "integrated", "unified"]).optional(),
+  yearsOfHrisData: z.number().int().min(0).max(30).optional(),
+  workforceDigitalAccess: z.enum(["all_laptops", "mixed", "limited", "mobile_only"]).optional(),
 });
 
 const SectionDSchema = z.object({
   annualHiresLow: z.number().int().min(0).optional(),
   annualHiresHigh: z.number().int().min(0).optional(),
   annualHiresIsEstimate: z.boolean().optional(),
-  adminTimePerHireHours: z.number().min(0).optional(), // NEW: admin time per hire
-  adminTimeIsEstimate: z.boolean().optional(),         // NEW: is estimate flag
-  topHrTimePlaces: z.array(z.string().max(100)).optional(), // NEW: top 3 time-consuming HR activities
+  adminTimePerHireHours: z.number().min(0).optional(),
+  adminTimeIsEstimate: z.boolean().optional(),
+  topHrTimePlaces: z.array(z.string().max(100)).optional(),
   hrBudgetGbp: z.number().min(0).optional(),
   hrBudgetIsEstimate: z.boolean().optional(),
   loadedFteCostGbp: z.number().min(0).optional(),
@@ -77,6 +83,19 @@ const SectionDSchema = z.object({
   attritionIsEstimate: z.boolean().optional(),
   timeToFillDays: z.number().min(0).optional(),
   timeToFillIsEstimate: z.boolean().optional(),
+  annualApplicationVolume: z.number().int().min(0).optional(),
+  costPerExternalHire: z.number().min(0).optional(),
+  costPerExternalHireIsEstimate: z.boolean().optional(),
+  annualContractorSpend: z.number().min(0).optional(),
+  annualContractorSpendIsEstimate: z.boolean().optional(),
+  monthlyHrQueryVolume: z.number().int().min(0).optional(),
+  internalHirePercent: z.number().min(0).max(100).optional(),
+  annualLDSpend: z.number().min(0).optional(),
+  annualLDSpendIsEstimate: z.boolean().optional(),
+  annualRevenue: z.number().min(0).optional(),
+  annualRevenueIsEstimate: z.boolean().optional(),
+  currentEngagementScore: z.number().min(0).max(10).optional(),
+  avgTimeToFillDays: z.number().min(0).optional(),
 });
 
 const SectionESchema = z.object({
@@ -126,7 +145,19 @@ const SectionHSchema = z.object({
   boardAiInterest: z.enum(["none", "low", "moderate", "high"]).optional(),
 });
 
-// NEW: Section J — Workforce Dynamics & Operational Constraints
+// Section K — Ways of Working
+const SectionKSchema = z.object({
+  onboardingModel: z.enum(["structured_programme", "buddy_led", "self_directed", "minimal"]).optional(),
+  internalMobilityApproach: z.enum(["open_marketplace", "manager_nominated", "limited", "none"]).optional(),
+  performanceReviewCadence: z.enum(["continuous", "quarterly", "biannual", "annual", "light_touch"]).optional(),
+  hrHelpdeskModel: z.enum(["shared_service_centre", "hrbp_direct", "ticketing_system", "informal"]).optional(),
+  hiringProcessStructure: z.enum(["highly_structured", "semi_structured", "informal", "varies_by_team"]).optional(),
+  hiringVolumeProfile: z.array(z.enum(["executive", "professional", "graduate_apprentice", "frontline_operative", "contingent_seasonal"])).optional(),
+  lAndDDeliveryModel: z.enum(["blended", "mostly_digital", "mostly_classroom", "on_the_job", "minimal"]).optional(),
+  rewardCycleModel: z.enum(["annual_cycle", "biannual_cycle", "continuous", "project_based"]).optional(),
+});
+
+// Section J — Workforce Dynamics & Operational Constraints
 const SectionJSchema = z.object({
   workforcePlanningHorizon: z.enum(["12_months", "18_months", "24_months", "36_months"]).optional(),
   criticalSkillsGaps: z.array(z.string().max(200)).max(5).optional(),     // Top skills gaps to address
@@ -140,16 +171,21 @@ const SectionJSchema = z.object({
   hrTechBudgetCycle: z.enum(["annual", "biannual", "rolling", "project_based"]).optional(),
 });
 
-// NEW: Section I — Business & Workforce Context
+// Section I — Business & Workforce Context
 const SectionISchema = z.object({
-  businessDirection: z.string().max(1000).optional(),           // Where is the business heading in 2–3 years?
-  topBusinessPriorities: z.array(z.string().max(200)).max(5).optional(), // Top 3–5 business priorities
+  businessDirection: z.string().max(1000).optional(),
+  businessDirectionType: z.enum(["growing", "transforming", "optimising", "restructuring", "stable"]).optional(),
+  topBusinessPriorities: z.array(z.string().max(200)).max(5).optional(),
   workforceWorkType: z.enum(["fully_remote", "hybrid", "mostly_onsite", "fully_onsite"]).optional(),
+  workforceComposition: z.enum(["office_knowledge", "frontline_heavy", "mixed", "field_based", "manufacturing"]).optional(),
   workforceEmploymentMix: z.enum(["mostly_permanent", "significant_contingent", "majority_contingent"]).optional(),
   geographicDistribution: z.enum(["single_site", "multi_site_single_country", "multi_country", "global"]).optional(),
-  pivotalJobFamilies: z.array(z.string().max(100)).max(5).optional(), // Job families most critical to business success
-  peopleChallenges: z.array(z.string().max(200)).max(3).optional(),   // Top 3 people/talent challenges
-  employeeExperienceState: z.string().max(500).optional(),            // How would you describe the current employee experience?
+  pivotalJobFamilies: z.array(z.string().max(100)).max(5).optional(),
+  peopleChallenges: z.array(z.string().max(200)).max(3).optional(),
+  employeeExperienceState: z.string().max(500).optional(),
+  managerCapabilityForInsights: z.enum(["Strong", "Mixed", "Weak", "Variable"]).optional(),
+  skillsFrameworkStatus: z.enum(["mature", "partial", "nascent", "none"]).optional(),
+  skillsInventoryCompleteness: z.enum(["comprehensive", "partial", "minimal", "none"]).optional(),
 });
 
 const BackgroundInputsSchema = z.object({
@@ -162,10 +198,11 @@ const BackgroundInputsSchema = z.object({
   sectionH: SectionHSchema.optional(),
   sectionI: SectionISchema.optional(),
   sectionJ: SectionJSchema.optional(),
+  sectionK: SectionKSchema.optional(),
 });
 
 const FacilitatorNoteSchema = z.object({
-  sectionId: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "general"]),
+  sectionId: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "general"]),
   content: z.string().max(5000),
 });
 
@@ -426,11 +463,12 @@ export const backgroundInputsRouter = router({
     const sectionI = (row as any).sectionIJson
       ? JSON.parse((row as any).sectionIJson)
       : {};
-
     const sectionJ = (row as any).sectionJJson
       ? JSON.parse((row as any).sectionJJson)
       : {};
-
+    const sectionK = (row as any).sectionKJson
+      ? JSON.parse((row as any).sectionKJson)
+      : {};
     const builderSectionStates: BuilderSectionStates = (row as any).builderSectionStatesJson
       ? JSON.parse((row as any).builderSectionStatesJson)
       : {};
@@ -443,6 +481,7 @@ export const backgroundInputsRouter = router({
       capabilityAssessment,
       sectionI,
       sectionJ,
+      sectionK,
       fitImpactResults,
       facilitatorNotes: isSuperAdmin ? facilitatorNotes : null,
       preworkCompletedAt: row.preworkCompletedAt,
@@ -464,6 +503,7 @@ export const backgroundInputsRouter = router({
       capabilityAssessment: SectionGSchema.optional(),
       sectionI: SectionISchema.optional(),
       sectionJ: SectionJSchema.optional(),
+      sectionK: SectionKSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
@@ -506,6 +546,14 @@ export const backgroundInputsRouter = router({
           ? JSON.parse((row as any).sectionJJson)
           : {};
         updates.sectionJJson = JSON.stringify({ ...existingJ, ...input.sectionJ });
+      }
+
+      // Section K stored separately
+      if (input.sectionK) {
+        const existingK = (row as any).sectionKJson
+          ? JSON.parse((row as any).sectionKJson)
+          : {};
+        updates.sectionKJson = JSON.stringify({ ...existingK, ...input.sectionK });
       }
 
       // Mirror key fields into top-level ailOrgContext columns for LLM context
@@ -617,6 +665,7 @@ export const backgroundInputsRouter = router({
           ? JSON.parse(row.facilitatorNotesJson)
           : null;
         const sectionJ = (row as any).sectionJJson ? JSON.parse((row as any).sectionJJson) : {};
+        const sectionK = (row as any).sectionKJson ? JSON.parse((row as any).sectionKJson) : {};
         const orgCtx = buildOrgContextString(inputs, capAssessment, facilitatorNotes, sectionI);
 
         // ── Fit+Impact engine evaluation ─────────────────────────────────────
@@ -624,12 +673,14 @@ export const backgroundInputsRouter = router({
         try {
           const engineInputs: FitImpactEngineInputs = {
             sectionA: {
-              totalHeadcount: (() => {
+              totalHeadcount: inputs.sectionA?.totalHeadcount ?? (() => {
                 const bandMap: Record<string, number> = { lt500: 250, "500_5k": 2500, "5k_25k": 15000, "25k_plus": 50000 };
                 return bandMap[inputs.sectionA?.headcountBand] ?? 0;
               })(),
+              ukSitesCount: inputs.sectionA?.ukSitesCount,
               sectorSpecificRegulation: inputs.sectionA?.sectorSpecificRegulations ?? [],
-              ownershipStructure: inputs.sectionA?.orgType,
+              ownershipStructure: inputs.sectionA?.ownershipStructure ?? inputs.sectionA?.orgType,
+              sector: inputs.sectionA?.sector,
             },
             sectionB: { hrSubFunctions: inputs.sectionB?.hrSubFunctions ?? [] },
             sectionC: {
@@ -665,8 +716,23 @@ export const backgroundInputsRouter = router({
             },
             sectionI: {
               workforceWorkType: sectionI.workforceWorkType,
+              workforceComposition: sectionI.workforceComposition,
+              businessDirectionType: sectionI.businessDirectionType,
               managerCapabilityForInsights: sectionI.managerCapabilityForInsights,
+              skillsFrameworkStatus: sectionI.skillsFrameworkStatus,
+              skillsInventoryCompleteness: sectionI.skillsInventoryCompleteness,
               pivotalJobFamilies: sectionI.pivotalJobFamilies,
+              employeeExperienceState: sectionI.employeeExperienceState,
+            },
+            sectionK: {
+              performanceReviewCadence: sectionK.performanceReviewCadence,
+              internalMobilityApproach: sectionK.internalMobilityApproach,
+              onboardingModel: sectionK.onboardingModel,
+              hrHelpdeskModel: sectionK.hrHelpdeskModel,
+              hiringProcessStructure: sectionK.hiringProcessStructure,
+              hiringVolumeProfile: sectionK.hiringVolumeProfile,
+              lAndDDeliveryModel: sectionK.lAndDDeliveryModel,
+              rewardCycleModel: sectionK.rewardCycleModel,
             },
             sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
             sectionG: {
