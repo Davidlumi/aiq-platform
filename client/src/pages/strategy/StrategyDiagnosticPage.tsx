@@ -41,13 +41,13 @@ import {
 import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
-  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe,
+  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders,
 } from "lucide-react";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I";
+type SectionId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J";
 type ProgressState = "not_started" | "in_progress" | "complete";
 
 interface AiTool {
@@ -74,6 +74,7 @@ function calcProgress(
   capDomains: Record<string, DomainRating>,
   sectionI: Record<string, unknown>,
   sectionId: SectionId,
+  sectionJ?: Record<string, unknown>,
 ): ProgressState {
   if (sectionId === "G") {
     const rated = Object.values(capDomains).filter(d => d.score > 0).length;
@@ -84,6 +85,12 @@ function calcProgress(
   if (sectionId === "I") {
     if (!sectionI.businessDirection && !(sectionI.topBusinessPriorities as string[] ?? []).length) return "not_started";
     if (sectionI.businessDirection && (sectionI.peopleChallenges as string[] ?? []).length > 0) return "complete";
+    return "in_progress";
+  }
+  if (sectionId === "J") {
+    const j = sectionJ ?? {};
+    if (!j.budgetCeiling && !j.timelineConstraint && !j.vendorPreferences) return "not_started";
+    if (j.budgetCeiling || j.timelineConstraint) return "complete";
     return "in_progress";
   }
   const s = (inputs as any)[`section${sectionId}`];
@@ -128,6 +135,7 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
   { id: "G", label: "Capability assessment",     icon: Star       },
   { id: "H", label: "Stakeholder context",       icon: UserCheck  },
   { id: "I", label: "Business & workforce",      icon: Globe      },
+  { id: "J", label: "Constraints & preferences",  icon: Sliders    },
 ];
 
 const HR_SUB_FUNCTIONS = ["TA", "L&D", "Reward", "WFP", "HRBP", "HR Ops", "DEI", "Comms"];
@@ -261,6 +269,7 @@ export default function StrategyDiagnosticPage() {
   const [capDomains, setCapDomains] = useState<Record<string, DomainRating>>({});
   const [capDerived, setCapDerived] = useState<{ overallScore?: number; maturityLabel?: string }>({});
   const [sectionI, setSectionI] = useState<Record<string, unknown>>({});
+  const [sectionJ, setSectionJ] = useState<Record<string, unknown>>({});
   const [serverFacilitatorNotes, setServerFacilitatorNotes] = useState<Record<string, { content: string; updatedAt?: string }>>({});
   const [completeError, setCompleteError] = useState<string | null>(null);
   const [expandedCalibration, setExpandedCalibration] = useState<string | null>(null);
@@ -308,6 +317,7 @@ export default function StrategyDiagnosticPage() {
         setCapDerived({ overallScore: (capData as any).overallScore, maturityLabel: (capData as any).maturityLabel });
       }
       setSectionI((inputsQ.data.sectionI as Record<string, unknown>) ?? {});
+      setSectionJ((inputsQ.data.sectionJ as Record<string, unknown>) ?? {});
       if (inputsQ.data.facilitatorNotes) {
         setServerFacilitatorNotes(inputsQ.data.facilitatorNotes as Record<string, { content: string }>);
         const noteTexts: Record<string, string> = {};
@@ -326,11 +336,13 @@ export default function StrategyDiagnosticPage() {
         sections: Record<string, unknown>;
         capabilityAssessment?: Record<string, unknown>;
         sectionI?: Record<string, unknown>;
+        sectionJ?: Record<string, unknown>;
       };
       saveInputsMut.mutate({
         sections: d.sections as any,
         capabilityAssessment: d.capabilityAssessment as any,
         sectionI: d.sectionI as any,
+        sectionJ: d.sectionJ as any,
       });
     }, [saveInputsMut]),
   );
@@ -339,18 +351,26 @@ export default function StrategyDiagnosticPage() {
     setInputs(prev => {
       const key = `section${sectionId}`;
       const updated = { ...prev, [key]: { ...(prev[key] as Record<string, unknown> ?? {}), [field]: value } };
-      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI });
+      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ });
       return updated;
     });
-  }, [scheduleInputSave, capDomains, capDerived, sectionI]);
+  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ]);
 
   const updateSectionI = useCallback((field: string, value: unknown) => {
     setSectionI(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated, sectionJ });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionJ]);
+
+  const updateSectionJ = useCallback((field: string, value: unknown) => {
+    setSectionJ(prev => {
+      const updated = { ...prev, [field]: value };
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ: updated });
+      return updated;
+    });
+  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI]);
 
   const updateCapability = useCallback((domainKey: string, field: "score" | "rationaleNotes", value: unknown) => {
     setCapDomains(prev => {
@@ -363,10 +383,10 @@ export default function StrategyDiagnosticPage() {
       const overall = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
       const derived = { overallScore: Math.round(overall * 10) / 10, maturityLabel: getMaturityLabel(overall) };
       setCapDerived(derived);
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI, sectionJ });
       return updated;
     });
-  }, [scheduleInputSave, inputs, sectionI]);
+  }, [scheduleInputSave, inputs, sectionI, sectionJ]);
 
   const saveFacilitatorNote = useCallback((sectionId: string) => {
     const content = facilitatorNoteText[sectionId] ?? "";
@@ -380,12 +400,13 @@ export default function StrategyDiagnosticPage() {
   const sectionData = (id: SectionId) => (inputs as any)[`section${id}`] ?? {};
   const getField = (id: SectionId, field: string) => sectionData(id)[field];
   const getFieldI = (field: string) => sectionI[field];
+  const getFieldJ = (field: string) => sectionJ[field];
 
   const activeSectionDef = SECTIONS.find(s => s.id === activeSection)!;
 
   // Section progress
   const progressMap = Object.fromEntries(
-    SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id)])
+    SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id, sectionJ)])
   ) as Record<SectionId, ProgressState>;
 
   // Headcount band → approximate number for validation
@@ -848,6 +869,23 @@ export default function StrategyDiagnosticPage() {
                 {((getField("C", "existingAiTools") ?? []) as AiTool[]).length === 0 && (
                   <p className="text-xs text-muted-foreground italic">No AI tools added yet.</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Systems integration readiness</Label>
+                <p className="text-xs text-muted-foreground">How well-connected are your HR systems? This affects which AI initiatives are feasible without infrastructure investment.</p>
+                <Select
+                  value={getField("C", "integrationReadiness") ?? ""}
+                  onValueChange={v => updateSection("C", "integrationReadiness", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select integration readiness" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="siloed">Siloed — systems don’t talk to each other; manual data transfers</SelectItem>
+                    <SelectItem value="partial">Partial — some integrations exist; significant gaps remain</SelectItem>
+                    <SelectItem value="connected">Connected — most systems integrated; some manual workarounds</SelectItem>
+                    <SelectItem value="unified">Unified — single source of truth; real-time data flows</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -1614,6 +1652,139 @@ export default function StrategyDiagnosticPage() {
                   className="resize-none"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Manager capability for AI-led change</Label>
+                <p className="text-xs text-muted-foreground">How capable are your people managers at leading AI-related change in their teams?</p>
+                <Select
+                  value={(getFieldI("managerCapabilityForAiChange") as string) ?? ""}
+                  onValueChange={v => updateSectionI("managerCapabilityForAiChange", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select capability level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="strong">Strong — most managers confident and capable</SelectItem>
+                    <SelectItem value="mixed">Mixed — variable across the management population</SelectItem>
+                    <SelectItem value="variable">Variable — a few strong, most uncertain</SelectItem>
+                    <SelectItem value="weak">Weak — most managers not yet equipped</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* ── Section J ─────────────────────────────────────────────────── */}
+          {activeSection === "J" && (
+            <div className="space-y-5">
+              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400">
+                These constraints and preferences shape which initiatives get prioritised and how the strategy is framed. Be honest — a strategy that ignores your real constraints isn't useful.
+              </div>
+
+              <div className="space-y-2">
+                <Label>Annual budget ceiling for HR AI initiatives</Label>
+                <p className="text-xs text-muted-foreground">Approximate total budget available across all HR AI initiatives in year one</p>
+                <Select
+                  value={(getFieldJ("budgetCeiling") as string) ?? ""}
+                  onValueChange={v => updateSectionJ("budgetCeiling", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select budget range" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lt50k">Under £50k</SelectItem>
+                    <SelectItem value="50k_150k">£50k – £150k</SelectItem>
+                    <SelectItem value="150k_500k">£150k – £500k</SelectItem>
+                    <SelectItem value="500k_1m">£500k – £1m</SelectItem>
+                    <SelectItem value="gt1m">Over £1m</SelectItem>
+                    <SelectItem value="unknown">Unknown / not yet agreed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Timeline constraint</Label>
+                <p className="text-xs text-muted-foreground">When does the business expect to see meaningful results from HR AI investment?</p>
+                <Select
+                  value={(getFieldJ("timelineConstraint") as string) ?? ""}
+                  onValueChange={v => updateSectionJ("timelineConstraint", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select timeline" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3_months">Within 3 months — quick wins only</SelectItem>
+                    <SelectItem value="6_months">Within 6 months — early demonstrable value</SelectItem>
+                    <SelectItem value="12_months">Within 12 months — meaningful capability built</SelectItem>
+                    <SelectItem value="18_24_months">18–24 months — strategic transformation</SelectItem>
+                    <SelectItem value="no_constraint">No hard constraint — quality over speed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Vendor preferences or constraints</Label>
+                <p className="text-xs text-muted-foreground">Any existing vendor relationships, preferred partners, or vendors to avoid?</p>
+                <Textarea
+                  placeholder="e.g. We have a strategic relationship with Microsoft so prefer Azure-native solutions. Avoid Workday add-ons due to contract issues…"
+                  rows={3}
+                  value={(getFieldJ("vendorPreferences") as string) ?? ""}
+                  onChange={e => updateSectionJ("vendorPreferences", e.target.value)}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Risk tolerance for AI initiatives</Label>
+                <Select
+                  value={(getFieldJ("riskTolerance") as string) ?? ""}
+                  onValueChange={v => updateSectionJ("riskTolerance", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select risk tolerance" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low — proven solutions only, no experiments</SelectItem>
+                    <SelectItem value="moderate">Moderate — willing to pilot new approaches with guardrails</SelectItem>
+                    <SelectItem value="high">High — comfortable with frontier AI and novel approaches</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Quick wins preference</Label>
+                <p className="text-xs text-muted-foreground">How important is it to demonstrate visible value quickly vs. building the right foundations?</p>
+                <Select
+                  value={(getFieldJ("quickWinsPreference") as string) ?? ""}
+                  onValueChange={v => updateSectionJ("quickWinsPreference", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select preference" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="foundations_first">Foundations first — get the infrastructure right before visible wins</SelectItem>
+                    <SelectItem value="balanced">Balanced — mix of quick wins and foundation building</SelectItem>
+                    <SelectItem value="quick_wins_first">Quick wins first — need visible results to maintain momentum and funding</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Initiatives to exclude</Label>
+                <p className="text-xs text-muted-foreground">Any areas that are off the table — politically, contractually, or strategically?</p>
+                <Textarea
+                  placeholder="e.g. No AI in recruitment decisions due to board sensitivity. No automation of L&D delivery — CEO is committed to human-led learning…"
+                  rows={3}
+                  value={(getFieldJ("excludedInitiatives") as string) ?? ""}
+                  onChange={e => updateSectionJ("excludedInitiatives", e.target.value)}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Additional context for the strategy</Label>
+                <p className="text-xs text-muted-foreground">Anything else that should shape the strategy that doesn't fit elsewhere?</p>
+                <Textarea
+                  placeholder="e.g. We're in a regulated industry with strict data residency requirements. Our CEO is personally championing AI and will sponsor the programme…"
+                  rows={4}
+                  value={(getFieldJ("additionalContext") as string) ?? ""}
+                  onChange={e => updateSectionJ("additionalContext", e.target.value)}
+                  maxLength={800}
+                  className="resize-none"
+                />
+              </div>
             </div>
           )}
 
@@ -1676,7 +1847,7 @@ export default function StrategyDiagnosticPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={activeSection === "I"}
+              disabled={activeSection === "J"}
               onClick={() => {
                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);

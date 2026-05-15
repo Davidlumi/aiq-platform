@@ -3426,26 +3426,58 @@ test
 
 ## Background Input Patch — Business & Workforce Context + Draft Generation
 
-- [ ] DB: add sectionIJson column to ail_org_context
-- [ ] DB: add builderSectionStatesJson column to ail_org_context (Option C per-section state)
-- [ ] Schema: update SectionASchema — add sectorSpecificRegulation multi-select
-- [ ] Schema: update SectionCSchema — add engagementSurveyTool optional enum
-- [ ] Schema: update SectionDSchema — add adminTimePerHire + isEstimate, topHrTimePlaces
-- [ ] Schema: add SectionISchema — 8 fields (businessDirection, topBusinessPriorities, workforceWorkType, workforceEmploymentMix, geographicDistribution, pivotalJobFamilies, peopleChallenges, employeeExperienceState)
-- [ ] Router: update BackgroundInputsSchema to include sectionI
-- [ ] Router: update FacilitatorNoteSchema to include "I" as valid sectionId
-- [ ] Router: raise completePrework threshold to full required-field set per brief §7
-- [ ] Router: wire draft generation trigger on completePrework (none→generating→initial_draft)
-- [ ] Router: wire second draft pass on completeSession (regenerate initial_draft sections only)
-- [ ] Router: pass facilitator notes as INTERNAL ONLY context to builder LLM prompts
-- [ ] UI: add Section I between A and B in SECTIONS array with all 8 fields
-- [ ] UI: add sectorSpecificRegulation multi-select to Section A
-- [ ] UI: add engagementSurveyTool to Section C
-- [ ] UI: add adminTimePerHire + isEstimate + topHrTimePlaces to Section D
-- [ ] UI: update SectionId type to include "I"
-- [ ] UI: update calcProgress to include Section I required fields
-- [ ] UI: add generation spinner UI on completePrework with "Generating your strategy..." copy
-- [ ] UI: add "View your strategy" CTA when generation completes
-- [ ] UI: add Section G facilitator calibration prompts as placeholder text
-- [ ] UI: update completePrework validation error messages with deep-links
-- [ ] Builders: update all 9 builder LLM prompts to include new sectionI fields per brief §8 mapping
+- [x] DB: add sectionIJson column to ail_org_context
+- [x] DB: add builderSectionStatesJson column to ail_org_context (Option C per-section state)
+- [x] Schema: update SectionASchema — add sectorSpecificRegulation multi-select
+- [x] Schema: update SectionCSchema — add engagementSurveyTool optional enum
+- [x] Schema: update SectionDSchema — add adminTimePerHire + isEstimate, topHrTimePlaces
+- [x] Schema: add SectionISchema — 8 fields (businessDirection, topBusinessPriorities, workforceWorkType, workforceEmploymentMix, geographicDistribution, pivotalJobFamilies, peopleChallenges, employeeExperienceState)
+- [x] Router: update BackgroundInputsSchema to include sectionI
+- [x] Router: update FacilitatorNoteSchema to include "I" as valid sectionId
+- [x] Router: raise completePrework threshold to full required-field set per brief §7
+- [x] Router: wire draft generation trigger on completePrework (none→generating→initial_draft)
+- [x] Router: wire second draft pass on completeSession (regenerate initial_draft sections only)
+- [x] Router: pass facilitator notes as INTERNAL ONLY context to builder LLM prompts
+- [x] UI: add Section I between A and B in SECTIONS array with all 8 fields
+- [x] UI: add sectorSpecificRegulation multi-select to Section A
+- [x] UI: add engagementSurveyTool to Section C
+- [x] UI: add adminTimePerHire + isEstimate + topHrTimePlaces to Section D
+- [x] UI: update SectionId type to include "I"
+- [x] UI: update calcProgress to include Section I required fields
+- [x] UI: add generation spinner UI on completePrework with "Generating your strategy..." copy
+- [x] UI: add "View your strategy" CTA when generation completes
+- [x] UI: add Section G facilitator calibration prompts as placeholder text
+- [x] UI: update completePrework validation error messages with deep-links
+- [x] Builders: update all 9 builder LLM prompts to include new sectionI fields per brief §8 mapping
+
+## Complete Background Input Patch — §complete-patch-brief
+
+- [ ] DB: add sectionJJson column to ail_org_context
+- [ ] Schema: update ailOrgContext Drizzle schema with sectionJJson
+- [ ] Build shared/initiativeLibrary.ts — 12 initiatives with full metadata
+- [ ] Build shared/valueFormulas.ts — formula functions for all 12 initiatives
+- [ ] Build shared/initiativeConfig.ts — parameterised multipliers and thresholds
+- [ ] Build server/services/fitImpactEngine.ts — fit scoring + value calculation engine
+- [ ] Router: add SectionJSchema (10 fields, conditional on Section B sub-functions)
+- [ ] Router: update SectionASchema — add totalHeadcount, ukSitesCount, ownershipStructure
+- [ ] Router: update SectionCSchema — add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess
+- [ ] Router: update SectionDSchema — add 12 new fields + totalHrBudget precision upgrade
+- [ ] Router: update BackgroundInputsSchema to include sectionJ
+- [ ] Router: update FacilitatorNoteSchema to include "J" as valid sectionId
+- [ ] Router: raise completePrework threshold to full required-field set per §9
+- [ ] Router: wire draft generation trigger on completePrework (wave 1→2→3)
+- [ ] Router: wire second draft pass on completeSession with edit preservation
+- [ ] UI: add Section J between D and E in SECTIONS array (display order A→I→B→C→D→J→E→F→G→H)
+- [ ] UI: Section J conditional field logic per §4
+- [ ] UI: add totalHeadcount + auto-derived band to Section A
+- [ ] UI: add ukSitesCount, ownershipStructure to Section A
+- [ ] UI: add hrSystemIntegrationMaturity, yearsOfHrisData, workforceDigitalAccess to Section C
+- [ ] UI: add engagementSurveyTool with "None" handling to Section C
+- [ ] UI: Section D collapsible groupings (Financial / Operational / Volume)
+- [ ] UI: add all 12 new Section D fields with isEstimate flags
+- [ ] UI: Section G facilitator calibration prompts placeholder text per §10
+- [ ] UI: generation spinner UI on completePrework with wave progress
+- [ ] UI: home dashboard banner "Your strategy draft is ready" when generation completes
+- [ ] Initiatives builder: call fitImpactEngine and render per-initiative card output per §6.6
+- [ ] Write tests for fitImpactEngine, initiativeLibrary, valueFormulas
+- [ ] Write tests for updated backgroundInputs router (Section J, new threshold)

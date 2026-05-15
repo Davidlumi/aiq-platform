@@ -20,7 +20,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { ailOrgContext } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM } from "../\_core/llm";
+import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 
 // ── Zod schemas for each section ─────────────────────────────────────────────
 
@@ -125,6 +126,20 @@ const SectionHSchema = z.object({
   boardAiInterest: z.enum(["none", "low", "moderate", "high"]).optional(),
 });
 
+// NEW: Section J — Workforce Dynamics & Operational Constraints
+const SectionJSchema = z.object({
+  workforcePlanningHorizon: z.enum(["12_months", "18_months", "24_months", "36_months"]).optional(),
+  criticalSkillsGaps: z.array(z.string().max(200)).max(5).optional(),     // Top skills gaps to address
+  successionCoverage: z.enum(["strong", "adequate", "weak", "none"]).optional(),
+  hiringFreezeRisk: z.enum(["none", "possible", "likely", "current"]).optional(),
+  keyConstraints: z.array(z.string().max(200)).max(5).optional(),          // Top 3–5 operational constraints
+  hrTransformationHistory: z.string().max(500).optional(),                 // Previous HR transformation attempts
+  unionOrERComplexity: z.enum(["none", "low", "moderate", "high"]).optional(),
+  dataPrivacyConstraints: z.string().max(500).optional(),                  // Key data privacy/GDPR constraints
+  outsourcingModel: z.enum(["fully_insourced", "mostly_insourced", "mixed", "mostly_outsourced"]).optional(),
+  hrTechBudgetCycle: z.enum(["annual", "biannual", "rolling", "project_based"]).optional(),
+});
+
 // NEW: Section I — Business & Workforce Context
 const SectionISchema = z.object({
   businessDirection: z.string().max(1000).optional(),           // Where is the business heading in 2–3 years?
@@ -146,10 +161,11 @@ const BackgroundInputsSchema = z.object({
   sectionF: SectionFSchema.optional(),
   sectionH: SectionHSchema.optional(),
   sectionI: SectionISchema.optional(),
+  sectionJ: SectionJSchema.optional(),
 });
 
 const FacilitatorNoteSchema = z.object({
-  sectionId: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "general"]),
+  sectionId: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "general"]),
   content: z.string().max(5000),
 });
 
@@ -411,14 +427,23 @@ export const backgroundInputsRouter = router({
       ? JSON.parse((row as any).sectionIJson)
       : {};
 
+    const sectionJ = (row as any).sectionJJson
+      ? JSON.parse((row as any).sectionJJson)
+      : {};
+
     const builderSectionStates: BuilderSectionStates = (row as any).builderSectionStatesJson
       ? JSON.parse((row as any).builderSectionStatesJson)
       : {};
+
+    const fitImpactResultsJson = (row as any).fitImpactResultsJson;
+    const fitImpactResults = fitImpactResultsJson ? JSON.parse(fitImpactResultsJson) : null;
 
     return {
       backgroundInputs,
       capabilityAssessment,
       sectionI,
+      sectionJ,
+      fitImpactResults,
       facilitatorNotes: isSuperAdmin ? facilitatorNotes : null,
       preworkCompletedAt: row.preworkCompletedAt,
       sessionCompletedAt: row.sessionCompletedAt,
@@ -438,6 +463,7 @@ export const backgroundInputsRouter = router({
       sections: BackgroundInputsSchema,
       capabilityAssessment: SectionGSchema.optional(),
       sectionI: SectionISchema.optional(),
+      sectionJ: SectionJSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
@@ -472,6 +498,14 @@ export const backgroundInputsRouter = router({
           ? JSON.parse((row as any).sectionIJson)
           : {};
         updates.sectionIJson = JSON.stringify({ ...existingI, ...input.sectionI });
+      }
+
+      // Section J stored separately
+      if (input.sectionJ) {
+        const existingJ = (row as any).sectionJJson
+          ? JSON.parse((row as any).sectionJJson)
+          : {};
+        updates.sectionJJson = JSON.stringify({ ...existingJ, ...input.sectionJ });
       }
 
       // Mirror key fields into top-level ailOrgContext columns for LLM context
@@ -582,7 +616,69 @@ export const backgroundInputsRouter = router({
         const facilitatorNotes = row.facilitatorNotesJson
           ? JSON.parse(row.facilitatorNotesJson)
           : null;
+        const sectionJ = (row as any).sectionJJson ? JSON.parse((row as any).sectionJJson) : {};
         const orgCtx = buildOrgContextString(inputs, capAssessment, facilitatorNotes, sectionI);
+
+        // ── Fit+Impact engine evaluation ─────────────────────────────────────
+        let fitImpactResultsJson: string | null = null;
+        try {
+          const engineInputs: FitImpactEngineInputs = {
+            sectionA: {
+              totalHeadcount: (() => {
+                const bandMap: Record<string, number> = { lt500: 250, "500_5k": 2500, "5k_25k": 15000, "25k_plus": 50000 };
+                return bandMap[inputs.sectionA?.headcountBand] ?? 0;
+              })(),
+              sectorSpecificRegulation: inputs.sectionA?.sectorSpecificRegulations ?? [],
+              ownershipStructure: inputs.sectionA?.orgType,
+            },
+            sectionB: { hrSubFunctions: inputs.sectionB?.hrSubFunctions ?? [] },
+            sectionC: {
+              hrisSystem: inputs.sectionC?.hrisSystem,
+              atsSystem: inputs.sectionC?.atsSystem,
+              lmsSystem: inputs.sectionC?.lmsSystem,
+              dataQualityRating: inputs.sectionC?.dataQualityRating,
+              hrSystemIntegrationMaturity: inputs.sectionC?.hrSystemIntegrationMaturity,
+              yearsOfHrisData: inputs.sectionC?.yearsOfHrisData,
+              workforceDigitalAccess: inputs.sectionC?.workforceDigitalAccess,
+            },
+            sectionD: {
+              annualHires: inputs.sectionD?.annualHiresLow,
+              adminTimePerHire: inputs.sectionD?.adminTimePerHireHours,
+              adminTimePerHireIsEstimate: inputs.sectionD?.adminTimeIsEstimate,
+              totalHrBudget: inputs.sectionD?.hrBudgetGbp,
+              totalHrBudgetIsEstimate: inputs.sectionD?.hrBudgetIsEstimate,
+              attritionRate: inputs.sectionD?.voluntaryAttritionPct,
+              attritionRateIsEstimate: inputs.sectionD?.attritionIsEstimate,
+              annualApplicationVolume: inputs.sectionD?.annualApplicationVolume,
+              costPerExternalHire: inputs.sectionD?.costPerExternalHire,
+              costPerExternalHireIsEstimate: inputs.sectionD?.costPerExternalHireIsEstimate,
+              annualContractorSpend: inputs.sectionD?.annualContractorSpend,
+              annualContractorSpendIsEstimate: inputs.sectionD?.annualContractorSpendIsEstimate,
+              monthlyHrQueryVolume: inputs.sectionD?.monthlyHrQueryVolume,
+              internalHirePercent: inputs.sectionD?.internalHirePercent,
+              annualLDSpend: inputs.sectionD?.annualLDSpend,
+              annualLDSpendIsEstimate: inputs.sectionD?.annualLDSpendIsEstimate,
+              annualRevenue: inputs.sectionD?.annualRevenue,
+              annualRevenueIsEstimate: inputs.sectionD?.annualRevenueIsEstimate,
+              currentEngagementScore: inputs.sectionD?.currentEngagementScore,
+              hrFteCount: inputs.sectionB?.hrTeamSize,
+            },
+            sectionI: {
+              workforceWorkType: sectionI.workforceWorkType,
+              managerCapabilityForInsights: sectionI.managerCapabilityForInsights,
+              pivotalJobFamilies: sectionI.pivotalJobFamilies,
+            },
+            sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
+            sectionG: {
+              ai_ethics_trust: capAssessment.ai_ethics_trust?.score,
+            },
+          };
+          const fitResults = evaluateAllInitiatives(engineInputs);
+          fitImpactResultsJson = JSON.stringify(fitResults);
+        } catch (fitErr) {
+          console.error("[backgroundInputs] Fit+Impact engine failed:", fitErr);
+        }
+
         const drafts = await generateAllBuilderDrafts(
           orgCtx,
           inputs.sectionE?.ambitionTier ?? "pragmatic",
@@ -602,6 +698,7 @@ export const backgroundInputsRouter = router({
         const patch: Record<string, unknown> = {
           draftGenerationState: "initial_draft",
           builderSectionStatesJson: JSON.stringify(builderSectionStates),
+          ...(fitImpactResultsJson ? { fitImpactResultsJson } : {}),
         };
 
         // Map builder keys to ailOrgContext columns

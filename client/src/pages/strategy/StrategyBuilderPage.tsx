@@ -272,6 +272,7 @@ function InitiativeRow({
   onToggle,
   onUpdateCriticality,
   onUpdateQuarter,
+  fitScore,
 }: {
   initiative: any;
   selected: boolean;
@@ -279,6 +280,7 @@ function InitiativeRow({
   onToggle: () => void;
   onUpdateCriticality?: (v: number) => void;
   onUpdateQuarter?: (v: string) => void;
+  fitScore?: number | null;
 }) {
   const typeColor = AI_TYPE_COLORS[initiative.aiType] ?? "#9CA3AF";
   const segments: string[] = initiative.owningSegmentsJson ?? [];
@@ -305,7 +307,19 @@ function InitiativeRow({
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1.5">
-            <p className="text-sm font-medium text-foreground leading-snug">{initiative.name}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-medium text-foreground leading-snug">{initiative.name}</p>
+              {fitScore != null && fitScore >= 7 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-medium whitespace-nowrap">
+                  ★ Recommended
+                </span>
+              )}
+              {fitScore != null && fitScore >= 5 && fitScore < 7 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 whitespace-nowrap">
+                  Good fit
+                </span>
+              )}
+            </div>
             {/* Regulatory flag pill */}
             {initiative.regulatoryFlag && (
               <TooltipProvider>
@@ -580,6 +594,9 @@ export default function StrategyBuilderPage() {
   // ── Queries ──
   const industriesQ = trpc.strategy.listIndustries.useQuery();
   const initiativesQ = trpc.strategy.listInitiatives.useQuery({ tenantId });
+  const backgroundInputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
   const strategiesQ = trpc.strategy.listStrategies.useQuery({ tenantId });
   const strategyQ = trpc.strategy.getStrategy.useQuery(
     { strategyId: activeStrategyId! },
@@ -675,14 +692,66 @@ export default function StrategyBuilderPage() {
     "Ethics & Governance": "Ethics & Governance",
   };
 
+  // ── Fit+Impact scores from background inputs ──
+  const fitScoreMap = useMemo(() => {
+    const results = backgroundInputsQ.data?.fitImpactResults;
+    if (!results) return {} as Record<string, number>;
+    const map: Record<string, number> = {};
+    for (const r of results) {
+      // Key by initiative id and also by a normalised name for fuzzy matching
+      map[r.initiativeId] = r.fitScore;
+    }
+    return map;
+  }, [backgroundInputsQ.data]);
+
+  // Map initiative library IDs to display initiative names for cross-referencing
+  const INITIATIVE_ID_TO_NAME: Record<string, string> = {
+    ai_cv_screening: "AI CV Screening",
+    ai_interview_scheduling: "AI Interview Scheduling",
+    ai_skills_gap: "AI Skills Gap Analysis",
+    ai_learning_paths: "AI Personalised Learning Paths",
+    ai_performance_coaching: "AI Performance Coaching",
+    ai_pay_equity: "AI Pay Equity Analysis",
+    ai_workforce_planning: "AI Workforce Planning",
+    ai_hr_chatbot: "AI HR Self-Service Chatbot",
+    ai_onboarding: "AI Onboarding Automation",
+    ai_engagement_prediction: "AI Engagement & Attrition Prediction",
+    ai_job_architecture: "AI Job Architecture",
+    ai_ethics_governance: "AI Ethics & Governance Framework",
+  };
+
+  const getFitScore = useCallback((initiative: any): number | null => {
+    // Try direct ID match first
+    if (fitScoreMap[initiative.id]) return fitScoreMap[initiative.id];
+    // Try matching by normalised name
+    const normName = initiative.name?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+    for (const [libId, libName] of Object.entries(INITIATIVE_ID_TO_NAME)) {
+      if (libName.toLowerCase().replace(/[^a-z0-9]/g, "") === normName) {
+        return fitScoreMap[libId] ?? null;
+      }
+    }
+    return null;
+  }, [fitScoreMap]);
+
   const filteredInitiatives = useMemo(() => {
-    if (categoryFilter === "All") return allInitiatives;
-    if (categoryFilter === "Custom") return allInitiatives.filter(i => i.isUserDefined);
-    return allInitiatives.filter(i => {
-      const mapped = CATEGORY_MAP[i.category] ?? i.category;
-      return mapped === categoryFilter;
-    });
-  }, [allInitiatives, categoryFilter]);
+    let list = allInitiatives;
+    if (categoryFilter === "Custom") list = allInitiatives.filter(i => i.isUserDefined);
+    else if (categoryFilter !== "All") {
+      list = allInitiatives.filter(i => {
+        const mapped = CATEGORY_MAP[i.category] ?? i.category;
+        return mapped === categoryFilter;
+      });
+    }
+    // Sort: recommended (fit ≥ 7) first, then by fit score desc, then alphabetical
+    if (Object.keys(fitScoreMap).length > 0) {
+      list = [...list].sort((a, b) => {
+        const sa = getFitScore(a) ?? 0;
+        const sb = getFitScore(b) ?? 0;
+        return sb - sa;
+      });
+    }
+    return list;
+  }, [allInitiatives, categoryFilter, fitScoreMap, getFitScore]);
 
   const output = outputQ.data;
   const compareOutput = compareOutputQ.data;
@@ -952,6 +1021,7 @@ export default function StrategyBuilderPage() {
                   selected={selectedInitiativeIds.has(init.id)}
                   strategyInitiative={selectedInitiativeMap[init.id]}
                   onToggle={() => handleToggleInitiative(init.id)}
+                  fitScore={getFitScore(init)}
                   onUpdateCriticality={v =>
                     updateInitiativeMut.mutate({
                       strategyInitiativeId: selectedInitiativeMap[init.id]?.id,
