@@ -2,8 +2,8 @@
  * StrategyDiagnosticPage — Background Input Section (Beta)
  *
  * 8-section wizard (A–H) capturing org context for the strategy builders.
- * Pre-work mode: CPO completes A–D + H async (20-30 min).
- * Session mode: facilitator (platform_super_admin) unlocks E–G and notes layer.
+ * CPO completes all 8 sections at their own pace (20–40 min).
+ * Facilitator (platform_super_admin) adds private notes layer during the 1:1 session.
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
-  Lock, CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
+  CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
   Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle,
 } from "lucide-react";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
@@ -97,15 +97,15 @@ function ProgressDot({ state }: { state: ProgressState }) {
 
 // ── Section definitions ───────────────────────────────────────────────────────
 
-const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; sessionOnly: boolean }[] = [
-  { id: "A", label: "Company snapshot",     icon: Building2,  sessionOnly: false },
-  { id: "B", label: "HR shape",             icon: Users,      sessionOnly: false },
-  { id: "C", label: "Tech & AI footprint",  icon: Cpu,        sessionOnly: false },
-  { id: "D", label: "Operational baselines",icon: BarChart2,  sessionOnly: false },
-  { id: "E", label: "Strategic direction",  icon: Target,     sessionOnly: true  },
-  { id: "F", label: "Culture",              icon: Lightbulb,  sessionOnly: true  },
-  { id: "G", label: "Capability assessment",icon: Star,       sessionOnly: true  },
-  { id: "H", label: "Stakeholder context",  icon: UserCheck,  sessionOnly: false },
+const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
+  { id: "A", label: "Company snapshot",      icon: Building2  },
+  { id: "B", label: "HR shape",              icon: Users      },
+  { id: "C", label: "Tech & AI footprint",   icon: Cpu        },
+  { id: "D", label: "Operational baselines", icon: BarChart2  },
+  { id: "E", label: "Strategic direction",   icon: Target     },
+  { id: "F", label: "Culture",               icon: Lightbulb  },
+  { id: "G", label: "Capability assessment", icon: Star       },
+  { id: "H", label: "Stakeholder context",   icon: UserCheck  },
 ];
 
 const HR_SUB_FUNCTIONS = ["TA", "L&D", "Reward", "WFP", "HRBP", "HR Ops", "DEI", "Comms"];
@@ -280,8 +280,6 @@ export default function StrategyDiagnosticPage() {
   const getField = (id: SectionId, field: string) => sectionData(id)[field];
 
   const activeSectionDef = SECTIONS.find(s => s.id === activeSection)!;
-  const isSessionSection = activeSectionDef.sessionOnly;
-  const canEditSessionSection = isSuperAdmin;
 
   // Section progress
   const progressMap = Object.fromEntries(
@@ -329,7 +327,6 @@ export default function StrategyDiagnosticPage() {
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {SECTIONS.map(sec => {
             const prog = progressMap[sec.id];
-            const locked = sec.sessionOnly && !canEditSessionSection;
             return (
               <button
                 key={sec.id}
@@ -340,9 +337,8 @@ export default function StrategyDiagnosticPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <ProgressDot state={locked ? "not_started" : prog} />
+                <ProgressDot state={prog} />
                 <span className="flex-1 truncate">{sec.label}</span>
-                {locked && <Lock className="w-3 h-3 flex-shrink-0 opacity-50" />}
               </button>
             );
           })}
@@ -375,11 +371,6 @@ export default function StrategyDiagnosticPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Badge variant="outline" className="text-xs font-mono">Section {activeSection}</Badge>
-              {isSessionSection && !canEditSessionSection && (
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Lock className="w-3 h-3" />Session only
-                </Badge>
-              )}
               {draftState === "initial_draft" && (
                 <Badge className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700">
                   Initial draft — not curated yet
@@ -388,23 +379,6 @@ export default function StrategyDiagnosticPage() {
             </div>
             <h1 className="text-xl font-semibold text-foreground">{activeSectionDef.label}</h1>
           </div>
-
-          {/* Locked placeholder for session-only sections */}
-          {isSessionSection && !canEditSessionSection && (
-            <Card className="border-dashed bg-muted/20">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">We'll capture this together in your session</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your facilitator will guide you through {activeSectionDef.label.toLowerCase()} during your 1:1.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* ── Section A ─────────────────────────────────────────────────── */}
           {activeSection === "A" && (
@@ -812,8 +786,8 @@ export default function StrategyDiagnosticPage() {
             </div>
           )}
 
-          {/* ── Section E (session only) ───────────────────────────────────── */}
-          {activeSection === "E" && canEditSessionSection && (
+          {/* ── Section E ─────────────────────────────────────────────────── */}
+          {activeSection === "E" && (
             <div className="space-y-5">
               <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs text-amber-700 dark:text-amber-300">
                 Capture verbatim where possible. The success narrative is the spine of the vision draft.
@@ -922,8 +896,8 @@ export default function StrategyDiagnosticPage() {
             </div>
           )}
 
-          {/* ── Section F (session only) ───────────────────────────────────── */}
-          {activeSection === "F" && canEditSessionSection && (
+          {/* ── Section F ─────────────────────────────────────────────────── */}
+          {activeSection === "F" && (
             <div className="space-y-5">
               <div className="space-y-3">
                 <Label>Culture descriptors <span className="text-destructive">*</span></Label>
@@ -967,8 +941,8 @@ export default function StrategyDiagnosticPage() {
             </div>
           )}
 
-          {/* ── Section G (session only) ───────────────────────────────────── */}
-          {activeSection === "G" && canEditSessionSection && (
+          {/* ── Section G ─────────────────────────────────────────────────── */}
+          {activeSection === "G" && (
             <div className="space-y-5">
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-xs text-blue-700 dark:text-blue-300">
                 This is a facilitated CPO self-rating — not the platform's adaptive assessment. Score each domain 0–10 together, then capture rationale notes.
@@ -1109,19 +1083,17 @@ export default function StrategyDiagnosticPage() {
                 </div>
               </div>
 
-              {canEditSessionSection && (
-                <div className="space-y-2">
-                  <Label>Specific concerns they've raised</Label>
-                  <Textarea
-                    placeholder="Any concerns raised in prior conversations…"
-                    rows={3}
-                    value={getField("H", "stakeholderConcerns") ?? ""}
-                    onChange={e => updateSection("H", "stakeholderConcerns", e.target.value)}
-                    maxLength={500}
-                    className="resize-none"
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>Specific concerns they've raised</Label>
+                <Textarea
+                  placeholder="Any concerns raised in prior conversations…"
+                  rows={3}
+                  value={getField("H", "stakeholderConcerns") ?? ""}
+                  onChange={e => updateSection("H", "stakeholderConcerns", e.target.value)}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
             </div>
           )}
 

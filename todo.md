@@ -3415,3 +3415,11 @@ test
 - [x] Draft state labelling: "Initial draft — not curated yet" on strategy pages until curated
 - [x] 3-second polling on CPO view for real-time facilitator field updates
 - [x] Write Vitest tests for backgroundInputs router
+
+## CPO Unlock All Sections + Architecture Doc
+- [x] Remove isSessionOnly lock from Sections E, F, G in StrategyDiagnosticPage
+- [x] Remove lock icons from section tabs E, F, G in sidebar
+- [x] Remove "Session only" badge from section headers E, F, G
+- [x] Update saveInputs router: remove session-only gate blocking hr_leader from writing E/F/G
+- [x] Update completePrework validation: add ambition tier (Section E) and at least one capability domain rated (Section G) as required
+- [ ] Write data input architecture document (background-input-architecture.md)

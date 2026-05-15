@@ -194,7 +194,7 @@ export const backgroundInputsRouter = router({
 
   /**
    * Save one or more sections of background inputs.
-   * Sections E, F are session-only — only platform_super_admin can write them.
+   * All sections are editable by any authenticated user.
    * Section G (capability assessment) is stored separately.
    */
   saveInputs: protectedProcedure
@@ -203,16 +203,7 @@ export const backgroundInputsRouter = router({
       capabilityAssessment: SectionGSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const isSuperAdmin = (ctx.user as any).role === "platform_super_admin";
       const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
-
-      // Gate session-only sections
-      if ((input.sections.sectionE || input.sections.sectionF) && !isSuperAdmin) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Sections E and F are only editable during a facilitated session.",
-        });
-      }
 
       // Merge with existing
       const existing = row.backgroundInputsJson ? JSON.parse(row.backgroundInputsJson) : {};
@@ -277,18 +268,31 @@ export const backgroundInputsRouter = router({
     }),
 
   /**
-   * Mark pre-work as complete. Validates required fields in A–D + H.
+   * Mark pre-work as complete. Validates required fields across all sections.
+   * Now that CPOs can complete all sections, E and G are also validated.
    */
   completePrework: protectedProcedure.mutation(async ({ ctx }) => {
     const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
     const inputs = row.backgroundInputsJson ? JSON.parse(row.backgroundInputsJson) : {};
+    const capAssessment = row.capabilityAssessmentJson
+      ? JSON.parse(row.capabilityAssessmentJson)
+      : {};
 
-    // Minimal required fields
+    // Required fields across all sections
     const missing: string[] = [];
+    // Section A
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
     if (!inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
+    // Section B
     if (!inputs.sectionB?.hrTeamSize && inputs.sectionB?.hrTeamSize !== 0)
       missing.push("HR team size (Section B)");
+    // Section E — now required since CPO can complete it
+    if (!inputs.sectionE?.ambitionTier) missing.push("Business AI ambition tier (Section E)");
+    // Section G — at least one domain must be rated
+    const DOMAINS = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+      "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
+    const hasAnyDomainRated = DOMAINS.some(d => capAssessment[d]?.score > 0);
+    if (!hasAnyDomainRated) missing.push("At least one capability domain rating (Section G)");
 
     if (missing.length > 0) {
       throw new TRPCError({

@@ -143,19 +143,21 @@ describe("Role gating", () => {
     expect(isSuperAdmin).toBe(false);
   });
 
-  it("CPO cannot access session-only sections E and F", () => {
+  it("CPO can write to Section E (no longer session-only)", () => {
     const ctx = makeCpoCtx();
     const isSuperAdmin = (ctx.user as any).role === "platform_super_admin";
-    const hasSectionE = true; // simulating input.sections.sectionE being present
-    const shouldBlock = hasSectionE && !isSuperAdmin;
-    expect(shouldBlock).toBe(true);
+    // All sections are now editable by any authenticated user — no session gate
+    const shouldBlock = false; // gate removed
+    expect(isSuperAdmin).toBe(false);
+    expect(shouldBlock).toBe(false);
   });
 
-  it("super admin can access session-only sections", () => {
+  it("super admin can also write to all sections", () => {
     const ctx = makeSuperAdminCtx();
     const isSuperAdmin = (ctx.user as any).role === "platform_super_admin";
-    const hasSectionE = true;
-    const shouldBlock = hasSectionE && !isSuperAdmin;
+    expect(isSuperAdmin).toBe(true);
+    // super admin can write to all sections including E, F, G
+    const shouldBlock = false;
     expect(shouldBlock).toBe(false);
   });
 });
