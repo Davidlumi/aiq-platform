@@ -324,6 +324,7 @@ BUSINESS & WORKFORCE CONTEXT (Section I):
 Business direction: ${sectionI.businessDirection ?? "Not provided"}
 Top business priorities: ${(sectionI.topBusinessPriorities as string[] ?? []).join("; ") || "Not specified"}
 Work type: ${sectionI.workforceWorkType ?? "?"} | Employment mix: ${sectionI.workforceEmploymentMix ?? "?"}
+Workforce composition: ${sectionI.workforceComposition ?? "?"} | Frontline headcount: ${sectionI.frontlineHeadcountPercent != null ? `${sectionI.frontlineHeadcountPercent}% of total workforce` : "Not specified"}
 Geographic distribution: ${sectionI.geographicDistribution ?? "?"}
 Pivotal job families: ${(sectionI.pivotalJobFamilies as string[] ?? []).join(", ") || "Not specified"}
 People challenges: ${(sectionI.peopleChallenges as string[] ?? []).join("; ") || "Not specified"}

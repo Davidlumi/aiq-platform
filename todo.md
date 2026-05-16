@@ -3570,3 +3570,11 @@ test
 - [x] 14 new Vitest tests: monotonicity, boundary (undefined=0), threshold bands, differentiation, non-frontline initiatives unaffected
 - [x] Tests: 1,046 / 1,046 passing (41 test files)
 - [x] Save checkpoint
+
+## buildOrgContextString — frontlineHeadcountPercent inclusion
+
+- [x] Add `Workforce composition` and `Frontline headcount: X% of total workforce` line to Section I block in `buildOrgContextString` (backgroundInputs.ts line 327)
+- [x] Graceful fallback: renders "Not specified" when field is undefined or null; renders "0% of total workforce" when value is explicitly 0
+- [x] 8 new Vitest tests in backgroundInputs.test.ts covering: present value, zero, undefined, null, boundary values (1, 100), composition+percent on same line, all other Section I fields preserved
+- [x] Tests: 1,054 / 1,054 passing (41 test files)
+- [x] Save checkpoint

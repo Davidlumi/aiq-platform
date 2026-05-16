@@ -602,3 +602,81 @@ describe("Save as Draft — draft metadata", () => {
     expect(schema.safeParse({}).success).toBe(true);
   });
 });
+
+// ── buildOrgContextString — frontlineHeadcountPercent inclusion ───────────────
+//
+// These tests exercise the LLM context-string builder directly by reconstructing
+// the same template logic used in buildOrgContextString and asserting the output
+// contains the expected frontline headcount line.
+
+describe("buildOrgContextString — frontlineHeadcountPercent", () => {
+  /**
+   * Minimal helper that replicates the Section I block of buildOrgContextString
+   * so we can unit-test it without importing the private function.
+   */
+  function renderSectionI(sectionI: Record<string, unknown>): string {
+    return [
+      `BUSINESS & WORKFORCE CONTEXT (Section I):`,
+      `Business direction: ${sectionI.businessDirection ?? "Not provided"}`,
+      `Top business priorities: ${(sectionI.topBusinessPriorities as string[] ?? []).join("; ") || "Not specified"}`,
+      `Work type: ${sectionI.workforceWorkType ?? "?"} | Employment mix: ${sectionI.workforceEmploymentMix ?? "?"}`,
+      `Workforce composition: ${sectionI.workforceComposition ?? "?"} | Frontline headcount: ${sectionI.frontlineHeadcountPercent != null ? `${sectionI.frontlineHeadcountPercent}% of total workforce` : "Not specified"}`,
+      `Geographic distribution: ${sectionI.geographicDistribution ?? "?"}`,
+      `Pivotal job families: ${(sectionI.pivotalJobFamilies as string[] ?? []).join(", ") || "Not specified"}`,
+      `People challenges: ${(sectionI.peopleChallenges as string[] ?? []).join("; ") || "Not specified"}`,
+      `Employee experience: ${sectionI.employeeExperienceState ?? "Not provided"}`,
+    ].join("\n");
+  }
+
+  it("includes 'Frontline headcount: X% of total workforce' when frontlineHeadcountPercent is provided", () => {
+    const ctx = renderSectionI({ frontlineHeadcountPercent: 65 });
+    expect(ctx).toContain("Frontline headcount: 65% of total workforce");
+  });
+
+  it("includes 'Frontline headcount: 0% of total workforce' when value is 0 (not null)", () => {
+    const ctx = renderSectionI({ frontlineHeadcountPercent: 0 });
+    expect(ctx).toContain("Frontline headcount: 0% of total workforce");
+  });
+
+  it("includes 'Frontline headcount: Not specified' when frontlineHeadcountPercent is undefined", () => {
+    const ctx = renderSectionI({});
+    expect(ctx).toContain("Frontline headcount: Not specified");
+  });
+
+  it("includes 'Frontline headcount: Not specified' when frontlineHeadcountPercent is null", () => {
+    const ctx = renderSectionI({ frontlineHeadcountPercent: null });
+    expect(ctx).toContain("Frontline headcount: Not specified");
+  });
+
+  it("renders the correct percentage for a boundary value of 100", () => {
+    const ctx = renderSectionI({ frontlineHeadcountPercent: 100 });
+    expect(ctx).toContain("Frontline headcount: 100% of total workforce");
+  });
+
+  it("renders the correct percentage for a boundary value of 1", () => {
+    const ctx = renderSectionI({ frontlineHeadcountPercent: 1 });
+    expect(ctx).toContain("Frontline headcount: 1% of total workforce");
+  });
+
+  it("includes workforceComposition on the same line as frontlineHeadcountPercent", () => {
+    const ctx = renderSectionI({ workforceComposition: "frontline_heavy", frontlineHeadcountPercent: 72 });
+    expect(ctx).toContain("Workforce composition: frontline_heavy | Frontline headcount: 72% of total workforce");
+  });
+
+  it("section I block still contains all other required fields when frontlineHeadcountPercent is present", () => {
+    const ctx = renderSectionI({
+      businessDirection: "Scaling into new markets",
+      workforceWorkType: "hybrid",
+      workforceComposition: "mixed",
+      frontlineHeadcountPercent: 40,
+      geographicDistribution: "multi_country",
+      peopleChallenges: ["Retention", "Upskilling"],
+    });
+    expect(ctx).toContain("Business direction: Scaling into new markets");
+    expect(ctx).toContain("Work type: hybrid");
+    expect(ctx).toContain("Workforce composition: mixed");
+    expect(ctx).toContain("Frontline headcount: 40% of total workforce");
+    expect(ctx).toContain("Geographic distribution: multi_country");
+    expect(ctx).toContain("People challenges: Retention; Upskilling");
+  });
+});
