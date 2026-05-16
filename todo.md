@@ -3625,3 +3625,23 @@ test
 - [x] Fix Section E validator — successNarrative NOT required (backend only needs ambitionTier, hrPosture, riskAppetite)
 - [x] Fix Section F validator — cultureDescriptors array filtered for empty strings before checking
 - [x] Fix Section D validator — annualHiresLow 0 is valid, not treated as missing
+
+## Inline Field-Level Error Highlighting
+
+- [ ] Add `sectionTouched` state — set to true when user clicks Next or Complete pre-work on an incomplete section
+- [ ] Add `getFieldError(sectionId, fieldKey)` helper — returns error message string when field is mandatory, section is touched, and value is missing
+- [ ] Section A: red border + "Required" on sector Select when touched and empty
+- [ ] Section A: red border + "Required" on headcount field when both totalHeadcount and headcountBand are empty
+- [ ] Section B: red border + "Required" on HR team size Input when touched and null/undefined
+- [ ] Section C: red border + "Required" on HRIS system Select when touched and empty
+- [ ] Section D: red border + "Required" on Annual hires (Low) when touched and null/undefined
+- [ ] Section E: red border + "Required" on Business AI ambition tier Select when touched and empty
+- [ ] Section E: red border + "Required" on HR AI posture Select when touched and empty
+- [ ] Section E: red border + "Required" on Risk appetite Select when touched and empty
+- [ ] Section G: red border + "At least 3 domains required" banner when touched and fewer than 3 domains rated
+- [ ] Section I: red border + "Required" on Business direction textarea when touched and empty
+- [ ] Section I: red border + "At least one challenge required" on People challenges when touched and empty
+- [ ] Error labels use text-destructive text-xs mt-1 pattern consistent with shadcn/ui
+- [ ] Red border uses border-destructive on Input/SelectTrigger/Textarea
+- [ ] Errors clear reactively as soon as the field is filled
+- [ ] Scroll to first error field when Next is clicked and section is incomplete

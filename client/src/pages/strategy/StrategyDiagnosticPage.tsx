@@ -356,6 +356,9 @@ export default function StrategyDiagnosticPage() {
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [resumeSection, setResumeSection] = useState<SectionId | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // Tracks which sections the user has attempted to advance past — triggers inline errors
+  const [touchedSections, setTouchedSections] = useState<Set<SectionId>>(new Set());
+  const touchSection = (id: SectionId) => setTouchedSections(prev => new Set([...prev, id]));
 
   // tRPC queries
   const inputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
@@ -557,6 +560,11 @@ export default function StrategyDiagnosticPage() {
   const currentSectionComplete = !currentSectionMandatory.includes(activeSection)
     || progressMap[activeSection] === "complete";
 
+  // Per-field error helper: returns an error message if the section is touched and the field is missing
+  const isTouched = (id: SectionId) => touchedSections.has(id);
+  const fieldErr = (id: SectionId, condition: boolean, msg = "Required") =>
+    isTouched(id) && condition ? msg : null;
+
   // Headcount band → approximate number for validation
   const headcountApprox: Record<string, number> = {
     lt500: 499, "500_5k": 5000, "5k_25k": 25000, "25k_plus": 100000,
@@ -710,13 +718,14 @@ export default function StrategyDiagnosticPage() {
                   value={getField("A", "sector") ?? ""}
                   onValueChange={v => { updateSection("A", "sector", v); updateSection("A", "subSector", ""); }}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("A", !getField("A", "sector"))}><SelectValue placeholder="Select industry" /></SelectTrigger>
                   <SelectContent>
                     {SECTOR_TAXONOMY.map(s => (
                       <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {fieldErr("A", !getField("A", "sector")) && <p className="text-destructive text-xs mt-1">Please select an industry</p>}
               </div>
 
               {subSectors.length > 0 && (
@@ -749,6 +758,7 @@ export default function StrategyDiagnosticPage() {
                     value={getField("A", "totalHeadcount") ?? ""}
                     onChange={e => updateSection("A", "totalHeadcount", e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     className="max-w-[180px]"
+                    aria-invalid={!!fieldErr("A", !getField("A", "totalHeadcount") && !getField("A", "headcountBand"))}
                   />
                   <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                     <Checkbox
@@ -758,6 +768,7 @@ export default function StrategyDiagnosticPage() {
                     Approximate
                   </label>
                 </div>
+                {fieldErr("A", !getField("A", "totalHeadcount") && !getField("A", "headcountBand")) && <p className="text-destructive text-xs mt-1">Please enter total headcount</p>}
               </div>
 
               <div className="space-y-2">
@@ -842,7 +853,9 @@ export default function StrategyDiagnosticPage() {
                   placeholder="e.g. 45"
                   value={getField("B", "hrTeamSize") ?? ""}
                   onChange={e => updateSection("B", "hrTeamSize", parseInt(e.target.value, 10) || 0)}
+                  aria-invalid={!!fieldErr("B", getField("B", "hrTeamSize") === undefined || getField("B", "hrTeamSize") === null || getField("B", "hrTeamSize") === "")}
                 />
+                {fieldErr("B", getField("B", "hrTeamSize") === undefined || getField("B", "hrTeamSize") === null || getField("B", "hrTeamSize") === "") && <p className="text-destructive text-xs mt-1">Please enter HR team size (0 is valid)</p>}
                 {hrSizeWarning && (
                   <p className="text-xs text-destructive flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />{hrSizeWarning}
@@ -914,11 +927,12 @@ export default function StrategyDiagnosticPage() {
                   value={getField("C", "hrisSystem") ?? ""}
                   onValueChange={v => updateSection("C", "hrisSystem", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select HRIS" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("C", !getField("C", "hrisSystem"))}><SelectValue placeholder="Select HRIS" /></SelectTrigger>
                   <SelectContent>
                     {HRIS_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {fieldErr("C", !getField("C", "hrisSystem")) && <p className="text-destructive text-xs mt-1">Please select your HRIS</p>}
               </div>
 
               <div className="space-y-2">
@@ -1163,6 +1177,7 @@ export default function StrategyDiagnosticPage() {
                       placeholder="e.g. 80"
                       value={getField("D", "annualHiresLow") ?? ""}
                       onChange={e => updateSection("D", "annualHiresLow", parseInt(e.target.value, 10) || 0)}
+                      aria-invalid={!!fieldErr("D", getField("D", "annualHiresLow") === undefined || getField("D", "annualHiresLow") === null || getField("D", "annualHiresLow") === "")}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1182,6 +1197,7 @@ export default function StrategyDiagnosticPage() {
                   />
                   This is an estimate
                 </label>
+                {fieldErr("D", getField("D", "annualHiresLow") === undefined || getField("D", "annualHiresLow") === null || getField("D", "annualHiresLow") === "") && <p className="text-destructive text-xs mt-1">Please enter annual hires low estimate (0 is valid)</p>}
               </div>
 
               {/* Admin time per hire */}
@@ -1476,7 +1492,7 @@ export default function StrategyDiagnosticPage() {
                   value={getField("E", "ambitionTier") ?? ""}
                   onValueChange={v => updateSection("E", "ambitionTier", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select ambition tier" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("E", !getField("E", "ambitionTier"))}><SelectValue placeholder="Select ambition tier" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="conservative">Conservative — cautious, compliance-first</SelectItem>
                     <SelectItem value="pragmatic">Pragmatic — selective, ROI-focused</SelectItem>
@@ -1484,6 +1500,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="transformative">Transformative — all-in, AI-native ambition</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("E", !getField("E", "ambitionTier")) && <p className="text-destructive text-xs mt-1">Please select an ambition tier</p>}
               </div>
 
               <div className="space-y-2">
@@ -1492,7 +1509,7 @@ export default function StrategyDiagnosticPage() {
                   value={getField("E", "hrPosture") ?? ""}
                   onValueChange={v => updateSection("E", "hrPosture", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select HR posture" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("E", !getField("E", "hrPosture"))}><SelectValue placeholder="Select HR posture" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="following">Following — HR adopts after the business</SelectItem>
                     <SelectItem value="pacing">Pacing — HR keeps pace with the business</SelectItem>
@@ -1500,6 +1517,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="transformative">Transformative — HR co-creates the AI strategy</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("E", !getField("E", "hrPosture")) && <p className="text-destructive text-xs mt-1">Please select HR AI posture</p>}
               </div>
 
               <div className="space-y-2">
@@ -1524,13 +1542,14 @@ export default function StrategyDiagnosticPage() {
                   value={getField("E", "riskAppetite") ?? ""}
                   onValueChange={v => updateSection("E", "riskAppetite", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select risk appetite" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("E", !getField("E", "riskAppetite"))}><SelectValue placeholder="Select risk appetite" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="conservative">Conservative — avoid risk, prioritise stability</SelectItem>
                     <SelectItem value="balanced">Balanced — accept measured risk for clear upside</SelectItem>
                     <SelectItem value="aggressive">Aggressive — accept significant risk for competitive advantage</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("E", !getField("E", "riskAppetite")) && <p className="text-destructive text-xs mt-1">Please select risk appetite</p>}
               </div>
 
               <div className="space-y-2">
@@ -1779,6 +1798,14 @@ export default function StrategyDiagnosticPage() {
                 );
               })}
 
+              {/* Section G mandatory error: at least 3 domains must be rated (score > 0) */}
+              {fieldErr("G", Object.values(capDomains).filter(d => (d.score ?? 0) > 0).length < 3) && (
+                <p className="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  Please rate at least 3 capability domains before continuing
+                </p>
+              )}
+
               {/* Derived overall */}
               {capDerived.overallScore !== undefined && (
                 <Card className="border-primary/30 bg-primary/5">
@@ -1915,10 +1942,12 @@ export default function StrategyDiagnosticPage() {
                   onChange={e => updateSectionI("businessDirection", e.target.value)}
                   maxLength={1000}
                   className="resize-none"
+                  aria-invalid={!!fieldErr("I", !((getFieldI("businessDirection") as string) ?? "").trim())}
                 />
                 <p className="text-xs text-muted-foreground text-right">
                   {((getFieldI("businessDirection") as string) ?? "").length}/1000
                 </p>
+                {fieldErr("I", !((getFieldI("businessDirection") as string) ?? "").trim()) && <p className="text-destructive text-xs mt-1">Please describe where the business is heading</p>}
               </div>
 
               <div className="space-y-3">
@@ -2018,14 +2047,16 @@ export default function StrategyDiagnosticPage() {
                       placeholder={`Challenge ${i + 1}`}
                       value={((getFieldI("peopleChallenges") as string[] ?? []))[i] ?? ""}
                       onChange={e => {
-                        const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))];
+                        const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))]
                         pts[i] = e.target.value;
                         updateSectionI("peopleChallenges", pts.filter(Boolean));
                       }}
                       maxLength={200}
+                      aria-invalid={i === 0 && !!fieldErr("I", ((getFieldI("peopleChallenges") as string[] ?? [])).filter(Boolean).length === 0)}
                     />
                   </div>
                 ))}
+                {fieldErr("I", ((getFieldI("peopleChallenges") as string[] ?? [])).filter(Boolean).length === 0) && <p className="text-destructive text-xs mt-1">Please enter at least one people challenge</p>}
               </div>
 
               <div className="space-y-2">
@@ -2477,9 +2508,13 @@ export default function StrategyDiagnosticPage() {
                   size="sm"
                   variant="outline"
                   className="border-emerald-500 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                  disabled={completePreworkMut.isPending || !allMandatoryComplete}
-                  title={!allMandatoryComplete ? "Complete all required sections first" : undefined}
+                  disabled={completePreworkMut.isPending}
                   onClick={() => {
+                    if (!allMandatoryComplete) {
+                      // Touch all mandatory sections to reveal all inline errors
+                      setTouchedSections(new Set(["A", "B", "C", "D", "E", "G", "I"] as SectionId[]));
+                      return;
+                    }
                     setCompleteError(null);
                     completePreworkMut.mutate();
                   }}
@@ -2516,9 +2551,13 @@ export default function StrategyDiagnosticPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={activeSection === "K" || !currentSectionComplete}
-              title={!currentSectionComplete ? "Complete required fields in this section first" : undefined}
+              disabled={activeSection === "K"}
               onClick={() => {
+                if (!currentSectionComplete) {
+                  // Touch the section to reveal inline errors, but don't advance
+                  touchSection(activeSection);
+                  return;
+                }
                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);
               }}
