@@ -162,18 +162,15 @@ const SectionKSchema = z.object({
   rewardCycleModel: z.enum(["annual_cycle", "biannual_cycle", "continuous", "project_based"]).optional(),
 });
 
-// Section J — Workforce Dynamics & Operational Constraints
+// Section J — Constraints & Preferences
 const SectionJSchema = z.object({
-  workforcePlanningHorizon: z.enum(["12_months", "18_months", "24_months", "36_months"]).optional(),
-  criticalSkillsGaps: z.array(z.string().max(200)).max(5).optional(),     // Top skills gaps to address
-  successionCoverage: z.enum(["strong", "adequate", "weak", "none"]).optional(),
-  hiringFreezeRisk: z.enum(["none", "possible", "likely", "current"]).optional(),
-  keyConstraints: z.array(z.string().max(200)).max(5).optional(),          // Top 3–5 operational constraints
-  hrTransformationHistory: z.string().max(500).optional(),                 // Previous HR transformation attempts
-  unionOrERComplexity: z.enum(["none", "low", "moderate", "high"]).optional(),
-  dataPrivacyConstraints: z.string().max(500).optional(),                  // Key data privacy/GDPR constraints
-  outsourcingModel: z.enum(["fully_insourced", "mostly_insourced", "mixed", "mostly_outsourced"]).optional(),
-  hrTechBudgetCycle: z.enum(["annual", "biannual", "rolling", "project_based"]).optional(),
+  budgetCeiling: z.enum(["lt50k", "50k_150k", "150k_500k", "500k_1m", "gt1m", "unknown"]).optional(),
+  timelineConstraint: z.enum(["3_months", "6_months", "12_months", "18_24_months", "no_constraint"]).optional(),
+  vendorPreferences: z.string().max(500).optional(),                       // Free text: preferred/excluded vendors
+  riskTolerance: z.enum(["low", "moderate", "high"]).optional(),
+  quickWinsPreference: z.enum(["foundations_first", "balanced", "quick_wins_first"]).optional(),
+  excludedInitiatives: z.string().max(500).optional(),                     // Free text: areas off the table
+  additionalContext: z.string().max(800).optional(),                       // Free text: anything else
 });
 
 // Section I — Business & Workforce Context
@@ -269,6 +266,8 @@ function buildOrgContextString(
     lt500: "< 500 employees", "500_5k": "500–5,000 employees",
     "5k_25k": "5,000–25,000 employees", "25k_plus": "25,000+ employees",
   };
+  const j = (inputs.sectionJ as any) ?? {};
+  const k = (inputs.sectionK as any) ?? {};
   const ambitionLabel: Record<string, string> = {
     conservative: "Conservative (efficiency-first, low risk)",
     pragmatic: "Pragmatic (selective AI adoption, moderate risk)",
@@ -325,10 +324,20 @@ BUSINESS & WORKFORCE CONTEXT (Section I):
 Business direction: ${sectionI.businessDirection ?? "Not provided"}
 Top business priorities: ${(sectionI.topBusinessPriorities as string[] ?? []).join("; ") || "Not specified"}
 Work type: ${sectionI.workforceWorkType ?? "?"} | Employment mix: ${sectionI.workforceEmploymentMix ?? "?"}
-Geographic distribution: ${sectionI.geographicDistribution ?? "?"} 
+Geographic distribution: ${sectionI.geographicDistribution ?? "?"}
 Pivotal job families: ${(sectionI.pivotalJobFamilies as string[] ?? []).join(", ") || "Not specified"}
 People challenges: ${(sectionI.peopleChallenges as string[] ?? []).join("; ") || "Not specified"}
 Employee experience: ${sectionI.employeeExperienceState ?? "Not provided"}
+
+CONSTRAINTS & PREFERENCES (Section J):
+Budget ceiling: ${j.budgetCeiling ?? "Not specified"} | Timeline: ${j.timelineConstraint ?? "Not specified"} | Risk tolerance: ${j.riskTolerance ?? "Not specified"} | Quick wins: ${j.quickWinsPreference ?? "Not specified"}
+Vendor preferences: ${j.vendorPreferences || "None specified"}
+Excluded areas: ${j.excludedInitiatives || "None specified"}
+Additional context: ${j.additionalContext || "None"}
+
+WAYS OF WORKING (Section K):
+Onboarding: ${k.onboardingModel ?? "?"} | Internal mobility: ${k.internalMobilityApproach ?? "?"} | Performance review: ${k.performanceReviewCadence ?? "?"}
+HR helpdesk: ${k.hrHelpdeskModel ?? "?"} | Hiring structure: ${k.hiringProcessStructure ?? "?"} | L&D model: ${k.lAndDDeliveryModel ?? "?"} | Reward cycle: ${k.rewardCycleModel ?? "?"}
 `.trim();
 
   // Append facilitator notes as INTERNAL ONLY context (never shown to CPO)
@@ -800,6 +809,7 @@ export const backgroundInputsRouter = router({
               annualRevenueIsEstimate: inputs.sectionD?.annualRevenueIsEstimate,
               currentEngagementScore: inputs.sectionD?.currentEngagementScore,
               hrFteCount: inputs.sectionB?.hrTeamSize,
+              avgTimeToFill: inputs.sectionD?.avgTimeToFillDays,
             },
             sectionI: {
               workforceWorkType: sectionI.workforceWorkType,
@@ -820,6 +830,12 @@ export const backgroundInputsRouter = router({
               hiringVolumeProfile: sectionK.hiringVolumeProfile,
               lAndDDeliveryModel: sectionK.lAndDDeliveryModel,
               rewardCycleModel: sectionK.rewardCycleModel,
+            },
+            sectionJ: {
+              budgetCeiling: sectionJ.budgetCeiling,
+              timelineConstraint: sectionJ.timelineConstraint,
+              riskTolerance: sectionJ.riskTolerance,
+              quickWinsPreference: sectionJ.quickWinsPreference,
             },
             sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
             sectionG: {

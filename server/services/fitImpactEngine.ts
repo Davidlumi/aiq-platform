@@ -45,6 +45,12 @@ export type FitImpactEngineInputs = ValueFormulaInputs & {
   sectionB?: { hrSubFunctions?: string[] };
   sectionG?: { [domain: string]: number };
   sectionF?: { changeReadiness?: string };
+  sectionJ?: {
+    budgetCeiling?: string;
+    timelineConstraint?: string;
+    riskTolerance?: string;
+    quickWinsPreference?: string;
+  };
   sectionK?: {
     onboardingModel?: string;
     internalMobilityApproach?: string;
