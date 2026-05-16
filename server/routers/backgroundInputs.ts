@@ -29,9 +29,10 @@ const SectionASchema = z.object({
   companyName: z.string().max(200).optional(),
   sector: z.string().optional(),
   subSector: z.string().optional(),
-  headcountBand: z.enum(["lt500", "500_5k", "5k_25k", "25k_plus"]).optional(),
-  totalHeadcount: z.number().int().min(0).optional(),
-  ukSitesCount: z.number().int().min(0).optional(),
+  headcountBand: z.enum(["lt500", "500_5k", "5k_25k", "25k_plus"]).optional(), // kept for backward compat
+  totalHeadcount: z.number().int().min(1).max(1000000).optional(),
+  totalHeadcountIsEstimate: z.boolean().optional(),
+  ukSitesCount: z.number().int().min(1).max(100000).optional(),
   primaryGeography: z.string().optional(),
   orgType: z.string().optional(),
   ownershipStructure: z.enum(["private_equity", "listed_plc", "private_company", "public_sector", "ngo_charity", "family_owned"]).optional(),
@@ -62,8 +63,8 @@ const SectionCSchema = z.object({
   dataQualityRating: z.enum(["poor", "fair", "good", "excellent"]).optional(),
   hasDataWarehouse: z.boolean().optional(),
   hrSystemIntegrationMaturity: z.enum(["siloed", "partial", "integrated", "unified"]).optional(),
-  yearsOfHrisData: z.number().int().min(0).max(30).optional(),
-  workforceDigitalAccess: z.enum(["all_laptops", "mixed", "limited", "mobile_only"]).optional(),
+  yearsOfHrisData: z.enum(["lt_1_year", "1_to_2_years", "2_to_5_years", "5_plus_years", "unknown"]).optional(),
+  workforceDigitalAccess: z.enum(["all_laptops", "mixed_access", "frontline_mobile", "limited"]).optional(),
 });
 
 const SectionDSchema = z.object({
@@ -83,12 +84,16 @@ const SectionDSchema = z.object({
   attritionIsEstimate: z.boolean().optional(),
   timeToFillDays: z.number().min(0).optional(),
   timeToFillIsEstimate: z.boolean().optional(),
-  annualApplicationVolume: z.number().int().min(0).optional(),
+  annualApplicationVolumeLow: z.number().int().min(0).optional(),
+  annualApplicationVolumeHigh: z.number().int().min(0).optional(),
+  annualApplicationVolumeIsEstimate: z.boolean().optional(),
   costPerExternalHire: z.number().min(0).optional(),
   costPerExternalHireIsEstimate: z.boolean().optional(),
   annualContractorSpend: z.number().min(0).optional(),
   annualContractorSpendIsEstimate: z.boolean().optional(),
-  monthlyHrQueryVolume: z.number().int().min(0).optional(),
+  monthlyHrQueryVolumeLow: z.number().int().min(0).optional(),
+  monthlyHrQueryVolumeHigh: z.number().int().min(0).optional(),
+  monthlyHrQueryVolumeIsEstimate: z.boolean().optional(),
   internalHirePercent: z.number().min(0).max(100).optional(),
   annualLDSpend: z.number().min(0).optional(),
   annualLDSpendIsEstimate: z.boolean().optional(),
@@ -149,10 +154,10 @@ const SectionHSchema = z.object({
 const SectionKSchema = z.object({
   onboardingModel: z.enum(["structured_programme", "buddy_led", "self_directed", "minimal"]).optional(),
   internalMobilityApproach: z.enum(["open_marketplace", "manager_nominated", "limited", "none"]).optional(),
-  performanceReviewCadence: z.enum(["continuous", "quarterly", "biannual", "annual", "light_touch"]).optional(),
+  performanceReviewCadence: z.enum(["annual", "bi_annual", "quarterly", "continuous", "light_touch"]).optional(),
   hrHelpdeskModel: z.enum(["shared_service_centre", "hrbp_direct", "ticketing_system", "informal"]).optional(),
   hiringProcessStructure: z.enum(["highly_structured", "semi_structured", "informal", "varies_by_team"]).optional(),
-  hiringVolumeProfile: z.array(z.enum(["executive", "professional", "graduate_apprentice", "frontline_operative", "contingent_seasonal"])).optional(),
+  hiringVolumeProfile: z.array(z.enum(["graduate_apprentice", "frontline_operative", "experienced_hires", "executive_search", "seasonal_surge"])).optional(),
   lAndDDeliveryModel: z.enum(["blended", "mostly_digital", "mostly_classroom", "on_the_job", "minimal"]).optional(),
   rewardCycleModel: z.enum(["annual_cycle", "biannual_cycle", "continuous", "project_based"]).optional(),
 });
@@ -174,18 +179,19 @@ const SectionJSchema = z.object({
 // Section I — Business & Workforce Context
 const SectionISchema = z.object({
   businessDirection: z.string().max(1000).optional(),
-  businessDirectionType: z.enum(["growing", "transforming", "optimising", "restructuring", "stable"]).optional(),
+  businessDirectionType: z.enum(["transforming", "growing", "optimising", "defending", "mixed"]).optional(),
   topBusinessPriorities: z.array(z.string().max(200)).max(5).optional(),
   workforceWorkType: z.enum(["fully_remote", "hybrid", "mostly_onsite", "fully_onsite"]).optional(),
-  workforceComposition: z.enum(["office_knowledge", "frontline_heavy", "mixed", "field_based", "manufacturing"]).optional(),
+  workforceComposition: z.enum(["knowledge_heavy", "mixed", "frontline_heavy", "unknown"]).optional(),
   workforceEmploymentMix: z.enum(["mostly_permanent", "significant_contingent", "majority_contingent"]).optional(),
   geographicDistribution: z.enum(["single_site", "multi_site_single_country", "multi_country", "global"]).optional(),
   pivotalJobFamilies: z.array(z.string().max(100)).max(5).optional(),
   peopleChallenges: z.array(z.string().max(200)).max(3).optional(),
   employeeExperienceState: z.string().max(500).optional(),
   managerCapabilityForInsights: z.enum(["Strong", "Mixed", "Weak", "Variable"]).optional(),
-  skillsFrameworkStatus: z.enum(["mature", "partial", "nascent", "none"]).optional(),
+  skillsFrameworkStatus: z.enum(["formal_taxonomy", "informal_role_based", "in_development", "none", "unknown"]).optional(),
   skillsInventoryCompleteness: z.enum(["comprehensive", "partial", "minimal", "none"]).optional(),
+  frontlineHeadcountPercent: z.number().int().min(0).max(100).optional(),
 });
 
 const BackgroundInputsSchema = z.object({
@@ -611,7 +617,7 @@ export const backgroundInputsRouter = router({
 
     // Section A — Company snapshot
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
-    if (!inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
+    if (!inputs.sectionA?.totalHeadcount && !inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
 
     // Section B — HR shape
     if (inputs.sectionB?.hrTeamSize === undefined || inputs.sectionB?.hrTeamSize === null)
@@ -674,8 +680,9 @@ export const backgroundInputsRouter = router({
           const engineInputs: FitImpactEngineInputs = {
             sectionA: {
               totalHeadcount: inputs.sectionA?.totalHeadcount ?? (() => {
-                const bandMap: Record<string, number> = { lt500: 250, "500_5k": 2500, "5k_25k": 15000, "25k_plus": 50000 };
-                return bandMap[inputs.sectionA?.headcountBand] ?? 0;
+                // Fallback: derive from headcountBand for backward compat
+                const bandMap: Record<string, number> = { lt500: 250, "500_5k": 2750, "5k_25k": 15000, "25k_plus": 50000 };
+                return bandMap[inputs.sectionA?.headcountBand ?? ""] ?? 0;
               })(),
               ukSitesCount: inputs.sectionA?.ukSitesCount,
               sectorSpecificRegulation: inputs.sectionA?.sectorSpecificRegulations ?? [],
@@ -700,12 +707,12 @@ export const backgroundInputsRouter = router({
               totalHrBudgetIsEstimate: inputs.sectionD?.hrBudgetIsEstimate,
               attritionRate: inputs.sectionD?.voluntaryAttritionPct,
               attritionRateIsEstimate: inputs.sectionD?.attritionIsEstimate,
-              annualApplicationVolume: inputs.sectionD?.annualApplicationVolume,
+              annualApplicationVolume: inputs.sectionD?.annualApplicationVolumeLow ?? inputs.sectionD?.annualApplicationVolumeHigh,
               costPerExternalHire: inputs.sectionD?.costPerExternalHire,
               costPerExternalHireIsEstimate: inputs.sectionD?.costPerExternalHireIsEstimate,
               annualContractorSpend: inputs.sectionD?.annualContractorSpend,
               annualContractorSpendIsEstimate: inputs.sectionD?.annualContractorSpendIsEstimate,
-              monthlyHrQueryVolume: inputs.sectionD?.monthlyHrQueryVolume,
+              monthlyHrQueryVolume: inputs.sectionD?.monthlyHrQueryVolumeLow ?? inputs.sectionD?.monthlyHrQueryVolumeHigh,
               internalHirePercent: inputs.sectionD?.internalHirePercent,
               annualLDSpend: inputs.sectionD?.annualLDSpend,
               annualLDSpendIsEstimate: inputs.sectionD?.annualLDSpendIsEstimate,

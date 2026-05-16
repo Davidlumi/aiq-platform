@@ -105,7 +105,7 @@ function calcProgress(
   const vals = Object.values(s).filter(v => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
   if (vals.length === 0) return "not_started";
   const required: Record<string, string[]> = {
-    A: ["sector", "headcountBand"],
+    A: ["sector", "totalHeadcount"],
     B: ["hrTeamSize"],
     C: ["hrisSystem"],
     D: ["annualHiresLow"],
@@ -567,17 +567,39 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-2">
                 <Label>Total headcount <span className="text-destructive">*</span></Label>
-                <Select
-                  value={getField("A", "headcountBand") ?? ""}
-                  onValueChange={v => updateSection("A", "headcountBand", v)}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select headcount range" /></SelectTrigger>
-                  <SelectContent>
-                    {HEADCOUNT_BANDS.map(b => (
-                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-xs text-muted-foreground">Full-time equivalents (FTEs) across all locations</p>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1000000}
+                    placeholder="e.g. 4500"
+                    value={getField("A", "totalHeadcount") ?? ""}
+                    onChange={e => updateSection("A", "totalHeadcount", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    className="max-w-[180px]"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                    <Checkbox
+                      checked={!!(getField("A", "totalHeadcountIsEstimate"))}
+                      onCheckedChange={v => updateSection("A", "totalHeadcountIsEstimate", !!v)}
+                    />
+                    Approximate
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Number of UK sites</Label>
+                <p className="text-xs text-muted-foreground">Distinct office, warehouse, or operational locations in the UK</p>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100000}
+                  placeholder="e.g. 12"
+                  value={getField("A", "ukSitesCount") ?? ""}
+                  onChange={e => updateSection("A", "ukSitesCount", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                  className="max-w-[180px]"
+                />
               </div>
 
               <div className="space-y-2">
@@ -896,15 +918,50 @@ export default function StrategyDiagnosticPage() {
                 <Label>Systems integration readiness</Label>
                 <p className="text-xs text-muted-foreground">How well-connected are your HR systems? This affects which AI initiatives are feasible without infrastructure investment.</p>
                 <Select
-                  value={getField("C", "integrationReadiness") ?? ""}
-                  onValueChange={v => updateSection("C", "integrationReadiness", v)}
+                  value={getField("C", "hrSystemIntegrationMaturity") ?? getField("C", "integrationReadiness") ?? ""}
+                  onValueChange={v => updateSection("C", "hrSystemIntegrationMaturity", v)}
                 >
                   <SelectTrigger><SelectValue placeholder="Select integration readiness" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="siloed">Siloed — systems don’t talk to each other; manual data transfers</SelectItem>
+                    <SelectItem value="siloed">Siloed — systems don't talk to each other; manual data transfers</SelectItem>
                     <SelectItem value="partial">Partial — some integrations exist; significant gaps remain</SelectItem>
-                    <SelectItem value="connected">Connected — most systems integrated; some manual workarounds</SelectItem>
+                    <SelectItem value="integrated">Integrated — most systems connected; some manual workarounds</SelectItem>
                     <SelectItem value="unified">Unified — single source of truth; real-time data flows</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Years of HRIS data</Label>
+                <p className="text-xs text-muted-foreground">How long has your current HRIS been in use with consistent data?</p>
+                <Select
+                  value={(getField("C", "yearsOfHrisData") as string) ?? ""}
+                  onValueChange={v => updateSection("C", "yearsOfHrisData", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select data history" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lt_1_year">Less than 1 year</SelectItem>
+                    <SelectItem value="1_to_2_years">1 to 2 years</SelectItem>
+                    <SelectItem value="2_to_5_years">2 to 5 years</SelectItem>
+                    <SelectItem value="5_plus_years">5 or more years</SelectItem>
+                    <SelectItem value="unknown">Unknown</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Workforce digital access</Label>
+                <p className="text-xs text-muted-foreground">What proportion of your workforce has regular access to a laptop or desktop?</p>
+                <Select
+                  value={(getField("C", "workforceDigitalAccess") as string) ?? ""}
+                  onValueChange={v => updateSection("C", "workforceDigitalAccess", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select access level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all_laptops">All employees have laptops / desktops</SelectItem>
+                    <SelectItem value="mixed_access">Mixed — most office staff do, frontline don't</SelectItem>
+                    <SelectItem value="frontline_mobile">Frontline mobile-only — smartphones or tablets</SelectItem>
+                    <SelectItem value="limited">Limited — significant portion have no digital access</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1089,6 +1146,129 @@ export default function StrategyDiagnosticPage() {
                   <Checkbox
                     checked={getField("D", "timeToFillIsEstimate") ?? false}
                     onCheckedChange={v => updateSection("D", "timeToFillIsEstimate", v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Annual application volume */}
+              <div className="space-y-2">
+                <Label>Annual application volume</Label>
+                <p className="text-xs text-muted-foreground">Total applications received per year across all roles</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Low estimate</Label>
+                    <Input
+                      type="number" min={0}
+                      placeholder="e.g. 5000"
+                      value={getField("D", "annualApplicationVolumeLow") ?? ""}
+                      onChange={e => updateSection("D", "annualApplicationVolumeLow", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">High estimate</Label>
+                    <Input
+                      type="number" min={0}
+                      placeholder="e.g. 12000"
+                      value={getField("D", "annualApplicationVolumeHigh") ?? ""}
+                      onChange={e => updateSection("D", "annualApplicationVolumeHigh", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={!!(getField("D", "annualApplicationVolumeIsEstimate"))}
+                    onCheckedChange={v => updateSection("D", "annualApplicationVolumeIsEstimate", !!v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Cost per external hire */}
+              <div className="space-y-2">
+                <Label>Cost per external hire (£)</Label>
+                <p className="text-xs text-muted-foreground">All-in cost including agency fees, job boards, and recruiter time</p>
+                <Input
+                  type="number" min={0}
+                  placeholder="e.g. 8500"
+                  value={getField("D", "costPerExternalHire") ?? ""}
+                  onChange={e => updateSection("D", "costPerExternalHire", e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={!!(getField("D", "costPerExternalHireIsEstimate"))}
+                    onCheckedChange={v => updateSection("D", "costPerExternalHireIsEstimate", !!v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Monthly HR query volume */}
+              <div className="space-y-2">
+                <Label>Monthly HR query volume</Label>
+                <p className="text-xs text-muted-foreground">Employee queries, helpdesk tickets, or HR case volume per month</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Low estimate</Label>
+                    <Input
+                      type="number" min={0}
+                      placeholder="e.g. 200"
+                      value={getField("D", "monthlyHrQueryVolumeLow") ?? ""}
+                      onChange={e => updateSection("D", "monthlyHrQueryVolumeLow", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">High estimate</Label>
+                    <Input
+                      type="number" min={0}
+                      placeholder="e.g. 500"
+                      value={getField("D", "monthlyHrQueryVolumeHigh") ?? ""}
+                      onChange={e => updateSection("D", "monthlyHrQueryVolumeHigh", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={!!(getField("D", "monthlyHrQueryVolumeIsEstimate"))}
+                    onCheckedChange={v => updateSection("D", "monthlyHrQueryVolumeIsEstimate", !!v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Annual L&D spend */}
+              <div className="space-y-2">
+                <Label>Annual L&amp;D spend (£)</Label>
+                <p className="text-xs text-muted-foreground">Total learning &amp; development budget including external training, platforms, and content</p>
+                <Input
+                  type="number" min={0}
+                  placeholder="e.g. 750000"
+                  value={getField("D", "annualLDSpend") ?? ""}
+                  onChange={e => updateSection("D", "annualLDSpend", e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={!!(getField("D", "annualLDSpendIsEstimate"))}
+                    onCheckedChange={v => updateSection("D", "annualLDSpendIsEstimate", !!v)}
+                  />
+                  This is an estimate
+                </label>
+              </div>
+
+              {/* Annual revenue */}
+              <div className="space-y-2">
+                <Label>Annual revenue (£)</Label>
+                <p className="text-xs text-muted-foreground">Used to size workforce productivity and revenue-per-head impact estimates</p>
+                <Input
+                  type="number" min={0}
+                  placeholder="e.g. 250000000"
+                  value={getField("D", "annualRevenue") ?? ""}
+                  onChange={e => updateSection("D", "annualRevenue", e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                  <Checkbox
+                    checked={!!(getField("D", "annualRevenueIsEstimate"))}
+                    onCheckedChange={v => updateSection("D", "annualRevenueIsEstimate", !!v)}
                   />
                   This is an estimate
                 </label>
@@ -1700,10 +1880,10 @@ export default function StrategyDiagnosticPage() {
                 >
                   <SelectTrigger><SelectValue placeholder="Select capability level" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Strong">Strong — most managers use data confidently</SelectItem>
-                    <SelectItem value="Mixed">Mixed — variable across the management population</SelectItem>
-                    <SelectItem value="Variable">Variable — a few strong, most uncertain</SelectItem>
-                    <SelectItem value="Weak">Weak — most managers not yet data-led</SelectItem>
+                    <SelectItem value="strong">Strong — most managers use data confidently</SelectItem>
+                    <SelectItem value="mixed">Mixed — variable across the management population</SelectItem>
+                    <SelectItem value="variable">Variable — a few strong, most uncertain</SelectItem>
+                    <SelectItem value="weak">Weak — most managers not yet data-led</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1717,11 +1897,10 @@ export default function StrategyDiagnosticPage() {
                 >
                   <SelectTrigger><SelectValue placeholder="Select composition" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="office_knowledge">Primarily office / knowledge workers</SelectItem>
+                    <SelectItem value="knowledge_heavy">Primarily office / knowledge workers</SelectItem>
                     <SelectItem value="frontline_heavy">Frontline / operational heavy</SelectItem>
                     <SelectItem value="mixed">Mixed — significant office and frontline</SelectItem>
-                    <SelectItem value="field_based">Predominantly field-based</SelectItem>
-                    <SelectItem value="manufacturing">Manufacturing / production</SelectItem>
+                    <SelectItem value="unknown">Unknown / not yet assessed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1735,11 +1914,11 @@ export default function StrategyDiagnosticPage() {
                 >
                   <SelectTrigger><SelectValue placeholder="Select direction" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="growing">Growing — headcount and revenue expanding</SelectItem>
                     <SelectItem value="transforming">Transforming — significant operating model change</SelectItem>
+                    <SelectItem value="growing">Growing — headcount and revenue expanding</SelectItem>
                     <SelectItem value="optimising">Optimising — efficiency and cost focus</SelectItem>
-                    <SelectItem value="restructuring">Restructuring — headcount reduction or reorganisation</SelectItem>
-                    <SelectItem value="stable">Stable — steady state, incremental improvement</SelectItem>
+                    <SelectItem value="defending">Defending — protecting market position</SelectItem>
+                    <SelectItem value="mixed">Mixed — different parts of the business in different phases</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1753,10 +1932,11 @@ export default function StrategyDiagnosticPage() {
                 >
                   <SelectTrigger><SelectValue placeholder="Select maturity level" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mature">Mature — comprehensive, actively maintained</SelectItem>
-                    <SelectItem value="partial">Partial — exists for some functions</SelectItem>
-                    <SelectItem value="nascent">Nascent — early stage, limited coverage</SelectItem>
+                    <SelectItem value="formal_taxonomy">Formal taxonomy — comprehensive, actively maintained</SelectItem>
+                    <SelectItem value="informal_role_based">Informal / role-based — exists for some functions</SelectItem>
+                    <SelectItem value="in_development">In development — early stage, limited coverage</SelectItem>
                     <SelectItem value="none">None — no skills framework in place</SelectItem>
+                    <SelectItem value="unknown">Unknown</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1776,6 +1956,24 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="none">None — no skills data captured</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Frontline headcount (%)</Label>
+                <p className="text-xs text-muted-foreground">Approximate percentage of your workforce in frontline, deskless, or operational roles</p>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={5}
+                    placeholder="e.g. 40"
+                    value={(getFieldI("frontlineHeadcountPercent") as number) ?? ""}
+                    onChange={e => updateSectionI("frontlineHeadcountPercent", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    className="max-w-[120px]"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
               </div>
             </div>
           )}
@@ -1948,7 +2146,7 @@ export default function StrategyDiagnosticPage() {
                   <SelectContent>
                     <SelectItem value="continuous">Continuous — ongoing check-ins, no formal cycle</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="biannual">Bi-annual</SelectItem>
+                    <SelectItem value="bi_annual">Bi-annual</SelectItem>
                     <SelectItem value="annual">Annual</SelectItem>
                     <SelectItem value="light_touch">Light touch — minimal or inconsistent</SelectItem>
                   </SelectContent>
@@ -1993,11 +2191,11 @@ export default function StrategyDiagnosticPage() {
                 <Label>Hiring volume profile</Label>
                 <p className="text-xs text-muted-foreground">Which hiring segments are most significant? (select all that apply)</p>
                 {[
-                  { value: "executive", label: "Executive / senior leadership" },
-                  { value: "professional", label: "Professional / specialist" },
+                  { value: "executive_search", label: "Executive / senior leadership" },
+                  { value: "experienced_hires", label: "Professional / experienced hires" },
                   { value: "graduate_apprentice", label: "Graduate / apprentice" },
                   { value: "frontline_operative", label: "Frontline / operative" },
-                  { value: "contingent_seasonal", label: "Contingent / seasonal" },
+                  { value: "seasonal_surge", label: "Seasonal surge / contingent" },
                 ].map(opt => (
                   <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                     <input
