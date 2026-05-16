@@ -75,6 +75,7 @@ export type SectionIInputs = {
   skillsInventoryCompleteness?: string;
   pivotalJobFamilies?: string[];
   employeeExperienceState?: string;
+  frontlineHeadcountPercent?: number;
 };
 
 export type SectionKInputs = {

@@ -583,3 +583,127 @@ describe("Initiative Config", () => {
     expect(d.workingDaysPerYear).toBeGreaterThan(0);
   });
 });
+
+// ── 7. scoreFrontlinePercent evaluator ───────────────────────────────────────
+
+describe("scoreFrontlinePercent evaluator", () => {
+  // Helper: build inputs with a given frontlineHeadcountPercent
+  const withPercent = (pct: number | undefined): FitImpactEngineInputs => ({
+    ...baseInputs,
+    sectionI: { ...baseInputs.sectionI, frontlineHeadcountPercent: pct },
+  });
+
+  // ── Monotonicity: higher percent → higher score on frontline initiatives ──
+
+  it("fw_shift_scheduling_ai scores increase monotonically with frontline percent", () => {
+    const p0   = evaluateInitiative("fw_shift_scheduling_ai", withPercent(0));
+    const p10  = evaluateInitiative("fw_shift_scheduling_ai", withPercent(10));
+    const p30  = evaluateInitiative("fw_shift_scheduling_ai", withPercent(30));
+    const p50  = evaluateInitiative("fw_shift_scheduling_ai", withPercent(50));
+    const p70  = evaluateInitiative("fw_shift_scheduling_ai", withPercent(70));
+    expect(p10.fitScore).toBeGreaterThan(p0.fitScore);
+    expect(p30.fitScore).toBeGreaterThan(p10.fitScore);
+    expect(p50.fitScore).toBeGreaterThan(p30.fitScore);
+    expect(p70.fitScore).toBeGreaterThanOrEqual(p50.fitScore);
+  });
+
+  it("fw_frontline_learning scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("fw_frontline_learning", withPercent(5));
+    const mid  = evaluateInitiative("fw_frontline_learning", withPercent(35));
+    const high = evaluateInitiative("fw_frontline_learning", withPercent(75));
+    expect(mid.fitScore).toBeGreaterThan(low.fitScore);
+    expect(high.fitScore).toBeGreaterThan(mid.fitScore);
+  });
+
+  it("fw_frontline_communication scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("fw_frontline_communication", withPercent(5));
+    const mid  = evaluateInitiative("fw_frontline_communication", withPercent(35));
+    const high = evaluateInitiative("fw_frontline_communication", withPercent(75));
+    expect(mid.fitScore).toBeGreaterThan(low.fitScore);
+    expect(high.fitScore).toBeGreaterThan(mid.fitScore);
+  });
+
+  it("fw_store_manager_assistant scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("fw_store_manager_assistant", withPercent(5));
+    const high = evaluateInitiative("fw_store_manager_assistant", withPercent(70));
+    expect(high.fitScore).toBeGreaterThan(low.fitScore);
+  });
+
+  it("mg_manager_copilot scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("mg_manager_copilot", withPercent(5));
+    const high = evaluateInitiative("mg_manager_copilot", withPercent(70));
+    expect(high.fitScore).toBeGreaterThan(low.fitScore);
+  });
+
+  it("ee_recognition_rewards scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("ee_recognition_rewards", withPercent(5));
+    const high = evaluateInitiative("ee_recognition_rewards", withPercent(70));
+    expect(high.fitScore).toBeGreaterThan(low.fitScore);
+  });
+
+  it("ld_compliance_training scores increase monotonically with frontline percent", () => {
+    const low  = evaluateInitiative("ld_compliance_training", withPercent(5));
+    const high = evaluateInitiative("ld_compliance_training", withPercent(70));
+    expect(high.fitScore).toBeGreaterThan(low.fitScore);
+  });
+
+  // ── Boundary: unknown/undefined percent returns 0 contribution ──
+
+  it("fw_shift_scheduling_ai with undefined percent scores same as percent=0", () => {
+    const undef  = evaluateInitiative("fw_shift_scheduling_ai", withPercent(undefined));
+    const zero   = evaluateInitiative("fw_shift_scheduling_ai", withPercent(0));
+    expect(undef.fitScore).toBe(zero.fitScore);
+  });
+
+  // ── Threshold bands: verify score brackets ──
+
+  it("fw_frontline_learning: percent=60 earns full maxScore for frontline_percent factor (15 pts)", () => {
+    // With percent=60 and all other factors at their base level, the frontline_percent
+    // factor should contribute its full 15 pts. We verify the score is strictly higher
+    // than percent=59 (which is in the 75% band = 11 pts).
+    const p59 = evaluateInitiative("fw_frontline_learning", withPercent(59));
+    const p60 = evaluateInitiative("fw_frontline_learning", withPercent(60));
+    expect(p60.fitScore).toBeGreaterThan(p59.fitScore);
+  });
+
+  it("fw_frontline_learning: percent=40 earns 75% band (higher than percent=39)", () => {
+    const p39 = evaluateInitiative("fw_frontline_learning", withPercent(39));
+    const p40 = evaluateInitiative("fw_frontline_learning", withPercent(40));
+    expect(p40.fitScore).toBeGreaterThan(p39.fitScore);
+  });
+
+  it("fw_frontline_learning: percent=20 earns 45% band (higher than percent=19)", () => {
+    const p19 = evaluateInitiative("fw_frontline_learning", withPercent(19));
+    const p20 = evaluateInitiative("fw_frontline_learning", withPercent(20));
+    expect(p20.fitScore).toBeGreaterThan(p19.fitScore);
+  });
+
+  // ── Differentiation: percent provides extra signal beyond categorical composition ──
+
+  it("fw_shift_scheduling_ai: 70% frontline scores higher than 25% even when both are 'mixed' composition", () => {
+    const mixed25: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "mixed", frontlineHeadcountPercent: 25 },
+    };
+    const mixed70: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "mixed", frontlineHeadcountPercent: 70 },
+    };
+    expect(evaluateInitiative("fw_shift_scheduling_ai", mixed70).fitScore)
+      .toBeGreaterThan(evaluateInitiative("fw_shift_scheduling_ai", mixed25).fitScore);
+  });
+
+  // ── Initiatives NOT using frontline_percent are unaffected ──
+
+  it("ta_high_volume_hiring score is unaffected by frontlineHeadcountPercent", () => {
+    const low  = evaluateInitiative("ta_high_volume_hiring", withPercent(5));
+    const high = evaluateInitiative("ta_high_volume_hiring", withPercent(80));
+    expect(low.fitScore).toBe(high.fitScore);
+  });
+
+  it("wp_workforce_planning score is unaffected by frontlineHeadcountPercent", () => {
+    const low  = evaluateInitiative("wp_workforce_planning", withPercent(5));
+    const high = evaluateInitiative("wp_workforce_planning", withPercent(80));
+    expect(low.fitScore).toBe(high.fitScore);
+  });
+});

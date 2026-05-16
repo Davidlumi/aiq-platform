@@ -820,6 +820,7 @@ export const backgroundInputsRouter = router({
               skillsInventoryCompleteness: sectionI.skillsInventoryCompleteness,
               pivotalJobFamilies: sectionI.pivotalJobFamilies,
               employeeExperienceState: sectionI.employeeExperienceState,
+              frontlineHeadcountPercent: sectionI.frontlineHeadcountPercent,
             },
             sectionK: {
               performanceReviewCadence: sectionK.performanceReviewCadence,

@@ -256,6 +256,24 @@ function scoreFrontlineComposition(inputs: FitImpactEngineInputs, maxScore: numb
   return Math.round(maxScore * (map[comp ?? "mixed"] ?? 0.6));
 }
 
+/**
+ * Scores based on the precise percentage of frontline headcount (Section I).
+ * Provides continuous differentiation that the categorical workforceComposition
+ * field cannot supply — e.g. 25% vs 70% frontline both map to "mixed" but
+ * have very different ROI profiles for frontline-targeted initiatives.
+ *
+ * Scale: ≥60% → full | 40–59% → 75% | 20–39% → 45% | 1–19% → 20% | 0/unknown → 0
+ */
+function scoreFrontlinePercent(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const pct = inputs.sectionI.frontlineHeadcountPercent;
+  if (pct === undefined || pct === null) return 0;
+  if (pct >= 60) return maxScore;
+  if (pct >= 40) return Math.round(maxScore * 0.75);
+  if (pct >= 20) return Math.round(maxScore * 0.45);
+  if (pct >= 1)  return Math.round(maxScore * 0.20);
+  return 0;
+}
+
 function scoreGeographicSpread(inputs: FitImpactEngineInputs, maxScore: number): number {
   const geo = inputs.sectionI.geographicDistribution;
   const map: Record<string, number> = {
@@ -365,6 +383,7 @@ const EVALUATORS: Record<string, (inputs: FitImpactEngineInputs, maxScore: numbe
   scoreEthicsCapability,
   scorePivotalJobs,
   scoreFrontlineComposition,
+  scoreFrontlinePercent,
   scoreGeographicSpread,
   scoreSkillsFramework,
   scoreGrowthDirection,

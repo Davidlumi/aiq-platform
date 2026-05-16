@@ -3553,3 +3553,20 @@ test
 - [x] UI: hasUnsavedChanges tracks all field updates; resets on saveDraft onSuccess
 - [x] Tests: 12 saveDraft unit tests added to backgroundInputs.test.ts (1,032 total passing)
 - [x] Save checkpoint
+
+## scoreFrontlinePercent Evaluator
+
+- [x] Add `frontlineHeadcountPercent?: number` to `SectionIInputs` type in `shared/valueFormulas.ts`
+- [x] Implement `scoreFrontlinePercent` evaluator in `server/services/fitImpactEngine.ts` — continuous scale: ≥60% → full, 40–59% → 75%, 20–39% → 45%, 1–19% → 20%, 0/unknown → 0
+- [x] Register `scoreFrontlinePercent` in `EVALUATOR_MAP`
+- [x] Wire to `fw_shift_scheduling_ai` — split composition 40→25, add percent 15 (total still 100)
+- [x] Wire to `fw_frontline_learning` — split composition 35→20, add percent 15 (total still 100)
+- [x] Wire to `fw_frontline_communication` — split composition 35→20, add percent 15 (total still 100)
+- [x] Wire to `fw_store_manager_assistant` — split composition 30→20, add percent 10 (total still 100)
+- [x] Wire to `mg_manager_copilot` — reduce headcount 25→15, add percent 10 (total still 100)
+- [x] Wire to `ee_recognition_rewards` — split composition 25→15, add percent 10 (total still 100)
+- [x] Wire to `ld_compliance_training` — split composition 15→8, add percent 7 (total still 100)
+- [x] Map `frontlineHeadcountPercent` into `sectionI` block of `completePrework` engine inputs
+- [x] 14 new Vitest tests: monotonicity, boundary (undefined=0), threshold bands, differentiation, non-frontline initiatives unaffected
+- [x] Tests: 1,046 / 1,046 passing (41 test files)
+- [x] Save checkpoint
