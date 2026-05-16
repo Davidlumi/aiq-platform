@@ -3614,3 +3614,14 @@ test
 - [x] Add strategyDraftJson column to ail_org_context table
 - [x] Add getStrategyDraft, generateStrategyDraftSection, saveStrategyDraftSection procedures to intelligence router
 - [x] All 1,084 tests passing
+
+## Pre-work Wizard Validation Fixes
+- [x] Disable "Next" button when current section has unfilled mandatory fields
+- [x] Disable "Complete pre-work" button when any mandatory field across all sections is missing
+- [x] Left nav section tick only shows when all mandatory fields in that section are genuinely filled (not just saved)
+- [x] Fix HR team size validator — numeric field reads live form state correctly (0 is valid, not treated as missing)
+- [x] Fix Section A validator — accepts either totalHeadcount OR headcountBand
+- [x] Fix Section G validator — 3-domain threshold (matches backend), not 6
+- [x] Fix Section E validator — successNarrative NOT required (backend only needs ambitionTier, hrPosture, riskAppetite)
+- [x] Fix Section F validator — cultureDescriptors array filtered for empty strings before checking
+- [x] Fix Section D validator — annualHiresLow 0 is valid, not treated as missing

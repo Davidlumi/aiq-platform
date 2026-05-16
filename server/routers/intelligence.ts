@@ -1823,7 +1823,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         backgroundInputsJson: ailOrgContext.backgroundInputsJson,
         sector: ailOrgContext.sector,
         headcount: ailOrgContext.headcount,
-        orgName: ailOrgContext.orgName,
+        orgName: (ailOrgContext as any).orgName,
         strategyDraftJson: (ailOrgContext as any).strategyDraftJson,
         structuredInputsJson: ailOrgContext.structuredInputsJson,
         operationalBaselineJson: ailOrgContext.operationalBaselineJson,

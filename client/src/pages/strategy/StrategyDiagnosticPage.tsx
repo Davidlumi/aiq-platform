@@ -71,6 +71,39 @@ interface Approver {
 
 // ── Section progress helper ────────────────────────────────────────────────────
 
+// ── Per-section mandatory completion check (mirrors backend completePrework) ──
+// MANDATORY sections (gate Complete pre-work): A, B, C, D, E, G, I
+// OPTIONAL sections (nav tick shows "complete" when all required fields filled): F, H, J, K
+function isMandatoryComplete(
+  inputs: Record<string, unknown>,
+  capDomains: Record<string, DomainRating>,
+  sectionI: Record<string, unknown>,
+): boolean {
+  const sA = (inputs as any).sectionA ?? {};
+  const sB = (inputs as any).sectionB ?? {};
+  const sC = (inputs as any).sectionC ?? {};
+  const sD = (inputs as any).sectionD ?? {};
+  const sE = (inputs as any).sectionE ?? {};
+  // Section A: sector + (totalHeadcount OR headcountBand)
+  if (!sA.sector) return false;
+  if (!sA.totalHeadcount && !sA.headcountBand) return false;
+  // Section B: hrTeamSize defined (0 is valid)
+  if (sB.hrTeamSize === undefined || sB.hrTeamSize === null) return false;
+  // Section C: hrisSystem
+  if (!sC.hrisSystem) return false;
+  // Section D: annualHiresLow defined (0 is valid)
+  if (sD.annualHiresLow === undefined || sD.annualHiresLow === null) return false;
+  // Section E: ambitionTier, hrPosture, riskAppetite
+  if (!sE.ambitionTier || !sE.hrPosture || !sE.riskAppetite) return false;
+  // Section G: at least 3 domains rated > 0
+  const ratedCount = Object.values(capDomains).filter(d => d.score > 0).length;
+  if (ratedCount < 3) return false;
+  // Section I: businessDirection + at least 1 peopleChallenges entry
+  if (!sectionI.businessDirection) return false;
+  if (!(sectionI.peopleChallenges as string[] ?? []).filter(Boolean).length) return false;
+  return true;
+}
+
 function calcProgress(
   inputs: Record<string, unknown>,
   capDomains: Record<string, DomainRating>,
@@ -82,12 +115,15 @@ function calcProgress(
   if (sectionId === "G") {
     const rated = Object.values(capDomains).filter(d => d.score > 0).length;
     if (rated === 0) return "not_started";
-    if (rated < 6) return "in_progress";
-    return "complete";
+    // Complete when backend threshold (3) is met; in_progress otherwise
+    if (rated >= 3) return "complete";
+    return "in_progress";
   }
   if (sectionId === "I") {
-    if (!sectionI.businessDirection && !(sectionI.topBusinessPriorities as string[] ?? []).length) return "not_started";
-    if (sectionI.businessDirection && (sectionI.peopleChallenges as string[] ?? []).length > 0) return "complete";
+    const hasDir = !!(sectionI.businessDirection as string)?.trim();
+    const hasChallenges = (sectionI.peopleChallenges as string[] ?? []).filter(Boolean).length > 0;
+    if (!hasDir && !hasChallenges) return "not_started";
+    if (hasDir && hasChallenges) return "complete";
     return "in_progress";
   }
   if (sectionId === "K") {
@@ -106,15 +142,44 @@ function calcProgress(
   if (!s) return "not_started";
   const vals = Object.values(s).filter(v => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0));
   if (vals.length === 0) return "not_started";
+
+  // Mandatory required fields per section (mirrors backend completePrework)
+  // Note: successNarrative is NOT required by the backend — removed from E
+  // Note: F, H are optional sections — their "complete" tick is best-effort
   const required: Record<string, string[]> = {
-    A: ["sector", "totalHeadcount"],
-    B: ["hrTeamSize"],
+    A: ["sector"],          // headcount handled specially below
+    B: ["hrTeamSize"],      // 0 is valid — handled specially below
     C: ["hrisSystem"],
-    D: ["annualHiresLow"],
-    E: ["ambitionTier", "hrPosture", "riskAppetite", "successNarrative"],
+    D: ["annualHiresLow"],  // 0 is valid — handled specially below
+    E: ["ambitionTier", "hrPosture", "riskAppetite"],
     F: ["cultureDescriptors"],
-    H: ["keyApprovers", "aiLiteracyLevel"],
+    H: ["aiLiteracyLevel"], // keyApprovers is optional in backend
   };
+
+  // Special-case: Section A headcount (either totalHeadcount or headcountBand)
+  if (sectionId === "A") {
+    if (!s.sector) return "in_progress";
+    if (!s.totalHeadcount && !s.headcountBand) return "in_progress";
+    return "complete";
+  }
+
+  // Special-case: numeric fields where 0 is valid
+  if (sectionId === "B") {
+    if (s.hrTeamSize === undefined || s.hrTeamSize === null) return "in_progress";
+    return "complete";
+  }
+  if (sectionId === "D") {
+    if (s.annualHiresLow === undefined || s.annualHiresLow === null) return "in_progress";
+    return "complete";
+  }
+
+  // Special-case: Section F cultureDescriptors — array may contain empty strings
+  if (sectionId === "F") {
+    const descs = (s.cultureDescriptors as string[] ?? []).filter(Boolean);
+    if (descs.length >= 1) return "complete";
+    return "in_progress";
+  }
+
   const req = required[sectionId] ?? [];
   const allReq = req.every(k => {
     const v = s[k];
@@ -483,6 +548,14 @@ export default function StrategyDiagnosticPage() {
   const progressMap = Object.fromEntries(
     SECTIONS.map(s => [s.id, calcProgress(inputs, capDomains, sectionI, s.id, sectionJ, sectionK)])
   ) as Record<SectionId, ProgressState>;
+
+  // Whether all mandatory sections are complete (mirrors backend completePrework)
+  const allMandatoryComplete = isMandatoryComplete(inputs, capDomains, sectionI);
+
+  // Whether the current section's mandatory fields are filled (gates Next button)
+  const currentSectionMandatory: SectionId[] = ["A", "B", "C", "D", "E", "G", "I"];
+  const currentSectionComplete = !currentSectionMandatory.includes(activeSection)
+    || progressMap[activeSection] === "complete";
 
   // Headcount band → approximate number for validation
   const headcountApprox: Record<string, number> = {
@@ -2389,7 +2462,8 @@ export default function StrategyDiagnosticPage() {
                   size="sm"
                   variant="outline"
                   className="border-emerald-500 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                  disabled={completePreworkMut.isPending}
+                  disabled={completePreworkMut.isPending || !allMandatoryComplete}
+                  title={!allMandatoryComplete ? "Complete all required sections first" : undefined}
                   onClick={() => {
                     setCompleteError(null);
                     completePreworkMut.mutate();
@@ -2427,7 +2501,8 @@ export default function StrategyDiagnosticPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={activeSection === "K"}
+              disabled={activeSection === "K" || !currentSectionComplete}
+              title={!currentSectionComplete ? "Complete required fields in this section first" : undefined}
               onClick={() => {
                 const idx = SECTIONS.findIndex(s => s.id === activeSection);
                 if (idx < SECTIONS.length - 1) setActiveSection(SECTIONS[idx + 1].id);
