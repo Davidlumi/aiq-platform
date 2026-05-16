@@ -87,17 +87,17 @@ const baseInputs: FitImpactEngineInputs = {
 // ── 1. Initiative Library ─────────────────────────────────────────────────────
 
 describe("Initiative Library", () => {
-  it("has exactly 51 initiatives", () => {
-    expect(INITIATIVE_LIBRARY).toHaveLength(51);
+  it("has exactly 52 initiatives", () => {
+    expect(INITIATIVE_LIBRARY).toHaveLength(52);
   });
 
-  it("exports INITIATIVE_IDS with 51 entries", () => {
-    expect(INITIATIVE_IDS).toHaveLength(51);
+  it("exports INITIATIVE_IDS with 52 entries", () => {
+    expect(INITIATIVE_IDS).toHaveLength(52);
   });
 
   it("all initiative IDs are unique", () => {
     const ids = INITIATIVE_LIBRARY.map((i) => i.id);
-    expect(new Set(ids).size).toBe(51);
+    expect(new Set(ids).size).toBe(52);
   });
 
   it("each initiative has required fields", () => {
@@ -220,9 +220,9 @@ describe("Engine: hard gate failures", () => {
 // ── 3. Engine: fit classification and sorting ─────────────────────────────────
 
 describe("Engine: fit classification and sorting", () => {
-  it("returns exactly 51 results", () => {
+  it("returns exactly 52 results", () => {
     const results = evaluateAllInitiatives(baseInputs);
-    expect(results).toHaveLength(51);
+    expect(results).toHaveLength(52);
   });
 
   it("each result has required fields", () => {
@@ -346,11 +346,11 @@ describe("Specific initiative scoring", () => {
   it("ld_workforce_reskilling scores higher with transformation direction", () => {
     const steady: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionI: { ...baseInputs.sectionI, businessDirectionType: "steady_state" },
+      sectionI: { ...baseInputs.sectionI, businessDirectionType: "growing" },
     };
     const transform: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionI: { ...baseInputs.sectionI, businessDirectionType: "transformation" },
+      sectionI: { ...baseInputs.sectionI, businessDirectionType: "transforming" },
     };
     const sResult = evaluateInitiative("ld_workforce_reskilling", steady);
     const tResult = evaluateInitiative("ld_workforce_reskilling", transform);
@@ -446,11 +446,11 @@ describe("Specific initiative scoring", () => {
 // ── 5. Value formulas ─────────────────────────────────────────────────────────
 
 describe("Value Formulas", () => {
-  it("VALUE_FORMULA_REGISTRY has exactly 51 entries", () => {
-    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(51);
+  it("VALUE_FORMULA_REGISTRY has exactly 52 entries", () => {
+    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(52);
   });
 
-  it("all 51 registered formulas return valid ValueRange shapes", () => {
+  it("all 52 registered formulas return valid ValueRange shapes", () => {
     for (const [key, fn] of Object.entries(VALUE_FORMULA_REGISTRY)) {
       const result = fn(baseInputs);
       expect(result.low, `${key}.low is not a number`).toBeTypeOf("number");

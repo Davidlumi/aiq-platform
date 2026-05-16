@@ -126,14 +126,10 @@ describe("Acme Retail — Section 11 validation", () => {
     expect(r.fitStatus).toBe("STRONG_FIT");
   });
 
-  // NOTE: hr_virtual_assistant requires workforceDigitalAccess in ["all_laptops", "mixed_access"].
-  // Acme has "frontline_mobile" — the hard gate correctly excludes this initiative.
-  // Section 11 of the spec lists it as STRONG_FIT, but that conflicts with the v3 hard gate.
-  // The gate takes precedence (correct business logic: a virtual assistant needs desktop access).
-  it("hr_virtual_assistant should be NOT_APPLICABLE for frontline_mobile workforce", () => {
+  it("hr_virtual_assistant should be STRONG_FIT (mobile-accessible HR helpdesk)", () => {
     const r = byId["hr_virtual_assistant"];
     expect(r, "hr_virtual_assistant not found").toBeDefined();
-    expect(r.fitStatus).toBe("NOT_APPLICABLE");
+    expect(r.fitStatus).toBe("STRONG_FIT");
   });
 
   it("ee_recognition_rewards should be STRONG_FIT (frontline_heavy, 20K headcount)", () => {
@@ -169,15 +165,32 @@ describe("Acme Retail — Section 11 validation", () => {
     expect(r.fitStatus).not.toBe("HARD_GATE_FAIL");
   });
 
-  it("results should include all 51 initiatives", () => {
-    expect(results.length).toBe(51);
+  it("results should include all 52 initiatives (49 v3 canonical + gv_cross_cutting_bias_audit + wp_ai_capability_building + wp_ai_capability_advanced)", () => {
+    expect(results.length).toBe(52);
   });
 
   it("wp_ai_capability_building should be STRONG_FIT (foundation initiative)", () => {
     const r = byId["wp_ai_capability_building"];
     expect(r, "wp_ai_capability_building not found").toBeDefined();
-    // Foundation initiatives have no hard gates, so they always score
-    expect(["STRONG_FIT", "POSSIBLE_FIT"]).toContain(r.fitStatus);
+    expect(r.fitStatus).toBe("STRONG_FIT");
+  });
+
+  it("wp_ai_capability_advanced should be STRONG_FIT (large org with AI ambition)", () => {
+    const r = byId["wp_ai_capability_advanced"];
+    expect(r, "wp_ai_capability_advanced not found").toBeDefined();
+    expect(r.fitStatus).toBe("STRONG_FIT");
+  });
+
+  it("ta_bias_monitoring should be STRONG_FIT (9K hires, 175K applications)", () => {
+    const r = byId["ta_bias_monitoring"];
+    expect(r, "ta_bias_monitoring not found").toBeDefined();
+    expect(r.fitStatus).toBe("STRONG_FIT");
+  });
+
+  it("ta_video_interview_assessment should be STRONG_FIT (9K hires, 175K applications)", () => {
+    const r = byId["ta_video_interview_assessment"];
+    expect(r, "ta_video_interview_assessment not found").toBeDefined();
+    expect(r.fitStatus).toBe("STRONG_FIT");
   });
 
   it("ee_workforce_ai_comms should be STRONG_FIT (foundation initiative)", () => {

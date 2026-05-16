@@ -213,13 +213,14 @@ function scoreHrisDataYears(inputs: FitImpactEngineInputs, maxScore: number): nu
 
 function scoreManagerCapability(inputs: FitImpactEngineInputs, maxScore: number): number {
   const level = inputs.sectionI.managerCapabilityForInsights;
+  // v4.2 enum values: strong, mixed, weak, variable (lowercase)
   const map: Record<string, number> = {
-    Strong: 1.0,
-    Mixed: 0.6,
-    Variable: 0.4,
-    Weak: 0.1,
+    strong: 1.0,
+    mixed: 0.6,
+    variable: 0.4,
+    weak: 0.1,
   };
-  return Math.round(maxScore * (map[level ?? "Mixed"] ?? 0.6));
+  return Math.round(maxScore * (map[level ?? "mixed"] ?? 0.6));
 }
 
 function scoreAttritionRate(inputs: FitImpactEngineInputs, maxScore: number): number {
@@ -324,60 +325,66 @@ function scoreFrontlinePercent(inputs: FitImpactEngineInputs, maxScore: number):
 
 function scoreGeographicSpread(inputs: FitImpactEngineInputs, maxScore: number): number {
   const geo = inputs.sectionI.geographicDistribution;
+  // v4.2 enum values: single_site, multi_site_single_country, multi_country, global
   const map: Record<string, number> = {
     global: 1.0,
     multi_country: 0.8,
-    uk_multi_site: 0.6,
-    uk_single_site: 0.2,
+    multi_site_single_country: 0.6,
+    single_site: 0.2,
   };
-  return Math.round(maxScore * (map[geo ?? "uk_multi_site"] ?? 0.6));
+  return Math.round(maxScore * (map[geo ?? "multi_site_single_country"] ?? 0.6));
 }
 
 function scoreSkillsFramework(inputs: FitImpactEngineInputs, maxScore: number): number {
   const status = inputs.sectionI.skillsFrameworkStatus;
+  // v4.2 enum values: formal_taxonomy, informal_role_based, in_development, none, unknown
   const map: Record<string, number> = {
-    mature: 1.0,
-    partial: 0.6,
-    early: 0.3,
+    formal_taxonomy: 1.0,
+    informal_role_based: 0.6,
+    in_development: 0.3,
     none: 0.0,
+    unknown: 0.0,
   };
   return Math.round(maxScore * (map[status ?? "none"] ?? 0.0));
 }
 
 function scoreGrowthDirection(inputs: FitImpactEngineInputs, maxScore: number): number {
   const dir = inputs.sectionI.businessDirectionType;
+  // v4.2 enum values: growing, transforming, optimising, defending, mixed
   const map: Record<string, number> = {
-    scaling: 1.0,
-    steady_state: 0.6,
-    transformation: 0.7,
-    restructuring: 0.3,
-    contraction: 0.1,
+    growing: 1.0,
+    transforming: 0.7,
+    mixed: 0.6,
+    optimising: 0.5,
+    defending: 0.3,
   };
-  return Math.round(maxScore * (map[dir ?? "steady_state"] ?? 0.6));
+  return Math.round(maxScore * (map[dir ?? "mixed"] ?? 0.6));
 }
 
 function scoreTransformationDirection(inputs: FitImpactEngineInputs, maxScore: number): number {
   const dir = inputs.sectionI.businessDirectionType;
+  // v4.2 enum values: growing, transforming, optimising, defending, mixed
   const map: Record<string, number> = {
-    transformation: 1.0,
-    restructuring: 0.9,
-    scaling: 0.6,
-    steady_state: 0.4,
-    contraction: 0.8,
+    transforming: 1.0,
+    defending: 0.9,
+    mixed: 0.6,
+    growing: 0.5,
+    optimising: 0.4,
   };
-  return Math.round(maxScore * (map[dir ?? "steady_state"] ?? 0.4));
+  return Math.round(maxScore * (map[dir ?? "mixed"] ?? 0.6));
 }
 
 function scoreWeakManagerCapability(inputs: FitImpactEngineInputs, maxScore: number): number {
   const level = inputs.sectionI.managerCapabilityForInsights;
   // Inverse: weak managers = high need for this tool
+  // v4.2 enum values: strong, mixed, weak, variable (lowercase)
   const map: Record<string, number> = {
-    Weak: 1.0,
-    Variable: 0.8,
-    Mixed: 0.5,
-    Strong: 0.1,
+    weak: 1.0,
+    variable: 0.8,
+    mixed: 0.5,
+    strong: 0.1,
   };
-  return Math.round(maxScore * (map[level ?? "Mixed"] ?? 0.5));
+  return Math.round(maxScore * (map[level ?? "mixed"] ?? 0.5));
 }
 
 function scoreHireCost(inputs: FitImpactEngineInputs, maxScore: number): number {

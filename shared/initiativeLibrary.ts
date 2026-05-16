@@ -253,10 +253,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     requiredSubFunctions: ["resourcing"],
     requiredDataFields: ["annualHires"],
     softFitFactors: [
-      { key: "hire_volume", label: "Annual hire volume", fieldPath: "sectionD.annualHires", evaluator: "scoreHireVolume", maxScore: 30 },
+      { key: "hire_volume", label: "Annual hire volume", fieldPath: "sectionD.annualHires", evaluator: "scoreHireVolume", maxScore: 35 },
+      { key: "application_volume", label: "Annual application volume", fieldPath: "sectionD.annualApplicationVolume", evaluator: "scoreApplicationVolume", maxScore: 30 },
       { key: "geographic_spread", label: "Geographic distribution", fieldPath: "sectionI.geographicDistribution", evaluator: "scoreGeographicSpread", maxScore: 25 },
-      { key: "digital_access", label: "Workforce digital access", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreDigitalAccess", maxScore: 25 },
-      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 20 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 10 },
     ],
     timeToValueMonths: { min: 2, max: 4 },
     phase: 1,
@@ -283,10 +283,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     requiredSubFunctions: ["resourcing"],
     requiredDataFields: ["annualHires"],
     softFitFactors: [
-      { key: "regulation", label: "Regulatory environment", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 35 },
-      { key: "hire_volume", label: "Annual hire volume", fieldPath: "sectionD.annualHires", evaluator: "scoreHireVolume", maxScore: 25 },
-      { key: "ethics_capability", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 25 },
-      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 15 },
+      { key: "hire_volume", label: "Annual hire volume", fieldPath: "sectionD.annualHires", evaluator: "scoreHireVolume", maxScore: 40 },
+      { key: "regulation", label: "Regulatory environment", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 30 },
+      { key: "application_volume", label: "Annual application volume", fieldPath: "sectionD.annualApplicationVolume", evaluator: "scoreApplicationVolume", maxScore: 20 },
+      { key: "ethics_capability", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 10 },
     ],
     timeToValueMonths: { min: 3, max: 6 },
     phase: 1,
@@ -921,11 +921,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     requiredSubFunctions: ["employee_experience"],
     requiredDataFields: [],
     softFitFactors: [
-      { key: "engagement_score", label: "Current engagement score", fieldPath: "sectionD.currentEngagementScore", evaluator: "scoreEngagementLevel", maxScore: 35 },
-      { key: "workforce_composition", label: "Frontline workforce composition", fieldPath: "sectionI.workforceComposition", evaluator: "scoreFrontlineComposition", maxScore: 15 },
-      { key: "frontline_percent", label: "Frontline headcount %", fieldPath: "sectionI.frontlineHeadcountPercent", evaluator: "scoreFrontlinePercent", maxScore: 10 },
+      { key: "attrition_rate", label: "Voluntary attrition rate", fieldPath: "sectionD.attritionRate", evaluator: "scoreAttritionRate", maxScore: 35 },
       { key: "business_direction", label: "Business direction", fieldPath: "sectionI.businessDirectionType", evaluator: "scoreGrowthDirection", maxScore: 25 },
+      { key: "workforce_composition", label: "Frontline workforce composition", fieldPath: "sectionI.workforceComposition", evaluator: "scoreFrontlineComposition", maxScore: 15 },
       { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 15 },
+      { key: "frontline_percent", label: "Frontline headcount %", fieldPath: "sectionI.frontlineHeadcountPercent", evaluator: "scoreFrontlinePercent", maxScore: 10 },
     ],
     timeToValueMonths: { min: 2, max: 4 },
     phase: 1,
@@ -1112,8 +1112,8 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     requiredDataFields: ["monthlyHrQueryVolume"],
     softFitFactors: [
       { key: "query_volume", label: "Monthly HR query volume", fieldPath: "sectionD.monthlyHrQueryVolume", evaluator: "scoreQueryVolume", maxScore: 35 },
-      { key: "digital_access", label: "Workforce digital access", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreDigitalAccess", maxScore: 25 },
       { key: "hris_present", label: "HRIS in place", fieldPath: "sectionC.hrisSystem", evaluator: "scoreHrisPresent", maxScore: 25 },
+      { key: "digital_access", label: "Workforce digital access (incl. mobile)", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreFrontlineDigitalAccess", maxScore: 25 },
       { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 15 },
     ],
     timeToValueMonths: { min: 2, max: 4 },
@@ -1128,7 +1128,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     y1CostRange: { low: 150, high: 500 },
     hardGates: [
       { type: "field_gt", path: "sectionD.monthlyHrQueryVolume", value: 100, label: "More than 100 HR queries per month" },
-      { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access"], label: "Workforce has digital access" },
+      { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access", "frontline_mobile"], label: "Workforce has digital access" },
       { type: "field_or", label: "HR Ops or HRBP in scope", gates: [
         { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "HR Ops in scope" },
         { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HRBP", label: "HRBP in scope" },
@@ -1459,13 +1459,13 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     label: "HR AI Governance Framework",
     description: "Structured governance framework for responsible AI deployment in HR — ethics, bias, explainability, compliance.",
     category: "governance",
-    requiredSubFunctions: ["people_analytics"],
+    requiredSubFunctions: [],
     requiredDataFields: [],
     softFitFactors: [
-      { key: "ethics_capability", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 35 },
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 35 },
       { key: "regulation", label: "Regulatory environment", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 30 },
-      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 20 },
-      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 15 },
+      { key: "hire_volume", label: "Annual hire volume", fieldPath: "sectionD.annualHires", evaluator: "scoreHireVolume", maxScore: 25 },
+      { key: "ethics_capability", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 10 },
     ],
     timeToValueMonths: { min: 2, max: 4 },
     phase: 1,
@@ -1621,9 +1621,9 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     requiredSubFunctions: [],
     requiredDataFields: [],
     softFitFactors: [
-      { key: "ai_ethics_trust", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 40 },
-      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 35 },
-      { key: "ai_capability_level", label: "Current AI capability level", fieldPath: "sectionG.aiCapabilityLevel", evaluator: "scoreAiCapabilityLevel", maxScore: 25 },
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 50 },
+      { key: "ai_capability_level", label: "Current AI capability level", fieldPath: "sectionG.aiCapabilityLevel", evaluator: "scoreAiCapabilityLevel", maxScore: 30 },
+      { key: "ai_ethics_trust", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 20 },
     ],
     timeToValueMonths: { min: 1, max: 3 },
     phase: 1,
@@ -1635,10 +1635,38 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["gv_ai_governance", "ee_workforce_ai_comms"],
     phaseRationale: "Foundation phase — AI capability building must happen before any AI tool is deployed. Without it, adoption fails and trust erodes.",
     y1CostRange: { low: 40, high: 100 },
-    hardGates: [
+        hardGates: [
       // Universal — recommended for any org deploying HR AI; no hard gates
     ],
     phaseV3: "foundation",
+  },
+
+  {
+    id: "wp_ai_capability_advanced",
+    label: "AI Capability Building (Advanced)",
+    description: "Advanced AI capability programme for HR specialists and senior leaders: building internal AI champions, running AI experiments, and developing proprietary AI use cases.",
+    category: "ai_capability",
+    requiredSubFunctions: [],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 45 },
+      { key: "ai_capability_level", label: "Current AI capability level", fieldPath: "sectionG.aiCapabilityLevel", evaluator: "scoreAiCapabilityLevel", maxScore: 35 },
+      { key: "ai_ethics_trust", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 20 },
+    ],
+    timeToValueMonths: { min: 3, max: 6 },
+    phase: 2,
+    caseStudyAnchor: "UK financial services firm (12K employees): Advanced AI capability programme produced 8 internal AI champions and 3 proprietary HR AI tools within 12 months.",
+    riskFlagKeys: [],
+    valueFormulaKey: "wp_ai_capability_building",
+    vendorLandscape: ["Coursera for Business", "LinkedIn Learning", "Internal L&D", "AI specialist consultancies"],
+    prerequisites: ["Foundation AI capability programme completed", "Executive sponsorship for advanced programme"],
+    coDeployments: ["gv_ai_governance", "wp_ai_capability_building"],
+    phaseRationale: "Build phase — advanced capability building follows the foundation programme and prepares the organisation for self-directed AI innovation.",
+    y1CostRange: { low: 80, high: 250 },
+    hardGates: [
+      // Universal — recommended for any large org with AI ambition
+    ],
+    phaseV3: "build",
   },
 
   {

@@ -1146,6 +1146,19 @@ export function wp_ai_capability_building(inputs: ValueFormulaInputs): ValueRang
   };
 }
 
+export function wp_ai_capability_advanced(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  // Advanced capability building: higher value multiplier than foundation programme
+  const adoptionValue = hc * (avgSalary(inputs) * 0.015) * 1.3;
+  return {
+    low: Math.round(adoptionValue * 0.5),
+    high: Math.round(adoptionValue * 1.3),
+    currency: "GBP",
+    isIndicative: true,
+    narrative: `Based on ${hc.toLocaleString()} employees: advanced AI capability building accelerates proprietary AI use case development and internal champion network.`,
+  };
+}
+
 export function ee_workforce_ai_comms(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
   const hc = inputs.sectionA.totalHeadcount ?? 1000;
@@ -1229,5 +1242,6 @@ export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs)
   fw_store_manager_assistant,
   // AI Capability Building
   wp_ai_capability_building,
+  wp_ai_capability_advanced,
   ee_workforce_ai_comms,
 };
