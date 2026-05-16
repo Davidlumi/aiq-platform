@@ -42,7 +42,9 @@ import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
   Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders, Settings,
+  Save, Clock,
 } from "lucide-react";
+import { toast } from "sonner";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -283,12 +285,34 @@ export default function StrategyDiagnosticPage() {
   const [completeError, setCompleteError] = useState<string | null>(null);
   const [expandedCalibration, setExpandedCalibration] = useState<string | null>(null);
 
+  // ── Save as Draft state ──────────────────────────────────────────────────
+  const [lastExplicitSaveAt, setLastExplicitSaveAt] = useState<number | null>(null);
+  const [draftSaveState, setDraftSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [resumeSection, setResumeSection] = useState<SectionId | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   // tRPC queries
   const inputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
     refetchInterval: isSuperAdmin ? false : 3000,
   });
 
   const utils = trpc.useUtils();
+
+  const saveDraftMut = trpc.backgroundInputs.saveDraft.useMutation({
+    onSuccess: (data) => {
+      setLastExplicitSaveAt(data.savedAt);
+      setHasUnsavedChanges(false);
+      setDraftSaveState("saved");
+      toast.success("Draft saved", { description: "You can safely close this page and resume later." });
+      setTimeout(() => setDraftSaveState("idle"), 3000);
+      utils.backgroundInputs.getInputs.invalidate();
+    },
+    onError: () => {
+      setDraftSaveState("idle");
+      toast.error("Failed to save draft", { description: "Please try again." });
+    },
+  });
 
   const saveInputsMut = trpc.backgroundInputs.saveInputs.useMutation({
     onSuccess: () => utils.backgroundInputs.getInputs.invalidate(),
@@ -313,6 +337,7 @@ export default function StrategyDiagnosticPage() {
   });
 
   // Populate local state from server
+  const hasHydratedRef = useRef(false);
   useEffect(() => {
     if (inputsQ.data) {
       setInputs((inputsQ.data.backgroundInputs as Record<string, unknown>) ?? {});
@@ -335,6 +360,18 @@ export default function StrategyDiagnosticPage() {
           noteTexts[k] = v.content ?? "";
         }
         setFacilitatorNoteText(noteTexts);
+      }
+      // On first load: restore draft position and last-saved timestamp
+      if (!hasHydratedRef.current) {
+        hasHydratedRef.current = true;
+        const serverSavedAt = (inputsQ.data as any).lastDraftSavedAt as number | null;
+        if (serverSavedAt) setLastExplicitSaveAt(serverSavedAt);
+        const serverSection = (inputsQ.data as any).lastActiveSectionId as string | null;
+        const validSections: SectionId[] = ["A","B","C","D","E","F","G","H","I","J","K"];
+        if (serverSection && serverSection !== "A" && validSections.includes(serverSection as SectionId)) {
+          setResumeSection(serverSection as SectionId);
+          setShowResumePrompt(true);
+        }
       }
     }
   }, [inputsQ.data]);
@@ -360,15 +397,17 @@ export default function StrategyDiagnosticPage() {
   );
 
   const updateSection = useCallback((sectionId: SectionId, field: string, value: unknown) => {
+    setHasUnsavedChanges(true);
     setInputs(prev => {
       const key = `section${sectionId}`;
       const updated = { ...prev, [key]: { ...(prev[key] as Record<string, unknown> ?? {}), [field]: value } };
       scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ, sectionK]);
+  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ, sectionK]);  // eslint-disable-line
 
   const updateSectionI = useCallback((field: string, value: unknown) => {
+    setHasUnsavedChanges(true);
     setSectionI(prev => {
       const updated = { ...prev, [field]: value };
       scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated, sectionJ, sectionK });
@@ -377,6 +416,7 @@ export default function StrategyDiagnosticPage() {
   }, [scheduleInputSave, inputs, capDomains, capDerived, sectionJ, sectionK]);
 
   const updateSectionJ = useCallback((field: string, value: unknown) => {
+    setHasUnsavedChanges(true);
     setSectionJ(prev => {
       const updated = { ...prev, [field]: value };
       scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ: updated, sectionK });
@@ -385,6 +425,7 @@ export default function StrategyDiagnosticPage() {
   }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI, sectionK]);
 
   const updateSectionK = useCallback((field: string, value: unknown) => {
+    setHasUnsavedChanges(true);
     setSectionK(prev => {
       const updated = { ...prev, [field]: value };
       scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK: updated });
@@ -407,6 +448,19 @@ export default function StrategyDiagnosticPage() {
       return updated;
     });
   }, [scheduleInputSave, inputs, sectionI, sectionJ]);
+
+  // Explicit Save as Draft handler
+  const handleSaveDraft = useCallback(() => {
+    setDraftSaveState("saving");
+    saveDraftMut.mutate({
+      sections: inputs as any,
+      capabilityAssessment: { ...capDomains, ...capDerived } as any,
+      sectionI: sectionI as any,
+      sectionJ: sectionJ as any,
+      sectionK: sectionK as any,
+      activeSectionId: activeSection,
+    });
+  }, [saveDraftMut, inputs, capDomains, capDerived, sectionI, sectionJ, sectionK, activeSection]);
 
   const saveFacilitatorNote = useCallback((sectionId: string) => {
     const content = facilitatorNoteText[sectionId] ?? "";
@@ -496,15 +550,60 @@ export default function StrategyDiagnosticPage() {
             </Button>
           )}
           <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground h-5">
-            {saveState === "saving" && <><Loader2 className="w-3 h-3 animate-spin" />Saving…</>}
-            {saveState === "saved" && <><Check className="w-3 h-3 text-emerald-600" />Saved</>}
+            {saveState === "saving" && <><Loader2 className="w-3 h-3 animate-spin" />Saving…</> }
+            {saveState === "saved" && <><Check className="w-3 h-3 text-emerald-600" />Auto-saved</> }
           </div>
+          {lastExplicitSaveAt && (
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>Draft saved {new Date(lastExplicitSaveAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            </div>
+          )}
+          {hasUnsavedChanges && !lastExplicitSaveAt && (
+            <div className="flex items-center justify-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+              Unsaved changes
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Centre: Section content ────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto p-6 space-y-6">
+
+          {/* Resume prompt */}
+          {showResumePrompt && resumeSection && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+              <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground">Resume where you left off?</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Your last draft was saved at Section {resumeSection}.
+                </p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 px-2"
+                  onClick={() => setShowResumePrompt(false)}
+                >
+                  Start from A
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={() => {
+                    setActiveSection(resumeSection);
+                    setShowResumePrompt(false);
+                  }}
+                >
+                  Go to Section {resumeSection}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Header */}
           <div>
@@ -2264,6 +2363,23 @@ export default function StrategyDiagnosticPage() {
               }}
             >
               <ChevronLeft className="w-4 h-4 mr-1" />Previous
+            </Button>
+
+            {/* Save as Draft button — centre of footer */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              disabled={draftSaveState === "saving" || saveDraftMut.isPending}
+              onClick={handleSaveDraft}
+            >
+              {draftSaveState === "saving" ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Saving draft…</>
+              ) : draftSaveState === "saved" ? (
+                <><Check className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />Draft saved</>
+              ) : (
+                <><Save className="w-3.5 h-3.5 mr-1.5" />Save as draft{hasUnsavedChanges ? " ●" : ""}</>
+              )}
             </Button>
 
             <div className="flex items-center gap-2">

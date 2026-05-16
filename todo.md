@@ -3509,33 +3509,47 @@ test
 
 ## Launch-Tier Fields — Patch v4.2 (13 fields, all 49 initiatives recommendable)
 
-- [ ] Schema: add totalHeadcount (integer), totalHeadcountIsEstimate (boolean) to SectionASchema; keep headcountBand for compat
-- [ ] Schema: add ukSitesCount (integer) to SectionASchema (already in schema — verify UI)
-- [ ] Schema: add workforceDigitalAccess (enum) to SectionCSchema
-- [ ] Schema: add yearsOfHrisData (enum) to SectionCSchema (already in schema — verify UI)
-- [ ] Schema: add annualRevenue (decimal), annualRevenueIsEstimate (boolean) to SectionDSchema
-- [ ] Schema: add monthlyHrQueryVolume (object {low, high}), monthlyHrQueryVolumeIsEstimate to SectionDSchema
-- [ ] Schema: add annualApplicationVolume (object {low, high}), annualApplicationVolumeIsEstimate to SectionDSchema
-- [ ] Schema: add annualLDSpend (decimal), annualLDSpendIsEstimate (boolean) to SectionDSchema
-- [ ] Schema: add businessDirectionType (enum) to SectionISchema (already in schema — verify UI)
-- [ ] Schema: add workforceComposition (enum) to SectionISchema (already in schema — verify UI)
-- [ ] Schema: add skillsFrameworkStatus (enum) to SectionISchema (already in schema — verify UI)
-- [ ] Schema: add frontlineHeadcountPercent (integer 0-100) to SectionISchema
-- [ ] Schema: verify performanceReviewCadence (enum) in SectionKSchema (already added — verify options match spec)
-- [ ] Schema: verify hiringVolumeProfile (array) in SectionKSchema (already added — verify conditional logic)
-- [ ] Engine: replace headcountBand lookup with direct totalHeadcount integer in completePrework
-- [ ] Engine: add fallback derivations for workforceComposition, ukSitesCount, workforceDigitalAccess, annualRevenue, monthlyHrQueryVolume, annualApplicationVolume, annualLDSpend, yearsOfHrisData, businessDirectionType, skillsFrameworkStatus
-- [ ] UI: replace headcountBand Select with totalHeadcount integer input + isEstimate checkbox in Section A
-- [ ] UI: add ukSitesCount integer input to Section A (slot A8)
-- [ ] UI: add workforceDigitalAccess select to Section C (slot C10)
-- [ ] UI: add yearsOfHrisData select to Section C (slot C11)
-- [ ] UI: add annualRevenue input + isEstimate to Section D (slot D16)
-- [ ] UI: add monthlyHrQueryVolume low/high pair + isEstimate to Section D (slot D17)
-- [ ] UI: add annualApplicationVolume low/high pair + isEstimate to Section D (slot D18)
-- [ ] UI: add annualLDSpend input + isEstimate to Section D (slot D19)
-- [ ] UI: add businessDirectionType select to Section I (slot I10, before freetext businessDirection)
-- [ ] UI: verify workforceComposition, skillsFrameworkStatus in Section I
-- [ ] UI: add frontlineHeadcountPercent integer input to Section I (slot I14)
-- [ ] UI: verify performanceReviewCadence and hiringVolumeProfile in Section K
-- [ ] Tests: update fitImpactEngine tests for totalHeadcount integer input
-- [ ] Save checkpoint
+- [x] Schema: add totalHeadcount (integer), totalHeadcountIsEstimate (boolean) to SectionASchema; keep headcountBand for compat
+- [x] Schema: add ukSitesCount (integer) to SectionASchema
+- [x] Schema: add workforceDigitalAccess (enum) to SectionCSchema
+- [x] Schema: add yearsOfHrisData (enum) to SectionCSchema
+- [x] Schema: add annualRevenue (decimal), annualRevenueIsEstimate (boolean) to SectionDSchema
+- [x] Schema: add monthlyHrQueryVolume (object {low, high}), monthlyHrQueryVolumeIsEstimate to SectionDSchema
+- [x] Schema: add annualApplicationVolume (object {low, high}), annualApplicationVolumeIsEstimate to SectionDSchema
+- [x] Schema: add annualLDSpend (decimal), annualLDSpendIsEstimate (boolean) to SectionDSchema
+- [x] Schema: add businessDirectionType (enum) to SectionISchema
+- [x] Schema: add workforceComposition (enum) to SectionISchema
+- [x] Schema: add skillsFrameworkStatus (enum) to SectionISchema
+- [x] Schema: add frontlineHeadcountPercent (integer 0-100) to SectionISchema
+- [x] Schema: performanceReviewCadence enum values corrected to match spec (bi_annual)
+- [x] Schema: hiringVolumeProfile array values corrected to match spec (executive_search, experienced_hires, seasonal_surge)
+- [x] Engine: replace headcountBand lookup with direct totalHeadcount integer in completePrework
+- [x] Engine: add fallback derivations for workforceComposition, ukSitesCount, workforceDigitalAccess, annualRevenue, monthlyHrQueryVolume, annualApplicationVolume, annualLDSpend, yearsOfHrisData, businessDirectionType, skillsFrameworkStatus
+- [x] UI: replace headcountBand Select with totalHeadcount integer input + isEstimate checkbox in Section A
+- [x] UI: add ukSitesCount integer input to Section A
+- [x] UI: add workforceDigitalAccess select to Section C
+- [x] UI: add yearsOfHrisData select to Section C
+- [x] UI: add annualRevenue input + isEstimate to Section D
+- [x] UI: add monthlyHrQueryVolume low/high pair + isEstimate to Section D
+- [x] UI: add annualApplicationVolume low/high pair + isEstimate to Section D
+- [x] UI: add annualLDSpend input + isEstimate to Section D
+- [x] UI: add businessDirectionType select to Section I
+- [x] UI: workforceComposition enum values corrected (knowledge_heavy, frontline_heavy, mixed, unknown)
+- [x] UI: skillsFrameworkStatus enum values corrected (formal_taxonomy, informal_role_based, in_development, none, unknown)
+- [x] UI: add frontlineHeadcountPercent integer input to Section I
+- [x] UI: performanceReviewCadence and hiringVolumeProfile values corrected in Section K
+- [x] Tests: fitImpactEngine tests updated for totalHeadcount integer input (1,020 passing)
+- [x] Save checkpoint (189c1f42)
+
+## Save as Draft Feature
+
+- [x] DB: add lastDraftSavedAt (bigint) and lastActiveSectionId (varchar) columns to ail_org_context
+- [x] Router: add explicit saveDraft mutation (saves all sections + lastActiveSectionId + lastDraftSavedAt timestamp, returns { ok, savedAt })
+- [x] Router: update getInputs to return lastDraftSavedAt and lastActiveSectionId
+- [x] UI: add Save as Draft button in the wizard footer (between Previous and Next)
+- [x] UI: show draft status badge ("Draft saved HH:MM") in sidebar footer with Clock icon
+- [x] UI: show unsaved-changes amber dot when hasUnsavedChanges and no explicit save yet
+- [x] UI: on wizard entry, if lastActiveSectionId exists and != A, offer "Resume from [Section Name]" prompt with Go / Start from A buttons
+- [x] UI: hasUnsavedChanges tracks all field updates; resets on saveDraft onSuccess
+- [x] Tests: 12 saveDraft unit tests added to backgroundInputs.test.ts (1,032 total passing)
+- [x] Save checkpoint

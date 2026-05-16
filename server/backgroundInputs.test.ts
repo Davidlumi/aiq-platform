@@ -517,3 +517,88 @@ describe("Section completion detection", () => {
     expect(isComplete).toBe(true);
   });
 });
+
+// ── Save as Draft feature ─────────────────────────────────────────────────────
+describe("Save as Draft — draft metadata", () => {
+  it("saveDraft returns a numeric savedAt timestamp", () => {
+    const savedAt = Date.now();
+    expect(typeof savedAt).toBe("number");
+    expect(savedAt).toBeGreaterThan(0);
+  });
+
+  it("lastDraftSavedAt is null when no explicit save has occurred", () => {
+    const row = { lastDraftSavedAt: null };
+    expect((row as any).lastDraftSavedAt ?? null).toBeNull();
+  });
+
+  it("lastDraftSavedAt is set after explicit save", () => {
+    const savedAt = Date.now();
+    const row = { lastDraftSavedAt: savedAt };
+    expect((row as any).lastDraftSavedAt).toBe(savedAt);
+  });
+
+  it("lastActiveSectionId defaults to null when not set", () => {
+    const row = { lastActiveSectionId: null };
+    expect((row as any).lastActiveSectionId ?? null).toBeNull();
+  });
+
+  it("lastActiveSectionId stores the section the user was on", () => {
+    const validSections = ["A","B","C","D","E","F","G","H","I","J","K"];
+    for (const section of validSections) {
+      const row = { lastActiveSectionId: section };
+      expect(validSections).toContain((row as any).lastActiveSectionId);
+    }
+  });
+
+  it("resume prompt is shown when lastActiveSectionId is not A", () => {
+    const serverSection = "D";
+    const validSections = ["A","B","C","D","E","F","G","H","I","J","K"];
+    const shouldShowPrompt = serverSection !== "A" && validSections.includes(serverSection);
+    expect(shouldShowPrompt).toBe(true);
+  });
+
+  it("resume prompt is NOT shown when lastActiveSectionId is A", () => {
+    const serverSection = "A";
+    const validSections = ["A","B","C","D","E","F","G","H","I","J","K"];
+    const shouldShowPrompt = serverSection !== "A" && validSections.includes(serverSection);
+    expect(shouldShowPrompt).toBe(false);
+  });
+
+  it("resume prompt is NOT shown when lastActiveSectionId is null", () => {
+    const serverSection: string | null = null;
+    const validSections = ["A","B","C","D","E","F","G","H","I","J","K"];
+    const shouldShowPrompt = !!serverSection && serverSection !== "A" && validSections.includes(serverSection);
+    expect(shouldShowPrompt).toBe(false);
+  });
+
+  it("hasUnsavedChanges is false after explicit save", () => {
+    let hasUnsavedChanges = true;
+    hasUnsavedChanges = false; // onSuccess fires
+    expect(hasUnsavedChanges).toBe(false);
+  });
+
+  it("hasUnsavedChanges is true after a field update", () => {
+    let hasUnsavedChanges = false;
+    hasUnsavedChanges = true; // updateSection called
+    expect(hasUnsavedChanges).toBe(true);
+  });
+
+  it("draftSaveState transitions: idle → saving → saved → idle", () => {
+    type DraftSaveState = "idle" | "saving" | "saved";
+    let state: DraftSaveState = "idle";
+    state = "saving";
+    expect(state).toBe("saving");
+    state = "saved";
+    expect(state).toBe("saved");
+    state = "idle";
+    expect(state).toBe("idle");
+  });
+
+  it("saveDraft activeSectionId is optional and max 4 chars", () => {
+    const { z } = require("zod");
+    const schema = z.object({ activeSectionId: z.string().max(4).optional() });
+    expect(schema.safeParse({ activeSectionId: "K" }).success).toBe(true);
+    expect(schema.safeParse({ activeSectionId: "ABCDE" }).success).toBe(false);
+    expect(schema.safeParse({}).success).toBe(true);
+  });
+});

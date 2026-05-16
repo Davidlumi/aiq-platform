@@ -495,6 +495,8 @@ export const backgroundInputsRouter = router({
       draftGenerationState: row.draftGenerationState ?? "none",
       builderSectionStates,
       isSuperAdmin,
+      lastDraftSavedAt: (row as any).lastDraftSavedAt ?? null,
+      lastActiveSectionId: (row as any).lastActiveSectionId ?? null,
     };
   }),
 
@@ -596,8 +598,86 @@ export const backgroundInputsRouter = router({
       await db.update(ailOrgContext)
         .set(updates as any)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
-
       return { ok: true };
+    }),
+
+  /**
+   * Explicit Save as Draft — persists all sections plus the user's current
+   * section position and a timestamp so they can resume exactly where they
+   * left off.
+   */
+  saveDraft: protectedProcedure
+    .input(z.object({
+      sections: BackgroundInputsSchema,
+      capabilityAssessment: SectionGSchema.optional(),
+      sectionI: SectionISchema.optional(),
+      sectionJ: SectionJSchema.optional(),
+      sectionK: SectionKSchema.optional(),
+      activeSectionId: z.string().max(4).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
+      const existing = row.backgroundInputsJson ? JSON.parse(row.backgroundInputsJson) : {};
+      const merged = { ...existing };
+      for (const [key, val] of Object.entries(input.sections)) {
+        if (val !== undefined) {
+          merged[key] = { ...(merged[key] ?? {}), ...val };
+        }
+      }
+      const savedAt = Date.now();
+      const draftUpdates: Record<string, unknown> = {
+        backgroundInputsJson: JSON.stringify(merged),
+        lastDraftSavedAt: savedAt,
+      };
+      if (input.activeSectionId) {
+        draftUpdates.lastActiveSectionId = input.activeSectionId;
+      }
+      if (input.capabilityAssessment) {
+        const existingCap = row.capabilityAssessmentJson
+          ? JSON.parse(row.capabilityAssessmentJson) : {};
+        draftUpdates.capabilityAssessmentJson = JSON.stringify({ ...existingCap, ...input.capabilityAssessment });
+      }
+      if (input.sectionI) {
+        const existingI = (row as any).sectionIJson ? JSON.parse((row as any).sectionIJson) : {};
+        draftUpdates.sectionIJson = JSON.stringify({ ...existingI, ...input.sectionI });
+      }
+      if (input.sectionJ) {
+        const existingJ = (row as any).sectionJJson ? JSON.parse((row as any).sectionJJson) : {};
+        draftUpdates.sectionJJson = JSON.stringify({ ...existingJ, ...input.sectionJ });
+      }
+      if (input.sectionK) {
+        const existingK = (row as any).sectionKJson ? JSON.parse((row as any).sectionKJson) : {};
+        draftUpdates.sectionKJson = JSON.stringify({ ...existingK, ...input.sectionK });
+      }
+      // Mirror key fields (same as saveInputs)
+      if (input.sections.sectionA) {
+        const a = input.sections.sectionA;
+        if (a.sector) draftUpdates.sector = a.sector;
+        if (a.subSector) draftUpdates.subSector = a.subSector;
+        if (a.orgType) draftUpdates.orgType = a.orgType;
+        if (a.primaryRegulator) draftUpdates.primaryRegulator = a.primaryRegulator;
+        if (a.totalHeadcount) draftUpdates.headcount = a.totalHeadcount;
+      }
+      if (input.sections.sectionB) {
+        const b = input.sections.sectionB;
+        if (b.hrInfluence) draftUpdates.hrInfluence = b.hrInfluence;
+      }
+      if (input.sections.sectionE) {
+        const e = input.sections.sectionE;
+        if (e.riskAppetite) draftUpdates.riskAppetiteOverall = e.riskAppetite;
+        if (e.strategicPriorities)
+          draftUpdates.strategicPrioritiesJson = JSON.stringify(e.strategicPriorities);
+      }
+      if (input.sections.sectionF) {
+        const f = input.sections.sectionF;
+        if (f.decisionMakingStyle) draftUpdates.decisionMakingStyle = f.decisionMakingStyle;
+        if (f.ceoStyle) draftUpdates.ceoStyle = f.ceoStyle;
+        if (f.cfoStyle) draftUpdates.cfoStyle = f.cfoStyle;
+      }
+      await db.update(ailOrgContext)
+        .set(draftUpdates as any)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true, savedAt };
     }),
 
   /**
