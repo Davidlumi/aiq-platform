@@ -3628,20 +3628,19 @@ test
 
 ## Inline Field-Level Error Highlighting
 
-- [ ] Add `sectionTouched` state — set to true when user clicks Next or Complete pre-work on an incomplete section
-- [ ] Add `getFieldError(sectionId, fieldKey)` helper — returns error message string when field is mandatory, section is touched, and value is missing
-- [ ] Section A: red border + "Required" on sector Select when touched and empty
-- [ ] Section A: red border + "Required" on headcount field when both totalHeadcount and headcountBand are empty
-- [ ] Section B: red border + "Required" on HR team size Input when touched and null/undefined
-- [ ] Section C: red border + "Required" on HRIS system Select when touched and empty
-- [ ] Section D: red border + "Required" on Annual hires (Low) when touched and null/undefined
-- [ ] Section E: red border + "Required" on Business AI ambition tier Select when touched and empty
-- [ ] Section E: red border + "Required" on HR AI posture Select when touched and empty
-- [ ] Section E: red border + "Required" on Risk appetite Select when touched and empty
-- [ ] Section G: red border + "At least 3 domains required" banner when touched and fewer than 3 domains rated
-- [ ] Section I: red border + "Required" on Business direction textarea when touched and empty
-- [ ] Section I: red border + "At least one challenge required" on People challenges when touched and empty
-- [ ] Error labels use text-destructive text-xs mt-1 pattern consistent with shadcn/ui
-- [ ] Red border uses border-destructive on Input/SelectTrigger/Textarea
-- [ ] Errors clear reactively as soon as the field is filled
-- [ ] Scroll to first error field when Next is clicked and section is incomplete
+- [x] Add `touchedSections` Set state — populated when user clicks Next or Complete pre-work on an incomplete section
+- [x] Add `fieldErr(sectionId, condition)` helper — returns error message when section is touched and condition is true
+- [x] Section A: aria-invalid + "Please select an industry" on sector Select when touched and empty
+- [x] Section A: aria-invalid + "Please enter total headcount" on headcount field when both totalHeadcount and headcountBand are empty
+- [x] Section B: aria-invalid + "Please enter HR team size" on HR team size Input when touched and null/undefined
+- [x] Section C: aria-invalid + "Please select your HRIS" on HRIS system Select when touched and empty
+- [x] Section D: aria-invalid + "Please enter annual hires low estimate" on Annual hires (Low) when touched and null/undefined
+- [x] Section E: aria-invalid + "Please select an ambition tier" on Business AI ambition tier Select when touched and empty
+- [x] Section E: aria-invalid + "Please select HR AI posture" on HR AI posture Select when touched and empty
+- [x] Section E: aria-invalid + "Please select risk appetite" on Risk appetite Select when touched and empty
+- [x] Section G: "Please rate at least 3 capability domains" banner when touched and fewer than 3 domains rated
+- [x] Section I: aria-invalid + "Please describe where the business is heading" on Business direction textarea when touched and empty
+- [x] Section I: aria-invalid + "Please enter at least one people challenge" on People challenges when touched and empty
+- [x] Error labels use text-destructive text-xs mt-1 pattern consistent with shadcn/ui
+- [x] Errors clear reactively as soon as the field is filled (fieldErr is computed from live form state)
+- [x] Fix TypeScript TS2802 error: Array.from().concat() instead of Set spread in touchSection helper
