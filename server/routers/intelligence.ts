@@ -1283,9 +1283,10 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    // Get the tenant's strategy context to find selectedInitiativeIds
+    // Get the tenant's strategy context to find selectedInitiativeIds + fitImpactResultsJson
     const ctxRows = await db.select({
       selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+      fitImpactResultsJson: ailOrgContext.fitImpactResultsJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -1293,21 +1294,33 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
     let selectedIds: string[] = [];
     try { selectedIds = JSON.parse(ctxRows[0].selectedInitiativesJson ?? "[]") as string[]; } catch {}
     if (!selectedIds.length) return [];
+    // Parse fit+impact results into a map keyed by initiative id
+    type FitCard = {
+      id: string; fitStatus: string; fitScore: number; fitRationale: string;
+      valueRange: { low: number; high: number; currency: string } | null;
+      valueNarrative: string; isIndicative: boolean; confidence: string;
+      timeToValueMonths: { min: number; max: number }; phase: number;
+      caseStudyAnchor: string; riskFlags: string[]; hardGateFailReasons: string[];
+      scoredFactors: Array<{ key: string; label: string; score: number; maxScore: number }>;
+      hardGatesPassed: string[];
+      y1CostRange: { low: number; high: number };
+    };
+    const fitMap = new Map<string, FitCard>();
+    try {
+      const raw = ctxRows[0].fitImpactResultsJson ? JSON.parse(ctxRows[0].fitImpactResultsJson) : [];
+      for (const r of raw as FitCard[]) { fitMap.set(r.id, r); }
+    } catch {}
     // Fetch all library entries for selected IDs
     const libRows = await db.select().from(strategyInitiativeLibrary);
     const libMap = new Map(libRows.map(r => [r.id, r]));
     // Fetch per-initiative state rows for this tenant's users' strategies
-    // We use a simple approach: get all strategyInitiatives rows where initiativeId is in selectedIds
-    // and the strategy belongs to this tenant (via ailOrgContext)
-    // Since strategyInitiatives is linked to a strategyId (from the strategies table),
-    // we fall back to returning library data with null state for now if no rows exist.
-    // The Plan page will upsert state rows on first status/phase edit.
     const stateRows = await db.select().from(strategyInitiatives)
-      .where(eq(strategyInitiatives.strategyId, ctx.user.tenantId)); // use tenantId as strategyId proxy for AIL context
+      .where(eq(strategyInitiatives.strategyId, ctx.user.tenantId));
     const stateMap = new Map(stateRows.map(r => [r.initiativeId, r]));
     return selectedIds.map(id => {
       const lib = libMap.get(id);
       const state = stateMap.get(id);
+      const fit = fitMap.get(id) ?? null;
       return {
         id,
         name: lib?.name ?? id,
@@ -1326,6 +1339,21 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         functionOverride: state?.functionOverride ?? null,
         criticality: state?.criticality ?? 1,
         notes: state?.notes ?? null,
+        // fit+impact engine output
+        fitStatus: fit?.fitStatus ?? null,
+        fitScore: fit?.fitScore ?? null,
+        fitRationale: fit?.fitRationale ?? null,
+        valueRange: fit?.valueRange ?? null,
+        valueNarrative: fit?.valueNarrative ?? null,
+        isIndicative: fit?.isIndicative ?? true,
+        confidence: fit?.confidence ?? null,
+        timeToValueMonths: fit?.timeToValueMonths ?? null,
+        caseStudyAnchor: fit?.caseStudyAnchor ?? null,
+        riskFlags: fit?.riskFlags ?? [],
+        hardGateFailReasons: fit?.hardGateFailReasons ?? [],
+        scoredFactors: fit?.scoredFactors ?? [],
+        hardGatesPassed: fit?.hardGatesPassed ?? [],
+        y1CostRange: fit?.y1CostRange ?? null,
       };
     });
   }),

@@ -65,6 +65,16 @@ export type InitiativeDefinition = {
   riskFlagKeys: string[];
   /** Value formula key in valueFormulas.ts */
   valueFormulaKey: string;
+  /** Vendor landscape — 3-5 real vendors with distinguishers */
+  vendorLandscape: string[];
+  /** Prerequisites before deployment */
+  prerequisites: string[];
+  /** Initiative IDs that pair naturally with this one */
+  coDeployments: string[];
+  /** One-sentence rationale for why this initiative is in its phase */
+  phaseRationale: string;
+  /** Y1 cost range in GBP thousands */
+  y1CostRange: { low: number; high: number };
 };
 
 export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
@@ -90,6 +100,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global logistics company (50K+ employees): 50% reduction in time-to-shortlist, 40% reduction in recruiter admin time within 6 months.",
     riskFlagKeys: ["low_application_volume", "no_ats", "poor_data_quality"],
     valueFormulaKey: "ta_high_volume_hiring",
+    vendorLandscape: ["HireVue", "Pymetrics", "Eightfold", "Phenom", "Paradox"],
+    prerequisites: ["ATS in place", "Documented hiring process", "Clear approval workflow"],
+    coDeployments: ["ta_bias_monitoring"],
+    phaseRationale: "Foundation phase — establishes the AI screening infrastructure that all downstream TA initiatives depend on.",
+    y1CostRange: { low: 100, high: 400 },
   },
 
   {
@@ -111,6 +126,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global consumer goods company (80K employees): 50% reduction in recruiter screening time, 4× faster candidate response.",
     riskFlagKeys: ["low_hire_volume", "no_ats", "brand_voice_consistency"],
     valueFormulaKey: "ta_candidate_chatbot",
+    vendorLandscape: ["Paradox (Olivia)", "Mya Systems", "Phenom", "Humanly", "Sense", "impress.ai"],
+    prerequisites: ["ATS integration", "Mobile-friendly careers infrastructure", "Vendor security due diligence"],
+    coDeployments: ["ta_interview_scheduling"],
+    phaseRationale: "Scale phase — chatbots need governance (Foundation) and underlying TA process review (Build) before deploying at volume.",
+    y1CostRange: { low: 100, high: 400 },
   },
 
   {
@@ -131,6 +151,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global hospitality group (40K employees): 80% reduction in scheduling coordination time, 1.5 hours per hire saved within 6 weeks.",
     riskFlagKeys: ["low_hire_volume", "poor_calendar_integration"],
     valueFormulaKey: "ta_interview_scheduling",
+    vendorLandscape: ["Paradox (Olivia)", "Mya Systems", "GoodTime", "Phenom"],
+    prerequisites: ["ATS integration", "Calendar system access"],
+    coDeployments: ["ta_candidate_chatbot"],
+    phaseRationale: "Foundation phase — quick-win automation that frees recruiter time before more complex TA AI is deployed.",
+    y1CostRange: { low: 30, high: 120 },
   },
 
   {
@@ -152,6 +177,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "European professional services firm (12K employees): 30% improvement in quality-of-hire, 25% reduction in sourcing cost.",
     riskFlagKeys: ["poor_data_quality", "poor_skills_data"],
     valueFormulaKey: "ta_sourcing_matching",
+    vendorLandscape: ["Eightfold AI", "Beamery", "SeekOut", "hireEZ", "Phenom", "Gem"],
+    prerequisites: ["ATS in place", "Sufficient historical hire data for the model to learn patterns"],
+    coDeployments: ["ta_bias_monitoring"],
+    phaseRationale: "Build phase — requires clean ATS data and a skills framework before AI matching is accurate.",
+    y1CostRange: { low: 80, high: 300 },
   },
 
   {
@@ -172,6 +202,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global consumer goods company (80K employees): 75% reduction in interview time, 2× candidate throughput.",
     riskFlagKeys: ["poor_digital_access", "ai_bias_in_assessment"],
     valueFormulaKey: "ta_video_interview_assessment",
+    vendorLandscape: ["HireVue", "Pymetrics", "Sapia.ai", "Talview", "MyInterview"],
+    prerequisites: ["Vendor must provide explainability and bias auditing", "Accommodation process for candidates who cannot complete video"],
+    coDeployments: ["ta_bias_monitoring"],
+    phaseRationale: "Scale phase — requires bias governance (Foundation) and sufficient hire volume to justify vendor cost.",
+    y1CostRange: { low: 80, high: 250 },
   },
 
   {
@@ -192,6 +227,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK financial services firm (regulated sector): Regulatory risk reduction, audit-ready hiring process within 4 months.",
     riskFlagKeys: ["low_ethics_capability", "insufficient_hire_volume_for_statistical_significance"],
     valueFormulaKey: "ta_bias_monitoring",
+    vendorLandscape: ["Pymetrics", "HireVue audit modules", "SeekOut", "Holistic AI", "Credo AI"],
+    prerequisites: ["Existing hiring AI to monitor", "Demographic data collection legally compliant"],
+    coDeployments: ["ta_high_volume_hiring", "ta_sourcing_matching", "ta_video_interview_assessment"],
+    phaseRationale: "Foundation phase — must be in place before or alongside any AI that touches hiring decisions.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   {
@@ -212,6 +252,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global professional services firm (20K employees): 25% recruiter productivity uplift, 30% reduction in time-to-shortlist.",
     riskFlagKeys: ["low_hire_volume", "tool_adoption_risk"],
     valueFormulaKey: "ta_recruiter_productivity_ai",
+    vendorLandscape: ["Gem", "hireEZ", "Phenom", "SeekOut Recruit", "ChatGPT Enterprise"],
+    prerequisites: ["ATS in place", "Outbound or passive candidate sourcing model"],
+    coDeployments: ["ta_sourcing_matching"],
+    phaseRationale: "Foundation phase — immediate productivity gain for recruiters with minimal integration complexity.",
+    y1CostRange: { low: 60, high: 200 },
   },
 
   {
@@ -232,6 +277,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK professional services firm (3K employees): 70% reduction in offer processing time, 2 hours per hire saved within 3 months.",
     riskFlagKeys: ["low_hire_volume", "complex_regulation_without_legal_review"],
     valueFormulaKey: "ta_offer_generation",
+    vendorLandscape: ["DocuSign + AI templates", "Workday", "Native HRIS modules"],
+    prerequisites: ["HRIS integration", "Legal review of templates for jurisdictional compliance"],
+    coDeployments: ["ta_interview_scheduling"],
+    phaseRationale: "Foundation phase — removes a common bottleneck at the end of the hiring funnel with low technical risk.",
+    y1CostRange: { low: 25, high: 75 },
   },
 
   {
@@ -252,6 +302,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK retail group (8K employees): 23% improvement in application quality, 16% increase in diverse applicants.",
     riskFlagKeys: ["brand_voice_consistency"],
     valueFormulaKey: "ta_jd_optimization",
+    vendorLandscape: ["Textio", "Datapeople", "Develop (UK)", "Ongig"],
+    prerequisites: ["ATS or job posting workflow access"],
+    coDeployments: ["ta_bias_monitoring"],
+    phaseRationale: "Foundation phase — low-cost, high-visibility quick win that improves pipeline quality before AI screening tools land.",
+    y1CostRange: { low: 30, high: 100 },
   },
 
   // ─── Onboarding (4 initiatives) ──────────────────────────────────────────
@@ -275,6 +330,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US SaaS company (2K employees): 15 days faster time-to-productivity, measurable improvement in 90-day retention within 6 months.",
     riskFlagKeys: ["low_hire_volume", "no_lms", "poor_digital_access"],
     valueFormulaKey: "on_personalised_journeys",
+    vendorLandscape: ["Enboarder", "ServiceNow Now Assist", "Sora", "Workday Journeys"],
+    prerequisites: ["HRIS for trigger events", "Clear role definitions", "Manager engagement"],
+    coDeployments: ["on_new_hire_chatbot"],
+    phaseRationale: "Build phase — requires HRIS data quality and LMS infrastructure to be in place before personalisation is meaningful.",
+    y1CostRange: { low: 50, high: 200 },
   },
 
   {
@@ -295,6 +355,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global telecoms company (100K employees): 50% reduction in onboarding queries, 4× faster query resolution.",
     riskFlagKeys: ["poor_digital_access", "no_hris"],
     valueFormulaKey: "on_new_hire_chatbot",
+    vendorLandscape: ["Moveworks", "Leena AI", "ServiceNow", "Espressive"],
+    prerequisites: ["Best deployed as scope extension of hr_virtual_assistant"],
+    coDeployments: ["hr_virtual_assistant"],
+    phaseRationale: "Build phase — incremental to the HR virtual assistant; deploy after the core chatbot is stable.",
+    y1CostRange: { low: 20, high: 60 },
   },
 
   {
@@ -315,6 +380,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK professional services firm (5K employees): 65% reduction in onboarding admin, zero compliance documentation errors.",
     riskFlagKeys: ["low_hire_volume", "complex_regulation_without_legal_review", "no_hris"],
     valueFormulaKey: "on_documentation_automation",
+    vendorLandscape: ["Enboarder", "ServiceNow", "HireRight", "Sterling", "Workday workflows"],
+    prerequisites: ["HRIS in place", "Legal review of compliance workflows", "Right-to-work checking process"],
+    coDeployments: ["ta_offer_generation"],
+    phaseRationale: "Foundation phase — compliance automation reduces legal risk and admin burden from day one.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   {
@@ -335,6 +405,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US technology company (15K employees): 10% first-year retention improvement, 25% faster time-to-productivity.",
     riskFlagKeys: ["low_hire_volume"],
     valueFormulaKey: "on_buddy_matching",
+    vendorLandscape: ["Together Platform", "MentorcliQ", "Native HRIS modules", "Slack-based tools"],
+    prerequisites: ["Workforce digital access for matching and communication"],
+    coDeployments: ["on_personalised_journeys"],
+    phaseRationale: "Build phase — most effective once personalised onboarding journeys are established and new hire data is available.",
+    y1CostRange: { low: 20, high: 80 },
   },
 
   // ─── Learning & Development (6 initiatives) ──────────────────────────────
@@ -358,6 +433,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Asia-Pacific bank (20K employees): 25% L&D spend efficiency gain, 15% improvement in skills assessment scores within 8 months.",
     riskFlagKeys: ["low_ld_spend", "no_lms", "poor_digital_access"],
     valueFormulaKey: "ld_personalised_learning",
+    vendorLandscape: ["Degreed", "Cornerstone", "LinkedIn Learning + AI", "Workday Skills Cloud"],
+    prerequisites: ["LMS in place", "Skills framework (formal or informal acceptable)"],
+    coDeployments: ["im_skills_inference"],
+    phaseRationale: "Scale phase — requires a skills framework and LMS foundation before AI personalisation adds value.",
+    y1CostRange: { low: 80, high: 350 },
   },
 
   {
@@ -378,6 +458,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (100K employees): $700M reskilling programme, 100K employees reskilled over 3 years.",
     riskFlagKeys: ["low_ld_spend", "poor_skills_data", "poor_change_readiness"],
     valueFormulaKey: "ld_workforce_reskilling",
+    vendorLandscape: ["SkyHive", "Degreed", "Cornerstone", "Workday Learning", "Eightfold"],
+    prerequisites: ["ld_personalised_learning often deployed first", "Clear business case for reskilling over hiring"],
+    coDeployments: ["ld_personalised_learning", "im_skills_inference"],
+    phaseRationale: "Optimise phase — strategic investment requiring mature skills data and established learning infrastructure.",
+    y1CostRange: { low: 200, high: 2000 },
   },
 
   {
@@ -398,6 +483,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US technology company (8K employees): 4× ROI vs external coaching, 20% manager effectiveness improvement.",
     riskFlagKeys: ["weak_manager_capability", "poor_change_readiness"],
     valueFormulaKey: "ld_ai_coaching",
+    vendorLandscape: ["BetterUp", "CoachHub", "Torch", "Sounding Board"],
+    prerequisites: ["Manager capability baseline assessment", "Coaching culture or executive sponsorship"],
+    coDeployments: ["mg_manager_copilot"],
+    phaseRationale: "Scale phase — most effective after governance and manager readiness initiatives have been completed.",
+    y1CostRange: { low: 100, high: 500 },
   },
 
   {
@@ -419,6 +509,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK financial services firm (8K employees): 95% compliance completion rate, 30% reduction in compliance admin.",
     riskFlagKeys: ["no_lms", "poor_digital_access"],
     valueFormulaKey: "ld_compliance_training",
+    vendorLandscape: ["Skillsoft", "SAP Litmos", "TalentLMS", "Cornerstone"],
+    prerequisites: ["LMS in place", "Compliance training inventory documented"],
+    coDeployments: ["ld_personalised_learning"],
+    phaseRationale: "Foundation phase — compliance training is a legal requirement; AI automation reduces admin and improves completion rates.",
+    y1CostRange: { low: 30, high: 120 },
   },
 
   {
@@ -439,6 +534,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global professional services firm (15K employees): 40% content creation cost reduction, 60% faster time-to-deploy.",
     riskFlagKeys: ["low_ld_spend", "no_lms"],
     valueFormulaKey: "ld_content_creation",
+    vendorLandscape: ["Synthesia", "Articulate AI", "iSpring", "Lectora"],
+    prerequisites: ["Subject matter experts available for content review", "LMS for content distribution"],
+    coDeployments: ["ld_personalised_learning"],
+    phaseRationale: "Build phase — accelerates content production once the learning infrastructure is established.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   {
@@ -459,6 +559,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global consulting firm (25K employees): 35% reduction in knowledge search time, 40% faster expert location.",
     riskFlagKeys: ["poor_data_quality", "tool_adoption_risk"],
     valueFormulaKey: "ld_knowledge_management",
+    vendorLandscape: ["Guru", "Notion AI", "Glean", "Microsoft Viva Topics"],
+    prerequisites: ["Existing knowledge base or documentation to ingest", "Content governance process"],
+    coDeployments: ["hr_virtual_assistant"],
+    phaseRationale: "Build phase — requires existing documentation and a governance process before AI indexing adds value.",
+    y1CostRange: { low: 60, high: 250 },
   },
 
   // ─── Internal Mobility (3 initiatives) ───────────────────────────────────
@@ -481,6 +586,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "European professional services firm (12K employees): 15% reduction in external hires, 10% reduction in contractor spend within 12 months.",
     riskFlagKeys: ["small_org", "low_internal_hire_rate", "poor_skills_data"],
     valueFormulaKey: "im_talent_marketplace",
+    vendorLandscape: ["Gloat", "Fuel50", "Eightfold", "Workday Talent Marketplace"],
+    prerequisites: ["Skills framework in place", "Manager buy-in for internal mobility"],
+    coDeployments: ["im_skills_inference", "ld_personalised_learning"],
+    phaseRationale: "Scale phase — requires skills infrastructure and manager readiness before internal mobility AI is effective.",
+    y1CostRange: { low: 200, high: 1000 },
   },
 
   {
@@ -501,6 +611,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "European energy company (18K employees): Skills taxonomy deployed across 80% of workforce, enabling 3× faster internal mobility matching.",
     riskFlagKeys: ["poor_data_quality", "insufficient_hris_data", "small_org"],
     valueFormulaKey: "im_skills_inference",
+    vendorLandscape: ["Eightfold AI", "Beamery", "SkyHive", "Workday Skills Cloud"],
+    prerequisites: ["HRIS with job history data", "Minimum 2 years of workforce data"],
+    coDeployments: ["im_talent_marketplace", "ld_personalised_learning"],
+    phaseRationale: "Build phase — skills inference is the data foundation for talent marketplace and personalised learning.",
+    y1CostRange: { low: 100, high: 400 },
   },
 
   {
@@ -521,6 +636,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US technology company (15K employees): 20% retention improvement for mentored employees, 25% career progression acceleration.",
     riskFlagKeys: ["small_org", "poor_change_readiness"],
     valueFormulaKey: "im_mentor_matching",
+    vendorLandscape: ["Together Platform", "MentorcliQ", "Chronus", "Mentorloop"],
+    prerequisites: ["Workforce digital access", "Mentoring programme sponsor"],
+    coDeployments: ["on_buddy_matching"],
+    phaseRationale: "Build phase — works best once skills data is available for intelligent matching.",
+    y1CostRange: { low: 30, high: 100 },
   },
 
   // ─── Performance Management (3 initiatives) ──────────────────────────────
@@ -543,6 +663,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global industrial manufacturer (30K employees): 4% productivity uplift across covered population within 12 months of deployment.",
     riskFlagKeys: ["weak_manager_capability", "poor_change_readiness"],
     valueFormulaKey: "pm_continuous_performance",
+    vendorLandscape: ["Betterworks", "Lattice", "15Five", "Workday Peakon"],
+    prerequisites: ["Manager capability for regular 1:1s", "Performance review process documented"],
+    coDeployments: ["mg_manager_copilot"],
+    phaseRationale: "Scale phase — continuous performance requires manager readiness and a culture of regular feedback.",
+    y1CostRange: { low: 40, high: 200 },
   },
 
   {
@@ -563,6 +688,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (25K employees): 60% reduction in review writing time, improved review quality scores.",
     riskFlagKeys: ["weak_manager_capability", "poor_change_readiness"],
     valueFormulaKey: "pm_review_writing",
+    vendorLandscape: ["Lattice AI", "Workday AI", "Leapsome", "Culture Amp"],
+    prerequisites: ["Performance review process in place", "HRIS with performance history"],
+    coDeployments: ["pm_continuous_performance"],
+    phaseRationale: "Build phase — AI writing assistance reduces review burden once the review process is established.",
+    y1CostRange: { low: 80, high: 400 },
   },
 
   {
@@ -583,6 +713,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (30K employees): OKR alignment linked to 3% productivity uplift, 30% improvement in goal clarity.",
     riskFlagKeys: ["poor_change_readiness", "weak_manager_capability"],
     valueFormulaKey: "pm_okr_goal_alignment",
+    vendorLandscape: ["Betterworks", "Lattice", "Workboard", "Ally.io"],
+    prerequisites: ["Executive sponsorship for OKR methodology", "Goal-setting process documented"],
+    coDeployments: ["pm_continuous_performance"],
+    phaseRationale: "Build phase — OKR alignment requires a functioning performance management foundation.",
+    y1CostRange: { low: 40, high: 200 },
   },
 
   // ─── Employee Experience (4 initiatives) ─────────────────────────────────
@@ -605,6 +740,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK retail group (25K employees): 5-point engagement score improvement, measurable reduction in voluntary turnover within 6 months.",
     riskFlagKeys: ["high_engagement_already", "poor_digital_access"],
     valueFormulaKey: "ee_sentiment_listening",
+    vendorLandscape: ["Workday Peakon", "Qualtrics", "Culture Amp", "Glint (LinkedIn)"],
+    prerequisites: ["Workforce digital access for survey completion", "Action-taking process for results"],
+    coDeployments: ["ee_wellbeing_burnout"],
+    phaseRationale: "Build phase — continuous listening requires a response process; deploy after governance establishes data ethics.",
+    y1CostRange: { low: 50, high: 200 },
   },
 
   {
@@ -626,6 +766,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (50K employees): 8% attrition reduction, 20% engagement uplift.",
     riskFlagKeys: ["high_engagement_already", "poor_change_readiness"],
     valueFormulaKey: "ee_recognition_rewards",
+    vendorLandscape: ["Achievers", "Workhuman", "Reward Gateway", "Bonusly"],
+    prerequisites: ["Rewards budget allocation confirmed", "Manager engagement for peer recognition"],
+    coDeployments: ["ee_sentiment_listening"],
+    phaseRationale: "Scale phase — recognition programmes have highest impact when deployed alongside continuous listening.",
+    y1CostRange: { low: 100, high: 500 },
   },
 
   {
@@ -646,6 +791,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global professional services firm (20K employees): 1.5 days absence reduction, 20% burnout-driven attrition reduction.",
     riskFlagKeys: ["poor_data_quality", "poor_change_readiness"],
     valueFormulaKey: "ee_wellbeing_burnout",
+    vendorLandscape: ["Unmind", "Headspace for Work", "Lyra Health", "Spring Health"],
+    prerequisites: ["Workforce digital access", "EAP or wellbeing programme in place"],
+    coDeployments: ["ee_sentiment_listening"],
+    phaseRationale: "Scale phase — wellbeing signal monitoring is most actionable once sentiment listening is established.",
+    y1CostRange: { low: 100, high: 500 },
   },
 
   {
@@ -666,6 +816,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (60K employees): 40% comms time reduction, 25% employee reach improvement.",
     riskFlagKeys: ["brand_voice_consistency", "poor_digital_access"],
     valueFormulaKey: "ee_internal_comms_ai",
+    vendorLandscape: ["Staffbase", "Firstup", "Poppulo", "Microsoft Viva Engage"],
+    prerequisites: ["Internal comms channel strategy", "Content governance process"],
+    coDeployments: ["fw_frontline_communication"],
+    phaseRationale: "Build phase — AI comms personalisation requires an established channel strategy before content targeting.",
+    y1CostRange: { low: 60, high: 300 },
   },
 
   // ─── Retention (3 initiatives) ────────────────────────────────────────────
@@ -688,6 +843,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US technology company (15K employees): 20% attrition reduction, ROI realised within 9 months of manager activation.",
     riskFlagKeys: ["insufficient_hris_data", "weak_manager_capability", "low_attrition_rate"],
     valueFormulaKey: "rt_flight_risk_prediction",
+    vendorLandscape: ["Workday People Analytics", "Visier", "Orgvue", "IBM Watson Talent"],
+    prerequisites: ["Minimum 2 years of HRIS data", "Manager capability to act on predictions"],
+    coDeployments: ["ee_sentiment_listening", "mg_manager_copilot"],
+    phaseRationale: "Optimise phase — flight risk models require mature HRIS data and a manager response process.",
+    y1CostRange: { low: 100, high: 400 },
   },
 
   {
@@ -708,6 +868,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK financial services firm (10K employees): 12% retention improvement from stay interviews, 15% at-risk employee retention.",
     riskFlagKeys: ["weak_manager_capability", "low_attrition_rate"],
     valueFormulaKey: "rt_stay_interview_ai",
+    vendorLandscape: ["Qualtrics", "Culture Amp", "Workday Peakon", "Leapsome"],
+    prerequisites: ["Manager training for stay interview conversations", "Action-taking process"],
+    coDeployments: ["rt_flight_risk_prediction", "mg_manager_copilot"],
+    phaseRationale: "Scale phase — stay interviews are most effective when managers have AI coaching support for the conversations.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   {
@@ -727,6 +892,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (30K employees): 8% structural attrition reduction, 20% improvement in exit insight quality.",
     riskFlagKeys: ["low_attrition_rate", "insufficient_hris_data"],
     valueFormulaKey: "rt_exit_intelligence",
+    vendorLandscape: ["Qualtrics", "Culture Amp", "Workday", "Medallia"],
+    prerequisites: ["Exit interview process in place", "HR team capacity to act on insights"],
+    coDeployments: ["rt_flight_risk_prediction"],
+    phaseRationale: "Build phase — exit intelligence is a quick win that improves retention data quality for downstream analytics.",
+    y1CostRange: { low: 30, high: 100 },
   },
 
   // ─── HR Operations (3 initiatives) ───────────────────────────────────────
@@ -749,6 +919,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK financial services firm (8K employees): 60% query deflection rate, 2.5 FTE redeployed to strategic work within 4 months.",
     riskFlagKeys: ["low_query_volume", "poor_digital_access", "no_hris"],
     valueFormulaKey: "hr_virtual_assistant",
+    vendorLandscape: ["Moveworks", "Leena AI", "ServiceNow Now Assist", "Espressive"],
+    prerequisites: ["HR knowledge base or policy documentation", "IT integration for ticket deflection"],
+    coDeployments: ["on_new_hire_chatbot", "ld_knowledge_management"],
+    phaseRationale: "Foundation phase — HR virtual assistant delivers immediate cost savings and is the platform for other chatbot use cases.",
+    y1CostRange: { low: 150, high: 500 },
   },
 
   {
@@ -769,6 +944,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK professional services firm (5K employees): 50% policy writing time reduction, 30% reduction in policy inconsistencies.",
     riskFlagKeys: ["complex_regulation_without_legal_review"],
     valueFormulaKey: "hr_policy_generation",
+    vendorLandscape: ["Workday", "ServiceNow", "ChatGPT Enterprise", "Luminance"],
+    prerequisites: ["Legal review process for generated policies", "HR team ownership of policy library"],
+    coDeployments: ["hr_virtual_assistant"],
+    phaseRationale: "Foundation phase — policy automation reduces legal risk and HR admin from the start.",
+    y1CostRange: { low: 30, high: 100 },
   },
 
   {
@@ -789,6 +969,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global financial services firm (20K employees): 55% query deflection, 20% benefits utilisation improvement.",
     riskFlagKeys: ["no_hris", "poor_digital_access"],
     valueFormulaKey: "hr_benefits_decision_support",
+    vendorLandscape: ["Benefitfocus", "Darwin (Mercer)", "Workday Benefits", "Aon Benefits"],
+    prerequisites: ["Benefits catalogue documented", "HRIS integration for eligibility data"],
+    coDeployments: ["hr_virtual_assistant"],
+    phaseRationale: "Build phase — benefits decision support requires a stable HR virtual assistant and benefits data integration.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   // ─── Workforce Planning (4 initiatives) ──────────────────────────────────
@@ -811,6 +996,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global pharmaceutical company (40K employees): 15% reduction in reactive hiring, 20% workforce planning efficiency improvement.",
     riskFlagKeys: ["poor_data_quality", "insufficient_hris_data"],
     valueFormulaKey: "wp_workforce_planning",
+    vendorLandscape: ["Orgvue", "Visier", "Workday Adaptive Planning", "IBM Planning Analytics"],
+    prerequisites: ["HRIS with 2+ years of workforce data", "Finance partnership for headcount planning"],
+    coDeployments: ["wp_succession_planning", "im_skills_inference"],
+    phaseRationale: "Optimise phase — workforce planning AI requires mature data and established planning processes.",
+    y1CostRange: { low: 150, high: 600 },
   },
 
   {
@@ -831,6 +1021,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global industrial company (30K employees): 30% improvement in succession readiness, 25% reduction in critical role vacancy time.",
     riskFlagKeys: ["poor_data_quality", "poor_skills_data"],
     valueFormulaKey: "wp_succession_planning",
+    vendorLandscape: ["Workday", "SAP SuccessFactors", "Cornerstone", "Eightfold"],
+    prerequisites: ["Performance and potential data in HRIS", "Executive sponsorship"],
+    coDeployments: ["wp_workforce_planning", "im_talent_marketplace"],
+    phaseRationale: "Optimise phase — succession planning AI requires mature talent data and a functioning talent marketplace.",
+    y1CostRange: { low: 80, high: 300 },
   },
 
   {
@@ -851,6 +1046,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global financial services firm (50K employees): 2% efficiency gain from span optimisation, 15% cost reduction from org design.",
     riskFlagKeys: ["poor_data_quality", "poor_change_readiness"],
     valueFormulaKey: "wp_org_design",
+    vendorLandscape: ["Orgvue", "Nakisa", "Workday", "Deloitte OrgDNA"],
+    prerequisites: ["HRIS with org structure data", "Executive sponsorship for org change"],
+    coDeployments: ["wp_workforce_planning"],
+    phaseRationale: "Optimise phase — org design AI is most valuable when workforce planning data is already mature.",
+    y1CostRange: { low: 100, high: 400 },
   },
 
   {
@@ -871,6 +1071,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global professional services firm (25K employees): 10% hiring cost reduction through location strategy, 15% talent cost optimisation.",
     riskFlagKeys: ["poor_data_quality"],
     valueFormulaKey: "wp_location_strategy",
+    vendorLandscape: ["Lightcast (EMSI Burning Glass)", "LinkedIn Talent Insights", "Workday", "Mercer Workforce Monitor"],
+    prerequisites: ["Business case for location change or expansion", "Finance and real estate partnership"],
+    coDeployments: ["wp_workforce_planning"],
+    phaseRationale: "Optimise phase — location strategy is a strategic decision requiring mature workforce planning data.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   // ─── Compensation & Reward (2 initiatives) ───────────────────────────────
@@ -893,6 +1098,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "US technology company (50K employees): $3M pay equity remediation avoided, 100% pay equity reporting compliance.",
     riskFlagKeys: ["complex_regulation_without_legal_review", "poor_data_quality"],
     valueFormulaKey: "cr_pay_equity",
+    vendorLandscape: ["Syndio", "Trusaic", "Mercer Pay Equity", "Workday Pay Equity"],
+    prerequisites: ["Compensation data in HRIS", "Legal review of pay equity methodology"],
+    coDeployments: ["cr_compensation_recommendations"],
+    phaseRationale: "Optimise phase — pay equity analysis requires complete compensation data and legal readiness.",
+    y1CostRange: { low: 50, high: 200 },
   },
 
   {
@@ -913,6 +1123,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (25K employees): 50% comp cycle time reduction, 30% improvement in pay decision consistency.",
     riskFlagKeys: ["poor_data_quality", "complex_regulation_without_legal_review"],
     valueFormulaKey: "cr_compensation_recommendations",
+    vendorLandscape: ["Mercer", "Radford (Aon)", "Workday Compensation", "Beqom"],
+    prerequisites: ["Market data subscription", "Compensation bands documented"],
+    coDeployments: ["cr_pay_equity"],
+    phaseRationale: "Optimise phase — AI compensation recommendations require market data integration and established comp bands.",
+    y1CostRange: { low: 50, high: 200 },
   },
 
   // ─── Manager Effectiveness (2 initiatives) ───────────────────────────────
@@ -936,6 +1151,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (50K employees): 4h/week manager time recovery, 20% manager effectiveness improvement.",
     riskFlagKeys: ["weak_manager_capability", "poor_change_readiness"],
     valueFormulaKey: "mg_manager_copilot",
+    vendorLandscape: ["Microsoft Copilot for HR", "Workday AI", "Leapsome", "Betterworks"],
+    prerequisites: ["Manager digital access", "1:1 cadence or performance process in place"],
+    coDeployments: ["pm_continuous_performance", "ld_ai_coaching"],
+    phaseRationale: "Scale phase — manager copilot is most effective once governance and continuous performance processes are established.",
+    y1CostRange: { low: 40, high: 200 },
   },
 
   {
@@ -956,6 +1176,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global professional services firm (15K employees): 25% reduction in HR escalations, 30% improvement in manager confidence.",
     riskFlagKeys: ["weak_manager_capability", "poor_change_readiness"],
     valueFormulaKey: "mg_difficult_conversations",
+    vendorLandscape: ["BetterUp", "CoachHub", "Humu", "Torch"],
+    prerequisites: ["Manager capability baseline", "HR BP support model for escalations"],
+    coDeployments: ["mg_manager_copilot"],
+    phaseRationale: "Scale phase — AI coaching for difficult conversations builds on manager copilot capabilities.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   // ─── Governance (2 initiatives) ───────────────────────────────────────────
@@ -978,6 +1203,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "UK financial services firm (regulated sector): 60% faster AI deployment with governance, zero regulatory incidents.",
     riskFlagKeys: ["low_ethics_capability", "complex_regulation_without_legal_review"],
     valueFormulaKey: "gv_ai_governance",
+    vendorLandscape: ["Holistic AI", "Credo AI", "IBM OpenScale", "Microsoft Responsible AI"],
+    prerequisites: ["Executive sponsorship for AI governance", "Legal and compliance team involvement"],
+    coDeployments: ["ta_bias_monitoring", "gv_cross_cutting_bias_audit"],
+    phaseRationale: "Foundation phase — AI governance must be established before any AI tool is deployed at scale.",
+    y1CostRange: { low: 50, high: 200 },
   },
 
   {
@@ -998,6 +1228,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global technology company (100K employees): Bias audit led to model rebuild, 16% diversity improvement post-audit.",
     riskFlagKeys: ["low_ethics_capability", "poor_data_quality"],
     valueFormulaKey: "gv_cross_cutting_bias_audit",
+    vendorLandscape: ["Holistic AI", "Credo AI", "Pymetrics", "Accenture Responsible AI"],
+    prerequisites: ["AI tools already deployed to audit", "Legal and compliance team involvement"],
+    coDeployments: ["gv_ai_governance", "ta_bias_monitoring"],
+    phaseRationale: "Optimise phase — cross-cutting bias audit is most valuable once multiple AI tools are in production.",
+    y1CostRange: { low: 40, high: 150 },
   },
 
   // ─── Frontline Workforce (4 initiatives) ─────────────────────────────────
@@ -1021,6 +1256,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (200K employees): 3% labour cost reduction, 15% overtime reduction.",
     riskFlagKeys: ["poor_data_quality", "poor_calendar_integration"],
     valueFormulaKey: "fw_shift_scheduling_ai",
+    vendorLandscape: ["Quinyx", "Deputy", "Rotageek", "UKG (Kronos)", "Humanforce"],
+    prerequisites: ["Workforce management system or scheduling data", "Manager buy-in for AI-assisted scheduling"],
+    coDeployments: ["fw_store_manager_assistant"],
+    phaseRationale: "Scale phase — shift scheduling AI delivers the highest ROI for frontline orgs once governance is in place.",
+    y1CostRange: { low: 100, high: 500 },
   },
 
   {
@@ -1042,6 +1282,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (100K employees): 3× compliance completion improvement, 10% operational performance uplift.",
     riskFlagKeys: ["poor_digital_access", "no_lms"],
     valueFormulaKey: "fw_frontline_learning",
+    vendorLandscape: ["Axonify", "Nudge", "EdApp (SafetyCulture)", "Cornerstone Degreed"],
+    prerequisites: ["Mobile device access for frontline workers", "Content library or SME availability"],
+    coDeployments: ["fw_frontline_communication", "ld_compliance_training"],
+    phaseRationale: "Scale phase — microlearning for frontline workers requires mobile infrastructure and a content strategy.",
+    y1CostRange: { low: 60, high: 250 },
   },
 
   {
@@ -1063,6 +1308,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (80K employees): 10% frontline attrition reduction, 25% employee reach improvement.",
     riskFlagKeys: ["poor_digital_access"],
     valueFormulaKey: "fw_frontline_communication",
+    vendorLandscape: ["Staffbase", "Beekeeper", "Firstup", "Poppulo"],
+    prerequisites: ["Mobile device access for frontline workers", "Content governance process"],
+    coDeployments: ["fw_frontline_learning", "ee_internal_comms_ai"],
+    phaseRationale: "Scale phase — frontline communication AI requires mobile infrastructure and a content strategy.",
+    y1CostRange: { low: 80, high: 400 },
   },
 
   {
@@ -1084,6 +1334,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     caseStudyAnchor: "Global retail company (200K employees): 5h/week manager time recovery, 15% manager retention improvement.",
     riskFlagKeys: ["weak_manager_capability", "poor_data_quality"],
     valueFormulaKey: "fw_store_manager_assistant",
+    vendorLandscape: ["Microsoft Copilot for Frontline", "Quinyx", "Deputy", "Humanforce"],
+    prerequisites: ["Store/site manager digital access", "HRIS with team data"],
+    coDeployments: ["fw_shift_scheduling_ai", "mg_manager_copilot"],
+    phaseRationale: "Scale phase — store manager AI assistant is most effective once shift scheduling AI is providing data.",
+    y1CostRange: { low: 100, high: 500 },
   },
 
 ];

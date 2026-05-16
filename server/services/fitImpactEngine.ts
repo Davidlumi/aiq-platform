@@ -39,6 +39,12 @@ export type InitiativeOutputCard = {
   caseStudyAnchor: string;
   riskFlags: string[];
   hardGateFailReasons: string[];
+  /** Per-factor scores for the Why-this-fits drawer section */
+  scoredFactors: Array<{ key: string; label: string; score: number; maxScore: number }>;
+  /** Hard gate checks that passed (for drawer display) */
+  hardGatesPassed: string[];
+  /** Y1 cost range in GBP thousands (from initiative library) */
+  y1CostRange: { low: number; high: number };
 };
 
 export type FitImpactEngineInputs = ValueFormulaInputs & {
@@ -580,16 +586,20 @@ export function evaluateInitiative(
       caseStudyAnchor: initiative.caseStudyAnchor,
       riskFlags: [],
       hardGateFailReasons,
+      scoredFactors: initiative.softFitFactors.map((f) => ({ key: f.key, label: f.label, score: 0, maxScore: f.maxScore })),
+      hardGatesPassed: [],
+      y1CostRange: initiative.y1CostRange,
     };
   }
 
   // 2. Soft fit scoring
   let fitScore = 0;
+  const scoredFactors: Array<{ key: string; label: string; score: number; maxScore: number }> = [];
   for (const factor of initiative.softFitFactors) {
     const evaluator = EVALUATORS[factor.evaluator];
-    if (evaluator) {
-      fitScore += evaluator(inputs, factor.maxScore);
-    }
+    const score = evaluator ? evaluator(inputs, factor.maxScore) : 0;
+    fitScore += score;
+    scoredFactors.push({ key: factor.key, label: factor.label, score, maxScore: factor.maxScore });
   }
   fitScore = Math.min(100, Math.max(0, fitScore));
 
@@ -633,6 +643,12 @@ export function evaluateInitiative(
     caseStudyAnchor: initiative.caseStudyAnchor,
     riskFlags,
     hardGateFailReasons: [],
+    scoredFactors,
+    hardGatesPassed: [
+      ...initiative.requiredSubFunctions.map((sf) => `Sub-function "${sf}" in scope`),
+      ...initiative.requiredDataFields.map((f) => `Data field "${f}" provided`),
+    ],
+    y1CostRange: initiative.y1CostRange,
   };
 }
 

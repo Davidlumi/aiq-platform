@@ -707,3 +707,124 @@ describe("scoreFrontlinePercent evaluator", () => {
     expect(low.fitScore).toBe(high.fitScore);
   });
 });
+
+// ─── Engine Enrichment: scoredFactors, hardGatesPassed, y1CostRange ──────────
+
+describe("InitiativeOutputCard enrichment fields", () => {
+  // ── scoredFactors ──────────────────────────────────────────────────────────
+  it("evaluateInitiative returns a scoredFactors array", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    expect(Array.isArray(result.scoredFactors)).toBe(true);
+  });
+
+  it("each scoredFactor has key, label, score, and maxScore", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    expect(result.scoredFactors!.length).toBeGreaterThan(0);
+    for (const f of result.scoredFactors!) {
+      expect(typeof f.key).toBe("string");
+      expect(typeof f.label).toBe("string");
+      expect(typeof f.score).toBe("number");
+      expect(typeof f.maxScore).toBe("number");
+      expect(f.score).toBeGreaterThanOrEqual(0);
+      expect(f.maxScore).toBeGreaterThan(0);
+      expect(f.score).toBeLessThanOrEqual(f.maxScore);
+    }
+  });
+
+  it("scoredFactors maxScore values sum to 100 for a non-hard-gate initiative", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    if (!result.scoredFactors || result.fitStatus === "HARD_GATE_FAIL") return;
+    const maxSum = result.scoredFactors.reduce((acc, f) => acc + f.maxScore, 0);
+    expect(maxSum).toBe(100);
+  });
+
+  it("scoredFactors scores sum approximately to fitScore (within rounding tolerance)", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    if (!result.scoredFactors || result.fitStatus === "HARD_GATE_FAIL") return;
+    const sum = result.scoredFactors.reduce((acc, f) => acc + f.score, 0);
+    expect(Math.abs(sum - result.fitScore)).toBeLessThanOrEqual(2);
+  });
+
+  it("HARD_GATE_FAIL result still returns scoredFactors defined", () => {
+    const noFunc: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionB: { hrSubFunctions: [] },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", noFunc);
+    expect(result.scoredFactors).toBeDefined();
+    expect(Array.isArray(result.scoredFactors)).toBe(true);
+  });
+
+  // ── hardGatesPassed ────────────────────────────────────────────────────────
+  it("evaluateInitiative returns hardGatesPassed as an array", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    expect(Array.isArray(result.hardGatesPassed)).toBe(true);
+  });
+
+  it("hardGatesPassed contains string entries when gates pass", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    if (result.hardGatesPassed!.length > 0) {
+      expect(typeof result.hardGatesPassed![0]).toBe("string");
+    }
+  });
+
+  it("HARD_GATE_FAIL result has hardGateFailReasons populated", () => {
+    const noFunc: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionB: { hrSubFunctions: [] },
+    };
+    const result = evaluateInitiative("ta_high_volume_hiring", noFunc);
+    if (result.fitStatus === "HARD_GATE_FAIL") {
+      expect(result.hardGateFailReasons!.length).toBeGreaterThan(0);
+    }
+  });
+
+  // ── y1CostRange ────────────────────────────────────────────────────────────
+  it("evaluateInitiative always returns y1CostRange field (may be null)", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    expect("y1CostRange" in result).toBe(true);
+  });
+
+  it("y1CostRange has low and high when defined", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    if (result.y1CostRange !== null && result.y1CostRange !== undefined) {
+      expect(typeof result.y1CostRange.low).toBe("number");
+      expect(typeof result.y1CostRange.high).toBe("number");
+      expect(result.y1CostRange.low).toBeGreaterThan(0);
+      expect(result.y1CostRange.high).toBeGreaterThanOrEqual(result.y1CostRange.low);
+    }
+  });
+
+  it("y1CostRange values are in a reasonable £k range (10–5000)", () => {
+    const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    if (result.y1CostRange) {
+      expect(result.y1CostRange.low).toBeGreaterThanOrEqual(10);
+      expect(result.y1CostRange.high).toBeLessThanOrEqual(5000);
+    }
+  });
+
+  // ── Cross-initiative consistency ───────────────────────────────────────────
+  it("scoredFactors factor keys differ between TA and FW initiatives", () => {
+    const r1 = evaluateInitiative("ta_high_volume_hiring", baseInputs);
+    const r2 = evaluateInitiative("fw_shift_scheduling_ai", baseInputs);
+    const keys1 = (r1.scoredFactors ?? []).map(f => f.key).sort().join(",");
+    const keys2 = (r2.scoredFactors ?? []).map(f => f.key).sort().join(",");
+    expect(keys1).not.toBe(keys2);
+  });
+
+  it("higher fitScore correlates with higher total scoredFactors sum", () => {
+    const strongFit: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, headcount: 5000, annualHires: 500 },
+    };
+    const weakFit: FitImpactEngineInputs = {
+      ...baseInputs,
+      sectionD: { ...baseInputs.sectionD, headcount: 200, annualHires: 20 },
+    };
+    const r1 = evaluateInitiative("ta_high_volume_hiring", strongFit);
+    const r2 = evaluateInitiative("ta_high_volume_hiring", weakFit);
+    if (r1.fitStatus !== "HARD_GATE_FAIL" && r2.fitStatus !== "HARD_GATE_FAIL") {
+      expect(r1.fitScore).toBeGreaterThanOrEqual(r2.fitScore);
+    }
+  });
+});

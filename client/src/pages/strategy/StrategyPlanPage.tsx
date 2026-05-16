@@ -30,7 +30,9 @@ import {
   ArrowLeft, LayoutGrid, List, AlertTriangle, Clock,
   CheckCircle2, Circle, PauseCircle, XCircle, Plus,
   Trash2, ChevronDown, Info, ExternalLink, Loader2, BarChart2,
+  TrendingUp,
 } from "lucide-react";
+import InitiativeDrawer, { type DrawerInitiative } from "@/components/InitiativeDrawer";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -525,6 +527,9 @@ export default function StrategyPlanPage() {
   const [removeInit,  setRemoveInit]  = useState<any | null>(null);
   const [selectorOpen, setSelectorOpen] = useState(false);
 
+  // Drawer state
+  const [drawerInitId, setDrawerInitId] = useState<string | null>(null);
+
   // Data queries
   const strategyQ = trpc.intelligence.getStrategy.useQuery();
   const initiativesQ = trpc.intelligence.getStrategyInitiatives.useQuery();
@@ -562,6 +567,12 @@ export default function StrategyPlanPage() {
   })), [initiatives]);
 
   const currentIds = useMemo(() => new Set(enriched.map(i => i.id)), [enriched]);
+
+  // Drawer init (must come after enriched)
+  const drawerInit = useMemo(
+    () => enriched.find(i => i.id === drawerInitId) ?? null,
+    [enriched, drawerInitId]
+  );
 
   // Execution state counts
   const statusCounts = useMemo(() => {
@@ -680,6 +691,34 @@ export default function StrategyPlanPage() {
   const totalLow  = costEnvelopeQ.data?.totalMin ?? phaseData.reduce((s, p) => s + p.costLow,  0);
   const totalHigh = costEnvelopeQ.data?.totalMax ?? phaseData.reduce((s, p) => s + p.costHigh, 0);
 
+  // Engine-derived value totals (sum of midpoints from fit results)
+  const { valueTotalLow, valueTotalHigh } = useMemo(() => {
+    let low = 0; let high = 0;
+    for (const init of enriched) {
+      if (init.valueRange && init.fitStatus !== "HARD_GATE_FAIL") {
+        low  += (init.valueRange as any).low  ?? 0;
+        high += (init.valueRange as any).high ?? 0;
+      }
+    }
+    return { valueTotalLow: low, valueTotalHigh: high };
+  }, [enriched]);
+
+  // Fit score colour helper
+  function fitBadgeClass(fitStatus: string | null | undefined): string {
+    if (fitStatus === "STRONG_FIT")     return "bg-green-500/10 text-green-400 border-green-500/20";
+    if (fitStatus === "POSSIBLE_FIT")   return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (fitStatus === "POOR_FIT")       return "bg-red-500/10 text-red-400 border-red-500/20";
+    if (fitStatus === "HARD_GATE_FAIL") return "bg-muted text-muted-foreground border-border";
+    return "";
+  }
+  function fitLabel(fitStatus: string | null | undefined): string {
+    if (fitStatus === "STRONG_FIT")     return "Strong fit";
+    if (fitStatus === "POSSIBLE_FIT")   return "Possible fit";
+    if (fitStatus === "POOR_FIT")       return "Weak fit";
+    if (fitStatus === "HARD_GATE_FAIL") return "N/A";
+    return "";
+  }
+
   const hasExecutionData = Object.values(statusCounts).some(v => v > 0 && Object.keys(statusCounts).some(k => k !== "not_started"));
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -762,18 +801,30 @@ export default function StrategyPlanPage() {
             <div className="space-y-4">
               {/* Plan shape + envelope */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-card border border-border">
+                <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-card border border-border">
                   <p className="text-xs text-muted-foreground/70 mb-1">Plan shape</p>
                   <p className="text-2xl font-bold text-foreground">{enriched.length}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
                 </div>
-                <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-card border border-border">
-                  <p className="text-xs text-muted-foreground/70 mb-1">Total envelope</p>
+                <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-card border border-border">
+                  <p className="text-xs text-muted-foreground/70 mb-1">Total investment</p>
                   <p className="text-2xl font-bold text-foreground">
                     £{totalLow >= 1000 ? `${(totalLow / 1000).toFixed(1)}M` : `${totalLow}k`}–£{totalHigh >= 1000 ? `${(totalHigh / 1000).toFixed(1)}M` : `${totalHigh}k`}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">indicative 18-month investment range</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">indicative 18-month range</p>
                 </div>
+                {valueTotalHigh > 0 && (
+                  <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                    <p className="text-xs text-muted-foreground/70 mb-1 flex items-center gap-1.5">
+                      <TrendingUp className="w-3 h-3 text-violet-400" />
+                      Indicative annual value
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      £{valueTotalLow >= 1000 ? `${(valueTotalLow / 1000).toFixed(1)}M` : `${valueTotalLow}k`}–£{valueTotalHigh >= 1000 ? `${(valueTotalHigh / 1000).toFixed(1)}M` : `${valueTotalHigh}k`}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">sum of engine value estimates across all initiatives</p>
+                  </div>
+                )}
               </div>
 
               {/* Execution state pills (only when at least one non-not_started) */}
@@ -978,11 +1029,15 @@ export default function StrategyPlanPage() {
                     <div className="flex-1 min-w-0">
                       <button
                         className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
-                        onClick={() => setDetailInit(init)}
+                        onClick={() => setDrawerInitId(init.id)}
                       >
                         {init.name}
                       </button>
-                      {init.description && (
+                      {/* Fit rationale snippet */}
+                      {init.fitRationale && (
+                        <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">{init.fitRationale}</p>
+                      )}
+                      {!init.fitRationale && init.description && (
                         <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">{init.description}</p>
                       )}
                       {/* Chips row */}
@@ -1005,6 +1060,45 @@ export default function StrategyPlanPage() {
                         {init.regulatoryFlag && (
                           <Badge variant="outline" className="text-[10px] bg-red-500/10 dark:text-red-400 text-red-600 border-red-500/20">
                             {init.regulatoryFlag}
+                          </Badge>
+                        )}
+                        {/* Fit score badge */}
+                        {(init as any).fitStatus && (init as any).fitStatus !== "HARD_GATE_FAIL" && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] cursor-pointer ${fitBadgeClass((init as any).fitStatus)}`}
+                            onClick={e => { e.stopPropagation(); setDrawerInitId(init.id); }}
+                          >
+                            {(init as any).fitScore != null && `${(init as any).fitScore} · `}{fitLabel((init as any).fitStatus)}
+                          </Badge>
+                        )}
+                        {/* Value badge */}
+                        {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (() => {
+                          const vr = (init as any).valueRange as { low: number; high: number };
+                          const mid = Math.round((vr.low + vr.high) / 2);
+                          const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;
+                          return (
+                            <Badge variant="outline" className="text-[10px] bg-violet-500/10 text-violet-400 border-violet-500/20">
+                              <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
+                              {fmt(mid)}
+                            </Badge>
+                          );
+                        })()}
+                        {/* Y1 cost badge */}
+                        {(init as any).y1CostRange && (() => {
+                          const cr = (init as any).y1CostRange as { low: number; high: number };
+                          const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;
+                          return (
+                            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">
+                              Y1: {fmt(cr.low)}–{fmt(cr.high)}
+                            </Badge>
+                          );
+                        })()}
+                        {/* TTV badge */}
+                        {(init as any).timeToValueMonths && (
+                          <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">
+                            <Clock className="w-2.5 h-2.5 mr-0.5" />
+                            {(init as any).timeToValueMonths.min}–{(init as any).timeToValueMonths.max}m
                           </Badge>
                         )}
                       </div>
@@ -1068,6 +1162,17 @@ export default function StrategyPlanPage() {
         onAdd={handleAddInitiative}
         currentIds={currentIds}
         strategyData={strategyQ.data}
+      />
+
+      {/* ── Initiative Drawer ── */}
+      <InitiativeDrawer
+        initiative={drawerInit as DrawerInitiative | null}
+        allInPlan={enriched as DrawerInitiative[]}
+        open={!!drawerInitId}
+        onClose={() => setDrawerInitId(null)}
+        onRemove={id => { setDrawerInitId(null); setRemoveInit(enriched.find(i => i.id === id) ?? null); }}
+        isInPlan={true}
+        onNavigate={id => setDrawerInitId(id)}
       />
     </div>
   );

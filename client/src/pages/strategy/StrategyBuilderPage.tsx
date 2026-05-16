@@ -698,8 +698,8 @@ export default function StrategyBuilderPage() {
     if (!results) return {} as Record<string, number>;
     const map: Record<string, number> = {};
     for (const r of results) {
-      // Key by initiative id and also by a normalised name for fuzzy matching
-      map[r.initiativeId] = r.fitScore;
+      // Key by initiative id (engine output uses `id`, not `initiativeId`)
+      map[r.id] = r.fitScore;
     }
     return map;
   }, [backgroundInputsQ.data]);
