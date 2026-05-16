@@ -705,6 +705,8 @@ export const backgroundInputsRouter = router({
     // Section A — Company snapshot
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
     if (!inputs.sectionA?.totalHeadcount && !inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
+    // v4.2 Launch-tier: ukSitesCount required — drives multi-site initiative scoring
+    if (!inputs.sectionA?.ukSitesCount) missing.push("Number of UK sites (Section A)");
 
     // Section B — HR shape
     if (inputs.sectionB?.hrTeamSize === undefined || inputs.sectionB?.hrTeamSize === null)
@@ -712,10 +714,25 @@ export const backgroundInputsRouter = router({
 
     // Section C — Tech footprint
     if (!inputs.sectionC?.hrisSystem) missing.push("HRIS system (Section C)");
+    // v4.2 Launch-tier: workforceDigitalAccess required — hard gate for digital-access-dependent initiatives
+    if (!inputs.sectionC?.workforceDigitalAccess) missing.push("Workforce digital access (Section C)");
+    // v4.2 Launch-tier: yearsOfHrisData required — data-dependent initiatives scored on this
+    if (!inputs.sectionC?.yearsOfHrisData) missing.push("Years of HRIS data (Section C)");
 
     // Section D — Operational baselines
     if (!inputs.sectionD?.annualHiresLow && inputs.sectionD?.annualHiresLow !== 0)
       missing.push("Annual hires (Section D)");
+    // v4.2 Launch-tier: annualRevenue required — revenue-band cost cap applied in portfolio curation
+    if (!inputs.sectionD?.annualRevenue) missing.push("Annual revenue (Section D)");
+    // v4.2 Launch-tier: monthlyHrQueryVolume required — drives HR virtual assistant scoring
+    if (!inputs.sectionD?.monthlyHrQueryVolumeLow && inputs.sectionD?.monthlyHrQueryVolumeLow !== 0)
+      missing.push("Monthly HR query volume (Section D)");
+    // v4.2 Launch-tier: annualApplicationVolume required — drives TA bias/governance initiative scoring
+    if (!inputs.sectionD?.annualApplicationVolumeLow && inputs.sectionD?.annualApplicationVolumeLow !== 0)
+      missing.push("Annual application volume (Section D)");
+    // v4.2 Launch-tier: annualLDSpend required — drives L&D initiative scoring
+    if (!inputs.sectionD?.annualLDSpend && inputs.sectionD?.annualLDSpend !== 0)
+      missing.push("Annual L&D spend (Section D)");
 
     // Section E — Strategic direction
     if (!inputs.sectionE?.ambitionTier) missing.push("Business AI ambition tier (Section E)");
@@ -732,9 +749,16 @@ export const backgroundInputsRouter = router({
     // Section I — Business & Workforce Context
     if (!sectionI.businessDirection) missing.push("Business direction (Section I)");
     if (!sectionI.peopleChallenges?.length) missing.push("Top people challenges (Section I)");
+    // v4.2 Launch-tier: workforceComposition required — may under-score frontline initiatives if missing
+    if (!sectionI.workforceComposition) missing.push("Workforce composition (Section I)");
+    // v4.2 Launch-tier: skillsFrameworkStatus required — hard gate for skills taxonomy initiatives
+    if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
 
-    // Section K — HR Operating Model (performanceReviewCadence required per v4.2 spec — hard gate for PM initiatives)
+    // Section K — HR Operating Model
+    // performanceReviewCadence required per v4.2 spec — hard gate for PM initiatives (B-006 revert)
     if (!inputs.sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
+    // v4.2 Launch-tier: hiringVolumeProfile required — volume-profile gates applied in TA initiative scoring
+    if (!inputs.sectionK?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
 
     if (missing.length > 0) {
       throw new TRPCError({

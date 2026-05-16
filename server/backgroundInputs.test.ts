@@ -252,19 +252,182 @@ describe("Pre-work completion validation", () => {
     expect(missing).not.toContain("Performance review cadence (Section K)");
   });
 
-  it("passes validation with all required fields", () => {
+  // ── v4.2 Launch-tier required field tests ────────────────────────────────────
+
+  it("requires ukSitesCount in Section A (v4.2 Launch-tier)", () => {
+    const inputs = { sectionA: { sector: "retail" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionA as any)?.ukSitesCount) missing.push("Number of UK sites (Section A)");
+    expect(missing).toContain("Number of UK sites (Section A)");
+  });
+
+  it("passes ukSitesCount validation when set", () => {
+    const inputs = { sectionA: { ukSitesCount: 5 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionA as any)?.ukSitesCount) missing.push("Number of UK sites (Section A)");
+    expect(missing).not.toContain("Number of UK sites (Section A)");
+  });
+
+  it("requires workforceDigitalAccess in Section C (v4.2 Launch-tier)", () => {
+    const inputs = { sectionC: { hrisSystem: "Workday" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionC as any)?.workforceDigitalAccess) missing.push("Workforce digital access (Section C)");
+    expect(missing).toContain("Workforce digital access (Section C)");
+  });
+
+  it("passes workforceDigitalAccess validation when set", () => {
+    const inputs = { sectionC: { workforceDigitalAccess: "frontline_mobile" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionC as any)?.workforceDigitalAccess) missing.push("Workforce digital access (Section C)");
+    expect(missing).not.toContain("Workforce digital access (Section C)");
+  });
+
+  it("requires yearsOfHrisData in Section C (v4.2 Launch-tier)", () => {
+    const inputs = { sectionC: { hrisSystem: "Workday" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionC as any)?.yearsOfHrisData) missing.push("Years of HRIS data (Section C)");
+    expect(missing).toContain("Years of HRIS data (Section C)");
+  });
+
+  it("passes yearsOfHrisData validation when set", () => {
+    const inputs = { sectionC: { yearsOfHrisData: "2_to_5_years" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionC as any)?.yearsOfHrisData) missing.push("Years of HRIS data (Section C)");
+    expect(missing).not.toContain("Years of HRIS data (Section C)");
+  });
+
+  it("requires annualRevenue in Section D (v4.2 Launch-tier)", () => {
+    const inputs = { sectionD: { annualHiresLow: 100 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualRevenue) missing.push("Annual revenue (Section D)");
+    expect(missing).toContain("Annual revenue (Section D)");
+  });
+
+  it("passes annualRevenue validation when set", () => {
+    const inputs = { sectionD: { annualRevenue: 50000000 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualRevenue) missing.push("Annual revenue (Section D)");
+    expect(missing).not.toContain("Annual revenue (Section D)");
+  });
+
+  it("requires monthlyHrQueryVolume in Section D (v4.2 Launch-tier)", () => {
+    const inputs = { sectionD: { annualHiresLow: 100 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.monthlyHrQueryVolumeLow && (inputs.sectionD as any)?.monthlyHrQueryVolumeLow !== 0)
+      missing.push("Monthly HR query volume (Section D)");
+    expect(missing).toContain("Monthly HR query volume (Section D)");
+  });
+
+  it("passes monthlyHrQueryVolume validation when set", () => {
+    const inputs = { sectionD: { monthlyHrQueryVolumeLow: 500 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.monthlyHrQueryVolumeLow && (inputs.sectionD as any)?.monthlyHrQueryVolumeLow !== 0)
+      missing.push("Monthly HR query volume (Section D)");
+    expect(missing).not.toContain("Monthly HR query volume (Section D)");
+  });
+
+  it("requires annualApplicationVolume in Section D (v4.2 Launch-tier)", () => {
+    const inputs = { sectionD: { annualHiresLow: 100 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualApplicationVolumeLow && (inputs.sectionD as any)?.annualApplicationVolumeLow !== 0)
+      missing.push("Annual application volume (Section D)");
+    expect(missing).toContain("Annual application volume (Section D)");
+  });
+
+  it("passes annualApplicationVolume validation when set", () => {
+    const inputs = { sectionD: { annualApplicationVolumeLow: 10000 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualApplicationVolumeLow && (inputs.sectionD as any)?.annualApplicationVolumeLow !== 0)
+      missing.push("Annual application volume (Section D)");
+    expect(missing).not.toContain("Annual application volume (Section D)");
+  });
+
+  it("requires annualLDSpend in Section D (v4.2 Launch-tier)", () => {
+    const inputs = { sectionD: { annualHiresLow: 100 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualLDSpend && (inputs.sectionD as any)?.annualLDSpend !== 0)
+      missing.push("Annual L&D spend (Section D)");
+    expect(missing).toContain("Annual L&D spend (Section D)");
+  });
+
+  it("passes annualLDSpend validation when set", () => {
+    const inputs = { sectionD: { annualLDSpend: 500000 } };
+    const missing: string[] = [];
+    if (!(inputs.sectionD as any)?.annualLDSpend && (inputs.sectionD as any)?.annualLDSpend !== 0)
+      missing.push("Annual L&D spend (Section D)");
+    expect(missing).not.toContain("Annual L&D spend (Section D)");
+  });
+
+  it("requires workforceComposition in Section I (v4.2 Launch-tier)", () => {
+    const sectionI: Record<string, unknown> = { businessDirection: "growing" };
+    const missing: string[] = [];
+    if (!sectionI.workforceComposition) missing.push("Workforce composition (Section I)");
+    expect(missing).toContain("Workforce composition (Section I)");
+  });
+
+  it("passes workforceComposition validation when set", () => {
+    const sectionI: Record<string, unknown> = { workforceComposition: "frontline_heavy" };
+    const missing: string[] = [];
+    if (!sectionI.workforceComposition) missing.push("Workforce composition (Section I)");
+    expect(missing).not.toContain("Workforce composition (Section I)");
+  });
+
+  it("requires skillsFrameworkStatus in Section I (v4.2 Launch-tier)", () => {
+    const sectionI: Record<string, unknown> = { businessDirection: "growing" };
+    const missing: string[] = [];
+    if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
+    expect(missing).toContain("Skills framework status (Section I)");
+  });
+
+  it("passes skillsFrameworkStatus validation when set", () => {
+    const sectionI: Record<string, unknown> = { skillsFrameworkStatus: "in_development" };
+    const missing: string[] = [];
+    if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
+    expect(missing).not.toContain("Skills framework status (Section I)");
+  });
+
+  it("requires hiringVolumeProfile in Section K (v4.2 Launch-tier)", () => {
+    const inputs = { sectionK: { performanceReviewCadence: "annual" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionK as any)?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
+    expect(missing).toContain("Hiring volume profile (Section K)");
+  });
+
+  it("passes hiringVolumeProfile validation when set", () => {
+    const inputs = { sectionK: { hiringVolumeProfile: ["frontline_operative"] } };
+    const missing: string[] = [];
+    if (!(inputs.sectionK as any)?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
+    expect(missing).not.toContain("Hiring volume profile (Section K)");
+  });
+
+  it("passes validation with all required fields (including v4.2 Launch-tier)", () => {
     const inputs = {
-      sectionA: { sector: "technology", headcountBand: "lt500" },
-      sectionB: { hrTeamSize: 5 },
-      sectionK: { performanceReviewCadence: "annual" },
+      sectionA: { sector: "retail", headcountBand: "5k_25k", ukSitesCount: 50 },
+      sectionB: { hrTeamSize: 25 },
+      sectionC: { hrisSystem: "Workday", workforceDigitalAccess: "frontline_mobile", yearsOfHrisData: "2_to_5_years" },
+      sectionD: { annualHiresLow: 500, annualRevenue: 200000000, monthlyHrQueryVolumeLow: 1000, annualApplicationVolumeLow: 20000, annualLDSpend: 800000 },
+      sectionK: { performanceReviewCadence: "annual", hiringVolumeProfile: ["frontline_operative"] },
     };
+    const sectionI = { businessDirection: "growing", peopleChallenges: ["retention"], workforceComposition: "frontline_heavy", skillsFrameworkStatus: "in_development" };
     const missing: string[] = [];
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
     if (!inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
-    if (!inputs.sectionB?.hrTeamSize && inputs.sectionB?.hrTeamSize !== 0)
-      missing.push("HR team size (Section B)");
-    if (!(inputs.sectionK as any)?.performanceReviewCadence)
-      missing.push("Performance review cadence (Section K)");
+    if (!inputs.sectionA?.ukSitesCount) missing.push("Number of UK sites (Section A)");
+    if (!inputs.sectionB?.hrTeamSize && inputs.sectionB?.hrTeamSize !== 0) missing.push("HR team size (Section B)");
+    if (!inputs.sectionC?.hrisSystem) missing.push("HRIS system (Section C)");
+    if (!inputs.sectionC?.workforceDigitalAccess) missing.push("Workforce digital access (Section C)");
+    if (!inputs.sectionC?.yearsOfHrisData) missing.push("Years of HRIS data (Section C)");
+    if (!inputs.sectionD?.annualHiresLow && inputs.sectionD?.annualHiresLow !== 0) missing.push("Annual hires (Section D)");
+    if (!inputs.sectionD?.annualRevenue) missing.push("Annual revenue (Section D)");
+    if (!inputs.sectionD?.monthlyHrQueryVolumeLow && inputs.sectionD?.monthlyHrQueryVolumeLow !== 0) missing.push("Monthly HR query volume (Section D)");
+    if (!inputs.sectionD?.annualApplicationVolumeLow && inputs.sectionD?.annualApplicationVolumeLow !== 0) missing.push("Annual application volume (Section D)");
+    if (!inputs.sectionD?.annualLDSpend && inputs.sectionD?.annualLDSpend !== 0) missing.push("Annual L&D spend (Section D)");
+    if (!sectionI.businessDirection) missing.push("Business direction (Section I)");
+    if (!sectionI.peopleChallenges?.length) missing.push("Top people challenges (Section I)");
+    if (!sectionI.workforceComposition) missing.push("Workforce composition (Section I)");
+    if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
+    if (!inputs.sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
+    if (!inputs.sectionK?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
     expect(missing).toHaveLength(0);
   });
 });

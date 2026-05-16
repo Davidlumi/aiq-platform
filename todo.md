@@ -3646,10 +3646,24 @@ test
 - [x] Fix TypeScript TS2802 error: Array.from().concat() instead of Set spread in touchSection helper
 
 ## Pre-launch fix (B-006 revert)
-- [ ] Restore performanceReviewCadence to required field validation list (server/routers/backgroundInputs.ts ~line 702)
-- [ ] Update backgroundInputs.test.ts to assert performanceReviewCadence is required
+- [x] Restore performanceReviewCadence to required field validation list (server/routers/backgroundInputs.ts ~line 702)
+- [x] Update backgroundInputs.test.ts to assert performanceReviewCadence is required
 
 ## Follow-up items (non-blocking)
-- [ ] Confirm phase number → named concept mapping (Foundation/Build/Scale/Optimise) in Plan view UI
-- [ ] Verify Plan view curation cap (~8-12 initiatives per engine-update-spec Section 10)
-- [ ] Document optional Launch-tier fields for future tightening patch
+- [x] Confirm phase number → named concept mapping (Foundation/Build/Scale/Optimise) in Plan view UI
+- [x] Verify Plan view curation cap (~8-12 initiatives per engine-update-spec Section 10)
+- [x] Document optional Launch-tier fields for future tightening patch
+
+## v4.2 Launch-tier fields — required validation tightening patch
+- [ ] Add workforceComposition (Section I) to completePrework required list
+- [ ] Add annualRevenue (Section D) to completePrework required list
+- [ ] Add monthlyHrQueryVolume (Section D) to completePrework required list
+- [ ] Add annualApplicationVolume (Section D) to completePrework required list
+- [ ] Add annualLDSpend (Section D) to completePrework required list
+- [ ] Add ukSitesCount (Section A) to completePrework required list
+- [ ] Add workforceDigitalAccess (Section C) to completePrework required list
+- [ ] Add yearsOfHrisData (Section C) to completePrework required list
+- [ ] Add skillsFrameworkStatus (Section I) to completePrework required list
+- [ ] Add hiringVolumeProfile (Section K) to completePrework required list
+- [ ] Add unit tests for all 10 new required fields in backgroundInputs.test.ts
+- [ ] Update wizard UI: mark all 10 new required fields with required indicator (asterisk / red border on submit)

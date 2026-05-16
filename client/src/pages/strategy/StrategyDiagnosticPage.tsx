@@ -84,23 +84,36 @@ function isMandatoryComplete(
   const sC = (inputs as any).sectionC ?? {};
   const sD = (inputs as any).sectionD ?? {};
   const sE = (inputs as any).sectionE ?? {};
-  // Section A: sector + (totalHeadcount OR headcountBand)
+  // Section A: sector + (totalHeadcount OR headcountBand) + ukSitesCount
   if (!sA.sector) return false;
   if (!sA.totalHeadcount && !sA.headcountBand) return false;
+  if (!sA.ukSitesCount) return false;
   // Section B: hrTeamSize defined (0 is valid)
   if (sB.hrTeamSize === undefined || sB.hrTeamSize === null) return false;
-  // Section C: hrisSystem
+  // Section C: hrisSystem + workforceDigitalAccess + yearsOfHrisData (v4.2 Launch-tier)
   if (!sC.hrisSystem) return false;
-  // Section D: annualHiresLow defined (0 is valid)
+  if (!sC.workforceDigitalAccess) return false;
+  if (!sC.yearsOfHrisData) return false;
+  // Section D: annualHiresLow + annualRevenue + monthlyHrQueryVolumeLow + annualApplicationVolumeLow + annualLDSpend
   if (sD.annualHiresLow === undefined || sD.annualHiresLow === null) return false;
+  if (!sD.annualRevenue) return false;
+  if (sD.monthlyHrQueryVolumeLow === undefined || sD.monthlyHrQueryVolumeLow === null) return false;
+  if (sD.annualApplicationVolumeLow === undefined || sD.annualApplicationVolumeLow === null) return false;
+  if (!sD.annualLDSpend) return false;
   // Section E: ambitionTier, hrPosture, riskAppetite
   if (!sE.ambitionTier || !sE.hrPosture || !sE.riskAppetite) return false;
   // Section G: at least 3 domains rated > 0
   const ratedCount = Object.values(capDomains).filter(d => d.score > 0).length;
   if (ratedCount < 3) return false;
-  // Section I: businessDirection + at least 1 peopleChallenges entry
+  // Section I: businessDirection + peopleChallenges + workforceComposition + skillsFrameworkStatus (v4.2 Launch-tier)
   if (!sectionI.businessDirection) return false;
   if (!(sectionI.peopleChallenges as string[] ?? []).filter(Boolean).length) return false;
+  if (!sectionI.workforceComposition) return false;
+  if (!sectionI.skillsFrameworkStatus) return false;
+  // Section K: performanceReviewCadence + hiringVolumeProfile (v4.2 Launch-tier)
+  const sK = (inputs as any).sectionK ?? {};
+  if (!sK.performanceReviewCadence) return false;
+  if (!(sK.hiringVolumeProfile as string[] ?? []).length) return false;
   return true;
 }
 
@@ -122,14 +135,16 @@ function calcProgress(
   if (sectionId === "I") {
     const hasDir = !!(sectionI.businessDirection as string)?.trim();
     const hasChallenges = (sectionI.peopleChallenges as string[] ?? []).filter(Boolean).length > 0;
+    const hasComposition = !!sectionI.workforceComposition;
+    const hasSkillsStatus = !!sectionI.skillsFrameworkStatus;
     if (!hasDir && !hasChallenges) return "not_started";
-    if (hasDir && hasChallenges) return "complete";
+    if (hasDir && hasChallenges && hasComposition && hasSkillsStatus) return "complete";
     return "in_progress";
   }
   if (sectionId === "K") {
     const k = sectionK ?? {};
-    if (!k.onboardingModel && !k.performanceReviewCadence) return "not_started";
-    if (k.onboardingModel && k.performanceReviewCadence && k.hrHelpdeskModel) return "complete";
+    if (!k.onboardingModel && !k.performanceReviewCadence && !(k.hiringVolumeProfile as string[] ?? []).length) return "not_started";
+    if (k.performanceReviewCadence && (k.hiringVolumeProfile as string[] ?? []).length > 0) return "complete";
     return "in_progress";
   }
   if (sectionId === "J") {
@@ -147,19 +162,20 @@ function calcProgress(
   // Note: successNarrative is NOT required by the backend — removed from E
   // Note: F, H are optional sections — their "complete" tick is best-effort
   const required: Record<string, string[]> = {
-    A: ["sector"],          // headcount handled specially below
+    A: ["sector"],          // headcount + ukSitesCount handled specially below
     B: ["hrTeamSize"],      // 0 is valid — handled specially below
-    C: ["hrisSystem"],
-    D: ["annualHiresLow"],  // 0 is valid — handled specially below
+    C: ["hrisSystem", "workforceDigitalAccess", "yearsOfHrisData"], // v4.2 Launch-tier
+    D: ["annualHiresLow"],  // numeric 0-valid fields handled specially below
     E: ["ambitionTier", "hrPosture", "riskAppetite"],
     F: ["cultureDescriptors"],
     H: ["aiLiteracyLevel"], // keyApprovers is optional in backend
   };
 
-  // Special-case: Section A headcount (either totalHeadcount or headcountBand)
+  // Special-case: Section A headcount (either totalHeadcount or headcountBand) + ukSitesCount
   if (sectionId === "A") {
     if (!s.sector) return "in_progress";
     if (!s.totalHeadcount && !s.headcountBand) return "in_progress";
+    if (!s.ukSitesCount) return "in_progress";
     return "complete";
   }
 
@@ -170,6 +186,10 @@ function calcProgress(
   }
   if (sectionId === "D") {
     if (s.annualHiresLow === undefined || s.annualHiresLow === null) return "in_progress";
+    if (!s.annualRevenue) return "in_progress";
+    if (s.monthlyHrQueryVolumeLow === undefined || s.monthlyHrQueryVolumeLow === null) return "in_progress";
+    if (s.annualApplicationVolumeLow === undefined || s.annualApplicationVolumeLow === null) return "in_progress";
+    if (!s.annualLDSpend) return "in_progress";
     return "complete";
   }
 
@@ -1124,7 +1144,7 @@ export default function StrategyDiagnosticPage() {
                   value={(getField("C", "yearsOfHrisData") as string) ?? ""}
                   onValueChange={v => updateSection("C", "yearsOfHrisData", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select data history" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("C", !getField("C", "yearsOfHrisData"))}><SelectValue placeholder="Select data history" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="lt_1_year">Less than 1 year</SelectItem>
                     <SelectItem value="1_to_2_years">1 to 2 years</SelectItem>
@@ -1133,6 +1153,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="unknown">Unknown</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("C", !getField("C", "yearsOfHrisData")) && <p className="text-destructive text-xs mt-1">Please select years of HRIS data</p>}
               </div>
 
               <div className="space-y-2">
@@ -1142,7 +1163,7 @@ export default function StrategyDiagnosticPage() {
                   value={(getField("C", "workforceDigitalAccess") as string) ?? ""}
                   onValueChange={v => updateSection("C", "workforceDigitalAccess", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select access level" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("C", !getField("C", "workforceDigitalAccess"))}><SelectValue placeholder="Select access level" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all_laptops">All employees have laptops / desktops</SelectItem>
                     <SelectItem value="mixed_access">Mixed — most office staff do, frontline don't</SelectItem>
@@ -1150,6 +1171,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="limited">Limited — significant portion have no digital access</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("C", !getField("C", "workforceDigitalAccess")) && <p className="text-destructive text-xs mt-1">Please select workforce digital access level</p>}
               </div>
             </div>
           )}
@@ -1366,6 +1388,7 @@ export default function StrategyDiagnosticPage() {
                       placeholder="e.g. 5000"
                       value={getField("D", "annualApplicationVolumeLow") ?? ""}
                       onChange={e => updateSection("D", "annualApplicationVolumeLow", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                      aria-invalid={!!fieldErr("D", getField("D", "annualApplicationVolumeLow") === undefined || getField("D", "annualApplicationVolumeLow") === null || getField("D", "annualApplicationVolumeLow") === "")}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1385,6 +1408,7 @@ export default function StrategyDiagnosticPage() {
                   />
                   This is an estimate
                 </label>
+                {fieldErr("D", getField("D", "annualApplicationVolumeLow") === undefined || getField("D", "annualApplicationVolumeLow") === null || getField("D", "annualApplicationVolumeLow") === "") && <p className="text-destructive text-xs mt-1">Please enter annual application volume low estimate (0 is valid)</p>}
               </div>
 
               {/* Cost per external hire */}
@@ -1418,6 +1442,7 @@ export default function StrategyDiagnosticPage() {
                       placeholder="e.g. 200"
                       value={getField("D", "monthlyHrQueryVolumeLow") ?? ""}
                       onChange={e => updateSection("D", "monthlyHrQueryVolumeLow", e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                      aria-invalid={!!fieldErr("D", getField("D", "monthlyHrQueryVolumeLow") === undefined || getField("D", "monthlyHrQueryVolumeLow") === null || getField("D", "monthlyHrQueryVolumeLow") === "")}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1437,6 +1462,7 @@ export default function StrategyDiagnosticPage() {
                   />
                   This is an estimate
                 </label>
+                {fieldErr("D", getField("D", "monthlyHrQueryVolumeLow") === undefined || getField("D", "monthlyHrQueryVolumeLow") === null || getField("D", "monthlyHrQueryVolumeLow") === "") && <p className="text-destructive text-xs mt-1">Please enter monthly HR query volume low estimate (0 is valid)</p>}
               </div>
 
               {/* Annual L&D spend */}
@@ -1448,7 +1474,9 @@ export default function StrategyDiagnosticPage() {
                   placeholder="e.g. 750000"
                   value={getField("D", "annualLDSpend") ?? ""}
                   onChange={e => updateSection("D", "annualLDSpend", e.target.value ? parseFloat(e.target.value) : undefined)}
+                  aria-invalid={!!fieldErr("D", !getField("D", "annualLDSpend"))}
                 />
+                {fieldErr("D", !getField("D", "annualLDSpend")) && <p className="text-destructive text-xs mt-1">Please enter annual L&D spend (0 is valid)</p>}
                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <Checkbox
                     checked={!!(getField("D", "annualLDSpendIsEstimate"))}
@@ -1467,7 +1495,9 @@ export default function StrategyDiagnosticPage() {
                   placeholder="e.g. 250000000"
                   value={getField("D", "annualRevenue") ?? ""}
                   onChange={e => updateSection("D", "annualRevenue", e.target.value ? parseFloat(e.target.value) : undefined)}
+                  aria-invalid={!!fieldErr("D", !getField("D", "annualRevenue"))}
                 />
+                {fieldErr("D", !getField("D", "annualRevenue")) && <p className="text-destructive text-xs mt-1">Please enter annual revenue</p>}
                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <Checkbox
                     checked={!!(getField("D", "annualRevenueIsEstimate"))}
@@ -2113,7 +2143,7 @@ export default function StrategyDiagnosticPage() {
                   value={(getFieldI("workforceComposition") as string) ?? ""}
                   onValueChange={v => updateSectionI("workforceComposition", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select composition" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("I", !getFieldI("workforceComposition"))}><SelectValue placeholder="Select composition" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="knowledge_heavy">Primarily office / knowledge workers</SelectItem>
                     <SelectItem value="frontline_heavy">Frontline / operational heavy</SelectItem>
@@ -2121,6 +2151,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="unknown">Unknown / not yet assessed</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("I", !getFieldI("workforceComposition")) && <p className="text-destructive text-xs mt-1">Please select workforce composition</p>}
               </div>
 
               <div className="space-y-2">
@@ -2142,13 +2173,13 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Skills framework maturity</Label>
+                <Label>Skills framework maturity <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">How developed is your organisation’s skills taxonomy and framework?</p>
                 <Select
                   value={(getFieldI("skillsFrameworkStatus") as string) ?? ""}
                   onValueChange={v => updateSectionI("skillsFrameworkStatus", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select maturity level" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("I", !getFieldI("skillsFrameworkStatus"))}><SelectValue placeholder="Select maturity level" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="formal_taxonomy">Formal taxonomy — comprehensive, actively maintained</SelectItem>
                     <SelectItem value="informal_role_based">Informal / role-based — exists for some functions</SelectItem>
@@ -2157,6 +2188,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="unknown">Unknown</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("I", !getFieldI("skillsFrameworkStatus")) && <p className="text-destructive text-xs mt-1">Please select skills framework maturity</p>}
               </div>
 
               <div className="space-y-2">
@@ -2354,13 +2386,13 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Performance review cadence</Label>
+                <Label>Performance review cadence <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">How frequently are formal performance reviews conducted?</p>
                 <Select
                   value={(getFieldK("performanceReviewCadence") as string) ?? ""}
                   onValueChange={v => updateSectionK("performanceReviewCadence", v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select cadence" /></SelectTrigger>
+                  <SelectTrigger aria-invalid={!!fieldErr("K", !getFieldK("performanceReviewCadence"))}><SelectValue placeholder="Select cadence" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="continuous">Continuous — ongoing check-ins, no formal cycle</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
@@ -2369,6 +2401,7 @@ export default function StrategyDiagnosticPage() {
                     <SelectItem value="light_touch">Light touch — minimal or inconsistent</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErr("K", !getFieldK("performanceReviewCadence")) && <p className="text-destructive text-xs mt-1">Please select performance review cadence</p>}
               </div>
 
               <div className="space-y-2">
@@ -2406,7 +2439,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-3">
-                <Label>Hiring volume profile</Label>
+                <Label>Hiring volume profile <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">Which hiring segments are most significant? (select all that apply)</p>
                 {[
                   { value: "executive_search", label: "Executive / senior leadership" },
@@ -2431,6 +2464,7 @@ export default function StrategyDiagnosticPage() {
                     <span className="text-sm">{opt.label}</span>
                   </label>
                 ))}
+                {fieldErr("K", !(getFieldK("hiringVolumeProfile") as string[] ?? []).length) && <p className="text-destructive text-xs mt-1">Please select at least one hiring volume profile</p>}
               </div>
 
               <div className="space-y-2">
