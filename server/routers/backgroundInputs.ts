@@ -733,6 +733,9 @@ export const backgroundInputsRouter = router({
     if (!sectionI.businessDirection) missing.push("Business direction (Section I)");
     if (!sectionI.peopleChallenges?.length) missing.push("Top people challenges (Section I)");
 
+    // Section K — HR Operating Model (performanceReviewCadence required per v4.2 spec — hard gate for PM initiatives)
+    if (!inputs.sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
+
     if (missing.length > 0) {
       throw new TRPCError({
         code: "BAD_REQUEST",

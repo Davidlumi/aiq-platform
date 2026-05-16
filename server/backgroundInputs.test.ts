@@ -236,16 +236,35 @@ describe("Pre-work completion validation", () => {
     expect(missing).not.toContain("HR team size (Section B)");
   });
 
+  it("requires performanceReviewCadence in Section K (v4.2 spec — hard gate for PM initiatives)", () => {
+    const inputs = { sectionK: {} };
+    const missing: string[] = [];
+    if (!(inputs.sectionK as any)?.performanceReviewCadence)
+      missing.push("Performance review cadence (Section K)");
+    expect(missing).toContain("Performance review cadence (Section K)");
+  });
+
+  it("passes performanceReviewCadence validation when set", () => {
+    const inputs = { sectionK: { performanceReviewCadence: "annual" } };
+    const missing: string[] = [];
+    if (!(inputs.sectionK as any)?.performanceReviewCadence)
+      missing.push("Performance review cadence (Section K)");
+    expect(missing).not.toContain("Performance review cadence (Section K)");
+  });
+
   it("passes validation with all required fields", () => {
     const inputs = {
       sectionA: { sector: "technology", headcountBand: "lt500" },
       sectionB: { hrTeamSize: 5 },
+      sectionK: { performanceReviewCadence: "annual" },
     };
     const missing: string[] = [];
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
     if (!inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
     if (!inputs.sectionB?.hrTeamSize && inputs.sectionB?.hrTeamSize !== 0)
       missing.push("HR team size (Section B)");
+    if (!(inputs.sectionK as any)?.performanceReviewCadence)
+      missing.push("Performance review cadence (Section K)");
     expect(missing).toHaveLength(0);
   });
 });

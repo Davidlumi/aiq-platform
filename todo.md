@@ -3644,3 +3644,12 @@ test
 - [x] Error labels use text-destructive text-xs mt-1 pattern consistent with shadcn/ui
 - [x] Errors clear reactively as soon as the field is filled (fieldErr is computed from live form state)
 - [x] Fix TypeScript TS2802 error: Array.from().concat() instead of Set spread in touchSection helper
+
+## Pre-launch fix (B-006 revert)
+- [ ] Restore performanceReviewCadence to required field validation list (server/routers/backgroundInputs.ts ~line 702)
+- [ ] Update backgroundInputs.test.ts to assert performanceReviewCadence is required
+
+## Follow-up items (non-blocking)
+- [ ] Confirm phase number → named concept mapping (Foundation/Build/Scale/Optimise) in Plan view UI
+- [ ] Verify Plan view curation cap (~8-12 initiatives per engine-update-spec Section 10)
+- [ ] Document optional Launch-tier fields for future tightening patch
