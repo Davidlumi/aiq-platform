@@ -1906,7 +1906,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
           { role: "user", content: userPrompt },
         ],
       });
-      const content = resp?.choices?.[0]?.message?.content ?? "";
+      const rawContent = resp?.choices?.[0]?.message?.content ?? "";
+      const content: string = typeof rawContent === "string" ? rawContent : (Array.isArray(rawContent) ? (rawContent as Array<{text?: string} | string>).map(c => (typeof c === "string" ? c : (c as any)?.text ?? "")).join("") : "");
       if (!content) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM returned empty content" });
 
       const existingDraft = parse((row as any).strategyDraftJson) ?? { sections: [], generatedAt: null, lockedSections: [] };
