@@ -101,6 +101,13 @@ const NAV_ITEMS: NavItem[] = [
     section: "aistrategy",
   },
   {
+    label: "Strategy Draft",
+    path: "/strategy/draft",
+    icon: FileText,
+    roles: CPO_ROLES,
+    section: "aistrategy",
+  },
+  {
     label: "Company Assessment",
     path: "/company-assessment",
     icon: Building2,

@@ -404,6 +404,22 @@ function scorePivotalJobs(inputs: FitImpactEngineInputs, maxScore: number): numb
   return 0;
 }
 
+/**
+ * Scores based on current AI capability level (sectionG.aiCapabilityLevel).
+ * Lower capability = higher need for capability building = higher fit score.
+ * Values: none | developing | established | advanced
+ */
+function scoreAiCapabilityLevel(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const level = (inputs.sectionG as any)?.aiCapabilityLevel ?? "developing";
+  const map: Record<string, number> = {
+    none: 1.0,        // No AI capability — highest need
+    developing: 0.85, // Building capability — high need
+    established: 0.5, // Capability in place — moderate need (refresh/advance)
+    advanced: 0.2,    // Strong capability — low need (advanced programme only)
+  };
+  return Math.round(maxScore * (map[level] ?? 0.85));
+}
+
 // ─── Evaluator registry ───────────────────────────────────────────────────────
 
 const EVALUATORS: Record<string, (inputs: FitImpactEngineInputs, maxScore: number) => number> = {
@@ -429,6 +445,7 @@ const EVALUATORS: Record<string, (inputs: FitImpactEngineInputs, maxScore: numbe
   scoreRegulation,
   scoreChangeReadiness,
   scoreEthicsCapability,
+  scoreAiCapabilityLevel,
   scorePivotalJobs,
   scoreFrontlineComposition,
   scoreFrontlinePercent,

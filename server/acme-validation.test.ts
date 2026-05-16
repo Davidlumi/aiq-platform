@@ -169,7 +169,20 @@ describe("Acme Retail — Section 11 validation", () => {
     expect(r.fitStatus).not.toBe("HARD_GATE_FAIL");
   });
 
-  it("results should include all 49 initiatives", () => {
-    expect(results.length).toBe(49);
+  it("results should include all 51 initiatives", () => {
+    expect(results.length).toBe(51);
+  });
+
+  it("wp_ai_capability_building should be STRONG_FIT (foundation initiative)", () => {
+    const r = byId["wp_ai_capability_building"];
+    expect(r, "wp_ai_capability_building not found").toBeDefined();
+    // Foundation initiatives have no hard gates, so they always score
+    expect(["STRONG_FIT", "POSSIBLE_FIT"]).toContain(r.fitStatus);
+  });
+
+  it("ee_workforce_ai_comms should be STRONG_FIT (foundation initiative)", () => {
+    const r = byId["ee_workforce_ai_comms"];
+    expect(r, "ee_workforce_ai_comms not found").toBeDefined();
+    expect(["STRONG_FIT", "POSSIBLE_FIT"]).toContain(r.fitStatus);
   });
 });

@@ -1454,9 +1454,29 @@ export default function StrategyOverviewPage() {
               />
             )}
           </div>
+          {/* Card 5 — Strategy draft (full-width) */}
+          <div role="listitem" className="col-span-2">
+            <div
+              className="rounded-xl border border-border/60 bg-card p-4 cursor-pointer hover:border-violet-500/40 hover:bg-violet-500/5 transition-all group"
+              onClick={() => navigate("/strategy/draft")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/draft"); } }}
+              aria-label="Strategy draft"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-medium tracking-[0.08em] uppercase text-violet-400">Strategy document</p>
+                  <p className="text-sm font-semibold text-foreground">Strategy draft</p>
+                  <p className="text-xs text-muted-foreground/60">A 4–6 page narrative in your voice — generate, edit, and export.</p>
+                </div>
+                <span className="text-xs text-violet-400 group-hover:translate-x-0.5 transition-transform">Open →</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* ══ TALKING POINTS ═══════════════════════════════════════════════════ */}
+        {/* ══ TALKING POINTS ══════════════════════════════════════════════════════════ */}
         <TalkingPointsBlock
           strategyHash={strategyHash}
           hasStrategy={hasStrategy}

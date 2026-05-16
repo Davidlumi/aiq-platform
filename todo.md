@@ -3594,3 +3594,23 @@ test
 - [x] Acme validation test (Section 11): 15/15 tests passing — fw_shift_scheduling_ai and fw_frontline_communication both STRONG_FIT
 - [x] validate-database-schema.py installed to scripts/ — 0 hard failures, 15 expected warnings
 - [x] Full test suite: 1,082/1,082 passing
+
+## QA Script — BLOCKER Fixes (from qa-script-comprehensive)
+- [x] Add wp_ai_capability_building initiative to library (Foundation phase, universal, STRONG for all orgs)
+- [x] Add ee_workforce_ai_comms initiative to library (Foundation phase, universal, STRONG for all orgs)
+- [x] Remove "Indicative annual value" hero tile from StrategyPlanPage (C-005 BLOCKER)
+- [x] Remove "Y1:" prefix from cost badge on plan cards — show cost range without "Y1" label (C-010 BLOCKER)
+- [x] Remove TTV badge from plan cards (C-010 BLOCKER)
+- [x] Rename "Year 1 cost" to "Initial cost" in InitiativeDrawer (C-010 HIGH)
+- [x] Remove "These figures are indicative estimates" disclaimer from InitiativeDrawer value section (C-010 BLOCKER)
+- [x] Remove "indicative 18-month range" sub-label from plan hero cost tile (C-010 BLOCKER)
+- [x] Strategy Draft card added to StrategyOverviewPage (replaces standalone "What it costs" card)
+- [x] "View Investment & Risk" and "View Value" footer links kept (valid cross-links, not standalone nav)
+- [x] Build Strategy Draft page (Section F — 7-section LLM narrative, /strategy/draft)
+- [x] Add strategy draft route to App.tsx and navigation
+- [x] Add Strategy Draft nav item to AppShell sidebar
+- [x] Add Strategy Draft card to StrategyOverviewPage
+- [x] Add "Next: Strategy draft" footer link to StrategyPlanPage
+- [x] Add strategyDraftJson column to ail_org_context table
+- [x] Add getStrategyDraft, generateStrategyDraftSection, saveStrategyDraftSection procedures to intelligence router
+- [x] All 1,084 tests passing

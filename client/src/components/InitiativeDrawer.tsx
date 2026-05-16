@@ -442,9 +442,9 @@ export default function InitiativeDrawer({
             </Section>
           )}
 
-          {/* ── D. Indicative value ── */}
+          {/* ── D. Value estimate ── */}
           {(initiative.valueRange || initiative.valueNarrative) && (
-            <Section title="Indicative value" accent="#FBBF24">
+            <Section title="Value estimate" accent="#FBBF24">
               {initiative.valueRange && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
@@ -456,11 +456,11 @@ export default function InitiativeDrawer({
                   </div>
                   {initiative.y1CostRange && (
                     <div className="p-3 rounded-lg bg-muted border border-border">
-                      <p className="text-[10px] text-muted-foreground/70 mb-0.5">Year 1 cost</p>
+                      <p className="text-[10px] text-muted-foreground/70 mb-0.5">Initial cost</p>
                       <p className="text-sm font-semibold text-foreground">
                         {formatRange(initiative.y1CostRange.low, initiative.y1CostRange.high)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground/50 mt-0.5">indicative</p>
+                      <p className="text-[10px] text-muted-foreground/50 mt-0.5">first 12 months</p>
                     </div>
                   )}
                 </div>
@@ -479,7 +479,7 @@ export default function InitiativeDrawer({
               )}
               {initiative.isIndicative && (
                 <p className="text-[10px] text-muted-foreground/50">
-                  These figures are indicative estimates. Actual value depends on implementation quality, adoption, and org-specific factors.
+                  These figures are estimates. Actual value depends on implementation quality, adoption, and org-specific factors.
                 </p>
               )}
             </Section>

@@ -935,6 +935,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   fitImpactResultsJson: text("fit_impact_results_json"),                           // JSON: Fit+Impact engine output — ranked initiative recommendations
   lastDraftSavedAt: bigint("last_draft_saved_at", { mode: "number" }),              // Unix ms timestamp of last explicit Save as Draft action
   lastActiveSectionId: varchar("last_active_section_id", { length: 4 }),           // Section ID the user was on when they last saved draft (for resume)
+  strategyDraftJson: text("strategy_draft_json"),                                  // JSON: { sections: [{id, title, content, lockedAt, generatedAt, version}], generatedAt, lockedSections: string[] }
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

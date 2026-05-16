@@ -29,7 +29,8 @@ export type InitiativeCategory =
   | "compensation_reward"
   | "manager_effectiveness"
   | "governance"
-  | "frontline_workforce";
+  | "frontline_workforce"
+  | "ai_capability";
 
 /**
  * v3 fit status values.
@@ -1608,6 +1609,64 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+  },
+
+  // ─── AI Capability Building (2 initiatives) ─────────────────────────────────
+
+  {
+    id: "wp_ai_capability_building",
+    label: "AI Capability Building (Foundation)",
+    description: "Structured programme to build HR team and manager AI literacy: what AI can and cannot do, how to evaluate vendor claims, and how to work alongside AI tools.",
+    category: "ai_capability",
+    requiredSubFunctions: [],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "ai_ethics_trust", label: "AI ethics & trust capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 40 },
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 35 },
+      { key: "ai_capability_level", label: "Current AI capability level", fieldPath: "sectionG.aiCapabilityLevel", evaluator: "scoreAiCapabilityLevel", maxScore: 25 },
+    ],
+    timeToValueMonths: { min: 1, max: 3 },
+    phase: 1,
+    caseStudyAnchor: "UK retail group (25K employees): 6-month AI literacy programme across HR and line managers; 78% of managers rated confident using AI tools within 3 months of deployment.",
+    riskFlagKeys: [],
+    valueFormulaKey: "wp_ai_capability_building",
+    vendorLandscape: ["Coursera for Business", "LinkedIn Learning", "Humu", "Internal L&D"],
+    prerequisites: ["Executive sponsorship", "L&D team capacity to design and deliver"],
+    coDeployments: ["gv_ai_governance", "ee_workforce_ai_comms"],
+    phaseRationale: "Foundation phase — AI capability building must happen before any AI tool is deployed. Without it, adoption fails and trust erodes.",
+    y1CostRange: { low: 40, high: 100 },
+    hardGates: [
+      // Universal — recommended for any org deploying HR AI; no hard gates
+    ],
+    phaseV3: "foundation",
+  },
+
+  {
+    id: "ee_workforce_ai_comms",
+    label: "Workforce AI Communications",
+    description: "Structured communications programme to prepare the workforce for AI in HR: what is changing, why, what it means for them, and how to raise concerns.",
+    category: "ai_capability",
+    requiredSubFunctions: [],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 40 },
+      { key: "workforce_composition", label: "Frontline workforce (higher need)", fieldPath: "sectionI.workforceComposition", evaluator: "scoreFrontlineComposition", maxScore: 35 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 25 },
+    ],
+    timeToValueMonths: { min: 1, max: 2 },
+    phase: 1,
+    caseStudyAnchor: "UK logistics company (18K employees): Pre-deployment AI comms campaign reduced employee concerns from 67% to 28% before first tool went live; adoption rate 2× higher than comparable deployments without comms.",
+    riskFlagKeys: [],
+    valueFormulaKey: "ee_workforce_ai_comms",
+    vendorLandscape: ["Internal comms team", "Staffbase", "Poppulo", "Workvivo"],
+    prerequisites: ["Executive sponsorship", "Clear AI deployment roadmap to communicate"],
+    coDeployments: ["gv_ai_governance", "wp_ai_capability_building"],
+    phaseRationale: "Foundation phase — workforce communications must precede any AI tool deployment. Colleagues need to understand what is coming and why before it arrives.",
+    y1CostRange: { low: 20, high: 60 },
+    hardGates: [
+      // Universal — recommended for any org deploying HR AI; no hard gates
+    ],
+    phaseV3: "foundation",
   },
 
   {

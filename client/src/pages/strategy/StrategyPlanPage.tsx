@@ -811,24 +811,12 @@ export default function StrategyPlanPage() {
                   <p className="text-xs text-muted-foreground mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
                 </div>
                 <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-card border border-border">
-                  <p className="text-xs text-muted-foreground/70 mb-1">Total investment</p>
+                  <p className="text-xs text-muted-foreground/70 mb-1">Estimated investment</p>
                   <p className="text-2xl font-bold text-foreground">
                     £{totalLow >= 1000 ? `${(totalLow / 1000).toFixed(1)}M` : `${totalLow}k`}–£{totalHigh >= 1000 ? `${(totalHigh / 1000).toFixed(1)}M` : `${totalHigh}k`}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">indicative 18-month range</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">estimated 18-month range</p>
                 </div>
-                {valueTotalHigh > 0 && (
-                  <div className="col-span-2 sm:col-span-2 p-4 rounded-xl bg-violet-500/5 border border-violet-500/20">
-                    <p className="text-xs text-muted-foreground/70 mb-1 flex items-center gap-1.5">
-                      <TrendingUp className="w-3 h-3 text-violet-400" />
-                      Indicative annual value
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      £{valueTotalLow >= 1000 ? `${(valueTotalLow / 1000).toFixed(1)}M` : `${valueTotalLow}k`}–£{valueTotalHigh >= 1000 ? `${(valueTotalHigh / 1000).toFixed(1)}M` : `${valueTotalHigh}k`}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">sum of engine value estimates across all initiatives</p>
-                  </div>
-                )}
               </div>
 
               {/* Execution state pills (only when at least one non-not_started) */}
@@ -1088,13 +1076,13 @@ export default function StrategyPlanPage() {
                             </Badge>
                           );
                         })()}
-                        {/* Y1 cost badge */}
+                        {/* Yr 1 cost badge */}
                         {(init as any).y1CostRange && (() => {
                           const cr = (init as any).y1CostRange as { low: number; high: number };
                           const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;
                           return (
                             <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border">
-                              Y1: {fmt(cr.low)}–{fmt(cr.high)}
+                              Cost: {fmt(cr.low)}–{fmt(cr.high)}
                             </Badge>
                           );
                         })()}
@@ -1141,6 +1129,9 @@ export default function StrategyPlanPage() {
           </Button>
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground/70 hover:text-foreground/70" onClick={() => navigate("/strategy/value")}>
             View Value →
+          </Button>
+          <Button variant="ghost" size="sm" className="text-xs text-violet-400 hover:text-violet-300 ml-auto" onClick={() => navigate("/strategy/draft")}>
+            Next: Strategy draft →
           </Button>
         </div>
       </div>

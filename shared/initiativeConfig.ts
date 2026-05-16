@@ -340,6 +340,17 @@ export const INITIATIVE_CONFIG = {
     teamEngagementUpliftRate: 0.02,
   },
 
+  // ─── AI Capability Building ──────────────────────────────────────────
+  wp_ai_capability_building: {
+    adoptionAccelerationMultiplier: 0.40, // 40% faster adoption of downstream initiatives
+    capabilityBuildingCostPerHead: 50,    // £50 per head for training programme
+  },
+
+  ee_workforce_ai_comms: {
+    adoptionRateUplift: 0.30,             // 30% higher adoption rate with comms vs without
+    concernReductionRate: 0.45,           // 45% reduction in workforce concerns
+  },
+
   // ─── Legacy aliases (kept for backward compat with old tests) ────────────
   attritionPrediction: {
     attritionCostAsMultipleOfSalary: 0.75,

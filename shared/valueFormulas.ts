@@ -1130,6 +1130,38 @@ export function fw_store_manager_assistant(inputs: ValueFormulaInputs): ValueRan
   };
 }
 
+export function wp_ai_capability_building(inputs: ValueFormulaInputs): ValueRange {
+  const d = inputs.sectionD;
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const cfg = (INITIATIVE_CONFIG as any).wp_ai_capability_building;
+  // Value = adoption acceleration on downstream initiatives (proxy: 40% of avg salary × coverage)
+  const adoptionValue = hc * (avgSalary(inputs) * 0.01) * cfg.adoptionAccelerationMultiplier;
+  const total = adoptionValue;
+  return {
+    low: Math.round(total * 0.5),
+    high: Math.round(total * 1.2),
+    currency: "GBP",
+    isIndicative: true,
+    narrative: `Based on ${hc.toLocaleString()} employees: accelerated adoption of downstream AI initiatives through structured capability building.`,
+  };
+}
+
+export function ee_workforce_ai_comms(inputs: ValueFormulaInputs): ValueRange {
+  const d = inputs.sectionD;
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const cfg = (INITIATIVE_CONFIG as any).ee_workforce_ai_comms;
+  // Value = adoption rate uplift on downstream initiatives (proxy: 30% uplift × avg salary × small fraction)
+  const adoptionValue = hc * (avgSalary(inputs) * 0.005) * cfg.adoptionRateUplift;
+  const total = adoptionValue;
+  return {
+    low: Math.round(total * 0.5),
+    high: Math.round(total * 1.2),
+    currency: "GBP",
+    isIndicative: true,
+    narrative: `Based on ${hc.toLocaleString()} employees: improved adoption rates for AI tools through structured workforce communications.`,
+  };
+}
+
 // ─── Formula registry ─────────────────────────────────────────────────────────
 
 export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs) => ValueRange> = {
@@ -1195,4 +1227,7 @@ export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs)
   fw_frontline_learning,
   fw_frontline_communication,
   fw_store_manager_assistant,
+  // AI Capability Building
+  wp_ai_capability_building,
+  ee_workforce_ai_comms,
 };

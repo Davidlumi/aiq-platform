@@ -1,8 +1,8 @@
 /**
- * Fit + Impact Engine — Vitest test suite (v3, 49 initiatives)
+ * Fit + Impact Engine — Vitest test suite (v3, 51 initiatives)
  *
  * Tests:
- *   1. Initiative library structure (49 initiatives, unique IDs, valid formula keys)
+ *   1. Initiative library structure (51 initiatives, unique IDs, valid formula keys)
  *   2. Engine scoring: hard gate failures, fit classification, sorting
  *   3. Specific initiative scoring behaviour
  *   4. Value formulas: all 49 return valid ValueRange shapes
@@ -87,17 +87,17 @@ const baseInputs: FitImpactEngineInputs = {
 // ── 1. Initiative Library ─────────────────────────────────────────────────────
 
 describe("Initiative Library", () => {
-  it("has exactly 49 initiatives", () => {
-    expect(INITIATIVE_LIBRARY).toHaveLength(49);
+  it("has exactly 51 initiatives", () => {
+    expect(INITIATIVE_LIBRARY).toHaveLength(51);
   });
 
-  it("exports INITIATIVE_IDS with 49 entries", () => {
-    expect(INITIATIVE_IDS).toHaveLength(49);
+  it("exports INITIATIVE_IDS with 51 entries", () => {
+    expect(INITIATIVE_IDS).toHaveLength(51);
   });
 
   it("all initiative IDs are unique", () => {
     const ids = INITIATIVE_LIBRARY.map((i) => i.id);
-    expect(new Set(ids).size).toBe(49);
+    expect(new Set(ids).size).toBe(51);
   });
 
   it("each initiative has required fields", () => {
@@ -139,7 +139,7 @@ describe("Initiative Library", () => {
       "talent_acquisition", "onboarding", "learning_development", "internal_mobility",
       "performance_management", "employee_experience", "retention", "hr_operations",
       "workforce_planning", "compensation_reward", "manager_effectiveness", "governance",
-      "frontline_workforce",
+      "frontline_workforce", "ai_capability",
     ];
     for (const init of INITIATIVE_LIBRARY) {
       expect(validCategories, `${init.id} has invalid category: ${init.category}`).toContain(init.category);
@@ -164,6 +164,7 @@ describe("Initiative Library", () => {
       "mg_manager_copilot", "mg_difficult_conversations",
       "gv_ai_governance", "gv_cross_cutting_bias_audit",
       "fw_shift_scheduling_ai", "fw_frontline_learning", "fw_frontline_communication", "fw_store_manager_assistant",
+      "wp_ai_capability_building", "ee_workforce_ai_comms",
     ];
     for (const id of expectedIds) {
       expect(INITIATIVE_IDS, `Missing initiative ID: ${id}`).toContain(id);
@@ -219,9 +220,9 @@ describe("Engine: hard gate failures", () => {
 // ── 3. Engine: fit classification and sorting ─────────────────────────────────
 
 describe("Engine: fit classification and sorting", () => {
-  it("returns exactly 49 results", () => {
+  it("returns exactly 51 results", () => {
     const results = evaluateAllInitiatives(baseInputs);
-    expect(results).toHaveLength(49);
+    expect(results).toHaveLength(51);
   });
 
   it("each result has required fields", () => {
@@ -445,11 +446,11 @@ describe("Specific initiative scoring", () => {
 // ── 5. Value formulas ─────────────────────────────────────────────────────────
 
 describe("Value Formulas", () => {
-  it("VALUE_FORMULA_REGISTRY has exactly 49 entries", () => {
-    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(49);
+  it("VALUE_FORMULA_REGISTRY has exactly 51 entries", () => {
+    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(51);
   });
 
-  it("all 49 registered formulas return valid ValueRange shapes", () => {
+  it("all 51 registered formulas return valid ValueRange shapes", () => {
     for (const [key, fn] of Object.entries(VALUE_FORMULA_REGISTRY)) {
       const result = fn(baseInputs);
       expect(result.low, `${key}.low is not a number`).toBeTypeOf("number");

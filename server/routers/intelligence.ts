@@ -1785,4 +1785,193 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { success: true };
     }),
+
+  // ─── Strategy Draft ────────────────────────────────────────────────────────
+
+  /**
+   * Get the current strategy draft (all 7 sections).
+   */
+  getStrategyDraft: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({ strategyDraftJson: (ailOrgContext as any).strategyDraftJson })
+      .from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    if (!rows[0] || !(rows[0] as any).strategyDraftJson) return null;
+    try { return JSON.parse((rows[0] as any).strategyDraftJson); } catch { return null; }
+  }),
+
+  /**
+   * Generate a single section of the strategy draft using the LLM.
+   */
+  generateStrategyDraftSection: protectedProcedure
+    .input(z.object({
+      sectionId: z.enum(["exec_summary", "where_we_are", "where_going", "what_well_do", "success_measures", "what_requires", "what_wont_do"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const rows = await db.select({
+        visionStatement: ailOrgContext.visionStatement,
+        guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
+        wontDoJson: ailOrgContext.wontDoJson,
+        outcomesJson: ailOrgContext.outcomesJson,
+        selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+        fitImpactResultsJson: (ailOrgContext as any).fitImpactResultsJson,
+        backgroundInputsJson: ailOrgContext.backgroundInputsJson,
+        sector: ailOrgContext.sector,
+        headcount: ailOrgContext.headcount,
+        orgName: ailOrgContext.orgName,
+        strategyDraftJson: (ailOrgContext as any).strategyDraftJson,
+        structuredInputsJson: ailOrgContext.structuredInputsJson,
+        operationalBaselineJson: ailOrgContext.operationalBaselineJson,
+      }).from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const row = rows[0];
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy context found" });
+
+      const parse = (j: string | null | undefined) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
+      const bgInputs = parse(row.backgroundInputsJson) ?? {};
+      const principles = parse(row.guidingPrinciplesJson) ?? [];
+      const wontDo = parse(row.wontDoJson) ?? [];
+      const outcomes = parse(row.outcomesJson) ?? [];
+      const baseline = parse(row.operationalBaselineJson) ?? {};
+      const selectedIds: string[] = parse(row.selectedInitiativesJson) ?? [];
+      const fitResults: Array<{ id: string; fitStatus: string; phase: number; valueRange?: { low: number; high: number }; fitRationale?: string; y1CostRange?: { low: number; high: number } }> = parse((row as any).fitImpactResultsJson) ?? [];
+
+      const selectedFit = fitResults.filter(r => selectedIds.includes(r.id));
+      const phaseMap: Record<number, string[]> = {};
+      for (const f of selectedFit) {
+        const p = f.phase ?? 4;
+        if (!phaseMap[p]) phaseMap[p] = [];
+        phaseMap[p].push(f.id.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()));
+      }
+      const initiativeSummary = Object.entries(phaseMap)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([phase, names]) => {
+          const pLabel = ["Foundation", "Build", "Scale", "Optimise"][Number(phase) - 1] ?? `Phase ${phase}`;
+          return `${pLabel}: ${names.join(", ")}`;
+        }).join("\n");
+
+      const totalCostLow = selectedFit.reduce((s, f) => s + (f.y1CostRange?.low ?? 0), 0);
+      const totalCostHigh = selectedFit.reduce((s, f) => s + (f.y1CostRange?.high ?? 0), 0);
+      const fmtCost = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;
+
+      const orgCtx = [
+        row.orgName ? `Organisation: ${row.orgName}` : "",
+        row.sector ? `Sector: ${row.sector}` : "",
+        row.headcount ? `Headcount: ${row.headcount.toLocaleString()}` : "",
+        bgInputs.sectionA?.ukSitesCount ? `UK sites: ${bgInputs.sectionA.ukSitesCount}` : "",
+        bgInputs.sectionB?.hrSubFunctions ? `HR sub-functions: ${bgInputs.sectionB.hrSubFunctions.join(", ")}` : "",
+        baseline.hires_per_year ? `Annual hires: ${baseline.hires_per_year}` : "",
+        baseline.voluntary_attrition_rate_pct ? `Attrition rate: ${baseline.voluntary_attrition_rate_pct}%` : "",
+        baseline.time_to_fill_days ? `Time to fill: ${baseline.time_to_fill_days} days` : "",
+      ].filter(Boolean).join("\n");
+
+      const vision = row.visionStatement ?? "";
+      const principlesList = principles.map((p: any) => `- ${p.title}: ${p.description}`).join("\n");
+      const wontDoList = wontDo.map((w: any) => `- ${typeof w === "string" ? w : w.text}`).join("\n");
+      const outcomesList = outcomes.map((o: any) => `- ${o.title}: ${o.derived_summary ?? ""}`).join("\n");
+
+      const SECTION_PROMPTS: Record<string, string> = {
+        where_we_are: `Write the "Where we are" section (2-3 paragraphs, ~200 words). Cover: the scale and shape of the org, the current HR function and systems, the pressure points (what's slow, expensive, or broken), and why AI is relevant now. Use first-person plural ("we", "our"). Be specific — name the sector, headcount, key metrics. No bullet lists in the prose.`,
+        where_going: `Write the "Where we're going" section (3-4 paragraphs, ~250 words). Cover: the ambition in a single plain-language sentence, the 3-5 guiding principles (weave them into prose, don't list them), and the human outcomes we're aiming for. Use first-person plural. Reference the vision statement provided.`,
+        what_well_do: `Write the "What we'll do" section (4-5 paragraphs, ~350 words). Structure: brief framing of phases, then one paragraph per phase (Foundation, Build, Scale, Optimise). Name each initiative in plain English and give a sentence on why it's right for this org. Prose only — no bullet lists.`,
+        success_measures: `Write the "How we'll know it's working" section (2-3 paragraphs + 3-5 specific outcomes, ~200 words). Lead with how the CPO will know the strategy is working. Make each outcome concrete with a specific metric. Be honest about what's measurable now vs what needs new measurement.`,
+        what_requires: `Write the "What this requires" section (2-3 paragraphs, ~180 words). Cover: the investment envelope (narrative, not a table), what it includes (vendor costs, internal capacity), and the key dependencies (sponsorship, change capacity, technical readiness). Light framing only — not a budget breakdown.`,
+        what_wont_do: `Write the "What we won't do" section (1 paragraph + 3-5 explicit exclusions, ~150 words). List specific non-commitments with brief reasoning. Show the strategy is chosen, not maximalist.`,
+        exec_summary: `Write the executive summary (1 paragraph, 80-120 words). Structure: situation → ambition → approach → confidence. Distil the whole document into a single paragraph a CEO could read in 30 seconds. Use first-person plural.`,
+      };
+
+      const SECTION_TITLES: Record<string, string> = {
+        exec_summary: "Executive summary",
+        where_we_are: "Where we are",
+        where_going: "Where we're going",
+        what_well_do: "What we'll do",
+        success_measures: "How we'll know it's working",
+        what_requires: "What this requires",
+        what_wont_do: "What we won't do",
+      };
+
+      const systemPrompt = `You are drafting a section of an AI strategy document for the CPO of a ${row.sector ?? "large"} organisation. Write in first-person plural ("we", "our"). Be specific, grounded, and direct. Avoid consultant-speak: do not use words like "leverage", "synergy", "transformative", "game-changing", "holistic", "robust", "empower", "best practice", "ROI", "talent pipeline", "future-proof", "operational excellence", or "best-in-class". Write in plain English. No bullet lists in prose sections. Length targets are approximate — quality over quantity.`;
+
+      const userPrompt = `${SECTION_PROMPTS[input.sectionId]}\n\nOrg context:\n${orgCtx}\n\nVision statement: ${vision}\n\nGuiding principles:\n${principlesList}\n\nSelected initiatives by phase:\n${initiativeSummary}\n\nEstimated investment: ${fmtCost(totalCostLow)}–${fmtCost(totalCostHigh)} (year 1)\n\nOutcomes:\n${outcomesList}\n\nWhat we won't do:\n${wontDoList}\n\nReturn only the prose text for this section. No headers, no markdown formatting, no preamble.`;
+
+      const resp = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      });
+      const content = resp?.choices?.[0]?.message?.content ?? "";
+      if (!content) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM returned empty content" });
+
+      const existingDraft = parse((row as any).strategyDraftJson) ?? { sections: [], generatedAt: null, lockedSections: [] };
+      const sections: Array<{ id: string; title: string; content: string; generatedAt: number; version: number; lockedAt?: number }> = existingDraft.sections ?? [];
+      const idx = sections.findIndex((s: any) => s.id === input.sectionId);
+      const newSection = {
+        id: input.sectionId,
+        title: SECTION_TITLES[input.sectionId],
+        content,
+        generatedAt: Date.now(),
+        version: idx >= 0 ? (sections[idx].version ?? 0) + 1 : 1,
+      };
+      if (idx >= 0) sections[idx] = newSection;
+      else sections.push(newSection);
+
+      const updatedDraft = { ...existingDraft, sections, generatedAt: Date.now() };
+      await db.update(ailOrgContext)
+        .set({ strategyDraftJson: JSON.stringify(updatedDraft) } as any)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { sectionId: input.sectionId, content, title: SECTION_TITLES[input.sectionId] };
+    }),
+
+  /**
+   * Save an edited section of the strategy draft.
+   */
+  saveStrategyDraftSection: protectedProcedure
+    .input(z.object({
+      sectionId: z.enum(["exec_summary", "where_we_are", "where_going", "what_well_do", "success_measures", "what_requires", "what_wont_do"]),
+      content: z.string().max(10000),
+      locked: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select({ strategyDraftJson: (ailOrgContext as any).strategyDraftJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const parse = (j: string | null | undefined) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
+      const existingDraft = parse((rows[0] as any)?.strategyDraftJson) ?? { sections: [], generatedAt: null, lockedSections: [] };
+      const sections: Array<{ id: string; title: string; content: string; generatedAt: number; version: number; lockedAt?: number }> = existingDraft.sections ?? [];
+      const lockedSections: string[] = existingDraft.lockedSections ?? [];
+      const idx = sections.findIndex((s: any) => s.id === input.sectionId);
+      const existing = idx >= 0 ? sections[idx] : null;
+      const updated = {
+        id: input.sectionId,
+        title: existing?.title ?? input.sectionId,
+        content: input.content,
+        generatedAt: existing?.generatedAt ?? Date.now(),
+        version: existing?.version ?? 1,
+        lockedAt: input.locked ? Date.now() : existing?.lockedAt,
+      };
+      if (idx >= 0) sections[idx] = updated;
+      else sections.push(updated);
+      if (input.locked === true && !lockedSections.includes(input.sectionId)) {
+        lockedSections.push(input.sectionId);
+      } else if (input.locked === false) {
+        const li = lockedSections.indexOf(input.sectionId);
+        if (li >= 0) lockedSections.splice(li, 1);
+      }
+      const updatedDraft = { ...existingDraft, sections, lockedSections };
+      await db.update(ailOrgContext)
+        .set({ strategyDraftJson: JSON.stringify(updatedDraft) } as any)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
 });
