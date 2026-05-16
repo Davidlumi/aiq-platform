@@ -358,7 +358,7 @@ export default function StrategyDiagnosticPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   // Tracks which sections the user has attempted to advance past — triggers inline errors
   const [touchedSections, setTouchedSections] = useState<Set<SectionId>>(new Set());
-  const touchSection = (id: SectionId) => setTouchedSections(prev => new Set([...prev, id]));
+  const touchSection = (id: SectionId) => setTouchedSections(prev => new Set(Array.from(prev).concat(id)));
 
   // tRPC queries
   const inputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
