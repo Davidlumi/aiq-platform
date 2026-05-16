@@ -1143,9 +1143,14 @@ export default function StrategyDiagnosticPage() {
           {/* ── Section D ─────────────────────────────────────────────────── */}
           {activeSection === "D" && (
             <div className="space-y-5">
-              <p className="text-sm text-muted-foreground">
-                Estimates are fine — tick the flag and downstream financials will be marked indicative.
+                <p className="text-sm text-muted-foreground">
+                Estimates are fine — tick the flag and downstream figures will be clearly labelled as estimates.
               </p>
+
+              {/* Sub-group: Hiring metrics */}
+              <div className="pt-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 mb-3">Hiring metrics</p>
+              </div>
 
               {/* Annual hires */}
               <div className="space-y-2">
@@ -1218,18 +1223,23 @@ export default function StrategyDiagnosticPage() {
                 ))}
               </div>
 
+              {/* Sub-group: Budget & scale */}
+              <div className="pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 mb-3">Budget &amp; scale</p>
+              </div>
+
               {/* Total HR budget */}
               <div className="space-y-2">
                 <Label>Total HR budget (£)</Label>
                 <Input
                   type="number" min={0}
                   placeholder="e.g. 4500000"
-                  value={getField("D", "totalHrBudgetGbp") ?? ""}
-                  onChange={e => updateSection("D", "totalHrBudgetGbp", parseFloat(e.target.value) || 0)}
+                  value={getField("D", "hrBudgetGbp") ?? ""}
+                  onChange={e => updateSection("D", "hrBudgetGbp", parseFloat(e.target.value) || 0)}
                 />
                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <Checkbox
-                    checked={getField("D", "hrBudgetIsEstimate") ?? false}
+                    checked={!!(getField("D", "hrBudgetIsEstimate"))}
                     onCheckedChange={v => updateSection("D", "hrBudgetIsEstimate", v)}
                   />
                   This is an estimate
@@ -1251,9 +1261,9 @@ export default function StrategyDiagnosticPage() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                {getField("B", "hrTeamSize") && getField("D", "totalHrBudgetGbp") && (
+                {getField("B", "hrTeamSize") && getField("D", "hrBudgetGbp") && (
                   <p className="text-xs text-muted-foreground">
-                    Suggested: £{Math.round((getField("D", "totalHrBudgetGbp") as number) / (getField("B", "hrTeamSize") as number)).toLocaleString()} (HR budget ÷ team size)
+                    Suggested: £{Math.round((getField("D", "hrBudgetGbp") as number) / (getField("B", "hrTeamSize") as number)).toLocaleString()} (HR budget ÷ team size)
                   </p>
                 )}
                 <Input
@@ -1285,6 +1295,11 @@ export default function StrategyDiagnosticPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Sub-group: HR operations */}
+              <div className="pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 mb-3">HR operations</p>
               </div>
 
               {/* Voluntary attrition */}
@@ -1519,7 +1534,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Success narrative <span className="text-destructive">*</span></Label>
+                <Label>Success narrative</Label>
                 <p className="text-xs text-muted-foreground italic">
                   "Imagine it's {getField("E", "timeHorizonMonths") ? `${getField("E", "timeHorizonMonths")} months` : "[horizon]"} from now and someone asks how your strategy went — what do you want to be able to say?"
                 </p>
@@ -1582,7 +1597,7 @@ export default function StrategyDiagnosticPage() {
           {activeSection === "F" && (
             <div className="space-y-5">
               <div className="space-y-3">
-                <Label>Culture descriptors <span className="text-destructive">*</span></Label>
+                <Label>Culture descriptors</Label>
                 <p className="text-xs text-muted-foreground">Three words that honestly describe HR culture today</p>
                 {[0, 1, 2].map(i => (
                   <div key={i} className="flex items-center gap-2">
@@ -1791,7 +1806,7 @@ export default function StrategyDiagnosticPage() {
             <div className="space-y-5">
               <div className="space-y-3">
                 <div>
-                  <Label>Who needs to approve <span className="text-destructive">*</span></Label>
+                  <Label>Who needs to approve</Label>
                   <p className="text-xs text-muted-foreground mt-0.5">Select all that apply</p>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
@@ -1815,7 +1830,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Their AI literacy <span className="text-destructive">*</span></Label>
+                <Label>Their AI literacy</Label>
                 <Select
                   value={getField("H", "aiLiteracyLevel") ?? ""}
                   onValueChange={v => updateSection("H", "aiLiteracyLevel", v)}
@@ -2054,8 +2069,8 @@ export default function StrategyDiagnosticPage() {
                   <SelectContent>
                     <SelectItem value="strong">Strong — most managers use data confidently</SelectItem>
                     <SelectItem value="mixed">Mixed — variable across the management population</SelectItem>
-                    <SelectItem value="variable">Variable — a few strong, most uncertain</SelectItem>
                     <SelectItem value="weak">Weak — most managers not yet data-led</SelectItem>
+                    <SelectItem value="variable">Variable — a few strong, most uncertain</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2274,7 +2289,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Onboarding model <span className="text-destructive">*</span></Label>
+                <Label>Onboarding model</Label>
                 <p className="text-xs text-muted-foreground">How are new hires currently onboarded?</p>
                 <Select
                   value={(getFieldK("onboardingModel") as string) ?? ""}
@@ -2308,7 +2323,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Performance review cadence <span className="text-destructive">*</span></Label>
+                <Label>Performance review cadence</Label>
                 <p className="text-xs text-muted-foreground">How frequently are formal performance reviews conducted?</p>
                 <Select
                   value={(getFieldK("performanceReviewCadence") as string) ?? ""}
@@ -2326,7 +2341,7 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>HR helpdesk model <span className="text-destructive">*</span></Label>
+                <Label>HR helpdesk model</Label>
                 <p className="text-xs text-muted-foreground">How do employees currently get HR support?</p>
                 <Select
                   value={(getFieldK("hrHelpdeskModel") as string) ?? ""}

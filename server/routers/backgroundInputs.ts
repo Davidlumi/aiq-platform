@@ -80,6 +80,7 @@ const SectionDSchema = z.object({
   loadedFteIsEstimate: z.boolean().optional(),
   aiInvestmentEnvelopeGbp: z.number().min(0).optional(),
   aiEnvelopeIsEstimate: z.boolean().optional(),
+  aiInvestmentEnvelope: z.enum(["lt200k", "200k_1m", "1m_plus"]).optional(),
   voluntaryAttritionPct: z.number().min(0).max(100).optional(),
   attritionIsEstimate: z.boolean().optional(),
   timeToFillDays: z.number().min(0).optional(),
@@ -139,11 +140,7 @@ const SectionGSchema = z.object({
 });
 
 const SectionHSchema = z.object({
-  keyApprovers: z.array(z.object({
-    name: z.string().max(100),
-    role: z.string().max(100),
-    influence: z.enum(["high", "medium", "low"]).optional(),
-  })).max(10).optional(),
+  keyApprovers: z.array(z.string().max(100)).max(10).optional(),
   aiLiteracyLevel: z.enum(["low", "mixed", "moderate", "high"]).optional(),
   languageResonates: z.array(z.string().max(100)).max(5).optional(),
   keyStakeholderConcerns: z.array(z.string().max(200)).max(5).optional(),
@@ -185,7 +182,7 @@ const SectionISchema = z.object({
   pivotalJobFamilies: z.array(z.string().max(100)).max(5).optional(),
   peopleChallenges: z.array(z.string().max(200)).max(3).optional(),
   employeeExperienceState: z.string().max(500).optional(),
-  managerCapabilityForInsights: z.enum(["Strong", "Mixed", "Weak", "Variable"]).optional(),
+  managerCapabilityForInsights: z.enum(["strong", "mixed", "weak", "variable"]).optional(),
   skillsFrameworkStatus: z.enum(["formal_taxonomy", "informal_role_based", "in_development", "none", "unknown"]).optional(),
   skillsInventoryCompleteness: z.enum(["comprehensive", "partial", "minimal", "none"]).optional(),
   frontlineHeadcountPercent: z.number().int().min(0).max(100).optional(),
