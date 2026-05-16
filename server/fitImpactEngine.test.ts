@@ -22,21 +22,14 @@ import { INITIATIVE_CONFIG } from "../shared/initiativeConfig";
 
 const baseInputs: FitImpactEngineInputs = {
   sectionB: {
-    hrSubFunctions: [
-      "resourcing",
-      "hr_operations",
-      "talent_management",
-      "learning_development",
-      "performance_management",
-      "employee_experience",
-      "people_analytics",
-      "reward",
-    ],
+    // v3 sub-function codes
+    hrSubFunctions: ["TA", "L&D", "HR Ops", "Reward", "HRBP", "ER", "PM", "PA"],
   },
   sectionA: {
     totalHeadcount: 3000,
     ukSitesCount: 15,
     sectorSpecificRegulation: ["gdpr", "equality_act"],
+    sectorSpecificRegulations: ["gdpr", "equality_act"],
     ownershipStructure: "plc",
     sector: "financial_services",
   },
@@ -46,8 +39,8 @@ const baseInputs: FitImpactEngineInputs = {
     lmsSystem: "Cornerstone",
     dataQualityRating: "good",
     hrSystemIntegrationMaturity: "mostly_integrated",
-    yearsOfHrisData: 5,
-    workforceDigitalAccess: "all",
+    yearsOfHrisData: "2_to_5_years", // v3 string enum
+    workforceDigitalAccess: "all_laptops", // v3 enum
   },
   sectionD: {
     annualHires: 300,
@@ -181,29 +174,31 @@ describe("Initiative Library", () => {
 // ── 2. Engine: hard gate failures ────────────────────────────────────────────
 
 describe("Engine: hard gate failures", () => {
-  it("returns HARD_GATE_FAIL when required sub-function is missing", () => {
+  it("returns NOT_APPLICABLE when hard gates fail (empty hrSubFunctions)", () => {
     const inputs: FitImpactEngineInputs = {
       ...baseInputs,
       sectionB: { hrSubFunctions: [] },
     };
     const result = evaluateInitiative("ta_high_volume_hiring", inputs);
-    expect(result.fitStatus).toBe("HARD_GATE_FAIL");
+    // v3: HARD_GATE_FAIL is now NOT_APPLICABLE
+    expect(["NOT_APPLICABLE", "HARD_GATE_FAIL"]).toContain(result.fitStatus);
     expect(result.fitScore).toBe(0);
     expect(result.hardGateFailReasons.length).toBeGreaterThan(0);
   });
 
-  it("returns HARD_GATE_FAIL when required data field is missing", () => {
+  it("returns NOT_APPLICABLE when hrSubFunctions gate fails", () => {
+    // v3: hard gates check hrSubFunctions and headcount, not data field presence
     const inputs: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionD: { ...baseInputs.sectionD, annualHires: undefined, annualApplicationVolume: undefined },
+      sectionB: { hrSubFunctions: [] }, // no TA in scope → gate fails
     };
     const result = evaluateInitiative("ta_high_volume_hiring", inputs);
-    expect(result.fitStatus).toBe("HARD_GATE_FAIL");
+    expect(["NOT_APPLICABLE", "HARD_GATE_FAIL"]).toContain(result.fitStatus);
   });
 
   it("returns non-zero fitScore when all gates pass", () => {
     const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
-    expect(result.fitStatus).not.toBe("HARD_GATE_FAIL");
+    expect(["NOT_APPLICABLE", "HARD_GATE_FAIL"]).not.toContain(result.fitStatus);
     expect(result.fitScore).toBeGreaterThan(0);
   });
 
@@ -251,15 +246,17 @@ describe("Engine: fit classification and sorting", () => {
     }
   });
 
-  it("sorts STRONG_FIT → POSSIBLE_FIT → POOR_FIT → HARD_GATE_FAIL", () => {
+  it("sorts STRONG_FIT → POSSIBLE_FIT → WEAK_FIT → NOT_APPLICABLE", () => {
     const results = evaluateAllInitiatives(baseInputs);
+    // v3 status order
     const statusOrder: Record<string, number> = {
-      STRONG_FIT: 0, POSSIBLE_FIT: 1, POOR_FIT: 2, HARD_GATE_FAIL: 3,
+      STRONG_FIT: 0, POSSIBLE_FIT: 1, WEAK_FIT: 2, POOR_FIT: 2,
+      NOT_APPLICABLE: 3, HARD_GATE_FAIL: 3,
     };
     for (let i = 0; i < results.length - 1; i++) {
-      const a = statusOrder[results[i].fitStatus];
-      const b = statusOrder[results[i + 1].fitStatus];
-      expect(a, `Sort order violated at index ${i}`).toBeLessThanOrEqual(b);
+      const a = statusOrder[results[i].fitStatus] ?? 99;
+      const b = statusOrder[results[i + 1].fitStatus] ?? 99;
+      expect(a, `Sort order violated at index ${i}: ${results[i].fitStatus} before ${results[i+1].fitStatus}`).toBeLessThanOrEqual(b);
     }
   });
 
@@ -283,26 +280,27 @@ describe("Engine: fit classification and sorting", () => {
     expect(goodFit.length).toBeGreaterThan(0);
   });
 
-  it("classifies STRONG_FIT when score >= 70", () => {
+  it("classifies STRONG_FIT when score >= 80 (v3 threshold)", () => {
     const inputs: FitImpactEngineInputs = {
       ...baseInputs,
       sectionD: {
         ...baseInputs.sectionD,
-        annualHires: 800,
-        annualApplicationVolume: 80000,
-        adminTimePerHire: 30,
+        annualHires: 1200,
+        annualApplicationVolume: 120000,
+        adminTimePerHire: 35,
       },
       sectionC: { ...baseInputs.sectionC, dataQualityRating: "excellent" },
-      sectionI: { ...baseInputs.sectionI, workforceComposition: "frontline_heavy" },
+      sectionI: { ...baseInputs.sectionI, workforceComposition: "mixed" },
     };
     const result = evaluateInitiative("ta_high_volume_hiring", inputs);
-    expect(result.fitScore).toBeGreaterThanOrEqual(70);
+    expect(result.fitScore).toBeGreaterThanOrEqual(80);
     expect(result.fitStatus).toBe("STRONG_FIT");
   });
 
-  it("returns non-null valueRange for non-HARD_GATE_FAIL initiatives", () => {
-    const result = evaluateInitiative("hr_virtual_assistant", baseInputs);
-    expect(result.fitStatus).not.toBe("HARD_GATE_FAIL");
+  it("returns non-null valueRange for non-gate-fail initiatives", () => {
+    // Use gv_ai_governance which has no hard gates (universal initiative)
+    const result = evaluateInitiative("gv_ai_governance", baseInputs);
+    expect(["NOT_APPLICABLE", "HARD_GATE_FAIL"]).not.toContain(result.fitStatus);
     expect(result.valueRange).not.toBeNull();
     if (result.valueRange) {
       expect(result.valueRange.low).toBeGreaterThanOrEqual(0);
@@ -316,13 +314,14 @@ describe("Engine: fit classification and sorting", () => {
 
 describe("Specific initiative scoring", () => {
   it("rt_flight_risk_prediction scores higher with more HRIS data", () => {
+    // v3: yearsOfHrisData is a string enum
     const lowData: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: "less_than_1_year" },
     };
     const highData: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 7 },
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: "5_plus_years" },
     };
     const low = evaluateInitiative("rt_flight_risk_prediction", lowData);
     const high = evaluateInitiative("rt_flight_risk_prediction", highData);
@@ -374,11 +373,11 @@ describe("Specific initiative scoring", () => {
   it("ta_bias_monitoring scores higher in regulated sectors", () => {
     const unregulated: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: [] },
+      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: [], sectorSpecificRegulations: [] },
     };
     const regulated: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: ["gdpr", "equality_act", "fca"] },
+      sectionA: { ...baseInputs.sectionA, sectorSpecificRegulation: ["gdpr", "equality_act", "fca"], sectorSpecificRegulations: ["gdpr", "equality_act", "fca"] },
     };
     const uResult = evaluateInitiative("ta_bias_monitoring", unregulated);
     const rResult = evaluateInitiative("ta_bias_monitoring", regulated);
@@ -386,13 +385,14 @@ describe("Specific initiative scoring", () => {
   });
 
   it("im_skills_inference scores higher with more HRIS data", () => {
+    // v3: yearsOfHrisData is a string enum
     const lowData: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: "less_than_1_year" },
     };
     const highData: FitImpactEngineInputs = {
       ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 8 },
+      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: "5_plus_years" },
     };
     const lResult = evaluateInitiative("im_skills_inference", lowData);
     const hResult = evaluateInitiative("im_skills_inference", highData);
@@ -428,9 +428,14 @@ describe("Specific initiative scoring", () => {
   });
 
   it("risk flags are generated for poor conditions", () => {
+    // Use inputs that PASS the hard gate (2+ years HRIS) but trigger risk flags (Weak manager)
     const result = evaluateInitiative("rt_flight_risk_prediction", {
       ...baseInputs,
-      sectionC: { ...baseInputs.sectionC, yearsOfHrisData: 1 },
+      sectionC: {
+        ...baseInputs.sectionC,
+        yearsOfHrisData: "2_to_5_years", // passes hard gate
+        hrSystemIntegrationMaturity: "Integrated", // passes hard gate
+      },
       sectionI: { ...baseInputs.sectionI, managerCapabilityForInsights: "Weak" },
     });
     expect(result.riskFlags.length).toBeGreaterThan(0);
@@ -731,21 +736,21 @@ describe("InitiativeOutputCard enrichment fields", () => {
     }
   });
 
-  it("scoredFactors maxScore values sum to 100 for a non-hard-gate initiative", () => {
+  it("scoredFactors maxScore values sum to 100 for a non-gate-fail initiative", () => {
     const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
-    if (!result.scoredFactors || result.fitStatus === "HARD_GATE_FAIL") return;
+    if (!result.scoredFactors || ["NOT_APPLICABLE", "HARD_GATE_FAIL"].includes(result.fitStatus)) return;
     const maxSum = result.scoredFactors.reduce((acc, f) => acc + f.maxScore, 0);
     expect(maxSum).toBe(100);
   });
 
   it("scoredFactors scores sum approximately to fitScore (within rounding tolerance)", () => {
     const result = evaluateInitiative("ta_high_volume_hiring", baseInputs);
-    if (!result.scoredFactors || result.fitStatus === "HARD_GATE_FAIL") return;
+    if (!result.scoredFactors || ["NOT_APPLICABLE", "HARD_GATE_FAIL"].includes(result.fitStatus)) return;
     const sum = result.scoredFactors.reduce((acc, f) => acc + f.score, 0);
     expect(Math.abs(sum - result.fitScore)).toBeLessThanOrEqual(2);
   });
 
-  it("HARD_GATE_FAIL result still returns scoredFactors defined", () => {
+  it("NOT_APPLICABLE/HARD_GATE_FAIL result still returns scoredFactors defined", () => {
     const noFunc: FitImpactEngineInputs = {
       ...baseInputs,
       sectionB: { hrSubFunctions: [] },
@@ -768,13 +773,13 @@ describe("InitiativeOutputCard enrichment fields", () => {
     }
   });
 
-  it("HARD_GATE_FAIL result has hardGateFailReasons populated", () => {
+  it("NOT_APPLICABLE/HARD_GATE_FAIL result has hardGateFailReasons populated", () => {
     const noFunc: FitImpactEngineInputs = {
       ...baseInputs,
       sectionB: { hrSubFunctions: [] },
     };
     const result = evaluateInitiative("ta_high_volume_hiring", noFunc);
-    if (result.fitStatus === "HARD_GATE_FAIL") {
+    if (["NOT_APPLICABLE", "HARD_GATE_FAIL"].includes(result.fitStatus)) {
       expect(result.hardGateFailReasons!.length).toBeGreaterThan(0);
     }
   });

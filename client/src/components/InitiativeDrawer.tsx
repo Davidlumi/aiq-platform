@@ -89,7 +89,9 @@ const FIT_CONFIG: Record<string, { label: string; color: string; bg: string }> =
   STRONG_FIT:     { label: "Strong fit",   color: "#4ADE80", bg: "bg-green-500/10 text-green-400 border-green-500/20" },
   POSSIBLE_FIT:   { label: "Possible fit", color: "#FBBF24", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   POOR_FIT:       { label: "Weak fit",     color: "#F87171", bg: "bg-red-500/10 text-red-400 border-red-500/20" },
+  WEAK_FIT:       { label: "Weak fit",     color: "#F87171", bg: "bg-red-500/10 text-red-400 border-red-500/20" },
   HARD_GATE_FAIL: { label: "Not applicable", color: "#94A3B8", bg: "bg-muted text-muted-foreground border-border" },
+  NOT_APPLICABLE: { label: "Not applicable", color: "#94A3B8", bg: "bg-muted text-muted-foreground border-border" },
 };
 
 const CONFIDENCE_CONFIG: Record<string, { label: string; color: string; description: string }> = {

@@ -3578,3 +3578,19 @@ test
 - [x] 8 new Vitest tests in backgroundInputs.test.ts covering: present value, zero, undefined, null, boundary values (1, 100), composition+percent on same line, all other Section I fields preserved
 - [x] Tests: 1,054 / 1,054 passing (41 test files)
 - [x] Save checkpoint
+
+## Engine v3 Upgrade (engine-update-spec.md)
+- [x] v3 hard gate evaluator — boolean expression evaluator (field_in_array, field_includes, field_gt, field_gte, field_not_equals, field_or, field_populated)
+- [x] HardGate type added to InitiativeDefinition; all 49 initiatives patched with v3 hard gates from hr-ai-initiative-database-v3.md
+- [x] Fit bucketing updated to v3 thresholds: 80+ = STRONG_FIT, 50-79 = POSSIBLE_FIT, <50 = WEAK_FIT, failed gates = NOT_APPLICABLE
+- [x] FitStatus enum updated: NOT_APPLICABLE replaces HARD_GATE_FAIL, WEAK_FIT replaces POOR_FIT (backward compat kept)
+- [x] scoreFrontlineDigitalAccess evaluator added — inverted scoring for frontline-specific initiatives
+- [x] scoreDigitalAccess updated to v3 enum values (all_laptops, mixed_access, frontline_mobile, limited)
+- [x] yearsOfHrisData normalised to handle both v2 numeric and v3 string enum values
+- [x] Missing v3 fields added to SectionAInputs, SectionCInputs, SectionIInputs, SectionDInputs
+- [x] backgroundInputs.ts engine inputs assembly updated to map all v3 fields
+- [x] checkHardGates fixed: empty hardGates array = universal initiative (no gates), not legacy path
+- [x] managerCapabilityForInsights gate values fixed to use correct capitalised values (Weak, Mixed, Strong)
+- [x] Acme validation test (Section 11): 15/15 tests passing — fw_shift_scheduling_ai and fw_frontline_communication both STRONG_FIT
+- [x] validate-database-schema.py installed to scripts/ — 0 hard failures, 15 expected warnings
+- [x] Full test suite: 1,082/1,082 passing

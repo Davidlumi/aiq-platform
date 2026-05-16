@@ -31,7 +31,36 @@ export type InitiativeCategory =
   | "governance"
   | "frontline_workforce";
 
-export type FitStatus = "STRONG_FIT" | "POSSIBLE_FIT" | "POOR_FIT" | "HARD_GATE_FAIL";
+/**
+ * v3 fit status values.
+ * NOT_APPLICABLE replaces HARD_GATE_FAIL.
+ * WEAK_FIT replaces POOR_FIT.
+ * POOR_FIT and HARD_GATE_FAIL are kept as aliases for backward compat with existing tests.
+ */
+export type FitStatus =
+  | "STRONG_FIT"
+  | "POSSIBLE_FIT"
+  | "WEAK_FIT"
+  | "NOT_APPLICABLE"
+  /** @deprecated use WEAK_FIT */
+  | "POOR_FIT"
+  /** @deprecated use NOT_APPLICABLE */
+  | "HARD_GATE_FAIL";
+
+/**
+ * v3 hard gate — a structured boolean expression the engine evaluates against inputs.
+ * All gates in an initiative's `hardGates` array must pass for the initiative to be scored.
+ */
+export type HardGate =
+  | { type: "field_in_array"; path: string; values: string[]; label: string }
+  | { type: "field_not_in_array"; path: string; values: string[]; label: string }
+  | { type: "field_gt"; path: string; value: number; label: string }
+  | { type: "field_gte"; path: string; value: number; label: string }
+  | { type: "field_lt"; path: string; value: number; label: string }
+  | { type: "field_includes"; path: string; value: string; label: string }
+  | { type: "field_not_equals"; path: string; value: string | number; label: string }
+  | { type: "field_populated"; path: string; label: string }
+  | { type: "field_or"; gates: HardGate[]; label: string };
 
 export type SoftFitFactor = {
   key: string;
@@ -75,6 +104,17 @@ export type InitiativeDefinition = {
   phaseRationale: string;
   /** Y1 cost range in GBP thousands */
   y1CostRange: { low: number; high: number };
+  /**
+   * v3 hard gates — structured boolean expressions evaluated by the engine.
+   * Replaces requiredSubFunctions + requiredDataFields for v3 initiatives.
+   * If present and non-empty, these are used instead of the legacy fields.
+   */
+  hardGates?: HardGate[];
+  /**
+   * v3 phase label (Foundation / Build / Scale / Optimise).
+   * Replaces the numeric phase field for v3 initiatives.
+   */
+  phaseV3?: "foundation" | "build" | "scale" | "optimise";
 };
 
 export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
@@ -105,6 +145,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_bias_monitoring"],
     phaseRationale: "Foundation phase — establishes the AI screening infrastructure that all downstream TA initiatives depend on.",
     y1CostRange: { low: 100, high: 400 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -131,6 +176,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_interview_scheduling"],
     phaseRationale: "Scale phase — chatbots need governance (Foundation) and underlying TA process review (Build) before deploying at volume.",
     y1CostRange: { low: 100, high: 400 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+      { type: "field_gt", path: "sectionD.annualApplicationVolume", value: 1000, label: "More than 1,000 annual applications" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -156,6 +206,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_candidate_chatbot"],
     phaseRationale: "Foundation phase — quick-win automation that frees recruiter time before more complex TA AI is deployed.",
     y1CostRange: { low: 30, high: 120 },
+    hardGates: [
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -182,6 +237,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_bias_monitoring"],
     phaseRationale: "Build phase — requires clean ATS data and a skills framework before AI matching is accurate.",
     y1CostRange: { low: 80, high: 300 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -207,6 +267,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_bias_monitoring"],
     phaseRationale: "Scale phase — requires bias governance (Foundation) and sufficient hire volume to justify vendor cost.",
     y1CostRange: { low: 80, high: 250 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -232,6 +297,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_high_volume_hiring", "ta_sourcing_matching", "ta_video_interview_assessment"],
     phaseRationale: "Foundation phase — must be in place before or alongside any AI that touches hiring decisions.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -257,6 +327,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_sourcing_matching"],
     phaseRationale: "Foundation phase — immediate productivity gain for recruiters with minimal integration complexity.",
     y1CostRange: { low: 60, high: 200 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -282,6 +357,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_interview_scheduling"],
     phaseRationale: "Foundation phase — removes a common bottleneck at the end of the hiring funnel with low technical risk.",
     y1CostRange: { low: 25, high: 75 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -307,6 +387,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_bias_monitoring"],
     phaseRationale: "Foundation phase — low-cost, high-visibility quick win that improves pipeline quality before AI screening tools land.",
     y1CostRange: { low: 30, high: 100 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   // ─── Onboarding (4 initiatives) ──────────────────────────────────────────
@@ -335,6 +419,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["on_new_hire_chatbot"],
     phaseRationale: "Build phase — requires HRIS data quality and LMS infrastructure to be in place before personalisation is meaningful.",
     y1CostRange: { low: 50, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -360,6 +449,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["hr_virtual_assistant"],
     phaseRationale: "Build phase — incremental to the HR virtual assistant; deploy after the core chatbot is stable.",
     y1CostRange: { low: 20, high: 60 },
+    hardGates: [
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -385,6 +479,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_offer_generation"],
     phaseRationale: "Foundation phase — compliance automation reduces legal risk and admin burden from day one.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
+      { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -410,6 +509,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["on_personalised_journeys"],
     phaseRationale: "Build phase — most effective once personalised onboarding journeys are established and new hire data is available.",
     y1CostRange: { low: 20, high: 80 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Learning & Development (6 initiatives) ──────────────────────────────
@@ -438,6 +542,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["im_skills_inference"],
     phaseRationale: "Scale phase — requires a skills framework and LMS foundation before AI personalisation adds value.",
     y1CostRange: { low: 80, high: 350 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+      { type: "field_populated", path: "sectionC.lmsSystem", label: "LMS system in place" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -463,6 +573,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ld_personalised_learning", "im_skills_inference"],
     phaseRationale: "Optimise phase — strategic investment requiring mature skills data and established learning infrastructure.",
     y1CostRange: { low: 200, high: 2000 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+    ],
+    phaseV3: "scale",
   },
 
   {
@@ -488,6 +603,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["mg_manager_copilot"],
     phaseRationale: "Scale phase — most effective after governance and manager readiness initiatives have been completed.",
     y1CostRange: { low: 100, high: 500 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -514,6 +634,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ld_personalised_learning"],
     phaseRationale: "Foundation phase — compliance training is a legal requirement; AI automation reduces admin and improves completion rates.",
     y1CostRange: { low: 30, high: 120 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -539,6 +664,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ld_personalised_learning"],
     phaseRationale: "Build phase — accelerates content production once the learning infrastructure is established.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -564,6 +693,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["hr_virtual_assistant"],
     phaseRationale: "Build phase — requires existing documentation and a governance process before AI indexing adds value.",
     y1CostRange: { low: 60, high: 250 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Internal Mobility (3 initiatives) ───────────────────────────────────
@@ -591,6 +725,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["im_skills_inference", "ld_personalised_learning"],
     phaseRationale: "Scale phase — requires skills infrastructure and manager readiness before internal mobility AI is effective.",
     y1CostRange: { low: 200, high: 1000 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HRBP", label: "Internal mobility in scope" },
+    ],
+    phaseV3: "scale",
   },
 
   {
@@ -616,6 +755,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["im_talent_marketplace", "ld_personalised_learning"],
     phaseRationale: "Build phase — skills inference is the data foundation for talent marketplace and personalised learning.",
     y1CostRange: { low: 100, high: 400 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -641,6 +784,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["on_buddy_matching"],
     phaseRationale: "Build phase — works best once skills data is available for intelligent matching.",
     y1CostRange: { low: 30, high: 100 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Performance Management (3 initiatives) ──────────────────────────────
@@ -668,6 +815,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["mg_manager_copilot"],
     phaseRationale: "Scale phase — continuous performance requires manager readiness and a culture of regular feedback.",
     y1CostRange: { low: 40, high: 200 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -693,6 +844,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["pm_continuous_performance"],
     phaseRationale: "Build phase — AI writing assistance reduces review burden once the review process is established.",
     y1CostRange: { low: 80, high: 400 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -718,6 +873,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["pm_continuous_performance"],
     phaseRationale: "Build phase — OKR alignment requires a functioning performance management foundation.",
     y1CostRange: { low: 40, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Employee Experience (4 initiatives) ─────────────────────────────────
@@ -745,6 +905,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ee_wellbeing_burnout"],
     phaseRationale: "Build phase — continuous listening requires a response process; deploy after governance establishes data ethics.",
     y1CostRange: { low: 50, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "Employee experience in scope" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -771,6 +936,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ee_sentiment_listening"],
     phaseRationale: "Scale phase — recognition programmes have highest impact when deployed alongside continuous listening.",
     y1CostRange: { low: 100, high: 500 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access", "frontline_mobile"], label: "Workforce has digital access" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -796,6 +966,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ee_sentiment_listening"],
     phaseRationale: "Scale phase — wellbeing signal monitoring is most actionable once sentiment listening is established.",
     y1CostRange: { low: 100, high: 500 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "Employee experience in scope" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -821,6 +996,15 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["fw_frontline_communication"],
     phaseRationale: "Build phase — AI comms personalisation requires an established channel strategy before content targeting.",
     y1CostRange: { low: 60, high: 300 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_or", label: "Multi-site, remote, or hybrid workforce", gates: [
+        { type: "field_gt", path: "sectionA.ukSitesCount", value: 10, label: "More than 10 UK sites" },
+        { type: "field_in_array", path: "sectionI.geographicDistribution", values: ["multi_site_single_country", "multi_country", "global"], label: "Multi-site or global distribution" },
+        { type: "field_in_array", path: "sectionI.workforceWorkType", values: ["fully_remote", "hybrid"], label: "Remote or hybrid workforce" },
+      ] },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Retention (3 initiatives) ────────────────────────────────────────────
@@ -848,6 +1032,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ee_sentiment_listening", "mg_manager_copilot"],
     phaseRationale: "Optimise phase — flight risk models require mature HRIS data and a manager response process.",
     y1CostRange: { low: 100, high: 400 },
+    hardGates: [
+      { type: "field_in_array", path: "sectionC.yearsOfHrisData", values: ["2_to_5_years", "5_plus_years"], label: "2+ years of HRIS data available" },
+      { type: "field_not_equals", path: "sectionC.hrSystemIntegrationMaturity", value: "Separate systems", label: "HR systems have some integration" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -873,6 +1063,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["rt_flight_risk_prediction", "mg_manager_copilot"],
     phaseRationale: "Scale phase — stay interviews are most effective when managers have AI coaching support for the conversations.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_not_equals", path: "sectionI.managerCapabilityForInsights", value: "Weak", label: "Manager capability is not weak" },
+      { type: "field_gt", path: "sectionD.attritionRate", value: 10, label: "Attrition rate above 10%" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -897,6 +1093,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["rt_flight_risk_prediction"],
     phaseRationale: "Build phase — exit intelligence is a quick win that improves retention data quality for downstream analytics.",
     y1CostRange: { low: 30, high: 100 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_in_array", path: "sectionC.yearsOfHrisData", values: ["1_to_2_years", "2_to_5_years", "5_plus_years"], label: "At least 1 year of HRIS data available" },
+    ],
+    phaseV3: "foundation",
   },
 
   // ─── HR Operations (3 initiatives) ───────────────────────────────────────
@@ -924,6 +1125,15 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["on_new_hire_chatbot", "ld_knowledge_management"],
     phaseRationale: "Foundation phase — HR virtual assistant delivers immediate cost savings and is the platform for other chatbot use cases.",
     y1CostRange: { low: 150, high: 500 },
+    hardGates: [
+      { type: "field_gt", path: "sectionD.monthlyHrQueryVolume", value: 100, label: "More than 100 HR queries per month" },
+      { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access"], label: "Workforce has digital access" },
+      { type: "field_or", label: "HR Ops or HRBP in scope", gates: [
+        { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "HR Ops in scope" },
+        { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HRBP", label: "HRBP in scope" },
+      ] },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -949,6 +1159,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["hr_virtual_assistant"],
     phaseRationale: "Foundation phase — policy automation reduces legal risk and HR admin from the start.",
     y1CostRange: { low: 30, high: 100 },
+    hardGates: [
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "HR Ops in scope" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -974,6 +1189,14 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["hr_virtual_assistant"],
     phaseRationale: "Build phase — benefits decision support requires a stable HR virtual assistant and benefits data integration.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_or", label: "Reward or HR Ops in scope", gates: [
+        { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+        { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "HR Ops in scope" },
+      ] },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Workforce Planning (4 initiatives) ──────────────────────────────────
@@ -1001,6 +1224,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["wp_succession_planning", "im_skills_inference"],
     phaseRationale: "Optimise phase — workforce planning AI requires mature data and established planning processes.",
     y1CostRange: { low: 150, high: 600 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_in_array", path: "sectionC.yearsOfHrisData", values: ["2_to_5_years", "5_plus_years"], label: "2+ years of HRIS data available" },
+      { type: "field_not_equals", path: "sectionC.hrSystemIntegrationMaturity", value: "Separate systems", label: "HR systems have some integration" },
+    ],
+    phaseV3: "scale",
   },
 
   {
@@ -1026,6 +1255,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["wp_workforce_planning", "im_talent_marketplace"],
     phaseRationale: "Optimise phase — succession planning AI requires mature talent data and a functioning talent marketplace.",
     y1CostRange: { low: 80, high: 300 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_populated", path: "sectionI.pivotalJobFamilies", label: "Pivotal job families identified" },
+    ],
+    phaseV3: "scale",
   },
 
   {
@@ -1051,6 +1285,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["wp_workforce_planning"],
     phaseRationale: "Optimise phase — org design AI is most valuable when workforce planning data is already mature.",
     y1CostRange: { low: 100, high: 400 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 3000, label: "Organisation has more than 3,000 employees" },
+      { type: "field_in_array", path: "sectionI.businessDirectionType", values: ["transforming", "optimising"], label: "Organisation is transforming or optimising" },
+    ],
+    phaseV3: "optimise",
   },
 
   {
@@ -1076,6 +1315,15 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["wp_workforce_planning"],
     phaseRationale: "Optimise phase — location strategy is a strategic decision requiring mature workforce planning data.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 5000, label: "Organisation has more than 5,000 employees" },
+      { type: "field_in_array", path: "sectionI.businessDirectionType", values: ["growing", "transforming"], label: "Organisation is growing or transforming" },
+      { type: "field_or", label: "Multi-site or international operations", gates: [
+        { type: "field_gt", path: "sectionA.ukSitesCount", value: 5, label: "More than 5 UK sites" },
+        { type: "field_in_array", path: "sectionI.geographicDistribution", values: ["multi_country", "global"], label: "Multi-country or global operations" },
+      ] },
+    ],
+    phaseV3: "optimise",
   },
 
   // ─── Compensation & Reward (2 initiatives) ───────────────────────────────
@@ -1103,6 +1351,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["cr_compensation_recommendations"],
     phaseRationale: "Optimise phase — pay equity analysis requires complete compensation data and legal readiness.",
     y1CostRange: { low: 50, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -1128,6 +1381,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["cr_pay_equity"],
     phaseRationale: "Optimise phase — AI compensation recommendations require market data integration and established comp bands.",
     y1CostRange: { low: 50, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Manager Effectiveness (2 initiatives) ───────────────────────────────
@@ -1156,6 +1414,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["pm_continuous_performance", "ld_ai_coaching"],
     phaseRationale: "Scale phase — manager copilot is most effective once governance and continuous performance processes are established.",
     y1CostRange: { low: 40, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_not_equals", path: "sectionK.performanceReviewCadence", value: "light_touch", label: "Performance review cadence is not light touch" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -1181,6 +1444,11 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["mg_manager_copilot"],
     phaseRationale: "Scale phase — AI coaching for difficult conversations builds on manager copilot capabilities.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_in_array", path: "sectionI.managerCapabilityForInsights", values: ["Mixed", "Weak"], label: "Manager capability is mixed or weak" },
+    ],
+    phaseV3: "build",
   },
 
   // ─── Governance (2 initiatives) ───────────────────────────────────────────
@@ -1208,6 +1476,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["ta_bias_monitoring", "gv_cross_cutting_bias_audit"],
     phaseRationale: "Foundation phase — AI governance must be established before any AI tool is deployed at scale.",
     y1CostRange: { low: 50, high: 200 },
+    hardGates: [
+      // Universal — recommended for any org deploying HR AI; no hard gates
+    ],
+    phaseV3: "foundation",
   },
 
   {
@@ -1233,6 +1505,10 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["gv_ai_governance", "ta_bias_monitoring"],
     phaseRationale: "Optimise phase — cross-cutting bias audit is most valuable once multiple AI tools are in production.",
     y1CostRange: { low: 40, high: 150 },
+    hardGates: [
+      // Recommended when 2+ HR AI initiatives are deployed or planned; no strict hard gate
+    ],
+    phaseV3: "build",
   },
 
   // ─── Frontline Workforce (4 initiatives) ─────────────────────────────────
@@ -1261,6 +1537,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["fw_store_manager_assistant"],
     phaseRationale: "Scale phase — shift scheduling AI delivers the highest ROI for frontline orgs once governance is in place.",
     y1CostRange: { low: 100, high: 500 },
+    hardGates: [
+      { type: "field_in_array", path: "sectionI.workforceComposition", values: ["frontline_heavy", "mixed"], label: "Frontline or mixed workforce composition" },
+      { type: "field_gt", path: "sectionA.ukSitesCount", value: 5, label: "More than 5 UK sites" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+    ],
+    phaseV3: "scale",
   },
 
   {
@@ -1273,7 +1555,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     softFitFactors: [
       { key: "workforce_composition", label: "Frontline workforce composition", fieldPath: "sectionI.workforceComposition", evaluator: "scoreFrontlineComposition", maxScore: 20 },
       { key: "frontline_percent", label: "Frontline headcount %", fieldPath: "sectionI.frontlineHeadcountPercent", evaluator: "scoreFrontlinePercent", maxScore: 15 },
-      { key: "digital_access", label: "Workforce digital access", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreDigitalAccess", maxScore: 30 },
+      { key: "digital_access", label: "Workforce digital access", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreFrontlineDigitalAccess", maxScore: 30 },
       { key: "regulation", label: "Regulatory environment", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 20 },
       { key: "ld_spend", label: "Annual L&D spend", fieldPath: "sectionD.annualLDSpend", evaluator: "scoreLDSpend", maxScore: 15 },
     ],
@@ -1287,6 +1569,13 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["fw_frontline_communication", "ld_compliance_training"],
     phaseRationale: "Scale phase — microlearning for frontline workers requires mobile infrastructure and a content strategy.",
     y1CostRange: { low: 60, high: 250 },
+    hardGates: [
+      { type: "field_in_array", path: "sectionI.workforceComposition", values: ["frontline_heavy", "mixed"], label: "Frontline or mixed workforce composition" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
+      { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["frontline_mobile", "mixed_access", "all_laptops"], label: "Workforce has digital access" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -1299,7 +1588,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     softFitFactors: [
       { key: "workforce_composition", label: "Frontline workforce composition", fieldPath: "sectionI.workforceComposition", evaluator: "scoreFrontlineComposition", maxScore: 20 },
       { key: "frontline_percent", label: "Frontline headcount %", fieldPath: "sectionI.frontlineHeadcountPercent", evaluator: "scoreFrontlinePercent", maxScore: 15 },
-      { key: "digital_access", label: "Workforce digital access", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreDigitalAccess", maxScore: 30 },
+      { key: "digital_access", label: "Frontline digital access (inverted)", fieldPath: "sectionC.workforceDigitalAccess", evaluator: "scoreFrontlineDigitalAccess", maxScore: 30 },
       { key: "geographic_spread", label: "Geographic distribution", fieldPath: "sectionI.geographicDistribution", evaluator: "scoreGeographicSpread", maxScore: 20 },
       { key: "attrition_rate", label: "Attrition rate", fieldPath: "sectionD.attritionRate", evaluator: "scoreAttritionRate", maxScore: 15 },
     ],
@@ -1313,6 +1602,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["fw_frontline_learning", "ee_internal_comms_ai"],
     phaseRationale: "Scale phase — frontline communication AI requires mobile infrastructure and a content strategy.",
     y1CostRange: { low: 80, high: 400 },
+    hardGates: [
+      { type: "field_in_array", path: "sectionI.workforceComposition", values: ["frontline_heavy", "mixed"], label: "Frontline or mixed workforce composition" },
+      { type: "field_gt", path: "sectionA.ukSitesCount", value: 10, label: "More than 10 UK sites" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "build",
   },
 
   {
@@ -1339,6 +1634,12 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["fw_shift_scheduling_ai", "mg_manager_copilot"],
     phaseRationale: "Scale phase — store manager AI assistant is most effective once shift scheduling AI is providing data.",
     y1CostRange: { low: 100, high: 500 },
+    hardGates: [
+      { type: "field_in_array", path: "sectionI.workforceComposition", values: ["frontline_heavy", "mixed"], label: "Frontline or mixed workforce composition" },
+      { type: "field_gt", path: "sectionA.ukSitesCount", value: 10, label: "More than 10 UK sites" },
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+    ],
+    phaseV3: "build",
   },
 
 ];

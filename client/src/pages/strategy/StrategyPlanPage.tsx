@@ -695,7 +695,7 @@ export default function StrategyPlanPage() {
   const { valueTotalLow, valueTotalHigh } = useMemo(() => {
     let low = 0; let high = 0;
     for (const init of enriched) {
-      if (init.valueRange && init.fitStatus !== "HARD_GATE_FAIL") {
+      if (init.valueRange && init.fitStatus !== "HARD_GATE_FAIL" && init.fitStatus !== "NOT_APPLICABLE") {
         low  += (init.valueRange as any).low  ?? 0;
         high += (init.valueRange as any).high ?? 0;
       }
@@ -708,14 +708,18 @@ export default function StrategyPlanPage() {
     if (fitStatus === "STRONG_FIT")     return "bg-green-500/10 text-green-400 border-green-500/20";
     if (fitStatus === "POSSIBLE_FIT")   return "bg-amber-500/10 text-amber-400 border-amber-500/20";
     if (fitStatus === "POOR_FIT")       return "bg-red-500/10 text-red-400 border-red-500/20";
+    if (fitStatus === "WEAK_FIT")        return "bg-red-500/10 text-red-400 border-red-500/20";
     if (fitStatus === "HARD_GATE_FAIL") return "bg-muted text-muted-foreground border-border";
+    if (fitStatus === "NOT_APPLICABLE") return "bg-muted text-muted-foreground border-border";
     return "";
   }
   function fitLabel(fitStatus: string | null | undefined): string {
     if (fitStatus === "STRONG_FIT")     return "Strong fit";
     if (fitStatus === "POSSIBLE_FIT")   return "Possible fit";
     if (fitStatus === "POOR_FIT")       return "Weak fit";
+    if (fitStatus === "WEAK_FIT")        return "Weak fit";
     if (fitStatus === "HARD_GATE_FAIL") return "N/A";
+    if (fitStatus === "NOT_APPLICABLE") return "N/A";
     return "";
   }
 
@@ -1063,7 +1067,7 @@ export default function StrategyPlanPage() {
                           </Badge>
                         )}
                         {/* Fit score badge */}
-                        {(init as any).fitStatus && (init as any).fitStatus !== "HARD_GATE_FAIL" && (
+                        {(init as any).fitStatus && (init as any).fitStatus !== "HARD_GATE_FAIL" && (init as any).fitStatus !== "NOT_APPLICABLE" && (
                           <Badge
                             variant="outline"
                             className={`text-[10px] cursor-pointer ${fitBadgeClass((init as any).fitStatus)}`}
@@ -1073,7 +1077,7 @@ export default function StrategyPlanPage() {
                           </Badge>
                         )}
                         {/* Value badge */}
-                        {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (() => {
+                        {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (init as any).fitStatus !== "NOT_APPLICABLE" && (() => {
                           const vr = (init as any).valueRange as { low: number; high: number };
                           const mid = Math.round((vr.low + vr.high) / 2);
                           const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;

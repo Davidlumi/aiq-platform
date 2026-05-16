@@ -15,7 +15,7 @@
  *   7. Return InitiativeOutputCard
  */
 
-import { INITIATIVE_LIBRARY, type FitStatus, type InitiativeDefinition } from "../../shared/initiativeLibrary";
+import { INITIATIVE_LIBRARY, type FitStatus, type HardGate, type InitiativeDefinition } from "../../shared/initiativeLibrary";
 import { VALUE_FORMULA_REGISTRY, type ValueFormulaInputs } from "../../shared/valueFormulas";
 import { INITIATIVE_CONFIG } from "../../shared/initiativeConfig";
 
@@ -128,13 +128,39 @@ function scoreDataQuality(inputs: FitImpactEngineInputs, maxScore: number): numb
 
 function scoreDigitalAccess(inputs: FitImpactEngineInputs, maxScore: number): number {
   const access = inputs.sectionC.workforceDigitalAccess;
+  // v3 enum values: all_laptops, mixed_access, frontline_mobile, limited
+  // v2 fallback values: all, most, some, limited
   const map: Record<string, number> = {
+    all_laptops: 1.0,
+    mixed_access: 0.75,
+    frontline_mobile: 0.35, // frontline-only mobile = low general digital access
+    limited: 0.1,
+    // v2 fallbacks
     all: 1.0,
     most: 0.75,
     some: 0.4,
-    limited: 0.1,
   };
-  return Math.round(maxScore * (map[access ?? "some"] ?? 0.4));
+  return Math.round(maxScore * (map[access ?? "mixed_access"] ?? 0.4));
+}
+
+/**
+ * Inverted digital access scorer for initiatives specifically designed for
+ * frontline/mobile-only workers (fw_frontline_communication, fw_frontline_learning).
+ * "frontline_mobile" = full score (exact target audience).
+ */
+function scoreFrontlineDigitalAccess(inputs: FitImpactEngineInputs, maxScore: number): number {
+  const access = inputs.sectionC.workforceDigitalAccess;
+  const map: Record<string, number> = {
+    frontline_mobile: 1.0,  // perfect fit — designed for this
+    mixed_access: 0.7,      // partial frontline = good fit
+    all_laptops: 0.3,       // desk-based workforce — lower need
+    limited: 0.5,           // limited access = still a need
+    // v2 fallbacks
+    some: 0.7,
+    most: 0.3,
+    all: 0.2,
+  };
+  return Math.round(maxScore * (map[access ?? "mixed_access"] ?? 0.5));
 }
 
 function scoreAtspresent(inputs: FitImpactEngineInputs, maxScore: number): number {
@@ -161,8 +187,24 @@ function scoreIntegrationMaturity(inputs: FitImpactEngineInputs, maxScore: numbe
   return Math.round(maxScore * (map[maturity ?? "partial"] ?? 0.4));
 }
 
+/** Normalise yearsOfHrisData to a numeric value for comparisons.
+ * v2: stored as a number. v3: stored as enum string e.g. "2_to_5_years", "5_plus_years".
+ */
+function normaliseHrisYears(raw: number | string | undefined): number {
+  if (raw === undefined || raw === null) return 0;
+  if (typeof raw === "number") return raw;
+  const map: Record<string, number> = {
+    none: 0,
+    less_than_1_year: 0.5,
+    "1_to_2_years": 1.5,
+    "2_to_5_years": 3,
+    "5_plus_years": 6,
+  };
+  return map[raw] ?? 0;
+}
+
 function scoreHrisDataYears(inputs: FitImpactEngineInputs, maxScore: number): number {
-  const years = inputs.sectionC.yearsOfHrisData ?? 0;
+  const years = normaliseHrisYears(inputs.sectionC.yearsOfHrisData);
   if (years >= 5) return maxScore;
   if (years >= 3) return Math.round(maxScore * 0.7);
   if (years >= 2) return Math.round(maxScore * 0.4);
@@ -390,6 +432,7 @@ const EVALUATORS: Record<string, (inputs: FitImpactEngineInputs, maxScore: numbe
   scorePivotalJobs,
   scoreFrontlineComposition,
   scoreFrontlinePercent,
+  scoreFrontlineDigitalAccess,
   scoreGeographicSpread,
   scoreSkillsFramework,
   scoreGrowthDirection,
@@ -436,7 +479,7 @@ function evaluateRiskFlags(initiative: InitiativeDefinition, inputs: FitImpactEn
         if (c.dataQualityRating === "poor" || c.dataQualityRating === "fair") flags.push("Skills data quality is limited — marketplace matching accuracy will be affected.");
         break;
       case "insufficient_hris_data":
-        if ((c.yearsOfHrisData ?? 0) < 2) flags.push("Less than 2 years of HRIS data — insufficient for reliable attrition prediction models.");
+        if (normaliseHrisYears(c.yearsOfHrisData) < 2) flags.push("Less than 2 years of HRIS data — insufficient for reliable attrition prediction models.");
         break;
       case "weak_manager_capability":
         if (inputs.sectionI.managerCapabilityForInsights === "Weak") flags.push("Manager capability rated weak — intervention effectiveness will be significantly reduced.");
@@ -486,40 +529,143 @@ function evaluateRiskFlags(initiative: InitiativeDefinition, inputs: FitImpactEn
   return flags;
 }
 
-// ─── Hard gate check ──────────────────────────────────────────────────────────
+// ─── Hard gate check (v3) ────────────────────────────────────────────────────
 
-function checkHardGates(initiative: InitiativeDefinition, inputs: FitImpactEngineInputs): string[] {
+/**
+ * Resolve a dot-path like "sectionI.workforceComposition" against the engine inputs.
+ * Returns undefined if any segment is missing.
+ */
+function resolvePath(inputs: FitImpactEngineInputs, path: string): unknown {
+  const parts = path.split(".");
+  let val: unknown = inputs;
+  for (const part of parts) {
+    if (val === null || val === undefined) return undefined;
+    val = (val as Record<string, unknown>)[part];
+  }
+  return val;
+}
+
+/**
+ * Evaluate a single v3 hard gate expression against engine inputs.
+ * Returns true if the gate passes (condition is met).
+ */
+function evaluateHardGate(gate: HardGate, inputs: FitImpactEngineInputs): boolean {
+  switch (gate.type) {
+    case "field_in_array": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return false;
+      // val may itself be an array (e.g. sectorSpecificRegulations)
+      if (Array.isArray(val)) return val.some((v) => gate.values.includes(String(v)));
+      return gate.values.includes(String(val));
+    }
+    case "field_not_in_array": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return true; // absent = not in array
+      if (Array.isArray(val)) return !val.some((v) => gate.values.includes(String(v)));
+      return !gate.values.includes(String(val));
+    }
+    case "field_gt": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return false;
+      return Number(val) > gate.value;
+    }
+    case "field_gte": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return false;
+      return Number(val) >= gate.value;
+    }
+    case "field_lt": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return false;
+      return Number(val) < gate.value;
+    }
+    case "field_includes": {
+      const val = resolvePath(inputs, gate.path);
+      if (!Array.isArray(val)) return false;
+      return val.map(String).includes(gate.value);
+    }
+    case "field_not_equals": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return true; // absent = not equals
+      return String(val) !== String(gate.value);
+    }
+    case "field_populated": {
+      const val = resolvePath(inputs, gate.path);
+      if (val === undefined || val === null) return false;
+      if (Array.isArray(val)) return val.length > 0;
+      if (typeof val === "string") return val.trim().length > 0;
+      return true;
+    }
+    case "field_or": {
+      return gate.gates.some((g) => evaluateHardGate(g, inputs));
+    }
+    default:
+      return true; // unknown gate type: pass by default
+  }
+}
+
+/**
+ * Check all hard gates for an initiative.
+ * v3: uses initiative.hardGates (structured expressions) if present;
+ * falls back to legacy requiredSubFunctions + requiredDataFields.
+ * Returns array of failure reason strings (empty = all gates passed).
+ */
+function checkHardGates(
+  initiative: InitiativeDefinition,
+  inputs: FitImpactEngineInputs
+): { failures: string[]; passed: string[] } {
   const failures: string[] = [];
-  const subFunctions = inputs.sectionB?.hrSubFunctions ?? [];
+  const passed: string[] = [];
 
+  // v3 path: evaluate structured HardGate expressions.
+  // An empty hardGates array means "no gates — universal initiative" (all pass).
+  // Use v3 path whenever hardGates is defined, regardless of length.
+  if (initiative.hardGates !== undefined) {
+    for (const gate of initiative.hardGates) {
+      if (evaluateHardGate(gate, inputs)) {
+        passed.push(gate.label);
+      } else {
+        failures.push(gate.label);
+      }
+    }
+    return { failures, passed };
+  }
+
+  // Legacy path: requiredSubFunctions + requiredDataFields
+  const subFunctions = inputs.sectionB?.hrSubFunctions ?? [];
   for (const required of initiative.requiredSubFunctions) {
-    if (!subFunctions.includes(required)) {
+    if (subFunctions.includes(required)) {
+      passed.push(`Sub-function "${required}" in scope`);
+    } else {
       failures.push(`Sub-function "${required}" not in scope for this HR team.`);
     }
   }
-
   for (const field of initiative.requiredDataFields) {
     const parts = field.split(".");
     let val: unknown = inputs;
     for (const part of parts) {
       val = (val as Record<string, unknown>)?.[part];
     }
-    // Check sectionD directly for flat field names
     if (val === undefined || val === null) {
       const sectionDVal = (inputs.sectionD as Record<string, unknown>)[field];
       if (sectionDVal === undefined || sectionDVal === null) {
-        failures.push(`Required data field "${field}" not provided in Section D.`);
+        failures.push(`Required data field "${field}" not provided.`);
+      } else {
+        passed.push(`Data field "${field}" provided`);
       }
+    } else {
+      passed.push(`Data field "${field}" provided`);
     }
   }
-
-  return failures;
+  return { failures, passed };
 }
 
 // ─── Fit rationale builder ────────────────────────────────────────────────────
 
 function buildFitRationale(initiative: InitiativeDefinition, fitStatus: FitStatus, fitScore: number, inputs: FitImpactEngineInputs): string {
-  if (fitStatus === "HARD_GATE_FAIL") return "Required sub-functions or data fields are missing — cannot evaluate fit.";
+  if (fitStatus === "NOT_APPLICABLE" || fitStatus === "HARD_GATE_FAIL") {
+    return "One or more required conditions are not met for this organisation — initiative not applicable.";
+  }
 
   const topFactor = initiative.softFitFactors.reduce((best, factor) => {
     const evaluator = EVALUATORS[factor.evaluator];
@@ -535,7 +681,7 @@ function buildFitRationale(initiative: InitiativeDefinition, fitStatus: FitStatu
   if (fitStatus === "POSSIBLE_FIT") {
     return `Possible fit — some conditions are met but gaps exist. Soft fit score: ${fitScore}/100.`;
   }
-  return `Poor fit — most fit conditions are not met at this time. Soft fit score: ${fitScore}/100.`;
+  return `Weak fit — most fit conditions are not met at this time. Soft fit score: ${fitScore}/100.`;
 }
 
 // ─── Confidence labelling ─────────────────────────────────────────────────────
@@ -567,18 +713,18 @@ export function evaluateInitiative(
   const initiative = INITIATIVE_LIBRARY.find((i) => i.id === initiativeId);
   if (!initiative) throw new Error(`Initiative "${initiativeId}" not found in library.`);
 
-  // 1. Hard gate check
-  const hardGateFailReasons = checkHardGates(initiative, inputs);
+  // 1. Hard gate check (v3)
+  const { failures: hardGateFailReasons, passed: hardGatesPassed } = checkHardGates(initiative, inputs);
   if (hardGateFailReasons.length > 0) {
     return {
       id: initiative.id,
       label: initiative.label,
       category: initiative.category,
-      fitStatus: "HARD_GATE_FAIL",
+      fitStatus: "NOT_APPLICABLE",
       fitScore: 0,
-      fitRationale: "Required sub-functions or data fields are missing — cannot evaluate fit.",
+      fitRationale: "One or more required conditions are not met for this organisation — initiative not applicable.",
       valueRange: null,
-      valueNarrative: "Value estimate not available — hard gate conditions not met.",
+      valueNarrative: "Value estimate not available — required conditions not met.",
       isIndicative: false,
       confidence: "LOW",
       timeToValueMonths: initiative.timeToValueMonths,
@@ -587,23 +733,28 @@ export function evaluateInitiative(
       riskFlags: [],
       hardGateFailReasons,
       scoredFactors: initiative.softFitFactors.map((f) => ({ key: f.key, label: f.label, score: 0, maxScore: f.maxScore })),
-      hardGatesPassed: [],
+      hardGatesPassed,
       y1CostRange: initiative.y1CostRange,
     };
   }
 
-  // 2. Soft fit scoring
+  // 2. Soft fit scoring — first pass (excludes co-deployment signals)
   let fitScore = 0;
   const scoredFactors: Array<{ key: string; label: string; score: number; maxScore: number }> = [];
   for (const factor of initiative.softFitFactors) {
+    // Skip co-deployment signals on first pass (resolved in second pass by evaluateAllInitiatives)
+    if (factor.evaluator === "scoreCoDeployment") {
+      scoredFactors.push({ key: factor.key, label: factor.label, score: 0, maxScore: factor.maxScore });
+      continue;
+    }
     const evaluator = EVALUATORS[factor.evaluator];
     const score = evaluator ? evaluator(inputs, factor.maxScore) : 0;
     fitScore += score;
     scoredFactors.push({ key: factor.key, label: factor.label, score, maxScore: factor.maxScore });
   }
-  fitScore = Math.min(100, Math.max(0, fitScore));
+  fitScore = Math.min(150, Math.max(0, fitScore)); // v3: cap at 150 before clamping to 100
 
-  // 3. Fit status classification
+  // 3. Fit status classification (v3 thresholds: 80/50)
   const cfg = INITIATIVE_CONFIG.fitScoring;
   let fitStatus: FitStatus;
   if (fitScore >= cfg.strongFitThreshold) {
@@ -611,7 +762,7 @@ export function evaluateInitiative(
   } else if (fitScore >= cfg.possibleFitThreshold) {
     fitStatus = "POSSIBLE_FIT";
   } else {
-    fitStatus = "POOR_FIT";
+    fitStatus = "WEAK_FIT";
   }
 
   // 4. Value calculation
@@ -632,7 +783,7 @@ export function evaluateInitiative(
     label: initiative.label,
     category: initiative.category,
     fitStatus,
-    fitScore,
+    fitScore: Math.min(100, fitScore), // clamp to 100 for display
     fitRationale,
     valueRange: valueResult ? { low: valueResult.low, high: valueResult.high, currency: valueResult.currency } : null,
     valueNarrative: valueResult?.narrative ?? "Value estimate not available.",
@@ -644,32 +795,79 @@ export function evaluateInitiative(
     riskFlags,
     hardGateFailReasons: [],
     scoredFactors,
-    hardGatesPassed: [
-      ...initiative.requiredSubFunctions.map((sf) => `Sub-function "${sf}" in scope`),
-      ...initiative.requiredDataFields.map((f) => `Data field "${f}" provided`),
-    ],
+    hardGatesPassed,
     y1CostRange: initiative.y1CostRange,
   };
 }
 
 /**
  * Evaluate all 49 initiatives and return sorted results.
- * Sort order: STRONG_FIT → POSSIBLE_FIT → POOR_FIT → HARD_GATE_FAIL, then by fitScore desc.
+ *
+ * v3 two-pass algorithm:
+ *   Pass 1: evaluate all soft signals except co-deployment signals.
+ *   Determine candidate set (applicable + fitScore >= possibleFitThreshold).
+ *   Pass 2: add co-deployment bonuses for initiatives whose co-deployment partners
+ *           are in the candidate set.
+ *
+ * Sort order: STRONG_FIT → POSSIBLE_FIT → WEAK_FIT → NOT_APPLICABLE, then by fitScore desc.
  */
 export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): InitiativeOutputCard[] {
+  // Pass 1: evaluate all initiatives (co-deployment signals score 0 in first pass)
   const results = INITIATIVE_LIBRARY.map((initiative) =>
     evaluateInitiative(initiative.id, inputs)
   );
 
-  const statusOrder: Record<FitStatus, number> = {
+  // Build candidate set: applicable initiatives with fitScore >= possibleFitThreshold
+  const possibleThreshold = INITIATIVE_CONFIG.fitScoring.possibleFitThreshold;
+  const strongThreshold = INITIATIVE_CONFIG.fitScoring.strongFitThreshold;
+  const candidateIds = new Set(
+    results
+      .filter((r) => r.fitStatus !== "NOT_APPLICABLE" && r.fitStatus !== "HARD_GATE_FAIL" && r.fitScore >= possibleThreshold)
+      .map((r) => r.id)
+  );
+
+  // Pass 2: apply co-deployment bonuses
+  for (const result of results) {
+    if (result.fitStatus === "NOT_APPLICABLE" || result.fitStatus === "HARD_GATE_FAIL") continue;
+    const initiative = INITIATIVE_LIBRARY.find((i) => i.id === result.id)!;
+    let coDeployBonus = 0;
+    for (const factor of initiative.softFitFactors) {
+      if (factor.evaluator !== "scoreCoDeployment") continue;
+      // The fieldPath for co-deployment factors encodes the partner initiative ID
+      const partnerId = factor.fieldPath;
+      if (candidateIds.has(partnerId)) {
+        coDeployBonus += factor.maxScore;
+        // Update the scored factor entry
+        const sf = result.scoredFactors.find((f) => f.key === factor.key);
+        if (sf) sf.score = factor.maxScore;
+      }
+    }
+    if (coDeployBonus > 0) {
+      const newScore = Math.min(100, result.fitScore + coDeployBonus);
+      result.fitScore = newScore;
+      // Re-classify fit status after co-deployment bonus
+      if (newScore >= strongThreshold) {
+        result.fitStatus = "STRONG_FIT";
+      } else if (newScore >= possibleThreshold) {
+        result.fitStatus = "POSSIBLE_FIT";
+      } else {
+        result.fitStatus = "WEAK_FIT";
+      }
+      result.fitRationale = buildFitRationale(initiative, result.fitStatus, newScore, inputs);
+    }
+  }
+
+  const statusOrder: Record<string, number> = {
     STRONG_FIT: 0,
     POSSIBLE_FIT: 1,
-    POOR_FIT: 2,
-    HARD_GATE_FAIL: 3,
+    WEAK_FIT: 2,
+    POOR_FIT: 2, // legacy alias
+    NOT_APPLICABLE: 3,
+    HARD_GATE_FAIL: 3, // legacy alias
   };
 
   return results.sort((a, b) => {
-    const statusDiff = statusOrder[a.fitStatus] - statusOrder[b.fitStatus];
+    const statusDiff = (statusOrder[a.fitStatus] ?? 4) - (statusOrder[b.fitStatus] ?? 4);
     if (statusDiff !== 0) return statusDiff;
     return b.fitScore - a.fitScore;
   });

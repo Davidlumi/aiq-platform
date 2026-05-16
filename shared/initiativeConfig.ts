@@ -42,10 +42,12 @@ export const INITIATIVE_CONFIG = {
     excellent: 1.00,
   } as Record<string, number>,
 
-  // ─── Fit scoring thresholds ───────────────────────────────────────────────
+  // ─── Fit scoring thresholds (v3) ─────────────────────────────────────────
   fitScoring: {
-    strongFitThreshold: 70,
-    possibleFitThreshold: 40,
+    /** v3: 80+ = STRONG_FIT (at least 30 pts of positive signal above base) */
+    strongFitThreshold: 80,
+    /** v3: 50–79 = POSSIBLE_FIT; below 50 = WEAK_FIT */
+    possibleFitThreshold: 50,
   },
 
   // ─── Confidence labelling ─────────────────────────────────────────────────

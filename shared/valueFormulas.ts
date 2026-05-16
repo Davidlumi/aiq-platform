@@ -45,12 +45,21 @@ export type SectionDInputs = {
   annualRevenueIsEstimate?: boolean;
   currentEngagementScore?: number;
   hrFteCount?: number;
+  /** High-end of annual hires range (v3 gate uses .high) */
+  annualHiresHigh?: number;
+  /** High-end of annual application volume range */
+  annualApplicationVolumeHigh?: number;
+  /** High-end of monthly HR query volume range */
+  monthlyHrQueryVolumeHigh?: number;
 };
 
 export type SectionAInputs = {
   totalHeadcount?: number;
   ukSitesCount?: number;
+  /** v2 alias — kept for backward compat */
   sectorSpecificRegulation?: string[];
+  /** v3 canonical name */
+  sectorSpecificRegulations?: string[];
   ownershipStructure?: string;
   sector?: string;
 };
@@ -61,13 +70,16 @@ export type SectionCInputs = {
   lmsSystem?: string;
   dataQualityRating?: string;
   hrSystemIntegrationMaturity?: string;
-  yearsOfHrisData?: number;
+  /** v2: numeric years; v3: string enum e.g. "2_to_5_years" */
+  yearsOfHrisData?: number | string;
   workforceDigitalAccess?: string;
+  engagementSurveyTool?: string;
 };
 
 export type SectionIInputs = {
   workforceWorkType?: string;
   workforceComposition?: string;
+  workforceEmploymentMix?: string;
   businessDirectionType?: string;
   geographicDistribution?: string;
   managerCapabilityForInsights?: string;
@@ -76,6 +88,7 @@ export type SectionIInputs = {
   pivotalJobFamilies?: string[];
   employeeExperienceState?: string;
   frontlineHeadcountPercent?: number;
+  topBusinessPriorities?: string[];
 };
 
 export type SectionKInputs = {
