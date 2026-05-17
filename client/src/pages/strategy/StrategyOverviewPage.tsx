@@ -926,6 +926,7 @@ function GateFlowStrip() {
 export default function StrategyOverviewPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const gate = useGate();
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
