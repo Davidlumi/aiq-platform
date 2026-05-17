@@ -3764,3 +3764,10 @@ test
 
 ## Login Page Error Fix
 - [x] Suppressed spurious "[API Query Error] Please login (10001)" console error on /login page — auth.me fires on every page including /login; the 10001 response is the normal unauthenticated state, not a real error. Fixed in client/src/main.tsx by skipping console.error when the error message matches UNAUTHED_ERR_MSG.
+
+## Global Error Handler Review
+- [x] Audited all TRPCError codes thrown in server: UNAUTHORIZED (4), FORBIDDEN (90), NOT_FOUND (68), BAD_REQUEST (17), CONFLICT (7), TOO_MANY_REQUESTS (1), PRECONDITION_FAILED (1), INTERNAL_SERVER_ERROR (280)
+- [x] Rewrote global error handler in client/src/main.tsx with structured suppression policy: EXPECTED_TRPC_CODES set covers UNAUTHORIZED, FORBIDDEN, NOT_FOUND, BAD_REQUEST, CONFLICT, TOO_MANY_REQUESTS, PRECONDITION_FAILED; INTERNAL_SERVER_ERROR and all other codes always logged
+- [x] isExpectedError() uses error.data.code (preferred) with fallback to message string matching for UNAUTHED_ERR_MSG and NOT_ADMIN_ERR_MSG
+- [x] Suppression applied to both queryCache and mutationCache subscribers
+- [x] All 1,133 tests passing, TypeScript 0 errors
