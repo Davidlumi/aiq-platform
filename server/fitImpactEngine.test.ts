@@ -960,7 +960,9 @@ describe("Acme E2E — principle alignment for ACME-001 initiatives", () => {
     expect(result.violatedPrinciples.length).toBeGreaterThan(0);
   });
 
-  it("ACME-E-002: fw_shift_scheduling_ai aligns with efficiency and workforce-pace principles", () => {
+  it("ACME-E-002: fw_shift_scheduling_ai is aligned (not mixed) with Acme principles — score >= 0.7, no violations", () => {
+    // Frontline scheduling has no consequential-decision or shortlist conflict.
+    // Must return 'aligned' specifically, not 'mixed'.
     const result = scorePrincipleAlignment(
       "fw_shift_scheduling_ai",
       "AI-Powered Shift Scheduling",
@@ -968,21 +970,21 @@ describe("Acme E2E — principle alignment for ACME-001 initiatives", () => {
       acmePrinciples,
       acmeWontDo,
     );
-    expect(["aligned", "mixed"]).toContain(result.ranking);
-    expect(result.score).toBeGreaterThan(0);
+    expect(result.ranking).toBe("aligned");
+    expect(result.score).toBeGreaterThanOrEqual(0.7);
     expect(result.violatedPrinciples).toHaveLength(0);
   });
-
-  it("ACME-E-003: fw_frontline_manager_copilot aligns with augmentation principles", () => {
+  it("ACME-E-003: fw_frontline_communication is aligned (not mixed) with Acme principles — score >= 0.7, no violations", () => {
+    // Corrected from fw_frontline_manager_copilot: the spec names fw_frontline_communication.
     const result = scorePrincipleAlignment(
-      "fw_frontline_manager_copilot",
-      "Frontline Manager AI Copilot",
+      "fw_frontline_communication",
+      "Frontline Communication AI",
       "Workforce Planning",
       acmePrinciples,
       acmeWontDo,
     );
-    expect(["aligned", "mixed"]).toContain(result.ranking);
-    expect(result.score).toBeGreaterThan(0);
+    expect(result.ranking).toBe("aligned");
+    expect(result.score).toBeGreaterThanOrEqual(0.7);
     expect(result.violatedPrinciples).toHaveLength(0);
   });
 

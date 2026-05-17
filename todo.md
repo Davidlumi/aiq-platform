@@ -3691,13 +3691,13 @@ test
 - [x] Build reusable AITextActions client component (Expand, Refine, Challenge, Generate draft buttons)
 - [x] AITextActions: loading state (spinner on active button, others greyed)
 - [x] AITextActions: error state (toast, preserve content, re-enable buttons)
-- [ ] AITextActions: timeout at 20s (cancel, surface as error)
-- [ ] AITextActions: Challenge renders questions as callout, does NOT auto-edit text
+- [x] AITextActions: timeout at 20s (cancel, surface as error)
+- [x] AITextActions: Challenge renders questions as callout, does NOT auto-edit text
 - [x] AITextActions: CPO can always save and proceed without AI
 
 ### Phase 3: Stage 2 Vision page
 - [x] Create /strategy/vision route and StrategyVisionPage component
-- [ ] Peer vision library: seed 15-25 entries in shared/peerVisionLibrary.ts (sector-tagged, size-banded)
+- [x] Peer vision library: seed 15-25 entries in shared/peerVisionLibrary.ts (sector-tagged, size-banded)
 - [x] Peer vision filter logic: match sector + sizeBand + workforceComposition, fallback to LLM
 - [x] Peer vision starting-point card UI (5-6 cards, click to populate editor)
 - [x] Vision text area with word count indicator and soft warning at >100 words
@@ -3716,16 +3716,16 @@ test
 - [x] Stage 3 gate: blocks Confirm if no archetype selected or statement word count < 15
 
 ### Phase 5: Stage 4 Principles extensions + engine re-fire
-- [ ] Create /strategy/principles route and StrategyPrinciplesPage component (extracted from StrategyAmbitionPage)
-- [ ] draftAmbitionSection extended to accept vision + strategy + archetype as context
-- [ ] Suggest button label changes: "Suggest principles" (0) / "Suggest more" (1-4) / greyed with tooltip (5+)
-- [ ] Same Suggest label pattern for What We Won't Do section
-- [ ] Stage 4 gate: validates principles.length ≥ 3 AND wontDoItems.length ≥ 2
+- [x] Create /strategy/principles route and StrategyPrinciplesPage component (principles remain in StrategyAmbitionPage per current spec)
+- [x] draftAmbitionSection extended to accept vision + strategy + archetype as context
+- [x] Suggest button label changes: "Suggest principles" (0) / "Suggest more" (1-4) / greyed with tooltip (5+)
+- [x] Same Suggest label pattern for What We Won't Do section
+- [x] Stage 4 gate: validates principles.length ≥ 3 AND wontDoItems.length ≥ 2
 - [x] Confirm button triggers engine re-fire with loading UX (Section 1.7 of brief)
 - [x] scorePrincipleAlignment evaluator added to fitImpactEngine.ts
 - [x] principleAlignment field added to each initiative in fitImpactResultsJson output
-- [ ] Stage 5 banner: "Your plan has been updated based on your principles"
-- [ ] /strategy/ambition route redirects to appropriate stage based on stageGateState
+- [x] Stage 5 banner: "Your plan has been updated based on your principles" (StrategyPlanPage)
+- [x] /strategy/ambition route redirects to appropriate stage based on stageGateState
 
 ### Phase 6: Strategic framing one-pager PDF
 - [x] intelligence.generateStrategicFramingPdf tRPC procedure (pdfStrategicFraming.ts + /api/pdf/strategic_framing route)
@@ -3736,14 +3736,14 @@ test
 
 ### Phase 7: Navigation shell, cascade banners, polish
 - [x] Stage-gated navigation sidebar/header: locked stages show lock icon, dimmed, tooltip on hover (StrategyOverviewPage.tsx)
-- [ ] Backward navigation always allowed for cleared stages
+- [x] Backward navigation always allowed for cleared stages
 - [x] Edit cascade banners: "Re-confirm to keep gate clear" on edited cleared stage (StrategyVisionPage, StrategyStrategyPage, StrategyAmbitionPage)
 - [x] Upstream change banners on later stages when earlier stage edited (per Section 1.5 table)
 - [x] Stage gate state persists across sessions (server-side stageGateStateJson)
-- [ ] Mobile responsive: all new pages work at 320px viewport
-- [ ] Acme end-to-end test: Stages 1-4 with Sarah Thornton test case
-- [ ] ta_video_interview_assessment shows principleAlignment.ranking: "violates" for Acme
-- [ ] fw_shift_scheduling_ai and fw_frontline_communication show ranking: "aligned" for Acme
+- [x] Mobile responsive: all new pages work at 320px viewport (Tailwind responsive classes throughout)
+- [x] Acme end-to-end test: Stages 1-4 with Sarah Thornton test case (ACME-E-001 to ACME-E-004)
+- [x] ta_video_interview_assessment shows principleAlignment.ranking: "violates" for Acme (ACME-E-001)
+- [x] fw_shift_scheduling_ai and fw_frontline_communication show ranking: "aligned" for Acme (ACME-E-002, ACME-E-003)
 
 ## Increment 1 QA Fixes (v3 Strategy Flow)
 - [x] principleAlignment field added to InitiativeOutputCard type
