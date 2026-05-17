@@ -10,10 +10,11 @@
  *  - Warning triangles replaced with "EU AI Act high-risk" pill
  *  - Domain gap bars use monochrome (single accent colour)
  */
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useGate } from "@/contexts/GateContext";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -304,7 +305,14 @@ function SectionCard({
 
 export default function StrategyDraftPage() {
   const gate = useGate();
+  const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  // Gate redirect: Stage 8 (Draft) requires Stage 7 to be cleared
+  useEffect(() => {
+    if (!gate.isLoading && !gate.isStage8Accessible) {
+      navigate("/strategy");
+    }
+  }, [gate.isLoading, gate.isStage8Accessible, navigate]);
   const { data: draft, isLoading } = trpc.intelligence.getStrategyDraft.useQuery();
   const generateMutation = trpc.intelligence.generateStrategyDraftSection.useMutation({
     onSuccess: () => {

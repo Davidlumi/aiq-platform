@@ -3788,16 +3788,16 @@ test
 ## Increment 2 — v3 Strategy Flow (Stages 5–8)
 
 ### Week 1: Schema + Gate integration + Quick wins
-- [ ] Add stage5ConfirmedAt, stage6ConfirmedAt, stage7ConfirmedAt, stage8ConfirmedAt columns to ailOrgContext schema
-- [ ] Add businessCaseNarrative (text) and capabilityAssessmentJson (json) columns to ailOrgContext schema
-- [ ] Extend selectedInitiativesJson entry schema with acceptanceReason, owner, primaryMeasure fields
-- [ ] Extend stageGateStateJson to include stages 5–8 (completedAt, lastEditedAt)
-- [ ] Generate and apply schema migration SQL
-- [ ] Gate integration: StrategyBuilderPage — redirect to furthest-accessible stage if stage4 not cleared
-- [ ] Gate integration: StrategyPlanPage — redirect to furthest-accessible stage if stage4 not cleared
-- [ ] Gate integration: StrategyMeasurementPage — redirect to furthest-accessible stage if stage5 not cleared
-- [ ] Gate integration: StrategyInvestmentRiskPage (→ BusinessCasePage) — redirect if stage6 not cleared
-- [ ] Gate integration: StrategyDraftPage — redirect if stage7 not cleared
+- [x] Add stage5ConfirmedAt, stage6ConfirmedAt, stage7ConfirmedAt, stage8ConfirmedAt columns to ailOrgContext schema
+- [x] Add businessCaseNarrative (text) and capabilityAssessmentJson (json) columns to ailOrgContext schema
+- [x] Extend selectedInitiativesJson entry schema with acceptanceReason, owner, primaryMeasure fields
+- [x] Extend stageGateStateJson to include stages 5–8 (completedAt, lastEditedAt)
+- [x] Generate and apply schema migration SQL
+- [x] Gate integration: StrategyBuilderPage — redirect to furthest-accessible stage if stage4 not cleared
+- [x] Gate integration: StrategyPlanPage — redirect to furthest-accessible stage if stage4 not cleared
+- [x] Gate integration: StrategyMeasurementPage — redirect to furthest-accessible stage if stage5 not cleared
+- [x] Gate integration: StrategyInvestmentRiskPage (→ BusinessCasePage) — redirect if stage6 not cleared
+- [x] Gate integration: StrategyDraftPage — redirect if stage7 not cleared
 - [x] /strategy/value redirect → /strategy/business-case (per Decision 1.1)
 - [x] /strategy/roadmap redirect → /strategy/plan (StrategyRoadmapPage retired)
 - [x] Plan view curation cap: show selected count, amber warning at 13–19, hard block at 20

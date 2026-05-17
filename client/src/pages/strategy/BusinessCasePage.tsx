@@ -204,6 +204,12 @@ export default function BusinessCasePage() {
   const [, navigate] = useLocation();
   const gate = useGate();
   const utils = trpc.useUtils();
+  // Gate redirect: Stage 7 (Business Case) requires Stage 6 to be cleared
+  useEffect(() => {
+    if (!gate.isLoading && !gate.isStage7Accessible) {
+      navigate("/strategy");
+    }
+  }, [gate.isLoading, gate.isStage7Accessible, navigate]);
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();

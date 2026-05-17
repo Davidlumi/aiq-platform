@@ -908,8 +908,14 @@ function MethodologyBlock() {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function StrategyMeasurementPage() {
-  const [, navigate] = useLocation();
   const gate = useGate();
+  const [, navigate] = useLocation();
+  // Gate redirect: Stage 6 (Measurement) requires Stage 5 to be cleared
+  useEffect(() => {
+    if (!gate.isLoading && !gate.isStage6Accessible) {
+      navigate("/strategy");
+    }
+  }, [gate.isLoading, gate.isStage6Accessible, navigate]);
 
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
   const strategyQ    = trpc.intelligence.getStrategy.useQuery();
