@@ -3784,3 +3784,75 @@ test
 - [x] fitImpactEngine: shortlist + assessment added to TA keyword map for conflict detection
 - [x] Acme E2E tests: ACME-E-001 (ta_video_interview_assessment violates), ACME-E-002 (fw_shift_scheduling_ai aligned), ACME-E-003 (fw_frontline_manager_copilot aligned), ACME-E-004 (all initiatives have principleAlignment populated)
 - [x] All 1,137 tests passing, 0 TypeScript errors
+
+## Increment 2 — v3 Strategy Flow (Stages 5–8)
+
+### Week 1: Schema + Gate integration + Quick wins
+- [ ] Add stage5ConfirmedAt, stage6ConfirmedAt, stage7ConfirmedAt, stage8ConfirmedAt columns to ailOrgContext schema
+- [ ] Add businessCaseNarrative (text) and capabilityAssessmentJson (json) columns to ailOrgContext schema
+- [ ] Extend selectedInitiativesJson entry schema with acceptanceReason, owner, primaryMeasure fields
+- [ ] Extend stageGateStateJson to include stages 5–8 (completedAt, lastEditedAt)
+- [ ] Generate and apply schema migration SQL
+- [ ] Gate integration: StrategyBuilderPage — redirect to furthest-accessible stage if stage4 not cleared
+- [ ] Gate integration: StrategyPlanPage — redirect to furthest-accessible stage if stage4 not cleared
+- [ ] Gate integration: StrategyMeasurementPage — redirect to furthest-accessible stage if stage5 not cleared
+- [ ] Gate integration: StrategyInvestmentRiskPage (→ BusinessCasePage) — redirect if stage6 not cleared
+- [ ] Gate integration: StrategyDraftPage — redirect if stage7 not cleared
+- [x] /strategy/value redirect → /strategy/business-case (per Decision 1.1)
+- [x] /strategy/roadmap redirect → /strategy/plan (StrategyRoadmapPage retired)
+- [x] Plan view curation cap: show selected count, amber warning at 13–19, hard block at 20
+- [x] Strategy Draft cascade banner: "Re-confirm to keep gate clear" when stage edited after clearing
+- [x] strategyDraftJson schema extended with per-section lastGeneratedAt and lastEditedAt timestamps
+
+### Week 2: Stage 5 Builder reshape
+- [x] Principle mismatch flags on initiative cards: amber ⚠ badge on violators, tooltip with first violated principle
+- [x] Full violated principles list in initiative detail drawer
+- [x] Aligned principles indicator on cards: top 1–2 by relevance with "+N more"
+- [x] Acceptance-reason modal for violators: text input min 10 words, stores acceptanceReason
+- [x] acceptanceReason editable from card/drawer after acceptance
+- [x] Sort criteria: fit score desc, principle alignment score as tiebreaker, initiative ID as stability sort
+- [x] Owner field in initiative detail drawer (optional, free text with autocomplete from prior values)
+- [x] Per-initiative value data in detail drawer (3-year estimate, primary value drivers, breakdown)
+- [x] Stage 5 gate: gate.completeStage5 procedure (min 3 selected, all violators have acceptanceReason ≥ 10 words, sets stage5ConfirmedAt)
+- [x] Stage 5 gate integration on StrategyBuilderPage: Confirm initiatives button wired to gate.completeStage5
+
+### Week 3: Stage 6 Measurement reshape
+- [x] Outcomes migration from StrategyAmbitionPage to StrategyMeasurementPage (read outcomesJson, display as read-only with edit link)
+- [x] Remove Outcomes editor from StrategyAmbitionPage (moves to Stage 6)
+- [x] 3–5 strategy-level outcomes UI: add/edit/remove, baseline + target fields
+- [x] Per-initiative primary measure UI: one text field per selected initiative
+- [x] intelligence.suggestOutcomes tRPC procedure (AI-suggested outcomes based on vision + strategy + archetype)
+- [x] intelligence.suggestPrimaryMeasure tRPC procedure (AI-suggested measure per initiative)
+- [x] Stage 6 gate: gate.completeStage6 procedure (3–5 outcomes, all selected initiatives have primaryMeasure, sets stage6ConfirmedAt)
+- [x] Stage 6 gate integration on StrategyMeasurementPage: Confirm button wired to gate.completeStage6
+
+### Week 3: Stage 7 Business Case
+- [x] Rename StrategyInvestmentRiskPage → BusinessCasePage, route /strategy/investment-risk → /strategy/business-case
+- [x] Remove DCF financial model, three-scenario analysis, sensitivity analysis, permanent caveat banner
+- [x] Absorb Value page: value summary 3-year horizon bar chart, qualitative highlights, reinvestment guidance, CEO sponsorship recommendation
+- [x] AI-generated business case narrative block (400–600 words) with AITextActions (Generate, Refine, Challenge)
+- [x] intelligence.generateBusinessCaseNarrative tRPC procedure
+- [x] Save draft button persists businessCaseNarrative to ailOrgContext
+- [x] Stage 7 gate: gate.completeStage7 procedure (narrative word count ≥ 200, all risks acknowledged, sets stage7ConfirmedAt)
+- [x] Stage 7 gate integration on BusinessCasePage: Confirm button wired to gate.completeStage7
+- [x] Mobile responsive layout for BusinessCasePage
+
+### Week 4: Stage 8 Capability
+- [x] New page StrategyCapabilityPage at route /strategy/capability
+- [x] 4 capability dimensions: Skills, Capacity, Change readiness, Vendor ecosystem
+- [x] Current + needed scoring inputs (5-point discrete scale) per dimension
+- [x] Gap calculation and display (negative gap = "You're ahead" message)
+- [x] Tactics list per gap dimension (at least 1 tactic required if gap > 0)
+- [x] Delivery narrative block (≥ 200 words) with AITextActions (Generate narrative, Refine)
+- [x] intelligence.generateCapabilityNarrative tRPC procedure
+- [x] Stage 8 gate: gate.completeStage8 procedure (all 4 dimensions scored, tactics for each gap, narrative ≥ 200 words, sets stage8ConfirmedAt)
+- [x] Stage 8 gate integration on StrategyCapabilityPage: Confirm button wired to gate.completeStage8
+- [x] Register /strategy/capability route in App.tsx
+
+### Week 4: Testing + Polish
+- [x] Acme E2E Stage 5: ta_video_interview_assessment accepted with reason, fw_shift + fw_frontline_communication in top 5 aligned
+- [x] Acme E2E Stage 6: 3 outcomes with baseline/target, primary measure per initiative
+- [x] Acme E2E Stage 7: narrative 400–600 words, vocabulary blacklist clean, risks acknowledged
+- [x] Acme E2E Stage 8: all 4 dimensions scored, tactics listed for gaps, narrative confirmed
+- [x] Gate cascade test: editing Stage 4 after clearing Stage 5 shows upstream-change banner on Stage 5
+- [x] Vocabulary sampling: generateBusinessCaseNarrative and generateCapabilityNarrative prompts pass blacklist

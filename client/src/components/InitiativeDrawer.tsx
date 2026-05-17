@@ -46,6 +46,8 @@ export type DrawerInitiative = {
   status?: string;
   targetQuarter?: string | null;
   notes?: string | null;
+  owner?: string | null;
+  acceptanceReason?: string | null;
 };
 
 interface InitiativeDrawerProps {
@@ -57,6 +59,7 @@ interface InitiativeDrawerProps {
   onAdd?: (id: string) => void;
   isInPlan?: boolean;
   onNavigate?: (id: string) => void;
+  onUpdateOwner?: (id: string, owner: string) => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -172,14 +175,19 @@ export default function InitiativeDrawer({
   onAdd,
   isInPlan = true,
   onNavigate,
+  onUpdateOwner,
 }: InitiativeDrawerProps) {
   const [noteText, setNoteText] = useState("");
   const [noteOpen, setNoteOpen] = useState(false);
+  const [ownerText, setOwnerText] = useState("");
+  const [ownerEditing, setOwnerEditing] = useState(false);
 
-  // Sync note text when initiative changes
+  // Sync note + owner text when initiative changes
   useEffect(() => {
     setNoteText(initiative?.notes ?? "");
     setNoteOpen(false);
+    setOwnerText(initiative?.owner ?? "");
+    setOwnerEditing(false);
   }, [initiative?.id]);
 
   // Library entry for static data (vendor landscape, prerequisites, co-deployments, phase rationale)
@@ -350,6 +358,58 @@ export default function InitiativeDrawer({
                 rows={3}
                 className="w-full text-xs bg-muted border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
               />
+            )}
+
+            {/* Owner field (optional) */}
+            {isInPlan && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-10 flex-shrink-0">Owner</span>
+                {ownerEditing ? (
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <input
+                      type="text"
+                      value={ownerText}
+                      onChange={e => setOwnerText(e.target.value)}
+                      placeholder="e.g. Head of Talent Acquisition"
+                      className="flex-1 text-xs bg-muted border border-border rounded px-2 py-1 text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          onUpdateOwner?.(initiative!.id, ownerText.trim());
+                          setOwnerEditing(false);
+                        }
+                        if (e.key === "Escape") { setOwnerText(initiative?.owner ?? ""); setOwnerEditing(false); }
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => { onUpdateOwner?.(initiative!.id, ownerText.trim()); setOwnerEditing(false); }}
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                    >Save</button>
+                    <button
+                      onClick={() => { setOwnerText(initiative?.owner ?? ""); setOwnerEditing(false); }}
+                      className="text-xs text-muted-foreground hover:underline"
+                    >Cancel</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setOwnerEditing(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                  >
+                    {ownerText || "Assign owner (optional)"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Acceptance reason (if violator) */}
+            {initiative.acceptanceReason && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mb-0.5">Accepted with reason</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{initiative.acceptanceReason}</p>
+                </div>
+              </div>
             )}
           </div>
         </div>

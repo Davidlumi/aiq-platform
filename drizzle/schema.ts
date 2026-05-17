@@ -944,6 +944,13 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   strategyStatement: text("strategy_statement"),                                   // CPO strategy statement (40-80 words)
   strategyConfirmedAt: timestamp("strategy_confirmed_at"),                         // When CPO confirmed Stage 3 strategy
   stage4ConfirmedAt: timestamp("stage4_confirmed_at"),                             // When CPO confirmed Stage 4 principles + won't-do
+  // v3 Strategy Flow — Increment 2 (Stages 5-8)
+  stage5ConfirmedAt: timestamp("stage5_confirmed_at"),                             // When CPO confirmed Stage 5 initiatives
+  stage6ConfirmedAt: timestamp("stage6_confirmed_at"),                             // When CPO confirmed Stage 6 success measures
+  stage7ConfirmedAt: timestamp("stage7_confirmed_at"),                             // When CPO confirmed Stage 7 business case
+  stage8ConfirmedAt: timestamp("stage8_confirmed_at"),                             // When CPO confirmed Stage 8 capability
+  businessCaseNarrative: text("business_case_narrative"),                          // AI-generated + CPO-edited business case narrative (400-600 words)
+  stage8CapabilityJson: text("stage8_capability_json"),                            // JSON: { skills, capacity, changeReadiness, vendorEcosystem } each { current, needed, tactics[] }, deliveryNarrative
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

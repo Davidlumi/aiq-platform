@@ -498,11 +498,14 @@ export const intelligenceRouter = router({
       visionInputsUpdatedAt: ailOrgContext.visionInputsUpdatedAt,
       sector: ailOrgContext.sector,
       headcount: ailOrgContext.headcount,
+      businessCaseNarrative: ailOrgContext.businessCaseNarrative,
+      strategyStatement: ailOrgContext.strategyStatement,
+      strategyArchetype: ailOrgContext.strategyArchetype,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
     const row = rows[0] ?? null;
-    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, userVisionInput: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null, visionInputs: null, visionInputsUpdatedAt: null, sector: null, headcount: null };
+    if (!row) return { completed: false, aspirationAnswers: null, hrRoleAnswers: null, visionStatement: null, userVisionInput: null, guidingPrinciples: null, completedAt: null, businessAmbitionLevel: null, peopleAmbitionLevel: null, selectedInitiativeIds: [] as string[], commitments: null as string[] | null, visionInputs: null, visionInputsUpdatedAt: null, sector: null, headcount: null, businessCaseNarrative: null, strategyStatement: null, strategyArchetype: null };
     const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
     return {
       completed: !!row.strategyAssessmentCompletedAt,
@@ -523,8 +526,29 @@ export const intelligenceRouter = router({
       visionInputsUpdatedAt: row.visionInputsUpdatedAt ?? null,
       sector: row.sector ?? null,
       headcount: row.headcount ?? null,
+      businessCaseNarrative: row.businessCaseNarrative ?? null,
+      strategyStatement: row.strategyStatement ?? null,
+      strategyArchetype: row.strategyArchetype ?? null,
     };
   }),
+
+  /**
+   * Save the business case narrative (auto-save from Stage 7).
+   */
+  saveBusinessCaseNarrative: protectedProcedure
+    .input(z.object({ narrative: z.string().max(10000) }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(ailOrgContext)
+        .set({ businessCaseNarrative: input.narrative, updatedAt: new Date() })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true };
+    }),
 
   /**
    * Generate AI-drafted vision statement and guiding principles from assessment answers.
@@ -1978,6 +2002,67 @@ Return format: JSON array of exactly 5 strings, no other text.`;
     }),
 
   /**
+   * Generate a business case narrative for Stage 7.
+   * Uses Vision + Strategy + Principles + selected initiatives + cost/value envelope.
+   */
+  generateBusinessCaseNarrative: protectedProcedure
+    .input(z.object({
+      orgName: z.string().optional(),
+      sector: z.string().optional(),
+      headcount: z.number().optional(),
+      vision: z.string().optional(),
+      strategy: z.string().optional(),
+      archetype: z.string().optional(),
+      principles: z.array(z.string()).optional(),
+      selectedInitiatives: z.array(z.string()).optional(),
+      totalCostLow: z.number().optional(),
+      totalCostHigh: z.number().optional(),
+      totalValueLow: z.number().optional(),
+      totalValueHigh: z.number().optional(),
+      topRisks: z.array(z.string()).optional(),
+      keyDependencies: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
+      const VOCAB_BLACKLIST = [
+        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
+        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
+        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
+      ];
+      const systemPrompt = [
+        "You are drafting the business case section of an HR AI strategy document, written for the CEO and board.",
+        "The case should be 400–600 words. It should reference specific numbers, specific risks, and specific business outcomes.",
+        "It should NOT be defensive or hedging. Write in plain, direct English.",
+        `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
+        "Open with why this matters now, then the approach, then the investment, then the value, then the risks honestly stated. Close with the ask of the board.",
+        "Return ONLY the narrative text. No headings, no markdown fences, no preamble.",
+      ].join(" ");
+      const userPrompt = [
+        input.orgName ? `Organisation: ${input.orgName}` : "",
+        input.sector ? `Sector: ${input.sector}` : "",
+        input.headcount ? `Headcount: ~${input.headcount.toLocaleString()}` : "",
+        input.vision ? `Vision: ${input.vision}` : "",
+        input.strategy ? `Strategy: ${input.strategy}` : "",
+        input.archetype ? `Archetype: ${input.archetype}` : "",
+        input.principles?.length ? `Principles (top 3): ${input.principles.slice(0, 3).join(" | ")}` : "",
+        input.selectedInitiatives?.length ? `Selected initiatives: ${input.selectedInitiatives.join(", ")}` : "",
+        `Total 3-year cost: ${fmt(input.totalCostLow)}–${fmt(input.totalCostHigh)}`,
+        `Estimated 3-year value: ${fmt(input.totalValueLow)}–${fmt(input.totalValueHigh)}`,
+        input.topRisks?.length ? `Top risks: ${input.topRisks.join(" | ")}` : "",
+        input.keyDependencies?.length ? `Key dependencies: ${input.keyDependencies.join(" | ")}` : "",
+        "Draft the business case narrative.",
+      ].filter(Boolean).join("\n");
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      });
+      const text = (response as any)?.choices?.[0]?.message?.content ?? "";
+      return { text: typeof text === "string" ? text.trim() : "" };
+    }),
+
+  /**
    * Transform text using AI — supports Expand / Refine / Challenge / Suggest actions.
    * Used by the AITextActions component for inline AI editing.
    */
@@ -1985,7 +2070,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
     .input(z.object({
       text: z.string().min(1).max(5000),
       action: z.enum(["expand", "refine", "challenge", "suggest"]),
-      stage: z.enum(["vision", "strategy_statement", "principle", "wont_do", "general"]),
+      stage: z.enum(["vision", "strategy_statement", "principle", "wont_do", "general", "business_case", "capability_narrative"]),
       orgContext: z.object({
         sector: z.string().optional(),
         headcount: z.number().optional(),
@@ -2003,6 +2088,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         principle: "a guiding principle for an HR AI strategy",
         wont_do: "a strategic exclusion (what we won't do) for an HR AI strategy",
         general: "strategic text for an HR AI strategy",
+        business_case: "a board-ready business case narrative for an HR AI strategy",
+        capability_narrative: "a capability delivery narrative for an HR AI strategy",
       };
 
       const actionInstructions: Record<string, string> = {
@@ -2043,5 +2130,147 @@ Return format: JSON array of exactly 5 strings, no other text.`;
 
       const resultText = (response as any)?.choices?.[0]?.message?.content ?? text;
       return { text: typeof resultText === "string" ? resultText.trim() : text };
+    }),
+
+  /**
+   * Get the Stage 8 capability assessment for the current tenant.
+   */
+  getCapabilityAssessment: protectedProcedure.query(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({ stage8CapabilityJson: ailOrgContext.stage8CapabilityJson })
+      .from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    if (!rows[0]) return null;
+    const parse = (j: string | null) => { try { return j ? JSON.parse(j) : null; } catch { return null; } };
+    return parse(rows[0].stage8CapabilityJson);
+  }),
+
+  /**
+   * Save (auto-save) the Stage 8 capability assessment draft.
+   */
+  saveCapabilityAssessment: protectedProcedure
+    .input(z.object({ capabilityJson: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(ailOrgContext)
+        .set({ stage8CapabilityJson: input.capabilityJson, updatedAt: new Date() })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true };
+    }),
+
+  /**
+   * Suggest tactics to close a capability gap for a specific dimension.
+   */
+  suggestCapabilityTactics: protectedProcedure
+    .input(z.object({
+      dimension: z.enum(["skills", "capacity", "changeReadiness", "vendorEcosystem"]),
+      current: z.number().int().min(1).max(5),
+      needed: z.number().int().min(1).max(5),
+      sector: z.string().optional(),
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
+      selectedInitiatives: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const DIMENSION_LABELS: Record<string, string> = {
+        skills: "HR team AI skills and literacy",
+        capacity: "HR team capacity and headcount",
+        changeReadiness: "organisational change readiness",
+        vendorEcosystem: "vendor and partner ecosystem",
+      };
+      const VOCAB_BLACKLIST = [
+        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
+        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
+        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
+      ];
+      const gap = input.needed - input.current;
+      const dimLabel = DIMENSION_LABELS[input.dimension] ?? input.dimension;
+      const ctxParts = [
+        input.sector ? `Sector: ${input.sector}` : "",
+        input.ambitionTier ? `Ambition tier: ${input.ambitionTier}` : "",
+        input.selectedInitiatives?.length ? `Selected initiatives: ${input.selectedInitiatives.slice(0, 8).join(", ")}` : "",
+      ].filter(Boolean).join(". ");
+      const systemPrompt = [
+        `You are an expert HR transformation consultant advising a CPO on how to close a capability gap.`,
+        ctxParts ? `Context: ${ctxParts}.` : "",
+        `The CPO has rated their current ${dimLabel} as ${input.current}/5 and needs ${input.needed}/5 for their strategy — a gap of ${gap} point${gap !== 1 ? "s" : ""}.`,
+        `Generate 3–5 specific, actionable tactics to close this gap. Each tactic should be a single sentence (max 20 words). Return as a JSON array of strings.`,
+        `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
+        `Return ONLY the JSON array, no preamble, no markdown fences.`,
+      ].filter(Boolean).join(" ");
+      const response = await invokeLLM({
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: `Suggest tactics to close the ${dimLabel} gap.` }],
+      });
+      const raw = (response as any)?.choices?.[0]?.message?.content ?? "[]";
+      let tactics: string[] = [];
+      try {
+        const parsed = JSON.parse(typeof raw === "string" ? raw.trim() : "[]");
+        tactics = Array.isArray(parsed) ? parsed.filter((t: unknown) => typeof t === "string") : [];
+      } catch { tactics = []; }
+      return { tactics };
+    }),
+
+  /**
+   * Generate a 400-word delivery narrative for Stage 8.
+   */
+  generateCapabilityNarrative: protectedProcedure
+    .input(z.object({
+      capabilityData: z.object({
+        skills: z.object({ current: z.number(), needed: z.number(), tactics: z.array(z.string()) }).optional(),
+        capacity: z.object({ current: z.number(), needed: z.number(), tactics: z.array(z.string()) }).optional(),
+        changeReadiness: z.object({ current: z.number(), needed: z.number(), tactics: z.array(z.string()) }).optional(),
+        vendorEcosystem: z.object({ current: z.number(), needed: z.number(), tactics: z.array(z.string()) }).optional(),
+      }),
+      sector: z.string().optional(),
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
+      selectedInitiatives: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const VOCAB_BLACKLIST = [
+        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
+        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
+        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
+      ];
+      const SCALE_LABELS: Record<number, string> = { 1: "significant gap", 2: "below requirement", 3: "adequate", 4: "strong", 5: "exceptional" };
+      const dims = [
+        { key: "skills", label: "HR team AI skills", data: input.capabilityData.skills },
+        { key: "capacity", label: "HR team capacity", data: input.capabilityData.capacity },
+        { key: "changeReadiness", label: "change readiness", data: input.capabilityData.changeReadiness },
+        { key: "vendorEcosystem", label: "vendor ecosystem", data: input.capabilityData.vendorEcosystem },
+      ].filter(d => d.data);
+      const dimSummary = dims.map(d => {
+        const gap = (d.data!.needed - d.data!.current);
+        const gapStr = gap > 0 ? `gap of ${gap}` : gap < 0 ? "ahead of requirement" : "at requirement";
+        const tactics = d.data!.tactics.length ? `Tactics: ${d.data!.tactics.join("; ")}` : "No tactics listed";
+        return `${d.label}: current ${SCALE_LABELS[d.data!.current] ?? d.data!.current}/5, needed ${SCALE_LABELS[d.data!.needed] ?? d.data!.needed}/5 (${gapStr}). ${tactics}.`;
+      }).join(" ");
+      const ctxParts = [
+        input.sector ? `Sector: ${input.sector}` : "",
+        input.ambitionTier ? `Ambition tier: ${input.ambitionTier}` : "",
+        input.selectedInitiatives?.length ? `Selected initiatives: ${input.selectedInitiatives.slice(0, 8).join(", ")}` : "",
+      ].filter(Boolean).join(". ");
+      const systemPrompt = [
+        `You are an expert HR transformation consultant writing a delivery capability narrative for a CPO's AI strategy.`,
+        ctxParts ? `Context: ${ctxParts}.` : "",
+        `Capability assessment: ${dimSummary}`,
+        `Write a 400-word narrative (no more than 450 words) that: (1) honestly acknowledges the current capability gaps, (2) explains how the listed tactics will close each gap, (3) gives the CPO and board confidence that the strategy is executable. Write in first-person plural ("we"). Be specific and concrete — no vague reassurances.`,
+        `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
+        `Return ONLY the narrative text. No headings, no bullet points, no preamble.`,
+      ].filter(Boolean).join(" ");
+      const response = await invokeLLM({
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "Generate the delivery capability narrative." }],
+      });
+      const text = (response as any)?.choices?.[0]?.message?.content ?? "";
+      return { text: typeof text === "string" ? text.trim() : "" };
     }),
 });

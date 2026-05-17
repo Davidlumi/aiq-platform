@@ -1,17 +1,18 @@
 /**
- * SectionPageLayout — reusable wrapper for all six strategy section pages.
+ * SectionPageLayout — reusable wrapper for all strategy section pages.
  *
  * Provides:
  *  - Breadcrumb: "HR AI Strategy / [section title]"
  *  - Section badge: "Section N · [label]"
  *  - Page title (h1)
  *  - Optional right-aligned actions slot
+ *  - Optional gate banner (locked / edited-after-clearing)
  *  - Consistent max-width, padding, and block spacing
  */
 import React from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock, AlertTriangle } from "lucide-react";
 
 interface SectionPageLayoutProps {
   /** Section number, e.g. "06" */
@@ -26,6 +27,18 @@ interface SectionPageLayoutProps {
   icon: React.ReactNode;
   /** Optional actions rendered in the top-right of the header */
   actions?: React.ReactNode;
+  /**
+   * When true the page renders a locked banner and dims the body.
+   * The CPO can still navigate here to read content but cannot edit.
+   */
+  isLocked?: boolean;
+  /**
+   * When true the page renders an "edited after clearing" cascade banner
+   * prompting the CPO to re-confirm.
+   */
+  editedAfterClearing?: boolean;
+  /** Label for the upstream stage that was edited, used in the cascade banner */
+  upstreamStageLabel?: string;
   children: React.ReactNode;
 }
 
@@ -36,6 +49,9 @@ export default function SectionPageLayout({
   accentColor,
   icon,
   actions,
+  isLocked = false,
+  editedAfterClearing = false,
+  upstreamStageLabel,
   children,
 }: SectionPageLayoutProps) {
   const [, navigate] = useLocation();
@@ -57,8 +73,40 @@ export default function SectionPageLayout({
         <span className="text-xs font-medium text-foreground">{sectionLabel}</span>
       </nav>
 
+      {/* Locked gate banner */}
+      {isLocked && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 mb-6">
+          <Lock className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+              This section is locked
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Complete the previous stage to unlock editing. You can read this section but cannot make changes.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Edited-after-clearing cascade banner */}
+      {!isLocked && editedAfterClearing && (
+        <div className="flex items-start gap-3 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 mb-6">
+          <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+              {upstreamStageLabel
+                ? `${upstreamStageLabel} has been updated`
+                : "An earlier stage has been updated"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Review this section and re-confirm if the changes affect your decisions here.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Page header */}
-      <div className="flex items-center gap-3 mb-8">
+      <div className={`flex items-center gap-3 mb-8 ${isLocked ? "opacity-60" : ""}`}>
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: `${accentColor}20`, color: accentColor }}
@@ -80,7 +128,7 @@ export default function SectionPageLayout({
       </div>
 
       {/* Page body */}
-      <div className="space-y-10">
+      <div className={`space-y-10 ${isLocked ? "pointer-events-none opacity-60 select-none" : ""}`}>
         {children}
       </div>
     </div>

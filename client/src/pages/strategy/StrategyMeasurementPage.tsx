@@ -1,35 +1,71 @@
 /**
  * StrategyMeasurementPage — /strategy/measurement
- * Section 06: How we'll measure progress
+ * Stage 6: Success measures
  *
  * Blocks:
- *  1. Hero — Countdown + cadence pill (inline-editable, full-payload save)
- *  2. Review schedule timeline (horizontal, scrollable on mobile)
- *  3. What each review checks (4 rows with cross-links)
- *  4. When we review (scheduled paragraph + 3 trigger rows)
- *  5. Methodology (collapsible)
+ *  1. Strategy-level outcomes (3–5) with AI suggest + edit modal
+ *  2. Primary measure per initiative
+ *  3. Review cadence (existing)
+ *  4. Review schedule / timeline / checks / triggers (existing)
+ *  5. Confirm measures gate button
  */
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useGate } from "@/contexts/GateContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import {
   ChevronDown, ChevronUp, AlertTriangle, CheckCircle2,
   ArrowRight, CalendarDays, Sparkles, BarChart3,
-  TrendingUp, ShieldAlert, Activity,
+  TrendingUp, ShieldAlert, Activity, Plus, Trash2,
+  Target, BarChart2,
 } from "lucide-react";
 import { MEASUREMENT_CADENCE_OPTIONS } from "@/../../shared/strategyInputs";
+import { INITIATIVE_LIBRARY } from "@/../../shared/initiativeLibrary";
 import { toast } from "sonner";
 import SectionPageLayout from "@/components/SectionPageLayout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
 type CadenceValue = "monthly_quarterly_annual" | "quarterly_annual" | "biannual" | "annual" | "other_custom";
 
 interface ReviewMarker {
   index: number;
   date: Date;
   completed: boolean;
+}
+
+interface Outcome {
+  number: number;
+  title: string;
+  unit: string;
+  baseline_value: number | null;
+  baseline_status: "measured" | "not_measured";
+  baseline_study_date: string | null;
+  target_value: number;
+  target_date: string;
+  derived_summary: string;
+  tests_principle: number | null;
+  ai_drafted: boolean;
+  primary_measure?: string | null;
+}
+
+interface Principle {
+  number: number;
+  title: string;
+  description: string;
+  capability_tags: string[];
+  ai_drafted: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -262,7 +298,7 @@ function CadencePill({ currentCadence, onSave, saving, savedAt, saveError }: Cad
   );
 }
 
-// ─── Block 1: Countdown hero ──────────────────────────────────────────────────
+// ─── Block A: Countdown hero ──────────────────────────────────────────────────
 
 interface CountdownHeroProps {
   countdown: { daysRemaining: number; reviewIndex: number } | null;
@@ -354,7 +390,7 @@ function CountdownHero({ countdown, noReviewScheduled, strategyConcluded, onOpen
   );
 }
 
-// ─── Block 2: Review timeline ─────────────────────────────────────────────────
+// ─── Block B: Review timeline ─────────────────────────────────────────────────
 
 interface ReviewTimelineProps {
   startDate: Date;
@@ -365,68 +401,54 @@ interface ReviewTimelineProps {
 
 function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProps) {
   const totalMs = endDate.getTime() - startDate.getTime();
-  const notStarted = now < startDate;
-  const concluded = now > endDate;
-  const todayPct = Math.max(0, Math.min(100, ((now.getTime() - startDate.getTime()) / totalMs) * 100));
-  const todayLabel = notStarted ? "Not started" : concluded ? "Concluded" : "Today";
-  const todayPosition = notStarted ? 0 : concluded ? 100 : todayPct;
-  const todayAriaLabel = notStarted
-    ? "Strategy has not started yet"
-    : concluded
-    ? "Strategy has concluded"
-    : `Today, ${Math.round(todayPct)}% of the way through the strategy`;
+  const todayPosition = totalMs > 0
+    ? Math.min(100, Math.max(0, ((now.getTime() - startDate.getTime()) / totalMs) * 100))
+    : 0;
+  const todayLabel = `Today · ${formatMonthYear(now)}`;
+  const todayAriaLabel = `Today is ${formatFullDate(now)}`;
 
   return (
     <div className="rounded-2xl border border-border bg-white/2 p-6">
       <h2 className="text-sm font-bold text-foreground mb-6">Review schedule</h2>
-      <div className="overflow-x-auto pb-2">
-        <div className="relative min-w-[480px]" style={{ height: "80px" }}>
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-foreground/10 rounded -translate-y-1/2" />
-
-          {/* Start marker */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center">
-            <div
-              className="w-2.5 h-2.5 rounded-full border-2 border-border/80 bg-background"
-              aria-label={`Strategy start, ${formatFullDate(startDate)}`}
-            />
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-1">
+      <div className="relative overflow-x-auto pb-2">
+        <div className="relative h-12 flex items-center" style={{ minWidth: 400 }}>
+          {/* Spine */}
+          <div className="absolute inset-x-0 top-1/2 h-0.5 bg-foreground/8 rounded" />
+          {/* Start */}
+          <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-foreground/20" />
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5">
               Start · {formatMonthYear(startDate)}
             </span>
           </div>
-
-          {/* End marker */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex flex-col items-center">
-            <div
-              className="w-2.5 h-2.5 rounded-full border-2 border-border/80 bg-background"
-              aria-label={`Strategy end, ${formatFullDate(endDate)}`}
-            />
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-1">
+          {/* End */}
+          <div className="absolute right-0 translate-x-1/2 flex flex-col items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-foreground/20" />
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5">
               End · {formatMonthYear(endDate)}
             </span>
           </div>
-
-          {/* Review markers */}
+          {/* Markers */}
           {markers.map(marker => {
-            const pct = ((marker.date.getTime() - startDate.getTime()) / totalMs) * 100;
-            const clampedPct = Math.max(2, Math.min(98, pct));
-            const ariaLabel = `Review ${marker.index}, ${marker.completed ? "completed" : "upcoming"}, ${formatFullDate(marker.date)}`;
+            const pct = totalMs > 0
+              ? Math.min(100, Math.max(0, ((marker.date.getTime() - startDate.getTime()) / totalMs) * 100))
+              : 0;
+            const ariaLabel = `Review ${marker.index}: ${formatFullDate(marker.date)}${marker.completed ? " (completed)" : ""}`;
             return (
               <div
                 key={marker.index}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center"
-                style={{ left: `${clampedPct}%` }}
+                className="absolute -translate-x-1/2 flex flex-col items-center gap-1"
+                style={{ left: `${pct}%` }}
               >
                 {marker.completed ? (
-                  <div
-                    className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center"
+                  <CheckCircle2
+                    className="w-4 h-4 dark:text-emerald-400 text-emerald-600"
                     aria-label={ariaLabel}
                     role="img"
-                  >
-                    <CheckCircle2 className="w-2.5 h-2.5 text-white" aria-hidden="true" />
-                  </div>
+                  />
                 ) : (
                   <div
-                    className="w-3.5 h-3.5 rounded-full border-[1.5px] border-border/80 bg-background"
+                    className="w-3 h-3 rounded-full border-2 border-border/60 bg-background"
                     aria-label={ariaLabel}
                     role="img"
                   />
@@ -441,7 +463,6 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
               </div>
             );
           })}
-
           {/* Today indicator */}
           <div
             className="absolute top-0 bottom-0 w-px bg-blue-400"
@@ -459,13 +480,13 @@ function ReviewTimeline({ startDate, endDate, markers, now }: ReviewTimelineProp
   );
 }
 
-// ─── Block 3: What each review checks ────────────────────────────────────────
+// ─── Block C: What each review checks ────────────────────────────────────────
 
 const REVIEW_CHECKS = [
   { label: "Capability re-assessment scores", target: "diagnostic" as const, targetLabel: "Diagnostic",       icon: BarChart3,   color: "#60A5FA" },
   { label: "Initiative phase progress",        target: "plan" as const,       targetLabel: "Plan",             icon: Activity,    color: "#A78BFA" },
-  { label: "Cost forecast and risk status",    target: "investment-risk" as const, targetLabel: "Investment & Risk", icon: ShieldAlert, color: "#F59E0B" },
-  { label: "Value realised vs. projection",    target: "value" as const,      targetLabel: "Value",            icon: TrendingUp,  color: "#4ADE80" },
+  { label: "Cost forecast and risk status",    target: "business-case" as const, targetLabel: "Business Case", icon: ShieldAlert, color: "#F59E0B" },
+  { label: "Value realised vs. projection",    target: "business-case" as const, targetLabel: "Business Case", icon: TrendingUp,  color: "#4ADE80" },
 ];
 
 function WhatEachReviewChecks() {
@@ -474,10 +495,10 @@ function WhatEachReviewChecks() {
     <div className="rounded-2xl border border-border bg-white/2 p-6">
       <h2 className="text-sm font-bold text-foreground mb-4">What each review checks</h2>
       <div className="divide-y divide-border">
-        {REVIEW_CHECKS.map(check => {
+        {REVIEW_CHECKS.map((check, idx) => {
           const Icon = check.icon;
           return (
-            <div key={check.target} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+            <div key={`${check.target}-${idx}`} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
               <div className="flex items-center gap-3">
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -491,10 +512,7 @@ function WhatEachReviewChecks() {
               <button
                 type="button"
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                onClick={() => {
-                  (window as any).umami?.track("strategy.measurement.review-checks.clicked", { target: check.target });
-                  navigate(`/strategy/${check.target}`);
-                }}
+                onClick={() => navigate(`/strategy/${check.target}`)}
                 aria-label={`View ${check.targetLabel} section`}
               >
                 View {check.targetLabel}
@@ -508,7 +526,7 @@ function WhatEachReviewChecks() {
   );
 }
 
-// ─── Block 4: When we review ──────────────────────────────────────────────────
+// ─── Block D: When we review ──────────────────────────────────────────────────
 
 const TRIGGER_CONDITIONS = [
   {
@@ -528,9 +546,9 @@ const TRIGGER_CONDITIONS = [
   {
     id: "high-risk-framework",
     text: "A new high-risk regulatory framework is identified",
-    detail: "Surfaces on the Investment & Risk card.",
-    target: "investment-risk" as const,
-    targetLabel: "Investment & Risk",
+    detail: "Surfaces on the Business Case card.",
+    target: "business-case" as const,
+    targetLabel: "Business Case",
   },
 ];
 
@@ -539,12 +557,10 @@ function WhenWeReview({ cadence }: { cadence: CadenceValue }) {
   return (
     <div className="rounded-2xl border border-border bg-white/2 p-6 space-y-5">
       <h2 className="text-sm font-bold text-foreground">When we review</h2>
-
       <div>
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Scheduled</p>
         <p className="text-sm text-muted-foreground leading-relaxed">{CADENCE_RATIONALE[cadence]}</p>
       </div>
-
       <div>
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
           Triggered (outside the schedule)
@@ -578,7 +594,266 @@ function WhenWeReview({ cadence }: { cadence: CadenceValue }) {
   );
 }
 
-// ─── Block 5: Methodology ─────────────────────────────────────────────────────
+// ─── Outcome row editor ───────────────────────────────────────────────────────
+
+function OutcomeRow({
+  outcome, index, principles, onChange, onRemove,
+}: {
+  outcome: Outcome; index: number; principles: Principle[] | null;
+  onChange: (field: keyof Outcome, val: unknown) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="border border-border/50 rounded-lg p-4 space-y-3 bg-card/50">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
+          {index + 1}
+        </div>
+        <Input
+          value={outcome.title}
+          onChange={e => onChange("title", e.target.value)}
+          placeholder="Outcome title (3–6 words)"
+          className="flex-1 h-8 text-sm"
+        />
+        <Button
+          variant="ghost" size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+          onClick={onRemove}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Unit</Label>
+          <Input
+            value={outcome.unit}
+            onChange={e => onChange("unit", e.target.value)}
+            placeholder="e.g. % reduction"
+            className="h-8 text-sm mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Target date</Label>
+          <Input
+            value={outcome.target_date}
+            onChange={e => onChange("target_date", e.target.value)}
+            placeholder="Q4 2026"
+            className="h-8 text-sm mt-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground mb-1.5 block">Baseline</Label>
+        <RadioGroup
+          value={outcome.baseline_status}
+          onValueChange={v => onChange("baseline_status", v)}
+          className="flex gap-4"
+        >
+          <div className="flex items-center gap-1.5">
+            <RadioGroupItem value="measured" id={`m-${index}`} />
+            <Label htmlFor={`m-${index}`} className="text-xs cursor-pointer">Measured</Label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <RadioGroupItem value="not_measured" id={`nm-${index}`} />
+            <Label htmlFor={`nm-${index}`} className="text-xs cursor-pointer">TBD / not yet measured</Label>
+          </div>
+        </RadioGroup>
+        {outcome.baseline_status === "measured" && (
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <div>
+              <Label className="text-[11px] text-muted-foreground">Baseline value</Label>
+              <Input
+                type="number"
+                value={outcome.baseline_value ?? ""}
+                onChange={e => onChange("baseline_value", e.target.value ? Number(e.target.value) : null)}
+                className="h-8 text-sm mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[11px] text-muted-foreground">Study date</Label>
+              <Input
+                value={outcome.baseline_study_date ?? ""}
+                onChange={e => onChange("baseline_study_date", e.target.value || null)}
+                placeholder="Q1 2025"
+                className="h-8 text-sm mt-1"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground">Target value</Label>
+        <Input
+          type="number"
+          value={outcome.target_value}
+          onChange={e => onChange("target_value", Number(e.target.value))}
+          className="h-8 text-sm mt-1"
+        />
+      </div>
+      <div>
+        <Label className="text-[11px] text-muted-foreground">Summary sentence</Label>
+        <Textarea
+          value={outcome.derived_summary}
+          onChange={e => onChange("derived_summary", e.target.value)}
+          placeholder="Reduce X from TBD to Y by Z"
+          className="text-sm min-h-[56px] resize-none mt-1"
+        />
+      </div>
+      {principles && principles.length > 0 && (
+        <div>
+          <Label className="text-[11px] text-muted-foreground">Tests principle (optional)</Label>
+          <select
+            value={outcome.tests_principle ?? ""}
+            onChange={e => onChange("tests_principle", e.target.value ? Number(e.target.value) : null)}
+            className="mt-1 w-full h-8 text-sm rounded-md border border-input bg-background px-2 text-foreground"
+          >
+            <option value="">— none —</option>
+            {principles.map(p => (
+              <option key={p.number} value={p.number}>{p.number}. {p.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Outcomes modal ───────────────────────────────────────────────────────────
+
+function OutcomesModal({
+  open, onClose, initial, principles, onSave, isDrafting, onDraft,
+}: {
+  open: boolean; onClose: () => void;
+  initial: Outcome[] | null;
+  principles: Principle[] | null;
+  onSave: (v: Outcome[]) => Promise<void>;
+  isDrafting: boolean;
+  onDraft: () => void;
+}) {
+  const [items, setItems] = useState<Outcome[]>(() => initial ?? []);
+  const [saving, setSaving] = useState(false);
+
+  const prevInitial = useRef(initial);
+  if (initial !== prevInitial.current) {
+    prevInitial.current = initial;
+    setItems(initial ?? []);
+  }
+
+  const add = () =>
+    setItems(prev => [
+      ...prev,
+      {
+        number: prev.length + 1, title: "", unit: "",
+        baseline_value: null, baseline_status: "not_measured",
+        baseline_study_date: null, target_value: 0, target_date: "",
+        derived_summary: "", tests_principle: null, ai_drafted: false,
+        primary_measure: null,
+      },
+    ]);
+  const remove = (i: number) =>
+    setItems(prev =>
+      prev.filter((_, idx) => idx !== i).map((o, idx) => ({ ...o, number: idx + 1 })),
+    );
+  const update = (i: number, field: keyof Outcome, val: unknown) =>
+    setItems(prev => prev.map((o, idx) => (idx === i ? { ...o, [field]: val } : o)));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSave(items);
+      onClose();
+    } catch {
+      toast.error("Failed to save outcomes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Strategy-level outcomes</DialogTitle>
+          <DialogDescription>3–5 measurable results that prove the strategy is working.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {items.map((o, i) => (
+            <OutcomeRow
+              key={i}
+              outcome={o}
+              index={i}
+              principles={principles}
+              onChange={(field, val) => update(i, field, val)}
+              onRemove={() => remove(i)}
+            />
+          ))}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8" onClick={add} disabled={items.length >= 5}>
+              <Plus className="w-3 h-3" /> Add outcome
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-xs h-8 text-muted-foreground"
+              onClick={onDraft}
+              disabled={isDrafting}
+            >
+              {isDrafting
+                ? <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                : <Sparkles className="w-3 h-3" />}
+              {isDrafting ? "Drafting…" : "Re-draft with AI"}
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── From-to bar (outcome visualisation) ─────────────────────────────────────
+
+function FromToBar({ outcome }: { outcome: Outcome }) {
+  const isTbd = outcome.baseline_status === "not_measured" || outcome.baseline_value === null;
+  const todayVal = outcome.baseline_value;
+  const targetVal = outcome.target_value;
+  const unit = outcome.unit;
+  const maxVal = Math.max(todayVal ?? 0, targetVal, 1);
+  const todayPct = isTbd ? 0 : Math.round(((todayVal ?? 0) / maxVal) * 100);
+  const targetPct = Math.round((targetVal / maxVal) * 100);
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <div className="flex items-center gap-2">
+        <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Today</span>
+        <div className="flex-1 relative" style={{ height: 5, borderRadius: 3, background: "var(--muted)" }}>
+          {isTbd ? (
+            <div style={{ position: "absolute", inset: 0, borderRadius: 3, border: "0.5px dashed rgba(255,255,255,0.15)" }} />
+          ) : (
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${todayPct}%`, borderRadius: 3, background: "var(--muted)" }} />
+          )}
+        </div>
+        <span className="w-14 text-right text-[11px] flex-shrink-0" style={isTbd ? { color: "var(--muted-foreground)", fontStyle: "italic" } : { color: "var(--muted-foreground)" }}>
+          {isTbd ? "Not measured" : `${todayVal} ${unit}`}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="w-10 text-[10px] text-muted-foreground flex-shrink-0">Target</span>
+        <div className="flex-1 relative" style={{ height: 5, borderRadius: 3, background: "var(--muted)" }}>
+          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${targetPct}%`, borderRadius: 3, background: "#5DCAA5" }} />
+        </div>
+        <span className="w-14 text-right text-[11px] flex-shrink-0" style={{ color: "#5DCAA5" }}>
+          {targetVal}{unit === "%" ? "" : " "}{unit}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Methodology ──────────────────────────────────────────────────────────────
 
 const METHODOLOGY_SECTIONS = [
   {
@@ -601,17 +876,12 @@ const METHODOLOGY_SECTIONS = [
 
 function MethodologyBlock() {
   const [expanded, setExpanded] = useState(false);
-  function toggle() {
-    const next = !expanded;
-    setExpanded(next);
-    (window as any).umami?.track("strategy.measurement.methodology.toggled", { expanded: next });
-  }
   return (
     <div className="rounded-2xl border border-border bg-white/2">
       <button
         type="button"
         className="w-full flex items-center justify-between p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl"
-        onClick={toggle}
+        onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
         aria-controls="methodology-content"
       >
@@ -639,16 +909,26 @@ function MethodologyBlock() {
 
 export default function StrategyMeasurementPage() {
   const [, navigate] = useLocation();
+  const gate = useGate();
 
-  const assessmentQ = trpc.intelligence.getStrategyAssessment.useQuery();
-  const strategyQ   = trpc.intelligence.getStrategy.useQuery();
+  const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
+  const strategyQ    = trpc.intelligence.getStrategy.useQuery();
+  const ambitionQ    = trpc.intelligence.getAmbitionSections.useQuery();
 
-  const [saving, setSaving]       = useState(false);
-  const [savedAt, setSavedAt]     = useState<Date | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [cadenceSaving, setCadenceSaving]       = useState(false);
+  const [cadenceSavedAt, setCadenceSavedAt]     = useState<Date | null>(null);
+  const [cadenceSaveError, setCadenceSaveError] = useState<string | null>(null);
+
+  const [outcomesOpen, setOutcomesOpen]         = useState(false);
+  const [outcomeDrafting, setOutcomeDrafting]   = useState(false);
+  const [confirmOpen, setConfirmOpen]           = useState(false);
+
+  // Per-initiative primary measures (local state, saved on confirm)
+  const [primaryMeasures, setPrimaryMeasures]   = useState<Record<string, string>>({});
 
   const assessment       = assessmentQ.data;
   const strategy         = strategyQ.data;
+  const ambition         = ambitionQ.data;
   const structuredInputs = assessment?.structuredInputs as Record<string, unknown> | null | undefined;
 
   const cadenceId: CadenceValue = (structuredInputs?.measurement_cadence as CadenceValue | undefined) ?? "biannual";
@@ -670,16 +950,46 @@ export default function StrategyMeasurementPage() {
   const strategyConcluded = ambitionTargetDate ? now > ambitionTargetDate : false;
   const noReviewScheduled = !strategySavedAt || !ambitionTargetDate;
 
+  // Selected initiative names
+  const selectedIds: string[] = assessment?.selectedInitiativeIds ?? [];
+  const selectedInitiatives = useMemo(
+    () => selectedIds.map(id => {
+      const lib = INITIATIVE_LIBRARY.find(i => i.id === id);
+      return { id, name: lib?.label ?? id };
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIds.join(",")],
+  );
+
+  // Outcomes from ambition sections
+  const outcomes = ambition?.outcomes as Outcome[] | null | undefined;
+  const principles = ambition?.principles as unknown as Principle[] | null | undefined;
+
+  // Gate state
+  const stage6Cleared = gate.stage6Cleared;
+  const outcomesCount = outcomes?.length ?? 0;
+  const primaryMeasureCount = Object.values(primaryMeasures).filter(v => v.trim().length > 0).length;
+
   useEffect(() => {
     (window as any).umami?.track("strategy.section.viewed", { section: "measurement" });
   }, []);
 
-  const saveAssessmentMut = trpc.intelligence.saveStrategyAssessment.useMutation();
+  const saveAssessmentMut   = trpc.intelligence.saveStrategyAssessment.useMutation();
+  const saveAmbitionMut     = trpc.intelligence.saveAmbitionSection.useMutation();
+  const draftAmbitionMut    = trpc.intelligence.draftAmbitionSection.useMutation();
+  const completeStage6Mut   = trpc.gate.completeStage6.useMutation({
+    onSuccess: () => {
+      gate.refetch();
+      setConfirmOpen(false);
+      toast.success("Stage 6 confirmed — success measures locked");
+    },
+    onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 6"),
+  });
 
   async function handleCadenceSave(newCadence: CadenceValue) {
     if (!assessment) return;
-    setSaving(true);
-    setSaveError(null);
+    setCadenceSaving(true);
+    setCadenceSaveError(null);
     try {
       const currentSI = (assessment.structuredInputs as Record<string, unknown> | null) ?? {};
       const updatedSI = { ...currentSI, measurement_cadence: newCadence };
@@ -698,17 +1008,70 @@ export default function StrategyMeasurementPage() {
           ? JSON.stringify(assessment.operationalBaseline)
           : undefined,
       });
-      setSavedAt(new Date());
+      setCadenceSavedAt(new Date());
       await assessmentQ.refetch();
     } catch {
-      setSaveError("Save failed — please try again");
+      setCadenceSaveError("Save failed — please try again");
       toast.error("Failed to save cadence change");
     } finally {
-      setSaving(false);
+      setCadenceSaving(false);
     }
   }
 
-  const isLoading   = assessmentQ.isLoading || strategyQ.isLoading;
+  async function handleOutcomesSave(newOutcomes: Outcome[]) {
+    await saveAmbitionMut.mutateAsync({ section: "outcomes", value: newOutcomes });
+    await ambitionQ.refetch();
+    gate.markEdited("stage6");
+  }
+
+  async function handleOutcomesDraft() {
+    setOutcomeDrafting(true);
+    try {
+      const result = await draftAmbitionMut.mutateAsync({
+        section: "outcomes",
+        orgDescriptor: ambition?.vision ?? undefined,
+        businessAmbitionTier: ambition?.businessAmbitionLevel ?? undefined,
+        hrDeliveryTier: ambition?.peopleAmbitionLevel ?? undefined,
+        visionStatement: ambition?.vision ?? undefined,
+      });
+      if (result && Array.isArray((result as any).outcomes)) {
+        await handleOutcomesSave((result as any).outcomes as Outcome[]);
+      }
+    } catch {
+      toast.error("Failed to draft outcomes");
+    } finally {
+      setOutcomeDrafting(false);
+    }
+  }
+
+  async function handleConfirmMeasures() {
+    // Merge primary measures into outcomes JSON
+    const enrichedOutcomes = (outcomes ?? []).map(o => ({
+      ...o,
+      primary_measure: primaryMeasures[`outcome-${o.number}`] ?? o.primary_measure ?? null,
+    }));
+    // Also add per-initiative primary measures as standalone outcome entries if needed
+    const initiativeMeasureOutcomes = selectedInitiatives
+      .filter(i => primaryMeasures[i.id]?.trim())
+      .map((i, idx) => ({
+        number: (enrichedOutcomes.length + idx + 1),
+        title: i.name,
+        unit: "",
+        baseline_value: null,
+        baseline_status: "not_measured" as const,
+        baseline_study_date: null,
+        target_value: 0,
+        target_date: "",
+        derived_summary: "",
+        tests_principle: null,
+        ai_drafted: false,
+        primary_measure: primaryMeasures[i.id],
+      }));
+    const allOutcomes = [...enrichedOutcomes, ...initiativeMeasureOutcomes];
+    await completeStage6Mut.mutateAsync({ outcomesJson: JSON.stringify(allOutcomes) });
+  }
+
+  const isLoading   = assessmentQ.isLoading || strategyQ.isLoading || ambitionQ.isLoading;
   const hasError    = assessmentQ.isError   || strategyQ.isError;
   const hasStrategy = strategy?.configured ?? false;
 
@@ -716,19 +1079,25 @@ export default function StrategyMeasurementPage() {
     <CadencePill
       currentCadence={cadenceId}
       onSave={handleCadenceSave}
-      saving={saving}
-      savedAt={savedAt}
-      saveError={saveError}
+      saving={cadenceSaving}
+      savedAt={cadenceSavedAt}
+      saveError={cadenceSaveError}
     />
   );
+
+  // Gate validation
+  const canConfirm = outcomesCount >= 1 && (primaryMeasureCount > 0 || selectedInitiatives.length === 0);
 
   return (
     <SectionPageLayout
       sectionNumber="06"
-      sectionLabel="Measurement"
-      title="How we'll measure progress"
+      sectionLabel="Success measures"
+      title="Define what success looks like"
       accentColor="#2DD4BF"
-      icon={<CalendarDays className="w-5 h-5" />}
+      icon={<Target className="w-5 h-5" />}
+      isLocked={!gate.isStage6Accessible}
+      editedAfterClearing={gate.stage5EditedAfterClearing}
+      upstreamStageLabel="Initiatives"
       actions={
         <Button
           variant="outline"
@@ -744,11 +1113,11 @@ export default function StrategyMeasurementPage() {
       {/* Empty state: no strategy */}
       {!isLoading && !hasError && !hasStrategy && (
         <div className="rounded-xl border border-dashed border-teal-500/20 bg-teal-500/4 p-8 flex items-start gap-4">
-          <CalendarDays className="w-5 h-5 dark:text-teal-400 text-teal-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <Target className="w-5 h-5 dark:text-teal-400 text-teal-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">No strategy configured yet</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-              Generate your strategy to set a measurement plan.
+              Complete the strategy wizard to define your success measures.
             </p>
             <Button
               size="sm"
@@ -763,26 +1132,172 @@ export default function StrategyMeasurementPage() {
         </div>
       )}
 
-      {/* Block 1: Countdown hero */}
+      {/* ── Block 1: Strategy-level outcomes ── */}
+      {hasStrategy && (
+        <div className="rounded-2xl border border-border bg-white/2 overflow-hidden">
+          <div className="px-6 py-4 flex items-center justify-between gap-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-4 h-4 dark:text-teal-400 text-teal-600" />
+              <h2 className="text-sm font-bold text-foreground">Strategy-level outcomes</h2>
+              <span className="text-xs text-muted-foreground ml-1">
+                {outcomesCount} of 3–5 recommended
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {outcomeDrafting ? (
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Drafting…
+                </span>
+              ) : (
+                <Button
+                  variant="ghost" size="sm"
+                  className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                  onClick={handleOutcomesDraft}
+                >
+                  <Sparkles className="w-3 h-3" /> Suggest from your framing
+                </Button>
+              )}
+              <Button
+                variant="ghost" size="sm"
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => setOutcomesOpen(true)}
+              >
+                Edit
+              </Button>
+            </div>
+          </div>
+
+          <div className="px-6 pb-6 pt-4">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
+              </div>
+            ) : !outcomes || outcomes.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/60 p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-3">No outcomes defined yet.</p>
+                <div className="flex items-center justify-center gap-2">
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={handleOutcomesDraft} disabled={outcomeDrafting}>
+                    <Sparkles className="w-3 h-3" /> Draft with AI
+                  </Button>
+                  <Button size="sm" variant="ghost" className="gap-1.5 text-xs h-8 text-muted-foreground" onClick={() => setOutcomesOpen(true)}>
+                    <Plus className="w-3 h-3" /> Add manually
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {outcomes.map(o => {
+                  const linkedPrinciple = o.tests_principle != null
+                    ? principles?.find(p => p.number === o.tests_principle)
+                    : null;
+                  return (
+                    <div key={o.number} className="border border-border/40 rounded-lg p-4 bg-background/40">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                          {o.number}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground">{o.title}</p>
+                            <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-muted-foreground">
+                              {o.target_date}
+                            </Badge>
+                            {o.ai_drafted && (
+                              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/30 text-primary/70">
+                                AI
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{o.derived_summary}</p>
+                          <FromToBar outcome={o} />
+                          <div className="mt-2 text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                            By {o.target_date}
+                            {o.baseline_status === "not_measured" && o.baseline_study_date && (
+                              <span> · Baseline study scheduled {o.baseline_study_date}</span>
+                            )}
+                          </div>
+                          {linkedPrinciple && (
+                            <div className="mt-1.5 flex items-center gap-1 text-[10px]">
+                              <span style={{ color: "#5DCAA5" }}>↪</span>
+                              <span style={{ color: "var(--muted-foreground)" }}>Tests principle {linkedPrinciple.number}:</span>
+                              <span style={{ color: "var(--primary)" }}>{linkedPrinciple.title}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Block 2: Primary measure per initiative ── */}
+      {hasStrategy && selectedInitiatives.length > 0 && (
+        <div className="rounded-2xl border border-border bg-white/2 overflow-hidden">
+          <div className="px-6 py-4 flex items-center gap-2 border-b border-border/50">
+            <Activity className="w-4 h-4 dark:text-violet-400 text-violet-600" />
+            <h2 className="text-sm font-bold text-foreground">Primary measure per initiative</h2>
+            <span className="text-xs text-muted-foreground ml-1">
+              {primaryMeasureCount} of {selectedInitiatives.length} set
+            </span>
+          </div>
+          <div className="px-6 pb-6 pt-4 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              One measure per initiative — how you'll know each is working.
+            </p>
+            {selectedInitiatives.map(init => (
+              <div key={init.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-background/40">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground truncate">{init.name}</p>
+                </div>
+                <Input
+                  value={primaryMeasures[init.id] ?? ""}
+                  onChange={e => setPrimaryMeasures(prev => ({ ...prev, [init.id]: e.target.value }))}
+                  placeholder="e.g. Manager hours saved per week"
+                  className="w-64 h-7 text-xs"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Block 3: Review cadence ── */}
       {isLoading ? (
         <CountdownSkeleton />
       ) : hasError ? (
         <BlockError message="Could not load countdown data." />
       ) : hasStrategy ? (
-        <CountdownHero
-          countdown={countdown}
-          cadence={cadenceId}
-          noReviewScheduled={noReviewScheduled}
-          strategyConcluded={strategyConcluded}
-          onOpenCadence={() => {
-            const btn = document.querySelector<HTMLButtonElement>("[aria-haspopup='listbox']");
-            btn?.click();
-          }}
-          cadencePill={cadencePill}
-        />
+        <div className="rounded-2xl border border-border bg-white/2 p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-sm font-bold text-foreground mb-1">Review cadence</h2>
+              <p className="text-xs text-muted-foreground">How often will you review the strategy?</p>
+            </div>
+            {cadencePill}
+          </div>
+          {/* Countdown sub-block */}
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <CountdownHero
+              countdown={countdown}
+              cadence={cadenceId}
+              noReviewScheduled={noReviewScheduled}
+              strategyConcluded={strategyConcluded}
+              onOpenCadence={() => {
+                const btn = document.querySelector<HTMLButtonElement>("[aria-haspopup='listbox']");
+                btn?.click();
+              }}
+              cadencePill={null}
+            />
+          </div>
+        </div>
       ) : null}
 
-      {/* Block 2: Review timeline */}
+      {/* ── Block 4: Review timeline ── */}
       {isLoading ? (
         <TimelineSkeleton />
       ) : hasError ? (
@@ -803,7 +1318,7 @@ export default function StrategyMeasurementPage() {
         </div>
       ) : null}
 
-      {/* Block 3: What each review checks */}
+      {/* ── Block 5: What each review checks ── */}
       {isLoading ? (
         <ReviewChecksSkeleton />
       ) : hasError ? (
@@ -812,7 +1327,7 @@ export default function StrategyMeasurementPage() {
         <WhatEachReviewChecks />
       ) : null}
 
-      {/* Block 4: When we review */}
+      {/* ── Block 6: When we review ── */}
       {isLoading ? (
         <Skeleton className="h-48 rounded-2xl" />
       ) : hasError ? (
@@ -821,8 +1336,89 @@ export default function StrategyMeasurementPage() {
         <WhenWeReview cadence={cadenceId} />
       ) : null}
 
-      {/* Block 5: Methodology */}
+      {/* ── Block 7: Methodology ── */}
       {hasStrategy && <MethodologyBlock />}
+
+      {/* ── Gate confirm button ── */}
+      {hasStrategy && !stage6Cleared && (
+        <div className="rounded-2xl border border-teal-500/20 bg-teal-500/4 p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-0.5">Confirm success measures</p>
+            <p className="text-xs text-muted-foreground">
+              {outcomesCount < 1
+                ? "Define at least 1 strategy-level outcome to continue."
+                : selectedInitiatives.length > 0 && primaryMeasureCount === 0
+                ? "Set at least one initiative primary measure to continue."
+                : "Ready to confirm — this will lock Stage 6."}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="bg-teal-500 hover:bg-teal-400 text-black font-semibold text-xs h-8 shrink-0"
+            disabled={!canConfirm}
+            onClick={() => setConfirmOpen(true)}
+          >
+            Confirm measures →
+          </Button>
+        </div>
+      )}
+
+      {stage6Cleared && (
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex items-center gap-3">
+          <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 6 confirmed</p>
+            <p className="text-xs text-muted-foreground">Success measures locked. Continue to Business Case.</p>
+          </div>
+          <Button
+            size="sm" variant="outline"
+            className="ml-auto text-xs h-7"
+            onClick={() => navigate("/strategy/business-case")}
+          >
+            Business Case →
+          </Button>
+        </div>
+      )}
+
+      {/* ── Outcomes modal ── */}
+      <OutcomesModal
+        open={outcomesOpen}
+        onClose={() => setOutcomesOpen(false)}
+        initial={outcomes ?? null}
+        principles={principles ?? null}
+        onSave={handleOutcomesSave}
+        isDrafting={outcomeDrafting}
+        onDraft={handleOutcomesDraft}
+      />
+
+      {/* ── Confirm dialog ── */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm success measures</DialogTitle>
+            <DialogDescription>
+              This will lock Stage 6. You can still edit measures later, but the gate will need to be re-confirmed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="rounded-xl border border-border bg-foreground/3 p-4 text-sm space-y-1">
+              <p className="text-xs text-muted-foreground">{outcomesCount} strategy-level outcome{outcomesCount !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-muted-foreground">{primaryMeasureCount} initiative primary measure{primaryMeasureCount !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-muted-foreground">{CADENCE_SHORT_LABEL[cadenceId]} review cadence</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+              <Button
+                className="flex-1 bg-teal-500 hover:bg-teal-400 text-black font-semibold"
+                disabled={completeStage6Mut.isPending}
+                onClick={handleConfirmMeasures}
+              >
+                {completeStage6Mut.isPending ? "Confirming…" : "Confirm measures"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SectionPageLayout>
   );
 }

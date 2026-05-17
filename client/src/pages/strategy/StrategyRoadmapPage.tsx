@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronRight, X, Plus, RefreshCw, ChevronDown, AlertTriangle, Check } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -625,6 +625,14 @@ function InitiativeModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StrategyRoadmapPage() {
+  const [, navigate] = useLocation();
+
+  // This page operates on the legacy hwgt data model.
+  // Redirect to the v3 StrategyPlanPage which supersedes it.
+  useEffect(() => {
+    navigate("/strategy/plan", { replace: true });
+  }, [navigate]);
+
   const [modalState, setModalState] = useState<ModalState | null>(null);
   const [dismissedBanners, setDismissedBanners] = useState<string[]>([]);
   const [showOrgContextBanner, setShowOrgContextBanner] = useState(false);

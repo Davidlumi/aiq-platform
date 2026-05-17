@@ -32,6 +32,8 @@ import StrategyPlanPage from "./pages/strategy/StrategyPlanPage";
 import StrategyRoadmapPage from "./pages/strategy/StrategyRoadmapPage";
 import StrategyInvestmentRiskPage from "./pages/strategy/StrategyInvestmentRiskPage";
 import StrategyValuePage from "./pages/strategy/StrategyValuePage";
+import BusinessCasePage from "./pages/strategy/BusinessCasePage";
+import CapabilityPage from "./pages/strategy/CapabilityPage";
 import StrategyMeasurementPage from "./pages/strategy/StrategyMeasurementPage";
 import StrategyDraftPage from "./pages/strategy/StrategyDraftPage";
 import StrategyVisionPage from "./pages/strategy/StrategyVisionPage";
@@ -237,6 +239,12 @@ function Router() {
       </Route>
       <Route path="/strategy/value">
         <ProtectedRoute component={StrategyValuePage} />
+      </Route>
+      <Route path="/strategy/business-case">
+        <ProtectedRoute component={BusinessCasePage} />
+      </Route>
+      <Route path="/strategy/capability">
+        <ProtectedRoute component={CapabilityPage} />
       </Route>
       <Route path="/strategy/measurement">
         <ProtectedRoute component={StrategyMeasurementPage} />

@@ -13,6 +13,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useGate } from "@/contexts/GateContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ import {
   XCircle,
   CalendarDays,
   Download,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -273,6 +275,7 @@ function InitiativeRow({
   onUpdateCriticality,
   onUpdateQuarter,
   fitScore,
+  principleAlignment,
 }: {
   initiative: any;
   selected: boolean;
@@ -281,15 +284,20 @@ function InitiativeRow({
   onUpdateCriticality?: (v: number) => void;
   onUpdateQuarter?: (v: string) => void;
   fitScore?: number | null;
+  principleAlignment?: { ranking: string; score: number; alignedPrinciples: string[]; violatedPrinciples: string[] } | null;
 }) {
   const typeColor = AI_TYPE_COLORS[initiative.aiType] ?? "#9CA3AF";
   const segments: string[] = initiative.owningSegmentsJson ?? [];
+  const isViolator = principleAlignment?.ranking === "violates";
+  const isAligned = principleAlignment?.ranking === "aligned";
+  const violatedList = principleAlignment?.violatedPrinciples ?? [];
+  const alignedList = principleAlignment?.alignedPrinciples ?? [];
 
   return (
     <div
       className={`rounded-xl border transition-all duration-150 ${
         selected
-          ? "border-green-500/40 bg-green-500/5"
+          ? isViolator ? "border-amber-500/40 bg-amber-500/5" : "border-green-500/40 bg-green-500/5"
           : "border-border bg-white/2 hover:border-border hover:bg-foreground/4"
       }`}
     >
@@ -318,6 +326,24 @@ function InitiativeRow({
                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 whitespace-nowrap">
                   Good fit
                 </span>
+              )}
+              {/* Principle mismatch flag */}
+              {isViolator && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 cursor-help whitespace-nowrap">
+                        <AlertTriangle className="w-3 h-3" />
+                        {violatedList.length > 1 ? `Conflicts with ${violatedList.length} principles` : "Conflicts with principle"}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs">
+                      {violatedList.length === 1
+                        ? `Conflicts with: ${violatedList[0]}`
+                        : `Conflicts with ${violatedList.length} of your principles: ${violatedList.slice(0, 2).join(", ")}${violatedList.length > 2 ? " +more" : ""}`}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
             {/* Regulatory flag pill */}
@@ -355,6 +381,13 @@ function InitiativeRow({
             ))}
             {segments.length > 2 && (
               <span className="text-xs text-muted-foreground">+{segments.length - 2} more</span>
+            )}
+            {/* Aligned principles indicator */}
+            {isAligned && alignedList.length > 0 && (
+              <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                ✓ {alignedList.slice(0, 2).map(p => p.length > 20 ? p.slice(0, 20) + "…" : p).join(" · ")}
+                {alignedList.length > 2 && ` +${alignedList.length - 2} more`}
+              </span>
             )}
           </div>
         </div>
@@ -581,6 +614,7 @@ export default function StrategyBuilderPage() {
   const { user } = useAuth();
   const tenantId = user?.tenantId ?? "";
   const utils = trpc.useUtils();
+  const gate = useGate();
 
   const [activeStrategyId, setActiveStrategyId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
@@ -698,11 +732,29 @@ export default function StrategyBuilderPage() {
     if (!results) return {} as Record<string, number>;
     const map: Record<string, number> = {};
     for (const r of results) {
-      // Key by initiative id (engine output uses `id`, not `initiativeId`)
       map[r.id] = r.fitScore;
     }
     return map;
   }, [backgroundInputsQ.data]);
+
+  // ── Principle alignment map from background inputs ──
+  const principleAlignmentMap = useMemo(() => {
+    const results = backgroundInputsQ.data?.fitImpactResults;
+    if (!results) return {} as Record<string, { ranking: string; score: number; alignedPrinciples: string[]; violatedPrinciples: string[] }>;
+    const map: Record<string, { ranking: string; score: number; alignedPrinciples: string[]; violatedPrinciples: string[] }> = {};
+    for (const r of results) {
+      if (r.principleAlignment) {
+        map[r.id] = r.principleAlignment as { ranking: string; score: number; alignedPrinciples: string[]; violatedPrinciples: string[] };
+      }
+    }
+    return map;
+  }, [backgroundInputsQ.data]);
+
+  // ── Acceptance reasons (violators) ──
+  const [acceptanceReasons, setAcceptanceReasons] = useState<Record<string, string>>({});
+  const [pendingViolatorId, setPendingViolatorId] = useState<string | null>(null);
+  const [acceptanceInput, setAcceptanceInput] = useState("");
+  const [showViolatorsOnly, setShowViolatorsOnly] = useState(false);
 
   // Map initiative library IDs to display initiative names for cross-referencing
   const INITIATIVE_ID_TO_NAME: Record<string, string> = {
@@ -742,16 +794,23 @@ export default function StrategyBuilderPage() {
         return mapped === categoryFilter;
       });
     }
-    // Sort: recommended (fit ≥ 7) first, then by fit score desc, then alphabetical
+    if (showViolatorsOnly) {
+      list = list.filter(i => principleAlignmentMap[i.id]?.ranking === "violates");
+    }
+    // Sort: fit score desc, principle alignment score as tiebreaker, then initiative ID for stability
     if (Object.keys(fitScoreMap).length > 0) {
       list = [...list].sort((a, b) => {
         const sa = getFitScore(a) ?? 0;
         const sb = getFitScore(b) ?? 0;
-        return sb - sa;
+        if (sb !== sa) return sb - sa;
+        const pa = principleAlignmentMap[a.id]?.score ?? 0;
+        const pb = principleAlignmentMap[b.id]?.score ?? 0;
+        if (pb !== pa) return pb - pa;
+        return (a.id ?? "").localeCompare(b.id ?? "");
       });
     }
     return list;
-  }, [allInitiatives, categoryFilter, fitScoreMap, getFitScore]);
+  }, [allInitiatives, categoryFilter, fitScoreMap, getFitScore, principleAlignmentMap, showViolatorsOnly]);
 
   const output = outputQ.data;
   const compareOutput = compareOutputQ.data;
@@ -776,6 +835,24 @@ export default function StrategyBuilderPage() {
   const handleToggleInitiative = useCallback(
     (initiativeId: string) => {
       if (!activeStrategyId) return;
+      // If already selected, allow deselect without modal
+      if (selectedInitiativeIds.has(initiativeId)) {
+        toggleInitMut.mutate({
+          strategyId: activeStrategyId,
+          initiativeId,
+          criticality: 1,
+          targetQuarter: "Q2 26",
+          targetQuarterOffset: 6,
+        });
+        return;
+      }
+      // If violator and not yet accepted, show acceptance-reason modal
+      const alignment = principleAlignmentMap[initiativeId];
+      if (alignment?.ranking === "violates" && !acceptanceReasons[initiativeId]) {
+        setPendingViolatorId(initiativeId);
+        setAcceptanceInput("");
+        return;
+      }
       toggleInitMut.mutate({
         strategyId: activeStrategyId,
         initiativeId,
@@ -784,8 +861,24 @@ export default function StrategyBuilderPage() {
         targetQuarterOffset: 6,
       });
     },
-    [activeStrategyId, toggleInitMut]
+    [activeStrategyId, toggleInitMut, selectedInitiativeIds, principleAlignmentMap, acceptanceReasons]
   );
+
+  const handleAcceptViolator = useCallback(() => {
+    if (!pendingViolatorId || !activeStrategyId) return;
+    const wordCount = acceptanceInput.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount < 10) return; // enforced in UI
+    setAcceptanceReasons(prev => ({ ...prev, [pendingViolatorId]: acceptanceInput.trim() }));
+    toggleInitMut.mutate({
+      strategyId: activeStrategyId,
+      initiativeId: pendingViolatorId,
+      criticality: 1,
+      targetQuarter: "Q2 26",
+      targetQuarterOffset: 6,
+    });
+    setPendingViolatorId(null);
+    setAcceptanceInput("");
+  }, [pendingViolatorId, activeStrategyId, acceptanceInput, toggleInitMut]);
 
   // ── No strategy yet ──
   if (!activeStrategyId && (strategiesQ.data?.length ?? 0) === 0) {
@@ -820,6 +913,18 @@ export default function StrategyBuilderPage() {
 
   return (
     <div className="space-y-6">
+      {/* Cascade banner — principles edited after clearing Stage 4 */}
+      {gate.stage4EditedAfterClearing && (
+        <div className="flex items-start gap-3 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">Principles have been updated</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Your principles changed after the plan was scored. Review flagged initiatives below — some alignment rankings may have shifted.
+            </p>
+          </div>
+        </div>
+      )}
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -1004,6 +1109,20 @@ export default function StrategyBuilderPage() {
                   {cat}
                 </button>
               ))}
+              {/* Show violators toggle */}
+              {Object.values(principleAlignmentMap).some(a => a.ranking === "violates") && (
+                <button
+                  onClick={() => setShowViolatorsOnly(v => !v)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 ${
+                    showViolatorsOnly
+                      ? "border-amber-500/60 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      : "border-border text-muted-foreground hover:border-border/60"
+                  }`}
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  {showViolatorsOnly ? "Hide violators" : `Show violators (${Object.values(principleAlignmentMap).filter(a => a.ranking === "violates").length})`}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1022,6 +1141,7 @@ export default function StrategyBuilderPage() {
                   strategyInitiative={selectedInitiativeMap[init.id]}
                   onToggle={() => handleToggleInitiative(init.id)}
                   fitScore={getFitScore(init)}
+                  principleAlignment={principleAlignmentMap[init.id] ?? null}
                   onUpdateCriticality={v =>
                     updateInitiativeMut.mutate({
                       strategyInitiativeId: selectedInitiativeMap[init.id]?.id,
@@ -1496,6 +1616,67 @@ export default function StrategyBuilderPage() {
           }
         }}
       />
+
+      {/* ── Acceptance-reason modal (violators) ── */}
+      {pendingViolatorId && (() => {
+        const init = allInitiatives.find(i => i.id === pendingViolatorId);
+        const alignment = principleAlignmentMap[pendingViolatorId];
+        const violated = alignment?.violatedPrinciples ?? [];
+        const wordCount = acceptanceInput.trim().split(/\s+/).filter(Boolean).length;
+        return (
+          <Dialog open={!!pendingViolatorId} onOpenChange={open => { if (!open) { setPendingViolatorId(null); setAcceptanceInput(""); } }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Principle conflict — acceptance required
+                </DialogTitle>
+                <DialogDescription>
+                  <strong>{init?.name}</strong> conflicts with {violated.length === 1 ? "one of your principles" : `${violated.length} of your principles`}:
+                  {violated.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {violated.map((p, i) => (
+                        <li key={i} className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 mt-2">
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1.5 block">
+                    Why are you accepting this initiative despite the conflict? <span className="text-muted-foreground">(min 10 words)</span>
+                  </label>
+                  <textarea
+                    value={acceptanceInput}
+                    onChange={e => setAcceptanceInput(e.target.value)}
+                    placeholder="e.g. This is a back-pocket option we may consider in 2027 if EU regulation evolves."
+                    className="w-full h-24 rounded-lg border border-border bg-background text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-foreground placeholder:text-muted-foreground"
+                  />
+                  <p className={`text-xs mt-1 ${wordCount >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                    {wordCount} / 10 words minimum
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setPendingViolatorId(null); setAcceptanceInput(""); }}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-semibold"
+                    disabled={wordCount < 10 || toggleInitMut.isPending}
+                    onClick={handleAcceptViolator}
+                  >
+                    {toggleInitMut.isPending ? "Adding…" : "Accept with reason"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 }

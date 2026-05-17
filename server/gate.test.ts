@@ -295,7 +295,7 @@ describe("gate.markEdited", () => {
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(
-      caller.gate.markEdited({ stage: "stage5" as any })
+      caller.gate.markEdited({ stage: "stage99" as any })
     ).rejects.toBeDefined();
   });
 });

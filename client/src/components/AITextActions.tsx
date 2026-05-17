@@ -34,7 +34,7 @@ export type AITextActionType = "expand" | "refine" | "challenge" | "suggest";
 
 export type AITextActionsContext = {
   /** Which stage/field this text belongs to — used for prompt context */
-  stage: "vision" | "strategy_statement" | "principle" | "wont_do" | "general";
+  stage: "vision" | "strategy_statement" | "principle" | "wont_do" | "general" | "business_case" | "capability_narrative";
   /** Optional org context for richer prompts */
   orgContext?: {
     sector?: string;

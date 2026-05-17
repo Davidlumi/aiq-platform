@@ -1509,8 +1509,8 @@ export default function StrategyOverviewPage() {
                 title="What it costs"
                 headline={costHeadline}
                 subLine={costSubLine}
-                footerLink="/strategy/investment-risk"
-                footerLabel="See the costs"
+                footerLink="/strategy/business-case"
+                footerLabel="See the business case"
                 emptyMessage="Cost not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
                 emptyCtaHref="/strategy/roadmap"
@@ -1518,7 +1518,7 @@ export default function StrategyOverviewPage() {
                 onNavigate={navigate}
                 onCardClick={() => {
                   (window as any).umami?.track("strategy.card.clicked", { card: "cost" });
-                  navigate("/strategy/investment-risk");
+                  navigate("/strategy/business-case");
                 }}
               />
             )}
@@ -1533,8 +1533,8 @@ export default function StrategyOverviewPage() {
                 title="What this is worth"
                 headline={valueHeadline}
                 subLine={valueSubLine}
-                footerLink="/strategy/value"
-                footerLabel="See what this is worth"
+                footerLink="/strategy/business-case"
+                footerLabel="See the business case"
                 emptyMessage="Value not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
                 emptyCtaHref="/strategy/roadmap"
@@ -1542,7 +1542,7 @@ export default function StrategyOverviewPage() {
                 onNavigate={navigate}
                 onCardClick={() => {
                   (window as any).umami?.track("strategy.card.clicked", { card: "value" });
-                  navigate("/strategy/value");
+                  navigate("/strategy/business-case");
                 }}
               />
             )}

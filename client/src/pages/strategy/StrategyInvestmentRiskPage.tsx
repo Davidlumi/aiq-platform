@@ -15,6 +15,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useGate } from "@/contexts/GateContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +180,7 @@ function AcknowledgeModal({ open, displayName, existingNote, onConfirm, onClose,
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function StrategyInvestmentRiskPage() {
   const [, navigate] = useLocation();
+  const gate = useGate();
 
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
   const strategyQ    = trpc.intelligence.getStrategy.useQuery();
@@ -386,6 +388,9 @@ export default function StrategyInvestmentRiskPage() {
       title="What it costs"
       accentColor="#FBBF24"
       icon={<PoundSterling className="w-5 h-5" />}
+      isLocked={!gate.isStage7Accessible}
+      editedAfterClearing={gate.stage5EditedAfterClearing || gate.stage6EditedAfterClearing}
+      upstreamStageLabel={gate.stage6EditedAfterClearing ? "Success Measures" : "Initiatives"}
       actions={
         <Button
           variant="outline" size="sm"

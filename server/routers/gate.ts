@@ -1,18 +1,20 @@
 /**
  * Gate Router — v3 Strategy Flow Stage Gate State Machine
  *
- * Manages the 4-stage gate state for the v3 strategy flow:
+ * Manages the 8-stage gate state for the v3 strategy flow:
  *   Stage 1: Pre-work (validated by completePrework in backgroundInputs router)
  *   Stage 2: Vision
  *   Stage 3: Strategy
  *   Stage 4: Principles + Won't Do (triggers engine re-fire)
+ *   Stage 5: Initiatives (plan curation)
+ *   Stage 6: Success Measures
+ *   Stage 7: Business Case
+ *   Stage 8: Capability
  *
  * Gate state is persisted in ailOrgContext.stageGateStateJson as:
  * {
  *   stage1: { completedAt: number | null, lastEditedAt: number | null },
- *   stage2: { completedAt: number | null, lastEditedAt: number | null },
- *   stage3: { completedAt: number | null, lastEditedAt: number | null },
- *   stage4: { completedAt: number | null, lastEditedAt: number | null },
+ *   ...stage8: { completedAt: number | null, lastEditedAt: number | null },
  * }
  *
  * A stage is "cleared" when completedAt is set and lastEditedAt is null or < completedAt.
@@ -40,6 +42,10 @@ export type StageGateState = {
   stage2: StageGateEntry;
   stage3: StageGateEntry;
   stage4: StageGateEntry;
+  stage5: StageGateEntry;
+  stage6: StageGateEntry;
+  stage7: StageGateEntry;
+  stage8: StageGateEntry;
 };
 
 const DEFAULT_GATE_STATE: StageGateState = {
@@ -47,6 +53,10 @@ const DEFAULT_GATE_STATE: StageGateState = {
   stage2: { completedAt: null, lastEditedAt: null },
   stage3: { completedAt: null, lastEditedAt: null },
   stage4: { completedAt: null, lastEditedAt: null },
+  stage5: { completedAt: null, lastEditedAt: null },
+  stage6: { completedAt: null, lastEditedAt: null },
+  stage7: { completedAt: null, lastEditedAt: null },
+  stage8: { completedAt: null, lastEditedAt: null },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,7 +65,8 @@ function freshEntry(): StageGateEntry {
   return { completedAt: null, lastEditedAt: null };
 }
 function parseGateState(json: string | null | undefined): StageGateState {
-  if (!json) return { stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry() };
+  const empty = () => ({ stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry(), stage5: freshEntry(), stage6: freshEntry(), stage7: freshEntry(), stage8: freshEntry() });
+  if (!json) return empty();
   try {
     const parsed = JSON.parse(json) as Partial<StageGateState>;
     return {
@@ -63,9 +74,13 @@ function parseGateState(json: string | null | undefined): StageGateState {
       stage2: parsed.stage2 ? { ...parsed.stage2 } : freshEntry(),
       stage3: parsed.stage3 ? { ...parsed.stage3 } : freshEntry(),
       stage4: parsed.stage4 ? { ...parsed.stage4 } : freshEntry(),
+      stage5: parsed.stage5 ? { ...parsed.stage5 } : freshEntry(),
+      stage6: parsed.stage6 ? { ...parsed.stage6 } : freshEntry(),
+      stage7: parsed.stage7 ? { ...parsed.stage7 } : freshEntry(),
+      stage8: parsed.stage8 ? { ...parsed.stage8 } : freshEntry(),
     };
   } catch {
-    return { stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry() };
+    return empty();
   }
 }
 
@@ -119,19 +134,21 @@ export const gateRouter = router({
       const orgCtx = row[0];
       if (!orgCtx) {
         return {
-          gateState: { stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry() },
+          gateState: parseGateState(null),
           isStage1Accessible: true,
           isStage2Accessible: false,
           isStage3Accessible: false,
           isStage4Accessible: false,
-          stage1Cleared: false,
-          stage2Cleared: false,
-          stage3Cleared: false,
-          stage4Cleared: false,
-          stage1EditedAfterClearing: false,
-          stage2EditedAfterClearing: false,
-          stage3EditedAfterClearing: false,
-          stage4EditedAfterClearing: false,
+          isStage5Accessible: false,
+          isStage6Accessible: false,
+          isStage7Accessible: false,
+          isStage8Accessible: false,
+          stage1Cleared: false, stage2Cleared: false, stage3Cleared: false, stage4Cleared: false,
+          stage5Cleared: false, stage6Cleared: false, stage7Cleared: false, stage8Cleared: false,
+          stage1EditedAfterClearing: false, stage2EditedAfterClearing: false,
+          stage3EditedAfterClearing: false, stage4EditedAfterClearing: false,
+          stage5EditedAfterClearing: false, stage6EditedAfterClearing: false,
+          stage7EditedAfterClearing: false, stage8EditedAfterClearing: false,
           visionStatement: null,
           visionInspirationSource: null,
           strategyArchetype: null,
@@ -150,6 +167,10 @@ export const gateRouter = router({
       const stage2Cleared = isStageCleared(gateState.stage2);
       const stage3Cleared = isStageCleared(gateState.stage3);
       const stage4Cleared = isStageCleared(gateState.stage4);
+      const stage5Cleared = isStageCleared(gateState.stage5);
+      const stage6Cleared = isStageCleared(gateState.stage6);
+      const stage7Cleared = isStageCleared(gateState.stage7);
+      const stage8Cleared = isStageCleared(gateState.stage8);
 
       return {
         gateState,
@@ -157,14 +178,20 @@ export const gateRouter = router({
         isStage2Accessible: stage1Cleared,
         isStage3Accessible: stage2Cleared,
         isStage4Accessible: stage3Cleared,
-        stage1Cleared,
-        stage2Cleared,
-        stage3Cleared,
-        stage4Cleared,
+        isStage5Accessible: stage4Cleared,
+        isStage6Accessible: stage5Cleared,
+        isStage7Accessible: stage6Cleared,
+        isStage8Accessible: stage7Cleared,
+        stage1Cleared, stage2Cleared, stage3Cleared, stage4Cleared,
+        stage5Cleared, stage6Cleared, stage7Cleared, stage8Cleared,
         stage1EditedAfterClearing: isStageEditedAfterClearing(gateState.stage1),
         stage2EditedAfterClearing: isStageEditedAfterClearing(gateState.stage2),
         stage3EditedAfterClearing: isStageEditedAfterClearing(gateState.stage3),
         stage4EditedAfterClearing: isStageEditedAfterClearing(gateState.stage4),
+        stage5EditedAfterClearing: isStageEditedAfterClearing(gateState.stage5),
+        stage6EditedAfterClearing: isStageEditedAfterClearing(gateState.stage6),
+        stage7EditedAfterClearing: isStageEditedAfterClearing(gateState.stage7),
+        stage8EditedAfterClearing: isStageEditedAfterClearing(gateState.stage8),
         visionStatement: orgCtx.visionStatement ?? null,
         visionInspirationSource: orgCtx.visionInspirationSource ?? null,
         strategyArchetype: orgCtx.strategyArchetype ?? null,
@@ -178,7 +205,7 @@ export const gateRouter = router({
    */
   markEdited: protectedProcedure
     .input(z.object({
-      stage: z.enum(["stage1", "stage2", "stage3", "stage4"]),
+      stage: z.enum(["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -494,6 +521,172 @@ export const gateRouter = router({
       // Return up to 6 entries, shuffled
       const shuffled = [...filtered].sort(() => Math.random() - 0.5);
       return shuffled.slice(0, 6);
+    }),
+
+  /**
+   * Complete Stage 5 (Initiatives / Plan Curation).
+   * Validates: at least 1 initiative selected.
+   * Sets stage5ConfirmedAt and clears stage5 gate.
+   */
+  completeStage5: protectedProcedure
+    .input(z.object({
+      selectedInitiativeIds: z.array(z.string()).min(1, "Select at least one initiative."),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const row = await db
+        .select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage5.completedAt = Date.now();
+      gateState.stage5.lastEditedAt = null;
+
+      await db.update(ailOrgContext)
+        .set({
+          selectedInitiativesJson: JSON.stringify(input.selectedInitiativeIds),
+          stage5ConfirmedAt: new Date(),
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { ok: true, gateState };
+    }),
+
+  /**
+   * Complete Stage 6 (Success Measures).
+   * Validates: at least 1 outcome with a primary measure defined.
+   * Sets stage6ConfirmedAt and clears stage6 gate.
+   */
+  completeStage6: protectedProcedure
+    .input(z.object({
+      outcomesJson: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let outcomes: Array<{ primary_measure?: string; title?: string }> = [];
+      try { outcomes = JSON.parse(input.outcomesJson); } catch { /* empty */ }
+
+      const withMeasure = outcomes.filter(o => o.primary_measure && o.primary_measure.trim().length > 0);
+      if (withMeasure.length < 1) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "At least one outcome must have a primary measure defined." });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const row = await db
+        .select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage6.completedAt = Date.now();
+      gateState.stage6.lastEditedAt = null;
+
+      await db.update(ailOrgContext)
+        .set({
+          outcomesJson: input.outcomesJson,
+          stage6ConfirmedAt: new Date(),
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { ok: true, gateState };
+    }),
+
+  /**
+   * Complete Stage 7 (Business Case).
+   * Validates: businessCaseNarrative is at least 50 words.
+   * Sets stage7ConfirmedAt and clears stage7 gate.
+   */
+  completeStage7: protectedProcedure
+    .input(z.object({
+      businessCaseNarrative: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const wordCount = countWords(input.businessCaseNarrative);
+      if (wordCount < 50) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Business case narrative must be at least 50 words (currently ${wordCount}).` });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const row = await db
+        .select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage7.completedAt = Date.now();
+      gateState.stage7.lastEditedAt = null;
+
+      await db.update(ailOrgContext)
+        .set({
+          businessCaseNarrative: input.businessCaseNarrative,
+          stage7ConfirmedAt: new Date(),
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { ok: true, gateState };
+    }),
+
+  /**
+   * Complete Stage 8 (Capability).
+   * Validates: stage8CapabilityJson is present with at least one dimension filled.
+   * Sets stage8ConfirmedAt and clears stage8 gate.
+   */
+  completeStage8: protectedProcedure
+    .input(z.object({
+      stage8CapabilityJson: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let cap: Record<string, unknown> = {};
+      try { cap = JSON.parse(input.stage8CapabilityJson); } catch { /* empty */ }
+
+      const dims = ["skills", "capacity", "changeReadiness", "vendorEcosystem"];
+      const filled = dims.filter(d => cap[d] && typeof cap[d] === "object");
+      if (filled.length < 1) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "At least one capability dimension must be completed." });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const row = await db
+        .select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage8.completedAt = Date.now();
+      gateState.stage8.lastEditedAt = null;
+
+      await db.update(ailOrgContext)
+        .set({
+          stage8CapabilityJson: input.stage8CapabilityJson,
+          stage8ConfirmedAt: new Date(),
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { ok: true, gateState };
     }),
 
   /**

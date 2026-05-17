@@ -528,6 +528,23 @@ function Stage5PrinciplesBanner() {
 export default function StrategyPlanPage() {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const gate = useGate();
+  const { isStage5Accessible, stage5Cleared: isStage5Cleared } = gate;
+
+  // Confirm Plan dialog
+  const [confirmPlanOpen, setConfirmPlanOpen] = useState(false);
+  const confirmPlanMutation = trpc.gate.completeStage5.useMutation({
+    onSuccess: () => {
+      utils.intelligence.getStrategy.invalidate();
+      utils.gate.getState.invalidate();  // eslint-disable-line @typescript-eslint/no-floating-promises
+      setConfirmPlanOpen(false);
+      toast.success("Plan confirmed — moving to Measurement");
+      navigate("/strategy/measurement");
+    },
+    onError: (err) => {
+      toast.error(err.message ?? "Failed to confirm plan");
+    },
+  });
 
   // View mode: "executive" (read-only, board-ready) or "operational" (editable)
   const [viewMode, setViewMode] = useState<"executive" | "operational">(() => {
@@ -629,7 +646,8 @@ export default function StrategyPlanPage() {
     return HR_FUNCTIONS.map(fn => ({ fn, count: counts[fn] ?? 0, pct: ((counts[fn] ?? 0) / max) * 100 }));
   }, [enriched]);
 
-  // Filtered + sorted list
+  // Filtered + sorted list (capped at 12 in executive view, uncapped in operational)
+  const PLAN_CAP = 12;
   const filteredList = useMemo(() => {
     let list = [...enriched];
     if (phaseFilter)    list = list.filter(i => i._phase === phaseFilter);
@@ -643,8 +661,12 @@ export default function StrategyPlanPage() {
       const order = ["paused", "in_progress", "not_started", "completed", "cancelled"];
       return order.indexOf(a.status ?? "not_started") - order.indexOf(b.status ?? "not_started");
     });
+    // Apply curation cap in executive view when no filters are active
+    if (viewMode === "executive" && !phaseFilter && !functionFilter && !statusFilter) {
+      return list.slice(0, PLAN_CAP);
+    }
     return list;
-  }, [enriched, phaseFilter, functionFilter, statusFilter, sortBy]);
+  }, [enriched, phaseFilter, functionFilter, statusFilter, sortBy, viewMode]);
 
   // Handlers
   const handlePhaseChange = useCallback((init: any, newPhase: string) => {
@@ -806,6 +828,27 @@ export default function StrategyPlanPage() {
             >
               Edit selection
             </Button>
+
+            {/* Confirm Plan (Stage 5 gate) */}
+            {isStage5Accessible && !isStage5Cleared && (
+              <Button
+                size="sm"
+                className="text-xs"
+                disabled={enriched.length === 0 || confirmPlanMutation.isPending}
+                onClick={() => setConfirmPlanOpen(true)}
+              >
+                {confirmPlanMutation.isPending ? (
+                  <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Confirming…</>
+                ) : (
+                  "Confirm plan"
+                )}
+              </Button>
+            )}
+            {isStage5Cleared && (
+              <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20 gap-1 px-2 py-1">
+                <CheckCircle2 className="w-3 h-3" />Plan confirmed
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -1116,6 +1159,20 @@ export default function StrategyPlanPage() {
                             {(init as any).timeToValueMonths.min}–{(init as any).timeToValueMonths.max}m
                           </Badge>
                         )}
+                        {/* Principle mismatch flag */}
+                        {(init as any).principleAlignment?.ranking === "violates" && (
+                          <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-500 border-red-500/20 gap-0.5">
+                            <AlertTriangle className="w-2.5 h-2.5" />
+                            Conflicts with principle
+                          </Badge>
+                        )}
+                        {/* Principle aligned indicator */}
+                        {(init as any).principleAlignment?.ranking === "aligned" && (init as any).principleAlignment?.score >= 0.7 && (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20 gap-0.5">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Principles aligned
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -1192,6 +1249,46 @@ export default function StrategyPlanPage() {
         isInPlan={true}
         onNavigate={id => setDrawerInitId(id)}
       />
+
+      {/* ── Confirm Plan Dialog ── */}
+      <Dialog open={confirmPlanOpen} onOpenChange={setConfirmPlanOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm plan?</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-3 text-sm text-muted-foreground">
+            <p>
+              You are about to confirm a plan of <strong className="text-foreground">{enriched.length} initiative{enriched.length !== 1 ? "s" : ""}</strong>.
+              This will advance the strategy to the <strong className="text-foreground">Measurement</strong> stage.
+            </p>
+            {enriched.some((i: any) => i.principleAlignment?.ranking === "violates") && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  {enriched.filter((i: any) => i.principleAlignment?.ranking === "violates").length} initiative{enriched.filter((i: any) => i.principleAlignment?.ranking === "violates").length !== 1 ? "s" : ""} conflict with your stated principles. Ensure you have reviewed and accepted these before confirming.
+                </p>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground/60">You can return to this page to revise the plan — doing so will require re-confirming.</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setConfirmPlanOpen(false)} disabled={confirmPlanMutation.isPending}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={confirmPlanMutation.isPending}
+              onClick={() => confirmPlanMutation.mutate({ selectedInitiativeIds: enriched.map((i: any) => i.id) })}
+            >
+              {confirmPlanMutation.isPending ? (
+                <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Confirming…</>
+              ) : (
+                "Confirm plan"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

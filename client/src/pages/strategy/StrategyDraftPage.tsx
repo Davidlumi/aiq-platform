@@ -7,12 +7,13 @@
  */
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { useGate } from "@/contexts/GateContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Sparkles, Lock, Unlock, RefreshCw, ChevronDown, ChevronUp,
-  FileText, CheckCircle2, AlertCircle, Download, Copy, Check,
+  FileText, CheckCircle2, AlertCircle, Download, Copy, Check, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -302,6 +303,7 @@ function SectionCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StrategyDraftPage() {
+  const gate = useGate();
   const utils = trpc.useUtils();
   const { data: draft, isLoading } = trpc.intelligence.getStrategyDraft.useQuery();
   const generateMutation = trpc.intelligence.generateStrategyDraftSection.useMutation({
@@ -398,6 +400,24 @@ export default function StrategyDraftPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
+      {/* Cascade banner — upstream stage edited after clearing */}
+      {(gate.stage5EditedAfterClearing || gate.stage6EditedAfterClearing || gate.stage7EditedAfterClearing) && (
+        <div className="flex items-start gap-3 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+              {gate.stage7EditedAfterClearing
+                ? "Business Case has been updated"
+                : gate.stage6EditedAfterClearing
+                  ? "Success Measures have been updated"
+                  : "Initiatives have been updated"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Review and regenerate any affected sections to keep the draft in sync.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
