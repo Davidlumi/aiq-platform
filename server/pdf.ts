@@ -15,6 +15,7 @@
 import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
 import { generateBoardPackPDF } from "./pdfBoardPack";
+import { generateStrategicFramingPDF } from "./pdfStrategicFraming";
 import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
@@ -1389,6 +1390,7 @@ export function registerPdfRoutes(app: Express) {
         capability_profile: "aiq-capability-profile.pdf",
         ai_strategy:        "aiq-ai-strategy-report.pdf",
         board_pack:         "aiq-hr-ai-strategy-board-pack.pdf",
+        strategic_framing:  "aiq-strategic-framing.pdf",
       };
 
       const filename = filenames[type];
@@ -1425,6 +1427,9 @@ export function registerPdfRoutes(app: Express) {
           break;
         case "board_pack":
           await generateBoardPackPDF(doc, user.id, user.tenantId);
+          break;
+        case "strategic_framing":
+          await generateStrategicFramingPDF(doc, user.id, user.tenantId);
           break;
       }
 

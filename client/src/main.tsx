@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { ViewAsProvider } from "@/contexts/ViewAsContext";
+import { GateProvider } from "@/contexts/GateContext";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
@@ -57,7 +58,9 @@ createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <ViewAsProvider>
-        <App />
+        <GateProvider>
+          <App />
+        </GateProvider>
       </ViewAsProvider>
     </QueryClientProvider>
   </trpc.Provider>

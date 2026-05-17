@@ -27,6 +27,7 @@ import { operationalMaturityRouter } from "./routers/operationalMaturity";
 import { contentReviewRouter } from "./routers/contentReview";
 import { hwgtRouter } from "./routers/hwgt";
 import { backgroundInputsRouter } from "./routers/backgroundInputs";
+import { gateRouter } from "./routers/gate";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -56,6 +57,7 @@ export const appRouter = router({
   contentReview: contentReviewRouter,
   hwgt: hwgtRouter,
   backgroundInputs: backgroundInputsRouter,
+  gate: gateRouter,
 });
 
 export type AppRouter = typeof appRouter;

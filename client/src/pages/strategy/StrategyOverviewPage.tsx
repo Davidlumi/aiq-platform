@@ -21,10 +21,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Clock, Pencil, Download, ArrowRight,
   MessageCircle, ChevronDown, ChevronUp,
   Copy, RefreshCw, Check, AlertTriangle, Sparkles,
+  CheckCircle2, Lock, Circle,
 } from "lucide-react";
 import { VisionModal, type VisionInputs } from "./VisionModal";
 import { toast } from "sonner";
 import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
+import { useGate } from "@/contexts/GateContext";
+import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
@@ -847,6 +850,78 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
   );
 }
 
+
+// ─── Gate Flow Strip ──────────────────────────────────────────────────────────
+const STAGE_LABELS: Record<number, string> = {
+  1: "Pre-work",
+  2: "Vision",
+  3: "Strategy",
+  4: "Principles",
+};
+
+function GateFlowStrip() {
+  const gate = useGate();
+  const [, navigate] = useLocation();
+
+  type StageInfo = {
+    num: 1 | 2 | 3 | 4;
+    label: string;
+    href: string;
+    isAccessible: boolean;
+    isCleared: boolean;
+  };
+
+  const stageInfos: StageInfo[] = [
+    { num: 1, label: "Pre-work",   href: "/strategy/diagnostic", isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
+    { num: 2, label: "Vision",     href: "/strategy/vision",     isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
+    { num: 3, label: "Strategy",   href: "/strategy/strategy",   isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
+    { num: 4, label: "Principles", href: "/strategy/ambition",   isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
+  ];
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+        STRATEGY BUILD PROGRESS
+      </p>
+      <div className="flex items-center gap-0">
+        {stageInfos.map(({ num, label, href, isAccessible, isCleared }, idx) => {
+          const isLocked = !isAccessible;
+
+          return (
+            <React.Fragment key={num}>
+              {idx > 0 && (
+                <div className={cn(
+                  "h-px flex-1 mx-1",
+                  stageInfos[idx - 1].isCleared ? "bg-emerald-500/60" : "bg-border"
+                )} />
+              )}
+              <button
+                onClick={() => !isLocked && navigate(href)}
+                disabled={isLocked}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  isCleared && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15",
+                  !isCleared && !isLocked && "text-foreground bg-background border border-border hover:bg-muted/50",
+                  isLocked && "text-muted-foreground/50 cursor-not-allowed"
+                )}
+              >
+                {isCleared ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                ) : isLocked ? (
+                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                ) : (
+                  <Circle className="w-3.5 h-3.5 flex-shrink-0" />
+                )}
+                <span>Stage {num} — {label}</span>
+              </button>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function StrategyOverviewPage() {
   const [, navigate] = useLocation();
@@ -1042,6 +1117,10 @@ export default function StrategyOverviewPage() {
     (window as any).umami?.track("strategy.export.clicked");
     window.open("/api/pdf/board_pack", "_blank", "noopener,noreferrer");
   }
+  function handleExportStrategicFraming() {
+    (window as any).umami?.track("strategy.export.framing.clicked");
+    window.open("/api/pdf/strategic_framing", "_blank", "noopener,noreferrer");
+  }
   function handleEditStrategy() {
     (window as any).umami?.track("strategy.edit.clicked");
     navigate("/strategy/ambition");
@@ -1227,6 +1306,15 @@ export default function StrategyOverviewPage() {
               variant="outline"
               size="sm"
               className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
+              onClick={handleExportStrategicFraming}
+            >
+              <Download className="w-3 h-3 mr-1.5" />
+              Export framing
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
               onClick={handleExportBoardPack}
             >
               <Download className="w-3 h-3 mr-1.5" />
@@ -1235,6 +1323,8 @@ export default function StrategyOverviewPage() {
           </div>
         </div>
 
+        {/* ══ V3 GATE FLOW STRIP ══════════════════════════════════════════════════ */}
+        <GateFlowStrip />
         {/* ══ HERO BLOCK (Changes 2+3) ══════════════════════════════════════════ */}
         <div className="mb-8">
           {isLoading ? (

@@ -5,10 +5,10 @@
  * Edit modals for all 4 sections. Review-date footer.
  */
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Pencil, Sparkles, Plus, Trash2, ChevronRight,
-  CheckCircle2, Clock, X, ArrowRight,
+  CheckCircle2, Clock, X, ArrowRight, AlertTriangle, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useGate } from "@/contexts/GateContext";
+import { cn } from "@/lib/utils";
 import { VisionModal, type VisionInputs } from "./VisionModal";
 import { toast } from "sonner";
 
@@ -993,6 +995,8 @@ function OutcomesModal({
 
 export default function StrategyAmbitionPage() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const gate = useGate();
 
   const sectionsQ = trpc.intelligence.getAmbitionSections.useQuery();
   const strategyQ = trpc.intelligence.getStrategyAssessment.useQuery();
@@ -1000,6 +1004,18 @@ export default function StrategyAmbitionPage() {
   const saveSectionM = trpc.intelligence.saveAmbitionSection.useMutation();
   const draftSectionM = trpc.intelligence.draftAmbitionSection.useMutation();
   const patchStrategyM = trpc.intelligence.patchStrategyField.useMutation();
+  const completeStage4M = trpc.gate.completeStage4.useMutation({
+    onSuccess: (data) => {
+      gate.refetch();
+      if (data.engineRefired) {
+        toast.success("Principles confirmed — engine re-scored your initiatives");
+      } else {
+        toast.success("Stage 4 confirmed");
+      }
+    },
+    onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 4"),
+  });
+  const markEditedM = trpc.gate.markEdited.useMutation();
 
   const [visionOpen, setVisionOpen] = useState(false);
   const [principlesOpen, setPrinciplesOpen] = useState(false);
@@ -1114,7 +1130,8 @@ export default function StrategyAmbitionPage() {
   const savePrinciples = useCallback(async (v: Principle[]) => {
     await saveSectionM.mutateAsync({ section: "principles", value: v as never });
     await sectionsQ.refetch();
-  }, [saveSectionM, sectionsQ]);
+    if (gate.stage4Cleared) markEditedM.mutate({ stage: "stage4" });
+  }, [saveSectionM, sectionsQ, gate.stage4Cleared, markEditedM]);
 
   const saveExclusions = useCallback(async (v: Exclusion[]) => {
     await saveSectionM.mutateAsync({ section: "wontDo", value: v as never });
@@ -1144,6 +1161,29 @@ export default function StrategyAmbitionPage() {
     if (outcomes?.length) count++;
     return count;
   }, [sections, principles, exclusions, outcomes]);
+
+  // Stage 4 gate banner logic
+  const isStage4Locked = !gate.isStage4Accessible;
+  const isStage4Cleared = gate.stage4Cleared;
+  const isStage4Edited = gate.stage4EditedAfterClearing;
+  const stage4BannerType: "locked" | "cleared" | "edited" | null =
+    isStage4Locked ? "locked"
+    : isStage4Edited ? "edited"
+    : isStage4Cleared ? "cleared"
+    : null;
+
+  const handleConfirmStage4 = async () => {
+    try {
+      await completeStage4M.mutateAsync();
+    } catch { /* handled by onError */ }
+  };
+
+  // Mark edited when principles/exclusions/outcomes change after stage4 is cleared
+  const handlePrinciplesChange = useCallback(async (v: Principle[]) => {
+    await saveSectionM.mutateAsync({ section: "principles", value: v as never });
+    await sectionsQ.refetch();
+    if (gate.stage4Cleared) markEditedM.mutate({ stage: "stage4" });
+  }, [saveSectionM, sectionsQ, gate.stage4Cleared, markEditedM]);
 
   if (sectionsQ.isLoading) {
     return (
@@ -1211,6 +1251,66 @@ export default function StrategyAmbitionPage() {
             </span>
           </div>
         </div>
+
+        {/* Stage 4 gate banner */}
+        {stage4BannerType === "locked" && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+            <Lock className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Complete Stage 3 — Strategy first</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Confirm your strategy archetype and statement before setting principles.
+              </p>
+            </div>
+          </div>
+        )}
+        {stage4BannerType === "cleared" && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Stage 4 confirmed — engine scored against your principles</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Editing principles or outcomes will trigger a re-score. Confirm again to apply changes.
+              </p>
+            </div>
+          </div>
+        )}
+        {stage4BannerType === "edited" && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Principles changed — re-confirm to update initiative scores</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Your edits will cascade to initiative fit scores once you re-confirm.
+              </p>
+            </div>
+            <button
+              onClick={handleConfirmStage4}
+              disabled={completeStage4M.isPending}
+              className={cn(
+                "flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors",
+                "bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+              )}
+            >
+              {completeStage4M.isPending ? "Scoring…" : "Re-confirm"}
+            </button>
+          </div>
+        )}
+        {!stage4BannerType && !isStage4Locked && (
+          <div className="flex items-center justify-end">
+            <button
+              onClick={handleConfirmStage4}
+              disabled={completeStage4M.isPending || !principles?.length}
+              className={cn(
+                "flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors",
+                "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              )}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {completeStage4M.isPending ? "Confirming…" : "Confirm principles & re-score"}
+            </button>
+          </div>
+        )}
 
         {/* Sections */}
         <VisionSection

@@ -3655,15 +3655,92 @@ test
 - [x] Document optional Launch-tier fields for future tightening patch
 
 ## v4.2 Launch-tier fields — required validation tightening patch
-- [ ] Add workforceComposition (Section I) to completePrework required list
-- [ ] Add annualRevenue (Section D) to completePrework required list
-- [ ] Add monthlyHrQueryVolume (Section D) to completePrework required list
-- [ ] Add annualApplicationVolume (Section D) to completePrework required list
-- [ ] Add annualLDSpend (Section D) to completePrework required list
-- [ ] Add ukSitesCount (Section A) to completePrework required list
-- [ ] Add workforceDigitalAccess (Section C) to completePrework required list
-- [ ] Add yearsOfHrisData (Section C) to completePrework required list
-- [ ] Add skillsFrameworkStatus (Section I) to completePrework required list
-- [ ] Add hiringVolumeProfile (Section K) to completePrework required list
-- [ ] Add unit tests for all 10 new required fields in backgroundInputs.test.ts
-- [ ] Update wizard UI: mark all 10 new required fields with required indicator (asterisk / red border on submit)
+- [x] Add workforceComposition (Section I) to completePrework required list
+- [x] Add annualRevenue (Section D) to completePrework required list
+- [x] Add monthlyHrQueryVolume (Section D) to completePrework required list
+- [x] Add annualApplicationVolume (Section D) to completePrework required list
+- [x] Add annualLDSpend (Section D) to completePrework required list
+- [x] Add ukSitesCount (Section A) to completePrework required list
+- [x] Add workforceDigitalAccess (Section C) to completePrework required list
+- [x] Add yearsOfHrisData (Section C) to completePrework required list
+- [x] Add skillsFrameworkStatus (Section I) to completePrework required list
+- [x] Add hiringVolumeProfile (Section K) to completePrework required list
+- [x] Add unit tests for all 10 new required fields in backgroundInputs.test.ts
+- [x] Update wizard UI: mark all 10 new required fields with required indicator (asterisk / red border on submit)
+
+## Increment 1 — v3 Strategy Flow (Stages 1–4)
+
+### Phase 1: Schema migration and gate state machine
+- [ ] Add stageGateStateJson column to ailOrgContext schema
+- [ ] Add visionConfirmedAt, visionInspirationSource columns to ailOrgContext schema
+- [ ] Add strategyArchetype, strategyStatement, strategyConfirmedAt columns to ailOrgContext schema
+- [ ] Add stage4ConfirmedAt column to ailOrgContext schema
+- [ ] Generate and apply schema migration SQL
+- [ ] Add gate.completeStage1 tRPC procedure (validates pre-work, sets stageGateState.stage1.completedAt)
+- [ ] Add gate.completeStage2 tRPC procedure (validates vision word count + confirmation)
+- [ ] Add gate.completeStage3 tRPC procedure (validates archetype + statement)
+- [ ] Add gate.completeStage4 tRPC procedure (validates principles + wontDo + triggers engine re-fire)
+- [ ] Add gate.getState tRPC procedure (returns stageGateState for current tenant)
+- [ ] Add gate.markEdited tRPC procedure (sets lastEditedAt for a stage)
+- [ ] Add StageGateContext React context with isStageAccessible + hasUpstreamEdits
+- [ ] Add engine.refire tRPC procedure (re-runs evaluateAllInitiatives with principles)
+
+### Phase 2: AITextActions component and intelligence.transformText
+- [ ] Add intelligence.transformText tRPC procedure with 28 prompt templates (4 actions × 7 field types)
+- [ ] Enforce vocabulary blacklist in every prompt template system prompt
+- [ ] Build reusable AITextActions client component (Expand, Refine, Challenge, Generate draft buttons)
+- [ ] AITextActions: loading state (spinner on active button, others greyed)
+- [ ] AITextActions: error state (toast, preserve content, re-enable buttons)
+- [ ] AITextActions: timeout at 20s (cancel, surface as error)
+- [ ] AITextActions: Challenge renders questions as callout, does NOT auto-edit text
+- [ ] AITextActions: CPO can always save and proceed without AI
+
+### Phase 3: Stage 2 Vision page
+- [ ] Create /strategy/vision route and StrategyVisionPage component
+- [ ] Peer vision library: seed 15-25 entries in shared/peerVisionLibrary.ts (sector-tagged, size-banded)
+- [ ] Peer vision filter logic: match sector + sizeBand + workforceComposition, fallback to LLM
+- [ ] Peer vision starting-point card UI (5-6 cards, click to populate editor)
+- [ ] Vision text area with word count indicator and soft warning at >100 words
+- [ ] AITextActions on vision field (Expand, Refine, Challenge)
+- [ ] Save draft button (auto-saves visionStatement)
+- [ ] Confirm vision button → calls gate.completeStage2, routes to Stage 3 on success
+- [ ] Stage 2 gate: blocks Confirm if word count < 10
+
+### Phase 4: Stage 3 Strategy page
+- [ ] Create /strategy/strategy route and StrategyStrategyPage component
+- [ ] 5 archetype cards in 3+2 desktop grid, full-width mobile stack
+- [ ] Archetype selection auto-fires transformText generate_draft for strategy statement
+- [ ] Strategy statement text area with AITextActions (Generate draft, Refine, Challenge)
+- [ ] Save draft button
+- [ ] Confirm strategy button → calls gate.completeStage3, routes to Stage 4 on success
+- [ ] Stage 3 gate: blocks Confirm if no archetype selected or statement word count < 15
+
+### Phase 5: Stage 4 Principles extensions + engine re-fire
+- [ ] Create /strategy/principles route and StrategyPrinciplesPage component (extracted from StrategyAmbitionPage)
+- [ ] draftAmbitionSection extended to accept vision + strategy + archetype as context
+- [ ] Suggest button label changes: "Suggest principles" (0) / "Suggest more" (1-4) / greyed with tooltip (5+)
+- [ ] Same Suggest label pattern for What We Won't Do section
+- [ ] Stage 4 gate: validates principles.length ≥ 3 AND wontDoItems.length ≥ 2
+- [ ] Confirm button triggers engine re-fire with loading UX (Section 1.7 of brief)
+- [ ] scorePrincipleAlignment evaluator added to fitImpactEngine.ts
+- [ ] principleAlignment field added to each initiative in fitImpactResultsJson output
+- [ ] Stage 5 banner: "Your plan has been updated based on your principles"
+- [ ] /strategy/ambition route redirects to appropriate stage based on stageGateState
+
+### Phase 6: Strategic framing one-pager PDF
+- [ ] intelligence.generateStrategicFramingPdf tRPC procedure
+- [ ] PDF content: Vision + Strategy archetype + statement + Principles + What We Won't Do
+- [ ] Single-page constraint with 2-page fallback if content overflows
+- [ ] AiQ light branding on PDF (no org logo for Increment 1)
+- [ ] Export button on Stage 4 success state and top of Stage 5
+
+### Phase 7: Navigation shell, cascade banners, polish
+- [ ] Stage-gated navigation sidebar/header: locked stages show lock icon, dimmed, tooltip on hover
+- [ ] Backward navigation always allowed for cleared stages
+- [ ] Edit cascade banners: "Re-confirm to keep gate clear" on edited cleared stage
+- [ ] Upstream change banners on later stages when earlier stage edited (per Section 1.5 table)
+- [ ] Stage gate state persists across sessions (server-side stageGateStateJson)
+- [ ] Mobile responsive: all new pages work at 320px viewport
+- [ ] Acme end-to-end test: Stages 1-4 with Sarah Thornton test case
+- [ ] ta_video_interview_assessment shows principleAlignment.ranking: "violates" for Acme
+- [ ] fw_shift_scheduling_ai and fw_frontline_communication show ranking: "aligned" for Acme

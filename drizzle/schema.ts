@@ -936,6 +936,14 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   lastDraftSavedAt: bigint("last_draft_saved_at", { mode: "number" }),              // Unix ms timestamp of last explicit Save as Draft action
   lastActiveSectionId: varchar("last_active_section_id", { length: 4 }),           // Section ID the user was on when they last saved draft (for resume)
   strategyDraftJson: text("strategy_draft_json"),                                  // JSON: { sections: [{id, title, content, lockedAt, generatedAt, version}], generatedAt, lockedSections: string[] }
+  // v3 Strategy Flow — Increment 1 (Stages 1-4)
+  stageGateStateJson: text("stage_gate_state_json"),                               // JSON: { stage1: { completedAt, lastEditedAt }, stage2: ..., stage3: ..., stage4: ... }
+  visionConfirmedAt: timestamp("vision_confirmed_at"),                              // When CPO confirmed Stage 2 vision
+  visionInspirationSource: varchar("vision_inspiration_source", { length: 100 }), // "own" | "peer_starter_${id}"
+  strategyArchetype: varchar("strategy_archetype", { length: 50 }),               // "augmentation" | "transformation" | "differentiation" | "efficiency" | "defensive"
+  strategyStatement: text("strategy_statement"),                                   // CPO strategy statement (40-80 words)
+  strategyConfirmedAt: timestamp("strategy_confirmed_at"),                         // When CPO confirmed Stage 3 strategy
+  stage4ConfirmedAt: timestamp("stage4_confirmed_at"),                             // When CPO confirmed Stage 4 principles + won't-do
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

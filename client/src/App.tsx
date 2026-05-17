@@ -34,6 +34,8 @@ import StrategyInvestmentRiskPage from "./pages/strategy/StrategyInvestmentRiskP
 import StrategyValuePage from "./pages/strategy/StrategyValuePage";
 import StrategyMeasurementPage from "./pages/strategy/StrategyMeasurementPage";
 import StrategyDraftPage from "./pages/strategy/StrategyDraftPage";
+import StrategyVisionPage from "./pages/strategy/StrategyVisionPage";
+import StrategyStrategyPage from "./pages/strategy/StrategyStrategyPage";
 import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
 import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
 import CompanyAssessmentResultsPage from "./pages/company/CompanyAssessmentResultsPage";
@@ -241,6 +243,12 @@ function Router() {
       </Route>
       <Route path="/strategy/draft">
         <ProtectedRoute component={StrategyDraftPage} />
+      </Route>
+      <Route path="/strategy/vision">
+        <ProtectedRoute component={StrategyVisionPage} />
+      </Route>
+      <Route path="/strategy/strategy">
+        <ProtectedRoute component={StrategyStrategyPage} />
       </Route>
       <Route path="/ai-strategy">
         <Redirect to="/strategy" />

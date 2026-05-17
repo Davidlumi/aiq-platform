@@ -1975,4 +1975,65 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { success: true };
     }),
+
+  /**
+   * Transform text using AI — supports Expand / Refine / Challenge / Suggest actions.
+   * Used by the AITextActions component for inline AI editing.
+   */
+  transformText: protectedProcedure
+    .input(z.object({
+      text: z.string().min(1).max(5000),
+      action: z.enum(["expand", "refine", "challenge", "suggest"]),
+      stage: z.enum(["vision", "strategy_statement", "principle", "wont_do", "general"]),
+      orgContext: z.object({
+        sector: z.string().optional(),
+        headcount: z.number().optional(),
+        strategyArchetype: z.string().optional(),
+        visionStatement: z.string().optional(),
+      }).optional(),
+      additionalContext: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { text, action, stage, orgContext, additionalContext } = input;
+
+      const stageDescriptions: Record<string, string> = {
+        vision: "an HR AI strategy vision statement",
+        strategy_statement: "an HR AI strategy statement",
+        principle: "a guiding principle for an HR AI strategy",
+        wont_do: "a strategic exclusion (what we won't do) for an HR AI strategy",
+        general: "strategic text for an HR AI strategy",
+      };
+
+      const actionInstructions: Record<string, string> = {
+        expand: "Expand this text by adding more specific detail, concrete examples, or measurable outcomes. Keep the same core intent. Return only the expanded text, no preamble.",
+        refine: "Refine this text to be sharper, more specific, and less vague. Remove generic phrases and replace with concrete language. Return only the refined text, no preamble.",
+        challenge: "Rewrite this text to be more ambitious, bold, or contrarian. Push the thinking further. Return only the rewritten text, no preamble.",
+        suggest: "Generate a fresh alternative to this text that takes a different angle or framing. Keep the same purpose but offer a genuinely different perspective. Return only the new text, no preamble.",
+      };
+
+      const orgCtxParts: string[] = [];
+      if (orgContext?.sector) orgCtxParts.push(`Sector: ${orgContext.sector}`);
+      if (orgContext?.headcount) orgCtxParts.push(`Headcount: ${orgContext.headcount.toLocaleString()}`);
+      if (orgContext?.strategyArchetype) orgCtxParts.push(`Strategy archetype: ${orgContext.strategyArchetype}`);
+      if (orgContext?.visionStatement) orgCtxParts.push(`Vision: ${orgContext.visionStatement}`);
+      const orgCtxStr = orgCtxParts.join(". ");
+
+      const systemPrompt = [
+        `You are an expert HR strategy consultant helping a CPO refine ${stageDescriptions[stage] ?? "strategic text"}.`,
+        orgCtxStr ? `Organisation context: ${orgCtxStr}.` : "",
+        additionalContext ?? "",
+        actionInstructions[action],
+        "Return ONLY the transformed text. No explanations, no preamble, no markdown fences.",
+      ].filter(Boolean).join(" ");
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: text },
+        ],
+      });
+
+      const resultText = (response as any)?.choices?.[0]?.message?.content ?? text;
+      return { text: typeof resultText === "string" ? resultText.trim() : text };
+    }),
 });
