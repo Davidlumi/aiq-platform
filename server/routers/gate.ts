@@ -521,6 +521,7 @@ export const gateRouter = router({
         input.visionStatement ? `The organisation's vision is: "${input.visionStatement}".` : "",
         "The statement should describe HOW the organisation will achieve its vision through this archetype.",
         "Be specific, active, and avoid generic phrases.",
+        "FORBIDDEN WORDS — never use these: leverage, synergy, synergise, strategic imperative, best-in-class, cutting-edge, holistic, transformative, game-changing, ROI, human capital, bandwidth, ecosystem, deliverables.",
         "Return ONLY the statement text. No preamble, no quotes, no markdown.",
       ].filter(Boolean).join(" ");
 

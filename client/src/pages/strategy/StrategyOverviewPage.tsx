@@ -1302,15 +1302,17 @@ export default function StrategyOverviewPage() {
               <Pencil className="w-3 h-3 mr-1.5" />
               Edit strategy
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
-              onClick={handleExportStrategicFraming}
-            >
-              <Download className="w-3 h-3 mr-1.5" />
-              Export framing
-            </Button>
+            {gate.stage4Cleared && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-3 text-xs border-border text-foreground hover:bg-foreground/8"
+                onClick={handleExportStrategicFraming}
+              >
+                <Download className="w-3 h-3 mr-1.5" />
+                Export framing
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

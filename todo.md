@@ -3744,3 +3744,13 @@ test
 - [ ] Acme end-to-end test: Stages 1-4 with Sarah Thornton test case
 - [ ] ta_video_interview_assessment shows principleAlignment.ranking: "violates" for Acme
 - [ ] fw_shift_scheduling_ai and fw_frontline_communication show ranking: "aligned" for Acme
+
+## Increment 1 QA Fixes (v3 Strategy Flow)
+- [x] principleAlignment field added to InitiativeOutputCard type
+- [x] scorePrincipleAlignment evaluator implemented in fitImpactEngine.ts
+- [x] Vocabulary blacklist added to transformText system prompt (intelligence.ts)
+- [x] Vocabulary blacklist added to draftStrategyStatement prompt (gate.ts)
+- [x] PDF bugs fixed in pdfStrategicFraming.ts (column names, completedAt)
+- [x] Export framing button gated behind gate.stage4Cleared in StrategyOverviewPage.tsx
+- [x] Unit tests for E-001–E-004 (principle alignment evaluator) added to fitImpactEngine.test.ts
+- [x] All 1,133 tests passing

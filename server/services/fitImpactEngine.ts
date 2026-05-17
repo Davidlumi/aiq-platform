@@ -45,9 +45,94 @@ export type InitiativeOutputCard = {
   hardGatesPassed: string[];
   /** Y1 cost range in GBP thousands (from initiative library) */
   y1CostRange: { low: number; high: number };
+  /** Principle alignment — populated on Stage 4 re-fire when principles are available */
+  principleAlignment?: {
+    ranking: "aligned" | "mixed" | "violates";
+    score: number;                      // 0.0 – 1.0
+    alignedPrinciples: string[];        // principle titles that support this initiative
+    violatedPrinciples: string[];       // won't-do items that conflict
+  };
 };
 
+// ─── Principle alignment evaluator ──────────────────────────────────────────
+
+/**
+ * Keyword-based principle alignment check.
+ * Returns a score 0–1 and a ranking (aligned / mixed / violates).
+ *
+ * Algorithm:
+ *  1. Check won't-do items for keyword conflicts with the initiative label/category.
+ *     Any match → ranking = "violates", score = 0.
+ *  2. Check principle titles for positive keyword alignment.
+ *     score = matchCount / principleCount, clamped to [0, 1].
+ *  3. ranking = "aligned" if score >= 0.7, else "mixed".
+ */
+export function scorePrincipleAlignment(
+  initiativeId: string,
+  initiativeLabel: string,
+  initiativeCategory: string,
+  principles: string[],
+  wontDoItems: string[],
+): NonNullable<InitiativeOutputCard["principleAlignment"]> {
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ");
+  const labelNorm = normalize(initiativeLabel);
+  void initiativeCategory; // used via catPrefix
+
+  // Category → keyword map for conflict detection
+  const CATEGORY_KEYWORDS: Record<string, string[]> = {
+    ta: ["screen", "interview", "hire", "recruit", "applicant", "candidate", "bias", "jd", "job description"],
+    fw: ["frontline", "shift", "schedule", "communication", "store manager", "deskless"],
+    hr: ["chatbot", "virtual assistant", "helpdesk", "query", "self-service", "benefit"],
+    ee: ["engagement", "recognition", "reward", "wellbeing", "sentiment", "exit"],
+    ld: ["learning", "reskill", "upskill", "training", "development", "coaching"],
+    wp: ["workforce", "planning", "headcount", "capability", "ai capability"],
+    on: ["onboard", "buddy", "documentation", "new hire"],
+    im: ["mobility", "internal", "career", "mentor"],
+    rt: ["retention", "attrition", "exit", "flight risk"],
+    gv: ["governance", "ethics", "audit", "compliance", "bias", "ai governance"],
+  };
+
+  // Extract category prefix (first 2 chars of id)
+  const catPrefix = initiativeId.slice(0, 2);
+  const catKeywords = CATEGORY_KEYWORDS[catPrefix] ?? [];
+  const allKeywords = [...catKeywords, ...labelNorm.split(" ").filter((w) => w.length > 4)];
+
+  // 1. Check won't-do items for conflicts
+  const violatedPrinciples: string[] = [];
+  for (const item of wontDoItems) {
+    const itemNorm = normalize(item);
+    const conflicts = allKeywords.some((kw) => itemNorm.includes(kw));
+    if (conflicts) violatedPrinciples.push(item);
+  }
+  if (violatedPrinciples.length > 0) {
+    return { ranking: "violates", score: 0, alignedPrinciples: [], violatedPrinciples };
+  }
+
+  // 2. Check principles for positive alignment
+  const alignedPrinciples: string[] = [];
+  for (const principle of principles) {
+    const pNorm = normalize(principle);
+    // Positive alignment signals
+    const positiveKeywords = [
+      "augment", "human", "people", "frontline", "fair", "transparent",
+      "data", "evidence", "responsible", "ethical", "trust", "privacy",
+      "capability", "skill", "develop", "learn", "wellbeing", "inclusion",
+    ];
+    const hasPositive = positiveKeywords.some((kw) => pNorm.includes(kw));
+    // Check if principle is relevant to this initiative's category
+    const hasCatMatch = catKeywords.some((kw) => pNorm.includes(kw));
+    if (hasPositive || hasCatMatch) alignedPrinciples.push(principle);
+  }
+
+  const score = principles.length > 0 ? Math.min(1, alignedPrinciples.length / principles.length) : 0.5;
+  const ranking = score >= 0.7 ? "aligned" : "mixed";
+  return { ranking, score, alignedPrinciples, violatedPrinciples: [] };
+}
+
 export type FitImpactEngineInputs = ValueFormulaInputs & {
+  /** Principle alignment context — injected by Stage 4 gate re-fire */
+  principles?: string[];
+  wontDoItems?: string[];
   sectionB?: { hrSubFunctions?: string[] };
   sectionG?: { [domain: string]: number };
   sectionF?: { changeReadiness?: string };
@@ -889,6 +974,22 @@ export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): Initiativ
     NOT_APPLICABLE: 3,
     HARD_GATE_FAIL: 3, // legacy alias
   };
+
+  // Pass 3: apply principle alignment if principles are provided
+  const principles = (inputs as any).principles as string[] | undefined;
+  const wontDoItems = (inputs as any).wontDoItems as string[] | undefined;
+  if (principles && principles.length > 0) {
+    for (const result of results) {
+      if (result.fitStatus === "NOT_APPLICABLE" || result.fitStatus === "HARD_GATE_FAIL") continue;
+      result.principleAlignment = scorePrincipleAlignment(
+        result.id,
+        result.label,
+        result.category,
+        principles,
+        wontDoItems ?? [],
+      );
+    }
+  }
 
   return results.sort((a, b) => {
     const statusDiff = (statusOrder[a.fitStatus] ?? 4) - (statusOrder[b.fitStatus] ?? 4);

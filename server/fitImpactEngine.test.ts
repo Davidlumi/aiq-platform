@@ -834,3 +834,98 @@ describe("InitiativeOutputCard enrichment fields", () => {
     }
   });
 });
+
+// ─── Principle Alignment Evaluator (QA E-001–E-004) ────────────────────────
+import { scorePrincipleAlignment } from "./services/fitImpactEngine";
+
+describe("scorePrincipleAlignment (E-001–E-004)", () => {
+  // E-001: Initiative whose label/category keywords match a principle keyword
+  // → ranking "aligned", score ≥ 0.7
+  it("E-001: keyword match to a principle → aligned, score ≥ 0.7", () => {
+    const result = scorePrincipleAlignment(
+      "ld_workforce_reskilling",
+      "Workforce Reskilling Platform",
+      "Learning & Development",
+      [
+        "We invest in people capability and skill development",
+        "We use data and evidence to make decisions",
+      ],
+      [],
+    );
+    expect(result.ranking).toBe("aligned");
+    expect(result.score).toBeGreaterThanOrEqual(0.7);
+    expect(result.alignedPrinciples.length).toBeGreaterThan(0);
+    expect(result.violatedPrinciples).toHaveLength(0);
+  });
+
+  // E-002: A won't-do item that conflicts with the initiative's keywords
+  // → ranking "violates", score 0
+  it("E-002: won't-do item conflict → violates, score 0", () => {
+    const result = scorePrincipleAlignment(
+      "ta_high_volume_hiring",
+      "High Volume Hiring Automation",
+      "Talent Acquisition",
+      [
+        "We prioritise fair and transparent hiring",
+      ],
+      [
+        "We will not automate candidate screening or bias-sensitive hiring decisions",
+      ],
+    );
+    expect(result.ranking).toBe("violates");
+    expect(result.score).toBe(0);
+    expect(result.violatedPrinciples.length).toBeGreaterThan(0);
+    expect(result.alignedPrinciples).toHaveLength(0);
+  });
+
+  // E-003: No principles set → score 0.5 (neutral default), ranking "mixed"
+  it("E-003: no principles set → score 0.5, ranking mixed", () => {
+    const result = scorePrincipleAlignment(
+      "hr_virtual_assistant",
+      "HR Virtual Assistant",
+      "HR Operations",
+      [],
+      [],
+    );
+    expect(result.score).toBe(0.5);
+    expect(result.ranking).toBe("mixed");
+    expect(result.alignedPrinciples).toHaveLength(0);
+    expect(result.violatedPrinciples).toHaveLength(0);
+  });
+
+  // E-004: Partial match — only some principles align → score < 0.7, ranking "mixed"
+  it("E-004: partial match → score < 0.7, ranking mixed", () => {
+    const result = scorePrincipleAlignment(
+      "ld_compliance_training",
+      "Compliance Training Automation",
+      "Learning & Development",
+      [
+        "We use data and evidence to make decisions",
+        "We keep costs below budget at all times",
+        "We never outsource core operations",
+      ],
+      [],
+    );
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThan(0.7);
+    expect(result.ranking).toBe("mixed");
+    expect(result.violatedPrinciples).toHaveLength(0);
+  });
+
+  // Additional: evaluateAllInitiatives populates principleAlignment when principles supplied
+  it("evaluateAllInitiatives populates principleAlignment when principles are supplied", () => {
+    const inputs: FitImpactEngineInputs = {
+      ...baseInputs,
+      principles: ["We invest in human capability and skill development"],
+      wontDoItems: [],
+    };
+    const results = evaluateAllInitiatives(inputs);
+    const ld = results.find((r) => r.id === "ld_workforce_reskilling");
+    expect(ld).toBeDefined();
+    if (ld && ld.fitStatus !== "NOT_APPLICABLE" && ld.fitStatus !== "HARD_GATE_FAIL") {
+      expect(ld.principleAlignment).toBeDefined();
+      expect(ld.principleAlignment!.ranking).toBeDefined();
+      expect(typeof ld.principleAlignment!.score).toBe("number");
+    }
+  });
+});

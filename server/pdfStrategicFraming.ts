@@ -77,7 +77,7 @@ export async function generateStrategicFramingPDF(doc: PDFKitDoc, userId: string
   // Gate state
   let gateState: Record<string, any> = {};
   try {
-    const raw = (orgCtx as any)?.gateStateJson;
+    const raw = (orgCtx as any)?.stageGateStateJson;
     if (raw) gateState = typeof raw === "string" ? JSON.parse(raw) : raw;
   } catch {}
 
@@ -85,8 +85,8 @@ export async function generateStrategicFramingPDF(doc: PDFKitDoc, userId: string
   const visionStatement: string = (orgCtx as any)?.visionStatement ?? "";
   let visionInspirationSource = "";
   try {
-    const raw = (orgCtx as any)?.visionInspirationSourceJson;
-    if (raw) visionInspirationSource = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const raw = (orgCtx as any)?.visionInspirationSource;
+    if (raw) visionInspirationSource = typeof raw === "string" ? raw : String(raw);
   } catch {}
 
   // Strategy
@@ -119,10 +119,10 @@ export async function generateStrategicFramingPDF(doc: PDFKitDoc, userId: string
   } catch {}
 
   // Gate status
-  const stage1Cleared = !!(gateState?.stage1?.clearedAt);
-  const stage2Cleared = !!(gateState?.stage2?.clearedAt);
-  const stage3Cleared = !!(gateState?.stage3?.clearedAt);
-  const stage4Cleared = !!(gateState?.stage4?.clearedAt);
+  const stage1Cleared = !!(gateState?.stage1?.completedAt);
+  const stage2Cleared = !!(gateState?.stage2?.completedAt);
+  const stage3Cleared = !!(gateState?.stage3?.completedAt);
+  const stage4Cleared = !!(gateState?.stage4?.completedAt);
 
   // ── 2. Page layout ─────────────────────────────────────────────────────────
   const PAGE_W = 595.28;

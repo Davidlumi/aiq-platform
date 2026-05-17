@@ -2018,11 +2018,18 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       if (orgContext?.visionStatement) orgCtxParts.push(`Vision: ${orgContext.visionStatement}`);
       const orgCtxStr = orgCtxParts.join(". ");
 
+      const VOCAB_BLACKLIST = [
+        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
+        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
+        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
+      ];
+
       const systemPrompt = [
         `You are an expert HR strategy consultant helping a CPO refine ${stageDescriptions[stage] ?? "strategic text"}.`,
         orgCtxStr ? `Organisation context: ${orgCtxStr}.` : "",
         additionalContext ?? "",
         actionInstructions[action],
+        `FORBIDDEN WORDS — never use these in your output: ${VOCAB_BLACKLIST.join(", ")}.`,
         "Return ONLY the transformed text. No explanations, no preamble, no markdown fences.",
       ].filter(Boolean).join(" ");
 
