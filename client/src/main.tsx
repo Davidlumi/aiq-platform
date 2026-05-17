@@ -29,7 +29,14 @@ queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    // Suppress console noise for the expected "not logged in" response.
+    // auth.me fires on every page including /login; a 10001 error there is
+    // the normal unauthenticated state, not a real application error.
+    const isExpectedUnauthError =
+      error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+    if (!isExpectedUnauthError) {
+      console.error("[API Query Error]", error);
+    }
   }
 });
 

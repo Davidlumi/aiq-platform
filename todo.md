@@ -3761,3 +3761,6 @@ test
 - [x] Verified: board_pack PDF reduced from 19 pages (with 3 blank pages per slide) to 6 pages (all with content)
 - [x] Vocabulary audit: no American English found in LLM prompts; 'recognize' at assessment.ts:3005 is intentional (forbidden-verbs list)
 - [x] All 1,133 tests passing after fix
+
+## Login Page Error Fix
+- [x] Suppressed spurious "[API Query Error] Please login (10001)" console error on /login page — auth.me fires on every page including /login; the 10001 response is the normal unauthenticated state, not a real error. Fixed in client/src/main.tsx by skipping console.error when the error message matches UNAUTHED_ERR_MSG.
