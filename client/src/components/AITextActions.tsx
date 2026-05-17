@@ -2,8 +2,12 @@
  * AITextActions — Reusable inline AI action buttons for text fields.
  *
  * Renders a compact toolbar with Expand / Refine / Challenge / Suggest buttons.
- * Each action calls `intelligence.transformText` on the server and replaces
- * the current text with the AI-generated result.
+ * - Expand / Refine / Suggest: call `intelligence.transformText` and replace text.
+ * - Challenge: calls `intelligence.transformText` with action="challenge" and renders
+ *   the result as a callout (questions/provocations), NOT auto-replacing the text.
+ *   The user can dismiss the callout or copy questions manually.
+ * - 20-second client-side timeout: if the mutation hasn't resolved, shows a toast
+ *   and cancels the pending state.
  *
  * Usage:
  *   <AITextActions
@@ -13,7 +17,7 @@
  *     disabled={isLoading}
  *   />
  */
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -21,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Maximize2, Sparkles, MessageSquareWarning, Wand2 } from "lucide-react";
+import { Loader2, Maximize2, Sparkles, MessageSquareWarning, Wand2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,7 +74,7 @@ const ACTION_CONFIG: Record<
   },
   challenge: {
     label: "Challenge",
-    tooltip: "Challenge — rewrite to be more ambitious or contrarian",
+    tooltip: "Challenge — surface probing questions to stress-test your thinking",
     icon: <MessageSquareWarning className="h-3.5 w-3.5" />,
   },
   suggest: {
@@ -79,6 +83,8 @@ const ACTION_CONFIG: Record<
     icon: <Sparkles className="h-3.5 w-3.5" />,
   },
 };
+
+const TIMEOUT_MS = 20_000;
 
 export function AITextActions({
   text,
@@ -90,13 +96,37 @@ export function AITextActions({
   showLabels = false,
 }: AITextActionsProps) {
   const [activeAction, setActiveAction] = useState<AITextActionType | null>(null);
+  /** Challenge callout — shown instead of replacing text */
+  const [challengeCallout, setChallengeCallout] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const clearPendingTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
 
   const transformMutation = trpc.intelligence.transformText.useMutation({
-    onSuccess: (data) => {
-      onResult(data.text);
+    onSuccess: (data, variables) => {
+      clearPendingTimeout();
+      if (variables.action === "challenge") {
+        // Challenge: show as callout, do NOT replace text
+        setChallengeCallout(data.text);
+      } else {
+        onResult(data.text);
+      }
       setActiveAction(null);
     },
     onError: (err) => {
+      clearPendingTimeout();
       toast.error(`AI action failed: ${err.message}`);
       setActiveAction(null);
     },
@@ -107,7 +137,16 @@ export function AITextActions({
       toast.error("Please enter some text first before using AI actions.");
       return;
     }
+    // Dismiss any existing challenge callout when starting a new action
+    setChallengeCallout(null);
     setActiveAction(action);
+
+    // 20-second client-side timeout
+    timeoutRef.current = setTimeout(() => {
+      setActiveAction(null);
+      toast.error("AI action timed out — please try again.");
+    }, TIMEOUT_MS);
+
     transformMutation.mutate({
       text,
       action,
@@ -121,41 +160,64 @@ export function AITextActions({
 
   return (
     <TooltipProvider>
-      <div className={cn("flex items-center gap-1", className)}>
-        {actions.map((action) => {
-          const config = ACTION_CONFIG[action];
-          const isThisRunning = isRunning && activeAction === action;
-          return (
-            <Tooltip key={action}>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
-                    showLabels ? "px-2" : "px-1.5",
-                    isThisRunning && "text-primary"
-                  )}
-                  disabled={disabled || isRunning}
-                  onClick={() => handleAction(action)}
-                >
-                  {isThisRunning ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    config.icon
-                  )}
-                  {showLabels && (
-                    <span>{isThisRunning ? "Working…" : config.label}</span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                {config.tooltip}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
+      <div className={cn("space-y-2", className)}>
+        {/* Action buttons row */}
+        <div className="flex items-center gap-1">
+          {actions.map((action) => {
+            const config = ACTION_CONFIG[action];
+            const isThisRunning = isRunning && activeAction === action;
+            return (
+              <Tooltip key={action}>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground",
+                      showLabels ? "px-2" : "px-1.5",
+                      isThisRunning && "text-primary"
+                    )}
+                    disabled={disabled || isRunning}
+                    onClick={() => handleAction(action)}
+                  >
+                    {isThisRunning ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      config.icon
+                    )}
+                    {showLabels && (
+                      <span>{isThisRunning ? "Working…" : config.label}</span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {config.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+
+        {/* Challenge callout — renders questions, does NOT replace text */}
+        {challengeCallout && (
+          <div className="relative rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
+            <button
+              type="button"
+              onClick={() => setChallengeCallout(null)}
+              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+              aria-label="Dismiss challenge"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-2">
+              Challenge questions
+            </p>
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed pr-4">
+              {challengeCallout}
+            </p>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

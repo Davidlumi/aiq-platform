@@ -94,9 +94,9 @@ const DEFAULT_OUTCOMES: Outcome[] = [
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 function SectionHeader({
-  label, onEdit, onDraft, isDrafting,
+  label, onEdit, onDraft, isDrafting, draftLabel = "Re-draft",
 }: {
-  label: string; onEdit?: () => void; onDraft?: () => void; isDrafting?: boolean;
+  label: string; onEdit?: () => void; onDraft?: () => void; isDrafting?: boolean; draftLabel?: string;
 }) {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -110,7 +110,7 @@ function SectionHeader({
             className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
             onClick={onDraft}
           >
-            <Sparkles className="w-3 h-3" /> Re-draft
+            <Sparkles className="w-3 h-3" /> {draftLabel}
           </Button>
         )}
         {isDrafting && (
@@ -279,7 +279,13 @@ function PrinciplesSection({
   }
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
-      <SectionHeader label="Guiding Principles" onEdit={onEdit} onDraft={onDraft} isDrafting={isDrafting} />
+      <SectionHeader
+        label="Guiding Principles"
+        onEdit={onEdit}
+        onDraft={principles.length >= 5 ? undefined : onDraft}
+        isDrafting={isDrafting}
+        draftLabel={principles.length === 0 ? "Suggest principles" : "Suggest more"}
+      />
       {/* Fix 4: Section caption */}
       <p className="text-[11px] leading-relaxed mb-4" style={{ color: "var(--muted-foreground)" }}>
         The decision rules we’ll hold to as we deploy AI across HR.
@@ -1099,6 +1105,16 @@ export default function StrategyAmbitionPage() {
     void seed();
   }, [sections, saveSectionM, sectionsQ]);
 
+  // Redirect to the appropriate stage if the user navigates to /strategy/ambition directly
+  // and an earlier stage is not yet cleared.
+  useEffect(() => {
+    if (gate.isLoading) return;
+    if (!gate.isStage3Accessible) {
+      // Stage 3 not accessible — redirect to Stage 2 (vision) or Stage 1 (pre-work)
+      navigate(gate.isStage2Accessible ? "/strategy/vision" : "/strategy");
+    }
+  }, [gate.isLoading, gate.isStage3Accessible, gate.isStage2Accessible, navigate]);
+
   const lastReviewedAt: number | null = sections?.lastReviewedAt
     ? (sections.lastReviewedAt instanceof Date ? sections.lastReviewedAt.getTime() : sections.lastReviewedAt as unknown as number)
     : null;
@@ -1200,9 +1216,15 @@ export default function StrategyAmbitionPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         {/* Header — Fix 3 */}
         <div>
-          {/* Breadcrumb */}
+          {/* Breadcrumb with back navigation */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <span>HR AI Strategy</span>
+            <button
+              onClick={() => navigate("/strategy/strategy")}
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              aria-label="Back to Strategy"
+            >
+              <span>HR AI Strategy</span>
+            </button>
             <ChevronRight className="w-3 h-3" />
             <span>Ambition</span>
           </div>
@@ -1300,7 +1322,8 @@ export default function StrategyAmbitionPage() {
           <div className="flex items-center justify-end">
             <button
               onClick={handleConfirmStage4}
-              disabled={completeStage4M.isPending || !principles?.length}
+              disabled={completeStage4M.isPending || (principles?.length ?? 0) < 3 || (exclusions?.length ?? 0) < 2}
+              title={(principles?.length ?? 0) < 3 ? "Add at least 3 guiding principles to confirm" : (exclusions?.length ?? 0) < 2 ? "Add at least 2 exclusions to confirm" : undefined}
               className={cn(
                 "flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors",
                 "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"

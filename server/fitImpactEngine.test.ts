@@ -929,3 +929,80 @@ describe("scorePrincipleAlignment (E-001–E-004)", () => {
     }
   });
 });
+
+// ─── Acme E2E: principle alignment for specific ACME-001 initiatives ──────────
+
+describe("Acme E2E — principle alignment for ACME-001 initiatives", () => {
+  const acmePrinciples = [
+    "Human-in-the-loop on consequential decisions — AI prepares and proposes; humans decide on hiring, promotion, performance, and termination.",
+    "Trust and ethics in deployment — fairness, bias monitoring, privacy, and explainability are non-negotiable.",
+    "Reshape work, then add AI — we redesign the work first, then deploy AI into the new design.",
+    "Build skills first, deploy second — we build AI literacy across HR before we deploy.",
+    "We deploy at people's pace — AI deployment speed is set by what the workforce can absorb.",
+  ];
+  const acmeWontDo = [
+    "We will not deploy AI in promotion or termination decisions in this period.",
+    "We will not let any vendor's AI make shortlist cuts without HR review.",
+    "We will not use generative AI for performance reviews this fiscal year.",
+    "We will not deploy frontier AI in HR without a dedicated ethics review.",
+  ];
+
+  it("ACME-E-001: ta_video_interview_assessment violates 'no shortlist cuts without HR review'", () => {
+    const result = scorePrincipleAlignment(
+      "ta_video_interview_assessment",
+      "Video Interview Assessment AI",
+      "Talent Acquisition",
+      acmePrinciples,
+      acmeWontDo,
+    );
+    expect(result.ranking).toBe("violates");
+    expect(result.score).toBe(0);
+    expect(result.violatedPrinciples.length).toBeGreaterThan(0);
+  });
+
+  it("ACME-E-002: fw_shift_scheduling_ai aligns with efficiency and workforce-pace principles", () => {
+    const result = scorePrincipleAlignment(
+      "fw_shift_scheduling_ai",
+      "AI-Powered Shift Scheduling",
+      "Workforce Planning",
+      acmePrinciples,
+      acmeWontDo,
+    );
+    expect(["aligned", "mixed"]).toContain(result.ranking);
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.violatedPrinciples).toHaveLength(0);
+  });
+
+  it("ACME-E-003: fw_frontline_manager_copilot aligns with augmentation principles", () => {
+    const result = scorePrincipleAlignment(
+      "fw_frontline_manager_copilot",
+      "Frontline Manager AI Copilot",
+      "Workforce Planning",
+      acmePrinciples,
+      acmeWontDo,
+    );
+    expect(["aligned", "mixed"]).toContain(result.ranking);
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.violatedPrinciples).toHaveLength(0);
+  });
+
+  it("ACME-E-004: evaluateAllInitiatives with Acme principles populates principleAlignment on all scored initiatives", () => {
+    const inputs: FitImpactEngineInputs = {
+      ...baseInputs,
+      principles: acmePrinciples,
+      wontDoItems: acmeWontDo,
+    };
+    const results = evaluateAllInitiatives(inputs);
+    const scoredResults = results.filter(
+      (r) => r.fitStatus !== "NOT_APPLICABLE" && r.fitStatus !== "HARD_GATE_FAIL",
+    );
+    expect(scoredResults.length).toBeGreaterThan(0);
+    for (const r of scoredResults) {
+      expect(r.principleAlignment).toBeDefined();
+      expect(["aligned", "mixed", "violates"]).toContain(r.principleAlignment!.ranking);
+      expect(typeof r.principleAlignment!.score).toBe("number");
+      expect(r.principleAlignment!.score).toBeGreaterThanOrEqual(0);
+      expect(r.principleAlignment!.score).toBeLessThanOrEqual(1);
+    }
+  });
+});

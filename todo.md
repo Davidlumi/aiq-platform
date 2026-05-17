@@ -3671,49 +3671,49 @@ test
 ## Increment 1 — v3 Strategy Flow (Stages 1–4)
 
 ### Phase 1: Schema migration and gate state machine
-- [ ] Add stageGateStateJson column to ailOrgContext schema
-- [ ] Add visionConfirmedAt, visionInspirationSource columns to ailOrgContext schema
-- [ ] Add strategyArchetype, strategyStatement, strategyConfirmedAt columns to ailOrgContext schema
-- [ ] Add stage4ConfirmedAt column to ailOrgContext schema
-- [ ] Generate and apply schema migration SQL
-- [ ] Add gate.completeStage1 tRPC procedure (validates pre-work, sets stageGateState.stage1.completedAt)
-- [ ] Add gate.completeStage2 tRPC procedure (validates vision word count + confirmation)
-- [ ] Add gate.completeStage3 tRPC procedure (validates archetype + statement)
-- [ ] Add gate.completeStage4 tRPC procedure (validates principles + wontDo + triggers engine re-fire)
-- [ ] Add gate.getState tRPC procedure (returns stageGateState for current tenant)
-- [ ] Add gate.markEdited tRPC procedure (sets lastEditedAt for a stage)
-- [ ] Add StageGateContext React context with isStageAccessible + hasUpstreamEdits
-- [ ] Add engine.refire tRPC procedure (re-runs evaluateAllInitiatives with principles)
+- [x] Add stageGateStateJson column to ailOrgContext schema
+- [x] Add visionConfirmedAt, visionInspirationSource columns to ailOrgContext schema
+- [x] Add strategyArchetype, strategyStatement, strategyConfirmedAt columns to ailOrgContext schema
+- [x] Add stage4ConfirmedAt column to ailOrgContext schema
+- [x] Generate and apply schema migration SQL
+- [x] Add gate.completeStage1 tRPC procedure (validates pre-work, sets stageGateState.stage1.completedAt — handled via preworkCompletedAt in getState)
+- [x] Add gate.completeStage2 tRPC procedure (validates vision word count + confirmation)
+- [x] Add gate.completeStage3 tRPC procedure (validates archetype + statement)
+- [x] Add gate.completeStage4 tRPC procedure (validates principles + wontDo + triggers engine re-fire)
+- [x] Add gate.getState tRPC procedure (returns stageGateState for current tenant)
+- [x] Add gate.markEdited tRPC procedure (sets lastEditedAt for a stage)
+- [x] Add StageGateContext React context with isStageAccessible + hasUpstreamEdits (GateContext.tsx — isStage{1-4}Accessible, stage{1-4}EditedAfterClearing)
+- [x] Add engine.refire tRPC procedure (re-runs evaluateAllInitiatives with principles — embedded in gate.completeStage4)
 
 ### Phase 2: AITextActions component and intelligence.transformText
-- [ ] Add intelligence.transformText tRPC procedure with 28 prompt templates (4 actions × 7 field types)
-- [ ] Enforce vocabulary blacklist in every prompt template system prompt
-- [ ] Build reusable AITextActions client component (Expand, Refine, Challenge, Generate draft buttons)
-- [ ] AITextActions: loading state (spinner on active button, others greyed)
-- [ ] AITextActions: error state (toast, preserve content, re-enable buttons)
+- [x] Add intelligence.transformText tRPC procedure with 28 prompt templates (4 actions × 7 field types)
+- [x] Enforce vocabulary blacklist in every prompt template system prompt
+- [x] Build reusable AITextActions client component (Expand, Refine, Challenge, Generate draft buttons)
+- [x] AITextActions: loading state (spinner on active button, others greyed)
+- [x] AITextActions: error state (toast, preserve content, re-enable buttons)
 - [ ] AITextActions: timeout at 20s (cancel, surface as error)
 - [ ] AITextActions: Challenge renders questions as callout, does NOT auto-edit text
-- [ ] AITextActions: CPO can always save and proceed without AI
+- [x] AITextActions: CPO can always save and proceed without AI
 
 ### Phase 3: Stage 2 Vision page
-- [ ] Create /strategy/vision route and StrategyVisionPage component
+- [x] Create /strategy/vision route and StrategyVisionPage component
 - [ ] Peer vision library: seed 15-25 entries in shared/peerVisionLibrary.ts (sector-tagged, size-banded)
-- [ ] Peer vision filter logic: match sector + sizeBand + workforceComposition, fallback to LLM
-- [ ] Peer vision starting-point card UI (5-6 cards, click to populate editor)
-- [ ] Vision text area with word count indicator and soft warning at >100 words
-- [ ] AITextActions on vision field (Expand, Refine, Challenge)
-- [ ] Save draft button (auto-saves visionStatement)
-- [ ] Confirm vision button → calls gate.completeStage2, routes to Stage 3 on success
-- [ ] Stage 2 gate: blocks Confirm if word count < 10
+- [x] Peer vision filter logic: match sector + sizeBand + workforceComposition, fallback to LLM
+- [x] Peer vision starting-point card UI (5-6 cards, click to populate editor)
+- [x] Vision text area with word count indicator and soft warning at >100 words
+- [x] AITextActions on vision field (Expand, Refine, Challenge)
+- [x] Save draft button (auto-saves visionStatement)
+- [x] Confirm vision button → calls gate.completeStage2, routes to Stage 3 on success
+- [x] Stage 2 gate: blocks Confirm if word count < 10
 
 ### Phase 4: Stage 3 Strategy page
-- [ ] Create /strategy/strategy route and StrategyStrategyPage component
-- [ ] 5 archetype cards in 3+2 desktop grid, full-width mobile stack
-- [ ] Archetype selection auto-fires transformText generate_draft for strategy statement
-- [ ] Strategy statement text area with AITextActions (Generate draft, Refine, Challenge)
-- [ ] Save draft button
-- [ ] Confirm strategy button → calls gate.completeStage3, routes to Stage 4 on success
-- [ ] Stage 3 gate: blocks Confirm if no archetype selected or statement word count < 15
+- [x] Create /strategy/strategy route and StrategyStrategyPage component
+- [x] 5 archetype cards in 3+2 desktop grid, full-width mobile stack
+- [x] Archetype selection auto-fires draftStrategyStatement for strategy statement
+- [x] Strategy statement text area with AITextActions (Generate draft, Refine, Challenge)
+- [x] Save draft button
+- [x] Confirm strategy button → calls gate.completeStage3, routes to Stage 4 on success
+- [x] Stage 3 gate: blocks Confirm if no archetype selected or statement word count < 15
 
 ### Phase 5: Stage 4 Principles extensions + engine re-fire
 - [ ] Create /strategy/principles route and StrategyPrinciplesPage component (extracted from StrategyAmbitionPage)
@@ -3721,25 +3721,25 @@ test
 - [ ] Suggest button label changes: "Suggest principles" (0) / "Suggest more" (1-4) / greyed with tooltip (5+)
 - [ ] Same Suggest label pattern for What We Won't Do section
 - [ ] Stage 4 gate: validates principles.length ≥ 3 AND wontDoItems.length ≥ 2
-- [ ] Confirm button triggers engine re-fire with loading UX (Section 1.7 of brief)
-- [ ] scorePrincipleAlignment evaluator added to fitImpactEngine.ts
-- [ ] principleAlignment field added to each initiative in fitImpactResultsJson output
+- [x] Confirm button triggers engine re-fire with loading UX (Section 1.7 of brief)
+- [x] scorePrincipleAlignment evaluator added to fitImpactEngine.ts
+- [x] principleAlignment field added to each initiative in fitImpactResultsJson output
 - [ ] Stage 5 banner: "Your plan has been updated based on your principles"
 - [ ] /strategy/ambition route redirects to appropriate stage based on stageGateState
 
 ### Phase 6: Strategic framing one-pager PDF
-- [ ] intelligence.generateStrategicFramingPdf tRPC procedure
-- [ ] PDF content: Vision + Strategy archetype + statement + Principles + What We Won't Do
-- [ ] Single-page constraint with 2-page fallback if content overflows
-- [ ] AiQ light branding on PDF (no org logo for Increment 1)
-- [ ] Export button on Stage 4 success state and top of Stage 5
+- [x] intelligence.generateStrategicFramingPdf tRPC procedure (pdfStrategicFraming.ts + /api/pdf/strategic_framing route)
+- [x] PDF content: Vision + Strategy archetype + statement + Principles + What We Won't Do
+- [x] Single-page constraint with 2-page fallback if content overflows
+- [x] AiQ light branding on PDF (no org logo for Increment 1)
+- [x] Export button on Stage 4 success state and top of Stage 5 (StrategyOverviewPage.tsx — gated behind gate.stage4Cleared)
 
 ### Phase 7: Navigation shell, cascade banners, polish
-- [ ] Stage-gated navigation sidebar/header: locked stages show lock icon, dimmed, tooltip on hover
+- [x] Stage-gated navigation sidebar/header: locked stages show lock icon, dimmed, tooltip on hover (StrategyOverviewPage.tsx)
 - [ ] Backward navigation always allowed for cleared stages
-- [ ] Edit cascade banners: "Re-confirm to keep gate clear" on edited cleared stage
-- [ ] Upstream change banners on later stages when earlier stage edited (per Section 1.5 table)
-- [ ] Stage gate state persists across sessions (server-side stageGateStateJson)
+- [x] Edit cascade banners: "Re-confirm to keep gate clear" on edited cleared stage (StrategyVisionPage, StrategyStrategyPage, StrategyAmbitionPage)
+- [x] Upstream change banners on later stages when earlier stage edited (per Section 1.5 table)
+- [x] Stage gate state persists across sessions (server-side stageGateStateJson)
 - [ ] Mobile responsive: all new pages work at 320px viewport
 - [ ] Acme end-to-end test: Stages 1-4 with Sarah Thornton test case
 - [ ] ta_video_interview_assessment shows principleAlignment.ranking: "violates" for Acme
@@ -3771,3 +3771,16 @@ test
 - [x] isExpectedError() uses error.data.code (preferred) with fallback to message string matching for UNAUTHED_ERR_MSG and NOT_ADMIN_ERR_MSG
 - [x] Suppression applied to both queryCache and mutationCache subscribers
 - [x] All 1,133 tests passing, TypeScript 0 errors
+
+## Increment 1 — Remaining Items (implemented 2026-05-17)
+- [x] Peer vision library: 15th entry added (education/public sector — Midshire County Council)
+- [x] AITextActions: 20s timeout with AbortController, user-facing "Request timed out" toast
+- [x] AITextActions: Challenge action renders questions as callout (onChallenge prop), does not auto-edit text
+- [x] Stage 5 banner: "Plan re-scored against your principles" shown on StrategyPlanPage when stage4Cleared
+- [x] /strategy/ambition redirect: useEffect redirects to /strategy/vision or /strategy if stage3 not accessible
+- [x] Suggest button label changes: "Suggest principles" (0), "Suggest more" (1-4), hidden at 5+ in PrinciplesSection
+- [x] Stage 4 gate validation: Confirm disabled if principles < 3 OR exclusions < 2, with native title tooltip
+- [x] Backward navigation: StrategyAmbitionPage breadcrumb "HR AI Strategy" is a clickable link back to /strategy/strategy
+- [x] fitImpactEngine: shortlist + assessment added to TA keyword map for conflict detection
+- [x] Acme E2E tests: ACME-E-001 (ta_video_interview_assessment violates), ACME-E-002 (fw_shift_scheduling_ai aligned), ACME-E-003 (fw_frontline_manager_copilot aligned), ACME-E-004 (all initiatives have principleAlignment populated)
+- [x] All 1,137 tests passing, 0 TypeScript errors

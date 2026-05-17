@@ -132,6 +132,16 @@ export const PEER_VISION_LIBRARY: PeerVisionEntry[] = [
     sizeBands: ["lt500", "500_5k", "5k_25k"],
     archetypeHint: "defensive",
   },
+  // ── Logistics / Transport ──────────────────────────────────────────────
+  {
+    id: "pv_logistics_01",
+    visionText:
+      "We will use AI to make our workforce planning as dynamic as our operations — matching driver and warehouse capacity to demand in real time, reducing agency spend, and giving our people more predictable schedules without sacrificing service levels.",
+    sectors: ["logistics_transport", "retail", "manufacturing"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    workforceCompositions: ["frontline_heavy", "mixed"],
+    archetypeHint: "efficiency",
+  },
   // ── Transformation-focused ────────────────────────────────────────────────
   {
     id: "pv_transform_01",

@@ -10,6 +10,7 @@
  *   5. Operational view (initiative list, filters, sort, inline chip edits, add/remove)
  *   6. Empty / loading / error states for each block
  */
+import { useGate } from "@/contexts/GateContext";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -504,6 +505,26 @@ function StatusChip({ value, onChange, readonly }: {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+
+// ─── Stage 5 Principles Banner ────────────────────────────────────────────────
+
+function Stage5PrinciplesBanner() {
+  const gate = useGate();
+  if (!gate.stage4Cleared) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
+      <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+      <div>
+        <p className="text-sm font-medium text-foreground">Plan re-scored against your principles</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Initiative fit scores now reflect your guiding principles and what you’ve ruled out.
+          Initiatives that conflict with a principle are marked as misaligned.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function StrategyPlanPage() {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -790,6 +811,8 @@ export default function StrategyPlanPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* ── Stage 5 banner: shown after principles confirmed ── */}
+        <Stage5PrinciplesBanner />
 
         {/* ── Hero ── */}
         <section aria-label="Plan summary">

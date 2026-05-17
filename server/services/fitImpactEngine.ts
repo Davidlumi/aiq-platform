@@ -80,7 +80,7 @@ export function scorePrincipleAlignment(
 
   // Category → keyword map for conflict detection
   const CATEGORY_KEYWORDS: Record<string, string[]> = {
-    ta: ["screen", "interview", "hire", "recruit", "applicant", "candidate", "bias", "jd", "job description"],
+    ta: ["screen", "interview", "hire", "recruit", "applicant", "candidate", "bias", "jd", "job description", "shortlist", "assessment"],
     fw: ["frontline", "shift", "schedule", "communication", "store manager", "deskless"],
     hr: ["chatbot", "virtual assistant", "helpdesk", "query", "self-service", "benefit"],
     ee: ["engagement", "recognition", "reward", "wellbeing", "sentiment", "exit"],
