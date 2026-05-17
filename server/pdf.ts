@@ -1402,7 +1402,11 @@ export function registerPdfRoutes(app: Express) {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
-      const doc = new PDFDocument({ size: "A4", margin: 40, bufferPages: true });
+      // board_pack and strategic_framing manage their own margins (MARGIN=44 constant).
+      // Using margin: 0 prevents PDFKit from auto-paginating when footer text is drawn
+      // near the bottom of the page (y > PAGE_H - margin), which caused extra blank pages.
+      const docMargin = (type === "board_pack" || type === "strategic_framing") ? 0 : 40;
+      const doc = new PDFDocument({ size: "A4", margin: docMargin, bufferPages: true });
       doc.pipe(res);
 
       switch (type) {

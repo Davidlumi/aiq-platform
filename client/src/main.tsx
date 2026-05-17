@@ -7,7 +7,6 @@ import superjson from "superjson";
 import App from "./App";
 import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { GateProvider } from "@/contexts/GateContext";
-import { getLoginUrl } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -20,7 +19,10 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // Redirect to the platform's own login page, not Manus OAuth
+  if (!window.location.pathname.startsWith("/login")) {
+    window.location.href = "/login";
+  }
 };
 
 queryClient.getQueryCache().subscribe(event => {

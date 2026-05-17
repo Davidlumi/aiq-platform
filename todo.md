@@ -3754,3 +3754,10 @@ test
 - [x] Export framing button gated behind gate.stage4Cleared in StrategyOverviewPage.tsx
 - [x] Unit tests for E-001–E-004 (principle alignment evaluator) added to fitImpactEngine.test.ts
 - [x] All 1,133 tests passing
+
+## ACME-001 QA Fix (PDF Blank Pages)
+- [x] Root cause identified: PDFKit auto-pagination triggered when footer text drawn at y > PAGE_H - margin (841.89 - 40 = 801.89); footer text placed at y = 813.89 caused 3 extra blank pages per slide
+- [x] Fix applied: PDFDocument created with margin: 0 for board_pack and strategic_framing types in server/pdf.ts; these generators manage their own margins via MARGIN=44 constant
+- [x] Verified: board_pack PDF reduced from 19 pages (with 3 blank pages per slide) to 6 pages (all with content)
+- [x] Vocabulary audit: no American English found in LLM prompts; 'recognize' at assessment.ts:3005 is intentional (forbidden-verbs list)
+- [x] All 1,133 tests passing after fix

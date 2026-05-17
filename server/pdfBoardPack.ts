@@ -322,18 +322,31 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   const ambitionTargetScore:   number | null = (orgCtx as any)?.ambitionTargetScore ?? null;
   const ambitionTargetDate:    string | null = (orgCtx as any)?.ambitionTargetDate  ?? null;
   const ambitionTargetLabel:   string | null = (orgCtx as any)?.ambitionTargetLabel ?? null;
-  const strategyNarrative:     string | null = (orgCtx as any)?.strategyNarrative   ?? null;
+  const strategyNarrative:     string | null = (orgCtx as any)?.strategyNarrative   ?? (orgCtx as any)?.strategyStatement ?? null;
   const visionStatement:       string | null = (orgCtx as any)?.visionStatement     ?? null;
   const sector:                string | null = (orgCtx as any)?.sector              ?? null;
   const headcount:             number | null = (orgCtx as any)?.headcount           ?? null;
   const orgSize:               string        = (orgCtx as any)?.orgSize             ?? "medium";
   const libVersion:            string | null = (orgCtx as any)?.libraryVersion      ?? null;
 
+  console.log("[PDF-DEBUG] strategyNarrative=", strategyNarrative?.slice(0, 60));
+  console.log("[PDF-DEBUG] visionStatement=", visionStatement?.slice(0, 60));
+  console.log("[PDF-DEBUG] businessAmbitionLevel=", businessAmbitionLevel, "peopleAmbitionLevel=", peopleAmbitionLevel);
+
   let guidingPrinciples: Array<{ title: string; description: string }> = [];
   try { const r = (orgCtx as any)?.guidingPrinciplesJson; if (r) guidingPrinciples = typeof r === "string" ? JSON.parse(r) : r; } catch {}
 
   let wontDoItems: string[] = [];
-  try { const r = (orgCtx as any)?.wontDoJson; if (r) wontDoItems = typeof r === "string" ? JSON.parse(r) : r; } catch {}
+  try {
+    const r = (orgCtx as any)?.wontDoJson;
+    if (r) {
+      const parsed = typeof r === "string" ? JSON.parse(r) : r;
+      // Support both string[] and {text: string}[] formats
+      wontDoItems = Array.isArray(parsed)
+        ? parsed.map((item: any) => (typeof item === "string" ? item : item?.text ?? String(item)))
+        : [];
+    }
+  } catch {}
 
   let selectedInitiativeIds: string[] = [];
   try { const r = (orgCtx as any)?.selectedInitiativesJson; if (r) selectedInitiativeIds = typeof r === "string" ? JSON.parse(r) : r; } catch {}

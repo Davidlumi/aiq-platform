@@ -78,6 +78,7 @@ function isMandatoryComplete(
   inputs: Record<string, unknown>,
   capDomains: Record<string, DomainRating>,
   sectionI: Record<string, unknown>,
+  sectionK?: Record<string, unknown>,
 ): boolean {
   const sA = (inputs as any).sectionA ?? {};
   const sB = (inputs as any).sectionB ?? {};
@@ -111,7 +112,7 @@ function isMandatoryComplete(
   if (!sectionI.workforceComposition) return false;
   if (!sectionI.skillsFrameworkStatus) return false;
   // Section K: performanceReviewCadence + hiringVolumeProfile (v4.2 Launch-tier)
-  const sK = (inputs as any).sectionK ?? {};
+  const sK = sectionK ?? (inputs as any).sectionK ?? {};
   if (!sK.performanceReviewCadence) return false;
   if (!(sK.hiringVolumeProfile as string[] ?? []).length) return false;
   return true;
@@ -573,7 +574,7 @@ export default function StrategyDiagnosticPage() {
   ) as Record<SectionId, ProgressState>;
 
   // Whether all mandatory sections are complete (mirrors backend completePrework)
-  const allMandatoryComplete = isMandatoryComplete(inputs, capDomains, sectionI);
+  const allMandatoryComplete = isMandatoryComplete(inputs, capDomains, sectionI, sectionK);
 
   // Whether the current section's mandatory fields are filled (gates Next button)
   const currentSectionMandatory: SectionId[] = ["A", "B", "C", "D", "E", "G", "I"];

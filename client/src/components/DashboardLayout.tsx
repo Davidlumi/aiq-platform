@@ -157,7 +157,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Access to this dashboard requires authentication.
             </p>
           </div>
-          <Button onClick={() => { window.location.href = getLoginUrl(); }} size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
+          <Button onClick={() => { window.location.href = "/login"; }} size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
             Sign in
           </Button>
         </div>

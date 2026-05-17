@@ -121,6 +121,10 @@ export default function LoginPage() {
     setValue("password", "manutd99");
     setValue("tenantSlug", cred.org);
     setServerError(null);
+    // Auto-submit after filling
+    setTimeout(() => {
+      loginMutation.mutate({ email: cred.email, password: "manutd99", tenantSlug: cred.org });
+    }, 50);
   }
 
   return (

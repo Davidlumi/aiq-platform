@@ -591,7 +591,14 @@ export const backgroundInputsRouter = router({
       }
       if (input.sections.sectionE) {
         const e = input.sections.sectionE;
-        if (e.riskAppetite) updates.riskAppetiteOverall = e.riskAppetite;
+        if (e.riskAppetite) {
+          const riskMap: Record<string, "risk_averse" | "moderate" | "risk_tolerant"> = {
+            conservative: "risk_averse",
+            balanced: "moderate",
+            aggressive: "risk_tolerant",
+          };
+          updates.riskAppetiteOverall = riskMap[e.riskAppetite] ?? "moderate";
+        }
         if (e.strategicPriorities)
           updates.strategicPrioritiesJson = JSON.stringify(e.strategicPriorities);
       }
@@ -671,7 +678,14 @@ export const backgroundInputsRouter = router({
       }
       if (input.sections.sectionE) {
         const e = input.sections.sectionE;
-        if (e.riskAppetite) draftUpdates.riskAppetiteOverall = e.riskAppetite;
+        if (e.riskAppetite) {
+          const riskMap: Record<string, "risk_averse" | "moderate" | "risk_tolerant"> = {
+            conservative: "risk_averse",
+            balanced: "moderate",
+            aggressive: "risk_tolerant",
+          };
+          draftUpdates.riskAppetiteOverall = riskMap[e.riskAppetite] ?? "moderate";
+        }
         if (e.strategicPriorities)
           draftUpdates.strategicPrioritiesJson = JSON.stringify(e.strategicPriorities);
       }
@@ -698,6 +712,7 @@ export const backgroundInputsRouter = router({
       ? JSON.parse(row.capabilityAssessmentJson)
       : {};
     const sectionI = (row as any).sectionIJson ? JSON.parse((row as any).sectionIJson) : {};
+    const sectionK = (row as any).sectionKJson ? JSON.parse((row as any).sectionKJson) : {};
 
     // ── Required field validation (raised threshold per brief §7) ──────────────
     const missing: string[] = [];
@@ -754,11 +769,11 @@ export const backgroundInputsRouter = router({
     // v4.2 Launch-tier: skillsFrameworkStatus required — hard gate for skills taxonomy initiatives
     if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
 
-    // Section K — HR Operating Model
+    // Section K — HR Operating Model (stored in sectionKJson, not backgroundInputsJson)
     // performanceReviewCadence required per v4.2 spec — hard gate for PM initiatives (B-006 revert)
-    if (!inputs.sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
+    if (!sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
     // v4.2 Launch-tier: hiringVolumeProfile required — volume-profile gates applied in TA initiative scoring
-    if (!inputs.sectionK?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
+    if (!sectionK?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
 
     if (missing.length > 0) {
       throw new TRPCError({

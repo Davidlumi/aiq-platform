@@ -316,6 +316,7 @@ export const intelligenceRouter = router({
       provenanceJson: ailOrgContext.provenanceJson,
       libraryVersion: ailOrgContext.libraryVersion,
       snapshotDomainScoresJson: ailOrgContext.snapshotDomainScoresJson,
+      preworkCompletedAt: ailOrgContext.preworkCompletedAt,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -364,7 +365,7 @@ export const intelligenceRouter = router({
       try { snapshotDomainScores = typeof row.snapshotDomainScoresJson === "string" ? JSON.parse(row.snapshotDomainScoresJson) : row.snapshotDomainScoresJson as Record<string, number | null>; } catch {}
     }
     return {
-      configured: !!(row.businessAmbitionLevel && row.peopleAmbitionLevel),
+      configured: !!(row.preworkCompletedAt || (row.businessAmbitionLevel && row.peopleAmbitionLevel)),
       businessAmbitionLevel: row.businessAmbitionLevel,
       peopleAmbitionLevel: row.peopleAmbitionLevel,
       domainTargets,
