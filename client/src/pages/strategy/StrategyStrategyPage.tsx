@@ -139,6 +139,15 @@ export default function StrategyStrategyPage() {
   const [hasEdited, setHasEdited] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
 
+  // Gate redirect — if Stage 2 is not cleared, this page is inaccessible
+  useEffect(() => {
+    if (gate.isLoading) return;
+    if (!gate.isStage3Accessible) {
+      // Stage 2 not yet cleared — redirect to Vision (or Overview if Stage 1 not done)
+      navigate(gate.isStage2Accessible ? "/strategy/vision" : "/strategy");
+    }
+  }, [gate.isLoading, gate.isStage3Accessible, gate.isStage2Accessible, navigate]);
+
   // Load existing values from gate state
   useEffect(() => {
     if (gate.strategyArchetype && !hasEdited) {

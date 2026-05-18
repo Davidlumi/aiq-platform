@@ -4049,3 +4049,10 @@ test
 - [x] Mobile: collapse to scrollable horizontal pill strip on < 768px
 - [x] TypeScript: 0 errors
 - [x] Checkpoint
+
+## Stage 3 Gate Redirect (B-2)
+
+- [x] Add gate redirect useEffect to StrategyStrategyPage: if !isStage3Accessible → navigate to /strategy/vision (or /strategy if stage 1 not done)
+- [x] TypeScript: 0 errors
+- [x] Tests: 1313/1313 passing
+- [x] Checkpoint
