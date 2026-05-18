@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";

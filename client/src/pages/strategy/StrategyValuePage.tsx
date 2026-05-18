@@ -29,6 +29,7 @@ import {
 import SectionPageLayout from "@/components/SectionPageLayout";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import {
   TrendingUp,
   ArrowRight,

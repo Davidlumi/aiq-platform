@@ -24,6 +24,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import SectionPageLayout from "@/components/SectionPageLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -550,7 +551,7 @@ export default function BoardReportPage() {
         )}
 
         {/* Stage cleared banner */}
-        {stage10Cleared && (
+        {stage10Cleared && !isDeepDive && (
           <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <div>
@@ -561,6 +562,12 @@ export default function BoardReportPage() {
             </div>
           </div>
         )}
+      {stage10Cleared && isDeepDive && (
+        <DeepDiveConfirmedStatus
+          confirmedAt={gate.gateState?.stage10.completedAt}
+          label="Stage 10 confirmed"
+        />
+      )}
 
         {/* Top toolbar */}
         <div className="flex items-center justify-between gap-3 flex-wrap">

@@ -1687,7 +1687,7 @@ export default function StrategyOverviewPage() {
             </div>
 
             {/* ── Row 2: Plan + Numbers (2-col) ── */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* The Plan */}
               <div
                 className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-violet-500/30 transition-all group"
@@ -1752,7 +1752,7 @@ export default function StrategyOverviewPage() {
             </div>
 
             {/* ── Row 3: Risks & Capability + Success Measures (2-col) ── */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Risks & Capability */}
               <div
                 className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-rose-500/30 transition-all group"

@@ -2070,7 +2070,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
     .input(z.object({
       text: z.string().min(1).max(5000),
       action: z.enum(["expand", "refine", "challenge", "suggest"]),
-      stage: z.enum(["vision", "strategy_statement", "principle", "wont_do", "general", "business_case", "capability_narrative"]),
+      stage: z.enum(["vision", "strategy_statement", "principle", "wont_do", "general", "business_case", "capability_narrative", "board_report"]),
       orgContext: z.object({
         sector: z.string().optional(),
         headcount: z.number().optional(),
@@ -2090,6 +2090,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         general: "strategic text for an HR AI strategy",
         business_case: "a board-ready business case narrative for an HR AI strategy",
         capability_narrative: "a capability delivery narrative for an HR AI strategy",
+        board_report: "a board report section for an HR AI strategy",
       };
 
       const actionInstructions: Record<string, string> = {

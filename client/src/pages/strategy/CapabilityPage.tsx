@@ -14,6 +14,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import SectionPageLayout from "@/components/SectionPageLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -625,7 +626,7 @@ export default function CapabilityPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {gate.stage8Cleared && (
+            {gate.stage8Cleared && !isDeepDive && (
               <Button
                 variant="outline"
                 size="sm"
@@ -645,6 +646,13 @@ export default function CapabilityPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {gate.stage8Cleared && isDeepDive && (
+        <DeepDiveConfirmedStatus
+          confirmedAt={gate.gateState?.stage8.completedAt}
+          label="Stage 8 confirmed"
+        />
       )}
 
       {/* Confirm dialog */}

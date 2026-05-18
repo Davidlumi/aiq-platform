@@ -14,6 +14,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import SectionPageLayout from "@/components/SectionPageLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -230,7 +231,7 @@ export default function ReviewSessionPage() {
       <div className="max-w-3xl mx-auto space-y-8">
 
         {/* Stage cleared banner */}
-        {stage9Cleared && (
+        {stage9Cleared && !isDeepDive && (
           <div className="flex items-center gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <div>
@@ -241,6 +242,12 @@ export default function ReviewSessionPage() {
             </div>
           </div>
         )}
+      {stage9Cleared && isDeepDive && (
+        <DeepDiveConfirmedStatus
+          confirmedAt={gate.gateState?.stage9.completedAt}
+          label="Stage 9 confirmed"
+        />
+      )}
 
         {/* Section 1: Tensions */}
         <section>

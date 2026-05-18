@@ -14,6 +14,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -1373,7 +1374,7 @@ export default function StrategyMeasurementPage() {
         </div>
       )}
 
-      {stage6Cleared && (
+      {stage6Cleared && !isDeepDive && (
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex items-center gap-3">
           <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600 flex-shrink-0" />
           <div>
@@ -1388,6 +1389,12 @@ export default function StrategyMeasurementPage() {
             Business Case →
           </Button>
         </div>
+      )}
+      {stage6Cleared && isDeepDive && (
+        <DeepDiveConfirmedStatus
+          confirmedAt={gate.gateState?.stage6.completedAt}
+          label="Stage 6 confirmed"
+        />
       )}
 
       {/* ── Outcomes modal ── */}

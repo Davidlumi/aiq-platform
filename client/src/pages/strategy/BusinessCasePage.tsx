@@ -14,6 +14,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import { useDeepDive } from "@/hooks/useDeepDive";
+import { DeepDiveConfirmedStatus } from "@/components/DeepDiveConfirmedStatus";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -1031,6 +1032,12 @@ export default function BusinessCasePage() {
       </div>
 
       {/* ── Gate confirm footer ────────────────────────────────────────────── */}
+      {gate.stage7Cleared && isDeepDive ? (
+        <DeepDiveConfirmedStatus
+          confirmedAt={gate.gateState?.stage7.completedAt}
+          label="Stage 7 confirmed"
+        />
+      ) : (
       <div className="rounded-2xl border border-border bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
@@ -1077,6 +1084,7 @@ export default function BusinessCasePage() {
           </Button>
         </div>
       </div>
+      )}
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
       {ackModal && (
