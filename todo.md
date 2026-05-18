@@ -4080,3 +4080,10 @@ test
 - [x] Fix HR function bar chart showing all zeros (category→function mapping not applied to enriched data)
 - [x] Add "Regenerate initiative options" button: re-runs fit engine, replaces selectedInitiativeIds with fresh top-fit results, shows loading state
 - [x] TypeScript: 0 errors; tests: all passing; checkpoint
+
+## Stage 5 Plan Page — Round 2 Bug Fixes
+- [x] Fix #1: top-of-page "Estimated investment" total formula mismatches phase breakdown — align both to sum of y1CostRange from initiatives
+- [x] Fix typo: "1 phases" → "1 phase" (pluralise correctly)
+- [x] Fix #2: all 12 initiatives default to Build — assign targetQuarter from typical_phase in shared library (foundation→Q1, build→Q2, scale→Q3, optimise→Q4)
+- [x] Fix #3: HR Virtual Assistant value £1.1k vs cost £150k–£500k — trace value formula bug and add sanity check (flag/suppress if value < cost_low)
+- [x] TypeScript: 0 errors; tests: all passing; checkpoint

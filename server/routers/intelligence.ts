@@ -1376,6 +1376,13 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       // y1CostRange: prefer fit engine output (stored in fitImpactResultsJson),
       // fall back to shared library definition (always present for standard initiatives)
       const y1CostRange = fit?.y1CostRange ?? shared?.y1CostRange ?? null;
+      // phaseV3: from shared library (foundation/build/scale/optimise)
+      const phaseV3 = shared?.phaseV3 ?? null;
+      // Map phaseV3 to targetQuarter if no user-set value exists
+      const phaseV3ToQuarter: Record<string, string> = {
+        foundation: "Q1", build: "Q2", scale: "Q3", optimise: "Q4",
+      };
+      const defaultQuarter = phaseV3 ? (phaseV3ToQuarter[phaseV3] ?? "Q2") : "Q2";
       return {
         id,
         name: lib?.name ?? shared?.label ?? id,
@@ -1386,11 +1393,12 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         regulatoryFlag: lib?.regulatoryFlag ?? null,
         complexity: lib?.complexity ?? 3,
         isUserDefined: lib?.isUserDefined === 1,
+        phaseV3,
         // per-initiative mutable state
         stateId: state?.id ?? null,
         status: state?.status ?? "not_started",
         statusReason: state?.statusReason ?? null,
-        targetQuarter: state?.targetQuarter ?? "Q2",
+        targetQuarter: state?.targetQuarter ?? defaultQuarter,
         functionOverride: state?.functionOverride ?? null,
         criticality: state?.criticality ?? 1,
         notes: state?.notes ?? null,

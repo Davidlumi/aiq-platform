@@ -769,8 +769,12 @@ export default function StrategyPlanPage() {
     }
     return { costFallbackLow: low, costFallbackHigh: high };
   }, [enriched]);
-  const totalLow  = costEnvelopeQ.data?.totalMin ?? costFallbackLow;
-  const totalHigh = costEnvelopeQ.data?.totalMax ?? costFallbackHigh;
+  // Always use the direct y1CostRange sum from enriched initiatives (in £k).
+  // calculateCostEnvelope only covers initiatives in content-library.json, not the shared
+  // initiativeLibrary.ts initiatives (on_/ld_/ta_/fw_ etc.), so its totalMin/totalMax is
+  // always 0 for those. costFallbackLow/High is the correct source of truth.
+  const totalLow  = costFallbackLow || costEnvelopeQ.data?.totalMin || 0;
+  const totalHigh = costFallbackHigh || costEnvelopeQ.data?.totalMax || 0;
 
   // Engine-derived value totals — valueRange is raw GBP; convert to £k for display.
   const { valueTotalLow, valueTotalHigh } = useMemo(() => {
@@ -944,7 +948,7 @@ export default function StrategyPlanPage() {
                 <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-card border border-border">
                   <p className="text-xs text-muted-foreground/70 mb-1">Plan shape</p>
                   <p className="text-2xl font-bold text-foreground">{enriched.length}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} phases</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">initiatives across {phaseData.filter(p => p.count > 0).length} {phaseData.filter(p => p.count > 0).length === 1 ? "phase" : "phases"}</p>
                 </div>
                 <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-card border border-border">
                   <p className="text-xs text-muted-foreground/70 mb-1">Estimated investment</p>
@@ -1203,6 +1207,19 @@ export default function StrategyPlanPage() {
                         {/* Value badge — valueRange is raw GBP; convert to £k for display */}
                         {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (init as any).fitStatus !== "NOT_APPLICABLE" && (() => {
                           const vr = (init as any).valueRange as { low: number; high: number };
+                          const cr = (init as any).y1CostRange as { low: number; high: number } | null;
+                          // Sanity check: value high (raw GBP) must exceed cost low (£k × 1000)
+                          const valueHighGbp = vr.high ?? 0;
+                          const costLowGbp   = cr ? (cr.low * 1000) : 0;
+                          if (valueHighGbp < costLowGbp) {
+                            // Value is implausibly lower than cost — flag rather than mislead
+                            return (
+                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-0.5">
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Value data unavailable
+                              </Badge>
+                            );
+                          }
                           const midGbp = Math.round((vr.low + vr.high) / 2);
                           const midK   = Math.round(midGbp / 1000);
                           const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;

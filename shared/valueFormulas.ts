@@ -795,7 +795,9 @@ export function rt_exit_intelligence(inputs: ValueFormulaInputs): ValueRange {
 
 export function hr_virtual_assistant(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const monthlyQueries = d.monthlyHrQueryVolume ?? 0;
+  const headcount = inputs.sectionA?.totalHeadcount ?? 500;
+  // Fallback: if monthlyHrQueryVolume not captured, estimate conservatively as 2 queries/employee/month
+  const monthlyQueries = d.monthlyHrQueryVolume ?? Math.round(headcount * 2);
   const hrFte = d.hrFteCount ?? 5;
   const cfg = INITIATIVE_CONFIG.hr_virtual_assistant;
   const hrlyRate = 40;
@@ -805,12 +807,15 @@ export function hr_virtual_assistant(inputs: ValueFormulaInputs): ValueRange {
   const hoursSaved = deflectedQueries * (15 / 60);
   const valueSaved = hoursSaved * hrlyRate * cfg.hrFteRedeploymentValue;
 
+  const isEstimated = d.monthlyHrQueryVolume == null;
   return {
     low: Math.round(valueSaved * 0.7),
     high: Math.round(valueSaved * 1.4),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${monthlyQueries.toLocaleString()} monthly queries × ${Math.round(cfg.queryDeflectionRate * 100)}% deflection rate × 15min avg handling time.`,
+    isIndicative: indicative(d) || isEstimated,
+    narrative: isEstimated
+      ? `Estimated from ${headcount.toLocaleString()} employees × 2 queries/month × ${Math.round(cfg.queryDeflectionRate * 100)}% deflection × 15min handling time. Provide actual monthly query volume for a more precise figure.`
+      : `Based on ${monthlyQueries.toLocaleString()} monthly queries × ${Math.round(cfg.queryDeflectionRate * 100)}% deflection rate × 15min avg handling time.`,
   };
 }
 
