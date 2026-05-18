@@ -959,6 +959,9 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   stage10ConfirmedAt: timestamp("stage10_confirmed_at"),                             // When CPO confirmed Stage 10 board report
   boardReportSectionsJson: text("board_report_sections_json"),                       // JSON: { [sectionId]: { content, lockedAt, generatedAt, editedAt, isAiGenerated, wordCount } }
   boardReportIncludeNotes: boolean("board_report_include_notes").default(false),     // Whether to include review session notes in appendix
+  // v4 LLM-semantic principle alignment cache
+  semanticAlignmentCacheKey: varchar("semantic_alignment_cache_key", { length: 64 }),  // SHA-256 hash of (principles[], wontDoItems[]) — cache invalidation key
+  semanticAlignmentCacheJson: text("semantic_alignment_cache_json"),                   // JSON: SemanticAlignmentMap — cached LLM alignment results
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

@@ -27,7 +27,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { ailOrgContext } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
-import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
+import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, type FitImpactEngineInputs } from "../services/fitImpactEngine";
+import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
 import { invokeLLM } from "../_core/llm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -357,6 +358,8 @@ export const gateRouter = router({
           visionStatement: ailOrgContext.visionStatement,
           strategyArchetype: ailOrgContext.strategyArchetype,
           strategyStatement: ailOrgContext.strategyStatement,
+          semanticAlignmentCacheKey: ailOrgContext.semanticAlignmentCacheKey,
+          semanticAlignmentCacheJson: ailOrgContext.semanticAlignmentCacheJson,
         })
         .from(ailOrgContext)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
@@ -395,6 +398,8 @@ export const gateRouter = router({
 
       // Re-fire the engine with principle alignment
       let updatedFitResultsJson: string | null = null;
+      let updatedAlignmentCacheKey: string | undefined;
+      let updatedAlignmentJson: string | undefined;
       try {
         const inputs = orgCtx.backgroundInputsJson ? JSON.parse(orgCtx.backgroundInputsJson) : {};
         const sectionI = orgCtx.sectionIJson ? JSON.parse(orgCtx.sectionIJson) : {};
@@ -466,12 +471,29 @@ export const gateRouter = router({
           sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
           sectionG: { ai_ethics_trust: capAssessment.ai_ethics_trust?.score },
         };
-        // Attach principle alignment context as extra fields for scorePrincipleAlignment evaluator
+        // Attach principle alignment context as extra fields for engine
         (engineInputs as Record<string, unknown>).principles = principles.map(p => p.title);
         (engineInputs as Record<string, unknown>).wontDoItems = wontDoItems.map(w => w.text);
 
-        const fitResults = evaluateAllInitiatives(engineInputs);
+        // Compute cache key to check if we can skip the LLM call
+        const newCacheKey = computeAlignmentCacheKey(
+          principles.map(p => p.title),
+          wontDoItems.map(w => w.text),
+        );
+        const cachedKey = orgCtx.semanticAlignmentCacheKey ?? undefined;
+        const cachedJson = orgCtx.semanticAlignmentCacheJson ?? undefined;
+
+        // Use async semantic alignment engine (falls back to keyword engine on LLM failure)
+        const { results: fitResults, alignmentCacheKey, alignmentJson } =
+          await evaluateAllInitiativesWithSemanticAlignment(
+            engineInputs,
+            cachedKey === newCacheKey ? newCacheKey : undefined,
+            cachedKey === newCacheKey ? cachedJson : undefined,
+          );
+
         updatedFitResultsJson = JSON.stringify(fitResults);
+        updatedAlignmentCacheKey = alignmentCacheKey;
+        updatedAlignmentJson = alignmentJson;
       } catch (engineErr) {
         console.error("[gate] Engine re-fire failed:", engineErr);
         // Non-fatal: gate still clears, but fit results not updated
@@ -489,6 +511,8 @@ export const gateRouter = router({
         updatedAt: new Date(),
       };
       if (updatedFitResultsJson) patch.fitImpactResultsJson = updatedFitResultsJson;
+      if (updatedAlignmentCacheKey) patch.semanticAlignmentCacheKey = updatedAlignmentCacheKey;
+      if (updatedAlignmentJson) patch.semanticAlignmentCacheJson = updatedAlignmentJson;
 
       await db.update(ailOrgContext)
         .set(patch as any)

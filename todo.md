@@ -4002,3 +4002,27 @@ test
 - [x] Re-run vocab sampler — confirm 0 blacklist hits across all 27 samples
 - [x] TypeScript: 0 errors
 - [x] Final checkpoint
+
+## LLM-Semantic Principle Alignment (v4 incremental move)
+
+- [x] Extend InitiativeOutputCard.principleAlignment with optional rationale field
+- [x] Create server/services/semanticPrincipleAlignment.ts: scoreSemanticPrincipleAlignment() async function
+  - [x] Single batched LLM call for all initiatives + all principles + all won't-dos
+  - [x] Structured JSON output schema: array of { initiativeId, ranking, score, alignedPrinciples, violatedPrinciples, rationale }
+  - [x] Temperature 0, response_format json_schema for determinism
+  - [x] Fallback to keyword engine (scorePrincipleAlignment) if LLM call fails
+  - [x] Cache key: SHA-256 hash of (principles[], wontDoItems[]) to avoid redundant LLM calls
+- [x] Create evaluateAllInitiativesWithSemanticAlignment() async wrapper in fitImpactEngine.ts
+  - [x] Runs sync evaluateAllInitiatives() first (all existing scoring)
+  - [x] Then calls scoreSemanticPrincipleAlignment() and merges principleAlignment results
+  - [x] Falls back gracefully if semantic alignment fails
+- [x] Update gate.ts completeStage4 to call evaluateAllInitiativesWithSemanticAlignment() instead of evaluateAllInitiatives()
+- [x] Add semanticAlignmentCacheJson column to ailOrgContext schema for caching alignment results
+- [x] Generate migration SQL and apply via webdev_execute_sql
+- [x] Vitest: ACME-S-001 — ta_video_interview_assessment violates "no shortlist cuts without HR review" (semantic, not keyword)
+- [x] Vitest: ACME-S-002 — nuanced conflict: "zero-hour worker monitoring" initiative violates "frontline first" principle (no keyword overlap)
+- [x] Vitest: ACME-S-003 — fallback to keyword engine when LLM call fails
+- [x] Vitest: ACME-S-004 — output shape includes rationale string for each initiative
+- [x] Vitest: ACME-S-005 — cache hit: second call with same principles/wontDos returns cached result without LLM call
+- [x] TypeScript: 0 errors
+- [x] Final checkpoint

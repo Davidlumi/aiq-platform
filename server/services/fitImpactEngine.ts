@@ -51,6 +51,8 @@ export type InitiativeOutputCard = {
     score: number;                      // 0.0 – 1.0
     alignedPrinciples: string[];        // principle titles that support this initiative
     violatedPrinciples: string[];       // won't-do items that conflict
+    /** LLM-generated rationale (semantic engine only; absent when keyword fallback used) */
+    rationale?: string;
   };
 };
 
@@ -996,4 +998,91 @@ export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): Initiativ
     if (statusDiff !== 0) return statusDiff;
     return b.fitScore - a.fitScore;
   });
+}
+
+// ─── Async wrapper with LLM-semantic principle alignment ─────────────────────
+
+/**
+ * Async version of evaluateAllInitiatives that replaces Pass 3 (keyword-based
+ * principle alignment) with LLM-semantic alignment.
+ *
+ * Flow:
+ *  1. Run the synchronous engine (all scoring, hard gates, soft factors).
+ *  2. For initiatives that are not HARD_GATE_FAIL / NOT_APPLICABLE, call the
+ *     LLM-semantic alignment engine in a single batched request.
+ *  3. Merge semantic results back into the output array.
+ *  4. If the LLM call fails, the sync engine's keyword-based alignment is
+ *     already in place as a fallback (Pass 3 still runs in step 1).
+ *
+ * @param inputs - Same inputs as evaluateAllInitiatives
+ * @param cacheKey - Optional pre-computed cache key (SHA-256 of principles+wontDos).
+ *                   If provided and a cached result is available, the LLM call is skipped.
+ * @param cachedAlignmentJson - Optional JSON string of a previously computed SemanticAlignmentMap.
+ *                              If provided and cacheKey matches, used directly.
+ */
+export async function evaluateAllInitiativesWithSemanticAlignment(
+  inputs: FitImpactEngineInputs,
+  cacheKey?: string,
+  cachedAlignmentJson?: string | null,
+): Promise<{ results: InitiativeOutputCard[]; alignmentCacheKey: string; alignmentJson: string }> {
+  // Lazy import to avoid circular dependency issues at module load time
+  const { scoreSemanticPrincipleAlignment, computeAlignmentCacheKey, keywordFallbackMap } =
+    await import("./semanticPrincipleAlignment");
+
+  const principles = ((inputs as any).principles as string[] | undefined) ?? [];
+  const wontDoItems = ((inputs as any).wontDoItems as string[] | undefined) ?? [];
+
+  // Step 1: Run sync engine (includes keyword-based Pass 3 as baseline)
+  const results = evaluateAllInitiatives(inputs);
+
+  // Compute cache key
+  const computedCacheKey = cacheKey ?? computeAlignmentCacheKey(principles, wontDoItems);
+
+  // Step 2: Check cache
+  let alignmentMap: Record<string, NonNullable<InitiativeOutputCard["principleAlignment"]>>;
+
+  if (cachedAlignmentJson && cacheKey && cacheKey === computedCacheKey) {
+    try {
+      alignmentMap = JSON.parse(cachedAlignmentJson);
+    } catch {
+      alignmentMap = await scoreSemanticPrincipleAlignment(
+        results
+          .filter((r) => r.fitStatus !== "NOT_APPLICABLE" && r.fitStatus !== "HARD_GATE_FAIL")
+          .map((r) => r.id),
+        principles,
+        wontDoItems,
+      );
+    }
+  } else {
+    // No cache hit — call LLM
+    const scorableIds = results
+      .filter((r) => r.fitStatus !== "NOT_APPLICABLE" && r.fitStatus !== "HARD_GATE_FAIL")
+      .map((r) => r.id);
+
+    if (scorableIds.length > 0 && (principles.length > 0 || wontDoItems.length > 0)) {
+      try {
+        alignmentMap = await scoreSemanticPrincipleAlignment(scorableIds, principles, wontDoItems);
+      } catch {
+        // Fallback to keyword engine
+        alignmentMap = keywordFallbackMap(scorableIds, principles, wontDoItems);
+      }
+    } else {
+      alignmentMap = {};
+    }
+  }
+
+  // Step 3: Merge semantic results into output array
+  for (const result of results) {
+    if (result.fitStatus === "NOT_APPLICABLE" || result.fitStatus === "HARD_GATE_FAIL") continue;
+    const semantic = alignmentMap[result.id];
+    if (semantic) {
+      result.principleAlignment = semantic;
+    }
+  }
+
+  return {
+    results,
+    alignmentCacheKey: computedCacheKey,
+    alignmentJson: JSON.stringify(alignmentMap),
+  };
 }

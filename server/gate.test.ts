@@ -27,9 +27,24 @@ vi.mock("./db", async (importOriginal) => {
 
 import { getDb } from "./db";
 
+// ─── Mock LLM ─────────────────────────────────────────────────────────────────
+// completeStage4 now calls the LLM-semantic alignment engine. Mock it so tests
+// don't make real network calls and don't time out.
+vi.mock("./_core/llm", () => ({
+  invokeLLM: vi.fn().mockResolvedValue({
+    choices: [{ message: { content: JSON.stringify({ results: [] }) } }],
+  }),
+}));
+
+import { invokeLLM } from "./_core/llm";
+
 // ─── Reset mocks between tests ───────────────────────────────────────────────
 beforeEach(() => {
   vi.resetAllMocks();
+  // Re-apply LLM mock after reset so completeStage4 tests don't hang on real LLM calls
+  vi.mocked(invokeLLM).mockResolvedValue({
+    choices: [{ message: { content: JSON.stringify({ results: [] }) } }],
+  });
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
