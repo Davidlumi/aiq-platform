@@ -76,6 +76,7 @@ const FUNCTION_COLOURS: Record<string, string> = {
 };
 
 const CATEGORY_MAP: Record<string, string> = {
+  // Display-style keys (legacy / user-defined)
   "Talent Acquisition":        "Talent Acquisition",
   "Learning & Development":    "Learning & Development",
   "Performance & Engagement":  "Performance & Development",
@@ -89,6 +90,21 @@ const CATEGORY_MAP: Record<string, string> = {
   "Change & Capability":       "HR Operations",
   "HR Business Partnering":    "Workforce Planning",
   "People Analytics":          "Workforce Planning",
+  // Snake_case keys from shared/initiativeLibrary.ts
+  "talent_acquisition":        "Talent Acquisition",
+  "learning_development":      "Learning & Development",
+  "performance_management":    "Performance & Development",
+  "workforce_planning":        "Workforce Planning",
+  "compensation_reward":       "Pay & Reward",
+  "hr_operations":             "HR Operations",
+  "governance":                "Ethics & Governance",
+  "onboarding":                "HR Operations",
+  "employee_experience":       "HR Operations",
+  "retention":                 "HR Operations",
+  "internal_mobility":         "Workforce Planning",
+  "manager_effectiveness":     "Performance & Development",
+  "frontline_workforce":       "HR Operations",
+  "ai_capability":             "HR Operations",
 };
 
 const STATUS_CONFIG: Record<string, {
@@ -732,16 +748,26 @@ export default function StrategyPlanPage() {
   const isError   = strategyQ.isError   || initiativesQ.isError;
 
   // Cost envelope display
-  const totalLow  = costEnvelopeQ.data?.totalMin ?? phaseData.reduce((s, p) => s + p.costLow,  0);
-  const totalHigh = costEnvelopeQ.data?.totalMax ?? phaseData.reduce((s, p) => s + p.costHigh, 0);
+  // Prefer the server-computed envelope; fall back to summing y1CostRange (in £k) from initiatives.
+  // y1CostRange is already in £k (e.g. { low: 60, high: 200 } = £60k–£200k).
+  const { costFallbackLow, costFallbackHigh } = useMemo(() => {
+    let low = 0; let high = 0;
+    for (const init of enriched) {
+      const cr = (init as any).y1CostRange as { low: number; high: number } | null;
+      if (cr) { low += cr.low; high += cr.high; }
+    }
+    return { costFallbackLow: low, costFallbackHigh: high };
+  }, [enriched]);
+  const totalLow  = costEnvelopeQ.data?.totalMin ?? costFallbackLow;
+  const totalHigh = costEnvelopeQ.data?.totalMax ?? costFallbackHigh;
 
-  // Engine-derived value totals (sum of midpoints from fit results)
+  // Engine-derived value totals — valueRange is raw GBP; convert to £k for display.
   const { valueTotalLow, valueTotalHigh } = useMemo(() => {
     let low = 0; let high = 0;
     for (const init of enriched) {
       if (init.valueRange && init.fitStatus !== "HARD_GATE_FAIL" && init.fitStatus !== "NOT_APPLICABLE") {
-        low  += (init.valueRange as any).low  ?? 0;
-        high += (init.valueRange as any).high ?? 0;
+        low  += Math.round(((init.valueRange as any).low  ?? 0) / 1000);
+        high += Math.round(((init.valueRange as any).high ?? 0) / 1000);
       }
     }
     return { valueTotalLow: low, valueTotalHigh: high };
@@ -1147,15 +1173,16 @@ export default function StrategyPlanPage() {
                             {(init as any).fitScore != null && `${(init as any).fitScore} · `}{fitLabel((init as any).fitStatus)}
                           </Badge>
                         )}
-                        {/* Value badge */}
+                        {/* Value badge — valueRange is raw GBP; convert to £k for display */}
                         {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (init as any).fitStatus !== "NOT_APPLICABLE" && (() => {
                           const vr = (init as any).valueRange as { low: number; high: number };
-                          const mid = Math.round((vr.low + vr.high) / 2);
+                          const midGbp = Math.round((vr.low + vr.high) / 2);
+                          const midK   = Math.round(midGbp / 1000);
                           const fmt = (k: number) => k >= 1000 ? `£${(k / 1000).toFixed(1)}M` : `£${k}k`;
                           return (
                             <Badge variant="outline" className="text-[10px] bg-violet-500/10 text-violet-400 border-violet-500/20">
                               <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
-                              {fmt(mid)}
+                              {fmt(midK)}
                             </Badge>
                           );
                         })()}

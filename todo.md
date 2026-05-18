@@ -4068,3 +4068,9 @@ test
 - [x] TypeScript: 0 errors
 - [x] Tests: all passing
 - [x] Checkpoint
+
+## Stage 5 Plan Page Bug Fixes (May 2026)
+- [x] Fix #1: HR function pill always showing "HR Operations" — expand CATEGORY_MAP to cover all snake_case category values (talent_acquisition, onboarding, learning_development, frontline_workforce, etc.)
+- [x] Fix #2: Value figures orders-of-magnitude too large — valueRange from fit engine is raw GBP; divide by 1000 before applying £k/£M formatter
+- [x] Fix #3: Estimated investment £0k–£0k — replace PHASE_COST fallback with direct sum of y1CostRange (already in £k) from initiatives; also fix valueTotalLow/High to convert raw GBP → £k
+- [x] Confirm #4: Phase distribution all-in-Build is by design — users are expected to drag initiatives between phases; phase assignment logic is working correctly
