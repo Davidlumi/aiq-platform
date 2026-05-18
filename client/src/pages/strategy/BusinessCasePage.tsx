@@ -26,7 +26,7 @@ import { AITextActions } from "@/components/AITextActions";
 import {
   Briefcase, PoundSterling, Shield, AlertTriangle, ArrowRight, ChevronDown,
   CheckCircle2, Link2, ChevronRight, Info, RefreshCw, BookOpen, Scale,
-  Eye, Layers, BarChart2, Loader2, Sparkles, TrendingUp, Users,
+  Eye, Layers, BarChart2, Loader2, Sparkles, TrendingUp, Users, FileDown,
 } from "lucide-react";
 import { SOLUTION_DELIVERY_OPTIONS } from "@/../../shared/strategyInputs";
 import { formatGbp, formatGbpK } from "@/lib/format";
@@ -1042,6 +1042,21 @@ export default function BusinessCasePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 border-border"
+            title="Intermediate export — final board report is produced at Stage 10"
+            onClick={() => {
+              const a = document.createElement("a");
+              a.href = "/api/pdf/business_case";
+              a.download = "aiq-business-case-intermediate.pdf";
+              a.click();
+            }}
+          >
+            <FileDown className="w-3.5 h-3.5 mr-1.5" />
+            Export intermediate report
+          </Button>
           {gate.stage7Cleared && (
             <Button variant="outline" size="sm" className="text-xs h-8 border-border" onClick={() => navigate("/strategy/capability")}>
               Continue to Stage 8 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

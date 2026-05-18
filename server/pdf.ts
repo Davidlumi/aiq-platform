@@ -21,7 +21,7 @@ import { COOKIE_NAME } from "../shared/const";
 import { verifySessionToken } from "./auth";
 import { getUserById, getDb, getTenantById } from "./db";
 import { getLibraryMeta, getAllInitiatives, resolveInitiativeIds } from "./contentLibrary";
-import { calculateCostEnvelope, evaluateRiskRules, calculateValueEnvelope } from "./strategyEngine";
+import { calculateCostEnvelope, evaluateRiskRules, calculateValueEnvelope, type ValueEnvelope } from "./strategyEngine";
 import {
   assessmentSessions,
   assessmentScores,
@@ -33,6 +33,7 @@ import {
   learningStreaks,
   users,
   ailOrgContext,
+  riskAcknowledgements,
 } from "../drizzle/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import {
@@ -1367,6 +1368,259 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
   addFooter(doc, pageCounter.n, libraryVersion ?? undefined);
 }
 
+// ─── Business Case Intermediate Export ──────────────────────────────────────
+
+async function generateBusinessCasePDF(
+  doc: PDFKit.PDFDocument,
+  userId: string,
+  tenantId: string,
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+
+  // ── Fetch data ──────────────────────────────────────────────────────────────
+  const orgCtxRows = await db.select().from(ailOrgContext)
+    .where(eq(ailOrgContext.tenantId, tenantId)).limit(1);
+  const ctx = orgCtxRows[0] ?? null;
+
+  const tenant = await getTenantById(tenantId);
+  const orgName = tenant?.name ?? "Your Organisation";
+
+  const narrative: string = (ctx as any)?.businessCaseNarrative ?? "";
+  const strategyStatement: string = (ctx as any)?.strategyStatement ?? "";
+  const strategyArchetype: string = (ctx as any)?.strategyArchetype ?? "";
+
+  // Parse selected initiatives
+  let selectedIds: string[] = [];
+  try {
+    const raw = (ctx as any)?.selectedInitiativesJson;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (Array.isArray(parsed)) {
+      selectedIds = parsed.map((e: any) => (typeof e === "string" ? e : e?.id ?? e?.initiativeId ?? "")).filter(Boolean);
+    }
+  } catch {}
+
+  // Parse outcomes
+  type Outcome = { title?: string; baseline_value?: string; target_value?: string; target_date?: string; primary_measure?: string };
+  let outcomes: Outcome[] = [];
+  try {
+    const raw = (ctx as any)?.outcomesJson;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (Array.isArray(parsed)) outcomes = parsed;
+  } catch {}
+
+  // Parse capability assessment
+  type CapDim = { current?: number; needed?: number; tactics?: string[] };
+  type CapAssessment = { skills?: CapDim; capacity?: CapDim; changeReadiness?: CapDim; vendorEcosystem?: CapDim };
+  let capAssessment: CapAssessment = {};
+  try {
+    const raw = (ctx as any)?.capabilityAssessmentJson;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (parsed && typeof parsed === "object") capAssessment = parsed;
+  } catch {}
+
+  // Fetch risk acknowledgements
+  const riskAcks = await db.select().from(riskAcknowledgements)
+    .where(and(eq(riskAcknowledgements.tenantId, tenantId), eq(riskAcknowledgements.itemType, "risk")));
+  const activeRisks = riskAcks.filter(r => !r.revokedAt);
+
+  // Compute value envelope
+  const allInitiatives = getAllInitiatives();
+  const initiativeMap = new Map(allInitiatives.map(i => [i.initiative_id, i]));
+  const resolvedIds = resolveInitiativeIds(selectedIds);
+  const selectedInits = resolvedIds.map(id => initiativeMap.get(id)).filter(Boolean) as typeof allInitiatives;
+  let valueEnvelope: ValueEnvelope | null = null;
+  try {
+    let baseline: Record<string, number> = {};
+    try {
+      const raw = (ctx as any)?.operationalBaselineJson;
+      baseline = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {});
+    } catch {}
+    if (selectedInits.length > 0) {
+      valueEnvelope = calculateValueEnvelope(selectedInits, baseline, 36);
+    }
+  } catch {}
+
+  // ── Layout helpers ─────────────────────────────────────────────────────────
+  const W = doc.page.width;
+  const MARGIN = 44;
+  const CONTENT_W = W - MARGIN * 2;
+  const pageCounter = { n: 1 };
+
+  function checkBreak(needed: number) {
+    if (doc.y + needed > doc.page.height - 60) {
+      doc.addPage();
+      pageCounter.n++;
+    }
+  }
+
+  function sectionHeader(title: string) {
+    checkBreak(30);
+    doc.moveDown(0.8);
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(BRAND.navy)
+       .text(title.toUpperCase(), MARGIN, doc.y, { width: CONTENT_W });
+    doc.moveDown(0.2);
+    doc.moveTo(MARGIN, doc.y).lineTo(MARGIN + CONTENT_W, doc.y)
+       .strokeColor(BRAND.gold).lineWidth(1).stroke();
+    doc.moveDown(0.4);
+  }
+
+  function bodyText(text: string, indent = 0) {
+    checkBreak(20);
+    doc.fontSize(9).font("Helvetica").fillColor(BRAND.slate)
+       .text(text, MARGIN + indent, doc.y, { width: CONTENT_W - indent, lineGap: 2 });
+    doc.moveDown(0.3);
+  }
+
+  function tableRow(cols: string[], widths: number[], isHeader = false) {
+    checkBreak(18);
+    const rowY = doc.y;
+    let x = MARGIN;
+    const font = isHeader ? "Helvetica-Bold" : "Helvetica";
+    const color = isHeader ? BRAND.navy : BRAND.slate;
+    const size = isHeader ? 8 : 8;
+    cols.forEach((col, i) => {
+      doc.fontSize(size).font(font).fillColor(color)
+         .text(col, x + 3, rowY + 3, { width: widths[i] - 6, lineBreak: false });
+      x += widths[i];
+    });
+    doc.moveTo(MARGIN, rowY).lineTo(MARGIN + CONTENT_W, rowY)
+       .strokeColor(BRAND.border).lineWidth(0.5).stroke();
+    doc.y = rowY + 18;
+  }
+
+  // ── Cover header ───────────────────────────────────────────────────────────
+  doc.rect(0, 0, W, 90).fill(BRAND.navy);
+  doc.fontSize(20).font("Helvetica-Bold").fillColor(BRAND.gold)
+     .text("Business Case", MARGIN, 22, { width: CONTENT_W });
+  doc.fontSize(10).font("Helvetica").fillColor(BRAND.white)
+     .text(`${orgName}  ·  Intermediate Export  ·  ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`, MARGIN, 52, { width: CONTENT_W });
+  doc.y = 105;
+
+  // Intermediate export notice
+  doc.rect(MARGIN, doc.y, CONTENT_W, 28).fill("#FEF3C7");
+  doc.fontSize(8).font("Helvetica-Oblique").fillColor("#92400E")
+     .text("⚠  This is an intermediate export for internal review. The final board report will be produced at Stage 10 of the strategy process.", MARGIN + 8, doc.y + 8, { width: CONTENT_W - 16 });
+  doc.y += 36;
+
+  // ── Strategy context ───────────────────────────────────────────────────────
+  if (strategyStatement || strategyArchetype) {
+    sectionHeader("Strategy Context");
+    if (strategyArchetype) {
+      bodyText(`Archetype: ${strategyArchetype.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}`);
+    }
+    if (strategyStatement) {
+      bodyText(strategyStatement);
+    }
+  }
+
+  // ── Business case narrative ────────────────────────────────────────────────
+  sectionHeader("Business Case Narrative");
+  if (narrative) {
+    // Split into paragraphs
+    const paras = narrative.split(/\n+/).filter(p => p.trim());
+    for (const para of paras) {
+      bodyText(para);
+    }
+  } else {
+    bodyText("No narrative has been drafted yet. Complete Stage 7 to generate the business case narrative.");
+  }
+
+  // ── Value summary ──────────────────────────────────────────────────────────
+  sectionHeader("Value Summary (3-Year Horizon)");
+  if (valueEnvelope) {
+    const fmt = (v: number) => `£${(v / 1_000_000).toFixed(1)}M`;
+    bodyText(`Estimated value range: ${fmt(valueEnvelope.total_quantified_value_gbp.low)} – ${fmt(valueEnvelope.total_quantified_value_gbp.high)}`);
+    bodyText(`Net value (after costs): ${fmt(valueEnvelope.net_value_gbp.low)} – ${fmt(valueEnvelope.net_value_gbp.high)}`);
+    if (valueEnvelope.payback_period_months) {
+      bodyText(`Payback period: ${valueEnvelope.payback_period_months.low}–${valueEnvelope.payback_period_months.high} months`);
+    }
+    if (valueEnvelope.qualitative_summary.bullet_points.length) {
+      doc.moveDown(0.3);
+      bodyText("Qualitative highlights:");
+      for (const bp of valueEnvelope.qualitative_summary.bullet_points.slice(0, 5)) {
+        bodyText(`• ${bp}`, 10);
+      }
+    }
+    // Per-initiative table
+    if (valueEnvelope.by_initiative.length) {
+      doc.moveDown(0.5);
+      const colW = [CONTENT_W * 0.45, CONTENT_W * 0.28, CONTENT_W * 0.27];
+      tableRow(["Initiative", "Value (3yr)", "Payback"], colW, true);
+      for (const init of valueEnvelope.by_initiative.slice(0, 12)) {
+        const valStr = init.quantified_value_gbp
+          ? `${fmt(init.quantified_value_gbp.low)} – ${fmt(init.quantified_value_gbp.high)}`
+          : "Qualitative";
+        const payStr = init.payback_months
+          ? `${init.payback_months.low}–${init.payback_months.high} mo`
+          : "—";
+        tableRow([init.display_name, valStr, payStr], colW);
+      }
+    }
+    doc.moveDown(0.3);
+    doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
+       .text(valueEnvelope.caveat, MARGIN, doc.y, { width: CONTENT_W });
+    doc.moveDown(0.3);
+  } else {
+    bodyText("Value data unavailable. Ensure initiatives have been selected and operational baseline data has been entered.");
+  }
+
+  // ── Outcomes ───────────────────────────────────────────────────────────────
+  if (outcomes.length) {
+    sectionHeader("Strategy Outcomes");
+    const colW = [CONTENT_W * 0.4, CONTENT_W * 0.2, CONTENT_W * 0.2, CONTENT_W * 0.2];
+    tableRow(["Outcome", "Baseline", "Target", "Target Date"], colW, true);
+    for (const o of outcomes) {
+      tableRow([
+        o.title ?? "",
+        o.baseline_value ?? "—",
+        o.target_value ?? "—",
+        o.target_date ?? "—",
+      ], colW);
+    }
+  }
+
+  // ── Risk acknowledgements ─────────────────────────────────────────────────
+  sectionHeader("Risk Acknowledgements");
+  if (activeRisks.length) {
+    const colW = [CONTENT_W * 0.5, CONTENT_W * 0.3, CONTENT_W * 0.2];
+    tableRow(["Risk Item", "Note", "Acknowledged"], colW, true);
+    for (const r of activeRisks) {
+      const date = new Date(r.acknowledgedAt).toLocaleDateString("en-GB");
+      tableRow([r.itemId.replace(/_/g, " "), r.note ?? "—", date], colW);
+    }
+  } else {
+    bodyText("No risks have been formally acknowledged yet.");
+  }
+
+  // ── Capability gap summary ────────────────────────────────────────────────
+  const capDims = [
+    { key: "skills",          label: "Skills" },
+    { key: "capacity",        label: "Capacity" },
+    { key: "changeReadiness", label: "Change Readiness" },
+    { key: "vendorEcosystem", label: "Vendor Ecosystem" },
+  ] as const;
+  const scoredDims = capDims.filter(d => (capAssessment as any)[d.key]?.current != null);
+  if (scoredDims.length) {
+    sectionHeader("Capability Gap Summary");
+    const colW = [CONTENT_W * 0.35, CONTENT_W * 0.15, CONTENT_W * 0.15, CONTENT_W * 0.15, CONTENT_W * 0.2];
+    tableRow(["Dimension", "Current", "Needed", "Gap", "Tactics"], colW, true);
+    for (const d of capDims) {
+      const dim = (capAssessment as any)[d.key] as CapDim | undefined;
+      if (!dim) continue;
+      const gap = (dim.needed ?? 0) - (dim.current ?? 0);
+      const gapStr = gap > 0 ? `+${gap}` : gap < 0 ? `${gap} (ahead)` : "0 (met)";
+      const tactics = dim.tactics?.length ? `${dim.tactics.length} listed` : "None";
+      tableRow([d.label, String(dim.current ?? "—"), String(dim.needed ?? "—"), gapStr, tactics], colW);
+    }
+  }
+
+  // ── Footer ─────────────────────────────────────────────────────────────────
+  doc.moveDown(1);
+  doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
+     .text(`Generated by AiQ HR Capability Intelligence Platform  ·  Confidential  ·  ${new Date().toLocaleDateString("en-GB")}`, MARGIN, doc.y, { width: CONTENT_W, align: "center" });
+}
+
 // ─── Route registration ───────────────────────────────────────────────────────
 
 export function registerPdfRoutes(app: Express) {
@@ -1391,6 +1645,7 @@ export function registerPdfRoutes(app: Express) {
         ai_strategy:        "aiq-ai-strategy-report.pdf",
         board_pack:         "aiq-hr-ai-strategy-board-pack.pdf",
         strategic_framing:  "aiq-strategic-framing.pdf",
+        business_case:      "aiq-business-case-intermediate.pdf",
       };
 
       const filename = filenames[type];
@@ -1434,6 +1689,9 @@ export function registerPdfRoutes(app: Express) {
           break;
         case "strategic_framing":
           await generateStrategicFramingPDF(doc, user.id, user.tenantId);
+          break;
+        case "business_case":
+          await generateBusinessCasePDF(doc, user.id, user.tenantId);
           break;
       }
 

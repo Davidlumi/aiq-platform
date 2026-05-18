@@ -36,6 +36,7 @@ import {
   TrendingDown,
   Minus,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -619,14 +620,27 @@ export default function CapabilityPage() {
               </ul>
             )}
           </div>
-          <Button
-            disabled={!canConfirm || completeStage8Mut.isPending}
-            onClick={() => setConfirmOpen(true)}
-            className="gap-2 shrink-0"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            {completeStage8Mut.isPending ? "Confirming…" : "Confirm capability →"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {gate.stage8Cleared && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => navigate("/strategy/review")}
+                title="Stage 9: Review session — coming in Increment 3"
+              >
+                Continue <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            <Button
+              disabled={!canConfirm || completeStage8Mut.isPending}
+              onClick={() => setConfirmOpen(true)}
+              className="gap-2 shrink-0"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {completeStage8Mut.isPending ? "Confirming…" : gate.stage8Cleared ? "Re-confirm" : "Confirm capability →"}
+            </Button>
+          </div>
         </div>
       )}
 

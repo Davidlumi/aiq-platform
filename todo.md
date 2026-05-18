@@ -3856,3 +3856,22 @@ test
 - [x] Acme E2E Stage 8: all 4 dimensions scored, tactics listed for gaps, narrative confirmed
 - [x] Gate cascade test: editing Stage 4 after clearing Stage 5 shows upstream-change banner on Stage 5
 - [x] Vocabulary sampling: generateBusinessCaseNarrative and generateCapabilityNarrative prompts pass blacklist
+
+## Post-Increment 2 Follow-ups
+
+### Business Case Intermediate PDF Export
+- [x] Server-side PDF generation endpoint: GET /api/pdf/business_case — assembles narrative, value chart data, risk table, capability summary using PDFKit (Node-native, no child_process dependency), returns PDF buffer
+- [x] Download button on BusinessCasePage — "Export intermediate report" label with FileDown icon, always visible, title tooltip clarifies it is an intermediate export
+- [x] PDF content: header with org name + date, strategy statement, narrative block, value envelope summary table, risk acknowledgements table, capability gap summary
+
+### Strategy Overview Stage-Badge Dashboard v1
+- [x] StrategyOverviewPage: GateFlowStrip extended to show all 8 stages in two rows (Foundation 1–4, Execution 5–8) with Cleared / In Progress / Locked state driven by useGate()
+- [x] Badge colours: Cleared = emerald, In Progress = foreground/border, Locked = muted/40
+- [x] Each stage button links to its route (disabled if Locked)
+- [x] Total cleared counter shown (N/8 stages cleared)
+- [x] Partial v1 — expect significant evolution in Increment 3
+
+### Stage 8 "Continue" CTA
+- [x] "Continue" button added to CapabilityPage gate footer, shown only after gate.stage8Cleared
+- [x] Navigates to /strategy/review (Stage 9 placeholder route)
+- [x] Confirm button label changes to "Re-confirm" after stage8 is cleared

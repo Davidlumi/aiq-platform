@@ -863,60 +863,80 @@ function GateFlowStrip() {
   const gate = useGate();
   const [, navigate] = useLocation();
 
-  type StageInfo = {
-    num: 1 | 2 | 3 | 4;
-    label: string;
-    href: string;
-    isAccessible: boolean;
-    isCleared: boolean;
-  };
+  type StageInfo = { num: number; label: string; href: string; isAccessible: boolean; isCleared: boolean };
 
-  const stageInfos: StageInfo[] = [
-    { num: 1, label: "Pre-work",   href: "/strategy/diagnostic", isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
-    { num: 2, label: "Vision",     href: "/strategy/vision",     isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
-    { num: 3, label: "Strategy",   href: "/strategy/strategy",   isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
-    { num: 4, label: "Principles", href: "/strategy/ambition",   isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
+  const row1: StageInfo[] = [
+    { num: 1, label: "Pre-work",    href: "/strategy/diagnostic",   isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
+    { num: 2, label: "Vision",      href: "/strategy/vision",        isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
+    { num: 3, label: "Strategy",    href: "/strategy/strategy",      isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
+    { num: 4, label: "Principles",  href: "/strategy/ambition",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
+  ];
+  const row2: StageInfo[] = [
+    { num: 5, label: "Initiatives",   href: "/strategy/builder",       isAccessible: gate.isStage5Accessible, isCleared: gate.stage5Cleared },
+    { num: 6, label: "Measurement",   href: "/strategy/measurement",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
+    { num: 7, label: "Business case", href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
+    { num: 8, label: "Capability",    href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
   ];
 
-  return (
-    <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-        STRATEGY BUILD PROGRESS
-      </p>
+  function StageRow({ stages }: { stages: StageInfo[] }) {
+    return (
       <div className="flex items-center gap-0">
-        {stageInfos.map(({ num, label, href, isAccessible, isCleared }, idx) => {
-          const isLocked = !isAccessible;
-
+        {stages.map((s, idx) => {
+          const isLocked = !s.isAccessible;
           return (
-            <React.Fragment key={num}>
+            <React.Fragment key={s.num}>
               {idx > 0 && (
                 <div className={cn(
                   "h-px flex-1 mx-1",
-                  stageInfos[idx - 1].isCleared ? "bg-emerald-500/60" : "bg-border"
+                  stages[idx - 1].isCleared ? "bg-emerald-500/60" : "bg-border"
                 )} />
               )}
               <button
-                onClick={() => !isLocked && navigate(href)}
+                onClick={() => !isLocked && navigate(s.href)}
                 disabled={isLocked}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  isCleared && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15",
-                  !isCleared && !isLocked && "text-foreground bg-background border border-border hover:bg-muted/50",
-                  isLocked && "text-muted-foreground/50 cursor-not-allowed"
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap",
+                  s.isCleared && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15",
+                  !s.isCleared && !isLocked && "text-foreground bg-background border border-border hover:bg-muted/50",
+                  isLocked && "text-muted-foreground/40 cursor-not-allowed"
                 )}
               >
-                {isCleared ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                {s.isCleared ? (
+                  <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
                 ) : isLocked ? (
-                  <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                  <Lock className="w-3 h-3 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <Circle className="w-3 h-3 flex-shrink-0" />
                 )}
-                <span>Stage {num} — {label}</span>
+                <span>S{s.num} — {s.label}</span>
               </button>
             </React.Fragment>
           );
         })}
+      </div>
+    );
+  }
+
+  const totalCleared = [gate.stage1Cleared, gate.stage2Cleared, gate.stage3Cleared, gate.stage4Cleared,
+    gate.stage5Cleared, gate.stage6Cleared, gate.stage7Cleared, gate.stage8Cleared].filter(Boolean).length;
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-3">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          STRATEGY BUILD PROGRESS
+        </p>
+        <span className="text-[10px] text-muted-foreground">{totalCleared}/8 stages cleared</span>
+      </div>
+      <div className="space-y-2">
+        <div>
+          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Foundation (Stages 1–4)</p>
+          <StageRow stages={row1} />
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Execution (Stages 5–8)</p>
+          <StageRow stages={row2} />
+        </div>
       </div>
     </div>
   );
