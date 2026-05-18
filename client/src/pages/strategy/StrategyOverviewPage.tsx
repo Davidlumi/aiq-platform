@@ -967,6 +967,14 @@ export default function StrategyOverviewPage() {
     { enabled: !!user?.tenantId }
   );
   const orgContextQ         = trpc.intelligence.orgContext.useQuery();
+  const ambitionSectionsQ   = trpc.intelligence.getAmbitionSections.useQuery(
+    undefined,
+    { enabled: gate.stage8Cleared }
+  );
+  const capabilityQ         = trpc.intelligence.getCapabilityAssessment.useQuery(
+    undefined,
+    { enabled: gate.stage8Cleared }
+  );
   const valueEnvQ           = trpc.intelligence.calculateValueEnvelope.useQuery(
     { selectedInitiativeIds: [] },
     { enabled: false }
@@ -1121,6 +1129,46 @@ export default function StrategyOverviewPage() {
     const ids = Array.from(selectedInitiativeIds).sort().join(",");
     return btoa(`${ids}|${businessLevel}|${peopleLevel}`).slice(0, 32);
   }, [selectedInitiativeIds, businessLevel, peopleLevel]);
+
+  // ── Post-flow summary card data ─────────────────────────────────────────
+  const pfPrinciples = (ambitionSectionsQ.data?.principles ?? []) as Array<{ title: string; description: string }>;
+  const pfWontDo     = (ambitionSectionsQ.data?.wontDo ?? []) as Array<{ text: string }>;
+  const pfOutcomes   = (ambitionSectionsQ.data?.outcomes ?? []) as Array<{ title: string; unit: string; target_value: number; target_date: string }>;
+  const pfCadence    = cadenceId; // reuse existing derivation
+  const pfCapability = capabilityQ.data as {
+    skills: { current: number; needed: number };
+    capacity: { current: number; needed: number };
+    changeReadiness: { current: number; needed: number };
+    vendorEcosystem: { current: number; needed: number };
+  } | null;
+  const pfArchetype  = gate.strategyArchetype;
+  const pfStatement  = gate.strategyStatement;
+  // Phase breakdown for post-flow plan card
+  const pfPhases = useMemo(() => {
+    const counts: Record<string, number> = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+    for (const init of selectedInits) {
+      const p = assignPhase(init);
+      if (p in counts) counts[p]++;
+    }
+    return counts;
+  }, [selectedInits]);
+  // Top 3 initiatives by name for post-flow plan card
+  const pfTopInits = selectedInits.slice(0, 3).map((i: any) => i.name ?? i.id);
+  const pfInitExtra = Math.max(0, selectedInitiativeIds.size - 3);
+  // Capability gap status for post-flow card
+  const CAP_DIM_LABELS: Record<string, string> = {
+    skills: "Skills", capacity: "Capacity",
+    changeReadiness: "Change readiness", vendorEcosystem: "Vendor ecosystem",
+  };
+  const pfCapDims = pfCapability
+    ? (["skills", "capacity", "changeReadiness", "vendorEcosystem"] as const).map(k => ({
+        key: k,
+        label: CAP_DIM_LABELS[k],
+        current: pfCapability[k]?.current ?? 0,
+        needed:  pfCapability[k]?.needed  ?? 0,
+        gap:     (pfCapability[k]?.needed ?? 0) - (pfCapability[k]?.current ?? 0),
+      }))
+    : [];
 
   const isLoading   = strategyQ.isLoading || strategyAssessmentQ.isLoading;
   const hasStrategy = (strategyData?.configured ?? false) as boolean;
@@ -1472,12 +1520,13 @@ export default function StrategyOverviewPage() {
           onBuildCapability={handleBuildCapability}
         />
 
-        {/* ══ STRATEGY CARDS — 2×2 GRID ════════════════════════════════════════ */}
-        <div
-          className="grid grid-cols-2 gap-3 mb-8"
-          role="list"
-          aria-label="Strategy sections"
-        >
+        {/* ══ STRATEGY CARDS — 2×2 GRID (mid-flow, hidden after Stage 8 cleared) ═════ */}
+        {!gate.stage8Cleared && (
+          <div
+            className="grid grid-cols-2 gap-3 mb-8"
+            role="list"
+            aria-label="Strategy sections"
+          >
           {/* Card 1 — Where we're going */}
           <div role="listitem">
             {isLoading ? <CardSkeleton /> : (
@@ -1597,6 +1646,190 @@ export default function StrategyOverviewPage() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* ══ POST-FLOW SUMMARY CARDS (5-card layout, shown once Stage 8 cleared) ════ */}
+        {gate.stage8Cleared && (
+          <div className="space-y-4 mb-8">
+            {/* ── Row 1: The Strategy (full-width) ── */}
+            <div
+              className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-violet-500/30 transition-all group"
+              onClick={() => navigate("/strategy/ambition?from=dashboard")}
+              role="button" tabIndex={0}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/ambition?from=dashboard"); } }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-400 mb-1">The Strategy</p>
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    {pfArchetype && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
+                        {pfArchetype.charAt(0).toUpperCase() + pfArchetype.slice(1)}
+                      </span>
+                    )}
+                    {pfPrinciples.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{pfPrinciples.length} principle{pfPrinciples.length !== 1 ? "s" : ""}</span>
+                    )}
+                    {pfWontDo.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{pfWontDo.length} won&apos;t-do</span>
+                    )}
+                  </div>
+                  {pfStatement ? (
+                    <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{pfStatement}</p>
+                  ) : displayVision ? (
+                    <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2 italic">{displayVision}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No strategy statement yet</p>
+                  )}
+                </div>
+                <span className="text-xs text-violet-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0 mt-1">Deep dive →</span>
+              </div>
+            </div>
+
+            {/* ── Row 2: Plan + Numbers (2-col) ── */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* The Plan */}
+              <div
+                className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-violet-500/30 transition-all group"
+                onClick={() => navigate("/strategy/builder?from=dashboard")}
+                role="button" tabIndex={0}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/builder?from=dashboard"); } }}
+              >
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-400 mb-2">The Plan</p>
+                <div className="flex items-baseline gap-1.5 mb-2">
+                  <span className="text-2xl font-bold text-foreground">{selectedInitiativeIds.size}</span>
+                  <span className="text-xs text-muted-foreground">initiative{selectedInitiativeIds.size !== 1 ? "s" : ""}</span>
+                </div>
+                {/* Phase breakdown */}
+                <div className="flex gap-2 mb-3">
+                  {(["Q1","Q2","Q3","Q4"] as const).map(q => pfPhases[q] > 0 && (
+                    <div key={q} className="flex items-center gap-1">
+                      <span className="text-[10px] font-medium text-muted-foreground">{q}</span>
+                      <span className="text-[10px] font-semibold text-foreground">{pfPhases[q]}</span>
+                    </div>
+                  ))}
+                </div>
+                {/* Top 3 initiatives */}
+                <div className="space-y-1">
+                  {pfTopInits.map((name: string, i: number) => (
+                    <p key={i} className="text-xs text-foreground/70 truncate">{name}</p>
+                  ))}
+                  {pfInitExtra > 0 && (
+                    <p className="text-xs text-muted-foreground">+{pfInitExtra} more</p>
+                  )}
+                </div>
+                <span className="text-xs text-violet-400 group-hover:translate-x-0.5 transition-transform block mt-3">Deep dive →</span>
+              </div>
+
+              {/* The Numbers */}
+              <div
+                className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-amber-500/30 transition-all group"
+                onClick={() => navigate("/strategy/business-case?from=dashboard")}
+                role="button" tabIndex={0}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/business-case?from=dashboard"); } }}
+              >
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-amber-400 mb-2">The Numbers</p>
+                {!costIsEmpty ? (
+                  <>
+                    <div className="mb-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Investment</p>
+                      <p className="text-lg font-bold text-foreground">{costHeadline}</p>
+                      <p className="text-xs text-muted-foreground">{fmt(totalCostLow).replace(/k/g,"K")} – {fmt(totalCostHigh).replace(/k/g,"K")} · 3 yrs</p>
+                    </div>
+                    {!valueIsEmpty && netMid != null && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Value</p>
+                        <p className="text-lg font-bold text-emerald-400">{fmtMidpoint(netLow!, netHigh!)}</p>
+                        <p className="text-xs text-muted-foreground">{fmt(netLow!)} – {fmt(netHigh!)} · 3 yrs</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">Cost not estimated yet</p>
+                )}
+                <span className="text-xs text-amber-400 group-hover:translate-x-0.5 transition-transform block mt-3">Deep dive →</span>
+              </div>
+            </div>
+
+            {/* ── Row 3: Risks & Capability + Success Measures (2-col) ── */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Risks & Capability */}
+              <div
+                className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-rose-500/30 transition-all group"
+                onClick={() => navigate("/strategy/capability?from=dashboard")}
+                role="button" tabIndex={0}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/capability?from=dashboard"); } }}
+              >
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-rose-400 mb-2">Risks &amp; Capability</p>
+                {/* Top 2 risks */}
+                {liveRisks && liveRisks.length > 0 ? (
+                  <div className="space-y-1.5 mb-3">
+                    {liveRisks.slice(0, 2).map((r: any, i: number) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                          r.severity === "high" ? "bg-rose-500" : r.severity === "medium" ? "bg-amber-400" : "bg-emerald-400"
+                        }`} />
+                        <p className="text-xs text-foreground/80 leading-tight">{r.title ?? r.id}</p>
+                      </div>
+                    ))}
+                    {liveRisks.length > 2 && (
+                      <p className="text-xs text-muted-foreground">+{liveRisks.length - 2} more risks</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic mb-3">Risk assessment not yet run</p>
+                )}
+                {/* Capability dimensions */}
+                {pfCapDims.length > 0 && (
+                  <div className="space-y-1">
+                    {pfCapDims.map(d => (
+                      <div key={d.key} className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground truncate">{d.label}</span>
+                        <span className={`text-xs font-medium flex-shrink-0 ${
+                          d.gap > 1 ? "text-rose-400" : d.gap === 1 ? "text-amber-400" : "text-emerald-400"
+                        }`}>
+                          {d.current}/{d.needed}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <span className="text-xs text-rose-400 group-hover:translate-x-0.5 transition-transform block mt-3">Deep dive →</span>
+              </div>
+
+              {/* Success Measures */}
+              <div
+                className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-teal-500/30 transition-all group"
+                onClick={() => navigate("/strategy/measurement?from=dashboard")}
+                role="button" tabIndex={0}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/measurement?from=dashboard"); } }}
+              >
+                <p className="text-[10px] font-semibold tracking-widest uppercase text-teal-400 mb-2">Success Measures</p>
+                {pfOutcomes.length > 0 ? (
+                  <div className="space-y-1.5 mb-3">
+                    {pfOutcomes.slice(0, 3).map((o, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-foreground/80 leading-tight truncate">{o.title}</p>
+                      </div>
+                    ))}
+                    {pfOutcomes.length > 3 && (
+                      <p className="text-xs text-muted-foreground">+{pfOutcomes.length - 3} more</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic mb-3">No outcomes defined yet</p>
+                )}
+                {pfCadence && (
+                  <p className="text-xs text-muted-foreground">
+                    Review: {pfCadence.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </p>
+                )}
+                <span className="text-xs text-teal-400 group-hover:translate-x-0.5 transition-transform block mt-3">Deep dive →</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══ TALKING POINTS ══════════════════════════════════════════════════════════ */}
         <TalkingPointsBlock

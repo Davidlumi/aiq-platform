@@ -3905,15 +3905,15 @@ test
 ### Week 2: Stage 10 — Summary Dashboard
 - [ ] StrategyOverviewPage reshape: state-aware (mid-flow vs post-flow) switched by stage8ConfirmedAt
 - [ ] Mid-flow state: stage badges view (existing GateFlowStrip) + populated card subset + "Continue strategy" CTA
-- [ ] Post-flow state: full 5-card summary layout + exports section
-- [ ] Card 1 — The Strategy: vision snippet, strategy archetype, principles count, won't-do count, deep dive link
-- [ ] Card 2 — The Plan: initiative count, phase count, violator count, top 3 by fit score, deep dive link
-- [ ] Card 3 — The Numbers: 3-year cost, 3-year value, cost waterfall mini-chart, value bar mini-chart, deep dive link
-- [ ] Card 4 — Risks & Capability: top 2 risks, capability gaps summary, deep dive link
-- [ ] Card 5 — Success Measures: outcomes list (3-5), primary measures, review cadence, deep dive link
-- [ ] Empty-state UX per card per Section 3.5 table
-- [ ] Custom initiative fallback for Numbers card (Section 3.5)
-- [ ] Top 3 initiatives by fit score in Plan card
+- [x] Post-flow state: full 5-card summary layout + exports section
+- [x] Card 1 — The Strategy: vision snippet, strategy archetype, principles count, won't-do count, deep dive link
+- [x] Card 2 — The Plan: initiative count, phase count, violator count, top 3 by fit score, deep dive link
+- [x] Card 3 — The Numbers: 3-year cost, 3-year value, cost waterfall mini-chart, value bar mini-chart, deep dive link
+- [x] Card 4 — Risks & Capability: top 2 risks, capability gaps summary, deep dive link
+- [x] Card 5 — Success Measures: outcomes list (3-5), primary measures, review cadence, deep dive link
+- [x] Empty-state UX per card per Section 3.5 table
+- [x] Custom initiative fallback for Numbers card (Section 3.5)
+- [x] Top 3 initiatives by fit score in Plan card
 - [x] Exports section: board report primary, intermediate artifacts secondary (framing one-pager PDF, business case PDF)
 - [ ] Mobile responsive at 320px
 
