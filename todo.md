@@ -4040,3 +4040,12 @@ test
 - [x] CTA only appears after completePrework mutation succeeds (preworkDone = true)
 - [x] TypeScript: 0 errors
 - [x] Checkpoint
+
+## Strategy Top Navigation Bar
+
+- [x] Create StrategyTopNav component: 10 stage steps, gate state (locked/active/cleared), active route highlight, click-to-navigate for accessible stages
+- [x] Create StrategyLayout wrapper that renders StrategyTopNav above page content
+- [x] Wire StrategyLayout into all 10 strategy routes in App.tsx
+- [x] Mobile: collapse to scrollable horizontal pill strip on < 768px
+- [x] TypeScript: 0 errors
+- [x] Checkpoint

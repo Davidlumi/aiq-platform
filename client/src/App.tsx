@@ -16,6 +16,7 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // App shell / dashboard
 import AppShell from "./components/AppShell";
+import StrategyLayout from "./components/StrategyLayout";
 
 // Role-specific dashboards (v2)
 import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
@@ -123,6 +124,35 @@ function ProtectedRoute({
   );
 }
 
+/** Protected route with strategy top nav — wraps AppShell content with StrategyLayout */
+function ProtectedRouteWithStrategyNav({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  return (
+    <AppShell>
+      <StrategyLayout>
+        <Component />
+      </StrategyLayout>
+    </AppShell>
+  );
+}
+
 /** Full-screen protected route — no AppShell wrapper (used for immersive experiences like the Coach) */
 function ProtectedRouteFullscreen({
   component: Component,
@@ -222,49 +252,49 @@ function Router() {
         <ProtectedRoute component={ReportsPage} />
       </Route>
       <Route path="/strategy">
-        <ProtectedRoute component={StrategyOverviewPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyOverviewPage} />
       </Route>
       <Route path="/strategy/diagnostic">
-        <ProtectedRoute component={StrategyDiagnosticPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyDiagnosticPage} />
       </Route>
       <Route path="/strategy/ambition">
-        <ProtectedRoute component={StrategyAmbitionPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyAmbitionPage} />
       </Route>
       <Route path="/strategy/plan">
-        <ProtectedRoute component={StrategyPlanPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyPlanPage} />
       </Route>
       <Route path="/strategy/roadmap">
-        <ProtectedRoute component={StrategyRoadmapPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
       </Route>
       <Route path="/strategy/investment-risk">
-        <ProtectedRoute component={StrategyInvestmentRiskPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
       </Route>
       <Route path="/strategy/value">
-        <ProtectedRoute component={StrategyValuePage} />
+        <ProtectedRouteWithStrategyNav component={StrategyValuePage} />
       </Route>
       <Route path="/strategy/business-case">
-        <ProtectedRoute component={BusinessCasePage} />
+        <ProtectedRouteWithStrategyNav component={BusinessCasePage} />
       </Route>
       <Route path="/strategy/capability">
-        <ProtectedRoute component={CapabilityPage} />
+        <ProtectedRouteWithStrategyNav component={CapabilityPage} />
       </Route>
       <Route path="/strategy/measurement">
-        <ProtectedRoute component={StrategyMeasurementPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyMeasurementPage} />
       </Route>
       <Route path="/strategy/review">
-        <ProtectedRoute component={ReviewSessionPage} />
+        <ProtectedRouteWithStrategyNav component={ReviewSessionPage} />
       </Route>
       <Route path="/strategy/board-report">
-        <ProtectedRoute component={BoardReportPage} />
+        <ProtectedRouteWithStrategyNav component={BoardReportPage} />
       </Route>
       <Route path="/strategy/draft">
-        <ProtectedRoute component={StrategyDraftPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyDraftPage} />
       </Route>
       <Route path="/strategy/vision">
-        <ProtectedRoute component={StrategyVisionPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyVisionPage} />
       </Route>
       <Route path="/strategy/strategy">
-        <ProtectedRoute component={StrategyStrategyPage} />
+        <ProtectedRouteWithStrategyNav component={StrategyStrategyPage} />
       </Route>
       <Route path="/ai-strategy">
         <Redirect to="/strategy" />
