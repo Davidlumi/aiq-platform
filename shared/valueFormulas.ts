@@ -204,7 +204,8 @@ export function ta_candidate_chatbot(inputs: ValueFormulaInputs): ValueRange {
   const recruiterTimeSaving = hires * cfg.screeningHoursPerHire * cfg.automationRate * hrlyRate;
   const conversionValue = hires * cfg.conversionUpliftRate * (d.costPerExternalHire ?? 8000) * 0.1;
   const managerTimeSaving = managerHeadcount(inputs) * 1 * 12 * (loadedManagerCost(inputs) / 1800);
-  const total = recruiterTimeSaving + conversionValue + managerTimeSaving;
+  const rawTotal = recruiterTimeSaving + conversionValue + managerTimeSaving;
+  const total = Math.min(rawTotal, 500_000); // Enterprise cap: candidate chatbot value bounded at £500k
 
   return {
     low: Math.round(total * 0.6),
@@ -275,10 +276,12 @@ export function ta_bias_monitoring(inputs: ValueFormulaInputs): ValueRange {
   const headcount = inputs.sectionA.totalHeadcount ?? 0;
   const riskValue = headcount * cfg.riskReductionPerHead;
   const auditValue = cfg.auditCostAvoided;
+  const rawTotal = riskValue + auditValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: bias monitoring value bounded at £750k
 
   return {
-    low: Math.round((riskValue + auditValue) * 0.4),
-    high: Math.round((riskValue + auditValue) * 1.0),
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
     currency: "GBP",
     isIndicative: false,
     narrative: `Scenario-based regulatory risk reduction (£${riskValue.toLocaleString()}) plus audit cost avoided (£${auditValue.toLocaleString()}). Direct financial value depends on sector regulatory environment.`,
@@ -433,8 +436,8 @@ export function ld_personalised_learning(inputs: ValueFormulaInputs): ValueRange
   const efficiencyGain = ldSpend * cfg.ldEfficiencyGain;
   const productivityValue = headcount * salary * cfg.skillsUpliftProductivityValue;
   const rawTotal = efficiencyGain + productivityValue;
-  // Cap at £2.5M: prevents inflated figures for large enterprises (20K+ headcount)
-  const total = Math.min(rawTotal, 2_500_000);
+  // Enterprise cap: personalised learning value bounded at £1.25M
+  const total = Math.min(rawTotal, 1_250_000);
 
   return {
     low: Math.round(total * 0.6),
@@ -456,7 +459,7 @@ export function ld_workforce_reskilling(inputs: ValueFormulaInputs): ValueRange 
   const total = reskillValue + retentionValue;
   // Enterprise-scale cap: reskilling value scales linearly with headcount and can exceed
   // realistic programme outcomes for large organisations. Cap at £3M to stay within 3-5x ROI.
-  const MAX_VALUE_GBP = 3_000_000;
+  const MAX_VALUE_GBP = 2_500_000; // Enterprise cap: workforce reskilling value bounded at £2.5M
   const cappedTotal = Math.min(total, MAX_VALUE_GBP);
 
   return {
@@ -476,7 +479,8 @@ export function ld_ai_coaching(inputs: ValueFormulaInputs): ValueRange {
 
   const coachingValue = headcount * cfg.coachingCoverageRate * salary * cfg.performanceUpliftRate;
   const coachingCostSaving = headcount * cfg.coachingCoverageRate * cfg.externalCoachingCostPerPerson;
-  const total = coachingValue + coachingCostSaving;
+  const rawTotal = coachingValue + coachingCostSaving;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: AI coaching value bounded at £1.5M
 
   return {
     low: Math.round(total * 0.4),
@@ -495,7 +499,8 @@ export function ld_compliance_training(inputs: ValueFormulaInputs): ValueRange {
 
   const completionValue = headcount * cfg.complianceRiskValuePerHead;
   const efficiencyValue = ldSpend * cfg.complianceTrainingFraction * cfg.efficiencyGain;
-  const total = completionValue + efficiencyValue;
+  const rawTotal = completionValue + efficiencyValue;
+  const total = Math.min(rawTotal, 500_000); // Enterprise cap: compliance training value bounded at £500k
 
   return {
     low: Math.round(total * 0.5),
@@ -531,8 +536,8 @@ export function ld_knowledge_management(inputs: ValueFormulaInputs): ValueRange 
   const cfg = INITIATIVE_CONFIG.ld_knowledge_management;
   const hrlyRate = salary / 1800;
 
-  const searchTimeSaving = headcount * cfg.weeklySearchMinutes * 52 * (1 / 60) * hrlyRate * cfg.searchTimeReductionRate;
-  const total = searchTimeSaving;
+  const rawSearchTimeSaving = headcount * cfg.weeklySearchMinutes * 52 * (1 / 60) * hrlyRate * cfg.searchTimeReductionRate;
+  const total = Math.min(rawSearchTimeSaving, 750_000); // Enterprise cap: knowledge management value bounded at £750k
 
   return {
     low: Math.round(total * 0.5),
@@ -557,7 +562,8 @@ export function im_talent_marketplace(inputs: ValueFormulaInputs): ValueRange {
   const externalHireSaving = hires * cfg.externalHireDisplacementRate * costPerHire;
   const contractorSaving = contractorSpend * cfg.contractorDisplacementRate;
   const retentionValue = headcount * cfg.retentionValueMultiplier * salary * 0.05;
-  const total = externalHireSaving + contractorSaving + retentionValue;
+  const rawTotal = externalHireSaving + contractorSaving + retentionValue;
+  const total = Math.min(rawTotal, 2_000_000); // Enterprise cap: talent marketplace value bounded at £2M
 
   return {
     low: Math.round(total * 0.5),
@@ -576,7 +582,8 @@ export function im_skills_inference(inputs: ValueFormulaInputs): ValueRange {
 
   const mobilityValue = headcount * salary * cfg.mobilityEnablementValueFraction;
   const planningValue = headcount * salary * cfg.workforcePlanningValueFraction;
-  const total = mobilityValue + planningValue;
+  const rawTotal = mobilityValue + planningValue;
+  const total = Math.min(rawTotal, 1_750_000); // Enterprise cap: skills inference value bounded at £1.75M
 
   return {
     low: Math.round(total * 0.4),
@@ -595,7 +602,8 @@ export function im_mentor_matching(inputs: ValueFormulaInputs): ValueRange {
 
   const retentionValue = headcount * cfg.retentionUpliftRate * costPerLeaver(inputs);
   const performanceValue = headcount * cfg.performanceUpliftRate * salary;
-  const total = retentionValue + performanceValue;
+  const rawTotal = retentionValue + performanceValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: mentor matching value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -615,7 +623,8 @@ export function pm_continuous_performance(inputs: ValueFormulaInputs): ValueRang
   const cfg = INITIATIVE_CONFIG.pm_continuous_performance;
 
   const coveredPop = headcount * cfg.coveredPopulationFraction;
-  const value = coveredPop * salary * cfg.productivityUpliftRate;
+  const rawValue = coveredPop * salary * cfg.productivityUpliftRate;
+  const value = Math.min(rawValue, 1_000_000); // Enterprise cap: continuous performance value bounded at £1M
 
   return {
     low: Math.round(value * 0.5),
@@ -652,7 +661,8 @@ export function pm_okr_goal_alignment(inputs: ValueFormulaInputs): ValueRange {
   const salary = avgSalary(inputs);
   const cfg = INITIATIVE_CONFIG.pm_okr_goal_alignment;
 
-  const alignmentValue = headcount * salary * cfg.alignmentProductivityUplift;
+  const rawAlignmentValue = headcount * salary * cfg.alignmentProductivityUplift;
+  const alignmentValue = Math.min(rawAlignmentValue, 750_000); // Enterprise cap: OKR alignment value bounded at £750k
 
   return {
     low: Math.round(alignmentValue * 0.4),
@@ -673,7 +683,8 @@ export function ee_sentiment_listening(inputs: ValueFormulaInputs): ValueRange {
 
   const revenueValue = revenue * cfg.engagementUpliftPoints * cfg.engagementToRevenueMultiplier;
   const attritionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.attritionReductionRate * costPerLeaver(inputs);
-  const total = revenueValue + attritionValue;
+  const rawTotal = revenueValue + attritionValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: sentiment listening value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -693,7 +704,8 @@ export function ee_recognition_rewards(inputs: ValueFormulaInputs): ValueRange {
 
   const attritionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.attritionReductionRate * costPerLeaver(inputs);
   const productivityValue = headcount * avgSalary(inputs) * cfg.productivityUpliftRate;
-  const total = attritionValue + productivityValue;
+  const rawTotal = attritionValue + productivityValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: recognition & rewards value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -711,7 +723,8 @@ export function ee_wellbeing_burnout(inputs: ValueFormulaInputs): ValueRange {
 
   const absenceValue = headcount * cfg.absenceDaysReduction * (avgSalary(inputs) / INITIATIVE_CONFIG.defaults.workingDaysPerYear);
   const attritionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.attritionReductionRate * costPerLeaver(inputs);
-  const total = absenceValue + attritionValue;
+  const rawTotal = absenceValue + attritionValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: wellbeing & burnout value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -730,7 +743,8 @@ export function ee_internal_comms_ai(inputs: ValueFormulaInputs): ValueRange {
 
   const commsTimeSaving = (d.hrFteCount ?? 5) * cfg.commsHoursPerWeek * 52 * cfg.timeReductionRate * hrlyRate;
   const engagementValue = headcount * avgSalary(inputs) * cfg.engagementUpliftRate;
-  const total = commsTimeSaving + engagementValue;
+  const rawTotal = commsTimeSaving + engagementValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: internal comms AI value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -757,7 +771,7 @@ export function rt_flight_risk_prediction(inputs: ValueFormulaInputs): ValueRang
   const value = annualLeavers * attritionReduction * costPerLeaver(inputs);
   // Enterprise-scale cap: flight risk value scales with headcount × attrition × cost-per-leaver
   // and produces unrealistic figures for large organisations. Cap at £2.5M to stay within 3-5× ROI.
-  const MAX_VALUE_GBP = 2_500_000;
+  const MAX_VALUE_GBP = 1_250_000; // Enterprise cap: flight risk prediction value bounded at £1.25M
   const cappedValue = Math.min(value, MAX_VALUE_GBP);
 
   return {
@@ -776,7 +790,8 @@ export function rt_stay_interview_ai(inputs: ValueFormulaInputs): ValueRange {
 
   const retentionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.retentionUpliftRate * costPerLeaver(inputs);
   const managerCapabilityValue = managerHeadcount(inputs) * 0.05 * loadedManagerCost(inputs);
-  const total = retentionValue + managerCapabilityValue;
+  const rawTotal = retentionValue + managerCapabilityValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: stay interview AI value bounded at £750k
 
   return {
     low: Math.round(total * 0.5),
@@ -792,7 +807,8 @@ export function rt_exit_intelligence(inputs: ValueFormulaInputs): ValueRange {
   const headcount = inputs.sectionA.totalHeadcount ?? 0;
   const cfg = INITIATIVE_CONFIG.rt_exit_intelligence;
 
-  const attritionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.attritionReductionRate * costPerLeaver(inputs);
+  const rawAttritionValue = headcount * (d.attritionRate ?? 15) / 100 * cfg.attritionReductionRate * costPerLeaver(inputs);
+  const attritionValue = Math.min(rawAttritionValue, 750_000); // Enterprise cap: exit intelligence value bounded at £750k
 
   return {
     low: Math.round(attritionValue * 0.3),
@@ -856,7 +872,8 @@ export function hr_benefits_decision_support(inputs: ValueFormulaInputs): ValueR
 
   const querySaving = headcount * cfg.benefitsQueriesPerEmployee * cfg.queryDeflectionRate * (20 / 60) * hrlyRate;
   const enrolmentValue = headcount * cfg.benefitsOptimisationValuePerEmployee;
-  const total = querySaving + enrolmentValue;
+  const rawTotal = querySaving + enrolmentValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: benefits decision support value bounded at £750k
 
   return {
     low: Math.round(total * 0.5),
@@ -878,7 +895,8 @@ export function wp_workforce_planning(inputs: ValueFormulaInputs): ValueRange {
 
   const planningEfficiency = headcount * salary * cfg.planningEfficiencyRate;
   const hiringOptimisation = hires * (d.costPerExternalHire ?? 8000) * cfg.hiringOptimisationRate;
-  const total = planningEfficiency + hiringOptimisation;
+  const rawTotal = planningEfficiency + hiringOptimisation;
+  const total = Math.min(rawTotal, 2_000_000); // Enterprise cap: workforce planning value bounded at £2M
 
   return {
     low: Math.round(total * 0.4),
@@ -897,7 +915,8 @@ export function wp_succession_planning(inputs: ValueFormulaInputs): ValueRange {
 
   const successionValue = mgrs * cfg.seniorRoleFraction * costPerLeaver(inputs) * cfg.riskReductionRate;
   const readinessValue = mgrs * loadedManagerCost(inputs) * cfg.readinessUpliftRate;
-  const total = successionValue + readinessValue;
+  const rawTotal = successionValue + readinessValue;
+  const total = Math.min(rawTotal, 1_250_000); // Enterprise cap: succession planning value bounded at £1.25M
 
   return {
     low: Math.round(total * 0.4),
@@ -914,7 +933,8 @@ export function wp_org_design(inputs: ValueFormulaInputs): ValueRange {
   const salary = avgSalary(inputs);
   const cfg = INITIATIVE_CONFIG.wp_org_design;
 
-  const spanValue = headcount * salary * cfg.spanEfficiencyGain;
+  const rawSpanValue = headcount * salary * cfg.spanEfficiencyGain;
+  const spanValue = Math.min(rawSpanValue, 2_000_000); // Enterprise cap: org design value bounded at £2M
 
   return {
     low: Math.round(spanValue * 0.3),
@@ -954,7 +974,8 @@ export function cr_pay_equity(inputs: ValueFormulaInputs): ValueRange {
 
   const riskValue = headcount * salary * cfg.regulatoryRiskValueRate;
   const auditEfficiency = cfg.auditCostAvoided;
-  const total = riskValue + auditEfficiency;
+  const rawTotal = riskValue + auditEfficiency;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: pay equity value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -974,7 +995,8 @@ export function cr_compensation_recommendations(inputs: ValueFormulaInputs): Val
 
   const managerTimeSaving = mgrs * cfg.compCycleHoursPerManager * cfg.timeReductionRate * (loadedManagerCost(inputs) / 1800);
   const equityValue = headcount * salary * cfg.payEquityValueRate;
-  const total = managerTimeSaving + equityValue;
+  const rawTotal = managerTimeSaving + equityValue;
+  const total = Math.min(rawTotal, 1_250_000); // Enterprise cap: compensation recommendations value bounded at £1.25M
 
   return {
     low: Math.round(total * 0.4),
@@ -995,7 +1017,8 @@ export function mg_manager_copilot(inputs: ValueFormulaInputs): ValueRange {
 
   const adminTimeSaving = mgrs * cfg.adminHoursPerWeek * 52 * cfg.timeReductionRate * (loadedManagerCost(inputs) / 1800);
   const teamOutcomeValue = headcount * avgSalary(inputs) * cfg.teamProductivityUplift;
-  const total = adminTimeSaving + teamOutcomeValue;
+  const rawTotal = adminTimeSaving + teamOutcomeValue;
+  const total = Math.min(rawTotal, 1_250_000); // Enterprise cap: manager copilot value bounded at £1.25M
 
   return {
     low: Math.round(total * 0.5),
@@ -1014,7 +1037,8 @@ export function mg_difficult_conversations(inputs: ValueFormulaInputs): ValueRan
 
   const hrEscalationSaving = headcount * cfg.difficultConversationRate * avgSalary(inputs) * cfg.handlingImprovementRate;
   const managerEffectivenessValue = mgrs * cfg.hardCaseFraction * loadedManagerCost(inputs);
-  const total = hrEscalationSaving + managerEffectivenessValue;
+  const rawTotal = hrEscalationSaving + managerEffectivenessValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: difficult conversations value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -1036,7 +1060,8 @@ export function gv_ai_governance(inputs: ValueFormulaInputs): ValueRange {
   // Proxy: regulatory risk reduction + deployment acceleration value
   const riskValue = headcount * salary * cfg.riskReductionRate;
   const accelerationValue = riskValue * cfg.deploymentAccelerationMultiplier;
-  const total = riskValue + accelerationValue;
+  const rawTotal = riskValue + accelerationValue;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: AI governance value bounded at £1.5M
 
   return {
     low: Math.round(total * 0.3),
@@ -1054,7 +1079,8 @@ export function gv_cross_cutting_bias_audit(inputs: ValueFormulaInputs): ValueRa
 
   const riskValue = headcount * salary * cfg.riskReductionRate;
   const auditEfficiency = cfg.auditCostAvoided;
-  const total = riskValue + auditEfficiency;
+  const rawRiskTotal = riskValue + auditEfficiency;
+  const total = Math.min(rawRiskTotal, 1_000_000); // Enterprise cap: bias audit value bounded at £1M
 
   return {
     low: Math.round(total * 0.3),
@@ -1076,7 +1102,8 @@ export function fw_shift_scheduling_ai(inputs: ValueFormulaInputs): ValueRange {
 
   const labourOptimisation = flHeadcount * salary * cfg.labourCostReductionRate;
   const overtimeSaving = flHeadcount * salary * cfg.overtimeReductionRate;
-  const total = labourOptimisation + overtimeSaving;
+  const rawTotal = labourOptimisation + overtimeSaving;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: shift scheduling value bounded at £1.5M
 
   return {
     low: Math.round(total * 0.5),
@@ -1096,7 +1123,8 @@ export function fw_frontline_learning(inputs: ValueFormulaInputs): ValueRange {
 
   const completionValue = flHeadcount * salary * cfg.performanceUpliftRate;
   const ldEfficiency = ldSpend * cfg.ldEfficiencyGain;
-  const total = completionValue + ldEfficiency;
+  const rawTotal = completionValue + ldEfficiency;
+  const total = Math.min(rawTotal, 1_250_000); // Enterprise cap: frontline learning value bounded at £1.25M
 
   return {
     low: Math.round(total * 0.5),
@@ -1115,7 +1143,8 @@ export function fw_frontline_communication(inputs: ValueFormulaInputs): ValueRan
 
   const attritionValue = flHeadcount * (d.attritionRate ?? 25) / 100 * cfg.attritionReductionRate * (salary * 0.5);
   const productivityValue = flHeadcount * salary * cfg.productivityUpliftRate;
-  const total = attritionValue + productivityValue;
+  const rawTotal = attritionValue + productivityValue;
+  const total = Math.min(rawTotal, 750_000); // Enterprise cap: frontline communication value bounded at £750k
 
   return {
     low: Math.round(total * 0.4),
@@ -1136,7 +1165,8 @@ export function fw_store_manager_assistant(inputs: ValueFormulaInputs): ValueRan
   const managerTimeValue = sites * cfg.hoursRecoveredPerManagerPerWeek * 52 * (managerCost / 1800);
   const managerRetentionValue = sites * cfg.managerTurnoverRate * cfg.managerRetentionReduction * costPerLeaver(inputs);
   const teamOutcomeValue = flHeadcount * avgSalary(inputs) * 0.6 * cfg.teamEngagementUpliftRate;
-  const total = managerTimeValue + managerRetentionValue + teamOutcomeValue;
+  const rawTotal = managerTimeValue + managerRetentionValue + teamOutcomeValue;
+  const total = Math.min(rawTotal, 1_000_000); // Enterprise cap: store manager assistant value bounded at £1M
 
   return {
     low: Math.round(total * 0.5),
@@ -1153,7 +1183,8 @@ export function wp_ai_capability_building(inputs: ValueFormulaInputs): ValueRang
   const cfg = (INITIATIVE_CONFIG as any).wp_ai_capability_building;
   // Value = adoption acceleration on downstream initiatives (proxy: 40% of avg salary × coverage)
   const adoptionValue = hc * (avgSalary(inputs) * 0.01) * cfg.adoptionAccelerationMultiplier;
-  const total = adoptionValue;
+  const rawTotal = adoptionValue;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: AI capability building value bounded at £1.5M
   return {
     low: Math.round(total * 0.5),
     high: Math.round(total * 1.2),
@@ -1166,7 +1197,8 @@ export function wp_ai_capability_building(inputs: ValueFormulaInputs): ValueRang
 export function wp_ai_capability_advanced(inputs: ValueFormulaInputs): ValueRange {
   const hc = inputs.sectionA.totalHeadcount ?? 1000;
   // Advanced capability building: higher value multiplier than foundation programme
-  const adoptionValue = hc * (avgSalary(inputs) * 0.015) * 1.3;
+  const rawAdoptionValue = hc * (avgSalary(inputs) * 0.015) * 1.3;
+  const adoptionValue = Math.min(rawAdoptionValue, 2_500_000); // Enterprise cap: advanced AI capability value bounded at £2.5M
   return {
     low: Math.round(adoptionValue * 0.5),
     high: Math.round(adoptionValue * 1.3),
@@ -1182,7 +1214,8 @@ export function ee_workforce_ai_comms(inputs: ValueFormulaInputs): ValueRange {
   const cfg = (INITIATIVE_CONFIG as any).ee_workforce_ai_comms;
   // Value = adoption rate uplift on downstream initiatives (proxy: 30% uplift × avg salary × small fraction)
   const adoptionValue = hc * (avgSalary(inputs) * 0.005) * cfg.adoptionRateUplift;
-  const total = adoptionValue;
+  const rawTotal = adoptionValue;
+  const total = Math.min(rawTotal, 500_000); // Enterprise cap: workforce AI comms value bounded at £500k
   return {
     low: Math.round(total * 0.5),
     high: Math.round(total * 1.2),

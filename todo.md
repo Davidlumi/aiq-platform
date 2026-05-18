@@ -4093,3 +4093,10 @@ test
 - [x] Fix #2: tighten sanity check threshold — flag "Value data unavailable" when value_high < cost_mid (not just cost_low); catches AI Compliance Training (£42k value vs £75k cost mid)
 - [x] Fix #3: Scale/Optimise phases empty — investigate library coverage and auto-selection logic; ensure initiatives with phaseV3=scale/optimise are included in auto-selection pool
 - [x] TypeScript: 0 errors; tests: all passing; checkpoint
+## Enterprise-Scale Value Formula Caps — Full Batch (May 2026)
+- [x] Simulation audit: identify all 32 formulas producing >10× ROI for Acme (20K headcount, 9K hires, £45K avg salary)
+- [x] Apply Math.min caps to all 32 formulas: ld_workforce_reskilling, rt_flight_risk_prediction, im_skills_inference, im_mentor_matching, pm_continuous_performance, pm_okr_goal_alignment, ee_recognition_rewards, ee_wellbeing_burnout, ee_sentiment_listening, ee_internal_comms_ai, rt_stay_interview_ai, rt_exit_intelligence, im_talent_marketplace, mg_manager_copilot, mg_difficult_conversations, gv_ai_governance, gv_cross_cutting_bias_audit, cr_pay_equity, cr_compensation_recommendations, wp_workforce_planning, wp_succession_planning, wp_org_design, fw_shift_scheduling_ai, fw_frontline_learning, fw_frontline_communication, fw_store_manager_assistant, ld_ai_coaching, ld_compliance_training, ld_knowledge_management, ld_personalised_learning, ta_candidate_chatbot, ta_bias_monitoring, hr_benefits_decision_support, wp_ai_capability_building, wp_ai_capability_advanced, ee_workforce_ai_comms
+- [x] Re-run simulation: 0 formulas now exceed 10× ROI (all in 2–9× range)
+- [x] TypeScript: 0 errors
+- [x] Tests: 1313/1313 passing
+- [x] Checkpoint
