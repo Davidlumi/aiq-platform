@@ -805,6 +805,7 @@ export const backgroundInputsRouter = router({
 
         // ── Fit+Impact engine evaluation ─────────────────────────────────────
         let fitImpactResultsJson: string | null = null;
+        let autoSelectedInitiativesJson: string | null = null;
         try {
           const engineInputs: FitImpactEngineInputs = {
             sectionA: {
@@ -893,6 +894,15 @@ export const backgroundInputsRouter = router({
           };
           const fitResults = evaluateAllInitiatives(engineInputs);
           fitImpactResultsJson = JSON.stringify(fitResults);
+          // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives (up to 12) so the Plan page is pre-populated
+          const autoSelected = fitResults
+            .filter((r: { fitStatus: string; fitScore: number }) =>
+              r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT"
+            )
+            .sort((a: { fitScore: number }, b: { fitScore: number }) => b.fitScore - a.fitScore)
+            .slice(0, 12)
+            .map((r: { id: string }) => r.id);
+          autoSelectedInitiativesJson = autoSelected.length > 0 ? JSON.stringify(autoSelected) : null;
         } catch (fitErr) {
           console.error("[backgroundInputs] Fit+Impact engine failed:", fitErr);
         }
@@ -917,6 +927,7 @@ export const backgroundInputsRouter = router({
           draftGenerationState: "initial_draft",
           builderSectionStatesJson: JSON.stringify(builderSectionStates),
           ...(fitImpactResultsJson ? { fitImpactResultsJson } : {}),
+          ...(autoSelectedInitiativesJson ? { selectedInitiativesJson: autoSelectedInitiativesJson } : {}),
         };
 
         // Map builder keys to ailOrgContext columns

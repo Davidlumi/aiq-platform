@@ -505,6 +505,21 @@ export const gateRouter = router({
       gateState.stage4.completedAt = now;
       gateState.stage4.lastEditedAt = null;
 
+      // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives from the re-fired engine results
+      let updatedSelectedInitiativesJson: string | null = null;
+      if (updatedFitResultsJson) {
+        try {
+          type FitResult = { id: string; fitStatus: string; fitScore: number };
+          const fitResults: FitResult[] = JSON.parse(updatedFitResultsJson);
+          const autoSelected = fitResults
+            .filter(r => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT")
+            .sort((a, b) => b.fitScore - a.fitScore)
+            .slice(0, 12)
+            .map(r => r.id);
+          if (autoSelected.length > 0) updatedSelectedInitiativesJson = JSON.stringify(autoSelected);
+        } catch { /* non-fatal */ }
+      }
+
       const patch: Record<string, unknown> = {
         stage4ConfirmedAt: new Date(),
         stageGateStateJson: JSON.stringify(gateState),
@@ -513,6 +528,7 @@ export const gateRouter = router({
       if (updatedFitResultsJson) patch.fitImpactResultsJson = updatedFitResultsJson;
       if (updatedAlignmentCacheKey) patch.semanticAlignmentCacheKey = updatedAlignmentCacheKey;
       if (updatedAlignmentJson) patch.semanticAlignmentCacheJson = updatedAlignmentJson;
+      if (updatedSelectedInitiativesJson) patch.selectedInitiativesJson = updatedSelectedInitiativesJson;
 
       await db.update(ailOrgContext)
         .set(patch as any)
