@@ -110,6 +110,7 @@ function countWords(text: string): number {
 // ─── Peer Vision Library ──────────────────────────────────────────────────────
 // Imported from shared library (seeded content)
 import { PEER_VISION_LIBRARY } from "../../shared/peerVisionLibrary";
+import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -505,17 +506,31 @@ export const gateRouter = router({
       gateState.stage4.completedAt = now;
       gateState.stage4.lastEditedAt = null;
 
-      // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives from the re-fired engine results
+      // Phase-balanced auto-selection: ensure at least 2 Scale + 1 Optimise initiatives are included
       let updatedSelectedInitiativesJson: string | null = null;
       if (updatedFitResultsJson) {
         try {
           type FitResult = { id: string; fitStatus: string; fitScore: number };
           const fitResults: FitResult[] = JSON.parse(updatedFitResultsJson);
-          const autoSelected = fitResults
+          const phaseMap = new Map(INITIATIVE_LIBRARY.map(i => [i.id, i.phaseV3]));
+          const eligible = fitResults
             .filter(r => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT")
-            .sort((a, b) => b.fitScore - a.fitScore)
-            .slice(0, 12)
+            .sort((a, b) => b.fitScore - a.fitScore);
+          const byPhase: Record<string, FitResult[]> = { foundation: [], build: [], scale: [], optimise: [] };
+          for (const r of eligible) {
+            const ph = phaseMap.get(r.id) ?? "build";
+            if (byPhase[ph]) byPhase[ph].push(r);
+          }
+          const guaranteed: string[] = [
+            ...byPhase.scale.slice(0, 2).map(r => r.id),
+            ...byPhase.optimise.slice(0, 1).map(r => r.id),
+          ];
+          const guaranteedSet = new Set(guaranteed);
+          const remaining = eligible
+            .filter(r => !guaranteedSet.has(r.id))
+            .slice(0, 12 - guaranteed.length)
             .map(r => r.id);
+          const autoSelected = [...guaranteed, ...remaining];
           if (autoSelected.length > 0) updatedSelectedInitiativesJson = JSON.stringify(autoSelected);
         } catch { /* non-fatal */ }
       }

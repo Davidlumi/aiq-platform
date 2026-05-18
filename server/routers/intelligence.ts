@@ -1601,14 +1601,27 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       const fitResults = evaluateAllInitiatives(engineInputs);
       const fitImpactResultsJson = JSON.stringify(fitResults);
 
-      // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives (up to 12)
-      const autoSelected = fitResults
-        .filter((r: { fitStatus: string; fitScore: number }) =>
-          r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT"
-        )
-        .sort((a: { fitScore: number }, b: { fitScore: number }) => b.fitScore - a.fitScore)
-        .slice(0, 12)
-        .map((r: { id: string }) => r.id);
+      // Phase-balanced auto-selection: ensure at least 2 Scale + 1 Optimise initiatives are included
+      type FitResult2 = { id: string; fitStatus: string; fitScore: number };
+      const phaseMap2 = new Map(INITIATIVE_LIBRARY.map(i => [i.id, i.phaseV3]));
+      const eligible2 = (fitResults as FitResult2[])
+        .filter(r => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT")
+        .sort((a, b) => b.fitScore - a.fitScore);
+      const byPhase2: Record<string, FitResult2[]> = { foundation: [], build: [], scale: [], optimise: [] };
+      for (const r of eligible2) {
+        const ph = phaseMap2.get(r.id) ?? "build";
+        if (byPhase2[ph]) byPhase2[ph].push(r);
+      }
+      const guaranteed2: string[] = [
+        ...byPhase2.scale.slice(0, 2).map(r => r.id),
+        ...byPhase2.optimise.slice(0, 1).map(r => r.id),
+      ];
+      const guaranteedSet2 = new Set(guaranteed2);
+      const remaining2 = eligible2
+        .filter(r => !guaranteedSet2.has(r.id))
+        .slice(0, 12 - guaranteed2.length)
+        .map(r => r.id);
+      const autoSelected = [...guaranteed2, ...remaining2];
 
       const selectedInitiativesJson = autoSelected.length > 0 ? JSON.stringify(autoSelected) : null;
 

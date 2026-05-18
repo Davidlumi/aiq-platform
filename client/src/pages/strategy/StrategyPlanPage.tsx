@@ -1208,10 +1208,11 @@ export default function StrategyPlanPage() {
                         {(init as any).valueRange && (init as any).fitStatus !== "HARD_GATE_FAIL" && (init as any).fitStatus !== "NOT_APPLICABLE" && (() => {
                           const vr = (init as any).valueRange as { low: number; high: number };
                           const cr = (init as any).y1CostRange as { low: number; high: number } | null;
-                          // Sanity check: value high (raw GBP) must exceed cost low (£k × 1000)
+                          // Sanity check: value high (raw GBP) must exceed cost mid (£k × 1000)
+                          // Using cost_mid catches cases like AI Compliance Training where value < cost_mid but value > cost_low
                           const valueHighGbp = vr.high ?? 0;
-                          const costLowGbp   = cr ? (cr.low * 1000) : 0;
-                          if (valueHighGbp < costLowGbp) {
+                          const costMidGbp   = cr ? (((cr.low + cr.high) / 2) * 1000) : 0;
+                          if (valueHighGbp < costMidGbp) {
                             // Value is implausibly lower than cost — flag rather than mislead
                             return (
                               <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-0.5">

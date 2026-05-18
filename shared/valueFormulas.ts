@@ -351,7 +351,9 @@ export function on_personalised_journeys(inputs: ValueFormulaInputs): ValueRange
 
   const rampValue = hires * cfg.timeToProductivityReductionDays * dailySalaryValue * cfg.productivityValueFraction;
   const retentionValue = hires * cfg.firstYearAttritionReduction * costPerLeaver(inputs);
-  const total = rampValue + retentionValue;
+  const rawTotal = rampValue + retentionValue;
+  // Cap at £2M: prevents inflated figures for large enterprises (20K+ headcount)
+  const total = Math.min(rawTotal, 2_000_000);
 
   return {
     low: Math.round(total * 0.6),
@@ -430,7 +432,9 @@ export function ld_personalised_learning(inputs: ValueFormulaInputs): ValueRange
 
   const efficiencyGain = ldSpend * cfg.ldEfficiencyGain;
   const productivityValue = headcount * salary * cfg.skillsUpliftProductivityValue;
-  const total = efficiencyGain + productivityValue;
+  const rawTotal = efficiencyGain + productivityValue;
+  // Cap at £2.5M: prevents inflated figures for large enterprises (20K+ headcount)
+  const total = Math.min(rawTotal, 2_500_000);
 
   return {
     low: Math.round(total * 0.6),

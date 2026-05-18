@@ -4087,3 +4087,9 @@ test
 - [x] Fix #2: all 12 initiatives default to Build — assign targetQuarter from typical_phase in shared library (foundation→Q1, build→Q2, scale→Q3, optimise→Q4)
 - [x] Fix #3: HR Virtual Assistant value £1.1k vs cost £150k–£500k — trace value formula bug and add sanity check (flag/suppress if value < cost_low)
 - [x] TypeScript: 0 errors; tests: all passing; checkpoint
+
+## Stage 5 Plan Page — Round 3 Bug Fixes
+- [x] Fix #1: value figure variance — personalised_onboarding_journeys (45×) and personalised_learning_paths (60×) ROI unrealistic; cap/correct formulas to 1.5–5× realistic range for Acme (20K employees, 9K annual hires)
+- [x] Fix #2: tighten sanity check threshold — flag "Value data unavailable" when value_high < cost_mid (not just cost_low); catches AI Compliance Training (£42k value vs £75k cost mid)
+- [x] Fix #3: Scale/Optimise phases empty — investigate library coverage and auto-selection logic; ensure initiatives with phaseV3=scale/optimise are included in auto-selection pool
+- [x] TypeScript: 0 errors; tests: all passing; checkpoint

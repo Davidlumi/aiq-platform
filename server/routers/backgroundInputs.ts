@@ -22,6 +22,7 @@ import { ailOrgContext } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../\_core/llm";
 import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
+import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
 
 // ── Zod schemas for each section ─────────────────────────────────────────────
 
@@ -894,14 +895,30 @@ export const backgroundInputsRouter = router({
           };
           const fitResults = evaluateAllInitiatives(engineInputs);
           fitImpactResultsJson = JSON.stringify(fitResults);
-          // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives (up to 12) so the Plan page is pre-populated
-          const autoSelected = fitResults
-            .filter((r: { fitStatus: string; fitScore: number }) =>
-              r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT"
-            )
-            .sort((a: { fitScore: number }, b: { fitScore: number }) => b.fitScore - a.fitScore)
-            .slice(0, 12)
-            .map((r: { id: string }) => r.id);
+          // Phase-balanced auto-selection: ensure at least 2 Scale + 1 Optimise initiatives are included
+          // so the 18-month plan always has second-year work, not just Foundation/Build.
+          type FitResult = { id: string; fitStatus: string; fitScore: number };
+          const phaseMap = new Map(INITIATIVE_LIBRARY.map(i => [i.id, i.phaseV3]));
+          const eligible = (fitResults as FitResult[])
+            .filter(r => r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT")
+            .sort((a, b) => b.fitScore - a.fitScore);
+          // Bucket by phase
+          const byPhase: Record<string, FitResult[]> = { foundation: [], build: [], scale: [], optimise: [] };
+          for (const r of eligible) {
+            const ph = phaseMap.get(r.id) ?? "build";
+            if (byPhase[ph]) byPhase[ph].push(r);
+          }
+          // Guaranteed minimums: 2 scale, 1 optimise; fill rest from top-scored across all phases
+          const guaranteed: string[] = [
+            ...byPhase.scale.slice(0, 2).map(r => r.id),
+            ...byPhase.optimise.slice(0, 1).map(r => r.id),
+          ];
+          const guaranteedSet = new Set(guaranteed);
+          const remaining = eligible
+            .filter(r => !guaranteedSet.has(r.id))
+            .slice(0, 12 - guaranteed.length)
+            .map(r => r.id);
+          const autoSelected = [...guaranteed, ...remaining];
           autoSelectedInitiativesJson = autoSelected.length > 0 ? JSON.stringify(autoSelected) : null;
         } catch (fitErr) {
           console.error("[backgroundInputs] Fit+Impact engine failed:", fitErr);
