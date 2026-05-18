@@ -13,6 +13,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -909,6 +910,7 @@ function MethodologyBlock() {
 
 export default function StrategyMeasurementPage() {
   const gate = useGate();
+  const { isDeepDive } = useDeepDive();
   const [, navigate] = useLocation();
   // Gate redirect: Stage 6 (Measurement) requires Stage 5 to be cleared
   useEffect(() => {
@@ -1104,6 +1106,8 @@ export default function StrategyMeasurementPage() {
       isLocked={!gate.isStage6Accessible}
       editedAfterClearing={gate.stage5EditedAfterClearing}
       upstreamStageLabel="Initiatives"
+      isDeepDive={isDeepDive}
+      confirmedAt={gate.gateState?.stage6.completedAt}
       actions={
         <Button
           variant="outline"

@@ -951,6 +951,14 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   stage8ConfirmedAt: timestamp("stage8_confirmed_at"),                             // When CPO confirmed Stage 8 capability
   businessCaseNarrative: text("business_case_narrative"),                          // AI-generated + CPO-edited business case narrative (400-600 words)
   stage8CapabilityJson: text("stage8_capability_json"),                            // JSON: { skills, capacity, changeReadiness, vendorEcosystem } each { current, needed, tactics[] }, deliveryNarrative
+  // v3 Strategy Flow — Increment 3 (Stages 9-10)
+  reviewHeldAt: timestamp("review_held_at"),                                         // When CPO marked review as held (Stage 9 gate)
+  reviewSessionNotes: text("review_session_notes"),                                  // Free-text session notes (optional, single-user visibility)
+  reviewTensionsJson: text("review_tensions_json"),                                  // JSON: most recent generated tensions list [{title, description, question}]
+  stage9ConfirmedAt: timestamp("stage9_confirmed_at"),                               // When CPO confirmed Stage 9 (= reviewHeldAt)
+  stage10ConfirmedAt: timestamp("stage10_confirmed_at"),                             // When CPO confirmed Stage 10 board report
+  boardReportSectionsJson: text("board_report_sections_json"),                       // JSON: { [sectionId]: { content, lockedAt, generatedAt, editedAt, isAiGenerated, wordCount } }
+  boardReportIncludeNotes: boolean("board_report_include_notes").default(false),     // Whether to include review session notes in appendix
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

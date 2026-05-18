@@ -9,6 +9,8 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerPdfRoutes } from "../pdf";
 import { registerSseRoutes } from "../sse";
 import { registerFeedbackStreamRoute } from "../feedbackStream";
+import { registerBoardReportStreamRoute } from "../boardReportStream";
+import { registerBoardReportDocxRoute } from "../boardReportDocx";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -82,6 +84,8 @@ async function startServer() {
   registerPdfRoutes(app);
   registerSseRoutes(app);
   registerFeedbackStreamRoute(app);
+  registerBoardReportStreamRoute(app);
+  registerBoardReportDocxRoute(app);
   // tRPC API
   app.use(
     "/api/trpc",

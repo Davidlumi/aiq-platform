@@ -877,6 +877,10 @@ function GateFlowStrip() {
     { num: 7, label: "Business case", href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
     { num: 8, label: "Capability",    href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
   ];
+  const row3: StageInfo[] = [
+    { num: 9,  label: "Review",        href: "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
+    { num: 10, label: "Board report",  href: "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+  ];
 
   function StageRow({ stages }: { stages: StageInfo[] }) {
     return (
@@ -892,7 +896,7 @@ function GateFlowStrip() {
                 )} />
               )}
               <button
-                onClick={() => !isLocked && navigate(s.href)}
+                onClick={() => !isLocked && navigate(gate.stage8Cleared ? s.href + "?from=dashboard" : s.href)}
                 disabled={isLocked}
                 className={cn(
                   "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap",
@@ -918,7 +922,8 @@ function GateFlowStrip() {
   }
 
   const totalCleared = [gate.stage1Cleared, gate.stage2Cleared, gate.stage3Cleared, gate.stage4Cleared,
-    gate.stage5Cleared, gate.stage6Cleared, gate.stage7Cleared, gate.stage8Cleared].filter(Boolean).length;
+    gate.stage5Cleared, gate.stage6Cleared, gate.stage7Cleared, gate.stage8Cleared,
+    gate.stage9Cleared, gate.stage10Cleared].filter(Boolean).length;
 
   return (
     <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-3">
@@ -926,7 +931,7 @@ function GateFlowStrip() {
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           STRATEGY BUILD PROGRESS
         </p>
-        <span className="text-[10px] text-muted-foreground">{totalCleared}/8 stages cleared</span>
+        <span className="text-[10px] text-muted-foreground">{totalCleared}/10 stages cleared</span>
       </div>
       <div className="space-y-2">
         <div>
@@ -936,6 +941,10 @@ function GateFlowStrip() {
         <div>
           <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Execution (Stages 5–8)</p>
           <StageRow stages={row2} />
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Delivery (Stages 9–10)</p>
+          <StageRow stages={row3} />
         </div>
       </div>
     </div>
@@ -1595,6 +1604,78 @@ export default function StrategyOverviewPage() {
           hasStrategy={hasStrategy}
           hasInitiatives={selectedInitiativeIds.size > 0}
         />
+
+        {/* ══ POST-FLOW EXPORTS (shown once Stage 8 is cleared) ═══════════════════════ */}
+        {gate.stage8Cleared && (
+          <div className="mt-8 rounded-xl border border-border/60 bg-card p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">Exports</span>
+            </div>
+
+            {/* Primary deliverable: Board Report */}
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-xs font-semibold tracking-widest uppercase text-emerald-500 mb-1">Primary deliverable</p>
+                  <p className="text-sm font-semibold text-foreground">Board Report</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {gate.stage10Cleared
+                      ? "Stage 10 confirmed — ready to share with your CEO."
+                      : "Complete Stage 10 to generate and confirm your board report."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {gate.stage10Cleared ? (
+                    <>
+                      <button
+                        onClick={() => window.open("/api/pdf/board_report", "_blank")}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download PDF
+                      </button>
+                      <button
+                        onClick={() => window.open("/api/export/board-report-docx", "_blank")}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-foreground hover:bg-foreground/5 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download Word
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => navigate("/strategy/board-report")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                    >
+                      Open Board Report →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Intermediate artefacts */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-3">Intermediate artefacts</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleExportStrategicFraming}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Strategic framing one-pager (PDF)
+                </button>
+                <button
+                  onClick={() => window.open("/api/pdf/business_case", "_blank")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-foreground hover:bg-foreground/5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Business case intermediate (PDF)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 

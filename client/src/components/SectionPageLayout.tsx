@@ -2,17 +2,18 @@
  * SectionPageLayout — reusable wrapper for all strategy section pages.
  *
  * Provides:
- *  - Breadcrumb: "HR AI Strategy / [section title]"
+ *  - Breadcrumb: "HR AI Strategy / [section title]"  (or "Back to summary / Deep dive — [label]")
  *  - Section badge: "Section N · [label]"
  *  - Page title (h1)
  *  - Optional right-aligned actions slot
  *  - Optional gate banner (locked / edited-after-clearing)
+ *  - Deep-dive mode banner + "Back to summary" breadcrumb
  *  - Consistent max-width, padding, and block spacing
  */
 import React from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Lock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Lock, AlertTriangle, BookOpen } from "lucide-react";
 
 interface SectionPageLayoutProps {
   /** Section number, e.g. "06" */
@@ -39,6 +40,14 @@ interface SectionPageLayoutProps {
   editedAfterClearing?: boolean;
   /** Label for the upstream stage that was edited, used in the cascade banner */
   upstreamStageLabel?: string;
+  /**
+   * When true the page renders in "deep dive" mode:
+   * - Header shows "Deep dive — [sectionLabel]" with a "Back to summary" link
+   * - A subtle info banner explains the mode
+   */
+  isDeepDive?: boolean;
+  /** Timestamp (ms) when this stage was confirmed — shown in deep-dive header */
+  confirmedAt?: number | null;
   children: React.ReactNode;
 }
 
@@ -52,26 +61,67 @@ export default function SectionPageLayout({
   isLocked = false,
   editedAfterClearing = false,
   upstreamStageLabel,
+  isDeepDive = false,
+  confirmedAt,
   children,
 }: SectionPageLayoutProps) {
   const [, navigate] = useLocation();
 
+  const confirmedLabel = confirmedAt
+    ? new Date(confirmedAt).toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <div className="max-w-5xl mx-auto pb-16 px-0">
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-6 pt-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate("/strategy")}
-        >
-          <ArrowLeft className="w-3 h-3 mr-1" aria-hidden="true" />
-          HR AI Strategy
-        </Button>
-        <span className="text-muted-foreground text-xs" aria-hidden="true">/</span>
-        <span className="text-xs font-medium text-foreground">{sectionLabel}</span>
-      </nav>
+      {isDeepDive ? (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-6 pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/strategy")}
+          >
+            <ArrowLeft className="w-3 h-3 mr-1" aria-hidden="true" />
+            Back to summary
+          </Button>
+          <span className="text-muted-foreground text-xs" aria-hidden="true">/</span>
+          <span className="text-xs font-medium text-foreground">Deep dive — {sectionLabel}</span>
+          {confirmedLabel && (
+            <span className="ml-auto text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Confirmed {confirmedLabel}
+            </span>
+          )}
+        </nav>
+      ) : (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-6 pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/strategy")}
+          >
+            <ArrowLeft className="w-3 h-3 mr-1" aria-hidden="true" />
+            HR AI Strategy
+          </Button>
+          <span className="text-muted-foreground text-xs" aria-hidden="true">/</span>
+          <span className="text-xs font-medium text-foreground">{sectionLabel}</span>
+        </nav>
+      )}
+
+      {/* Deep-dive mode banner */}
+      {isDeepDive && (
+        <div className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-2.5 mb-6">
+          <BookOpen className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" aria-hidden="true" />
+          <p className="text-xs text-violet-400">
+            <span className="font-semibold">Deep dive mode</span> — you can review and edit this section. Changes will trigger cascade banners on downstream stages.
+          </p>
+        </div>
+      )}
 
       {/* Locked gate banner */}
       {isLocked && (

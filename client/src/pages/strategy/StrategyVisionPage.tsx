@@ -16,6 +16,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import { AITextActions } from "@/components/AITextActions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -131,6 +132,7 @@ function GateBanner({ type }: { type: "locked" | "cleared" | "edited" }) {
 export default function StrategyVisionPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
+  const { isDeepDive } = useDeepDive();
 
   // Local editor state
   const [visionText, setVisionText] = useState("");
@@ -217,10 +219,12 @@ export default function StrategyVisionPage() {
             className="hover:text-foreground cursor-pointer"
             onClick={() => navigate("/strategy")}
           >
-            Strategy
+            {isDeepDive ? "← Back to summary" : "Strategy"}
           </span>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground font-medium">Stage 2 — Vision</span>
+          <span className="text-foreground font-medium">
+            {isDeepDive ? `Deep dive — Vision` : "Stage 2 — Vision"}
+          </span>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">Your HR AI Vision</h1>
         <p className="text-muted-foreground text-sm max-w-2xl">

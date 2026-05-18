@@ -3875,3 +3875,96 @@ test
 - [x] "Continue" button added to CapabilityPage gate footer, shown only after gate.stage8Cleared
 - [x] Navigates to /strategy/review (Stage 9 placeholder route)
 - [x] Confirm button label changes to "Re-confirm" after stage8 is cleared
+
+## Increment 3 — Stage 9, Stage 10, Board Report
+
+### Week 1: Schema + Streaming Infrastructure
+- [ ] Schema: add reviewHeldAt, reviewSessionNotes, reviewTensionsJson, stage9ConfirmedAt, stage10ConfirmedAt, boardReportSectionsJson columns to ailOrgContext
+- [ ] Schema: generate migration SQL and apply via webdev_execute_sql
+- [ ] Extend stageGateStateJson to include stages 9-10
+- [ ] Extend GateContext with isStage9Accessible, stage9Cleared, isStage10Accessible, stage10Cleared
+- [ ] Streaming infrastructure: tRPC v11 subscription procedure for SSE-based streaming
+- [ ] server/routers/streaming.ts: createStreamingRouter with generateBoardReportSection subscription
+- [ ] Client: useStreamingSubscription hook (appends chunks, handles completion, handles drop/retry)
+- [ ] Connection drop handling: 5-second silence detection, partial content preservation, retry button
+- [ ] intelligence.generateReviewTensions procedure (non-streaming, 0-5 tensions with zero-tensions state)
+
+### Week 1: Stage 9 — Review Session
+- [ ] New page StrategyReviewPage at route /strategy/review
+- [ ] Accessible only when Stage 8 cleared (gate redirect if not)
+- [ ] Pre-session prep view: "How to prepare" block with 4 steps + export links
+- [ ] AI-generated tensions list (0-5 tensions, specific to current strategy state)
+- [ ] Zero-tensions state: positive framing when no tensions surface
+- [ ] "Refresh tensions" button re-runs generateReviewTensions with latest data
+- [ ] Session notes: free-text multi-line, autosaved with 1.5s debounce, stored as reviewSessionNotes
+- [ ] Single-user visibility note on session notes
+- [ ] "Mark review held" button: sets reviewHeldAt + stage9ConfirmedAt, clears Stage 9 gate
+- [ ] gate.completeStage9 procedure (sets reviewHeldAt, stage9ConfirmedAt)
+- [ ] Register /strategy/review route in App.tsx
+
+### Week 2: Stage 10 — Summary Dashboard
+- [ ] StrategyOverviewPage reshape: state-aware (mid-flow vs post-flow) switched by stage8ConfirmedAt
+- [ ] Mid-flow state: stage badges view (existing GateFlowStrip) + populated card subset + "Continue strategy" CTA
+- [ ] Post-flow state: full 5-card summary layout + exports section
+- [ ] Card 1 — The Strategy: vision snippet, strategy archetype, principles count, won't-do count, deep dive link
+- [ ] Card 2 — The Plan: initiative count, phase count, violator count, top 3 by fit score, deep dive link
+- [ ] Card 3 — The Numbers: 3-year cost, 3-year value, cost waterfall mini-chart, value bar mini-chart, deep dive link
+- [ ] Card 4 — Risks & Capability: top 2 risks, capability gaps summary, deep dive link
+- [ ] Card 5 — Success Measures: outcomes list (3-5), primary measures, review cadence, deep dive link
+- [ ] Empty-state UX per card per Section 3.5 table
+- [ ] Custom initiative fallback for Numbers card (Section 3.5)
+- [ ] Top 3 initiatives by fit score in Plan card
+- [x] Exports section: board report primary, intermediate artifacts secondary (framing one-pager PDF, business case PDF)
+- [ ] Mobile responsive at 320px
+
+### Week 2: Deep-Dive Mode
+- [x] Deep-dive mode detection: stage8ConfirmedAt non-null + ?from=dashboard URL param (or client-side state)
+- [x] Each stage page: "Deep dive — [Stage name]" header + "Back to summary" link in deep-dive mode
+- [ ] Progress/gate-clearing indicators replaced with "Section status: confirmed [date]" in deep-dive mode
+- [ ] Edit affordances remain available in deep-dive mode
+- [ ] Cascade banners still apply if Sarah edits in deep-dive mode
+- [x] Wire deep-dive mode to: StrategyVisionPage, StrategyMeasurementPage, BusinessCasePage, CapabilityPage, ReviewSessionPage, BoardReportPage, StrategyInvestmentRiskPage, StrategyValuePage (via SectionPageLayout); StrategyStrategyPage, StrategyPlanPage use custom breadcrumbs with conditional deep-dive text
+
+### Week 3: Board Report Editor
+- [ ] StrategyDraftPage reshaped into BoardReportPage at /strategy/draft
+- [ ] 6 section editors: Executive Summary, Strategic Case, Initiatives, Won't Do, Investment/Value/Risks, Delivery/Accountability
+- [ ] Per-section: editable rich text, Regenerate / Refine / Challenge buttons, Lock toggle
+- [ ] AI-generated indicator: amber badge on sections not yet manually edited by Sarah (Q7 decision)
+- [ ] Section 1 (Executive Summary) cascade rule: editing/regenerating sections 2-6 marks Section 1 as stale with banner
+- [ ] Streaming integration: section editor disabled while streaming, "Generating..." indicator
+- [ ] Only one section streams at a time; Regenerate buttons on other sections disabled during stream
+- [ ] "Generate full report" button disabled while any section is streaming
+- [ ] Connection drop: "Generation interrupted — partial content preserved. Retry?" with retry button
+- [ ] Cache invalidation per Section 5.4 rules
+- [ ] "Generate full report" button: orchestrates all unlocked sections in sequence, then polish pass
+- [ ] Appendix toggle: optional review session notes inclusion
+- [ ] Mobile banner: "This editor works best on desktop. View only on mobile." + read-only on < 768px
+- [ ] Gate footer: "Mark board report ready" button (all 6 sections present + non-empty)
+- [ ] gate.completeStage10 procedure (all 6 sections present, word count 1200-4000, sets stage10ConfirmedAt)
+
+### Week 3: Board Report Generation Procedures
+- [ ] intelligence.generateBoardReportSection subscription (streaming, per-section, vocabulary blacklist enforced)
+- [ ] intelligence.generateFullBoardReport procedure (orchestrates sections in sequence, then polish)
+- [ ] intelligence.polishBoardReport procedure (consistency check, vocabulary filter, returns finalised sections)
+- [ ] transformText extended with board report section fieldTypes (refine, challenge per section)
+- [ ] boardReportSectionsJson schema: per-section { content, lockedAt, generatedAt, editedAt, isAiGenerated }
+- [ ] Cache invalidation: upstream stage data changes invalidate relevant sections
+
+### Week 3.5: PDF + Word Export
+- [ ] PDF export for board report: style spec (A4, Georgia body, AiQ sans headings, 1in margins, page numbers, cover page)
+- [ ] PDF includes optional appendix if Sarah opted in
+- [ ] Word export: docx npm package, heading levels, paragraph spacing, bullet lists, tables for initiatives section
+- [ ] Download PDF button on BoardReportPage
+- [ ] Download Word button on BoardReportPage
+- [ ] Preview as PDF (inline preview or new tab)
+
+### Week 3.5: Tests + Polish
+- [ ] Vitest: gate.completeStage9 and gate.completeStage10 procedures
+- [ ] Vitest: generateReviewTensions (tensions thresholds, zero-tensions state)
+- [ ] Vitest: generateBoardReportSection (vocabulary blacklist in prompt, streaming mock)
+- [ ] Vitest: polishBoardReport (consistency check, blacklist filter)
+- [ ] Vitest: PDF/Word export (buffer non-empty, headers correct)
+- [ ] Acme E2E Stage 9: 4 tensions generated, session notes saved, gate clears
+- [ ] Acme E2E Stage 10: full board report generated, 6 sections, word count 2400, Section 1 staleness banner, PDF export 5 pages
+- [ ] TypeScript: 0 errors
+- [ ] Final checkpoint

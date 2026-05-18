@@ -2273,4 +2273,197 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       const text = (response as any)?.choices?.[0]?.message?.content ?? "";
       return { text: typeof text === "string" ? text.trim() : "" };
     }),
+
+  // ─── Stage 9: Review session ──────────────────────────────────────────────────
+
+  /** Generate tensions/hard questions for the review session */
+  generateReviewTensions: protectedProcedure
+    .input(z.object({
+      strategyStatement: z.string().optional(),
+      strategyArchetype: z.string().optional(),
+      selectedInitiatives: z.array(z.string()).optional(),
+      outcomesJson: z.string().optional(),
+      businessCaseNarrative: z.string().optional(),
+      capabilityJson: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const VOCAB_BLACKLIST = [
+        "leverage", "synergy", "paradigm shift", "best-in-class", "world-class",
+        "cutting-edge", "state-of-the-art", "game-changing", "revolutionary",
+        "disruptive", "holistic", "robust", "scalable", "agile", "innovative",
+        "transformative", "seamless", "ecosystem", "stakeholder alignment",
+        "value-add", "low-hanging fruit", "move the needle", "boil the ocean",
+        "circle back", "deep dive", "bandwidth", "ideate", "learnings",
+      ];
+      const ctxParts = [
+        input.strategyStatement ? `Strategy statement: ${input.strategyStatement}` : "",
+        input.strategyArchetype ? `Archetype: ${input.strategyArchetype}` : "",
+        input.selectedInitiatives?.length ? `Initiatives: ${input.selectedInitiatives.slice(0, 8).join(", ")}` : "",
+        input.businessCaseNarrative ? `Business case: ${input.businessCaseNarrative.slice(0, 500)}` : "",
+      ].filter(Boolean).join(". ");
+      const systemPrompt = [
+        `You are a senior board advisor preparing a CPO for a strategy review session.`,
+        `Context: ${ctxParts}`,
+        `Generate exactly 5 tensions or hard questions that a board member or CEO might raise about this AI HR strategy.`,
+        `Each tension should: (1) be grounded in the specific strategy content, (2) be genuinely challenging — not softballs, (3) include a suggested talking point the CPO could use to address it.`,
+        `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
+        `Return JSON object with key "tensions" containing array of exactly 5 items: [{"title":"...","description":"...","talkingPoint":"..."}].`,
+      ].filter(Boolean).join(" ");
+      const response = await invokeLLM({
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "Generate the 5 tensions." }],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "review_tensions",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                tensions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      description: { type: "string" },
+                      talkingPoint: { type: "string" },
+                    },
+                    required: ["title", "description", "talkingPoint"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["tensions"],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+      const raw = (response as any)?.choices?.[0]?.message?.content ?? "{}";
+      try {
+        const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
+        return { tensions: (parsed.tensions ?? []) as Array<{ title: string; description: string; talkingPoint: string }> };
+      } catch {
+        return { tensions: [] as Array<{ title: string; description: string; talkingPoint: string }> };
+      }
+    }),
+
+  /** Get review session state */
+  getReviewSession: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [row] = await db.select({
+        reviewHeldAt: ailOrgContext.reviewHeldAt,
+        reviewSessionNotes: ailOrgContext.reviewSessionNotes,
+        reviewTensionsJson: ailOrgContext.reviewTensionsJson,
+        stage9ConfirmedAt: ailOrgContext.stage9ConfirmedAt,
+        strategyStatement: ailOrgContext.strategyStatement,
+        strategyArchetype: ailOrgContext.strategyArchetype,
+        selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+        outcomesJson: ailOrgContext.outcomesJson,
+        businessCaseNarrative: ailOrgContext.businessCaseNarrative,
+        stage8CapabilityJson: ailOrgContext.stage8CapabilityJson,
+      }).from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+      return row ?? null;
+    }),
+
+  /** Save review session notes and tensions */
+  saveReviewSession: protectedProcedure
+    .input(z.object({
+      reviewSessionNotes: z.string().optional(),
+      reviewTensionsJson: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      const updates: Record<string, unknown> = {};
+      if (input.reviewSessionNotes !== undefined) updates.reviewSessionNotes = input.reviewSessionNotes;
+      if (input.reviewTensionsJson !== undefined) updates.reviewTensionsJson = input.reviewTensionsJson;
+      if (Object.keys(updates).length === 0) return { success: true };
+      await db.update(ailOrgContext).set(updates).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  // ─── Stage 10: Board report ───────────────────────────────────────────────────
+
+  /** Get board report state */
+  getBoardReport: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [row] = await db.select({
+        boardReportSectionsJson: ailOrgContext.boardReportSectionsJson,
+        boardReportIncludeNotes: ailOrgContext.boardReportIncludeNotes,
+        stage10ConfirmedAt: ailOrgContext.stage10ConfirmedAt,
+        reviewSessionNotes: ailOrgContext.reviewSessionNotes,
+      }).from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+      return row ?? null;
+    }),
+
+  /** Update a single board report section (manual edit) */
+  saveBoardReportSection: protectedProcedure
+    .input(z.object({
+      sectionId: z.enum(["context", "strategic_direction", "initiative_portfolio", "investment_case", "capability_readiness", "governance"]),
+      content: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      const [row] = await db.select({ boardReportSectionsJson: ailOrgContext.boardReportSectionsJson })
+        .from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+      let sectionsMap: Record<string, unknown> = {};
+      try { sectionsMap = row?.boardReportSectionsJson ? JSON.parse(row.boardReportSectionsJson) : {}; } catch { sectionsMap = {}; }
+      const existing = (sectionsMap[input.sectionId] as Record<string, unknown>) ?? {};
+      const wordCount = input.content.split(/\s+/).filter(Boolean).length;
+      sectionsMap[input.sectionId] = {
+        ...existing,
+        content: input.content,
+        editedAt: Date.now(),
+        isAiGenerated: false,
+        wordCount,
+      };
+      await db.update(ailOrgContext)
+        .set({ boardReportSectionsJson: JSON.stringify(sectionsMap) })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  /** Toggle lock on a board report section */
+  toggleBoardReportSectionLock: protectedProcedure
+    .input(z.object({
+      sectionId: z.enum(["context", "strategic_direction", "initiative_portfolio", "investment_case", "capability_readiness", "governance"]),
+      locked: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      const [row] = await db.select({ boardReportSectionsJson: ailOrgContext.boardReportSectionsJson })
+        .from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+      let sectionsMap: Record<string, unknown> = {};
+      try { sectionsMap = row?.boardReportSectionsJson ? JSON.parse(row.boardReportSectionsJson) : {}; } catch { sectionsMap = {}; }
+      const existing = (sectionsMap[input.sectionId] as Record<string, unknown>) ?? {};
+      sectionsMap[input.sectionId] = {
+        ...existing,
+        lockedAt: input.locked ? Date.now() : null,
+      };
+      await db.update(ailOrgContext)
+        .set({ boardReportSectionsJson: JSON.stringify(sectionsMap) })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  /** Update board report include-notes preference */
+  saveBoardReportPreferences: protectedProcedure
+    .input(z.object({
+      includeNotes: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      await db.update(ailOrgContext)
+        .set({ boardReportIncludeNotes: input.includeNotes })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
 });

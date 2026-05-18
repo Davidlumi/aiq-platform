@@ -13,6 +13,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -203,6 +204,7 @@ function ConfirmBusinessCaseDialog({ open, wordCount, onConfirm, onClose, isLoad
 export default function BusinessCasePage() {
   const [, navigate] = useLocation();
   const gate = useGate();
+  const { isDeepDive } = useDeepDive();
   const utils = trpc.useUtils();
   // Gate redirect: Stage 7 (Business Case) requires Stage 6 to be cleared
   useEffect(() => {
@@ -519,6 +521,8 @@ export default function BusinessCasePage() {
       isLocked={!gate.isStage7Accessible}
       editedAfterClearing={gate.stage7EditedAfterClearing}
       upstreamStageLabel="Success Measures"
+      isDeepDive={isDeepDive}
+      confirmedAt={gate.gateState?.stage7.completedAt}
       actions={
         <Button
           variant="outline" size="sm"

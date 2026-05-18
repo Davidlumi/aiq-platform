@@ -16,6 +16,7 @@ import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -181,6 +182,7 @@ function AcknowledgeModal({ open, displayName, existingNote, onConfirm, onClose,
 export default function StrategyInvestmentRiskPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
+  const { isDeepDive } = useDeepDive();
 
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
   const strategyQ    = trpc.intelligence.getStrategy.useQuery();
@@ -391,6 +393,8 @@ export default function StrategyInvestmentRiskPage() {
       isLocked={!gate.isStage7Accessible}
       editedAfterClearing={gate.stage5EditedAfterClearing || gate.stage6EditedAfterClearing}
       upstreamStageLabel={gate.stage6EditedAfterClearing ? "Success Measures" : "Initiatives"}
+      isDeepDive={isDeepDive}
+      confirmedAt={gate.gateState?.stage4.completedAt}
       actions={
         <Button
           variant="outline" size="sm"

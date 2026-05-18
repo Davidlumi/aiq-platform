@@ -13,6 +13,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import SectionPageLayout from "@/components/SectionPageLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -328,6 +329,7 @@ function DimensionCard({
 export default function CapabilityPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
+  const { isDeepDive } = useDeepDive();
   const utils = trpc.useUtils();
 
   // ── Data ──────────────────────────────────────────────────────────────────
@@ -503,6 +505,8 @@ export default function CapabilityPage() {
       isLocked={isLocked}
       editedAfterClearing={gate.stage8EditedAfterClearing}
       upstreamStageLabel="Business case"
+      isDeepDive={isDeepDive}
+      confirmedAt={gate.gateState?.stage8.completedAt}
     >
       {/* Intro */}
       <div className="space-y-2">
@@ -627,7 +631,6 @@ export default function CapabilityPage() {
                 size="sm"
                 className="gap-1.5 shrink-0"
                 onClick={() => navigate("/strategy/review")}
-                title="Stage 9: Review session — coming in Increment 3"
               >
                 Continue <ArrowRight className="w-3.5 h-3.5" />
               </Button>

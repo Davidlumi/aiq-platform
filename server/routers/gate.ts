@@ -46,6 +46,8 @@ export type StageGateState = {
   stage6: StageGateEntry;
   stage7: StageGateEntry;
   stage8: StageGateEntry;
+  stage9: StageGateEntry;
+  stage10: StageGateEntry;
 };
 
 const DEFAULT_GATE_STATE: StageGateState = {
@@ -57,6 +59,8 @@ const DEFAULT_GATE_STATE: StageGateState = {
   stage6: { completedAt: null, lastEditedAt: null },
   stage7: { completedAt: null, lastEditedAt: null },
   stage8: { completedAt: null, lastEditedAt: null },
+  stage9: { completedAt: null, lastEditedAt: null },
+  stage10: { completedAt: null, lastEditedAt: null },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,7 +69,7 @@ function freshEntry(): StageGateEntry {
   return { completedAt: null, lastEditedAt: null };
 }
 function parseGateState(json: string | null | undefined): StageGateState {
-  const empty = () => ({ stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry(), stage5: freshEntry(), stage6: freshEntry(), stage7: freshEntry(), stage8: freshEntry() });
+  const empty = () => ({ stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry(), stage5: freshEntry(), stage6: freshEntry(), stage7: freshEntry(), stage8: freshEntry(), stage9: freshEntry(), stage10: freshEntry() });
   if (!json) return empty();
   try {
     const parsed = JSON.parse(json) as Partial<StageGateState>;
@@ -78,6 +82,8 @@ function parseGateState(json: string | null | undefined): StageGateState {
       stage6: parsed.stage6 ? { ...parsed.stage6 } : freshEntry(),
       stage7: parsed.stage7 ? { ...parsed.stage7 } : freshEntry(),
       stage8: parsed.stage8 ? { ...parsed.stage8 } : freshEntry(),
+      stage9: parsed.stage9 ? { ...parsed.stage9 } : freshEntry(),
+      stage10: parsed.stage10 ? { ...parsed.stage10 } : freshEntry(),
     };
   } catch {
     return empty();
@@ -182,8 +188,12 @@ export const gateRouter = router({
         isStage6Accessible: stage5Cleared,
         isStage7Accessible: stage6Cleared,
         isStage8Accessible: stage7Cleared,
+        isStage9Accessible: isStageCleared(gateState.stage8),
+        isStage10Accessible: isStageCleared(gateState.stage9),
         stage1Cleared, stage2Cleared, stage3Cleared, stage4Cleared,
         stage5Cleared, stage6Cleared, stage7Cleared, stage8Cleared,
+        stage9Cleared: isStageCleared(gateState.stage9),
+        stage10Cleared: isStageCleared(gateState.stage10),
         stage1EditedAfterClearing: isStageEditedAfterClearing(gateState.stage1),
         stage2EditedAfterClearing: isStageEditedAfterClearing(gateState.stage2),
         stage3EditedAfterClearing: isStageEditedAfterClearing(gateState.stage3),
@@ -192,6 +202,8 @@ export const gateRouter = router({
         stage6EditedAfterClearing: isStageEditedAfterClearing(gateState.stage6),
         stage7EditedAfterClearing: isStageEditedAfterClearing(gateState.stage7),
         stage8EditedAfterClearing: isStageEditedAfterClearing(gateState.stage8),
+        stage9EditedAfterClearing: isStageEditedAfterClearing(gateState.stage9),
+        stage10EditedAfterClearing: isStageEditedAfterClearing(gateState.stage10),
         visionStatement: orgCtx.visionStatement ?? null,
         visionInspirationSource: orgCtx.visionInspirationSource ?? null,
         strategyArchetype: orgCtx.strategyArchetype ?? null,
@@ -205,7 +217,7 @@ export const gateRouter = router({
    */
   markEdited: protectedProcedure
     .input(z.object({
-      stage: z.enum(["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8"]),
+      stage: z.enum(["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -687,6 +699,90 @@ export const gateRouter = router({
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
 
       return { ok: true, gateState };
+    }),
+
+  /**
+   * Complete Stage 9 — mark review as held (soft gate: self-attestation).
+   * Sets reviewHeldAt, stage9ConfirmedAt, and stageGateState.stage9.completedAt.
+   */
+  completeStage9: protectedProcedure
+    .input(z.object({
+      reviewHeldAt: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const row = await db.select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage9 = { completedAt: Date.now(), lastEditedAt: null };
+      const heldAt = input.reviewHeldAt ? new Date(input.reviewHeldAt) : new Date();
+      await db.update(ailOrgContext)
+        .set({
+          reviewHeldAt: heldAt,
+          stage9ConfirmedAt: heldAt,
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true, gateState };
+    }),
+
+  /**
+   * Complete Stage 10 — confirm board report is ready.
+   * Validates: all 6 sections present, total word count 1200-4000.
+   * Sets stage10ConfirmedAt and stageGateState.stage10.completedAt.
+   */
+  completeStage10: protectedProcedure
+    .input(z.object({
+      boardReportSectionsJson: z.string(),
+      boardReportIncludeNotes: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      let sections: Record<string, { content: string; wordCount?: number }> = {};
+      try { sections = JSON.parse(input.boardReportSectionsJson); } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid boardReportSectionsJson" });
+      }
+      const REQUIRED_SECTIONS = ["context", "strategic_direction", "initiative_portfolio", "investment_case", "capability_readiness", "governance"];
+      const missingSections = REQUIRED_SECTIONS.filter(s => !sections[s]?.content?.trim());
+      if (missingSections.length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Missing sections: ${missingSections.join(", ")}` });
+      }
+      const totalWords = REQUIRED_SECTIONS.reduce((sum, s) => {
+        const wc = sections[s]?.wordCount ?? sections[s]?.content?.split(/\s+/).filter(Boolean).length ?? 0;
+        return sum + wc;
+      }, 0);
+      if (totalWords < 1200) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Report too short: ${totalWords} words (minimum 1200)` });
+      }
+      if (totalWords > 4000) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Report too long: ${totalWords} words (maximum 4000)` });
+      }
+      const row = await db.select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage10 = { completedAt: Date.now(), lastEditedAt: null };
+      const updates: Record<string, unknown> = {
+        boardReportSectionsJson: input.boardReportSectionsJson,
+        stage10ConfirmedAt: new Date(),
+        stageGateStateJson: JSON.stringify(gateState),
+        updatedAt: new Date(),
+      };
+      if (input.boardReportIncludeNotes !== undefined) {
+        updates.boardReportIncludeNotes = input.boardReportIncludeNotes;
+      }
+      await db.update(ailOrgContext)
+        .set(updates)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true, gateState, totalWords };
     }),
 
   /**

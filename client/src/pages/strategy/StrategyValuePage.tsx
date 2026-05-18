@@ -27,6 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import SectionPageLayout from "@/components/SectionPageLayout";
+import { useGate } from "@/contexts/GateContext";
+import { useDeepDive } from "@/hooks/useDeepDive";
 import {
   TrendingUp,
   ArrowRight,
@@ -473,6 +475,8 @@ function ScenarioCard({ label, color, bg, border, assumptions, cost, value, net,
 
 export default function StrategyValuePage() {
   const [, navigate] = useLocation();
+  const gate = useGate();
+  const { isDeepDive } = useDeepDive();
 
   // DCF rate state — session-scoped, not persisted
   const [discountRate, setDiscountRate] = useState(8.0);
@@ -560,6 +564,8 @@ export default function StrategyValuePage() {
       title="What this strategy is worth"
       accentColor="#4ADE80"
       icon={<TrendingUp className="w-5 h-5" />}
+      isDeepDive={isDeepDive}
+      confirmedAt={gate.gateState?.stage5.completedAt}
     >
       {/* ── Loading ──────────────────────────────────────────────────────────── */}
       {isLoading && (
