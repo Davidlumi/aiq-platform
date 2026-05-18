@@ -454,10 +454,14 @@ export function ld_workforce_reskilling(inputs: ValueFormulaInputs): ValueRange 
   const reskillValue = headcount * cfg.reskillTargetFraction * salary * cfg.productivityUpliftRate;
   const retentionValue = headcount * cfg.reskillTargetFraction * costPerLeaver(inputs) * cfg.retentionUpliftRate;
   const total = reskillValue + retentionValue;
+  // Enterprise-scale cap: reskilling value scales linearly with headcount and can exceed
+  // realistic programme outcomes for large organisations. Cap at £3M to stay within 3-5x ROI.
+  const MAX_VALUE_GBP = 3_000_000;
+  const cappedTotal = Math.min(total, MAX_VALUE_GBP);
 
   return {
-    low: Math.round(total * 0.4),
-    high: Math.round(total * 1.0),
+    low: Math.round(cappedTotal * 0.4),
+    high: Math.round(cappedTotal * 1.0),
     currency: "GBP",
     isIndicative: indicative(d),
     narrative: `Based on ${Math.round(cfg.reskillTargetFraction * 100)}% of ${headcount.toLocaleString()} employees reskilled: productivity uplift and retention improvement.`,
@@ -751,10 +755,14 @@ export function rt_flight_risk_prediction(inputs: ValueFormulaInputs): ValueRang
   const annualLeavers = headcount * attritionRate;
   const attritionReduction = cfg.attritionReductionRate * managerProb;
   const value = annualLeavers * attritionReduction * costPerLeaver(inputs);
+  // Enterprise-scale cap: flight risk value scales with headcount × attrition × cost-per-leaver
+  // and produces unrealistic figures for large organisations. Cap at £2.5M to stay within 3-5× ROI.
+  const MAX_VALUE_GBP = 2_500_000;
+  const cappedValue = Math.min(value, MAX_VALUE_GBP);
 
   return {
-    low: Math.round(value * 0.6),
-    high: Math.round(value * 1.2),
+    low: Math.round(cappedValue * 0.6),
+    high: Math.round(cappedValue * 1.2),
     currency: "GBP",
     isIndicative: indicative(d),
     narrative: `Based on ${headcount.toLocaleString()} headcount × ${Math.round(attritionRate * 100)}% attrition × ${Math.round(attritionReduction * 100)}% reduction (adjusted for ${managerLevel} manager capability).`,
